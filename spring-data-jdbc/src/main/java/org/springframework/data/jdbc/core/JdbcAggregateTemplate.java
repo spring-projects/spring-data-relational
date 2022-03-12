@@ -287,6 +287,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.exists(query, probeType);
 	}
 
+	@Override
+	public <T> long count(Example<T> example) {
+		Query query = this.exampleMapper.getMappedExample(example);
+		Class<T> probeType = example.getProbeType();
+		return accessStrategy.count(query, probeType);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)

@@ -381,10 +381,18 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return null;
 	}
 
-	@Override public <T> boolean exists(Query query, Class<T> probeType) {
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
 		// TODO: DIEGO find help for this one
 		// I have zero MyBatis knowledge.
 		return false;
+	}
+
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		// TODO: DIEGO find help for this one
+		// I have zero MyBatis knowledge.
+		return 0;
 	}
 
 	/*

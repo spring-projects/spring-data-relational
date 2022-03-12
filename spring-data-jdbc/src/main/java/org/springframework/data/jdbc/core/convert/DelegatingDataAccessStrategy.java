@@ -222,6 +222,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.exists(query, probeType);
 	}
 
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		return delegate.count(query, probeType);
+	}
+
 	/**
 	 * Must be called exactly once before calling any of the other methods.
 	 *

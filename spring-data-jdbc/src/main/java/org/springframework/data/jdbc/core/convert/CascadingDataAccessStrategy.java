@@ -226,6 +226,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.exists(query, probeType));
 	}
 
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		return collect(das -> das.count(query, probeType));
+	}
+
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
 
 		// Keep <T> as Eclipse fails to compile if <> is used.

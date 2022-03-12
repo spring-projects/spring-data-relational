@@ -761,6 +761,28 @@ class SqlGeneratorUnitTests {
 				.containsOnly(entry("x_name", probe.name));
 	}
 
+	@Test
+	void countByQuerySimpleValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.countByQuery(query, parameterSource);
+		assertThat(generatedSQL) //
+				.isNotNull() //
+				.containsIgnoringCase("COUNT(1)") //
+				.contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {

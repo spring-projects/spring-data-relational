@@ -746,6 +746,25 @@ class SqlGenerator {
 	}
 
 	/**
+	 * Constructs a single sql query that performs select count based on the provided query for checking existence.
+	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Expression idColumn = getIdColumn();
+		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(idColumn);
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
 	 * Constructs a single sql query that performs select count based on the provided query. Additional the bindings for
 	 * the where clause are stored after execution into the <code>parameterSource</code>
 	 *
@@ -753,11 +772,33 @@ class SqlGenerator {
 	 * @param parameterSource the source for holding the bindings
 	 * @return a non null query string.
 	 */
-	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
-		Table table = getTable();
+	public String countByQuery(Query query, MapSqlParameterSource parameterSource) {
 
+		Expression countExpression = Expressions.just("1");
+		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(countExpression);
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
+	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
+	 *
+	 * @param countExpressions the expression to use as count parameter.
+	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
+	 *         columns and has only a count in the projection of the select.
+	 */
+	private SelectBuilder.SelectJoin getSelectCountWithExpression(Expression... countExpressions) {
+
+		Assert.notNull(countExpressions, "countExpressions must not be null");
+		Assert.state(countExpressions.length >= 1, "countExpressions must contain at least one expression");
+
+		Table table = getTable();
 		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder //
-				.select(Functions.count(getIdColumn())) //
+				.select(Functions.count(countExpressions)) //
 				.from(table);//
 
 		SelectBuilder.SelectJoin baseSelect = selectBuilder;
@@ -774,11 +815,7 @@ class SqlGenerator {
 				baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
 			}
 		}
-
-		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
-				.build();
-
-		return render(select);
+		return baseSelect;
 	}
 
 	private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,

@@ -469,6 +469,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).countByQuery(query, parameterSource);
+
+		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
+
+		Assert.notNull(result, "The result of a count query must not be null.");
+
+		return result;
+	}
+
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
 			RelationalPersistentEntity<S> persistentEntity, String prefix,
 			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {

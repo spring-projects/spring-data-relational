@@ -220,13 +220,9 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
-		/*Assert.notNull(example, "Example must not be null!");
-		
-		Query query = this.exampleMapper.getMappedExample(example);
-		
-		return this.entityOperations.count(query, example.getProbeType());*/
-		// TODO: impl
-		return 0;
+		Assert.notNull(example, "Example must not be null!");
+
+		return this.entityOperations.count(example);
 	}
 
 	@Override

@@ -258,4 +258,13 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @return {@literal true} if the object exists.
 	 */
 	<T> boolean exists(Query query, Class<T> probeType);
+
+	/**
+	 * Counts the rows in the table representing the given probe type, that match the given <code>query</code>.
+	 *
+	 * @param probeType the probe type for which to count the elements. Must not be {@code null}.
+	 * @param query the query which elements have to match.
+	 * @return the count. Guaranteed to be not {@code null}.
+	 */
+	<T> long count(Query query, Class<T> probeType);
 }

@@ -185,4 +185,12 @@ public interface JdbcAggregateOperations {
 	 * @return {@literal true} if the object exists.
 	 */
 	<T> boolean exists(Example<T> example);
+
+	/**
+	 * Counts the number of aggregates of a given type that match the given <code>example</code>.
+	 *
+	 * @param example the example to match.
+	 * @return the number of instances stored in the database. Guaranteed to be not {@code null}.
+	 */
+	<T> long count(Example<T> example);
 }

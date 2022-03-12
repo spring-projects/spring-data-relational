@@ -765,6 +765,78 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(exists).isTrue();
 	}
 
+	@Test
+	void countByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		long count = repository.count(example);
+
+		assertThat(count).isOne();
+	}
+
+	@Test
+	void countByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		long count = repository.count(example);
+		assertThat(count).isEqualTo(2);
+	}
+
+	@Test
+	void countByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		long count = repository.count(example);
+
+		assertThat(count).isNotNull().isZero();
+	}
+
+	@Test
+	void countByExampleComplex() {
+
+		final Instant pointInTime = Instant.now().minusSeconds(10000);
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+		two.setName("Diego");
+		two.setPointInTime(pointInTime);
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName("Diego");
+		exampleEntitiy.setPointInTime(pointInTime);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		long count = repository.count(example);
+		assertThat(count).isOne();
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
