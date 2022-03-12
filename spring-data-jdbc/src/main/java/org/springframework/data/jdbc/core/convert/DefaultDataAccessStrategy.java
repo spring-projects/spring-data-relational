@@ -458,6 +458,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource, pageable);
+
+		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+	}
+
+	@Override
 	public <T> boolean exists(Query query, Class<T> probeType) {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 

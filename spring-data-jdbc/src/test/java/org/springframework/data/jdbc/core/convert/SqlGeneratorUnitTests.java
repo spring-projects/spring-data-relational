@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
-import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -778,6 +777,32 @@ class SqlGeneratorUnitTests {
 				.isNotNull() //
 				.containsIgnoringCase("COUNT(1)") //
 				.contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test
+	void selectByQueryPaginationValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		PageRequest pageRequest = PageRequest.of(2, 1, Sort.by(Sort.Order.asc("name")));
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource, pageRequest);
+		assertThat(generatedSQL) //
+				.isNotNull() //
+				.contains(":x_name") //
+				.containsIgnoringCase("ORDER BY dummy_entity.x_name ASC") //
+				.containsIgnoringCase("LIMIT 1") //
+				.containsIgnoringCase("OFFSET 2 LIMIT 1");
 
 		assertThat(parameterSource.getValues()) //
 				.containsOnly(entry("x_name", probe.name));

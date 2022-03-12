@@ -32,12 +32,17 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -53,7 +58,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -65,6 +69,7 @@ import org.springframework.data.relational.core.mapping.event.AbstractRelational
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -691,6 +696,138 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(allFound) //
 				.isNotNull() //
 				.isEmpty();
+	}
+
+	@Test
+	void findAllByExamplePageableShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(1) //
+				.extracting(DummyEntity::getName) //
+				.containsExactly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExamplePageableMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(2) //
+				.extracting(DummyEntity::getName) //
+				.containsOnly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExamplePageableShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
+	@Test
+	void findAllByExamplePageableOutsidePageShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+		Pageable pageRequest = PageRequest.of(10, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
+	@ParameterizedTest
+	@MethodSource("findAllByExamplePageableSource")
+	void findAllByExamplePageable(Pageable pageRequest, int size, int totalPages, List<String> notContains) {
+
+		for (int i = 0; i < 100; i++) {
+			DummyEntity dummyEntity = createDummyEntity();
+			dummyEntity.setFlag(true);
+			dummyEntity.setName("" + i);
+
+			repository.save(dummyEntity);
+		}
+
+		DummyEntity dummyEntityExample = createDummyEntity();
+		dummyEntityExample.setName(null);
+		dummyEntityExample.setFlag(true);
+
+		Example<DummyEntity> example = Example.of(dummyEntityExample);
+
+		Page<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		// page has correct size
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(size);
+
+		// correct number of total
+		assertThat(allFound.getTotalElements()).isEqualTo(100);
+
+		assertThat(allFound.getTotalPages()).isEqualTo(totalPages);
+
+		if (!notContains.isEmpty()) {
+			assertThat(allFound) //
+					.extracting(DummyEntity::getName) //
+					.doesNotContain(notContains.toArray(new String[0]));
+		}
+	}
+
+	public static Stream<Arguments> findAllByExamplePageableSource() {
+		return Stream.of( //
+				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
+				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
+				Arguments.of(PageRequest.of(2, 10), 10, 10, Arrays.asList("1", "2", "3")), //
+				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
+		);
 	}
 
 	@Test

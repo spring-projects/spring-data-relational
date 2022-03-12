@@ -218,6 +218,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		return delegate.select(query, probeType, pageable);
+	}
+
+	@Override
 	public <T> boolean exists(Query query, Class<T> probeType) {
 		return delegate.exists(query, probeType);
 	}

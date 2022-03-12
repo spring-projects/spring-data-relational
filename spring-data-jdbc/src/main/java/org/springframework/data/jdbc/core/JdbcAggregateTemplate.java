@@ -294,6 +294,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.count(query, probeType);
 	}
 
+	@Override
+	public <T> Page<T> select(Example<T> example, Pageable pageable) {
+		Query query = this.exampleMapper.getMappedExample(example);
+		Class<T> probeType = example.getProbeType();
+
+		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, probeType, pageable));
+		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
+
+		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, probeType));
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)

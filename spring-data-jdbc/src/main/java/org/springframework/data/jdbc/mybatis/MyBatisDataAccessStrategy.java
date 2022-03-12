@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.ibatis.session.SqlSession;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -376,6 +376,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		// TODO: DIEGO find help for this one
+		// I have zero MyBatis knowledge.
+		return null;
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
 		// TODO: DIEGO find help for this one
 		// I have zero MyBatis knowledge.
 		return null;

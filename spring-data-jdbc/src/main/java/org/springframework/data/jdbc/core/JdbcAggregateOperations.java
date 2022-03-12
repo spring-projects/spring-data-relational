@@ -193,4 +193,14 @@ public interface JdbcAggregateOperations {
 	 * @return the number of instances stored in the database. Guaranteed to be not {@code null}.
 	 */
 	<T> long count(Example<T> example);
+
+	/**
+	 * Returns a {@link Page} of entities matching the given {@link Example}. In case no match could be found, an empty
+	 * {@link Page} is returned.
+	 * 
+	 * @param example must not be null
+	 * @param pageable can be null.
+	 * @return a {@link Page} of entities matching the given {@link Example}.
+	 */
+	<T> Page<T> select(Example<T> example, Pageable pageable);
 }

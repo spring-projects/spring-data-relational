@@ -746,6 +746,31 @@ class SqlGenerator {
 	}
 
 	/**
+	 * Constructs a single sql query that performs select based on the provided query and pagination information.
+	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null.
+	 * @param pageable the pageable to perform on the select.
+	 * @param parameterSource the source for holding the bindings.
+	 * @return a non null query string.
+	 */
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource, Pageable pageable) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		// first apply query and then pagination. This means possible query sorting and limiting might be overwritten by the
+		// pagination. This is desired.
+		SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(query, parameterSource, selectBuilder);
+		selectOrdered = applyPagination(pageable, selectOrdered);
+		selectOrdered = selectOrdered.orderBy(extractOrderByFields(pageable.getSort()));
+
+		Select select = selectOrdered.build();
+		return render(select);
+	}
+
+	/**
 	 * Constructs a single sql query that performs select count based on the provided query for checking existence.
 	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
 	 *

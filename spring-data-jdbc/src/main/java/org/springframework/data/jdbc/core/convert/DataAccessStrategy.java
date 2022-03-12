@@ -245,10 +245,22 @@ public interface DataAccessStrategy extends RelationResolver {
 	 *
 	 * @param query must not be {@literal null}.
 	 * @param probeType the type of entities. Must not be {@code null}.
-	 * @return a non null list with all the matching results.
+	 * @return a non-null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
 	<T> Iterable<T> select(Query query, Class<T> probeType);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}. Applies the {@link Pageable}
+	 * to the result.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@literal  null}.
+	 * @param pageable the pagination that should be applied. Must not be {@literal null}.
+	 * @return a non-null list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable);
 
 	/**
 	 * Determine whether there is an aggregate of type <code>probeType</code> that matches the provided {@link Query}.

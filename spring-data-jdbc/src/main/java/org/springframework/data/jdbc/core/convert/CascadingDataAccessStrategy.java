@@ -222,6 +222,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		return collect(das -> das.select(query, probeType, pageable));
+	}
+
+	@Override
 	public <T> boolean exists(Query query, Class<T> probeType) {
 		return collect(das -> das.exists(query, probeType));
 	}

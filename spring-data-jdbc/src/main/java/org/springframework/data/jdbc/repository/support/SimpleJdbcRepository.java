@@ -214,8 +214,9 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
-		// TODO: impl
-		return null;
+		Assert.notNull(example, "Example must not be null!");
+
+		return this.entityOperations.select(example, pageable);
 	}
 
 	@Override
