@@ -107,7 +107,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		verify(callbacks).callback(BeforeConvertCallback.class, first);
 		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(MutableAggregateChange.class));
-		verify(callbacks).callback(AfterSaveCallback.class, second);
+		verify(callbacks).callback(AfterSaveCallback.class, third);
 		assertThat(last).isEqualTo(third);
 	}
 

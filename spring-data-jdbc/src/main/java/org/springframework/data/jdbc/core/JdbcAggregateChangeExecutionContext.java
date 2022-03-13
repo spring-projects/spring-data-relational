@@ -366,12 +366,10 @@ class JdbcAggregateChangeExecutionContext {
 				DbAction.WithEntity<?> withEntity = (DbAction.WithGeneratedId<?>) action;
 				Object newEntity = setIdAndCascadingProperties(withEntity, ((InsertExecutionResult) result).getNewId(), cascadingValues);
 
-				if (action instanceof DbAction.InsertRoot) {
-					rootWithPopulatedFields = (T) newEntity;
-				}
-
 				// the id property was immutable so we have to propagate changes up the tree
-				if (newEntity != withEntity.getEntity()) {
+				if (newEntity != withEntity.getEntity() || context.getRequiredPersistentEntity(action.getEntityType()).hasVersionProperty()) {
+
+					rootWithPopulatedFields = (T) newEntity;
 
 					if (action instanceof DbAction.Insert) {
 						DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
