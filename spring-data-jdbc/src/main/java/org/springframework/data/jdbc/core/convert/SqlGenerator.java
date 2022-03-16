@@ -15,6 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -32,11 +37,6 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -383,11 +383,11 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -397,10 +397,10 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -733,9 +733,9 @@ class SqlGenerator {
 
 		Join(Table joinTable, Column joinColumn, Column parentId) {
 
-			Assert.notNull( joinTable,"JoinTable must not be null.");
-			Assert.notNull( joinColumn,"JoinColumn must not be null.");
-			Assert.notNull( parentId,"ParentId must not be null.");
+			Assert.notNull(joinTable, "JoinTable must not be null.");
+			Assert.notNull(joinColumn, "JoinColumn must not be null.");
+			Assert.notNull(parentId, "ParentId must not be null.");
 
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;
@@ -757,12 +757,12 @@ class SqlGenerator {
 		@Override
 		public boolean equals(Object o) {
 
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
 			Join join = (Join) o;
-			return joinTable.equals(join.joinTable) &&
-					joinColumn.equals(join.joinColumn) &&
-					parentId.equals(join.parentId);
+			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
 		}
 
 		@Override
@@ -773,11 +773,7 @@ class SqlGenerator {
 		@Override
 		public String toString() {
 
-			return "Join{" +
-					"joinTable=" + joinTable +
-					", joinColumn=" + joinColumn +
-					", parentId=" + parentId +
-					'}';
+			return "Join{" + "joinTable=" + joinTable + ", joinColumn=" + joinColumn + ", parentId=" + parentId + '}';
 		}
 	}
 

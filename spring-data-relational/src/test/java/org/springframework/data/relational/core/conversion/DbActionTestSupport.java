@@ -16,10 +16,12 @@
 package org.springframework.data.relational.core.conversion;
 
 import lombok.experimental.UtilityClass;
+
 import org.springframework.lang.Nullable;
 
 /**
  * Utility class for analyzing DbActions in tests.
+ * 
  * @author Jens Schauder
  * @author Chirag Tailor
  */
@@ -49,6 +51,7 @@ class DbActionTestSupport {
 
 	@Nullable
 	static IdValueSource insertIdValueSource(DbAction<?> action) {
+
 		if (action instanceof DbAction.InsertRoot) {
 			return ((DbAction.InsertRoot<?>) action).getIdValueSource();
 		} else if (action instanceof DbAction.Insert) {

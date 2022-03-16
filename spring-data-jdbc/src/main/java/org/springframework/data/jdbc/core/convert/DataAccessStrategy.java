@@ -76,7 +76,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	<T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource);
 
 	/**
-	 * Inserts the data of a multiple entities.
+	 * Inserts the data of multiple entities.
 	 *
 	 * @param <T> the type of the instance.
 	 * @param insertSubjects the subjects to be inserted, where each subject contains the instance and its identifier.

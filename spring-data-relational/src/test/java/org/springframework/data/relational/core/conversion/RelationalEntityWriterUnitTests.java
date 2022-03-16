@@ -17,6 +17,9 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,9 +45,6 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
-
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Unit tests for the {@link RelationalEntityWriter}
@@ -97,7 +97,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -118,7 +119,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, PrimitiveLongIdEntity.class, "", PrimitiveLongIdEntity.class, false, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, PrimitiveLongIdEntity.class, "", PrimitiveLongIdEntity.class, false,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -139,7 +141,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, PrimitiveIntIdEntity.class, "", PrimitiveIntIdEntity.class, false, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, PrimitiveIntIdEntity.class, "", PrimitiveIntIdEntity.class, false,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -162,7 +165,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, EmbeddedReferenceEntity.class, "", EmbeddedReferenceEntity.class, false, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, EmbeddedReferenceEntity.class, "", EmbeddedReferenceEntity.class, false,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -185,7 +189,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, IdValueSource.GENERATED), //
+						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false,
+								IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other", Element.class, true, IdValueSource.GENERATED) //
 				);
 	}
@@ -210,9 +215,12 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
-						tuple(InsertRoot.class, EntityWithReferencesToPrimitiveIdEntity.class, "", EntityWithReferencesToPrimitiveIdEntity.class, false, IdValueSource.GENERATED), //
-						tuple(Insert.class, PrimitiveLongIdEntity.class, "primitiveLongIdEntity", PrimitiveLongIdEntity.class, true, IdValueSource.GENERATED), //
-						tuple(Insert.class, PrimitiveIntIdEntity.class, "primitiveIntIdEntity", PrimitiveIntIdEntity.class, true, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, EntityWithReferencesToPrimitiveIdEntity.class, "",
+								EntityWithReferencesToPrimitiveIdEntity.class, false, IdValueSource.GENERATED), //
+						tuple(Insert.class, PrimitiveLongIdEntity.class, "primitiveLongIdEntity", PrimitiveLongIdEntity.class, true,
+								IdValueSource.GENERATED), //
+						tuple(Insert.class, PrimitiveIntIdEntity.class, "primitiveIntIdEntity", PrimitiveIntIdEntity.class, true,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -307,11 +315,11 @@ public class RelationalEntityWriterUnitTests {
 				);
 		List<Insert<Element>> batchedInsertActions = getInsertBatchAction(actions, Element.class).getInserts();
 		assertThat(batchedInsertActions).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, Element.class, "elements", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "elements", Element.class, true, IdValueSource.GENERATED) //
@@ -346,17 +354,19 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::isWithDependsOn, //
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false, IdValueSource.GENERATED), //
+						tuple(InsertRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false,
+								IdValueSource.GENERATED), //
 						tuple(InsertBatch.class, CascadingReferenceMiddleElement.class, "", null, false, IdValueSource.GENERATED), //
 						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
 				);
-		List<Insert<CascadingReferenceMiddleElement>> middleElementInserts = getInsertBatchAction(actions, CascadingReferenceMiddleElement.class).getInserts();
+		List<Insert<CascadingReferenceMiddleElement>> middleElementInserts = getInsertBatchAction(actions,
+				CascadingReferenceMiddleElement.class).getInserts();
 		assertThat(middleElementInserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
 								true, IdValueSource.GENERATED), //
@@ -365,11 +375,11 @@ public class RelationalEntityWriterUnitTests {
 				);
 		List<Insert<Element>> leafElementInserts = getInsertBatchAction(actions, Element.class).getInserts();
 		assertThat(leafElementInserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
@@ -415,11 +425,11 @@ public class RelationalEntityWriterUnitTests {
 		List<Insert<CascadingReferenceMiddleElement>> middleElementInserts = getInsertBatchAction(actions,
 				CascadingReferenceMiddleElement.class).getInserts();
 		assertThat(middleElementInserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
 								true, IdValueSource.GENERATED), //
@@ -428,11 +438,11 @@ public class RelationalEntityWriterUnitTests {
 				);
 		List<Insert<Element>> elementInserts = getInsertBatchAction(actions, Element.class).getInserts();
 		assertThat(elementInserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
@@ -481,10 +491,10 @@ public class RelationalEntityWriterUnitTests {
 				);
 		List<Insert<Element>> inserts = getInsertBatchAction(actions, Element.class).getInserts();
 		assertThat(inserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						this::getMapKey, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				this::getMapKey, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
 						tuple(Insert.class, Element.class, "one", "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "two", "elements", IdValueSource.GENERATED) //
@@ -525,10 +535,10 @@ public class RelationalEntityWriterUnitTests {
 				);
 		List<Insert<Element>> inserts = getInsertBatchAction(actions, Element.class).getInserts();
 		assertThat(inserts).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						this::getMapKey, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				this::getMapKey, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
 						tuple(Insert.class, Element.class, "1", "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "2", "elements", IdValueSource.GENERATED), //
@@ -718,7 +728,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(InsertRoot.class, EmbeddedReferenceChainEntity.class, "", EmbeddedReferenceChainEntity.class, false, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, EmbeddedReferenceChainEntity.class, "", EmbeddedReferenceChainEntity.class, false,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -764,35 +775,34 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsSubsequence(
 						tuple(InsertRoot.class, ListContainer.class, "", ListContainer.class, false, IdValueSource.GENERATED), //
 						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.PROVIDED) //
-				)
-				.containsSubsequence( //
+				).containsSubsequence( //
 						tuple(InsertRoot.class, ListContainer.class, "", ListContainer.class, false, IdValueSource.GENERATED), //
 						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
 				);
 		InsertBatch<Element> insertBatchWithoutId = getInsertBatchAction(actions, Element.class, IdValueSource.GENERATED);
 		assertThat(insertBatchWithoutId.getInserts()).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						this::getListKey, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				this::getListKey, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, Element.class, 0, "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, 2, "elements", IdValueSource.GENERATED) //
 				);
 		InsertBatch<Element> insertBatchWithId = getInsertBatchAction(actions, Element.class, IdValueSource.PROVIDED);
 		assertThat(insertBatchWithId.getInserts()).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						this::getListKey, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				this::getListKey, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(Insert.class, Element.class, 1, "elements", IdValueSource.PROVIDED), //
 						tuple(Insert.class, Element.class, 3, "elements", IdValueSource.PROVIDED) //
@@ -813,15 +823,18 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-						DbAction::getEntityType, //
-						DbActionTestSupport::extractPath, //
-						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn, //
-						DbActionTestSupport::insertIdValueSource) //
+				DbAction::getEntityType, //
+				DbActionTestSupport::extractPath, //
+				DbActionTestSupport::actualEntityType, //
+				DbActionTestSupport::isWithDependsOn, //
+				DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
-						tuple(InsertRoot.class, EntityWithReferencesToPrimitiveIdEntity.class, "", EntityWithReferencesToPrimitiveIdEntity.class, false, IdValueSource.GENERATED), //
-						tuple(Insert.class, PrimitiveLongIdEntity.class, "primitiveLongIdEntities", PrimitiveLongIdEntity.class, true, IdValueSource.GENERATED), //
-						tuple(Insert.class, PrimitiveIntIdEntity.class, "primitiveIntIdEntities", PrimitiveIntIdEntity.class, true, IdValueSource.GENERATED) //
+						tuple(InsertRoot.class, EntityWithReferencesToPrimitiveIdEntity.class, "",
+								EntityWithReferencesToPrimitiveIdEntity.class, false, IdValueSource.GENERATED), //
+						tuple(Insert.class, PrimitiveLongIdEntity.class, "primitiveLongIdEntities", PrimitiveLongIdEntity.class,
+								true, IdValueSource.GENERATED), //
+						tuple(Insert.class, PrimitiveIntIdEntity.class, "primitiveIntIdEntities", PrimitiveIntIdEntity.class, true,
+								IdValueSource.GENERATED) //
 				);
 	}
 
@@ -834,28 +847,25 @@ public class RelationalEntityWriterUnitTests {
 
 	@NotNull
 	private <T> InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType) {
-		return getInsertBatchActions(actions, entityType).stream()
-				.findFirst()
+		return getInsertBatchActions(actions, entityType).stream().findFirst()
 				.orElseThrow(() -> new RuntimeException("No InsertBatch action found!"));
 	}
 
 	@NotNull
 	private <T> InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType,
-													IdValueSource idValueSource) {
+			IdValueSource idValueSource) {
 		return getInsertBatchActions(actions, entityType).stream()
-				.filter(insertBatch -> insertBatch.getIdValueSource() == idValueSource)
-				.findFirst()
-				.orElseThrow(() -> new RuntimeException(String.format("No InsertBatch with includeId '%s' found!", idValueSource)));
+				.filter(insertBatch -> insertBatch.getIdValueSource() == idValueSource).findFirst().orElseThrow(
+						() -> new RuntimeException(String.format("No InsertBatch with includeId '%s' found!", idValueSource)));
 	}
 
 	@NotNull
 	private <T> List<InsertBatch<T>> getInsertBatchActions(List<DbAction<?>> actions, Class<T> entityType) {
-		//noinspection unchecked
+		// noinspection unchecked
 		return actions.stream() //
 				.filter(dbAction -> dbAction instanceof InsertBatch) //
 				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
-				.map(dbAction -> (InsertBatch<T>) dbAction)
-				.collect(Collectors.toList());
+				.map(dbAction -> (InsertBatch<T>) dbAction).collect(Collectors.toList());
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {

@@ -23,12 +23,12 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 import junit.framework.AssertionFailedError;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import lombok.Value;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

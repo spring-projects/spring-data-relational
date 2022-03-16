@@ -17,7 +17,11 @@ package org.springframework.data.relational.core.conversion;
 
 import static java.util.Arrays.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -55,7 +59,8 @@ class WritingContext {
 		this.root = root;
 		this.entity = aggregateChange.getEntity();
 		this.entityType = aggregateChange.getEntityType();
-		this.rootIdValueSource = IdValueSource.forInstance(root, context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
+		this.rootIdValueSource = IdValueSource.forInstance(root,
+				context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
 		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded());
 	}
 
@@ -124,7 +129,8 @@ class WritingContext {
 	@SuppressWarnings("unchecked")
 	private List<? extends DbAction<?>> insertAll(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(path.getRequiredLeafProperty());
+		RelationalPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(path.getRequiredLeafProperty());
 		List<DbAction.Insert<Object>> inserts = new ArrayList<>();
 		from(path).forEach(node -> {
 
@@ -150,18 +156,15 @@ class WritingContext {
 			inserts.add(insert);
 			previousActions.put(node, insert);
 		});
-		return inserts.stream()
-				.collect(Collectors.groupingBy(DbAction.Insert::getIdValueSource))
-				.entrySet().stream()
-				.filter(entry -> (!entry.getValue().isEmpty()))
-				.map(entry -> {
+		return inserts.stream().collect(Collectors.groupingBy(DbAction.Insert::getIdValueSource)).entrySet().stream()
+				.filter(entry -> (!entry.getValue().isEmpty())).map(entry -> {
+
 					List<DbAction.Insert<Object>> batch = entry.getValue();
 					if (batch.size() > 1) {
 						return new DbAction.InsertBatch<>(batch, entry.getKey());
 					}
 					return batch.get(0);
-				})
-				.collect(Collectors.toList());
+				}).collect(Collectors.toList());
 	}
 
 	private List<DbAction<?>> deleteReferenced() {

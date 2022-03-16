@@ -110,6 +110,7 @@ public interface DbAction<T> {
 		private final IdValueSource idValueSource;
 
 		public InsertRoot(T entity, IdValueSource idValueSource) {
+
 			this.entity = entity;
 			this.idValueSource = idValueSource;
 		}

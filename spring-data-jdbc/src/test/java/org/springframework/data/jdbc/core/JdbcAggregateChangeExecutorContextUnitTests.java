@@ -28,9 +28,9 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
+import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
-import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -56,14 +56,13 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	});
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
-	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
 	JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 			accessStrategy);
 
 	DummyEntity root = new DummyEntity();
 
 	@Test // DATAJDBC-453
-	public void rootOfEmptySetOfActionsisNull() {
+	public void rootOfEmptySetOfActionIsNull() {
 
 		Object root = executionContext.populateIdsIfNecessary();
 
@@ -92,7 +91,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntityNonPrimitiveVersion dummyEntityNonPrimitiveVersion = new DummyEntityNonPrimitiveVersion();
 
-		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion, IdValueSource.GENERATED));
+		executionContext
+				.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion, IdValueSource.GENERATED));
 		executionContext.populateRootVersionIfNecessary(dummyEntityNonPrimitiveVersion);
 
 		assertThat(dummyEntityNonPrimitiveVersion.version).isEqualTo(0);
@@ -124,7 +124,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Content content = new Content();
 
 		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(23L);
-		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class), eq(IdValueSource.GENERATED))).thenReturn(24L);
+		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class), eq(IdValueSource.GENERATED)))
+				.thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
@@ -147,15 +148,12 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 
 		Content content = new Content();
-		Identifier identifier = Identifier.empty()
-				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class)
+		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class)
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
-		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class, IdValueSource.GENERATED))
-				.thenReturn(new Object[] { 456L });
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
+				IdValueSource.GENERATED)).thenReturn(new Object[] { 456L });
 		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)),
-				IdValueSource.GENERATED
-		);
+				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.GENERATED);
 		executionContext.executeInsertBatch(insertBatch);
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
@@ -174,15 +172,12 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 
 		Content content = new Content();
-		Identifier identifier = Identifier.empty()
-				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class)
+		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class)
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
-		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class, IdValueSource.PROVIDED))
-				.thenReturn(new Object[] { null });
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
+				IdValueSource.PROVIDED)).thenReturn(new Object[] { null });
 		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)),
-				IdValueSource.PROVIDED
-		);
+				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.PROVIDED);
 		executionContext.executeInsertBatch(insertBatch);
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
@@ -193,12 +188,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-									@Nullable Object key) {
+			@Nullable Object key) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
+		return new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
 				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
-
-		return insert;
 	}
 
 	PersistentPropertyPathExtension toPathExt(String path) {

@@ -29,9 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.Identifier;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -50,7 +48,6 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 public class MyBatisDataAccessStrategyUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
 
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
@@ -69,7 +66,8 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void insert() {
 
-		accessStrategy.insert("x", String.class, Identifier.from(singletonMap(unquoted("key"), "value")), IdValueSource.GENERATED);
+		accessStrategy.insert("x", String.class, Identifier.from(singletonMap(unquoted("key"), "value")),
+				IdValueSource.GENERATED);
 
 		verify(session).insert(eq("java.lang.StringMapper.insert"), captor.capture());
 

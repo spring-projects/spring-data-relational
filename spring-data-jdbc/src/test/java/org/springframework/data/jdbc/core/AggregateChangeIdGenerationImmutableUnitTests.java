@@ -72,7 +72,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	JdbcConverter converter = mock(JdbcConverter.class);
 	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity, IdValueSource.GENERATED);
 
-	private DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
+	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
 

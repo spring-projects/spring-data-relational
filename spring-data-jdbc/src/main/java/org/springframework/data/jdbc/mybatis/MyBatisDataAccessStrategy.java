@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.ibatis.session.SqlSession;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -101,7 +101,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
-		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
+		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
+				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
 				sqlGeneratorSource, //
 				context, //
@@ -168,8 +169,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
 
-		return insertSubjects.stream()
-				.map(insertSubject -> insert(insertSubject.getInstance(), domainType, insertSubject.getIdentifier(), idValueSource))
+		return insertSubjects.stream().map(
+				insertSubject -> insert(insertSubject.getInstance(), domainType, insertSubject.getIdentifier(), idValueSource))
 				.toArray();
 	}
 

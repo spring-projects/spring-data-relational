@@ -37,6 +37,7 @@ public class SqlServerDialect extends AbstractDialect {
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+
 		@Override
 		public boolean supportedForBatchOperations() {
 			return false;

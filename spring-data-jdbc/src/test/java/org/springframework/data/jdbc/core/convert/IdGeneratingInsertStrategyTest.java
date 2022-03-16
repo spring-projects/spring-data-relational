@@ -45,7 +45,7 @@ class IdGeneratingInsertStrategyTest {
 	NamedParameterJdbcOperations namedParameterJdbcOperations = mock(NamedParameterJdbcOperations.class);
 	String sql = "some sql";
 	SqlParameterSource sqlParameterSource = new SqlIdentifierParameterSource(identifierProcessing);
-	
+
 	@Test
 	void insertsWithKeyHolderAndKeyColumnNames_whenDriverRequiresKeyColumnNames() {
 
@@ -85,6 +85,7 @@ class IdGeneratingInsertStrategyTest {
 
 		Long idValue = 123L;
 		when(namedParameterJdbcOperations.update(any(), any(), any())).thenAnswer(invocationOnMock -> {
+
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
 			keys.put("anything", idValue);
@@ -104,6 +105,7 @@ class IdGeneratingInsertStrategyTest {
 
 		Long idValue = 123L;
 		when(namedParameterJdbcOperations.update(any(), any(), any())).thenAnswer(invocationOnMock -> {
+
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
 			keys.put(idColumn.getReference(), idValue);
@@ -124,6 +126,7 @@ class IdGeneratingInsertStrategyTest {
 
 		Long idValue = 123L;
 		when(namedParameterJdbcOperations.update(any(), any(), any())).thenAnswer(invocationOnMock -> {
+
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
 			keys.put(idColumn.getReference(), idValue);
@@ -151,7 +154,7 @@ class IdGeneratingInsertStrategyTest {
 	}
 
 	private static Dialect createDialect(final IdentifierProcessing identifierProcessing,
-										 final boolean requiresKeyColumnNames) {
+			final boolean requiresKeyColumnNames) {
 
 		return new AbstractDialect() {
 

@@ -79,6 +79,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
 			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlParametersFactory sqlParametersFactory,
 			InsertStrategyFactory insertStrategyFactory) {
+
 		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -104,11 +105,13 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier, idValueSource);
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
+				idValueSource);
 
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
 
-		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql, parameterSource);
+		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
+				parameterSource);
 	}
 
 	@Override
@@ -116,12 +119,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType, insertSubject.getIdentifier(), idValueSource))
+				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
+						insertSubject.getIdentifier(), idValueSource))
 				.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
 
-		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql, sqlParameterSources);
+		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
+				sqlParameterSources);
 	}
 
 	@Override
@@ -186,7 +191,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
-		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryById(rootId, rootEntity.getType(), ROOT_ID_PARAMETER);
+		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryById(rootId, rootEntity.getType(),
+				ROOT_ID_PARAMETER);
 		operations.update(delete, parameters);
 	}
 
@@ -197,6 +203,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
 		operations.getJdbcOperations()
 				.update(sql(propertyPath.getBaseProperty().getOwner().getType()).createDeleteAllSql(propertyPath));
 	}
@@ -338,8 +345,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Nullable
 	private <T> SqlIdentifier getIdColumn(Class<T> domainType) {
+
 		return Optional.ofNullable(context.getRequiredPersistentEntity(domainType).getIdProperty())
-				.map(RelationalPersistentProperty::getColumnName)
-				.orElse(null);
+				.map(RelationalPersistentProperty::getColumnName).orElse(null);
 	}
 }

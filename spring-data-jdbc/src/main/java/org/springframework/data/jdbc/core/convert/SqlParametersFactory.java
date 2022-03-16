@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
-
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +67,8 @@ public class SqlParametersFactory {
 	 * @return the {@link SqlIdentifierParameterSource} for the insert. Guaranteed to not be {@code null}.
 	 * @since 2.4
 	 */
-	<T> SqlIdentifierParameterSource forInsert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+	<T> SqlIdentifierParameterSource forInsert(T instance, Class<T> domainType, Identifier identifier,
+			IdValueSource idValueSource) {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
@@ -110,9 +109,9 @@ public class SqlParametersFactory {
 	 * @since 2.4
 	 */
 	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType, SqlIdentifier name) {
-		
+
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
-		
+
 		addConvertedPropertyValue( //
 				parameterSource, //
 				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
@@ -135,8 +134,8 @@ public class SqlParametersFactory {
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
 
 		addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
-				ids, IDS_SQL_PARAMETER);
-		
+				ids);
+
 		return parameterSource;
 	}
 
@@ -150,7 +149,7 @@ public class SqlParametersFactory {
 	SqlIdentifierParameterSource forQueryByIdentifier(Identifier identifier) {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
-		
+
 		identifier.toMap()
 				.forEach((name, value) -> addConvertedPropertyValue(parameterSource, name, value, value.getClass()));
 
@@ -173,19 +172,20 @@ public class SqlParametersFactory {
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
-										   RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
+			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getTargetSqlType(property));
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property),
+				converter.getTargetSqlType(property));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
-										   Class<?> javaType) {
+			Class<?> javaType) {
 
 		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.targetSqlTypeFor(javaType));
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
-								   SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
+			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
@@ -200,7 +200,7 @@ public class SqlParametersFactory {
 	}
 
 	private void addConvertedPropertyValuesAsList(SqlIdentifierParameterSource parameterSource,
-												  RelationalPersistentProperty property, Iterable<?> values, SqlIdentifier paramName) {
+			RelationalPersistentProperty property, Iterable<?> values) {
 
 		List<Object> convertedIds = new ArrayList<>();
 		JdbcValue jdbcValue = null;
@@ -218,7 +218,7 @@ public class SqlParametersFactory {
 		SQLType jdbcType = jdbcValue.getJdbcType();
 		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
 
-		parameterSource.addValue(paramName, convertedIds, typeNumber);
+		parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, convertedIds, typeNumber);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -227,8 +227,8 @@ public class SqlParametersFactory {
 	}
 
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
-																   RelationalPersistentEntity<S> persistentEntity, String prefix,
-																   Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {
+			RelationalPersistentEntity<S> persistentEntity, String prefix,
+			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
 

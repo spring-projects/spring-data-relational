@@ -41,9 +41,9 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 	private final BatchJdbcOperations batchJdbcOperations;
 	private final SqlIdentifier idColumn;
 
-	public IdGeneratingBatchInsertStrategy(InsertStrategy insertStrategy,
-										   Dialect dialect, BatchJdbcOperations batchJdbcOperations,
-										   @Nullable SqlIdentifier idColumn) {
+	IdGeneratingBatchInsertStrategy(InsertStrategy insertStrategy, Dialect dialect,
+			BatchJdbcOperations batchJdbcOperations, @Nullable SqlIdentifier idColumn) {
+
 		this.insertStrategy = insertStrategy;
 		this.dialect = dialect;
 		this.batchJdbcOperations = batchJdbcOperations;
@@ -54,9 +54,9 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 	public Object[] execute(String sql, SqlParameterSource[] sqlParameterSources) {
 
 		if (!dialect.getIdGeneration().supportedForBatchOperations()) {
+
 			return Arrays.stream(sqlParameterSources)
-					.map(sqlParameterSource -> insertStrategy.execute(sql, sqlParameterSource))
-					.toArray();
+					.map(sqlParameterSource -> insertStrategy.execute(sql, sqlParameterSource)).toArray();
 		}
 
 		GeneratedKeyHolder holder = new GeneratedKeyHolder();
@@ -75,6 +75,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 		Object[] ids = new Object[sqlParameterSources.length];
 		List<Map<String, Object>> keyList = holder.getKeyList();
 		for (int i = 0; i < keyList.size(); i++) {
+
 			Map<String, Object> keys = keyList.get(i);
 			if (keys.size() > 1) {
 				if (idColumn != null) {
@@ -92,7 +93,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 	private String[] getKeyColumnNames() {
 
 		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[]{idColumn.getReference(dialect.getIdentifierProcessing())})
+				.map(idColumn -> new String[] { idColumn.getReference(dialect.getIdentifierProcessing()) })
 				.orElse(new String[0]);
 	}
 }
