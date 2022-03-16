@@ -30,12 +30,14 @@ import org.springframework.lang.Nullable;
  * @since 2.4
  */
 public class InsertStrategyFactory {
+
 	private final NamedParameterJdbcOperations namedParameterJdbcOperations;
 	private final BatchJdbcOperations batchJdbcOperations;
 	private final Dialect dialect;
 
-	public InsertStrategyFactory(NamedParameterJdbcOperations namedParameterJdbcOperations, BatchJdbcOperations batchJdbcOperations,
-								 Dialect dialect) {
+	public InsertStrategyFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,
+			BatchJdbcOperations batchJdbcOperations, Dialect dialect) {
+
 		this.namedParameterJdbcOperations = namedParameterJdbcOperations;
 		this.batchJdbcOperations = batchJdbcOperations;
 		this.dialect = dialect;
@@ -65,8 +67,8 @@ public class InsertStrategyFactory {
 
 		if (IdValueSource.GENERATED.equals(idValueSource)) {
 			return new IdGeneratingBatchInsertStrategy(
-					new IdGeneratingInsertStrategy(dialect, namedParameterJdbcOperations, idColumn),
-					dialect, batchJdbcOperations, idColumn);
+					new IdGeneratingInsertStrategy(dialect, namedParameterJdbcOperations, idColumn), dialect, batchJdbcOperations,
+					idColumn);
 		}
 		return new DefaultBatchInsertStrategy(namedParameterJdbcOperations);
 	}
@@ -75,7 +77,7 @@ public class InsertStrategyFactory {
 
 		private final NamedParameterJdbcOperations jdbcOperations;
 
-		public DefaultInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
+		DefaultInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
 			this.jdbcOperations = jdbcOperations;
 		}
 
@@ -91,7 +93,7 @@ public class InsertStrategyFactory {
 
 		private final NamedParameterJdbcOperations jdbcOperations;
 
-		public DefaultBatchInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
+		DefaultBatchInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
 			this.jdbcOperations = jdbcOperations;
 		}
 

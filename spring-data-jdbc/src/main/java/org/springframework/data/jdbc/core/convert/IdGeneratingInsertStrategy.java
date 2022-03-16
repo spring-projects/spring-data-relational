@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -25,9 +28,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
-
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * An {@link InsertStrategy} that expects an id to be generated from the insert.
@@ -41,8 +41,8 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 	private final NamedParameterJdbcOperations jdbcOperations;
 	private final SqlIdentifier idColumn;
 
-	public IdGeneratingInsertStrategy(Dialect dialect, NamedParameterJdbcOperations jdbcOperations,
-									  @Nullable SqlIdentifier idColumn) {
+	IdGeneratingInsertStrategy(Dialect dialect, NamedParameterJdbcOperations jdbcOperations,
+			@Nullable SqlIdentifier idColumn) {
 		this.dialect = dialect;
 		this.jdbcOperations = jdbcOperations;
 		this.idColumn = idColumn;
@@ -68,7 +68,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 		}
 
 		try {
-//				 MySQL just returns one value with a special name
+			// MySQL just returns one value with a special name
 			return holder.getKey();
 		} catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
 			// Postgres returns a value for each column
@@ -85,7 +85,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 
 	private String[] getKeyColumnNames() {
 		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[]{idColumn.getReference(dialect.getIdentifierProcessing())})
+				.map(idColumn -> new String[] { idColumn.getReference(dialect.getIdentifierProcessing()) })
 				.orElse(new String[0]);
 	}
 }

@@ -23,7 +23,6 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -96,12 +95,9 @@ public class TestConfiguration {
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect) {
 
-		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(
-				new SqlGeneratorSource(context, converter, dialect), context, converter, template,
-				new SqlParametersFactory(context, converter, dialect),
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
+				template, new SqlParametersFactory(context, converter, dialect),
 				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
-
-		return defaultDataAccessStrategy;
 	}
 
 	@Bean

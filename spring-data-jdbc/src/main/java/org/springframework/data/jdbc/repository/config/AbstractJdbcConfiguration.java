@@ -22,7 +22,6 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -96,8 +95,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;
-		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(),
-				arrayColumns);
+		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
 
 		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
 				dialect.getIdentifierProcessing());

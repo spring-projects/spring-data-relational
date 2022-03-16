@@ -31,9 +31,9 @@ import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
+import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
-import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -94,7 +94,8 @@ class JdbcAggregateChangeExecutionContext {
 
 			setNewVersion(initialVersion);
 		} else {
-			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(), insert.getIdValueSource());
+			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
+					insert.getIdValueSource());
 		}
 
 		add(new DbActionExecutionResult(insert, id));
@@ -103,7 +104,8 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys, insert.getIdValueSource());
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys,
+				insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 

@@ -55,7 +55,8 @@ class InsertStrategyFactoryTest {
 	@Test
 	void batchInsertWithoutGeneratedIds() {
 
-		Object[] ids = insertStrategyFactory.batchInsertStrategy(IdValueSource.GENERATED, null).execute(sql, sqlParameterSources);
+		Object[] ids = insertStrategyFactory.batchInsertStrategy(IdValueSource.GENERATED, null).execute(sql,
+				sqlParameterSources);
 
 		verify(namedParameterJdbcOperations).batchUpdate(sql, sqlParameterSources);
 		assertThat(ids).hasSize(sqlParameterSources.length);

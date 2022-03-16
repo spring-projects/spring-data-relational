@@ -15,6 +15,13 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -31,21 +38,15 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Counterpart to {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} containing
- * methods for performing batch updates with generated keys.
+ * Counterpart to {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} containing methods for
+ * performing batch updates with generated keys.
  *
  * @author Chirag Tailor
  * @since 2.4
  */
 public class BatchJdbcOperations {
+
 	private final JdbcOperations jdbcOperations;
 
 	public BatchJdbcOperations(JdbcOperations jdbcOperations) {
@@ -53,15 +54,14 @@ public class BatchJdbcOperations {
 	}
 
 	/**
-	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments,
-	 * returning generated keys.
+	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments, returning generated keys.
+	 * 
 	 * @param sql the SQL statement to execute
-	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of
-	 * arguments for the query
+	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of arguments for the query
 	 * @param generatedKeyHolder a {@link KeyHolder} that will hold the generated keys
-	 * @return an array containing the numbers of rows affected by each update in the batch
-	 * (may also contain special JDBC-defined negative values for affected rows such as
-	 * {@link java.sql.Statement#SUCCESS_NO_INFO}/{@link java.sql.Statement#EXECUTE_FAILED})
+	 * @return an array containing the numbers of rows affected by each update in the batch (may also contain special
+	 *         JDBC-defined negative values for affected rows such as
+	 *         {@link java.sql.Statement#SUCCESS_NO_INFO}/{@link java.sql.Statement#EXECUTE_FAILED})
 	 * @throws org.springframework.dao.DataAccessException if there is any problem issuing the update
 	 * @see org.springframework.jdbc.support.GeneratedKeyHolder
 	 * @since 2.4
@@ -71,16 +71,15 @@ public class BatchJdbcOperations {
 	}
 
 	/**
-	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments,
-	 * returning generated keys.
+	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments, returning generated keys.
+	 * 
 	 * @param sql the SQL statement to execute
-	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of
-	 * arguments for the query
+	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of arguments for the query
 	 * @param generatedKeyHolder a {@link KeyHolder} that will hold the generated keys
 	 * @param keyColumnNames names of the columns that will have keys generated for them
-	 * @return an array containing the numbers of rows affected by each update in the batch
-	 * (may also contain special JDBC-defined negative values for affected rows such as
-	 * {@link java.sql.Statement#SUCCESS_NO_INFO}/{@link java.sql.Statement#EXECUTE_FAILED})
+	 * @return an array containing the numbers of rows affected by each update in the batch (may also contain special
+	 *         JDBC-defined negative values for affected rows such as
+	 *         {@link java.sql.Statement#SUCCESS_NO_INFO}/{@link java.sql.Statement#EXECUTE_FAILED})
 	 * @throws org.springframework.dao.DataAccessException if there is any problem issuing the update
 	 * @see org.springframework.jdbc.support.GeneratedKeyHolder
 	 * @since 2.4
@@ -91,7 +90,7 @@ public class BatchJdbcOperations {
 		if (batchArgs.length == 0) {
 			return new int[0];
 		}
-		
+
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
 		SqlParameterSource paramSource = batchArgs[0];
 		String sqlToUse = NamedParameterUtils.substituteNamedParameters(parsedSql, paramSource);
@@ -105,6 +104,7 @@ public class BatchJdbcOperations {
 		Object[] params = NamedParameterUtils.buildValueArray(parsedSql, paramSource, null);
 		PreparedStatementCreator psc = pscf.newPreparedStatementCreator(params);
 		BatchPreparedStatementSetter bpss = new BatchPreparedStatementSetter() {
+
 			@Override
 			public void setValues(PreparedStatement ps, int i) throws SQLException {
 				Object[] values = NamedParameterUtils.buildValueArray(parsedSql, batchArgs[i], null);
@@ -117,10 +117,13 @@ public class BatchJdbcOperations {
 			}
 		};
 		PreparedStatementCallback<int[]> preparedStatementCallback = ps -> {
+
 			int batchSize = bpss.getBatchSize();
 			generatedKeyHolder.getKeyList().clear();
 			if (JdbcUtils.supportsBatchUpdates(ps.getConnection())) {
+
 				for (int i = 0; i < batchSize; i++) {
+
 					bpss.setValues(ps, i);
 					ps.addBatch();
 				}
@@ -128,8 +131,10 @@ public class BatchJdbcOperations {
 				storeGeneratedKeys(generatedKeyHolder, ps, batchSize);
 				return results;
 			} else {
+
 				List<Integer> rowsAffected = new ArrayList<>();
 				for (int i = 0; i < batchSize; i++) {
+
 					bpss.setValues(ps, i);
 					rowsAffected.add(ps.executeUpdate());
 					storeGeneratedKeys(generatedKeyHolder, ps, 1);
@@ -146,18 +151,20 @@ public class BatchJdbcOperations {
 		return result;
 	}
 
-	private void storeGeneratedKeys(KeyHolder generatedKeyHolder, PreparedStatement ps, int rowsExpected) throws SQLException {
+	private void storeGeneratedKeys(KeyHolder generatedKeyHolder, PreparedStatement ps, int rowsExpected)
+			throws SQLException {
 
 		List<Map<String, Object>> generatedKeys = generatedKeyHolder.getKeyList();
 		ResultSet keys = ps.getGeneratedKeys();
 		if (keys != null) {
+
 			try {
-				RowMapperResultSetExtractor<Map<String, Object>> rse =
-						new RowMapperResultSetExtractor<>(new ColumnMapRowMapper(), rowsExpected);
-				//noinspection ConstantConditions
+
+				RowMapperResultSetExtractor<Map<String, Object>> rse = new RowMapperResultSetExtractor<>(
+						new ColumnMapRowMapper(), rowsExpected);
+				// noinspection ConstantConditions
 				generatedKeys.addAll(rse.extractData(keys));
-			}
-			finally {
+			} finally {
 				JdbcUtils.closeResultSet(keys);
 			}
 		}

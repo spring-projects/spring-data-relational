@@ -83,9 +83,11 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
-		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
+		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
+				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 
-		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations, sqlParametersFactory, insertStrategyFactory));
+		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations,
+				sqlParametersFactory, insertStrategyFactory));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 

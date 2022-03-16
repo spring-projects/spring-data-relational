@@ -21,6 +21,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategyUnitTests.*;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,11 +41,6 @@ import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
 
 /**
  * Unit tests for {@link SqlParametersFactory}.
@@ -62,7 +62,8 @@ class SqlParametersFactoryTest {
 				singletonList(IdValueToStringConverter.INSTANCE));
 
 		String rawId = "batman";
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forQueryById(new IdValue(rawId), WithValueObjectId.class, SqlGenerator.ID_SQL_PARAMETER);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forQueryById(new IdValue(rawId),
+				WithValueObjectId.class, SqlGenerator.ID_SQL_PARAMETER);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(rawId);
 	}
@@ -83,7 +84,8 @@ class SqlParametersFactoryTest {
 		HashMap<SqlIdentifier, Object> additionalParameters = new HashMap<>();
 		additionalParameters.put(SqlIdentifier.quoted("DUMMYENTITYROOT"), rootIdValue);
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forQueryByIdentifier(Identifier.from(additionalParameters));
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory
+				.forQueryByIdentifier(Identifier.from(additionalParameters));
 
 		assertThat(sqlParameterSource.getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
 	}
@@ -207,14 +209,14 @@ class SqlParametersFactoryTest {
 	@RequiredArgsConstructor
 	private static class DummyEntity {
 
-		@Id
-		private final Long id;
+		@Id private final Long id;
 	}
-	
+
 	private SqlParametersFactory createSqlParametersFactoryWithConverters(List<?> converters) {
 
-		BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(converters),
-				new DefaultJdbcTypeFactory(mock(JdbcOperations.class)), dialect.getIdentifierProcessing());
+		BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
+				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)),
+				dialect.getIdentifierProcessing());
 		return new SqlParametersFactory(context, converter, dialect);
 	}
 }

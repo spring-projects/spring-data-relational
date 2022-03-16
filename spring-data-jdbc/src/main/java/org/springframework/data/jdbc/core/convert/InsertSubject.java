@@ -27,6 +27,7 @@ import java.util.Objects;
  * @since 2.4
  */
 public final class InsertSubject<T> {
+
 	private final T instance;
 	private final Identifier identifier;
 
@@ -35,6 +36,7 @@ public final class InsertSubject<T> {
 	}
 
 	private InsertSubject(T instance, Identifier identifier) {
+
 		this.instance = instance;
 		this.identifier = identifier;
 	}
@@ -49,6 +51,7 @@ public final class InsertSubject<T> {
 
 	@Override
 	public boolean equals(Object o) {
+
 		if (this == o)
 			return true;
 		if (o == null || getClass() != o.getClass())
