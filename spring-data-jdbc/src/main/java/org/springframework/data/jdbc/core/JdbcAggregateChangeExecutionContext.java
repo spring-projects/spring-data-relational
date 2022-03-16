@@ -213,11 +213,7 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Nullable
 	<T> T populateIdsIfNecessary() {
-
-		T newRoot = null;
 
 		// have the results so that the inserts on the leaves come first.
 		List<DbActionExecutionResult> reverseResults = new ArrayList<>(results.values());
@@ -230,25 +226,26 @@ class JdbcAggregateChangeExecutionContext {
 			DbAction.WithEntity<?> action = result.getAction();
 
 			Object newEntity = setIdAndCascadingProperties(action, result.getGeneratedId(), cascadingValues);
+			
+			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
+				//noinspection unchecked
+				return (T) newEntity;
+			}
 
 			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != action.getEntity()) {
+			if (newEntity != action.getEntity() && action instanceof DbAction.Insert) {
+				DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
 
-				if (action instanceof DbAction.Insert) {
-					DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
+				Pair<?, ?> qualifier = insert.getQualifier();
 
-					Pair<?, ?> qualifier = insert.getQualifier();
-
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifier == null ? null : qualifier.getSecond(), newEntity);
-
-				} else if (action instanceof DbAction.InsertRoot) {
-					newRoot = (T) newEntity;
-				}
+				cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
+						qualifier == null ? null : qualifier.getSecond(), newEntity);
 			}
 		}
 
-		return newRoot;
+		throw new IllegalStateException(
+				String.format("Cannot retrieve the resulting instance unless a %s or %s action was successfully executed.",
+						DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
 	}
 
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,

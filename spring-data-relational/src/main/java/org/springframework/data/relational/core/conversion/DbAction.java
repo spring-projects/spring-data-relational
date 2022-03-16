@@ -104,9 +104,9 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class InsertRoot<T> implements WithEntity<T> {
+	class InsertRoot<T> implements WithRoot<T> {
 
-		private final T entity;
+		private T entity;
 		private final IdValueSource idValueSource;
 
 		public InsertRoot(T entity, IdValueSource idValueSource) {
@@ -117,6 +117,11 @@ public interface DbAction<T> {
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		@Override
+		public void setEntity(T entity) {
+			this.entity = entity;
 		}
 
 		public IdValueSource getIdValueSource() {
@@ -134,9 +139,9 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class UpdateRoot<T> implements WithEntity<T> {
+	class UpdateRoot<T> implements WithRoot<T> {
 
-		private final T entity;
+		private T entity;
 
 		@Nullable private final Number previousVersion;
 
@@ -147,6 +152,11 @@ public interface DbAction<T> {
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		@Override
+		public void setEntity(T entity) {
+			this.entity = entity;
 		}
 
 		@Override
@@ -444,6 +454,18 @@ public interface DbAction<T> {
 		 * @return the {@link IdValueSource} for the entity to persist. Guaranteed to be not {@code null}.
 		 */
 		IdValueSource getIdValueSource();
+	}
+
+	/**
+	 * A {@link DbAction} pertaining to the root on an aggregate.
+	 *
+	 * @author Chirag Tailor
+	 */
+	interface WithRoot<T> extends WithEntity<T> {
+		/**
+		 * @param entity the entity to persist. Must not be {@code null}.
+		 */
+		void setEntity(T entity);
 	}
 
 	/**

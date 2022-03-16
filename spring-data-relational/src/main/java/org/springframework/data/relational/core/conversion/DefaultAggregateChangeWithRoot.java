@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 the original author or authors.
+ * Copyright 2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,10 @@ import org.springframework.util.Assert;
 /**
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
- * @author Jens Schauder
- * @author Mark Paluch
  * @author Chirag Tailor
- * @since 2.0
+ * @since 2.6
  */
-class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
+class DefaultAggregateChangeWithRoot<T> implements AggregateChangeWithRoot<T> {
 
 	private final Kind kind;
 
@@ -39,10 +37,12 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
+	private DbAction.WithRoot<T> rootAction;
+
 	/** The previous version assigned to the instance being changed, if available */
 	@Nullable private final Number previousVersion;
 
-	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
+	public DefaultAggregateChangeWithRoot(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
 
 		this.kind = kind;
 		this.entityType = entityType;
@@ -62,14 +62,39 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		actions.add(action);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getKind()
+	 */
 	@Override
 	public Kind getKind() {
 		return this.kind;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntityType()
+	 */
 	@Override
 	public Class<T> getEntityType() {
 		return this.entityType;
+	}
+
+	@Override
+	public void setRoot(T aggregateRoot) {
+
+		Assert.isInstanceOf(this.entityType, aggregateRoot,
+				String.format("AggregateRoot must be of type %s", entityType.getName()));
+
+		rootAction.setEntity(aggregateRoot);
+	}
+
+	@Override
+	public void setRootAction(DbAction.WithRoot<T> action) {
+
+		Assert.isNull(this.rootAction, "The rootAction must be set exactly once");
+
+		this.rootAction = action;
 	}
 
 	@Nullable
@@ -78,11 +103,26 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		return previousVersion;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntity()
+	 */
+	@Override
+	public T getRoot() {
+		return this.rootAction.getEntity();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.AggregateChange#forEachAction(java.util.function.Consumer)
+	 */
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 
 		Assert.notNull(consumer, "Consumer must not be null.");
+		Assert.notNull(rootAction, "DbAction.WithRoot must not be null.");
 
+		consumer.accept(rootAction);
 		actions.forEach(consumer);
 	}
 }

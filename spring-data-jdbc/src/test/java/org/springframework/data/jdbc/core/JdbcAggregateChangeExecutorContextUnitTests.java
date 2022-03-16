@@ -63,14 +63,6 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	DummyEntity root = new DummyEntity();
 
 	@Test // DATAJDBC-453
-	public void rootOfEmptySetOfActionIsNull() {
-
-		Object root = executionContext.populateIdsIfNecessary();
-
-		assertThat(root).isNull();
-	}
-
-	@Test // DATAJDBC-453
 	public void afterInsertRootIdMaybeUpdated() {
 
 		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(23L);
@@ -79,7 +71,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 	}
 
@@ -97,7 +89,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -118,7 +110,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -143,7 +135,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isEqualTo(456L);
 	}
@@ -167,7 +159,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isNull();
 	}
@@ -186,7 +178,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsert(createInsert(rootInsert, "contentImmutableId", contentImmutableId, null));
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(root.contentImmutableId.id).isEqualTo(456L);
 	}

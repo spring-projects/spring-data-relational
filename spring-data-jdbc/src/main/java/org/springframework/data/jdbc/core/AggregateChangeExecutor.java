@@ -18,10 +18,10 @@ package org.springframework.data.jdbc.core;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
-import org.springframework.lang.Nullable;
 
 /**
  * Executes an {@link MutableAggregateChange}.
@@ -42,20 +42,22 @@ class AggregateChangeExecutor {
 		this.accessStrategy = accessStrategy;
 	}
 
-	@Nullable
-	<T> T execute(AggregateChange<T> aggregateChange) {
+	<T> T execute(AggregateChangeWithRoot<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 				accessStrategy);
 
 		aggregateChange.forEachAction(action -> execute(action, executionContext));
 
-		T root = executionContext.populateIdsIfNecessary();
-		if (root == null) {
-			root = aggregateChange.getEntity();
-		}
+		return executionContext.populateIdsIfNecessary();
+	}
 
-		return root;
+	<T> void execute(AggregateChange<T> aggregateChange) {
+
+		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
+				accessStrategy);
+
+		aggregateChange.forEachAction(action -> execute(action, executionContext));
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
