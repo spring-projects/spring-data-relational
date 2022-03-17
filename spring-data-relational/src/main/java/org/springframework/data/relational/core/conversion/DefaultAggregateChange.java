@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  * @since 2.0
  */
 class DefaultAggregateChange<T> implements MutableAggregateChange<T> {

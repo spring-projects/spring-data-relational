@@ -24,6 +24,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  * @since 2.0
  */
 public interface MutableAggregateChange<T> extends AggregateChange<T> {

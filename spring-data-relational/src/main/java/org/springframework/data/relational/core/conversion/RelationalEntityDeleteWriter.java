@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * @author Bastian Wilhelm
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
 
