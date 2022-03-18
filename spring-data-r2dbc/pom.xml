@@ -31,7 +31,7 @@
 		<r2dbc-spi-test.version>0.9.1.RELEASE</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<mariadb-jdbc.version>2.5.4</mariadb-jdbc.version>
-		<r2dbc-releasetrain.version>Borca-RELEASE</r2dbc-releasetrain.version>
+		<r2dbc-releasetrain.version>Borca-SR1</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.3</reactive-streams.version>
 		<netty>4.1.73.Final</netty>
 	</properties>
