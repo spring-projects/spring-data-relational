@@ -422,7 +422,7 @@ When your data base has an auto-increment column for the ID column, the generate
 One important constraint is that, after saving an entity, the entity must not be new any more.
 Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
-If you are not using auto-increment columns, you can use a `BeforeSave` listener, which sets the ID of the entity (covered later in this document).
+If you are not using auto-increment columns, you can use a `BeforeConvert` listener, which sets the ID of the entity (covered later in this document).
 
 [[jdbc.entity-persistence.optimistic-locking]]
 === Optimistic Locking
@@ -865,7 +865,7 @@ The following table describes the available events:
  This is the correct event if you want to set an id programmatically.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
-| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets inserted or updated was made).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveEvent.html[`AfterSaveEvent`]
 | After an aggregate root gets saved (that is, inserted or updated).
@@ -900,7 +900,7 @@ Spring Data JDBC uses the `EntityCallback` API for its auditing support and reac
 This is the correct callback if you want to set an id programmatically.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
-| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets inserted or updated was made).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveCallback.html[`AfterSaveCallback`]
 | After an aggregate root gets saved (that is, inserted or updated).
