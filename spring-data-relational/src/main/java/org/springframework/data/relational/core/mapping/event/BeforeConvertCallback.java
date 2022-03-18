@@ -19,7 +19,7 @@ import org.springframework.data.mapping.callback.EntityCallback;
 
 /**
  * An {@link EntityCallback} that gets invoked before the aggregate is converted into a database change. The decision if
- * the change will be an insert or update is made before this callback gets called.
+ * the change will be an insert or update is made after this callback gets called.
  *
  * @author Jens Schauder
  * @author Mark Paluch

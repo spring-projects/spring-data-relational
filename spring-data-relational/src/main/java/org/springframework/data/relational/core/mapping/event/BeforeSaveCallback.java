@@ -32,8 +32,9 @@ public interface BeforeSaveCallback<T> extends EntityCallback<T> {
 	/**
 	 * Entity callback method invoked before an aggregate root is saved. Can return either the same or a modified instance
 	 * of the aggregate and can modify {@link MutableAggregateChange} contents. This method is called after converting the
-	 * {@code aggregate} to {@link MutableAggregateChange}. Changes to the aggregate are not taken into account for
-	 * saving. Use the {@link BeforeConvertCallback} to change the persistent the entity before being converted.
+	 * {@code aggregate} to {@link MutableAggregateChange}. Changes to the aggregate are not taken into account to decide
+	 * whether the change will be an insert or update. Use the {@link BeforeConvertCallback} to change the persistent the
+	 * entity before being converted.
 	 *
 	 * @param aggregate the aggregate.
 	 * @param aggregateChange the associated {@link MutableAggregateChange}.
