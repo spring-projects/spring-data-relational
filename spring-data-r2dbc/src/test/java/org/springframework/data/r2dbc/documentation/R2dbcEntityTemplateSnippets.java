@@ -83,7 +83,7 @@ class R2dbcEntityTemplateSnippets {
 	void fluentUpdate(R2dbcEntityTemplate template) {
 
 		// tag::update[]
-		Mono<Integer> update = template.update(Person.class)	// <1>
+		Mono<Long> update = template.update(Person.class)	// <1>
 				.inTable("other_table")														// <2>
 				.matching(query(where("firstname").is("John")))		// <3>
 				.apply(update("age", 42));												// <4>
@@ -93,7 +93,7 @@ class R2dbcEntityTemplateSnippets {
 	void delete(R2dbcEntityTemplate template) {
 
 		// tag::delete[]
-		Mono<Integer> delete = template.delete(Person.class)	// <1>
+		Mono<Long> delete = template.delete(Person.class)	// <1>
 				.from("other_table")															// <2>
 				.matching(query(where("firstname").is("John")))		// <3>
 				.all();																						// <4>

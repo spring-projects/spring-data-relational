@@ -117,7 +117,7 @@ public interface ReactiveUpdateOperation {
 		 * @return the number of affected rows by the update; never {@literal null}.
 		 * @see Mono
 		 */
-		Mono<Integer> apply(Update update);
+		Mono<Long> apply(Update update);
 	}
 
 	/**

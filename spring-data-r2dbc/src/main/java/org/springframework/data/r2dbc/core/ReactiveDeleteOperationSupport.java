@@ -92,7 +92,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.TerminatingDelete#all()
 		 */
-		public Mono<Integer> all() {
+		public Mono<Long> all() {
 			return template.doDelete(query, domainType, getTableName());
 		}
 

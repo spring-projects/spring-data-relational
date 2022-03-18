@@ -94,7 +94,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.TerminatingUpdate#apply(org.springframework.data.r2dbc.query.Update)
 		 */
 		@Override
-		public Mono<Integer> apply(Update update) {
+		public Mono<Long> apply(Update update) {
 
 			Assert.notNull(update, "Update must not be null");
 

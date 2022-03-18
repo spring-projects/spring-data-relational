@@ -113,7 +113,7 @@ public interface ReactiveDeleteOperation {
 		 * @return the number of affected rows; never {@literal null}.
 		 * @see Mono
 		 */
-		Mono<Integer> all();
+		Mono<Long> all();
 	}
 
 	/**

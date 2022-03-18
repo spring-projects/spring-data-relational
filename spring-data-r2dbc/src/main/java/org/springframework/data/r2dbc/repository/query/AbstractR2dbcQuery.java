@@ -137,7 +137,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 			if (Number.class.isAssignableFrom(returnedType.getReturnedType())) {
 
 					return fs.rowsUpdated()
-							.map(integer -> converter.getConversionService().convert(integer, returnedType.getReturnedType()));
+							.map(count -> converter.getConversionService().convert(count, returnedType.getReturnedType()));
 			}
 
 			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {

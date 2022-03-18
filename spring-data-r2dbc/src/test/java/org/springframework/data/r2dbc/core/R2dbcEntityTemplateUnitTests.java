@@ -214,7 +214,7 @@ public class R2dbcEntityTemplateUnitTests {
 		entityTemplate
 				.update(Query.query(Criteria.where("name").is("Walter")), Update.update("name", "Heisenberg"), Person.class) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
@@ -235,7 +235,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		entityTemplate.delete(Query.query(Criteria.where("name").is("Walter")), Person.class) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));

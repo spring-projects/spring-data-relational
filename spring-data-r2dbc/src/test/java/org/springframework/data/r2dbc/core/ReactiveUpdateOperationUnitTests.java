@@ -63,7 +63,7 @@ public class ReactiveUpdateOperationUnitTests {
 		entityTemplate.update(Person.class) //
 				.apply(Update.update("name", "Heisenberg")) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
@@ -82,7 +82,7 @@ public class ReactiveUpdateOperationUnitTests {
 		entityTemplate.update(Person.class) //
 				.inTable("table").apply(Update.update("name", "Heisenberg")) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
@@ -102,7 +102,7 @@ public class ReactiveUpdateOperationUnitTests {
 				.matching(query(where("name").is("Walter"))) //
 				.apply(Update.update("name", "Heisenberg")) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
@@ -124,7 +124,7 @@ public class ReactiveUpdateOperationUnitTests {
 				.matching(query(where("name").is("Walter"))) //
 				.apply(Update.update("name", "Heisenberg")) //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));

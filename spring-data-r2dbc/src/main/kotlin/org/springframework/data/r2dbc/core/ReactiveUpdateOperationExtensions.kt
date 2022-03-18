@@ -34,4 +34,4 @@ inline fun <reified T : Any> ReactiveUpdateOperation.update(): ReactiveUpdateOpe
 /**
  * Coroutines variant of [ReactiveUpdateOperation.TerminatingUpdate.apply].
  */
-suspend fun ReactiveUpdateOperation.TerminatingUpdate.applyAndAwait(update: Update): Int = apply(update).awaitSingle()
+suspend fun ReactiveUpdateOperation.TerminatingUpdate.applyAndAwait(update: Update): Long = apply(update).awaitSingle()

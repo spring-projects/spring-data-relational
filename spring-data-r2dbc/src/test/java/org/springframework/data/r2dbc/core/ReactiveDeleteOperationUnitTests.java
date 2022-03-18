@@ -62,7 +62,7 @@ public class ReactiveDeleteOperationUnitTests {
 		entityTemplate.delete(Person.class) //
 				.all() //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
@@ -80,7 +80,7 @@ public class ReactiveDeleteOperationUnitTests {
 		entityTemplate.delete(Person.class) //
 				.from("table").all() //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
@@ -99,7 +99,7 @@ public class ReactiveDeleteOperationUnitTests {
 				.matching(query(where("name").is("Walter"))) //
 				.all() //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
@@ -120,7 +120,7 @@ public class ReactiveDeleteOperationUnitTests {
 				.matching(query(where("name").is("Walter"))) //
 				.all() //
 				.as(StepVerifier::create) //
-				.expectNext(1) //
+				.expectNext(1L) //
 				.verifyComplete();
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));

@@ -33,5 +33,5 @@ inline fun <reified T : Any> ReactiveDeleteOperation.delete(): ReactiveDeleteOpe
 /**
  * Coroutines variant of [ReactiveDeleteOperation.TerminatingDelete.all].
  */
-suspend fun ReactiveDeleteOperation.TerminatingDelete.allAndAwait(): Int =
+suspend fun ReactiveDeleteOperation.TerminatingDelete.allAndAwait(): Long =
 		all().awaitSingle()

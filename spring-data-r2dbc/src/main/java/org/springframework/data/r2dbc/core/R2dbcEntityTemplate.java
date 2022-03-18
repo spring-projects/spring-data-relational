@@ -428,7 +428,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#update(org.springframework.data.r2dbc.query.Query, org.springframework.data.r2dbc.query.Update, java.lang.Class)
 	 */
 	@Override
-	public Mono<Integer> update(Query query, Update update, Class<?> entityClass) throws DataAccessException {
+	public Mono<Long> update(Query query, Update update, Class<?> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
 		Assert.notNull(update, "Update must not be null");
@@ -437,7 +437,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return doUpdate(query, update, entityClass, getTableName(entityClass));
 	}
 
-	Mono<Integer> doUpdate(Query query, Update update, Class<?> entityClass, SqlIdentifier tableName) {
+	Mono<Long> doUpdate(Query query, Update update, Class<?> entityClass, SqlIdentifier tableName) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
@@ -458,7 +458,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#delete(org.springframework.data.r2dbc.query.Query, java.lang.Class)
 	 */
 	@Override
-	public Mono<Integer> delete(Query query, Class<?> entityClass) throws DataAccessException {
+	public Mono<Long> delete(Query query, Class<?> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
 		Assert.notNull(entityClass, "Entity class must not be null");
@@ -466,7 +466,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return doDelete(query, entityClass, getTableName(entityClass));
 	}
 
-	Mono<Integer> doDelete(Query query, Class<?> entityClass, SqlIdentifier tableName) {
+	Mono<Long> doDelete(Query query, Class<?> entityClass, SqlIdentifier tableName) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
@@ -479,7 +479,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(deleteSpec);
-		return this.databaseClient.sql(operation).fetch().rowsUpdated().defaultIfEmpty(0);
+		return this.databaseClient.sql(operation).fetch().rowsUpdated().defaultIfEmpty(0L);
 	}
 
 	// -------------------------------------------------------------------------

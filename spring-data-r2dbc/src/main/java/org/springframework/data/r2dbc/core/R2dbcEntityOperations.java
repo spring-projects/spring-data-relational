@@ -129,7 +129,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @return the number of affected rows.
 	 * @throws DataAccessException if there is any problem executing the query.
 	 */
-	Mono<Integer> update(Query query, Update update, Class<?> entityClass) throws DataAccessException;
+	Mono<Long> update(Query query, Update update, Class<?> entityClass) throws DataAccessException;
 
 	/**
 	 * Remove entities (rows)/columns from the table by {@link Query}.
@@ -139,7 +139,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @return the number of affected rows.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
-	Mono<Integer> delete(Query query, Class<?> entityClass) throws DataAccessException;
+	Mono<Long> delete(Query query, Class<?> entityClass) throws DataAccessException;
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with org.springframework.r2dbc.core.PreparedOperation
