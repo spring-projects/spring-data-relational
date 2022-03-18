@@ -17,13 +17,12 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.function.Consumer;
 
-import org.springframework.lang.Nullable;
-
 /**
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  */
 public interface AggregateChange<T> {
 
@@ -40,14 +39,6 @@ public interface AggregateChange<T> {
 	 * @return Guaranteed to be not {@literal null}.
 	 */
 	Class<T> getEntityType();
-
-	/**
-	 * The entity to which this {@link AggregateChange} relates.
-	 *
-	 * @return may be {@literal null}.
-	 */
-	@Nullable
-	T getEntity();
 
 	/**
 	 * Applies the given consumer to each {@link DbAction} in this {@code AggregateChange}.

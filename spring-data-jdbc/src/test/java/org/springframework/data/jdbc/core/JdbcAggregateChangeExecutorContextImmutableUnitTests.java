@@ -56,14 +56,6 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	DummyEntity root = new DummyEntity();
 
 	@Test // DATAJDBC-453
-	public void rootOfEmptySetOfActionsisNull() {
-
-		Object root = executionContext.populateIdsIfNecessary();
-
-		assertThat(root).isNull();
-	}
-
-	@Test // DATAJDBC-453
 	public void afterInsertRootIdMaybeUpdated() {
 
 		// note that the root entity isn't the original one, but a new instance with the version set.

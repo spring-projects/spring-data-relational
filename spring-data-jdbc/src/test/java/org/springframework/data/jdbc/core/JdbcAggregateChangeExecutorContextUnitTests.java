@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Value;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -62,14 +63,6 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	DummyEntity root = new DummyEntity();
 
 	@Test // DATAJDBC-453
-	public void rootOfEmptySetOfActionIsNull() {
-
-		Object root = executionContext.populateIdsIfNecessary();
-
-		assertThat(root).isNull();
-	}
-
-	@Test // DATAJDBC-453
 	public void afterInsertRootIdMaybeUpdated() {
 
 		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(23L);
@@ -78,7 +71,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 	}
 
@@ -96,7 +89,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -117,7 +110,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -142,7 +135,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isEqualTo(456L);
 	}
@@ -166,9 +159,28 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isEqualTo(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isNull();
+	}
+
+	@Test // GH-1201
+	void updates_whenReferencesWithImmutableIdAreInserted() {
+		when(accessStrategy.update(any(), any())).thenReturn(true);
+		root.id = 123L;
+		DbAction.UpdateRoot<DummyEntity> rootInsert = new DbAction.UpdateRoot<>(root, null);
+		executionContext.executeUpdateRoot(rootInsert);
+
+		ContentImmutableId contentImmutableId = new ContentImmutableId(null);
+		root.contentImmutableId = contentImmutableId;
+		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class);
+		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED)).thenReturn(456L);
+		executionContext.executeInsert(createInsert(rootInsert, "contentImmutableId", contentImmutableId, null));
+
+		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		assertThat(newRoot).isEqualTo(root);
+		assertThat(root.id).isEqualTo(123L);
+		assertThat(root.contentImmutableId.id).isEqualTo(456L);
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
@@ -205,10 +217,17 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		Content content;
 
+		ContentImmutableId contentImmutableId;
+
 		List<Content> list = new ArrayList<>();
 	}
 
 	private static class Content {
+		@Id Long id;
+	}
+
+	@Value
+	private static class ContentImmutableId {
 		@Id Long id;
 	}
 
