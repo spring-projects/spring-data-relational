@@ -15,15 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -40,6 +32,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -108,6 +101,7 @@ class JdbcAggregateChangeExecutionContext {
 		} else {
 			updateWithoutVersion(update);
 		}
+		add(new DbActionExecutionResult(update));
 	}
 
 	<T> void executeUpdate(DbAction.Update<T> update) {
@@ -203,11 +197,12 @@ class JdbcAggregateChangeExecutionContext {
 
 	private Object getPotentialGeneratedIdFrom(DbAction.WithEntity<?> idOwningAction) {
 
-		if (idOwningAction instanceof DbAction.WithGeneratedId) {
+		if (IdValueSource.GENERATED.equals(idOwningAction.getIdValueSource())) {
 
-			Object generatedId;
 			DbActionExecutionResult dbActionExecutionResult = results.get(idOwningAction);
-			generatedId = dbActionExecutionResult == null ? null : dbActionExecutionResult.getId();
+			Object generatedId = Optional.ofNullable(dbActionExecutionResult) //
+					.map(DbActionExecutionResult::getGeneratedId) //
+					.orElse(null);
 
 			if (generatedId != null) {
 				return generatedId;
@@ -241,17 +236,12 @@ class JdbcAggregateChangeExecutionContext {
 
 		for (DbActionExecutionResult result : reverseResults) {
 
-			DbAction<?> action = result.getAction();
+			DbAction.WithEntity<?> action = result.getAction();
 
-			if (!(action instanceof DbAction.WithGeneratedId)) {
-				continue;
-			}
-
-			DbAction.WithEntity<?> withEntity = (DbAction.WithGeneratedId<?>) action;
-			Object newEntity = setIdAndCascadingProperties(withEntity, result.getId(), cascadingValues);
+			Object newEntity = setIdAndCascadingProperties(action, result.getGeneratedId(), cascadingValues);
 
 			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != withEntity.getEntity()) {
+			if (newEntity != action.getEntity()) {
 
 				if (action instanceof DbAction.Insert) {
 					DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
@@ -279,7 +269,7 @@ class JdbcAggregateChangeExecutionContext {
 				.getRequiredPersistentEntity(action.getEntityType());
 		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
 
-		if (generatedId != null && persistentEntity.hasIdProperty()) {
+		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 
@@ -298,6 +288,10 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		if (action instanceof DbAction.InsertRoot) {
+			return pathToValue;
+		}
+
+		if (action instanceof DbAction.UpdateRoot) {
 			return pathToValue;
 		}
 

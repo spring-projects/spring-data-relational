@@ -46,7 +46,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class Insert<T> implements WithGeneratedId<T>, WithDependingOn<T> {
+	class Insert<T> implements WithDependingOn<T> {
 
 		private final T entity;
 		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
@@ -104,7 +104,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class InsertRoot<T> implements WithGeneratedId<T> {
+	class InsertRoot<T> implements WithEntity<T> {
 
 		private final T entity;
 		private final IdValueSource idValueSource;
@@ -148,6 +148,11 @@ public interface DbAction<T> {
 			return this.entity;
 		}
 
+		@Override
+		public IdValueSource getIdValueSource() {
+			return IdValueSource.PROVIDED;
+		}
+
 		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
 			return this.propertyPath;
 		}
@@ -175,6 +180,11 @@ public interface DbAction<T> {
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		@Override
+		public IdValueSource getIdValueSource() {
+			return IdValueSource.PROVIDED;
 		}
 
 		@Nullable
@@ -448,6 +458,7 @@ public interface DbAction<T> {
 	 * A {@link DbAction} that stores the information of a single entity in the database.
 	 *
 	 * @author Jens Schauder
+	 * @author Chirag Tailor
 	 */
 	interface WithEntity<T> extends DbAction<T> {
 
@@ -461,21 +472,11 @@ public interface DbAction<T> {
 		default Class<T> getEntityType() {
 			return (Class<T>) getEntity().getClass();
 		}
-	}
 
-	/**
-	 * A {@link DbAction} that may "update" its entity. In order to support immutable entities this requires at least
-	 * potentially creating a new instance, which this interface makes available.
-	 *
-	 * @author Jens Schauder
-	 */
-	interface WithGeneratedId<T> extends WithEntity<T> {
-
-		@SuppressWarnings("unchecked")
-		@Override
-		default Class<T> getEntityType() {
-			return (Class<T>) getEntity().getClass();
-		}
+		/**
+		 * @return the {@link IdValueSource} for the entity to persist. Guaranteed to be not {@code null}.
+		 */
+		IdValueSource getIdValueSource();
 	}
 
 	/**

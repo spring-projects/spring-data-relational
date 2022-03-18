@@ -19,31 +19,38 @@ import org.springframework.lang.Nullable;
 
 /**
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 2.0
  */
 public class DbActionExecutionResult {
 
-	private final Object id;
-	private final DbAction<?> action;
+	private final Object generatedId;
+	private final DbAction.WithEntity<?> action;
 
-	public DbActionExecutionResult(DbAction<?> action, @Nullable Object newId) {
+	public DbActionExecutionResult(DbAction.WithEntity<?> action) {
 
 		this.action = action;
-		this.id = newId;
+		this.generatedId = null;
+	}
+
+	public DbActionExecutionResult(DbAction.WithEntity<?> action, @Nullable Object generatedId) {
+
+		this.action = action;
+		this.generatedId = generatedId;
 	}
 
 	public DbActionExecutionResult() {
 
 		action = null;
-		id = null;
+		generatedId = null;
 	}
 
 	@Nullable
-	public Object getId() {
-		return id;
+	public Object getGeneratedId() {
+		return generatedId;
 	}
 
-	public DbAction<?> getAction() {
+	public DbAction.WithEntity<?> getAction() {
 		return action;
 	}
 }

@@ -18,11 +18,9 @@ package org.springframework.data.jdbc.core;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Value;
-import lombok.With;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.assertj.core.api.SoftAssertions;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +36,10 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.Value;
+import lombok.With;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
@@ -238,6 +237,26 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		softly.assertAll();
 	}
 
+	@Test // GH-1201
+	void replaceReferencedEntity_saveResult() {
+
+		Root root = new Root(null, "originalRoot", new NonRoot(null, "originalNonRoot"));
+		Root originalSavedRoot = template.save(root);
+
+		assertThat(originalSavedRoot.id).isNotNull();
+		assertThat(originalSavedRoot.name).isEqualTo("originalRoot");
+		assertThat(originalSavedRoot.reference.id).isNotNull();
+		assertThat(originalSavedRoot.reference.name).isEqualTo("originalNonRoot");
+
+		Root updatedRoot = new Root(originalSavedRoot.id, "updatedRoot", new NonRoot(null, "updatedNonRoot"));
+		Root updatedSavedRoot = template.save(updatedRoot);
+
+		assertThat(updatedSavedRoot.id).isNotNull();
+		assertThat(updatedSavedRoot.name).isEqualTo("updatedRoot");
+		assertThat(updatedSavedRoot.reference.id).isNotNull().isNotEqualTo(originalSavedRoot.reference.id);
+		assertThat(updatedSavedRoot.reference.name).isEqualTo("updatedNonRoot");
+	}
+
 	@Test // DATAJDBC-241
 	public void changeReferencedEntity() {
 
@@ -302,6 +321,21 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	@With
 	static class Author {
 
+		@Id Long id;
+		String name;
+	}
+
+	@Data
+	@AllArgsConstructor
+	static class Root {
+		@Id private Long id;
+		private String name;
+		private NonRoot reference;
+	}
+
+	@Value
+	@With
+	static class NonRoot {
 		@Id Long id;
 		String name;
 	}
