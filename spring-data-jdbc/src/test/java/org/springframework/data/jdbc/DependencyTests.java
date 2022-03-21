@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.auditing.config.AuditingHandlerBeanDefinitionParser;
 
@@ -56,6 +57,7 @@ public class DependencyTests {
 	}
 
 	@Test
+	@Disabled("Cycle in Spring Data Commons")
 	void acrossModules() {
 
 		JavaClasses importedClasses = new ClassFileImporter()

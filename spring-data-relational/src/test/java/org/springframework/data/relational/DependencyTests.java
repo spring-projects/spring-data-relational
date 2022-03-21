@@ -16,6 +16,7 @@
 package org.springframework.data.relational;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -58,6 +59,7 @@ public class DependencyTests {
 	}
 
 	@Test
+	@Disabled("Cycle in Spring Data Commons")
 	void acrossModules() {
 
 		JavaClasses importedClasses = new ClassFileImporter() //
