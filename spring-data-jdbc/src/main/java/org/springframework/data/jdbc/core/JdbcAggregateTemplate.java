@@ -150,8 +150,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
 
-		Function<T, MutableAggregateChange<T>> changeCreator = persistentEntity.isNew(instance) ? this::createInsertChange
-				: this::createUpdateChange;
+		Function<T, MutableAggregateChange<T>> changeCreator = persistentEntity.isNew(instance)
+				? entity -> createInsertChange(prepareVersionForInsert(entity))
+				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
 
 		return store(instance, changeCreator, persistentEntity);
 	}
@@ -170,7 +171,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
 
-		return store(instance, this::createInsertChange, persistentEntity);
+		return store(instance, entity -> createInsertChange(prepareVersionForInsert(entity)), persistentEntity);
 	}
 
 	/**
@@ -187,7 +188,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
 
-		return store(instance, this::createUpdateChange, persistentEntity);
+		return store(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)), persistentEntity);
 	}
 
 	/*
@@ -365,6 +366,21 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> MutableAggregateChange<T> createInsertChange(T instance) {
 
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
+		jdbcEntityInsertWriter.write(instance, aggregateChange);
+		return aggregateChange;
+	}
+
+	private <T> MutableAggregateChange<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
+
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
+				entityAndVersion.version);
+		jdbcEntityUpdateWriter.write(entityAndVersion.entity, aggregateChange);
+		return aggregateChange;
+	}
+
+	private <T> T prepareVersionForInsert(T instance) {
+
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(instance);
 		T preparedInstance = instance;
 		if (persistentEntity.hasVersionProperty()) {
@@ -375,31 +391,26 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
 					instance, initialVersion, persistentEntity, converter);
 		}
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(preparedInstance);
-		jdbcEntityInsertWriter.write(preparedInstance, aggregateChange);
-		return aggregateChange;
+		return preparedInstance;
 	}
 
-	private <T> MutableAggregateChange<T> createUpdateChange(T instance) {
+	private <T> EntityAndPreviousVersion<T> prepareVersionForUpdate(T instance) {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(instance);
 		T preparedInstance = instance;
 		Number previousVersion = null;
 		if (persistentEntity.hasVersionProperty()) {
 			// If the root aggregate has a version property, increment it.
-			previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance,
-					persistentEntity, converter);
+			previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance, persistentEntity, converter);
 
 			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
 
 			long newVersion = previousVersion.longValue() + 1;
 
-			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity(instance, newVersion,
-					persistentEntity, converter);
+			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity(instance, newVersion, persistentEntity,
+					converter);
 		}
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(preparedInstance, previousVersion);
-		jdbcEntityUpdateWriter.write(preparedInstance, aggregateChange);
-		return aggregateChange;
+		return new EntityAndPreviousVersion<>(preparedInstance, previousVersion);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -488,5 +499,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		}
 
 		return null;
+	}
+
+	private static class EntityAndPreviousVersion<T> {
+
+		private final T entity;
+		private final Number version;
+
+		EntityAndPreviousVersion(T entity, @Nullable Number version) {
+
+			this.entity = entity;
+			this.version = version;
+		}
 	}
 }
