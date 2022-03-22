@@ -821,9 +821,10 @@ class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // GH-1137
 	void testUpdateEntityWithVersionDoesNotTriggerAnewConstructorInvocation() {
+
 		AggregateWithImmutableVersion aggregateWithImmutableVersion = new AggregateWithImmutableVersion(null, null);
 
-		final AggregateWithImmutableVersion savedRoot = template.save(aggregateWithImmutableVersion);
+		AggregateWithImmutableVersion savedRoot = template.save(aggregateWithImmutableVersion);
 
 		assertThat(savedRoot).isNotNull();
 		assertThat(savedRoot.version).isEqualTo(0L);
@@ -836,12 +837,12 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		AggregateWithImmutableVersion.clearConstructorInvocationData();
 
-		final AggregateWithImmutableVersion updatedRoot = template.save(savedRoot);
+		AggregateWithImmutableVersion updatedRoot = template.save(savedRoot);
 
 		assertThat(updatedRoot).isNotNull();
 		assertThat(updatedRoot.version).isEqualTo(1L);
 
-		// Expect only one assignnment of the version to AggregateWithImmutableVersion
+		// Expect only one assignment of the version to AggregateWithImmutableVersion
 		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
 	}
 
@@ -1261,6 +1262,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		}
 
 		public AggregateWithImmutableVersion(Long id, Long version) {
+
 			constructorInvocations.add(new ConstructorInvocation(id, version));
 			this.id = id;
 			this.version = version;
@@ -1270,8 +1272,9 @@ class JdbcAggregateTemplateIntegrationTests {
 	@Value
 	@EqualsAndHashCode
 	private static class ConstructorInvocation {
-		private Long id;
-		private Long version;
+
+		Long id;
+		Long version;
 	}
 
 	@Data
