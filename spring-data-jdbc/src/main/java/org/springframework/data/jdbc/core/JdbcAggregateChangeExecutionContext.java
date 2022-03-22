@@ -104,15 +104,6 @@ class JdbcAggregateChangeExecutionContext {
 		add(new DbActionExecutionResult(update));
 	}
 
-	<T> void executeUpdate(DbAction.Update<T> update) {
-
-		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
-
-			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
-		}
-	}
-
 	<T> void executeDeleteRoot(DbAction.DeleteRoot<T> delete) {
 
 		if (delete.getPreviousVersion() != null) {

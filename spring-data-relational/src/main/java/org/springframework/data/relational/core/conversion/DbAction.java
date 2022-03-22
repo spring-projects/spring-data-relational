@@ -130,39 +130,6 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an update statement for a single entity that is not the root of an aggregate.
-	 *
-	 * @param <T> type of the entity for which this represents a database interaction.
-	 */
-	final class Update<T> implements WithEntity<T> {
-
-		private final T entity;
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-
-		public Update(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-			this.entity = entity;
-			this.propertyPath = propertyPath;
-		}
-
-		public T getEntity() {
-			return this.entity;
-		}
-
-		@Override
-		public IdValueSource getIdValueSource() {
-			return IdValueSource.PROVIDED;
-		}
-
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
-
-		public String toString() {
-			return "DbAction.Update(entity=" + this.getEntity() + ", propertyPath=" + this.getPropertyPath() + ")";
-		}
-	}
-
-	/**
 	 * Represents an update statement for the aggregate root.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
