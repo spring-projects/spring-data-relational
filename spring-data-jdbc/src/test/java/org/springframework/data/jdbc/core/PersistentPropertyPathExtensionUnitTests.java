@@ -127,7 +127,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 			softly.assertThat(extPath("secondList.third.value").getTableAlias()).isEqualTo(quoted("secondList_third"));
 			softly.assertThat(extPath("secondList").getTableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(extPath("second2.third").getTableAlias()).isEqualTo(quoted("secthird"));
-			softly.assertThat(extPath("second3.third").getTableAlias()).isEqualTo(quoted("second3third"));
+			softly.assertThat(extPath("second3.third").getTableAlias()).isEqualTo(quoted("third"));
 		});
 	}
 
