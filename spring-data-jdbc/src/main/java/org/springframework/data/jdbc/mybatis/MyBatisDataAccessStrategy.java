@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -67,7 +68,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
 	private final SqlSession sqlSession;
-	private final IdentifierProcessing identifierProcessing;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
 
 	/**
@@ -92,15 +92,14 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
-		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession,
-				dialect.getIdentifierProcessing());
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession, dialect.getIdentifierProcessing());
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
 				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
-		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
+		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
 				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
@@ -127,13 +126,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
-	 * @param identifierProcessing the {@link IdentifierProcessing} applied to {@link SqlIdentifier} instances in order to
-	 *          turn them into {@link String}
+	 *
+	 * @deprecated because identifierProcessing now will not be considered in the process of applying it to {@link SqlIdentifier},
+	 * 			  use {@link MyBatisDataAccessStrategy(SqlSession)} constructor instead
 	 */
+	@Deprecated
 	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
+		this(sqlSession);
+	}
 
+	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
-		this.identifierProcessing = identifierProcessing;
 	}
 
 	/**
@@ -326,12 +329,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statement = namespace(domainType) + ".count";
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
 		return sqlSession().selectOne(statement, parameter);
-	}
-
-	private Map<String, Object> convertToParameterMap(Map<SqlIdentifier, Object> additionalParameters) {
-
-		return additionalParameters.entrySet().stream() //
-				.collect(Collectors.toMap(e -> e.getKey().toSql(identifierProcessing), Map.Entry::getValue));
 	}
 
 	private String namespace(Class<?> domainType) {

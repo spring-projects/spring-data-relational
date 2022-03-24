@@ -65,7 +65,7 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	public String getReference(IdentifierProcessing processing) {
+	public String getReference() {
 		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
 	}
 

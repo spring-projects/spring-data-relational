@@ -79,13 +79,13 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 				return null;
 			}
 
-			return keys.get(idColumn.getReference(dialect.getIdentifierProcessing()));
+			return keys.get(idColumn.getReference());
 		}
 	}
 
 	private String[] getKeyColumnNames() {
 		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[] { idColumn.getReference(dialect.getIdentifierProcessing()) })
+				.map(idColumn -> new String[] { idColumn.getReference() })
 				.orElse(new String[0]);
 	}
 }

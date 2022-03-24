@@ -83,7 +83,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
-		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
+		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
 				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 

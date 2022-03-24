@@ -39,6 +39,7 @@ import org.springframework.data.util.Streamable;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public interface SqlIdentifier extends Streamable<SqlIdentifier> {
@@ -63,11 +64,6 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create SQL snippets");
 		}
 
-		@Override
-		public String getReference(IdentifierProcessing processing) {
-			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names");
-		}
-
 		public String toString() {
 			return "<NULL-IDENTIFIER>";
 		}
@@ -77,10 +73,14 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
 	 * programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
-	 * @param processing identifier processing rules.
-	 * @return
+	 * @param processing ignored
+	 *
+	 * @deprecated Since it does not differ anyhow from {@link #getReference()}, so, please, use {@link #getReference()} instead
 	 */
-	String getReference(IdentifierProcessing processing);
+	@Deprecated
+	default String getReference(IdentifierProcessing processing) {
+		return getReference();
+	}
 
 	/**
 	 * Return the reference name without any further transformation. The reference name is used for programmatic access to

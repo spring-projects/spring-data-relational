@@ -168,7 +168,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
 			JdbcMappingContext context, Dialect dialect) {
 		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
-				jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter, dialect),
+				jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter),
 				new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect));
 	}
 

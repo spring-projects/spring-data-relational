@@ -44,7 +44,7 @@ class IdGeneratingInsertStrategyTest {
 	IdentifierProcessing identifierProcessing = IdentifierProcessing.ANSI;
 	NamedParameterJdbcOperations namedParameterJdbcOperations = mock(NamedParameterJdbcOperations.class);
 	String sql = "some sql";
-	SqlParameterSource sqlParameterSource = new SqlIdentifierParameterSource(identifierProcessing);
+	SqlParameterSource sqlParameterSource = new SqlIdentifierParameterSource();
 
 	@Test
 	void insertsWithKeyHolderAndKeyColumnNames_whenDriverRequiresKeyColumnNames() {

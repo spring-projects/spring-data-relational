@@ -20,7 +20,7 @@ public class H2Dialect extends PostgresDialect {
 
 	@Override
 	public String renderForGeneratedValues(SqlIdentifier identifier) {
-		return identifier.getReference(getIdentifierProcessing());
+		return identifier.getReference();
 	}
 
 	@Override

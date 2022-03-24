@@ -64,7 +64,7 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	public String getReference(IdentifierProcessing processing) {
+	public String getReference() {
 		return this.name;
 	}
 

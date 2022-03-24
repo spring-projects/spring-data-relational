@@ -327,11 +327,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		SqlIdentifier keyColumn = path.getQualifierColumn();
 		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + path);
 
-		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn, getIdentifierProcessing());
-	}
-
-	private IdentifierProcessing getIdentifierProcessing() {
-		return sqlGeneratorSource.getDialect().getIdentifierProcessing();
+		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn);
 	}
 
 	@SuppressWarnings("unchecked")

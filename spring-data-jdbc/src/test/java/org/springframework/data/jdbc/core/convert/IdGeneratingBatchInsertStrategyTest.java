@@ -44,8 +44,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	BatchJdbcOperations batchJdbcOperations = mock(BatchJdbcOperations.class);
 	InsertStrategy insertStrategy = mock(InsertStrategy.class);
 	String sql = "some sql";
-	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] {
-			new SqlIdentifierParameterSource(identifierProcessing) };
+	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] {new SqlIdentifierParameterSource() };
 
 	@Test
 	void insertsSequentially_whenIdGenerationForBatchOperationsNotSupported() {
@@ -53,9 +52,9 @@ class IdGeneratingBatchInsertStrategyTest {
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
 				createDialect(identifierProcessing, true, false), batchJdbcOperations, idColumn);
 
-		SqlIdentifierParameterSource sqlParameterSource1 = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource sqlParameterSource1 = new SqlIdentifierParameterSource();
 		sqlParameterSource1.addValue(SqlIdentifier.quoted("property1"), "value1");
-		SqlIdentifierParameterSource sqlParameterSource2 = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource sqlParameterSource2 = new SqlIdentifierParameterSource();
 		sqlParameterSource2.addValue(SqlIdentifier.quoted("property2"), "value2");
 
 		long id1 = 1L;

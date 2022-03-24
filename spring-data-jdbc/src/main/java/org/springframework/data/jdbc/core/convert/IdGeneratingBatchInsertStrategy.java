@@ -79,7 +79,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 			Map<String, Object> keys = keyList.get(i);
 			if (keys.size() > 1) {
 				if (idColumn != null) {
-					ids[i] = keys.get(idColumn.getReference(dialect.getIdentifierProcessing()));
+					ids[i] = keys.get(idColumn.getReference());
 				}
 			} else {
 				ids[i] = keys.entrySet().stream().findFirst() //
@@ -93,7 +93,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 	private String[] getKeyColumnNames() {
 
 		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[] { idColumn.getReference(dialect.getIdentifierProcessing()) })
+				.map(idColumn -> new String[] { idColumn.getReference() })
 				.orElse(new String[0]);
 	}
 }

@@ -32,15 +32,13 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  */
 class InsertStrategyFactoryTest {
 
-	IdentifierProcessing identifierProcessing = IdentifierProcessing.ANSI;
-
 	NamedParameterJdbcOperations namedParameterJdbcOperations = mock(NamedParameterJdbcOperations.class);
 	BatchJdbcOperations batchJdbcOperations = mock(BatchJdbcOperations.class);
 	InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(namedParameterJdbcOperations,
 			batchJdbcOperations, AnsiDialect.INSTANCE);
 
 	String sql = "some sql";
-	SqlParameterSource sqlParameterSource = new SqlIdentifierParameterSource(identifierProcessing);
+	SqlParameterSource sqlParameterSource = new SqlIdentifierParameterSource();
 	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] { sqlParameterSource };
 
 	@Test

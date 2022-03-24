@@ -25,35 +25,30 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * the value in the resultset under which other entities refer back to it.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<RelationalPersistentProperty> {
 
-	private final IdentifierProcessing identifierProcessing;
 	private final PersistentPropertyPathExtension basePath;
 	private final ResultSetAccessor resultSet;
 
 	/**
-	 * @param identifierProcessing used for converting the
-	 *          {@link org.springframework.data.relational.core.sql.SqlIdentifier} from a property to a column label
 	 * @param basePath path from the aggregate root relative to which all properties get resolved.
 	 * @param resultSet the {@link ResultSetAccessor} from which to obtain the actual values.
 	 */
-	JdbcBackReferencePropertyValueProvider(IdentifierProcessing identifierProcessing,
-			PersistentPropertyPathExtension basePath, ResultSetAccessor resultSet) {
+	JdbcBackReferencePropertyValueProvider(PersistentPropertyPathExtension basePath, ResultSetAccessor resultSet) {
 
 		this.resultSet = resultSet;
 		this.basePath = basePath;
-		this.identifierProcessing = identifierProcessing;
 	}
 
 	@Override
 	public <T> T getPropertyValue(RelationalPersistentProperty property) {
-		return (T) resultSet
-				.getObject(basePath.extendBy(property).getReverseColumnNameAlias().getReference(identifierProcessing));
+		return (T) resultSet.getObject(basePath.extendBy(property).getReverseColumnNameAlias().getReference());
 	}
 
 	public JdbcBackReferencePropertyValueProvider extendBy(RelationalPersistentProperty property) {
-		return new JdbcBackReferencePropertyValueProvider(identifierProcessing, basePath.extendBy(property), resultSet);
+		return new JdbcBackReferencePropertyValueProvider(basePath.extendBy(property), resultSet);
 	}
 }

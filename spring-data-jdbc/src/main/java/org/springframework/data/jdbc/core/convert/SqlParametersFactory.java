@@ -42,17 +42,21 @@ import org.springframework.util.Assert;
  * 
  * @author Jens Schauder
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  * @since 2.4
  */
 public class SqlParametersFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
-	private final Dialect dialect;
 
+	@Deprecated
 	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
+		this(context, converter);
+	}
+
+	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter) {
 		this.context = context;
 		this.converter = converter;
-		this.dialect = dialect;
 	}
 
 	/**
@@ -72,7 +76,7 @@ public class SqlParametersFactory {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
-				PersistentProperty::isIdProperty, dialect.getIdentifierProcessing());
+				PersistentProperty::isIdProperty);
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
@@ -95,8 +99,7 @@ public class SqlParametersFactory {
 	 */
 	<T> SqlIdentifierParameterSource forUpdate(T instance, Class<T> domainType) {
 
-		return getParameterSource(instance, getRequiredPersistentEntity(domainType), "", Predicates.includeAll(),
-				dialect.getIdentifierProcessing());
+		return getParameterSource(instance, getRequiredPersistentEntity(domainType), "", Predicates.includeAll());
 	}
 
 	/**
@@ -110,7 +113,7 @@ public class SqlParametersFactory {
 	 */
 	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType, SqlIdentifier name) {
 
-		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
 		addConvertedPropertyValue( //
 				parameterSource, //
@@ -131,7 +134,7 @@ public class SqlParametersFactory {
 	 */
 	<T> SqlIdentifierParameterSource forQueryByIds(Iterable<?> ids, Class<T> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
 		addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
 				ids);
@@ -148,7 +151,7 @@ public class SqlParametersFactory {
 	 */
 	SqlIdentifierParameterSource forQueryByIdentifier(Identifier identifier) {
 
-		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(dialect.getIdentifierProcessing());
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
 		identifier.toMap()
 				.forEach((name, value) -> addConvertedPropertyValue(parameterSource, name, value, value.getClass()));
@@ -228,9 +231,9 @@ public class SqlParametersFactory {
 
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
 			RelationalPersistentEntity<S> persistentEntity, String prefix,
-			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {
+			Predicate<RelationalPersistentProperty> skipProperty) {
 
-		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
@@ -249,8 +252,7 @@ public class SqlParametersFactory {
 				Object value = propertyAccessor.getProperty(property);
 				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
 				SqlIdentifierParameterSource additionalParameters = getParameterSource((T) value,
-						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty,
-						identifierProcessing);
+						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				parameters.addAll(additionalParameters);
 			} else {
 
