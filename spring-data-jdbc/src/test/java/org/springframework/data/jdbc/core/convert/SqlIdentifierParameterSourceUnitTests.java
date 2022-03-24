@@ -27,15 +27,14 @@ import java.util.Arrays;
  * Tests for {@link SqlIdentifierParameterSource}.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class SqlIdentifierParameterSourceUnitTests {
-
-	private IdentifierProcessing identifierProcessing = IdentifierProcessing.ANSI;
 
 	@Test // DATAJDBC-386
 	public void empty() {
 
-		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
 		assertSoftly(softly -> {
 
@@ -49,7 +48,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 	@Test // DATAJDBC-386
 	public void addSingleValue() {
 
-		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
 		parameters.addValue(SqlIdentifier.unquoted("key"), 23);
 
@@ -68,7 +67,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 	@Test // DATAJDBC-386
 	public void addSingleValueWithType() {
 
-		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
 		parameters.addValue(SqlIdentifier.unquoted("key"), 23, 42);
 
@@ -88,11 +87,11 @@ public class SqlIdentifierParameterSourceUnitTests {
 	@Test // DATAJDBC-386
 	public void addOtherDatabaseObjectIdentifierParameterSource() {
 
-		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 		parameters.addValue(SqlIdentifier.unquoted("key1"), 111, 11);
 		parameters.addValue(SqlIdentifier.unquoted("key2"), 111);
 
-		SqlIdentifierParameterSource parameters2 = new SqlIdentifierParameterSource(identifierProcessing);
+		SqlIdentifierParameterSource parameters2 = new SqlIdentifierParameterSource();
 		parameters2.addValue(SqlIdentifier.unquoted("key2"), 222, 22);
 		parameters2.addValue(SqlIdentifier.unquoted("key3"), 222);
 

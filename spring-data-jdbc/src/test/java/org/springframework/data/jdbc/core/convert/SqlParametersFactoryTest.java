@@ -54,7 +54,7 @@ class SqlParametersFactoryTest {
 	RelationResolver relationResolver = mock(RelationResolver.class);
 	BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver);
 	AnsiDialect dialect = AnsiDialect.INSTANCE;
-	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
+	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
 	@Test // DATAJDBC-412
 	public void considersConfiguredWriteConverterForIdValueObjects_onRead() {
@@ -243,6 +243,6 @@ class SqlParametersFactoryTest {
 		BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)),
 				dialect.getIdentifierProcessing());
-		return new SqlParametersFactory(context, converter, dialect);
+		return new SqlParametersFactory(context, converter);
 	}
 }

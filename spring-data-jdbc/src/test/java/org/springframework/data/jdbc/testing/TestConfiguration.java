@@ -108,7 +108,7 @@ public class TestConfiguration {
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 
 		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
-				template, new SqlParametersFactory(context, converter, dialect),
+				template, new SqlParametersFactory(context, converter),
 				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
 	}
 

@@ -181,8 +181,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext, this.converter,
 								this.dialect);
-						SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(this.mappingContext, this.converter,
-								this.dialect);
+						SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(this.mappingContext, this.converter);
 						InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(this.operations,
 								new BatchJdbcOperations(this.operations.getJdbcOperations()), this.dialect);
 						return new DefaultDataAccessStrategy(sqlGeneratorSource, this.mappingContext, this.converter,

@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -88,7 +89,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
-		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
+		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
 				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
@@ -125,11 +126,16 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
-	 * @param identifierProcessing the {@link IdentifierProcessing} applied to {@link SqlIdentifier} instances in order to
-	 *          turn them into {@link String}
+	 *
+	 * @deprecated because identifierProcessing now will not be considered in the process of applying it to {@link SqlIdentifier},
+	 * 			  use {@link MyBatisDataAccessStrategy(SqlSession)} constructor instead
 	 */
+	@Deprecated
 	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
+		this(sqlSession);
+	}
 
+	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
 	}
 

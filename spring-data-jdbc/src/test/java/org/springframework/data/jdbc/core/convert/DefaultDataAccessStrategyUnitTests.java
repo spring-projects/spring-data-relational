@@ -74,7 +74,7 @@ class DefaultDataAccessStrategyUnitTests {
 		relationResolver.setDelegate(accessStrategy);
 
 		when(sqlParametersFactory.forInsert(any(), any(), any(), any()))
-				.thenReturn(new SqlIdentifierParameterSource(dialect.getIdentifierProcessing()));
+				.thenReturn(new SqlIdentifierParameterSource());
 		when(insertStrategyFactory.insertStrategy(any(), any())).thenReturn(mock(InsertStrategy.class));
 		when(insertStrategyFactory.batchInsertStrategy(any(), any())).thenReturn(mock(BatchInsertStrategy.class));
 	}

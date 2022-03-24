@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.RowMapper;
  * {@link Map.Entry} is delegated to a {@link RowMapper} provided in the constructor.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 
@@ -38,16 +39,12 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	private final JdbcConverter converter;
 	private final Identifier identifier;
 	private final SqlIdentifier keyColumn;
-	private final IdentifierProcessing identifierProcessing;
 
-	MapEntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier,
-			SqlIdentifier keyColumn, IdentifierProcessing identifierProcessing) {
-
+	MapEntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier, SqlIdentifier keyColumn) {
 		this.path = path;
 		this.converter = converter;
 		this.identifier = identifier;
 		this.keyColumn = keyColumn;
-		this.identifierProcessing = identifierProcessing;
 	}
 
 	@Override

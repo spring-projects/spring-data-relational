@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
 
@@ -31,16 +30,17 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  *
  * @author Jens Schauder
  * @author Kurt Niemi
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
-	private final IdentifierProcessing identifierProcessing;
-	private final Set<SqlIdentifier> identifiers = new HashSet<>();
-	private final Map<String, Object> namesToValues = new HashMap<>();
+	private final Set<SqlIdentifier> identifiers;
+	private final Map<String, Object> namesToValues;
 
-	SqlIdentifierParameterSource(IdentifierProcessing identifierProcessing) {
-		this.identifierProcessing = identifierProcessing;
+	SqlIdentifierParameterSource() {
+		this.identifiers = new HashSet<>();
+		this.namesToValues = new HashMap<>();
 	}
 
 	@Override
