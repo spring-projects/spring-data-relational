@@ -295,7 +295,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		if (componentType == Byte.class) {
-			convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
+			convertedValue = ArrayUtilsToPrimitive.toPrimitive((Byte[]) convertedValue);
 		}
 
 		return JdbcValue.of(convertedValue, JDBCType.BINARY);
@@ -334,28 +334,28 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		if (componentType.isPrimitive()) {
 			if (componentType == boolean.class) {
-				return ArrayUtils.toObject((boolean[]) source);
+				return ArrayUtilsToObject.toObject((boolean[]) source);
 			}
 			if (componentType == byte.class) {
-				return ArrayUtils.toObject((byte[]) source);
+				return ArrayUtilsToObject.toObject((byte[]) source);
 			}
 			if (componentType == char.class) {
-				return ArrayUtils.toObject((char[]) source);
+				return ArrayUtilsToObject.toObject((char[]) source);
 			}
 			if (componentType == double.class) {
-				return ArrayUtils.toObject((double[]) source);
+				return ArrayUtilsToObject.toObject((double[]) source);
 			}
 			if (componentType == float.class) {
-				return ArrayUtils.toObject((float[]) source);
+				return ArrayUtilsToObject.toObject((float[]) source);
 			}
 			if (componentType == int.class) {
-				return ArrayUtils.toObject((int[]) source);
+				return ArrayUtilsToObject.toObject((int[]) source);
 			}
 			if (componentType == long.class) {
-				return ArrayUtils.toObject((long[]) source);
+				return ArrayUtilsToObject.toObject((long[]) source);
 			}
 			if (componentType == short.class) {
-				return ArrayUtils.toObject((short[]) source);
+				return ArrayUtilsToObject.toObject((short[]) source);
 			}
 
 			throw new IllegalArgumentException("Unsupported component type: " + componentType);

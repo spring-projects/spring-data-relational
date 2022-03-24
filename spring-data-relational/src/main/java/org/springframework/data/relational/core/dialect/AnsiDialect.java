@@ -84,7 +84,6 @@ public class AnsiDialect extends AbstractDialect {
 		return LOCK_CLAUSE;
 	}
 
-	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
 	}

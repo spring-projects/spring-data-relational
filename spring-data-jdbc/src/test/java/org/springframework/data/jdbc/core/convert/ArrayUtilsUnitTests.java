@@ -21,7 +21,7 @@ import static org.assertj.core.data.Offset.offset;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link ArrayUtils}.
+ * Unit tests for {@link ArrayUtilsToPrimitive}.
  *
  * @author Mark Paluch
  */
@@ -30,26 +30,26 @@ class ArrayUtilsUnitTests {
 	@Test
 	void testCreatePrimitiveArray() {
 
-		assertThat(ArrayUtils.toPrimitive(new Boolean[] { true })).isEqualTo(new boolean[] { true });
-		assertThat(ArrayUtils.toPrimitive(new Byte[] { 1 })).isEqualTo(new byte[] { 1 });
-		assertThat(ArrayUtils.toPrimitive(new Character[] { 'a' })).isEqualTo(new char[] { 'a' });
-		assertThat(ArrayUtils.toPrimitive(new Double[] { 2.718 })).contains(new double[] { 2.718 }, offset(0.1));
-		assertThat(ArrayUtils.toPrimitive(new Float[] { 3.14f })).contains(new float[] { 3.14f }, offset(0.1f));
-		assertThat(ArrayUtils.toPrimitive(new Integer[] {})).isEqualTo(new int[] {});
-		assertThat(ArrayUtils.toPrimitive(new Long[] { 2L, 3L })).isEqualTo(new long[] { 2, 3 });
-		assertThat(ArrayUtils.toPrimitive(new Short[] { 2 })).isEqualTo(new short[] { 2 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Boolean[] { true })).isEqualTo(new boolean[] { true });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Byte[] { 1 })).isEqualTo(new byte[] { 1 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Character[] { 'a' })).isEqualTo(new char[] { 'a' });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Double[] { 2.718 })).contains(new double[] { 2.718 }, offset(0.1));
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Float[] { 3.14f })).contains(new float[] { 3.14f }, offset(0.1f));
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Integer[] {})).isEqualTo(new int[] {});
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Long[] { 2L, 3L })).isEqualTo(new long[] { 2, 3 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Short[] { 2 })).isEqualTo(new short[] { 2 });
 	}
 
 	@Test
 	void testCreatePrimitiveArrayViaObjectArray() {
 
-		assertThat(ArrayUtils.toPrimitive(new Boolean[] { true })).isEqualTo(new boolean[] { true });
-		assertThat(ArrayUtils.toPrimitive(new Byte[] { 1 })).isEqualTo(new byte[] { 1 });
-		assertThat(ArrayUtils.toPrimitive(new Character[] { 'a' })).isEqualTo(new char[] { 'a' });
-		assertThat(ArrayUtils.toPrimitive(new Double[] { 2.718 })).contains(new double[] { 2.718 }, offset(0.1));
-		assertThat(ArrayUtils.toPrimitive(new Float[] { 3.14f })).contains(new float[] { 3.14f }, offset(0.1f));
-		assertThat(ArrayUtils.toPrimitive(new Integer[] {})).isEqualTo(new int[] {});
-		assertThat(ArrayUtils.toPrimitive(new Long[] { 2L, 3L })).isEqualTo(new long[] { 2, 3 });
-		assertThat(ArrayUtils.toPrimitive(new Short[] { 2 })).isEqualTo(new short[] { 2 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Boolean[] { true })).isEqualTo(new boolean[] { true });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Byte[] { 1 })).isEqualTo(new byte[] { 1 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Character[] { 'a' })).isEqualTo(new char[] { 'a' });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Double[] { 2.718 })).contains(new double[] { 2.718 }, offset(0.1));
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Float[] { 3.14f })).contains(new float[] { 3.14f }, offset(0.1f));
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Integer[] {})).isEqualTo(new int[] {});
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Long[] { 2L, 3L })).isEqualTo(new long[] { 2, 3 });
+		assertThat(ArrayUtilsToPrimitive.toPrimitive(new Short[] { 2 })).isEqualTo(new short[] { 2 });
 	}
 }

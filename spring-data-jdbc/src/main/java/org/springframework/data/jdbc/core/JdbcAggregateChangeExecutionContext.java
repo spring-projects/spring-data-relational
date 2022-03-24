@@ -39,6 +39,7 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -74,9 +75,9 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
+		Object objectId = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
 				insert.getIdValueSource());
-		add(new DbActionExecutionResult(insert, id));
+		add(new DbActionExecutionResult(insert, objectId));
 	}
 
 	<T> void executeInsert(DbAction.Insert<T> insert) {
@@ -500,6 +501,39 @@ class JdbcAggregateChangeExecutionContext {
 		@Override
 		public Object add(@Nullable Object __null, @Nullable Object qualifier, Object value) {
 			return value;
+		}
+	}
+
+	public void execute(DbAction<?> action) {
+
+		try {
+			if (action instanceof DbAction.InsertRoot) {
+				executeInsertRoot((DbAction.InsertRoot<?>) action);
+			} else if (action instanceof DbAction.Insert) {
+				executeInsert((DbAction.Insert<?>) action);
+			} else if (action instanceof DbAction.InsertBatch) {
+				executeInsertBatch((DbAction.InsertBatch<?>) action);
+			} else if (action instanceof DbAction.UpdateRoot) {
+				executeUpdateRoot((DbAction.UpdateRoot<?>) action);
+			} else if (action instanceof DbAction.Update) {
+				executeUpdate((DbAction.Update<?>) action);
+			} else if (action instanceof DbAction.Delete) {
+				executeDelete((DbAction.Delete<?>) action);
+			} else if (action instanceof DbAction.DeleteAll) {
+				executeDeleteAll((DbAction.DeleteAll<?>) action);
+			} else if (action instanceof DbAction.DeleteRoot) {
+				executeDeleteRoot((DbAction.DeleteRoot<?>) action);
+			} else if (action instanceof DbAction.DeleteAllRoot) {
+				executeDeleteAllRoot((DbAction.DeleteAllRoot<?>) action);
+			} else if (action instanceof DbAction.AcquireLockRoot) {
+				executeAcquireLock((DbAction.AcquireLockRoot<?>) action);
+			} else if (action instanceof DbAction.AcquireLockAllRoot) {
+				executeAcquireLockAllRoot((DbAction.AcquireLockAllRoot<?>) action);
+			} else {
+				throw new RuntimeException("unexpected action");
+			}
+		} catch (Exception e) {
+			throw new DbActionExecutionException(action, e);
 		}
 	}
 }

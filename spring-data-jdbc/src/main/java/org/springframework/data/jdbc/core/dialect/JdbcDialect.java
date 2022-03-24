@@ -24,7 +24,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
  * @author Jens Schauder
  * @since 2.3
  */
-public interface JdbcDialect extends Dialect {
+public interface JdbcDialect {
 
 	/**
 	 * Returns the JDBC specific array support object that describes how array-typed columns are supported by this
@@ -33,6 +33,7 @@ public interface JdbcDialect extends Dialect {
 	 * @return the JDBC specific array support object that describes how array-typed columns are supported by this
 	 *         dialect.
 	 */
-	@Override
-	JdbcArrayColumns getArraySupport();
+	default JdbcArrayColumns getArraySupport(){
+		return JdbcArrayColumns.Unsupported.INSTANCE;
+	};
 }

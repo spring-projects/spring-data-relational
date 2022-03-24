@@ -101,11 +101,11 @@ public class MariaDbTestSupport {
 
 		return ProvidedDatabase.builder() //
 				.hostname("localhost") //
-				.port(3306) //
+				.port(3307) //
 				.database("mysql") //
 				.username("root") //
-				.password("my-secret-pw") //
-				.jdbcUrl("jdbc:mariadb://localhost:3306/mysql") //
+				.password("root") //
+				.jdbcUrl("jdbc:mariadb://localhost:3307/mysql") //
 				.build();
 	}
 

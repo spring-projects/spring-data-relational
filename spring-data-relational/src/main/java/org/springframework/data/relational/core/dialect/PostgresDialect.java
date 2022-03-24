@@ -87,7 +87,6 @@ public class PostgresDialect extends AbstractDialect {
 		return LOCK_CLAUSE;
 	}
 
-	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
 	}

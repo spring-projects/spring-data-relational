@@ -27,6 +27,10 @@ public class HsqlDbDialect extends AbstractDialect {
 
 	protected HsqlDbDialect() {}
 
+	public ArrayColumns getArraySupport() {
+		return ArrayColumns.Unsupported.INSTANCE;
+	}
+
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;

@@ -76,7 +76,6 @@ public class H2Dialect extends AbstractDialect {
 		return AnsiDialect.LOCK_CLAUSE;
 	}
 
-	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
 	}

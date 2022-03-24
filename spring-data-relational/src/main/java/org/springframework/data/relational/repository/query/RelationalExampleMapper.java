@@ -96,31 +96,7 @@ public class RelationalExampleMapper {
 
 			String column = property.getName();
 
-			switch (matcherAccessor.getStringMatcherForPath(property.getName())) {
-				case DEFAULT:
-				case EXACT:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
-					break;
-				case ENDING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue).ignoreCase(ignoreCase));
-					break;
-				case STARTING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like(convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like(convPropValue + "%").ignoreCase(ignoreCase));
-					break;
-				case CONTAINING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
-					break;
-				default:
-					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported!");
-			}
+			setCriteriaBasedOnProperties(example, matcherAccessor, criteriaBasedOnProperties, property, convPropValue, ignoreCase, column);
 		});
 
 		// Criteria, assemble!
@@ -136,6 +112,34 @@ public class RelationalExampleMapper {
 		}
 
 		return Query.query(criteria);
+	}
+
+	private <T> void setCriteriaBasedOnProperties(Example<T> example, ExampleMatcherAccessor matcherAccessor, List<Criteria> criteriaBasedOnProperties, RelationalPersistentProperty property, Object convPropValue, boolean ignoreCase, String column) {
+		switch (matcherAccessor.getStringMatcherForPath(property.getName())) {
+			case DEFAULT:
+			case EXACT:
+				criteriaBasedOnProperties.add(includeNulls(example) //
+						? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
+						: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
+				break;
+			case ENDING:
+				criteriaBasedOnProperties.add(includeNulls(example) //
+						? Criteria.where(column).isNull().or(column).like("%" + convPropValue).ignoreCase(ignoreCase)
+						: Criteria.where(column).like("%" + convPropValue).ignoreCase(ignoreCase));
+				break;
+			case STARTING:
+				criteriaBasedOnProperties.add(includeNulls(example) //
+						? Criteria.where(column).isNull().or(column).like(convPropValue + "%").ignoreCase(ignoreCase)
+						: Criteria.where(column).like(convPropValue + "%").ignoreCase(ignoreCase));
+				break;
+			case CONTAINING:
+				criteriaBasedOnProperties.add(includeNulls(example) //
+						? Criteria.where(column).isNull().or(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase)
+						: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
+				break;
+			default:
+				throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported!");
+		}
 	}
 
 	/**

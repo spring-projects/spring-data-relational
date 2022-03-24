@@ -46,6 +46,10 @@ public class SqlServerDialect extends AbstractDialect {
 
 	protected SqlServerDialect() {}
 
+	public ArrayColumns getArraySupport() {
+		return ArrayColumns.Unsupported.INSTANCE;
+	}
+
 	@Override
 	public IdGeneration getIdGeneration() {
 		return ID_GENERATION;

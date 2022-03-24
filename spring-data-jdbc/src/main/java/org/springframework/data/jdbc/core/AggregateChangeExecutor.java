@@ -48,7 +48,7 @@ class AggregateChangeExecutor {
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 				accessStrategy);
 
-		aggregateChange.forEachAction(action -> execute(action, executionContext));
+		aggregateChange.forEachAction(action -> executionContext.execute(action));
 
 		T root = executionContext.populateIdsIfNecessary();
 		if (root == null) {
@@ -58,36 +58,4 @@ class AggregateChangeExecutor {
 		return root;
 	}
 
-	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
-
-		try {
-			if (action instanceof DbAction.InsertRoot) {
-				executionContext.executeInsertRoot((DbAction.InsertRoot<?>) action);
-			} else if (action instanceof DbAction.Insert) {
-				executionContext.executeInsert((DbAction.Insert<?>) action);
-			} else if (action instanceof DbAction.InsertBatch) {
-				executionContext.executeInsertBatch((DbAction.InsertBatch<?>) action);
-			} else if (action instanceof DbAction.UpdateRoot) {
-				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
-			} else if (action instanceof DbAction.Update) {
-				executionContext.executeUpdate((DbAction.Update<?>) action);
-			} else if (action instanceof DbAction.Delete) {
-				executionContext.executeDelete((DbAction.Delete<?>) action);
-			} else if (action instanceof DbAction.DeleteAll) {
-				executionContext.executeDeleteAll((DbAction.DeleteAll<?>) action);
-			} else if (action instanceof DbAction.DeleteRoot) {
-				executionContext.executeDeleteRoot((DbAction.DeleteRoot<?>) action);
-			} else if (action instanceof DbAction.DeleteAllRoot) {
-				executionContext.executeDeleteAllRoot((DbAction.DeleteAllRoot<?>) action);
-			} else if (action instanceof DbAction.AcquireLockRoot) {
-				executionContext.executeAcquireLock((DbAction.AcquireLockRoot<?>) action);
-			} else if (action instanceof DbAction.AcquireLockAllRoot) {
-				executionContext.executeAcquireLockAllRoot((DbAction.AcquireLockAllRoot<?>) action);
-			} else {
-				throw new RuntimeException("unexpected action");
-			}
-		} catch (Exception e) {
-			throw new DbActionExecutionException(action, e);
-		}
-	}
 }

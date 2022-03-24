@@ -64,6 +64,10 @@ public class MySqlDialect extends AbstractDialect {
 		this.identifierProcessing = identifierProcessing;
 	}
 
+	public ArrayColumns getArraySupport() {
+		return ArrayColumns.Unsupported.INSTANCE;
+	}
+
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override
