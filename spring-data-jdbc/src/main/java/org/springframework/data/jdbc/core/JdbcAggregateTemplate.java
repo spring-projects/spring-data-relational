@@ -32,6 +32,7 @@ import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
+import org.springframework.data.relational.core.conversion.MergedAggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
@@ -44,6 +45,7 @@ import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
@@ -146,6 +148,21 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
 
 		return store(instance, changeCreator, persistentEntity);
+	}
+
+	private <T> void saveAll(Iterable<T> instances) {
+		
+		ArrayList<T> instancesList = new ArrayList<>();
+		instances.forEach(instancesList::add);
+		Assert.notEmpty(instancesList, "Aggregate instances must not be empty!");
+
+		//noinspection unchecked
+		MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedAggregateChange = instancesList.stream()
+				.map(MutableAggregateChange::forSave)
+				.reduce(MutableAggregateChange.mergedSave((Class<T>) ClassUtils.getUserClass(instancesList.get(0))),
+						MergedAggregateChange::merge,
+						(left, right) -> right);
+
 	}
 
 	/**

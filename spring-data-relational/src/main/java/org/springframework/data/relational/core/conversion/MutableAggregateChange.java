@@ -74,6 +74,13 @@ public interface MutableAggregateChange<T> extends AggregateChange<T> {
 		return forDelete((Class<T>) ClassUtils.getUserClass(entity));
 	}
 
+	static <T> MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedSave(Class<T> entityClass) {
+
+		Assert.notNull(entityClass, "Entity class must not be null");
+
+		return new SaveMergedAggregateChange<>(entityClass);
+	}
+
 	/**
 	 * Factory method to create an {@link MutableAggregateChange} for deleting entities.
 	 *
