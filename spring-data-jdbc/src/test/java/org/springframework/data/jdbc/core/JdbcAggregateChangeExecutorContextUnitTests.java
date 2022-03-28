@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder.*;
 
 import lombok.Value;
 
@@ -31,7 +32,6 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -69,9 +69,9 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isEqualTo(root);
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(23L);
 	}
 
@@ -81,15 +81,15 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Content content = new Content();
 
 		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(23L);
-		when(accessStrategy.insert(content, Content.class, createBackRef(), IdValueSource.GENERATED)).thenReturn(24L);
+		when(accessStrategy.insert(content, Content.class, createBackRef(23L), IdValueSource.GENERATED)).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
-		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
+		executionContext.executeInsert(createInsert(rootInsert, "content", content, null, IdValueSource.GENERATED));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isEqualTo(root);
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -106,11 +106,11 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
-		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
+		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1, IdValueSource.GENERATED));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isEqualTo(root);
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -129,13 +129,13 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.GENERATED)).thenReturn(new Object[] { 456L });
-		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.GENERATED);
-		executionContext.executeInsertBatch(insertBatch);
+		DbAction.BatchInsert<?> batchInsert = new DbAction.BatchInsert<>(
+				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.GENERATED)));
+		executionContext.executeBatchInsert(batchInsert);
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isEqualTo(root);
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isEqualTo(456L);
 	}
@@ -153,42 +153,73 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.PROVIDED)).thenReturn(new Object[] { null });
-		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.PROVIDED);
-		executionContext.executeInsertBatch(insertBatch);
+		DbAction.BatchInsert<?> batchInsert = new DbAction.BatchInsert<>(
+				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.PROVIDED)));
+		executionContext.executeBatchInsert(batchInsert);
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isEqualTo(root);
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(content.id).isNull();
 	}
 
 	@Test // GH-1201
 	void updates_whenReferencesWithImmutableIdAreInserted() {
-		when(accessStrategy.update(any(), any())).thenReturn(true);
+
 		root.id = 123L;
-		DbAction.UpdateRoot<DummyEntity> rootInsert = new DbAction.UpdateRoot<>(root, null);
-		executionContext.executeUpdateRoot(rootInsert);
+		when(accessStrategy.update(root, DummyEntity.class)).thenReturn(true);
+		DbAction.UpdateRoot<DummyEntity> rootUpdate = new DbAction.UpdateRoot<>(root, null);
+		executionContext.executeUpdateRoot(rootUpdate);
 
 		ContentImmutableId contentImmutableId = new ContentImmutableId(null);
 		root.contentImmutableId = contentImmutableId;
 		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class);
 		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED))
 				.thenReturn(456L);
-		executionContext.executeInsert(createInsert(rootInsert, "contentImmutableId", contentImmutableId, null));
+		executionContext.executeInsert(createInsert(rootUpdate, "contentImmutableId", contentImmutableId, null, IdValueSource.GENERATED));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
-		assertThat(newRoot).isEqualTo(root);
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+		assertThat(newRoots).containsExactly(root);
 		assertThat(root.id).isEqualTo(123L);
 		assertThat(root.contentImmutableId.id).isEqualTo(456L);
 	}
 
+	@Test // GH-537
+	void populatesIdsIfNecessaryForAllRootsThatWereProcessed() {
+
+		DummyEntity root1 = new DummyEntity();
+		root1.id = 123L;
+		when(accessStrategy.update(root1, DummyEntity.class)).thenReturn(true);
+		DbAction.UpdateRoot<DummyEntity> rootUpdate1 = new DbAction.UpdateRoot<>(root1, null);
+		executionContext.executeUpdateRoot(rootUpdate1);
+		Content content1 = new Content();
+		when(accessStrategy.insert(content1, Content.class, createBackRef(123L), IdValueSource.GENERATED)).thenReturn(11L);
+		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null, IdValueSource.GENERATED));
+
+
+		DummyEntity root2 = new DummyEntity();
+		DbAction.InsertRoot<DummyEntity> rootInsert2 = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+		when(accessStrategy.insert(root2, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(456L);
+		executionContext.executeInsertRoot(rootInsert2);
+		Content content2 = new Content();
+		when(accessStrategy.insert(content2, Content.class, createBackRef(456L), IdValueSource.GENERATED)).thenReturn(12L);
+		executionContext.executeInsert(createInsert(rootInsert2, "content", content2, null, IdValueSource.GENERATED));
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoots).containsExactly(root1, root2);
+		assertThat(root1.id).isEqualTo(123L);
+		assertThat(content1.id).isEqualTo(11L);
+		assertThat(root2.id).isEqualTo(456L);
+		assertThat(content2.id).isEqualTo(12L);
+	}
+
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-			@Nullable Object key) {
+									@Nullable Object key, IdValueSource idValueSource) {
 
 		return new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
-				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
+				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), idValueSource);
 	}
 
 	PersistentPropertyPathExtension toPathExt(String path) {
@@ -199,8 +230,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		return context.getPersistentPropertyPath(propertyName, DummyEntity.class);
 	}
 
-	Identifier createBackRef() {
-		return JdbcIdentifierBuilder.forBackReferences(converter, toPathExt("content"), 23L).build();
+	Identifier createBackRef(long value) {
+		return forBackReferences(converter, toPathExt("content"), value).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

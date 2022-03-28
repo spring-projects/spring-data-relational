@@ -17,8 +17,10 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -345,37 +347,55 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a batch of {@link DbAction} that share a common value for a property of the action.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
+	abstract class BatchWithValue<T, A extends DbAction<T>, B> implements DbAction<T> {
+		private final List<A> actions;
+		private final B batchValue;
+
+		public BatchWithValue(List<A> actions, Function<A, B> batchValueExtractor) {
+			Assert.notEmpty(actions, "Actions must contain at least one action");
+			Iterator<A> actionIterator = actions.iterator();
+			this.batchValue = batchValueExtractor.apply(actionIterator.next());
+			actionIterator.forEachRemaining(action -> {
+				if (!batchValueExtractor.apply(action).equals(batchValue)) {
+					throw new IllegalArgumentException("All actions in the batch must have matching batchValue");
+				}
+			});
+			this.actions = actions;
+		}
+
+		@Override
+		public Class<T> getEntityType() {
+			return actions.get(0).getEntityType();
+		}
+
+		public List<A> getActions() {
+			return actions;
+		}
+
+		public B getBatchValue() {
+			return batchValue;
+		}
+
+		@Override
+		public String toString() {
+			return "BatchWithValue{" + "actions=" + actions + ", batchValue=" + batchValue + '}';
+		}
+	}
+
+	/**
 	 * Represents a batch insert statement for a multiple entities that are not aggregate roots.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 * @since 2.4
 	 */
-	final class InsertBatch<T> implements DbAction<T> {
-		private final List<Insert<T>> inserts;
-		private final IdValueSource idValueSource;
-
-		public InsertBatch(List<Insert<T>> inserts, IdValueSource idValueSource) {
-			Assert.notEmpty(inserts, "Inserts must contains at least one insert");
-			this.inserts = inserts;
-			this.idValueSource = idValueSource;
-		}
-
-		@Override
-		public Class<T> getEntityType() {
-			return inserts.get(0).getEntityType();
-		}
-
-		public List<Insert<T>> getInserts() {
-			return inserts;
-		}
-
-		public IdValueSource getIdValueSource() {
-			return idValueSource;
-		}
-
-		@Override
-		public String toString() {
-			return "InsertBatch{" + "inserts=" + inserts + ", idValueSource=" + idValueSource + '}';
+	final class BatchInsert<T> extends BatchWithValue<T, Insert<T>, IdValueSource> {
+		public BatchInsert(List<Insert<T>> actions) {
+			super(actions, Insert::getIdValueSource);
 		}
 	}
 

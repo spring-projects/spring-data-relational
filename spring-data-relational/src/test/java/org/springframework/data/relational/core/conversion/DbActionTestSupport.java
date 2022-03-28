@@ -56,8 +56,8 @@ class DbActionTestSupport {
 			return ((DbAction.InsertRoot<?>) action).getIdValueSource();
 		} else if (action instanceof DbAction.Insert) {
 			return ((DbAction.Insert<?>) action).getIdValueSource();
-		} else if (action instanceof DbAction.InsertBatch) {
-			return ((DbAction.InsertBatch<?>) action).getIdValueSource();
+		} else if (action instanceof DbAction.BatchInsert) {
+			return ((DbAction.BatchInsert<?>) action).getBatchValue();
 		} else {
 			return null;
 		}

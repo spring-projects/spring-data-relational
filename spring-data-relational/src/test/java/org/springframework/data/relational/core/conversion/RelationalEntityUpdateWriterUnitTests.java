@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  *
  * @author Thomas Lang
  * @author Myeonghyeon Lee
- * @author Chirag Taylor
+ * @author Chirag Tailor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityUpdateWriterUnitTests {
@@ -46,7 +46,7 @@ public class RelationalEntityUpdateWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityUpdateWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 

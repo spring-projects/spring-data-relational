@@ -26,9 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,7 +36,6 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
-import org.springframework.data.relational.core.conversion.DbAction.InsertBatch;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -84,7 +81,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -105,7 +102,7 @@ public class RelationalEntityWriterUnitTests {
 	void newEntityWithPrimitiveLongId_insertDoesNotIncludeId_whenIdValueIsZero() {
 		PrimitiveLongIdEntity entity = new PrimitiveLongIdEntity();
 
-		AggregateChangeWithRoot<PrimitiveLongIdEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<PrimitiveLongIdEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<PrimitiveLongIdEntity>(context).write(entity, aggregateChange);
 
@@ -126,7 +123,7 @@ public class RelationalEntityWriterUnitTests {
 	void newEntityWithPrimitiveIntId_insertDoesNotIncludeId_whenIdValueIsZero() {
 		PrimitiveIntIdEntity entity = new PrimitiveIntIdEntity();
 
-		AggregateChangeWithRoot<PrimitiveIntIdEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<PrimitiveIntIdEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<PrimitiveIntIdEntity>(context).write(entity, aggregateChange);
 
@@ -149,7 +146,7 @@ public class RelationalEntityWriterUnitTests {
 		EmbeddedReferenceEntity entity = new EmbeddedReferenceEntity(null);
 		entity.other = new Element(2L);
 
-		AggregateChangeWithRoot<EmbeddedReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<EmbeddedReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<EmbeddedReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -172,7 +169,7 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
 		entity.other = new Element(null);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -197,7 +194,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.primitiveLongIdEntity = new PrimitiveLongIdEntity();
 		entity.primitiveIntIdEntity = new PrimitiveIntIdEntity();
 
-		AggregateChangeWithRoot<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = MutableAggregateChange
+		RootAggregateChange<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = MutableAggregateChange
 				.forSave(entity);
 
 		new RelationalEntityWriter<EntityWithReferencesToPrimitiveIdEntity>(context).write(entity, aggregateChange);
@@ -224,7 +221,7 @@ public class RelationalEntityWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
 
 		new RelationalEntityWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -247,7 +244,7 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
 
 		new RelationalEntityWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -269,7 +266,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptySetResultsInSingleInsert() {
 
 		SetContainer entity = new SetContainer(null);
-		AggregateChangeWithRoot<SetContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SetContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<SetContainer>(context).write(entity, aggregateChange);
 
@@ -285,13 +282,13 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void newEntityWithSetContainingMultipleElementsResultsInAnInsertForTheBatch() {
+	public void newEntityWithSetContainingMultipleElementsResultsInAnInsertForEach() {
 
 		SetContainer entity = new SetContainer(null);
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		AggregateChangeWithRoot<SetContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SetContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 		new RelationalEntityWriter<SetContainer>(context).write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -303,16 +300,6 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false, IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> batchedInsertActions = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(batchedInsertActions).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
 						tuple(Insert.class, Element.class, "elements", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "elements", Element.class, true, IdValueSource.GENERATED) //
 				);
@@ -333,7 +320,7 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChangeWithRoot<CascadingReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<CascadingReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<CascadingReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -347,31 +334,10 @@ public class RelationalEntityWriterUnitTests {
 				.containsExactly( //
 						tuple(InsertRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false,
 								IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, CascadingReferenceMiddleElement.class, "", null, false, IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
-				);
-		List<Insert<CascadingReferenceMiddleElement>> middleElementInserts = getInsertBatchAction(actions,
-				CascadingReferenceMiddleElement.class).getInserts();
-		assertThat(middleElementInserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
 								true, IdValueSource.GENERATED), //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
-								true, IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> leafElementInserts = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(leafElementInserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
+								true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
@@ -394,7 +360,7 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChangeWithRoot<CascadingReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
+		RootAggregateChange<CascadingReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
 
 		new RelationalEntityWriter<CascadingReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -409,31 +375,10 @@ public class RelationalEntityWriterUnitTests {
 						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false, null), //
 						tuple(Delete.class, Element.class, "other.element", null, false, null),
 						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false, null),
-						tuple(InsertBatch.class, CascadingReferenceMiddleElement.class, "", null, false, IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
-				);
-		List<Insert<CascadingReferenceMiddleElement>> middleElementInserts = getInsertBatchAction(actions,
-				CascadingReferenceMiddleElement.class).getInserts();
-		assertThat(middleElementInserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
 								true, IdValueSource.GENERATED), //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
-								true, IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> elementInserts = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(elementInserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
+								true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true, IdValueSource.GENERATED), //
@@ -445,7 +390,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyMapResultsInSingleInsert() {
 
 		MapContainer entity = new MapContainer(null);
-		AggregateChangeWithRoot<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<MapContainer>(context).write(entity, aggregateChange);
 
@@ -464,7 +409,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("one", new Element(null));
 		entity.elements.put("two", new Element(null));
 
-		AggregateChangeWithRoot<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 		new RelationalEntityWriter<MapContainer>(context).write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -473,19 +418,16 @@ public class RelationalEntityWriterUnitTests {
 				this::getMapKey, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
-						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, null, "", IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> inserts = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(inserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				this::getMapKey, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
+						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "one", "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "two", "elements", IdValueSource.GENERATED) //
+				).containsSubsequence( // container comes before the elements
+						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
+						tuple(Insert.class, Element.class, "two", "elements", IdValueSource.GENERATED) //
+				).containsSubsequence( // container comes before the elements
+						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
+						tuple(Insert.class, Element.class, "one", "elements", IdValueSource.GENERATED) //
 				);
 	}
 
@@ -507,7 +449,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("a", new Element(null));
 		entity.elements.put("b", new Element(null));
 
-		AggregateChangeWithRoot<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 		new RelationalEntityWriter<MapContainer>(context).write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -516,17 +458,8 @@ public class RelationalEntityWriterUnitTests {
 				this::getMapKey, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
-						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, null, "", IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> inserts = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(inserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				this::getMapKey, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::insertIdValueSource) //
 				.containsExactlyInAnyOrder( //
+						tuple(InsertRoot.class, MapContainer.class, null, "", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "1", "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "2", "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, "3", "elements", IdValueSource.GENERATED), //
@@ -546,7 +479,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyListResultsInSingleInsert() {
 
 		ListContainer entity = new ListContainer(null);
-		AggregateChangeWithRoot<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<ListContainer>(context).write(entity, aggregateChange);
 
@@ -565,7 +498,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		AggregateChangeWithRoot<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity);
 		new RelationalEntityWriter<ListContainer>(context).write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -576,15 +509,6 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
 						tuple(InsertRoot.class, ListContainer.class, null, "", IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, null, "", IdValueSource.GENERATED) //
-				);
-		List<Insert<Element>> inserts = getInsertBatchAction(actions, Element.class).getInserts();
-		assertThat(inserts).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				this::getListKey, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
 						tuple(Insert.class, Element.class, 0, "elements", IdValueSource.GENERATED), //
 						tuple(Insert.class, Element.class, 1, "elements", IdValueSource.GENERATED) //
 				);
@@ -596,7 +520,7 @@ public class RelationalEntityWriterUnitTests {
 		MapContainer entity = new MapContainer(SOME_ENTITY_ID);
 		entity.elements.put("one", new Element(null));
 
-		AggregateChangeWithRoot<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
+		RootAggregateChange<MapContainer> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
 
 		new RelationalEntityWriter<MapContainer>(context).write(entity, aggregateChange);
 
@@ -619,7 +543,7 @@ public class RelationalEntityWriterUnitTests {
 		ListContainer entity = new ListContainer(SOME_ENTITY_ID);
 		entity.elements.add(new Element(null));
 
-		AggregateChangeWithRoot<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
+		RootAggregateChange<ListContainer> aggregateChange = MutableAggregateChange.forSave(entity, 1L);
 
 		new RelationalEntityWriter<ListContainer>(context).write(entity, aggregateChange);
 
@@ -643,7 +567,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new MapContainer(SOME_ENTITY_ID));
 		listMapContainer.maps.get(0).elements.put("one", new Element(null));
 
-		AggregateChangeWithRoot<ListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer, 1L);
+		RootAggregateChange<ListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer, 1L);
 
 		new RelationalEntityWriter<ListMapContainer>(context).write(listMapContainer, aggregateChange);
 
@@ -670,7 +594,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new NoIdMapContainer());
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
-		AggregateChangeWithRoot<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer,
+		RootAggregateChange<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer,
 				1L);
 
 		new RelationalEntityWriter<NoIdListMapContainer>(context).write(listMapContainer, aggregateChange);
@@ -697,7 +621,7 @@ public class RelationalEntityWriterUnitTests {
 		EmbeddedReferenceChainEntity entity = new EmbeddedReferenceChainEntity(null);
 		// the embedded is null !!!
 
-		AggregateChangeWithRoot<EmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<EmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<EmbeddedReferenceChainEntity>(context).write(entity, aggregateChange);
 
@@ -721,7 +645,7 @@ public class RelationalEntityWriterUnitTests {
 		root.other = new EmbeddedReferenceChainEntity(null);
 		// the embedded is null !!!
 
-		AggregateChangeWithRoot<RootWithEmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange
+		RootAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange
 				.forSave(root);
 
 		new RelationalEntityWriter<RootWithEmbeddedReferenceChainEntity>(context).write(root, aggregateChange);
@@ -742,61 +666,13 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@Test
-	void newEntityWithCollectionWhereSomeElementsHaveIdSet_producesABatchInsertEachForElementsWithIdAndWithout() {
-
-		ListContainer root = new ListContainer(null);
-		root.elements.add(new Element(null));
-		root.elements.add(new Element(1L));
-		root.elements.add(new Element(null));
-		root.elements.add(new Element(2L));
-		AggregateChangeWithRoot<ListContainer> aggregateChange = MutableAggregateChange.forSave(root);
-
-		new RelationalEntityWriter<ListContainer>(context).write(root, aggregateChange);
-
-		List<DbAction<?>> actions = extractActions(aggregateChange);
-		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::actualEntityType, //
-				DbActionTestSupport::isWithDependsOn, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsSubsequence(
-						tuple(InsertRoot.class, ListContainer.class, "", ListContainer.class, false, IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.PROVIDED) //
-				).containsSubsequence( //
-						tuple(InsertRoot.class, ListContainer.class, "", ListContainer.class, false, IdValueSource.GENERATED), //
-						tuple(InsertBatch.class, Element.class, "", null, false, IdValueSource.GENERATED) //
-				);
-		InsertBatch<Element> insertBatchWithoutId = getInsertBatchAction(actions, Element.class, IdValueSource.GENERATED);
-		assertThat(insertBatchWithoutId.getInserts()).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				this::getListKey, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
-						tuple(Insert.class, Element.class, 0, "elements", IdValueSource.GENERATED), //
-						tuple(Insert.class, Element.class, 2, "elements", IdValueSource.GENERATED) //
-				);
-		InsertBatch<Element> insertBatchWithId = getInsertBatchAction(actions, Element.class, IdValueSource.PROVIDED);
-		assertThat(insertBatchWithId.getInserts()).extracting(DbAction::getClass, //
-				DbAction::getEntityType, //
-				this::getListKey, //
-				DbActionTestSupport::extractPath, //
-				DbActionTestSupport::insertIdValueSource) //
-				.containsExactly( //
-						tuple(Insert.class, Element.class, 1, "elements", IdValueSource.PROVIDED), //
-						tuple(Insert.class, Element.class, 3, "elements", IdValueSource.PROVIDED) //
-				);
-	}
-
-	@Test
-	void newEntityWithCollection_whenElementHasPrimitiveId_batchInsertDoesNotIncludeId_whenIdValueIsZero() {
+	void newEntityWithCollection_whenElementHasPrimitiveId_doesNotIncludeId_whenIdValueIsZero() {
 
 		EntityWithReferencesToPrimitiveIdEntity entity = new EntityWithReferencesToPrimitiveIdEntity(null);
 		entity.primitiveLongIdEntities.add(new PrimitiveLongIdEntity());
 		entity.primitiveIntIdEntities.add(new PrimitiveIntIdEntity());
 
-		AggregateChangeWithRoot<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = MutableAggregateChange
+		RootAggregateChange<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = MutableAggregateChange
 				.forSave(entity);
 
 		new RelationalEntityWriter<EntityWithReferencesToPrimitiveIdEntity>(context).write(entity, aggregateChange);
@@ -824,7 +700,7 @@ public class RelationalEntityWriterUnitTests {
 		WithReadOnlyReference entity = new WithReadOnlyReference(null);
 		entity.readOnly = new Element(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
 
@@ -844,7 +720,7 @@ public class RelationalEntityWriterUnitTests {
 		WithReadOnlyReference entity = new WithReadOnlyReference(SOME_ENTITY_ID);
 		entity.readOnly = new Element(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
 
@@ -863,29 +739,6 @@ public class RelationalEntityWriterUnitTests {
 		List<DbAction<?>> actions = new ArrayList<>();
 		aggregateChange.forEachAction(actions::add);
 		return actions;
-	}
-
-	@NotNull
-	private <T> InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType) {
-		return getInsertBatchActions(actions, entityType).stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("No InsertBatch action found!"));
-	}
-
-	@NotNull
-	private <T> InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType,
-			IdValueSource idValueSource) {
-		return getInsertBatchActions(actions, entityType).stream()
-				.filter(insertBatch -> insertBatch.getIdValueSource() == idValueSource).findFirst().orElseThrow(
-						() -> new RuntimeException(String.format("No InsertBatch with includeId '%s' found!", idValueSource)));
-	}
-
-	@NotNull
-	private <T> List<InsertBatch<T>> getInsertBatchActions(List<DbAction<?>> actions, Class<T> entityType) {
-		// noinspection unchecked
-		return actions.stream() //
-				.filter(dbAction -> dbAction instanceof InsertBatch) //
-				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
-				.map(dbAction -> (InsertBatch<T>) dbAction).collect(Collectors.toList());
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {

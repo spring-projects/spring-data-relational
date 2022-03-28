@@ -83,14 +83,14 @@ class JdbcAggregateChangeExecutionContext {
 		add(new DbActionExecutionResult(insert, id));
 	}
 
-	<T> void executeInsertBatch(DbAction.InsertBatch<T> insertBatch) {
+	<T> void executeBatchInsert(DbAction.BatchInsert<T> batchInsert) {
 
-		List<DbAction.Insert<T>> inserts = insertBatch.getInserts();
+		List<DbAction.Insert<T>> inserts = batchInsert.getActions();
 		List<InsertSubject<T>> insertSubjects = inserts.stream()
 				.map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter)))
 				.collect(Collectors.toList());
 
-		Object[] ids = accessStrategy.insert(insertSubjects, insertBatch.getEntityType(), insertBatch.getIdValueSource());
+		Object[] ids = accessStrategy.insert(insertSubjects, batchInsert.getEntityType(), batchInsert.getBatchValue());
 
 		for (int i = 0; i < inserts.size(); i++) {
 			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
@@ -216,13 +216,15 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
-	<T> T populateIdsIfNecessary() {
+	<T> List<T> populateIdsIfNecessary() {
 
 		// have the results so that the inserts on the leaves come first.
 		List<DbActionExecutionResult> reverseResults = new ArrayList<>(results.values());
 		Collections.reverse(reverseResults);
 
 		StagedValues cascadingValues = new StagedValues();
+
+		List<T> roots = new ArrayList<>(reverseResults.size());
 
 		for (DbActionExecutionResult result : reverseResults) {
 
@@ -232,7 +234,7 @@ class JdbcAggregateChangeExecutionContext {
 
 			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
 				// noinspection unchecked
-				return (T) newEntity;
+				roots.add((T) newEntity);
 			}
 
 			// the id property was immutable so we have to propagate changes up the tree
@@ -246,9 +248,15 @@ class JdbcAggregateChangeExecutionContext {
 			}
 		}
 
-		throw new IllegalStateException(
-				String.format("Cannot retrieve the resulting instance unless a %s or %s action was successfully executed.",
-						DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+		if (roots.isEmpty()) {
+			throw new IllegalStateException(
+					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed.",
+							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+		}
+
+		Collections.reverse(roots);
+
+		return roots;
 	}
 
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,

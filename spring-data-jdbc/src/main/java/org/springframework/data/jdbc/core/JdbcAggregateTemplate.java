@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,7 +32,8 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
+import org.springframework.data.relational.core.conversion.BatchingAggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
@@ -44,6 +46,7 @@ import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
@@ -141,13 +144,15 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
+		return performSave(instance, changeCreatorSelectorForSave(instance));
+	}
 
-		Function<T, AggregateChangeWithRoot<T>> changeCreator = persistentEntity.isNew(instance)
-				? entity -> createInsertChange(prepareVersionForInsert(entity))
-				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
+	@Override
+	public <T> Iterable<T> saveAll(Iterable<T> instances) {
 
-		return store(instance, changeCreator, persistentEntity);
+		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty!");
+
+		return performSaveAll(instances);
 	}
 
 	/**
@@ -162,9 +167,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
-
-		return store(instance, entity -> createInsertChange(prepareVersionForInsert(entity)), persistentEntity);
+		return performSave(instance, entity -> createInsertChange(prepareVersionForInsert(entity)));
 	}
 
 	/**
@@ -179,9 +182,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
-
-		return store(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)), persistentEntity);
+		return performSave(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)));
 	}
 
 	@Override
@@ -280,29 +281,33 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		MutableAggregateChange<?> change = createDeletingChange(domainType);
-		executor.execute(change);
+		executor.executeDelete(change);
 	}
 
-	private <T> T store(T aggregateRoot, Function<T, AggregateChangeWithRoot<T>> changeCreator,
-			RelationalPersistentEntity<?> persistentEntity) {
+	private <T> T afterExecute(AggregateChange<T> change, T entityAfterExecution) {
+
+		Object identifier = context.getRequiredPersistentEntity(change.getEntityType())
+				.getIdentifierAccessor(entityAfterExecution).getIdentifier();
+
+		Assert.notNull(identifier, "After saving the identifier must not be null!");
+
+		return triggerAfterSave(entityAfterExecution, change);
+	}
+
+	private <T> RootAggregateChange<T> beforeExecute(T aggregateRoot,
+													 Function<T, RootAggregateChange<T>> changeCreator) {
 
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
 
-		AggregateChangeWithRoot<T> change = changeCreator.apply(aggregateRoot);
+		RootAggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
 		aggregateRoot = triggerBeforeSave(change.getRoot(), change);
 
 		change.setRoot(aggregateRoot);
 
-		T entityAfterExecution = executor.execute(change);
-
-		Object identifier = persistentEntity.getIdentifierAccessor(entityAfterExecution).getIdentifier();
-
-		Assert.notNull(identifier, "After saving the identifier must not be null!");
-
-		return triggerAfterSave(entityAfterExecution, change);
+		return change;
 	}
 
 	private <T> void deleteTree(Object id, @Nullable T entity, Class<T> domainType) {
@@ -311,23 +316,70 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		entity = triggerBeforeDelete(entity, id, change);
 
-		executor.execute(change);
+		executor.executeDelete(change);
 
 		triggerAfterDelete(entity, id, change);
 	}
 
-	private <T> AggregateChangeWithRoot<T> createInsertChange(T instance) {
+	private <T> T performSave(T instance, Function<T, RootAggregateChange<T>> changeCreator) {
 
-		AggregateChangeWithRoot<T> aggregateChange = MutableAggregateChange.forSave(instance);
+		// noinspection unchecked
+		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = //
+				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance));
+		batchingAggregateChange.add(beforeExecute(instance, changeCreator));
+
+		Iterator<T> afterExecutionIterator = executor.executeSave(batchingAggregateChange).iterator();
+
+		Assert.isTrue(afterExecutionIterator.hasNext(), "Instances after execution must not be empty!");
+
+		return afterExecute(batchingAggregateChange, afterExecutionIterator.next());
+	}
+
+	private <T> List<T> performSaveAll(Iterable<T> instances) {
+
+		Iterator<T> iterator = instances.iterator();
+		T firstInstance = iterator.next();
+
+		// noinspection unchecked
+		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = //
+				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(firstInstance));
+		batchingAggregateChange.add(beforeExecute(firstInstance, changeCreatorSelectorForSave(firstInstance)));
+
+		while (iterator.hasNext()) {
+			T instance = iterator.next();
+			batchingAggregateChange.add(beforeExecute(instance, changeCreatorSelectorForSave(instance)));
+		}
+
+		List<T> instancesAfterExecution = executor.executeSave(batchingAggregateChange);
+
+		ArrayList<T> results = new ArrayList<>(instancesAfterExecution.size());
+		for (T instance : instancesAfterExecution) {
+			results.add(afterExecute(batchingAggregateChange, instance));
+		}
+
+		return results;
+	}
+
+	private <T> Function<T, RootAggregateChange<T>> changeCreatorSelectorForSave(T instance) {
+
+		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
+				? entity -> createInsertChange(prepareVersionForInsert(entity))
+				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
+	}
+
+	private <T> RootAggregateChange<T> createInsertChange(T instance) {
+
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
 		new RelationalEntityInsertWriter<T>(context).write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	private <T> AggregateChangeWithRoot<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
+	private <T> RootAggregateChange<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
 
-		AggregateChangeWithRoot<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
 				entityAndVersion.version);
-		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity, aggregateChange);
+		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity,
+				aggregateChange);
 		return aggregateChange;
 	}
 

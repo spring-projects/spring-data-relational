@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * Unit tests for the {@link RelationalEntityInsertWriter}
  *
  * @author Thomas Lang
- * @author Chirag Taylor
+ * @author Chirag Tailor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityInsertWriterUnitTests {
@@ -45,7 +45,7 @@ public class RelationalEntityInsertWriterUnitTests {
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityInsertWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
@@ -62,7 +62,7 @@ public class RelationalEntityInsertWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityInsertWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 

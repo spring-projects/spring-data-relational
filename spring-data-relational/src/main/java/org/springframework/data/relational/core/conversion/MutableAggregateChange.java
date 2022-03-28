@@ -30,32 +30,32 @@ import org.springframework.util.ClassUtils;
 public interface MutableAggregateChange<T> extends AggregateChange<T> {
 
 	/**
-	 * Factory method to create an {@link AggregateChangeWithRoot} for saving entities.
+	 * Factory method to create a {@link RootAggregateChange} for saving entities.
 	 *
 	 * @param entity aggregate root to save.
 	 * @param <T> entity type.
-	 * @return the {@link AggregateChangeWithRoot} for saving the root {@code entity}.
+	 * @return the {@link RootAggregateChange} for saving the root {@code entity}.
 	 * @since 1.2
 	 */
-	static <T> AggregateChangeWithRoot<T> forSave(T entity) {
+	static <T> RootAggregateChange<T> forSave(T entity) {
 		return forSave(entity, null);
 	}
 
 	/**
-	 * Factory method to create an {@link AggregateChangeWithRoot} for saving entities.
+	 * Factory method to create a {@link RootAggregateChange} for saving entities.
 	 *
 	 * @param entity aggregate root to save.
 	 * @param previousVersion the previous version assigned to the instance being saved. May be {@literal null}.
 	 * @param <T> entity type.
-	 * @return the {@link AggregateChangeWithRoot} for saving the root {@code entity}.
+	 * @return the {@link RootAggregateChange} for saving the root {@code entity}.
 	 * @since 2.4
 	 */
 	@SuppressWarnings("unchecked")
-	static <T> AggregateChangeWithRoot<T> forSave(T entity, @Nullable Number previousVersion) {
+	static <T> RootAggregateChange<T> forSave(T entity, @Nullable Number previousVersion) {
 
 		Assert.notNull(entity, "Entity must not be null");
 
-		return new DefaultAggregateChangeWithRoot<>(Kind.SAVE, (Class<T>) ClassUtils.getUserClass(entity), previousVersion);
+		return new DefaultRootAggregateChange<>(Kind.SAVE, (Class<T>) ClassUtils.getUserClass(entity), previousVersion);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +24,6 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -35,6 +33,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Milan Milanov
+ * @author Chirag Tailor
  */
 @Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, PagingAndSortingRepository<T, ID> {
@@ -60,10 +59,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, Paging
 	@Transactional
 	@Override
 	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
-
-		return Streamable.of(entities).stream() //
-				.map(this::save) //
-				.collect(Collectors.toList());
+		return entityOperations.saveAll(entities);
 	}
 
 	@Override

@@ -36,7 +36,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
@@ -71,10 +71,10 @@ public class AggregateChangeIdGenerationUnitTests {
 	@Test // DATAJDBC-291
 	public void singleRoot() {
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 	}
@@ -84,11 +84,11 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		entity.single = content;
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -103,12 +103,12 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentList.add(content);
 		entity.contentList.add(content2);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -123,12 +123,12 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentMap.put("a", content);
 		entity.contentMap.put("b", content2);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.contentMap.values()).extracting(c -> c.id).containsExactly(2, 3);
@@ -143,12 +143,12 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert = createDeepInsert("single", tag1, null, parentInsert);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.single.id).isEqualTo(2);
@@ -166,13 +166,13 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagList", tag1, 0, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 1, parentInsert);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -193,13 +193,13 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagSet", tag1, null, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagSet", tag2, null, parentInsert);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -227,14 +227,14 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
 		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -260,7 +260,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 0, parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagList", tag3, 1, parentInsert2);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -268,7 +268,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -298,7 +298,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagMap", tag2, "222", parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagMap", tag3, "333", parentInsert2);
 
-		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -306,7 +306,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
