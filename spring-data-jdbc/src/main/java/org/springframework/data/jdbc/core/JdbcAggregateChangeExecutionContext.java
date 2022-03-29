@@ -216,13 +216,15 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
-	<T> T populateIdsIfNecessary() {
+	<T> List<T> populateIdsIfNecessary() {
 
 		// have the results so that the inserts on the leaves come first.
 		List<DbActionExecutionResult> reverseResults = new ArrayList<>(results.values());
 		Collections.reverse(reverseResults);
 
 		StagedValues cascadingValues = new StagedValues();
+
+		List<T> roots = new ArrayList<>();
 
 		for (DbActionExecutionResult result : reverseResults) {
 
@@ -232,7 +234,7 @@ class JdbcAggregateChangeExecutionContext {
 
 			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
 				// noinspection unchecked
-				return (T) newEntity;
+				roots.add((T) newEntity);
 			}
 
 			// the id property was immutable so we have to propagate changes up the tree
@@ -246,9 +248,15 @@ class JdbcAggregateChangeExecutionContext {
 			}
 		}
 
-		throw new IllegalStateException(
-				String.format("Cannot retrieve the resulting instance unless a %s or %s action was successfully executed.",
-						DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+		if (roots.isEmpty()) {
+			throw new IllegalStateException(
+					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed.",
+							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+		}
+
+		Collections.reverse(roots);
+
+		return roots;
 	}
 
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,

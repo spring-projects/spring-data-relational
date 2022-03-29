@@ -68,6 +68,8 @@ import org.springframework.lang.Nullable;
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
+	private static final long generatedId = 4711L;
+
 	CollectingEventPublisher publisher = new CollectingEventPublisher();
 
 	DummyEntityRepository repository;
@@ -125,14 +127,14 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		repository.saveAll(asList(entity1, entity2));
 
 		assertThat(publisher.events) //
-				.extracting(e -> (Class) e.getClass()) //
+				.extracting(RelationalEvent::getClass, e -> ((DummyEntity) e.getEntity()).getId()) //
 				.containsExactly( //
-						BeforeConvertEvent.class, //
-						BeforeSaveEvent.class, //
-						AfterSaveEvent.class, //
-						BeforeConvertEvent.class, //
-						BeforeSaveEvent.class, //
-						AfterSaveEvent.class //
+						Tuple.tuple(BeforeConvertEvent.class, null), //
+						Tuple.tuple(BeforeSaveEvent.class, null), //
+						Tuple.tuple(BeforeConvertEvent.class, 23L), //
+						Tuple.tuple(BeforeSaveEvent.class, 23L), //
+						Tuple.tuple(AfterSaveEvent.class, generatedId), //
+						Tuple.tuple(AfterSaveEvent.class, 23L) //
 				);
 	}
 
@@ -284,7 +286,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		Answer<Integer> setIdInKeyHolder = invocation -> {
 
 			HashMap<String, Object> keys = new HashMap<>();
-			keys.put("id", 4711L);
+			keys.put("id", generatedId);
 			KeyHolder keyHolder = invocation.getArgument(2);
 			keyHolder.getKeyList().add(keys);
 

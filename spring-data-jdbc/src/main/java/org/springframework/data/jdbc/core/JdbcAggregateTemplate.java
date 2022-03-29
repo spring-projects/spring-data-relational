@@ -47,6 +47,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
+import static java.util.Collections.*;
+
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
  *
@@ -141,28 +143,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
-
-		Function<T, AggregateChangeWithRoot<T>> changeCreator = persistentEntity.isNew(instance)
-				? entity -> createInsertChange(prepareVersionForInsert(entity))
-				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
-
-		return store(instance, changeCreator, persistentEntity);
+		return StreamSupport.stream(saveAll(singletonList(instance)).spliterator(), false).findFirst()
+				.orElseThrow(() -> new IllegalStateException(
+						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
 	}
 
-	private <T> void saveAll(Iterable<T> instances) {
-		
-		ArrayList<T> instancesList = new ArrayList<>();
-		instances.forEach(instancesList::add);
-		Assert.notEmpty(instancesList, "Aggregate instances must not be empty!");
-
-		//noinspection unchecked
-		MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedAggregateChange = instancesList.stream()
-				.map(MutableAggregateChange::forSave)
-				.reduce(MutableAggregateChange.mergedSave((Class<T>) ClassUtils.getUserClass(instancesList.get(0))),
-						MergedAggregateChange::merge,
-						(left, right) -> right);
-
+	@Override
+	public <T> Iterable<T> saveAll(Iterable<T> instances) {
+		return performSaveChange(instances, this::changeCreatorSelectorForSave);
 	}
 
 	/**
@@ -177,9 +165,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
-
-		return store(instance, entity -> createInsertChange(prepareVersionForInsert(entity)), persistentEntity);
+		return performSaveChange(singletonList(instance), this::changeCreatorSelectorForInsert).stream().findFirst()
+				.orElseThrow(() -> new IllegalStateException(
+						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
 	}
 
 	/**
@@ -194,9 +182,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
-
-		return store(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)), persistentEntity);
+		return performSaveChange(singletonList(instance), this::changeCreatorSelectorForUpdate).stream().findFirst()
+				.orElseThrow(() -> new IllegalStateException(
+						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
 	}
 
 	@Override
@@ -295,12 +283,20 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		MutableAggregateChange<?> change = createDeletingChange(domainType);
-		executor.execute(change);
+		executor.executeDelete(change);
 	}
 
-	private <T> T store(T aggregateRoot, Function<T, AggregateChangeWithRoot<T>> changeCreator,
-			RelationalPersistentEntity<?> persistentEntity) {
+	private <T> T afterExecute(AggregateChange<T> change, T entityAfterExecution) {
+		Object identifier = context.getRequiredPersistentEntity(change.getEntityType())
+				.getIdentifierAccessor(entityAfterExecution).getIdentifier();
 
+		Assert.notNull(identifier, "After saving the identifier must not be null!");
+
+		return triggerAfterSave(entityAfterExecution, change);
+	}
+
+	private <T> AggregateChangeWithRoot<T> beforeExecute(T aggregateRoot,
+			Function<T, AggregateChangeWithRoot<T>> changeCreator) {
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
@@ -310,14 +306,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		aggregateRoot = triggerBeforeSave(change.getRoot(), change);
 
 		change.setRoot(aggregateRoot);
-
-		T entityAfterExecution = executor.execute(change);
-
-		Object identifier = persistentEntity.getIdentifierAccessor(entityAfterExecution).getIdentifier();
-
-		Assert.notNull(identifier, "After saving the identifier must not be null!");
-
-		return triggerAfterSave(entityAfterExecution, change);
+		return change;
 	}
 
 	private <T> void deleteTree(Object id, @Nullable T entity, Class<T> domainType) {
@@ -326,9 +315,39 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		entity = triggerBeforeDelete(entity, id, change);
 
-		executor.execute(change);
+		executor.executeDelete(change);
 
 		triggerAfterDelete(entity, id, change);
+	}
+
+	private <T> List<T> performSaveChange(Iterable<T> instances, Function<T, Function<T, AggregateChangeWithRoot<T>>> changeCreatorSelector) {
+		ArrayList<T> instancesList = new ArrayList<>();
+		instances.forEach(instancesList::add);
+		Assert.notEmpty(instancesList, "Aggregate instances must not be empty!");
+
+		// noinspection unchecked
+		MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedAggregateChange = instancesList.stream() //
+				.map(instance -> beforeExecute(instance, changeCreatorSelector.apply(instance))) //
+				.reduce(MutableAggregateChange.mergedSave((Class<T>) ClassUtils.getUserClass(instancesList.get(0))),
+						MergedAggregateChange::merge, (left, right) -> right);
+
+		return executor.executeSave(mergedAggregateChange).stream()
+				.map(entityAfterExecution -> afterExecute(mergedAggregateChange, entityAfterExecution))
+				.collect(Collectors.toList());
+	}
+
+	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForSave(T instance) {
+		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
+				? changeCreatorSelectorForInsert(instance)
+				: changeCreatorSelectorForUpdate(instance);
+	}
+
+	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForInsert(T instance) {
+		return entity -> createInsertChange(prepareVersionForInsert(entity));
+	}
+
+	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForUpdate(T instance) {
+		return entity -> createUpdateChange(prepareVersionForUpdate(entity));
 	}
 
 	private <T> AggregateChangeWithRoot<T> createInsertChange(T instance) {
@@ -342,7 +361,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		AggregateChangeWithRoot<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
 				entityAndVersion.version);
-		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity, aggregateChange);
+		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity,
+				aggregateChange);
 		return aggregateChange;
 	}
 

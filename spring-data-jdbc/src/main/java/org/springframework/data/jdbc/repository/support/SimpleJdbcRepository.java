@@ -60,10 +60,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, Paging
 	@Transactional
 	@Override
 	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
-
-		return Streamable.of(entities).stream() //
-				.map(this::save) //
-				.collect(Collectors.toList());
+		return entityOperations.saveAll(entities);
 	}
 
 	@Override

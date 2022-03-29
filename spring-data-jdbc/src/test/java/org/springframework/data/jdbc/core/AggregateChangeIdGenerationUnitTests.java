@@ -74,7 +74,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		AggregateChangeWithRoot<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.setRootAction(rootInsert);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 	}
@@ -88,7 +88,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.setRootAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -108,7 +108,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -128,7 +128,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.contentMap.values()).extracting(c -> c.id).containsExactly(2, 3);
@@ -148,7 +148,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.single.id).isEqualTo(2);
@@ -172,7 +172,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -199,7 +199,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -234,7 +234,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -268,7 +268,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 
@@ -306,7 +306,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		executor.execute(aggregateChange);
+		executor.executeSave(aggregateChange);
 
 		assertSoftly(softly -> {
 

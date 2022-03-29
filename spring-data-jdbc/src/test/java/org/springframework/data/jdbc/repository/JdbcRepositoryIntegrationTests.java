@@ -128,7 +128,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // DATAJDBC-97
-	public void savesManyEntities() {
+	public void insertsManyEntities() {
 
 		DummyEntity entity = createDummyEntity();
 		DummyEntity other = createDummyEntity();
@@ -276,6 +276,20 @@ public class JdbcRepositoryIntegrationTests {
 		other.setName("others Name");
 
 		repository.saveAll(asList(entity, other));
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getName) //
+				.containsExactlyInAnyOrder(entity.getName(), other.getName());
+	}
+
+	@Test
+	void insertsOrUpdatesManyEntities() {
+
+		DummyEntity entity = repository.save(createDummyEntity());
+		entity.setName("something else");
+		DummyEntity other = createDummyEntity();
+		other.setName("others name");
+		repository.saveAll(asList(other, entity));
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getName) //

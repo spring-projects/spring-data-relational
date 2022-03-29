@@ -18,10 +18,11 @@ package org.springframework.data.jdbc.core;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
+
+import java.util.List;
 
 /**
  * Executes an {@link MutableAggregateChange}.
@@ -43,15 +44,15 @@ class AggregateChangeExecutor {
 	}
 
 	/**
-	 * Execute an aggregate change which has a root entity. It returns the root entity, with all changes that might apply.
-	 * This might be the original instance or a new instance, depending on its mutability.
+	 * Execute a save aggregate change. It returns the resulting root entities, with all changes that might apply. This
+	 * might be the original instances or new instances, depending on their mutability.
 	 * 
 	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
 	 * @param <T> the type of the aggregate root.
-	 * @return the potentially modified aggregate root. Guaranteed to be not {@literal null}.
+	 * @return the aggregate roots resulting from the change, if there are any. May be empty.
 	 * @since 3.0
 	 */
-	<T> T execute(AggregateChangeWithRoot<T> aggregateChange) {
+	<T> List<T> executeSave(AggregateChange<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 				accessStrategy);
@@ -62,13 +63,13 @@ class AggregateChangeExecutor {
 	}
 
 	/**
-	 * Execute an aggregate change without a root entity.
+	 * Execute a delete aggregate change.
 	 *
 	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
 	 * @param <T> the type of the aggregate root.
 	 * @since 3.0
 	 */
-	<T> void execute(AggregateChange<T> aggregateChange) {
+	<T> void executeDelete(AggregateChange<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 				accessStrategy);

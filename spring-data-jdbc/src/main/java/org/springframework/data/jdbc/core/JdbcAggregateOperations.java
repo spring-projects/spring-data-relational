@@ -38,6 +38,8 @@ public interface JdbcAggregateOperations {
 	 */
 	<T> T save(T instance);
 
+	<T> Iterable<T> saveAll(Iterable<T> instances);
+
 	/**
 	 * Dedicated insert function. This skips the test if the aggregate root is new and makes an insert.
 	 * <p>

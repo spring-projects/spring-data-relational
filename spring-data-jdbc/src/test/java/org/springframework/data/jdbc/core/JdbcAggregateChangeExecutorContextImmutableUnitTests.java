@@ -70,9 +70,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNotNull();
+		assertThat(newRoots).hasSize(1);
+		DummyEntity newRoot = newRoots.get(0);
 		assertThat(newRoot.id).isEqualTo(23L);
 	}
 
@@ -83,16 +84,17 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()),
 				eq(IdValueSource.GENERATED))).thenReturn(23L);
-		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef()), eq(IdValueSource.GENERATED)))
+		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef(23L)), eq(IdValueSource.GENERATED)))
 				.thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNotNull();
+		assertThat(newRoots).hasSize(1);
+		DummyEntity newRoot = newRoots.get(0);
 		assertThat(newRoot.id).isEqualTo(23L);
 
 		assertThat(newRoot.content.id).isEqualTo(24L);
@@ -112,12 +114,44 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
-		assertThat(newRoot).isNotNull();
+		assertThat(newRoots).hasSize(1);
+		DummyEntity newRoot = newRoots.get(0);
 		assertThat(newRoot.id).isEqualTo(23L);
 
 		assertThat(newRoot.list.get(0).id).isEqualTo(24L);
+	}
+
+	@Test // GH-537
+	void populatesIdsIfNecessaryForAllRootsThatWereProcessed() {
+
+		DummyEntity root1 = new DummyEntity().withId(123L);
+		when(accessStrategy.update(root1, DummyEntity.class)).thenReturn(true);
+		DbAction.UpdateRoot<DummyEntity> rootUpdate1 = new DbAction.UpdateRoot<>(root1, null);
+		executionContext.executeUpdateRoot(rootUpdate1);
+		Content content1 = new Content();
+		when(accessStrategy.insert(content1, Content.class, createBackRef(123L), IdValueSource.GENERATED)).thenReturn(11L);
+		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null));
+
+
+		DummyEntity root2 = new DummyEntity();
+		DbAction.InsertRoot<DummyEntity> rootInsert2 = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+		when(accessStrategy.insert(root2, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(456L);
+		executionContext.executeInsertRoot(rootInsert2);
+		Content content2 = new Content();
+		when(accessStrategy.insert(content2, Content.class, createBackRef(456L), IdValueSource.GENERATED)).thenReturn(12L);
+		executionContext.executeInsert(createInsert(rootInsert2, "content", content2, null));
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoots).hasSize(2);
+		DummyEntity newRoot1 = newRoots.get(0);
+		assertThat(newRoot1.id).isEqualTo(123L);
+		assertThat(newRoot1.content.id).isEqualTo(11L);
+		DummyEntity newRoot2 = newRoots.get(1);
+		assertThat(newRoot2.id).isEqualTo(456L);
+		assertThat(newRoot2.content.id).isEqualTo(12L);
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
@@ -135,8 +169,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		return context.getPersistentPropertyPath(propertyName, DummyEntity.class);
 	}
 
-	Identifier createBackRef() {
-		return JdbcIdentifierBuilder.forBackReferences(converter, toPathExt("content"), 23L).build();
+	Identifier createBackRef(long value) {
+		return JdbcIdentifierBuilder.forBackReferences(converter, toPathExt("content"), value).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
