@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Value;
+import lombok.With;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,14 +41,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.Value;
-import lombok.With;
-
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
  *
  * @author Jens Schauder
  * @author Salim Achouche
+ * @author Chirag Taylor
  */
 @ContextConfiguration
 @Transactional
@@ -341,8 +342,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	static class WithCopyConstructor {
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private final String name;
 
 		WithCopyConstructor(Long id, String name) {

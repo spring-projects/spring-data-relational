@@ -669,7 +669,8 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new NoIdMapContainer());
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
-		AggregateChangeWithRoot<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer, 1L);
+		AggregateChangeWithRoot<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer,
+				1L);
 
 		new RelationalEntityWriter<NoIdListMapContainer>(context).write(listMapContainer, aggregateChange);
 

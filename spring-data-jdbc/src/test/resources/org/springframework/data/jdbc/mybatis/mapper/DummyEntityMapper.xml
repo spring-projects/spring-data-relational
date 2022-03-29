@@ -14,8 +14,8 @@
 	</insert>
 	<select id="findById" resultType="MyBatisContext" resultMap="dummyEntityMap">
 		SELECT
-			id,
-			'name ' || id as name
+		id,
+		'name ' || id as name
 		FROM DummyEntity
 		WHERE id = #{id}
 	</select>

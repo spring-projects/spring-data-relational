@@ -17,6 +17,11 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Value;
+import lombok.With;
+
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -37,11 +42,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Value;
-import lombok.With;
 
 /**
  * Integration tests for the {@link BeforeSaveCallback}.
@@ -153,7 +153,8 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		private String name;
 	}
 
-	private interface MutableWithImmutableIdEntityRepository extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {}
+	private interface MutableWithImmutableIdEntityRepository
+			extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {}
 
 	@Data
 	@AllArgsConstructor
@@ -162,14 +163,14 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		private String name;
 	}
 
-	private interface ImmutableWithMutableIdEntityRepository extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {}
+	private interface ImmutableWithMutableIdEntityRepository
+			extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {}
 
 	@Data
 	@AllArgsConstructor
 	static class ImmutableWithMutableIdEntity {
 		@Id private Long id;
-		@With
-		private final String name;
+		@With private final String name;
 	}
 
 	@Configuration

@@ -19,13 +19,13 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import lombok.Value;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Value;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
@@ -174,7 +174,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		ContentImmutableId contentImmutableId = new ContentImmutableId(null);
 		root.contentImmutableId = contentImmutableId;
 		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class);
-		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED)).thenReturn(456L);
+		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED))
+				.thenReturn(456L);
 		executionContext.executeInsert(createInsert(rootInsert, "contentImmutableId", contentImmutableId, null));
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();

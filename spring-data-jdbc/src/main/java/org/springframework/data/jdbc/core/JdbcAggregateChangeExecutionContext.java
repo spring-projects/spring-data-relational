@@ -42,6 +42,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * A container for the data required and produced by an aggregate change execution. Most importantly it holds the
+ * results of the various actions performed.
+ *
  * @author Jens Schauder
  * @author Umut Erturk
  * @author Myeonghyeon Lee
@@ -226,9 +229,9 @@ class JdbcAggregateChangeExecutionContext {
 			DbAction.WithEntity<?> action = result.getAction();
 
 			Object newEntity = setIdAndCascadingProperties(action, result.getGeneratedId(), cascadingValues);
-			
+
 			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
-				//noinspection unchecked
+				// noinspection unchecked
 				return (T) newEntity;
 			}
 

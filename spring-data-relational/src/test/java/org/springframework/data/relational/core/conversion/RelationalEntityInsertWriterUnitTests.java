@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * Unit tests for the {@link RelationalEntityInsertWriter}
  *
  * @author Thomas Lang
+ * @author Chirag Taylor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityInsertWriterUnitTests {

@@ -42,6 +42,12 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
+/**
+ * Test for the {@link JdbcAggregateChangeExecutionContext} when operating on immutable classes.
+ *
+ * @author Jens Schauder
+ * @author Chirag Taylor
+ */
 public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();

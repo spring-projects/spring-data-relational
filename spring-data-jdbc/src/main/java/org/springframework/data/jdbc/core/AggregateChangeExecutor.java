@@ -42,6 +42,15 @@ class AggregateChangeExecutor {
 		this.accessStrategy = accessStrategy;
 	}
 
+	/**
+	 * Execute an aggregate change which has a root entity. It returns the root entity, with all changes that might apply.
+	 * This might be the original instance or a new instance, depending on its mutability.
+	 * 
+	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
+	 * @param <T> the type of the aggregate root.
+	 * @return the potentially modified aggregate root. Guaranteed to be not {@literal null}.
+	 * @since 3.0
+	 */
 	<T> T execute(AggregateChangeWithRoot<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
@@ -52,6 +61,13 @@ class AggregateChangeExecutor {
 		return executionContext.populateIdsIfNecessary();
 	}
 
+	/**
+	 * Execute an aggregate change without a root entity.
+	 *
+	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
+	 * @param <T> the type of the aggregate root.
+	 * @since 3.0
+	 */
 	<T> void execute(AggregateChange<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
