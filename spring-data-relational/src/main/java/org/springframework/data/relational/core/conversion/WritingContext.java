@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -149,15 +148,7 @@ class WritingContext<T> {
 			inserts.add(insert);
 			previousActions.put(node, insert);
 		});
-		return inserts.stream().collect(Collectors.groupingBy(DbAction.Insert::getIdValueSource)).entrySet().stream()
-				.filter(entry -> (!entry.getValue().isEmpty())).map(entry -> {
-
-					List<DbAction.Insert<Object>> batch = entry.getValue();
-					if (batch.size() > 1) {
-						return new DbAction.InsertBatch<>(batch, entry.getKey());
-					}
-					return batch.get(0);
-				}).collect(Collectors.toList());
+		return inserts;
 	}
 
 	private List<DbAction<?>> deleteReferenced() {
