@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -345,15 +346,25 @@ public interface DbAction<T> {
 		}
 	}
 
+	/**
+	 * Represents a batch of {@link DbAction} that share a common value for a property of the action.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
 	abstract class BatchWithValue<T, A extends DbAction<T>, B> implements DbAction<T> {
 		private final List<A> actions;
 		private final B batchValue;
 
 		public BatchWithValue(List<A> actions, Function<A, B> batchValueExtractor) {
 			Assert.notEmpty(actions, "Actions must contain at least one action");
-			this.batchValue = batchValueExtractor.apply(actions.get(0));
-			Assert.isTrue(actions.stream().allMatch(a -> batchValueExtractor.apply(a).equals(batchValue)),
-					"All actions in the batch must have matching batchValue");
+			Iterator<A> actionIterator = actions.iterator();
+			this.batchValue = batchValueExtractor.apply(actionIterator.next());
+			actionIterator.forEachRemaining(action -> {
+				if (!batchValueExtractor.apply(action).equals(batchValue)) {
+					throw new IllegalArgumentException("All actions in the batch must have matching batchValue");
+				}
+			});
 			this.actions = actions;
 		}
 

@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  *
  * @author Thomas Lang
  * @author Myeonghyeon Lee
- * @author Chirag Taylor
+ * @author Chirag Tailor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityUpdateWriterUnitTests {

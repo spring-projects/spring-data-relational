@@ -287,6 +287,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> T afterExecute(AggregateChange<T> change, T entityAfterExecution) {
+
 		Object identifier = context.getRequiredPersistentEntity(change.getEntityType())
 				.getIdentifierAccessor(entityAfterExecution).getIdentifier();
 
@@ -297,6 +298,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> AggregateChangeWithRoot<T> beforeExecute(T aggregateRoot,
 			Function<T, AggregateChangeWithRoot<T>> changeCreator) {
+
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
@@ -306,6 +308,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		aggregateRoot = triggerBeforeSave(change.getRoot(), change);
 
 		change.setRoot(aggregateRoot);
+
 		return change;
 	}
 
@@ -321,6 +324,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> List<T> performSaveChange(Iterable<T> instances, Function<T, Function<T, AggregateChangeWithRoot<T>>> changeCreatorSelector) {
+
 		ArrayList<T> instancesList = new ArrayList<>();
 		instances.forEach(instancesList::add);
 		Assert.notEmpty(instancesList, "Aggregate instances must not be empty!");
@@ -337,6 +341,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForSave(T instance) {
+
 		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
 				? changeCreatorSelectorForInsert(instance)
 				: changeCreatorSelectorForUpdate(instance);

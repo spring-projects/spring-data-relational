@@ -46,7 +46,7 @@ import org.springframework.lang.Nullable;
  * Test for the {@link JdbcAggregateChangeExecutionContext} when operating on immutable classes.
  *
  * @author Jens Schauder
- * @author Chirag Taylor
+ * @author Chirag Tailor
  */
 public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 

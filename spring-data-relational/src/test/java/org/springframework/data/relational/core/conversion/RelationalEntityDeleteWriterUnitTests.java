@@ -39,7 +39,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
- * @author Chirag Taylor
+ * @author Chirag Tailor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityDeleteWriterUnitTests {

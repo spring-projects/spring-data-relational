@@ -1,3 +1,18 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.relational.core.conversion;
 
 import static java.util.Collections.*;
@@ -14,6 +29,15 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
+/**
+ * A {@link org.springframework.data.relational.core.conversion.MergedAggregateChange} implementation for save changes
+ * that can contain actions for any mix of insert and update operations. When consumed, actions are yielded in the
+ * appropriate entity tree order with inserts carried out from root to leaves and deletes in reverse. All insert
+ * operations are grouped into batches to offer the ability for an optimized batch operation to be used.
+ *
+ * @author Chirag Tailor
+ * @since 3.0
+ */
 public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, AggregateChangeWithRoot<T>> {
 
 	private static final Comparator<PersistentPropertyPath<RelationalPersistentProperty>> pathLengthComparator = //
@@ -55,6 +79,7 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 
 	@Override
 	public MergedAggregateChange<T, AggregateChangeWithRoot<T>> merge(AggregateChangeWithRoot<T> aggregateChange) {
+
 		aggregateChange.forEachAction(action -> {
 			if (action instanceof DbAction.WithRoot<?> rootAction) {
 				rootActions.add(rootAction);
@@ -69,6 +94,7 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 	}
 
 	private void addInsert(DbAction.Insert<Object> action) {
+
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
 		insertActions.merge(propertyPath,
 				new EnumMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))),
@@ -83,6 +109,7 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 	}
 
 	private void addDelete(DbAction.Delete<?> action) {
+
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
 		deleteActions.merge(propertyPath, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {
 			actions.add(action);
