@@ -162,9 +162,9 @@ class SaveMergedAggregateChangeTest {
 						Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
 						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED)) //
 				.doesNotContain(Tuple.tuple(DbAction.Insert.class, Intermediate.class));
-		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.GENERATED).getInserts())
+		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.GENERATED).getActions())
 				.containsExactly(intermediateInsertGeneratedId);
-		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.PROVIDED).getInserts())
+		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.PROVIDED).getActions())
 				.containsExactly(intermediateInsertProvidedId);
 	}
 
@@ -207,9 +207,9 @@ class SaveMergedAggregateChangeTest {
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED),
 						Tuple.tuple(DbAction.InsertBatch.class, Leaf.class, IdValueSource.GENERATED));
-		assertThat(getInsertBatchAction(actions, Intermediate.class).getInserts()) //
+		assertThat(getInsertBatchAction(actions, Intermediate.class).getActions()) //
 				.containsExactly(root1IntermediateInsert, root2IntermediateInsert);
-		assertThat(getInsertBatchAction(actions, Leaf.class).getInserts()) //
+		assertThat(getInsertBatchAction(actions, Leaf.class).getActions()) //
 				.containsExactly(root1LeafInsert);
 	}
 
@@ -241,14 +241,14 @@ class SaveMergedAggregateChangeTest {
 						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED));
 		List<DbAction.InsertBatch<Intermediate>> insertBatchActions = getInsertBatchActions(actions, Intermediate.class);
 		assertThat(insertBatchActions).hasSize(2);
-		assertThat(insertBatchActions.get(0).getInserts()).containsExactly(oneInsert);
-		assertThat(insertBatchActions.get(1).getInserts()).containsExactly(twoInsert);
+		assertThat(insertBatchActions.get(0).getActions()).containsExactly(oneInsert);
+		assertThat(insertBatchActions.get(1).getActions()).containsExactly(twoInsert);
 	}
 
 	private <T> DbAction.InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType,
 			IdValueSource idValueSource) {
 		return getInsertBatchActions(actions, entityType).stream()
-				.filter(insertBatch -> insertBatch.getIdValueSource() == idValueSource).findFirst().orElseThrow(
+				.filter(insertBatch -> insertBatch.getBatchValue() == idValueSource).findFirst().orElseThrow(
 						() -> new RuntimeException(String.format("No InsertBatch with includeId '%s' found!", idValueSource)));
 	}
 

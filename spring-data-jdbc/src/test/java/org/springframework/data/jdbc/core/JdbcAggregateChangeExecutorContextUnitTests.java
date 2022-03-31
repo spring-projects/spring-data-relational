@@ -85,7 +85,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
-		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
+		executionContext.executeInsert(createInsert(rootInsert, "content", content, null, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -106,7 +106,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
-		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
+		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -130,7 +130,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.GENERATED)).thenReturn(new Object[] { 456L });
 		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.GENERATED);
+				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.GENERATED)));
 		executionContext.executeInsertBatch(insertBatch);
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
@@ -154,7 +154,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.PROVIDED)).thenReturn(new Object[] { null });
 		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
-				singletonList(createInsert(rootInsert, "list", content, 0)), IdValueSource.PROVIDED);
+				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.PROVIDED)));
 		executionContext.executeInsertBatch(insertBatch);
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
@@ -177,7 +177,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class);
 		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED))
 				.thenReturn(456L);
-		executionContext.executeInsert(createInsert(rootUpdate, "contentImmutableId", contentImmutableId, null));
+		executionContext.executeInsert(createInsert(rootUpdate, "contentImmutableId", contentImmutableId, null, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 		assertThat(newRoots).containsExactly(root);
@@ -195,7 +195,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeUpdateRoot(rootUpdate1);
 		Content content1 = new Content();
 		when(accessStrategy.insert(content1, Content.class, createBackRef(123L), IdValueSource.GENERATED)).thenReturn(11L);
-		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null));
+		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null, IdValueSource.GENERATED));
 
 
 		DummyEntity root2 = new DummyEntity();
@@ -204,7 +204,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsertRoot(rootInsert2);
 		Content content2 = new Content();
 		when(accessStrategy.insert(content2, Content.class, createBackRef(456L), IdValueSource.GENERATED)).thenReturn(12L);
-		executionContext.executeInsert(createInsert(rootInsert2, "content", content2, null));
+		executionContext.executeInsert(createInsert(rootInsert2, "content", content2, null, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -216,10 +216,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-									@Nullable Object key) {
+									@Nullable Object key, IdValueSource idValueSource) {
 
 		return new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
-				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
+				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), idValueSource);
 	}
 
 	PersistentPropertyPathExtension toPathExt(String path) {

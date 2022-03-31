@@ -50,7 +50,7 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 				.forEach((entry) -> entry.getValue().forEach(consumer));
 		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
 				.forEach((entry) -> entry.getValue()
-						.forEach((idValueSource, inserts) -> consumer.accept(new DbAction.InsertBatch<>(inserts, idValueSource))));
+						.forEach((idValueSource, inserts) -> consumer.accept(new DbAction.InsertBatch<>(inserts))));
 	}
 
 	@Override
