@@ -129,9 +129,9 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.GENERATED)).thenReturn(new Object[] { 456L });
-		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
+		DbAction.BatchInsert<?> batchInsert = new DbAction.BatchInsert<>(
 				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.GENERATED)));
-		executionContext.executeInsertBatch(insertBatch);
+		executionContext.executeBatchInsert(batchInsert);
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -153,9 +153,9 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				.withPart(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"), 0, Integer.class);
 		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(content, identifier)), Content.class,
 				IdValueSource.PROVIDED)).thenReturn(new Object[] { null });
-		DbAction.InsertBatch<?> insertBatch = new DbAction.InsertBatch<>(
+		DbAction.BatchInsert<?> batchInsert = new DbAction.BatchInsert<>(
 				singletonList(createInsert(rootInsert, "list", content, 0, IdValueSource.PROVIDED)));
-		executionContext.executeInsertBatch(insertBatch);
+		executionContext.executeBatchInsert(batchInsert);
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 

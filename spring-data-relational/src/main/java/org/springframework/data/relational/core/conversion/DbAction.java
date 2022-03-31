@@ -382,8 +382,8 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 * @since 2.4
 	 */
-	final class InsertBatch<T> extends BatchWithValue<T, Insert<T>, IdValueSource> {
-		public InsertBatch(List<Insert<T>> actions) {
+	final class BatchInsert<T> extends BatchWithValue<T, Insert<T>, IdValueSource> {
+		public BatchInsert(List<Insert<T>> actions) {
 			super(actions, Insert::getIdValueSource);
 		}
 	}

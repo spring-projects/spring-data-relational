@@ -84,8 +84,8 @@ class AggregateChangeExecutor {
 				executionContext.executeInsertRoot((DbAction.InsertRoot<?>) action);
 			} else if (action instanceof DbAction.Insert) {
 				executionContext.executeInsert((DbAction.Insert<?>) action);
-			} else if (action instanceof DbAction.InsertBatch) {
-				executionContext.executeInsertBatch((DbAction.InsertBatch<?>) action);
+			} else if (action instanceof DbAction.BatchInsert) {
+				executionContext.executeBatchInsert((DbAction.BatchInsert<?>) action);
 			} else if (action instanceof DbAction.UpdateRoot) {
 				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
 			} else if (action instanceof DbAction.Delete) {

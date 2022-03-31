@@ -129,7 +129,7 @@ class SaveMergedAggregateChangeTest {
 
 		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence( //
 				Tuple.tuple(DbAction.Delete.class, Intermediate.class), //
-				Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class));
+				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
 	}
 
 	@Test
@@ -157,14 +157,14 @@ class SaveMergedAggregateChangeTest {
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource) //
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
-						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.PROVIDED)) //
+						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.PROVIDED)) //
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
-						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED)) //
+						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED)) //
 				.doesNotContain(Tuple.tuple(DbAction.Insert.class, Intermediate.class));
-		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.GENERATED).getActions())
+		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.GENERATED).getActions())
 				.containsExactly(intermediateInsertGeneratedId);
-		assertThat(getInsertBatchAction(actions, Intermediate.class, IdValueSource.PROVIDED).getActions())
+		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.PROVIDED).getActions())
 				.containsExactly(intermediateInsertProvidedId);
 	}
 
@@ -205,11 +205,11 @@ class SaveMergedAggregateChangeTest {
 		assertThat(actions)
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 				.containsSubsequence( //
-						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED),
-						Tuple.tuple(DbAction.InsertBatch.class, Leaf.class, IdValueSource.GENERATED));
-		assertThat(getInsertBatchAction(actions, Intermediate.class).getActions()) //
+						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
+						Tuple.tuple(DbAction.BatchInsert.class, Leaf.class, IdValueSource.GENERATED));
+		assertThat(getBatchInsertAction(actions, Intermediate.class).getActions()) //
 				.containsExactly(root1IntermediateInsert, root2IntermediateInsert);
-		assertThat(getInsertBatchAction(actions, Leaf.class).getActions()) //
+		assertThat(getBatchInsertAction(actions, Leaf.class).getActions()) //
 				.containsExactly(root1LeafInsert);
 	}
 
@@ -237,33 +237,33 @@ class SaveMergedAggregateChangeTest {
 		assertThat(actions)
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 				.containsSubsequence( //
-						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED),
-						Tuple.tuple(DbAction.InsertBatch.class, Intermediate.class, IdValueSource.GENERATED));
-		List<DbAction.InsertBatch<Intermediate>> insertBatchActions = getInsertBatchActions(actions, Intermediate.class);
-		assertThat(insertBatchActions).hasSize(2);
-		assertThat(insertBatchActions.get(0).getActions()).containsExactly(oneInsert);
-		assertThat(insertBatchActions.get(1).getActions()).containsExactly(twoInsert);
+						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
+						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED));
+		List<DbAction.BatchInsert<Intermediate>> batchInsertActions = getBatchInsertActions(actions, Intermediate.class);
+		assertThat(batchInsertActions).hasSize(2);
+		assertThat(batchInsertActions.get(0).getActions()).containsExactly(oneInsert);
+		assertThat(batchInsertActions.get(1).getActions()).containsExactly(twoInsert);
 	}
 
-	private <T> DbAction.InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType,
-			IdValueSource idValueSource) {
-		return getInsertBatchActions(actions, entityType).stream()
-				.filter(insertBatch -> insertBatch.getBatchValue() == idValueSource).findFirst().orElseThrow(
-						() -> new RuntimeException(String.format("No InsertBatch with includeId '%s' found!", idValueSource)));
+	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType,
+															 IdValueSource idValueSource) {
+		return getBatchInsertActions(actions, entityType).stream()
+				.filter(batchInsert -> batchInsert.getBatchValue() == idValueSource).findFirst().orElseThrow(
+						() -> new RuntimeException(String.format("No BatchInsert with batch value '%s' found!", idValueSource)));
 	}
 
-	private <T> DbAction.InsertBatch<T> getInsertBatchAction(List<DbAction<?>> actions, Class<T> entityType) {
-		return getInsertBatchActions(actions, entityType).stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("No InsertBatch action found!"));
+	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType) {
+		return getBatchInsertActions(actions, entityType).stream().findFirst()
+				.orElseThrow(() -> new RuntimeException("No BatchInsert action found!"));
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> List<DbAction.InsertBatch<T>> getInsertBatchActions(List<DbAction<?>> actions, Class<T> entityType) {
+	private <T> List<DbAction.BatchInsert<T>> getBatchInsertActions(List<DbAction<?>> actions, Class<T> entityType) {
 
 		return actions.stream() //
-				.filter(dbAction -> dbAction instanceof DbAction.InsertBatch) //
+				.filter(dbAction -> dbAction instanceof DbAction.BatchInsert) //
 				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
-				.map(dbAction -> (DbAction.InsertBatch<T>) dbAction).collect(Collectors.toList());
+				.map(dbAction -> (DbAction.BatchInsert<T>) dbAction).collect(Collectors.toList());
 	}
 
 	private <T> List<DbAction<?>> extractActions(MergedAggregateChange<T, AggregateChangeWithRoot<T>> change) {
