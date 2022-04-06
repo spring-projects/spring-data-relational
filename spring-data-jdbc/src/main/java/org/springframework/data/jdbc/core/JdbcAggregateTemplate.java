@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
-import org.springframework.data.relational.core.conversion.MergedAggregateChange;
+import org.springframework.data.relational.core.conversion.BatchingAggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
@@ -46,8 +47,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import static java.util.Collections.*;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
@@ -143,14 +142,15 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		return StreamSupport.stream(saveAll(singletonList(instance)).spliterator(), false).findFirst()
-				.orElseThrow(() -> new IllegalStateException(
-						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
+		return performSave(instance, changeCreatorSelectorForSave(instance));
 	}
 
 	@Override
 	public <T> Iterable<T> saveAll(Iterable<T> instances) {
-		return performSaveChange(instances, this::changeCreatorSelectorForSave);
+
+		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty!");
+
+		return performSaveAll(instances);
 	}
 
 	/**
@@ -165,9 +165,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		return performSaveChange(singletonList(instance), this::changeCreatorSelectorForInsert).stream().findFirst()
-				.orElseThrow(() -> new IllegalStateException(
-						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
+		return performSave(instance, entity -> createInsertChange(prepareVersionForInsert(entity)));
 	}
 
 	/**
@@ -182,9 +180,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		return performSaveChange(singletonList(instance), this::changeCreatorSelectorForUpdate).stream().findFirst()
-				.orElseThrow(() -> new IllegalStateException(
-						String.format("Unable to retrieve the result of executing aggregate change for instance: %s", instance)));
+		return performSave(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)));
 	}
 
 	@Override
@@ -323,36 +319,50 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		triggerAfterDelete(entity, id, change);
 	}
 
-	private <T> List<T> performSaveChange(Iterable<T> instances, Function<T, Function<T, AggregateChangeWithRoot<T>>> changeCreatorSelector) {
-
-		ArrayList<T> instancesList = new ArrayList<>();
-		instances.forEach(instancesList::add);
-		Assert.notEmpty(instancesList, "Aggregate instances must not be empty!");
+	private <T> T performSave(T instance, Function<T, AggregateChangeWithRoot<T>> changeCreator) {
 
 		// noinspection unchecked
-		MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedAggregateChange = instancesList.stream() //
-				.map(instance -> beforeExecute(instance, changeCreatorSelector.apply(instance))) //
-				.reduce(MutableAggregateChange.mergedSave((Class<T>) ClassUtils.getUserClass(instancesList.get(0))),
-						MergedAggregateChange::merge, (left, right) -> right);
+		BatchingAggregateChange<T, AggregateChangeWithRoot<T>> batchingAggregateChange = //
+				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance));
+		batchingAggregateChange.add(beforeExecute(instance, changeCreator));
 
-		return executor.executeSave(mergedAggregateChange).stream()
-				.map(entityAfterExecution -> afterExecute(mergedAggregateChange, entityAfterExecution))
-				.collect(Collectors.toList());
+		Iterator<T> afterExecutionIterator = executor.executeSave(batchingAggregateChange).iterator();
+
+		Assert.isTrue(afterExecutionIterator.hasNext(), "Instances after execution must not be empty!");
+
+		return afterExecute(batchingAggregateChange, afterExecutionIterator.next());
+	}
+
+	private <T> List<T> performSaveAll(Iterable<T> instances) {
+
+		Iterator<T> iterator = instances.iterator();
+		T firstInstance = iterator.next();
+
+		// noinspection unchecked
+		BatchingAggregateChange<T, AggregateChangeWithRoot<T>> batchingAggregateChange = //
+				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(firstInstance));
+		batchingAggregateChange.add(beforeExecute(firstInstance, changeCreatorSelectorForSave(firstInstance)));
+
+		while (iterator.hasNext()) {
+			T instance = iterator.next();
+			batchingAggregateChange.add(beforeExecute(instance, changeCreatorSelectorForSave(instance)));
+		}
+
+		List<T> instancesAfterExecution = executor.executeSave(batchingAggregateChange);
+
+		ArrayList<T> results = new ArrayList<>(instancesAfterExecution.size());
+		for (T instance : instancesAfterExecution) {
+			results.add(afterExecute(batchingAggregateChange, instance));
+		}
+
+		return results;
 	}
 
 	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForSave(T instance) {
 
 		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
-				? changeCreatorSelectorForInsert(instance)
-				: changeCreatorSelectorForUpdate(instance);
-	}
-
-	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForInsert(T instance) {
-		return entity -> createInsertChange(prepareVersionForInsert(entity));
-	}
-
-	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForUpdate(T instance) {
-		return entity -> createUpdateChange(prepareVersionForUpdate(entity));
+				? entity -> createInsertChange(prepareVersionForInsert(entity))
+				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
 	}
 
 	private <T> AggregateChangeWithRoot<T> createInsertChange(T instance) {

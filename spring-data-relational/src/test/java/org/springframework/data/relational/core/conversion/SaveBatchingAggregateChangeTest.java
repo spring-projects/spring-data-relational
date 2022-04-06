@@ -30,18 +30,18 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import lombok.Value;
 
 /**
- * Unit tests for {@link SaveMergedAggregateChange}.
+ * Unit tests for {@link SaveBatchingAggregateChange}.
  *
  * @author Chirag Tailor
  */
-class SaveMergedAggregateChangeTest {
+class SaveBatchingAggregateChangeTest {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 
 	@Test
 	void startsWithNoActions() {
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = MutableAggregateChange.mergedSave(Root.class);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
 
 		assertThat(extractActions(change)).isEmpty();
 	}
@@ -58,10 +58,9 @@ class SaveMergedAggregateChangeTest {
 		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange1) //
-						.merge(aggregateChange2);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange1);
+		change.add(aggregateChange2);
 
 		assertThat(extractActions(change)).containsExactly(root1Insert, root2Insert);
 	}
@@ -81,10 +80,9 @@ class SaveMergedAggregateChangeTest {
 		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange1) //
-						.merge(aggregateChange2);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange1);
+		change.add(aggregateChange2);
 
 		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
 				Tuple.tuple(DbAction.UpdateRoot.class, Root.class), //
@@ -112,10 +110,9 @@ class SaveMergedAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange1) //
-						.merge(aggregateChange2);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange1);
+		change.add(aggregateChange2);
 
 		assertThat(extractActions(change)).containsSubsequence(root2LeafDelete, root1IntermediateDelete,
 				root2IntermediateDelete);
@@ -142,10 +139,9 @@ class SaveMergedAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange1) //
-						.merge(aggregateChange2);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange1);
+		change.add(aggregateChange2);
 
 		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence( //
 				Tuple.tuple(DbAction.Delete.class, Intermediate.class), //
@@ -168,9 +164,8 @@ class SaveMergedAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.PROVIDED);
 		aggregateChange.addAction(intermediateInsertProvidedId);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
@@ -216,10 +211,9 @@ class SaveMergedAggregateChangeTest {
 				IdValueSource.GENERATED);
 		aggregateChange2.addAction(root2IntermediateInsert);
 
-		MergedAggregateChange<Root, AggregateChangeWithRoot<Root>> change = //
-				MutableAggregateChange.mergedSave(Root.class) //
-						.merge(aggregateChange1) //
-						.merge(aggregateChange2);
+		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange1);
+		change.add(aggregateChange2);
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
@@ -237,21 +231,24 @@ class SaveMergedAggregateChangeTest {
 	void yieldsInsertsWithSameLengthReferences_asSeparateInserts() {
 
 		RootWithSameLengthReferences root = new RootWithSameLengthReferences(null, null, null);
-		DbAction.InsertRoot<RootWithSameLengthReferences> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
+		DbAction.InsertRoot<RootWithSameLengthReferences> rootInsert = new DbAction.InsertRoot<>(root,
+				IdValueSource.GENERATED);
 		AggregateChangeWithRoot<RootWithSameLengthReferences> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
 		Intermediate one = new Intermediate(null, "one", null);
 		DbAction.Insert<Intermediate> oneInsert = new DbAction.Insert<>(one,
-				context.getPersistentPropertyPath("one", RootWithSameLengthReferences.class), rootInsert, emptyMap(), IdValueSource.GENERATED);
+				context.getPersistentPropertyPath("one", RootWithSameLengthReferences.class), rootInsert, emptyMap(),
+				IdValueSource.GENERATED);
 		aggregateChange.addAction(oneInsert);
 		Intermediate two = new Intermediate(null, "two", null);
 		DbAction.Insert<Intermediate> twoInsert = new DbAction.Insert<>(two,
-				context.getPersistentPropertyPath("two", RootWithSameLengthReferences.class), rootInsert, emptyMap(), IdValueSource.GENERATED);
+				context.getPersistentPropertyPath("two", RootWithSameLengthReferences.class), rootInsert, emptyMap(),
+				IdValueSource.GENERATED);
 		aggregateChange.addAction(twoInsert);
 
-		MergedAggregateChange<RootWithSameLengthReferences, AggregateChangeWithRoot<RootWithSameLengthReferences>> change = //
-				MutableAggregateChange.mergedSave(RootWithSameLengthReferences.class) //
-						.merge(aggregateChange);
+		BatchingAggregateChange<RootWithSameLengthReferences, AggregateChangeWithRoot<RootWithSameLengthReferences>> change = //
+				BatchingAggregateChange.forSave(RootWithSameLengthReferences.class);
+		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
@@ -266,7 +263,7 @@ class SaveMergedAggregateChangeTest {
 	}
 
 	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType,
-															 IdValueSource idValueSource) {
+			IdValueSource idValueSource) {
 		return getBatchInsertActions(actions, entityType).stream()
 				.filter(batchInsert -> batchInsert.getBatchValue() == idValueSource).findFirst().orElseThrow(
 						() -> new RuntimeException(String.format("No BatchInsert with batch value '%s' found!", idValueSource)));
@@ -286,7 +283,7 @@ class SaveMergedAggregateChangeTest {
 				.map(dbAction -> (DbAction.BatchInsert<T>) dbAction).collect(Collectors.toList());
 	}
 
-	private <T> List<DbAction<?>> extractActions(MergedAggregateChange<T, AggregateChangeWithRoot<T>> change) {
+	private <T> List<DbAction<?>> extractActions(BatchingAggregateChange<T, AggregateChangeWithRoot<T>> change) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
 		change.forEachAction(actions::add);

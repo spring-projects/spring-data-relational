@@ -75,21 +75,6 @@ public interface MutableAggregateChange<T> extends AggregateChange<T> {
 	}
 
 	/**
-	 * Factory method to create a {@link MergedAggregateChange} for saving entities.
-	 *
-	 * @param entityClass aggregate root type.
-	 * @param <T> entity type.
-	 * @return the {@link MergedAggregateChange} for saving root entities.
-	 * @since 3.0
-	 */
-	static <T> MergedAggregateChange<T, AggregateChangeWithRoot<T>> mergedSave(Class<T> entityClass) {
-
-		Assert.notNull(entityClass, "Entity class must not be null");
-
-		return new SaveMergedAggregateChange<>(entityClass);
-	}
-
-	/**
 	 * Factory method to create an {@link MutableAggregateChange} for deleting entities.
 	 *
 	 * @param entityClass aggregate root type.

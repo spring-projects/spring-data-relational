@@ -224,7 +224,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		StagedValues cascadingValues = new StagedValues();
 
-		List<T> roots = new ArrayList<>();
+		List<T> roots = new ArrayList<>(reverseResults.size());
 
 		for (DbActionExecutionResult result : reverseResults) {
 

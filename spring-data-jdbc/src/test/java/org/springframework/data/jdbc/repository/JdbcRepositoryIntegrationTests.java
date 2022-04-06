@@ -601,7 +601,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		List<Root> savedRoots = rootRepository.saveAll(asList(root1, root2));
 
-		List<Root> reloadedRoots = rootRepository.findAll();
+		List<Root> reloadedRoots = rootRepository.findAllByOrderByIdAsc();
 		assertThat(reloadedRoots).isEqualTo(savedRoots);
 		assertThat(reloadedRoots).hasSize(2);
 		assertIsEqualToWithNonNullIds(reloadedRoots.get(0), root1);
@@ -628,7 +628,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		List<Root> updatedRoots = rootRepository.saveAll(asList(updatedRoot1, updatedRoot2));
 
-		List<Root> reloadedRoots = rootRepository.findAll();
+		List<Root> reloadedRoots = rootRepository.findAllByOrderByIdAsc();
 		assertThat(reloadedRoots).isEqualTo(updatedRoots);
 		assertThat(reloadedRoots).containsExactly(updatedRoot1, updatedRoot2);
 	}
@@ -645,7 +645,7 @@ public class JdbcRepositoryIntegrationTests {
 		Root root2 = createRoot("root2");
 		List<Root> savedRoots = rootRepository.saveAll(asList(updatedRoot1, root2));
 
-		List<Root> reloadedRoots = rootRepository.findAll();
+		List<Root> reloadedRoots = rootRepository.findAllByOrderByIdAsc();
 		assertThat(reloadedRoots).isEqualTo(savedRoots);
 		assertThat(reloadedRoots.get(0)).isEqualTo(updatedRoot1);
 		assertIsEqualToWithNonNullIds(reloadedRoots.get(1), root2);
@@ -795,7 +795,9 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	interface RootRepository extends ListCrudRepository<Root, Long> {}
+	interface RootRepository extends ListCrudRepository<Root, Long> {
+		List<Root> findAllByOrderByIdAsc();
+	}
 
 	@Value
 	static class Root {

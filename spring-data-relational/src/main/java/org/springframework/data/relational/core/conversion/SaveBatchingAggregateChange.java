@@ -19,7 +19,6 @@ import static java.util.Collections.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.util.Assert;
 
 /**
- * A {@link org.springframework.data.relational.core.conversion.MergedAggregateChange} implementation for save changes
+ * A {@link BatchingAggregateChange} implementation for save changes
  * that can contain actions for any mix of insert and update operations. When consumed, actions are yielded in the
  * appropriate entity tree order with inserts carried out from root to leaves and deletes in reverse. All insert
  * operations are grouped into batches to offer the ability for an optimized batch operation to be used.
@@ -38,19 +37,19 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @since 3.0
  */
-public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, AggregateChangeWithRoot<T>> {
+public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T, AggregateChangeWithRoot<T>> {
 
 	private static final Comparator<PersistentPropertyPath<RelationalPersistentProperty>> pathLengthComparator = //
 			Comparator.comparing(PersistentPropertyPath::getLength);
 
 	private final Class<T> entityType;
 	private final List<DbAction.WithRoot<?>> rootActions = new ArrayList<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, EnumMap<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
+	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<?>>> deleteActions = //
 			new HashMap<>();
 
-	public SaveMergedAggregateChange(Class<T> entityType) {
+	public SaveBatchingAggregateChange(Class<T> entityType) {
 		this.entityType = entityType;
 	}
 
@@ -78,7 +77,7 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 	}
 
 	@Override
-	public MergedAggregateChange<T, AggregateChangeWithRoot<T>> merge(AggregateChangeWithRoot<T> aggregateChange) {
+	public void add(AggregateChangeWithRoot<T> aggregateChange) {
 
 		aggregateChange.forEachAction(action -> {
 			if (action instanceof DbAction.WithRoot<?> rootAction) {
@@ -90,21 +89,20 @@ public class SaveMergedAggregateChange<T> implements MergedAggregateChange<T, Ag
 				addDelete(deleteAction);
 			}
 		});
-		return this;
 	}
 
 	private void addInsert(DbAction.Insert<Object> action) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
 		insertActions.merge(propertyPath,
-				new EnumMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))),
-				(enumMap, enumMapDefaultValue) -> {
-					enumMap.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)),
+				new HashMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))),
+				(map, mapDefaultValue) -> {
+					map.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)),
 							(actions, listDefaultValue) -> {
 								actions.add(action);
 								return actions;
 							});
-					return enumMap;
+					return map;
 				});
 	}
 
