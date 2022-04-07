@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,38 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
+import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -55,6 +65,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Evgeni Dimitrov
  * @author Mark Paluch
  * @author Dennis Effing
+ * @author Chirag Tailor
  */
 class StringBasedJdbcQueryUnitTests {
 
@@ -64,7 +75,7 @@ class StringBasedJdbcQueryUnitTests {
 	JdbcConverter converter;
 
 	@BeforeEach
-	void setup() throws NoSuchMethodException {
+	void setup() {
 
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
@@ -172,6 +183,54 @@ class StringBasedJdbcQueryUnitTests {
 				.hasMessageContaining("Page queries are not supported using string-based queries");
 	}
 
+	@Test // GH-1212
+	void convertsEnumCollectionParameterIntoStringCollectionParameter() {
+
+		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class));
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+
+		query.execute(new Object[] { asList(Direction.LEFT, Direction.RIGHT) });
+
+		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+
+		SqlParameterSource sqlParameterSource = captor.getValue();
+		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder("LEFT", "RIGHT");
+	}
+
+	@Test // GH-1212
+	void convertsEnumCollectionParameterUsingCustomConverterWhenRegisteredForType() {
+
+		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class), new JdbcCustomConversions(asList(DirectionToIntegerConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE)), JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+
+		query.execute(new Object[] { asList(Direction.LEFT, Direction.RIGHT) });
+
+		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+
+		SqlParameterSource sqlParameterSource = captor.getValue();
+		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder(-1, 1);
+	}
+
+	@Test // GH-1212
+	void doesNotConvertNonCollectionParameter() {
+
+		JdbcQueryMethod queryMethod = createMethod("findBySimpleValue", Integer.class);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class));
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+
+		query.execute(new Object[] { 1 });
+
+		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+
+		SqlParameterSource sqlParameterSource = captor.getValue();
+		assertThat(sqlParameterSource.getValue("value")).isEqualTo(1);
+	}
+
 	private JdbcQueryMethod createMethod(String methodName, Class<?>... paramTypes) {
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, methodName, paramTypes);
@@ -212,6 +271,11 @@ class StringBasedJdbcQueryUnitTests {
 		@Query(value = "some sql statement")
 		Slice<Object> sliceAll(Pageable pageable);
 
+		@Query(value = "some sql statement")
+		List<Object> findByEnumTypeIn(Set<Direction> directions);
+
+		@Query(value = "some sql statement")
+		List<Object> findBySimpleValue(Integer value);
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
@@ -238,6 +302,54 @@ class StringBasedJdbcQueryUnitTests {
 		@Override
 		public Object extractData(ResultSet rs) throws DataAccessException {
 			return null;
+		}
+	}
+
+	private enum Direction {
+		LEFT, CENTER, RIGHT
+	}
+	
+	@WritingConverter
+	enum DirectionToIntegerConverter implements Converter<Direction, JdbcValue> {
+
+		INSTANCE;
+
+		@Override
+		public JdbcValue convert(Direction source) {
+
+			int integer;
+			switch (source) {
+				case LEFT:
+					integer = -1;
+					break;
+				case CENTER:
+					integer = 0;
+					break;
+				case RIGHT:
+					integer = 1;
+					break;
+				default:
+					throw new IllegalArgumentException();
+			}
+			return JdbcValue.of(integer, JDBCType.INTEGER);
+		}
+	}
+
+	@ReadingConverter
+	enum IntegerToDirectionConverter implements Converter<Integer, Direction> {
+
+		INSTANCE;
+
+		@Override
+		public Direction convert(Integer source) {
+
+			if (source == 0) {
+				return Direction.CENTER;
+			} else if (source < 0) {
+				return Direction.LEFT;
+			} else {
+				return Direction.RIGHT;
+			}
 		}
 	}
 

@@ -16,9 +16,11 @@
 package org.springframework.data.relational.repository.query;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.repository.query.RelationalParameters.RelationalParameter;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
@@ -65,8 +67,11 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 	 * Custom {@link Parameter} implementation.
 	 *
 	 * @author Mark Paluch
+	 * @author Chirag Tailor
 	 */
 	public static class RelationalParameter extends Parameter {
+
+		private final MethodParameter parameter;
 
 		/**
 		 * Creates a new {@link RelationalParameter}.
@@ -75,6 +80,13 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 		 */
 		RelationalParameter(MethodParameter parameter) {
 			super(parameter);
+			this.parameter = parameter;
+		}
+
+
+		public ResolvableType getResolvableType() {
+			return ResolvableType
+					.forClassWithGenerics(super.getType(), ResolvableType.forMethodParameter(this.parameter).getGenerics());
 		}
 	}
 }

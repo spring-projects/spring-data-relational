@@ -5,5 +5,6 @@ CREATE TABLE dummy_entity
     POINT_IN_TIME    TIMESTAMP(3),
     OFFSET_DATE_TIME TIMESTAMP(3),
     FLAG             BOOLEAN,
-    REF              BIGINT
+    REF              BIGINT,
+    DIRECTION        VARCHAR(100)
 );

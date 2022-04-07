@@ -5,5 +5,6 @@ CREATE TABLE dummy_entity
     POINT_IN_TIME    TIMESTAMP,
     OFFSET_DATE_TIME TIMESTAMP WITH TIME ZONE,
     FLAG             BOOLEAN,
-    REF              BIGINT
+    REF              BIGINT,
+    DIRECTION        VARCHAR(100)
 );
