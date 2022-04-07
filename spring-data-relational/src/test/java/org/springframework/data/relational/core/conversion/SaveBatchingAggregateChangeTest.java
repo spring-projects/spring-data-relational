@@ -41,7 +41,7 @@ class SaveBatchingAggregateChangeTest {
 	@Test
 	void startsWithNoActions() {
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 
 		assertThat(extractActions(change)).isEmpty();
 	}
@@ -51,14 +51,14 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root1 = new Root(null, null);
 		DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Insert);
 		Root root2 = new Root(null, null);
 		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
@@ -70,17 +70,17 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root1 = new Root(null, null);
 		DbAction.UpdateRoot<Root> root1Update = new DbAction.UpdateRoot<>(root1, null);
-		AggregateChangeWithRoot<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Update);
 		DbAction.Delete<?> root1IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange1.addAction(root1IntermediateDelete);
 		Root root2 = new Root(null, null);
 		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
@@ -94,14 +94,14 @@ class SaveBatchingAggregateChangeTest {
 	void yieldsNestedDeleteActionsInTreeOrderFromLeavesToRoot() {
 
 		Root root1 = new Root(1L, null);
-		AggregateChangeWithRoot<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(new DbAction.UpdateRoot<>(root1, null));
 		DbAction.Delete<?> root1IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange1.addAction(root1IntermediateDelete);
 
 		Root root2 = new Root(1L, null);
-		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(new DbAction.UpdateRoot<>(root2, null));
 		DbAction.Delete<?> root2LeafDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate.leaf", Root.class));
@@ -110,7 +110,7 @@ class SaveBatchingAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
@@ -123,7 +123,7 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root1 = new Root(null, null);
 		DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Insert);
 		Intermediate root1Intermediate = new Intermediate(null, "root1Intermediate", null);
 		DbAction.Insert<?> root1IntermediateInsert = new DbAction.Insert<>(root1Intermediate,
@@ -133,13 +133,13 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root2 = new Root(1L, null);
 		DbAction.UpdateRoot<Root> root2Update = new DbAction.UpdateRoot<>(root2, null);
-		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Update);
 		DbAction.Delete<?> root2IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
@@ -153,7 +153,7 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root = new Root(null, null);
 		DbAction.InsertRoot<Root> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange = MutableAggregateChange.forSave(root);
+		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
 		Intermediate intermediateGeneratedId = new Intermediate(null, "intermediateGeneratedId", null);
 		DbAction.Insert<Intermediate> intermediateInsertGeneratedId = new DbAction.Insert<>(intermediateGeneratedId,
@@ -164,7 +164,7 @@ class SaveBatchingAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.PROVIDED);
 		aggregateChange.addAction(intermediateInsertProvidedId);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
@@ -188,7 +188,7 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root1 = new Root(null, null);
 		DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Insert);
 		Intermediate root1Intermediate = new Intermediate(null, "root1Intermediate", null);
 		DbAction.Insert<Intermediate> root1IntermediateInsert = new DbAction.Insert<>(root1Intermediate,
@@ -203,7 +203,7 @@ class SaveBatchingAggregateChangeTest {
 
 		Root root2 = new Root(null, null);
 		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
-		AggregateChangeWithRoot<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
 		Intermediate root2Intermediate = new Intermediate(null, "root2Intermediate", null);
 		DbAction.Insert<Intermediate> root2IntermediateInsert = new DbAction.Insert<>(root2Intermediate,
@@ -211,7 +211,7 @@ class SaveBatchingAggregateChangeTest {
 				IdValueSource.GENERATED);
 		aggregateChange2.addAction(root2IntermediateInsert);
 
-		BatchingAggregateChange<Root, AggregateChangeWithRoot<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
@@ -233,7 +233,7 @@ class SaveBatchingAggregateChangeTest {
 		RootWithSameLengthReferences root = new RootWithSameLengthReferences(null, null, null);
 		DbAction.InsertRoot<RootWithSameLengthReferences> rootInsert = new DbAction.InsertRoot<>(root,
 				IdValueSource.GENERATED);
-		AggregateChangeWithRoot<RootWithSameLengthReferences> aggregateChange = MutableAggregateChange.forSave(root);
+		RootAggregateChange<RootWithSameLengthReferences> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
 		Intermediate one = new Intermediate(null, "one", null);
 		DbAction.Insert<Intermediate> oneInsert = new DbAction.Insert<>(one,
@@ -246,7 +246,7 @@ class SaveBatchingAggregateChangeTest {
 				IdValueSource.GENERATED);
 		aggregateChange.addAction(twoInsert);
 
-		BatchingAggregateChange<RootWithSameLengthReferences, AggregateChangeWithRoot<RootWithSameLengthReferences>> change = //
+		BatchingAggregateChange<RootWithSameLengthReferences, RootAggregateChange<RootWithSameLengthReferences>> change = //
 				BatchingAggregateChange.forSave(RootWithSameLengthReferences.class);
 		change.add(aggregateChange);
 
@@ -283,7 +283,7 @@ class SaveBatchingAggregateChangeTest {
 				.map(dbAction -> (DbAction.BatchInsert<T>) dbAction).collect(Collectors.toList());
 	}
 
-	private <T> List<DbAction<?>> extractActions(BatchingAggregateChange<T, AggregateChangeWithRoot<T>> change) {
+	private <T> List<DbAction<?>> extractActions(BatchingAggregateChange<T, RootAggregateChange<T>> change) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
 		change.forEachAction(actions::add);

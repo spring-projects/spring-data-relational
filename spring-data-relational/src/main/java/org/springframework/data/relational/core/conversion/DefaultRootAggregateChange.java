@@ -26,9 +26,9 @@ import org.springframework.util.Assert;
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
  * @author Chirag Tailor
- * @since 2.6
+ * @since 3.0
  */
-class DefaultAggregateChangeWithRoot<T> implements AggregateChangeWithRoot<T> {
+class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 
 	private final Kind kind;
 
@@ -42,7 +42,7 @@ class DefaultAggregateChangeWithRoot<T> implements AggregateChangeWithRoot<T> {
 	/** The previous version assigned to the instance being changed, if available */
 	@Nullable private final Number previousVersion;
 
-	public DefaultAggregateChangeWithRoot(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
+	public DefaultRootAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
 
 		this.kind = kind;
 		this.entityType = entityType;

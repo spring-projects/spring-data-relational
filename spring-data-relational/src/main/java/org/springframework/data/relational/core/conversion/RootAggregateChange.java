@@ -19,9 +19,9 @@ package org.springframework.data.relational.core.conversion;
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
  * @author Chirag Tailor
- * @since 2.6
+ * @since 3.0
  */
-public interface AggregateChangeWithRoot<T> extends MutableAggregateChange<T> {
+public interface RootAggregateChange<T> extends MutableAggregateChange<T> {
 
 	/**
 	 * The root object to which this {@link AggregateChange} relates. Guaranteed to be not {@code null}.

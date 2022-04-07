@@ -29,15 +29,15 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.util.Assert;
 
 /**
- * A {@link BatchingAggregateChange} implementation for save changes
- * that can contain actions for any mix of insert and update operations. When consumed, actions are yielded in the
- * appropriate entity tree order with inserts carried out from root to leaves and deletes in reverse. All insert
- * operations are grouped into batches to offer the ability for an optimized batch operation to be used.
+ * A {@link BatchingAggregateChange} implementation for save changes that can contain actions for any mix of insert and
+ * update operations. When consumed, actions are yielded in the appropriate entity tree order with inserts carried out
+ * from root to leaves and deletes in reverse. All insert operations are grouped into batches to offer the ability for
+ * an optimized batch operation to be used.
  *
  * @author Chirag Tailor
  * @since 3.0
  */
-public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T, AggregateChangeWithRoot<T>> {
+public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T, RootAggregateChange<T>> {
 
 	private static final Comparator<PersistentPropertyPath<RelationalPersistentProperty>> pathLengthComparator = //
 			Comparator.comparing(PersistentPropertyPath::getLength);
@@ -77,7 +77,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	}
 
 	@Override
-	public void add(AggregateChangeWithRoot<T> aggregateChange) {
+	public void add(RootAggregateChange<T> aggregateChange) {
 
 		aggregateChange.forEachAction(action -> {
 			if (action instanceof DbAction.WithRoot<?> rootAction) {

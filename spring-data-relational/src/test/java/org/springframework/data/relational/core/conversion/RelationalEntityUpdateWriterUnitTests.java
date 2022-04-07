@@ -46,7 +46,7 @@ public class RelationalEntityUpdateWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityUpdateWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 

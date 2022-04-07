@@ -41,7 +41,7 @@ public interface BatchingAggregateChange<T, C extends MutableAggregateChange<T>>
 	 * @return the {@link BatchingAggregateChange} for saving root entities.
 	 * @since 3.0
 	 */
-	static <T> BatchingAggregateChange<T, AggregateChangeWithRoot<T>> forSave(Class<T> entityClass) {
+	static <T> BatchingAggregateChange<T, RootAggregateChange<T>> forSave(Class<T> entityClass) {
 
 		Assert.notNull(entityClass, "Entity class must not be null");
 

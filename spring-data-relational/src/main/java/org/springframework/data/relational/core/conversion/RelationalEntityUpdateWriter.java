@@ -19,7 +19,7 @@ import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Converts an aggregate represented by its root into an {@link AggregateChangeWithRoot}. Does not perform any isNew
+ * Converts an aggregate represented by its root into a {@link RootAggregateChange}. Does not perform any isNew
  * check.
  *
  * @author Thomas Lang
@@ -27,7 +27,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * @author Chirag Tailor
  * @since 1.1
  */
-public class RelationalEntityUpdateWriter<T> implements EntityWriter<T, AggregateChangeWithRoot<T>> {
+public class RelationalEntityUpdateWriter<T> implements EntityWriter<T, RootAggregateChange<T>> {
 
 	private final RelationalMappingContext context;
 
@@ -36,7 +36,7 @@ public class RelationalEntityUpdateWriter<T> implements EntityWriter<T, Aggregat
 	}
 
 	@Override
-	public void write(T root, AggregateChangeWithRoot<T> aggregateChange) {
+	public void write(T root, RootAggregateChange<T> aggregateChange) {
 		new WritingContext<>(context, root, aggregateChange).update();
 	}
 }

@@ -51,9 +51,9 @@ class WritingContext<T> {
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 	private final IdValueSource rootIdValueSource;
 	@Nullable private final Number previousVersion;
-	private final AggregateChangeWithRoot<T> aggregateChange;
+	private final RootAggregateChange<T> aggregateChange;
 
-	WritingContext(RelationalMappingContext context, T root, AggregateChangeWithRoot<T> aggregateChange) {
+	WritingContext(RelationalMappingContext context, T root, RootAggregateChange<T> aggregateChange) {
 
 		this.context = context;
 		this.root = root;

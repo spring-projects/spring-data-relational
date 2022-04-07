@@ -32,7 +32,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.conversion.BatchingAggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
@@ -292,14 +292,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return triggerAfterSave(entityAfterExecution, change);
 	}
 
-	private <T> AggregateChangeWithRoot<T> beforeExecute(T aggregateRoot,
-			Function<T, AggregateChangeWithRoot<T>> changeCreator) {
+	private <T> RootAggregateChange<T> beforeExecute(T aggregateRoot,
+													 Function<T, RootAggregateChange<T>> changeCreator) {
 
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
 
-		AggregateChangeWithRoot<T> change = changeCreator.apply(aggregateRoot);
+		RootAggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
 		aggregateRoot = triggerBeforeSave(change.getRoot(), change);
 
@@ -319,10 +319,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		triggerAfterDelete(entity, id, change);
 	}
 
-	private <T> T performSave(T instance, Function<T, AggregateChangeWithRoot<T>> changeCreator) {
+	private <T> T performSave(T instance, Function<T, RootAggregateChange<T>> changeCreator) {
 
 		// noinspection unchecked
-		BatchingAggregateChange<T, AggregateChangeWithRoot<T>> batchingAggregateChange = //
+		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = //
 				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance));
 		batchingAggregateChange.add(beforeExecute(instance, changeCreator));
 
@@ -339,7 +339,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		T firstInstance = iterator.next();
 
 		// noinspection unchecked
-		BatchingAggregateChange<T, AggregateChangeWithRoot<T>> batchingAggregateChange = //
+		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = //
 				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(firstInstance));
 		batchingAggregateChange.add(beforeExecute(firstInstance, changeCreatorSelectorForSave(firstInstance)));
 
@@ -358,23 +358,23 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return results;
 	}
 
-	private <T> Function<T, AggregateChangeWithRoot<T>> changeCreatorSelectorForSave(T instance) {
+	private <T> Function<T, RootAggregateChange<T>> changeCreatorSelectorForSave(T instance) {
 
 		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
 				? entity -> createInsertChange(prepareVersionForInsert(entity))
 				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
 	}
 
-	private <T> AggregateChangeWithRoot<T> createInsertChange(T instance) {
+	private <T> RootAggregateChange<T> createInsertChange(T instance) {
 
-		AggregateChangeWithRoot<T> aggregateChange = MutableAggregateChange.forSave(instance);
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
 		new RelationalEntityInsertWriter<T>(context).write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	private <T> AggregateChangeWithRoot<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
+	private <T> RootAggregateChange<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
 
-		AggregateChangeWithRoot<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
 				entityAndVersion.version);
 		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity,
 				aggregateChange);
