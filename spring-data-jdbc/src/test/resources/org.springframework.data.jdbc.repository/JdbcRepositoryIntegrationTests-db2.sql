@@ -7,5 +7,6 @@ CREATE TABLE dummy_entity
     POINT_IN_TIME    TIMESTAMP,
     OFFSET_DATE_TIME TIMESTAMP, -- with time zone is only supported with z/OS
     FLAG             BOOLEAN,
-    REF              BIGINT
+    REF              BIGINT,
+    DIRECTION        VARCHAR(100)
 );
