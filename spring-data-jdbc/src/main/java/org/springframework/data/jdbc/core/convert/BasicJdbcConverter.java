@@ -287,8 +287,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return writeJdbcValue(value, columnType, JdbcUtil.jdbcTypeFor(sqlType));
 	}
 
-
-		/*
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
 	 */

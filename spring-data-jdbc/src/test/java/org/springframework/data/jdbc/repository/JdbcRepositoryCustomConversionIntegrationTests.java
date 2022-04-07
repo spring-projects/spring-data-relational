@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
@@ -23,6 +24,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 import java.math.BigDecimal;
 import java.sql.JDBCType;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +38,7 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -50,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Sanghyuk Jung
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
@@ -69,18 +73,19 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 
 		@Bean
-		EntityWithBooleanRepository repository() {
-			return factory.getRepository(EntityWithBooleanRepository.class);
+		EntityWithStringyBigDecimalRepository repository() {
+			return factory.getRepository(EntityWithStringyBigDecimalRepository.class);
 		}
 
 		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
 			return new JdbcCustomConversions(asList(StringToBigDecimalConverter.INSTANCE, BigDecimalToString.INSTANCE,
-					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE));
+					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE, DirectionToIntegerConverter.INSTANCE,
+					NumberToDirectionConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE));
 		}
 	}
 
-	@Autowired EntityWithBooleanRepository repository;
+	@Autowired EntityWithStringyBigDecimalRepository repository;
 
 	/**
 	 * In PostrgreSQL this fails if a simple converter like the following is used.
@@ -143,13 +148,50 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		});
 	}
 
-	interface EntityWithBooleanRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {}
+	@Test // GH-1212
+	void queryByEnumTypeIn() {
+
+		EntityWithStringyBigDecimal entityA = new EntityWithStringyBigDecimal();
+		entityA.direction = Direction.LEFT;
+		EntityWithStringyBigDecimal entityB = new EntityWithStringyBigDecimal();
+		entityB.direction = Direction.CENTER;
+		EntityWithStringyBigDecimal entityC = new EntityWithStringyBigDecimal();
+		entityC.direction = Direction.RIGHT;
+		repository.saveAll(asList(entityA, entityB, entityC));
+
+		assertThat(repository.findByEnumTypeIn(asList(Direction.LEFT, Direction.RIGHT)))
+				.extracting(entity -> entity.direction).containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
+	}
+
+	@Test // GH-1212
+	void queryByEnumTypeEqual() {
+
+		EntityWithStringyBigDecimal entityA = new EntityWithStringyBigDecimal();
+		entityA.direction = Direction.LEFT;
+		EntityWithStringyBigDecimal entityB = new EntityWithStringyBigDecimal();
+		entityB.direction = Direction.CENTER;
+		EntityWithStringyBigDecimal entityC = new EntityWithStringyBigDecimal();
+		entityC.direction = Direction.RIGHT;
+		repository.saveAll(asList(entityA, entityB, entityC));
+
+		assertThat(repository.findByEnumTypeIn(singletonList(Direction.CENTER))).extracting(entity -> entity.direction)
+				.containsExactly(Direction.CENTER);
+	}
+
+	interface EntityWithStringyBigDecimalRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {
+		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION IN (:types)")
+		List<EntityWithStringyBigDecimal> findByEnumTypeIn(List<Direction> types);
+
+		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION = :type")
+		List<EntityWithStringyBigDecimal> findByEnumType(Direction type);
+	}
 
 	private static class EntityWithStringyBigDecimal {
 
 		@Id CustomId id;
-		String stringyNumber;
+		String stringyNumber = "1.0";
 		OtherEntity reference;
+		Direction direction = Direction.CENTER;
 	}
 
 	private static class CustomId {
@@ -165,6 +207,10 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		@Id CustomId id;
 		Date created;
+	}
+
+	enum Direction {
+		LEFT, CENTER, RIGHT
 	}
 
 	@WritingConverter
@@ -214,4 +260,64 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 	}
 
+	@WritingConverter
+	enum DirectionToIntegerConverter implements Converter<Direction, JdbcValue> {
+
+		INSTANCE;
+
+		@Override
+		public JdbcValue convert(Direction source) {
+
+			int integer;
+			switch (source) {
+				case LEFT:
+					integer = -1;
+					break;
+				case CENTER:
+					integer = 0;
+					break;
+				case RIGHT:
+					integer = 1;
+					break;
+				default:
+					throw new IllegalArgumentException();
+			}
+			return JdbcValue.of(integer, JDBCType.INTEGER);
+		}
+	}
+
+	@ReadingConverter // Needed for Oracle since the JDBC driver returns BigDecimal on read
+	enum NumberToDirectionConverter implements Converter<Number, Direction> {
+
+		INSTANCE;
+
+		@Override
+		public Direction convert(Number source) {
+			int sourceAsInt = source.intValue();
+			if (sourceAsInt == 0) {
+				return Direction.CENTER;
+			} else if (sourceAsInt < 0) {
+				return Direction.LEFT;
+			} else {
+				return Direction.RIGHT;
+			}
+		}
+	}
+
+	@ReadingConverter
+	enum IntegerToDirectionConverter implements Converter<Integer, Direction> {
+
+		INSTANCE;
+
+		@Override
+		public Direction convert(Integer source) {
+			if (source == 0) {
+				return Direction.CENTER;
+			} else if (source < 0) {
+				return Direction.LEFT;
+			} else {
+				return Direction.RIGHT;
+			}
+		}
+	}
 }

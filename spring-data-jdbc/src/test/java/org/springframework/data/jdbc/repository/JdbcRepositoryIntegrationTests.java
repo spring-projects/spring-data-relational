@@ -20,10 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Value;
-
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
@@ -33,6 +29,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,11 +72,16 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
@@ -575,6 +577,38 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.returnInput(null)).isNull();
 	}
 
+	@Test // GH-1212
+	void queryByEnumTypeIn() {
+
+		DummyEntity dummyA = new DummyEntity("dummyA");
+		dummyA.setDirection(Direction.LEFT);
+		DummyEntity dummyB = new DummyEntity("dummyB");
+		dummyB.setDirection(Direction.CENTER);
+		DummyEntity dummyC = new DummyEntity("dummyC");
+		dummyC.setDirection(Direction.RIGHT);
+		repository.saveAll(asList(dummyA, dummyB, dummyC));
+
+		assertThat(repository.findByEnumTypeIn(asList(Direction.LEFT, Direction.RIGHT)))
+				.extracting(DummyEntity::getDirection)
+				.containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
+	}
+
+	@Test // GH-1212
+	void queryByEnumTypeEqual() {
+
+		DummyEntity dummyA = new DummyEntity("dummyA");
+		dummyA.setDirection(Direction.LEFT);
+		DummyEntity dummyB = new DummyEntity("dummyB");
+		dummyB.setDirection(Direction.CENTER);
+		DummyEntity dummyC = new DummyEntity("dummyC");
+		dummyC.setDirection(Direction.RIGHT);
+		repository.saveAll(asList(dummyA, dummyB, dummyC));
+
+		assertThat(repository.findByEnumType(Direction.CENTER))
+				.extracting(DummyEntity::getDirection)
+				.containsExactlyInAnyOrder(Direction.CENTER);
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -660,6 +694,12 @@ public class JdbcRepositoryIntegrationTests {
 		@Query("SELECT CAST(:hello AS CHAR(5)) FROM DUMMY_ENTITY")
 		@Nullable
 		String returnInput(@Nullable String hello);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE DIRECTION IN (:directions)")
+		List<DummyEntity> findByEnumTypeIn(List<Direction> directions);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE DIRECTION = :direction")
+		List<DummyEntity> findByEnumType(Direction direction);
 	}
 
 	@Configuration
@@ -713,10 +753,15 @@ public class JdbcRepositoryIntegrationTests {
 		@Id private Long idProp;
 		boolean flag;
 		AggregateReference<DummyEntity, Long> ref;
+		Direction direction;
 
 		public DummyEntity(String name) {
 			this.name = name;
 		}
+	}
+
+	enum Direction {
+		LEFT, CENTER, RIGHT
 	}
 
 	interface DummyProjection {
