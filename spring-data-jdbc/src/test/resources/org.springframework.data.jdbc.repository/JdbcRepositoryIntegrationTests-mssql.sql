@@ -6,5 +6,6 @@ CREATE TABLE dummy_entity
     POINT_IN_TIME    DATETIME,
     OFFSET_DATE_TIME DATETIMEOFFSET,
     FLAG             BIT,
-    REF              BIGINT
+    REF              BIGINT,
+    DIRECTION        VARCHAR(100)
 );
