@@ -41,10 +41,6 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 	private static MSSQLServerContainer<?> MSSQL_CONTAINER;
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
-     */
     @Override
     protected DataSource createDataSource() {
 

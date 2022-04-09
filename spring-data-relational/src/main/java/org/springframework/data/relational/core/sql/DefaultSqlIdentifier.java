@@ -41,19 +41,11 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 		this.quoted = quoted;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#iterator()
-	 */
 	@Override
 	public Iterator<SqlIdentifier> iterator() {
 		return Collections.<SqlIdentifier> singleton(this).iterator();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#transform(java.util.function.UnaryOperator)
-	 */
 	@Override
 	public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
 
@@ -62,28 +54,16 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 		return new DefaultSqlIdentifier(transformationFunction.apply(name), quoted);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#toSql(org.springframework.data.relational.domain.IdentifierProcessing)
-	 */
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 		return quoted ? processing.quote(getReference(processing)) : getReference(processing);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#getReference(org.springframework.data.relational.domain.IdentifierProcessing)
-	 */
 	@Override
 	public String getReference(IdentifierProcessing processing) {
 		return name;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object o) {
 
@@ -98,19 +78,11 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return quoted ? toSql(IdentifierProcessing.ANSI) : this.name;

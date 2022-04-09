@@ -819,6 +819,33 @@ class JdbcAggregateTemplateIntegrationTests {
 				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 	}
 
+	@Test // GH-1137
+	void testUpdateEntityWithVersionDoesNotTriggerAnewConstructorInvocation() {
+
+		AggregateWithImmutableVersion aggregateWithImmutableVersion = new AggregateWithImmutableVersion(null, null);
+
+		AggregateWithImmutableVersion savedRoot = template.save(aggregateWithImmutableVersion);
+
+		assertThat(savedRoot).isNotNull();
+		assertThat(savedRoot.version).isEqualTo(0L);
+
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsExactly(
+				new ConstructorInvocation(null, null), // Initial invocation, done by client
+				new ConstructorInvocation(null, savedRoot.version), // Assigning the version
+				new ConstructorInvocation(savedRoot.id, savedRoot.version) // Assigning the id
+		);
+
+		AggregateWithImmutableVersion.clearConstructorInvocationData();
+
+		AggregateWithImmutableVersion updatedRoot = template.save(savedRoot);
+
+		assertThat(updatedRoot).isNotNull();
+		assertThat(updatedRoot.version).isEqualTo(1L);
+
+		// Expect only one assignment of the version to AggregateWithImmutableVersion
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
+	}
+
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
 	void deleteAggregateWithVersion() {
 
@@ -1227,6 +1254,27 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		@Id Long id;
 		@Version Long version;
+
+		private final static List<ConstructorInvocation> constructorInvocations = new ArrayList<>();
+
+		public static void clearConstructorInvocationData() {
+			constructorInvocations.clear();
+		}
+
+		public AggregateWithImmutableVersion(Long id, Long version) {
+
+			constructorInvocations.add(new ConstructorInvocation(id, version));
+			this.id = id;
+			this.version = version;
+		}
+	}
+
+	@Value
+	@EqualsAndHashCode
+	private static class ConstructorInvocation {
+
+		Long id;
+		Long version;
 	}
 
 	@Data

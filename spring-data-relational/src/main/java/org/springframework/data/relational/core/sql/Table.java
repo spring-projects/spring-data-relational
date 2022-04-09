@@ -20,8 +20,9 @@ import org.springframework.util.Assert;
 /**
  * Represents a table reference within a SQL statement. Typically used to denote {@code FROM} or {@code JOIN} or to
  * prefix a {@link Column}.
- * <p/>
+ * <p>
  * Renders to: {@code <name>} or {@code <name> AS <name>}.
+ * </p>
  *
  * @author Mark Paluch
  * @since 1.1
@@ -107,11 +108,6 @@ public class Table extends AbstractSegment implements TableLike {
 		return new AliasedTable(name, alias);
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Named#getName()
-	 */
 	@Override
 	public SqlIdentifier getName() {
 		return name;
@@ -126,10 +122,6 @@ public class Table extends AbstractSegment implements TableLike {
 		return name;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return name.toString();
@@ -158,28 +150,16 @@ public class Table extends AbstractSegment implements TableLike {
 			this.alias = alias;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
-		 */
 		@Override
 		public SqlIdentifier getAlias() {
 			return alias;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Table#getReferenceName()
-		 */
 		@Override
 		public SqlIdentifier getReferenceName() {
 			return getAlias();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Table#toString()
-		 */
 		@Override
 		public String toString() {
 			return getName() + " AS " + getAlias();

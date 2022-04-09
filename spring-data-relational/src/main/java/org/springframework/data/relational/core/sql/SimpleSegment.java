@@ -31,10 +31,6 @@ public class SimpleSegment extends AbstractSegment {
 		return sql;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return getSql();

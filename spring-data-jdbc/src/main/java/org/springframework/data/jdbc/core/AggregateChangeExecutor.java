@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@ package org.springframework.data.jdbc.core;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.AggregateChangeWithRoot;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
-import org.springframework.lang.Nullable;
 
 /**
  * Executes an {@link MutableAggregateChange}.
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @since 2.0
  */
 class AggregateChangeExecutor {
@@ -41,22 +42,38 @@ class AggregateChangeExecutor {
 		this.accessStrategy = accessStrategy;
 	}
 
-	@Nullable
-	<T> T execute(AggregateChange<T> aggregateChange) {
+	/**
+	 * Execute an aggregate change which has a root entity. It returns the root entity, with all changes that might apply.
+	 * This might be the original instance or a new instance, depending on its mutability.
+	 * 
+	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
+	 * @param <T> the type of the aggregate root.
+	 * @return the potentially modified aggregate root. Guaranteed to be not {@literal null}.
+	 * @since 3.0
+	 */
+	<T> T execute(AggregateChangeWithRoot<T> aggregateChange) {
 
 		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
 				accessStrategy);
 
 		aggregateChange.forEachAction(action -> execute(action, executionContext));
 
-		T root = executionContext.populateIdsIfNecessary();
-		root = root == null ? aggregateChange.getEntity() : root;
+		return executionContext.populateIdsIfNecessary();
+	}
 
-		if (root != null) {
-			root = executionContext.populateRootVersionIfNecessary(root);
-		}
+	/**
+	 * Execute an aggregate change without a root entity.
+	 *
+	 * @param aggregateChange the aggregate change to be executed. Must not be {@literal null}.
+	 * @param <T> the type of the aggregate root.
+	 * @since 3.0
+	 */
+	<T> void execute(AggregateChange<T> aggregateChange) {
 
-		return root;
+		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
+				accessStrategy);
+
+		aggregateChange.forEachAction(action -> execute(action, executionContext));
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
@@ -66,10 +83,10 @@ class AggregateChangeExecutor {
 				executionContext.executeInsertRoot((DbAction.InsertRoot<?>) action);
 			} else if (action instanceof DbAction.Insert) {
 				executionContext.executeInsert((DbAction.Insert<?>) action);
+			} else if (action instanceof DbAction.InsertBatch) {
+				executionContext.executeInsertBatch((DbAction.InsertBatch<?>) action);
 			} else if (action instanceof DbAction.UpdateRoot) {
 				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
-			} else if (action instanceof DbAction.Update) {
-				executionContext.executeUpdate((DbAction.Update<?>) action);
 			} else if (action instanceof DbAction.Delete) {
 				executionContext.executeDelete((DbAction.Delete<?>) action);
 			} else if (action instanceof DbAction.DeleteAll) {

@@ -45,10 +45,6 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -67,10 +63,6 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 		throw new IllegalStateException("Cannot provide visitor for " + segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -86,10 +78,6 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Visitable segment) {
 

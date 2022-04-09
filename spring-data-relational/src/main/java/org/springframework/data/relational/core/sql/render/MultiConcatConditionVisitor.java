@@ -45,10 +45,6 @@ class MultiConcatConditionVisitor extends FilteredSingleConditionRenderSupport {
 		this.concat = " OR ";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -63,10 +59,6 @@ class MultiConcatConditionVisitor extends FilteredSingleConditionRenderSupport {
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Visitable segment) {
 

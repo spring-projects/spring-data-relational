@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 
 /**
  * @author Jens Schauder
+ * @author Daniil Razorenov
  */
 public class PersistentPropertyPathExtensionUnitTests {
 
@@ -126,6 +127,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 			softly.assertThat(extPath("secondList.third.value").getTableAlias()).isEqualTo(quoted("secondList_third"));
 			softly.assertThat(extPath("secondList").getTableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(extPath("second2.third").getTableAlias()).isEqualTo(quoted("secthird"));
+			softly.assertThat(extPath("second3.third").getTableAlias()).isEqualTo(quoted("third"));
 		});
 	}
 
@@ -237,6 +239,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 		@Id Long entityId;
 		Second second;
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) Second second3;
 		List<Second> secondList;
 		WithId withId;
 	}

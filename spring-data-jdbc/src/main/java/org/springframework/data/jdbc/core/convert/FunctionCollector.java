@@ -43,19 +43,11 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		this.method = method;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.stream.Collector#supplier()
-	 */
 	@Override
 	public Supplier<ResultOrException<T>> supplier() {
 		return ResultOrException::new;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.stream.Collector#accumulator()
-	 */
 	@Override
 	public BiConsumer<ResultOrException<T>, DataAccessStrategy> accumulator() {
 
@@ -72,10 +64,6 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.stream.Collector#combiner()
-	 */
 	@Override
 	public BinaryOperator<ResultOrException<T>> combiner() {
 
@@ -84,10 +72,6 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.stream.Collector#finisher()
-	 */
 	@Override
 	public Function<ResultOrException<T>, T> finisher() {
 
@@ -101,10 +85,6 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.stream.Collector#characteristics()
-	 */
 	@Override
 	public Set<Characteristics> characteristics() {
 		return Collections.emptySet();

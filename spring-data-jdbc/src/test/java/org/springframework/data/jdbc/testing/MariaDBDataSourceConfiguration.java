@@ -41,10 +41,6 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements 
 
 	private static MariaDBContainer<?> MARIADB_CONTAINER;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
-	 */
 	@Override
 	protected DataSource createDataSource() {
 

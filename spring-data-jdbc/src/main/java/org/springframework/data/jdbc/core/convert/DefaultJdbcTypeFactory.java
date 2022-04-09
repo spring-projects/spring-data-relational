@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.Array;
 import java.sql.SQLType;
 
-import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;

@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Objects;
+
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -23,14 +25,14 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-
-import java.util.Objects;
+import org.springframework.util.StringUtils;
 
 /**
  * A wrapper around a {@link org.springframework.data.mapping.PersistentPropertyPath} for making common operations
  * available used in SQL generation and conversion
  *
  * @author Jens Schauder
+ * @author Daniil Razorenov
  * @since 1.1
  */
 public class PersistentPropertyPathExtension {
@@ -384,23 +386,34 @@ public class PersistentPropertyPathExtension {
 		return isEntity() && !isEmbedded() ? this : getParentPath().getTableOwningAncestor();
 	}
 
+	@Nullable
 	private SqlIdentifier assembleTableAlias() {
 
 		Assert.state(path != null, "Path is null");
 
 		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
-		String prefix = isEmbedded() ? leafProperty.getEmbeddedPrefix() : leafProperty.getName();
+		String prefix;
+		if (isEmbedded()) {
+			prefix = leafProperty.getEmbeddedPrefix();
+
+		} else {
+			prefix = leafProperty.getName();
+		}
 
 		if (path.getLength() == 1) {
 			Assert.notNull(prefix, "Prefix mus not be null.");
-			return SqlIdentifier.quoted(prefix);
+			return StringUtils.hasText(prefix) ? SqlIdentifier.quoted(prefix) : null;
 		}
 
 		PersistentPropertyPathExtension parentPath = getParentPath();
 		SqlIdentifier sqlIdentifier = parentPath.assembleTableAlias();
 
-		return parentPath.isEmbedded() ? sqlIdentifier.transform(name -> name.concat(prefix))
-				: sqlIdentifier.transform(name -> name + "_" + prefix);
+		if (sqlIdentifier != null) {
+
+			return parentPath.isEmbedded() ? sqlIdentifier.transform(name -> name.concat(prefix))
+					: sqlIdentifier.transform(name -> name + "_" + prefix);
+		}
+		return SqlIdentifier.quoted(prefix);
 
 	}
 
@@ -438,11 +451,12 @@ public class PersistentPropertyPathExtension {
 	@Override
 	public boolean equals(Object o) {
 
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		PersistentPropertyPathExtension that = (PersistentPropertyPathExtension) o;
-		return entity.equals(that.entity) &&
-				Objects.equals(path, that.path);
+		return entity.equals(that.entity) && Objects.equals(path, that.path);
 	}
 
 	@Override

@@ -21,10 +21,10 @@ import java.util.Stack;
 
 /**
  * Validator for {@link Select} statements.
- * <p/>
+ * <p>
  * Validates that all {@link Column}s using a table qualifier have a table import from either the {@code FROM} or
  * {@code JOIN} clause.
- *
+ * </p>
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
@@ -79,10 +79,6 @@ class SelectValidator extends AbstractImportValidator {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#enter(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public void enter(Visitable segment) {
 
@@ -128,10 +124,6 @@ class SelectValidator extends AbstractImportValidator {
 		super.enter(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.AbstractImportValidator#leave(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public void leave(Visitable segment) {
 

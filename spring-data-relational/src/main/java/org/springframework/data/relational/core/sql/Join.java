@@ -17,12 +17,13 @@ package org.springframework.data.relational.core.sql;
 
 /**
  * {@link Segment} for a {@code JOIN} declaration.
- * <p/>
+ * <p>
  * Renders to: {@code JOIN
  *
 <table>
  *  ON <condition>}.
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @since 1.1
  */
@@ -62,10 +63,6 @@ public class Join extends AbstractSegment {
 		return on;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return type + " " + joinTable + " ON " + on;

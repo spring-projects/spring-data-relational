@@ -32,10 +32,6 @@ public class Where extends AbstractSegment {
 		this.condition = condition;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "WHERE " + condition;

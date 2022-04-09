@@ -44,10 +44,6 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 		this.parent = parent;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(TableLike segment) {
 

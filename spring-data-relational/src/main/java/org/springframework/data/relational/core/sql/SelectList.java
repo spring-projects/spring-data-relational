@@ -34,10 +34,6 @@ public class SelectList extends AbstractSegment {
 		this.selectList = selectList;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return StringUtils.collectionToDelimitedString(selectList, ", ");

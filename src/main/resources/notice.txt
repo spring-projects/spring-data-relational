@@ -1,4 +1,4 @@
-Spring Data JDBC 2.4 M3 (2021.2.0)
+Spring Data Relational 3.0 M3 (2022.0.0)
 Copyright (c) [2017-2019] Pivotal Software, Inc.
 
 This product is licensed to you under the Apache License, Version 2.0 (the "License").

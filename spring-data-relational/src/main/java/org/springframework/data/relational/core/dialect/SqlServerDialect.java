@@ -36,41 +36,38 @@ public class SqlServerDialect extends AbstractDialect {
 	 */
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
+	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+
+		@Override
+		public boolean supportedForBatchOperations() {
+			return false;
+		}
+	};
+
 	protected SqlServerDialect() {}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
+	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getLimit(long)
-		 */
 		@Override
 		public String getLimit(long limit) {
 			return "OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getOffset(long)
-		 */
 		@Override
 		public String getOffset(long offset) {
 			return "OFFSET " + offset + " ROWS";
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClause(long, long)
-		 */
 		@Override
 		public String getLimitOffset(long limit, long offset) {
 			return String.format("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", offset, limit);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
@@ -79,10 +76,6 @@ public class SqlServerDialect extends AbstractDialect {
 
 	private static final LockClause LOCK_CLAUSE = new LockClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getLimit(LockOptions)
-		 */
 		@Override
 		public String getLock(LockOptions lockOptions) {
 			switch (lockOptions.getLockMode()) {
@@ -98,10 +91,6 @@ public class SqlServerDialect extends AbstractDialect {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_FROM_TABLE;
@@ -111,37 +100,21 @@ public class SqlServerDialect extends AbstractDialect {
 	private final Lazy<SelectRenderContext> selectRenderContext = Lazy
 			.of(() -> new SqlServerSelectRenderContext(getAfterFromTable(), getAfterOrderBy()));
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#limit()
-	 */
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
-	 */
 	@Override
 	public LockClause lock() {
 		return LOCK_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#getLikeEscaper()
-	 */
 	@Override
 	public Escaper getLikeEscaper() {
 		return Escaper.DEFAULT.withRewriteFor("[", "]");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.AbstractDialect#getSelectContext()
-	 */
 	@Override
 	public SelectRenderContext getSelectContext() {
 		return selectRenderContext.get();

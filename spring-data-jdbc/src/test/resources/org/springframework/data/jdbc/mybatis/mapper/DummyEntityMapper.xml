@@ -9,13 +9,13 @@
 			<arg column="name" javaType="String"/>
 		</constructor>
 	</resultMap>
-	<insert id="insert" parameterType="MyBatisContext" useGeneratedKeys="true" keyProperty="instance.id" keyColumn="ID">
+	<insert id="insert" parameterType="MyBatisContext" useGeneratedKeys="true" keyProperty="id" keyColumn="ID">
 		INSERT INTO DummyEntity (id) VALUES (DEFAULT)
 	</insert>
 	<select id="findById" resultType="MyBatisContext" resultMap="dummyEntityMap">
 		SELECT
-			id,
-			'name ' || id as name
+		id,
+		'name ' || id as name
 		FROM DummyEntity
 		WHERE id = #{id}
 	</select>

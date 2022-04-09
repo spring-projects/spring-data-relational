@@ -35,10 +35,6 @@ class DefaultDelete implements Delete {
 		this.where = where != null ? new Where(where) : null;
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
 	@Override
 	public void visit(Visitor visitor) {
 
@@ -55,10 +51,6 @@ class DefaultDelete implements Delete {
 		visitor.leave(this);
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 

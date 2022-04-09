@@ -96,19 +96,11 @@ public class RenderContextFactory {
 			this.insertRenderContext = renderingDialect.getInsertRenderContext();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getNamingStrategy()
-		 */
 		@Override
 		public RenderNamingStrategy getNamingStrategy() {
 			return renderNamingStrategy;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getIdentifierProcessing()
-		 */
 		@Override
 		public IdentifierProcessing getIdentifierProcessing() {
 			return renderingDialect.getIdentifierProcessing();
@@ -119,10 +111,6 @@ public class RenderContextFactory {
 			return getSelectRenderContext();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getSelect()
-		 */
 		@Override
 		public SelectRenderContext getSelectRenderContext() {
 			return selectRenderContext;

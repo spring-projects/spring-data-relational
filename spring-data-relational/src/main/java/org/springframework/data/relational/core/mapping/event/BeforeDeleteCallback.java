@@ -37,7 +37,7 @@ public interface BeforeDeleteCallback<T> extends EntityCallback<T> {
 	 * account for deleting. Only transient fields of the entity should be changed in this callback.
 	 *
 	 * @param aggregate the aggregate.
-	 * @param aggregateChange the associated {@link DefaultAggregateChange}.
+	 * @param aggregateChange the associated {@link MutableAggregateChange}.
 	 * @return the aggregate to be deleted.
 	 */
 	T onBeforeDelete(T aggregate, MutableAggregateChange<T> aggregateChange);

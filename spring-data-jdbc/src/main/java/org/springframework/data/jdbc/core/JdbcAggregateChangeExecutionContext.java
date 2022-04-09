@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
+import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentProperty;
@@ -38,7 +32,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
-import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -48,9 +42,13 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * A container for the data required and produced by an aggregate change execution. Most importantly it holds the
+ * results of the various actions performed.
+ *
  * @author Jens Schauder
  * @author Umut Erturk
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 class JdbcAggregateChangeExecutionContext {
 
@@ -62,7 +60,6 @@ class JdbcAggregateChangeExecutionContext {
 	private final DataAccessStrategy accessStrategy;
 
 	private final Map<DbAction<?>, DbActionExecutionResult> results = new LinkedHashMap<>();
-	@Nullable private Long version;
 
 	JdbcAggregateChangeExecutionContext(JdbcConverter converter, DataAccessStrategy accessStrategy) {
 
@@ -73,71 +70,50 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
 
-		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
-
-		Object id;
-		if (persistentEntity.hasVersionProperty()) {
-
-			RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
-
-			Assert.state(versionProperty != null, "Version property must not be null at this stage.");
-
-			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
-
-			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
-					insert.getEntity(), initialVersion, persistentEntity, converter);
-
-			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
-
-			setNewVersion(initialVersion);
-		} else {
-			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
-		}
-
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
+				insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys);
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys,
+				insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
+	}
+
+	<T> void executeInsertBatch(DbAction.InsertBatch<T> insertBatch) {
+
+		List<DbAction.Insert<T>> inserts = insertBatch.getInserts();
+		List<InsertSubject<T>> insertSubjects = inserts.stream()
+				.map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter)))
+				.collect(Collectors.toList());
+
+		Object[] ids = accessStrategy.insert(insertSubjects, insertBatch.getEntityType(), insertBatch.getIdValueSource());
+
+		for (int i = 0; i < inserts.size(); i++) {
+			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
+		}
 	}
 
 	<T> void executeUpdateRoot(DbAction.UpdateRoot<T> update) {
 
-		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(update.getEntityType());
-
-		if (persistentEntity.hasVersionProperty()) {
-			updateWithVersion(update, persistentEntity);
+		if (update.getPreviousVersion() != null) {
+			updateWithVersion(update);
 		} else {
-
 			updateWithoutVersion(update);
 		}
-	}
-
-	<T> void executeUpdate(DbAction.Update<T> update) {
-
-		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
-
-			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
-		}
+		add(new DbActionExecutionResult(update));
 	}
 
 	<T> void executeDeleteRoot(DbAction.DeleteRoot<T> delete) {
 
 		if (delete.getPreviousVersion() != null) {
-
-			RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(delete.getEntityType());
-			if (persistentEntity.hasVersionProperty()) {
-
-				accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
-				return;
-			}
+			accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
+		} else {
+			accessStrategy.delete(delete.getId(), delete.getEntityType());
 		}
-
-		accessStrategy.delete(delete.getId(), delete.getEntityType());
 	}
 
 	<T> void executeDelete(DbAction.Delete<T> delete) {
@@ -153,18 +129,6 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeDeleteAll(DbAction.DeleteAll<T> delete) {
 
 		accessStrategy.deleteAll(delete.getPropertyPath());
-	}
-
-	<T> void executeMerge(DbAction.Merge<T> merge) {
-
-		// temporary implementation
-		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
-
-			Object id = accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge, converter));
-			add(new DbActionExecutionResult(merge, id));
-		} else {
-			add(new DbActionExecutionResult());
-		}
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
@@ -227,11 +191,12 @@ class JdbcAggregateChangeExecutionContext {
 
 	private Object getPotentialGeneratedIdFrom(DbAction.WithEntity<?> idOwningAction) {
 
-		if (idOwningAction instanceof DbAction.WithGeneratedId) {
+		if (IdValueSource.GENERATED.equals(idOwningAction.getIdValueSource())) {
 
-			Object generatedId;
 			DbActionExecutionResult dbActionExecutionResult = results.get(idOwningAction);
-			generatedId = dbActionExecutionResult == null ? null : dbActionExecutionResult.getId();
+			Object generatedId = Optional.ofNullable(dbActionExecutionResult) //
+					.map(DbActionExecutionResult::getGeneratedId) //
+					.orElse(null);
 
 			if (generatedId != null) {
 				return generatedId;
@@ -251,41 +216,7 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
-	private void setNewVersion(long version) {
-
-		Assert.isNull(this.version, "A new version was set a second time.");
-
-		this.version = version;
-	}
-
-	private long getNewVersion() {
-
-		Assert.notNull(version, "A new version was requested, but none was set.");
-
-		return version;
-	}
-
-	private boolean hasNewVersion() {
-		return version != null;
-	}
-
-	<T> T populateRootVersionIfNecessary(T newRoot) {
-
-		if (!hasNewVersion()) {
-			return newRoot;
-		}
-		// Does the root entity have a version attribute?
-		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) context
-				.getRequiredPersistentEntity(newRoot.getClass());
-
-		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot, getNewVersion(), persistentEntity, converter);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Nullable
 	<T> T populateIdsIfNecessary() {
-
-		T newRoot = null;
 
 		// have the results so that the inserts on the leaves come first.
 		List<DbActionExecutionResult> reverseResults = new ArrayList<>(results.values());
@@ -295,33 +226,29 @@ class JdbcAggregateChangeExecutionContext {
 
 		for (DbActionExecutionResult result : reverseResults) {
 
-			DbAction<?> action = result.getAction();
+			DbAction.WithEntity<?> action = result.getAction();
 
-			if (!(action instanceof DbAction.WithGeneratedId)) {
-				continue;
+			Object newEntity = setIdAndCascadingProperties(action, result.getGeneratedId(), cascadingValues);
+
+			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
+				// noinspection unchecked
+				return (T) newEntity;
 			}
 
-			DbAction.WithEntity<?> withEntity = (DbAction.WithGeneratedId<?>) action;
-			Object newEntity = setIdAndCascadingProperties(withEntity, result.getId(), cascadingValues);
-
 			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != withEntity.getEntity()) {
+			if (newEntity != action.getEntity() && action instanceof DbAction.Insert) {
+				DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
 
-				if (action instanceof DbAction.Insert) {
-					DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
+				Pair<?, ?> qualifier = insert.getQualifier();
 
-					Pair<?, ?> qualifier = insert.getQualifier();
-
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifier == null ? null : qualifier.getSecond(), newEntity);
-
-				} else if (action instanceof DbAction.InsertRoot) {
-					newRoot = (T) newEntity;
-				}
+				cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
+						qualifier == null ? null : qualifier.getSecond(), newEntity);
 			}
 		}
 
-		return newRoot;
+		throw new IllegalStateException(
+				String.format("Cannot retrieve the resulting instance unless a %s or %s action was successfully executed.",
+						DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
 	}
 
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,
@@ -333,7 +260,7 @@ class JdbcAggregateChangeExecutionContext {
 				.getRequiredPersistentEntity(action.getEntityType());
 		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
 
-		if (generatedId != null && persistentEntity.hasIdProperty()) {
+		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 
@@ -355,6 +282,10 @@ class JdbcAggregateChangeExecutionContext {
 			return pathToValue;
 		}
 
+		if (action instanceof DbAction.UpdateRoot) {
+			return pathToValue;
+		}
+
 		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported.", action.getClass()));
 	}
 
@@ -371,20 +302,12 @@ class JdbcAggregateChangeExecutionContext {
 		}
 	}
 
-	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update, RelationalPersistentEntity<T> persistentEntity) {
+	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update) {
 
-		// If the root aggregate has a version property, increment it.
-		Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
-				persistentEntity, converter);
-
+		Number previousVersion = update.getPreviousVersion();
 		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
 
-		setNewVersion(previousVersion.longValue() + 1);
-
-		T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(), getNewVersion(),
-				persistentEntity, converter);
-
-		if (!accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
+		if (!accessStrategy.updateWithVersion(update.getEntity(), update.getEntityType(), previousVersion)) {
 
 			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
 		}

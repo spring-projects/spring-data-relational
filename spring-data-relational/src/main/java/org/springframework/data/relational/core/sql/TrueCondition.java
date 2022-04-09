@@ -27,10 +27,6 @@ public class TrueCondition implements Condition {
 
 	private TrueCondition() {}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "1 = 1";

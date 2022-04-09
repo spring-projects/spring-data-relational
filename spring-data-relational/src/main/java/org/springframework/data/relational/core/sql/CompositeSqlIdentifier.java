@@ -42,28 +42,16 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 		this.parts = parts;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#iterator()
-	 */
 	@Override
 	public Iterator<SqlIdentifier> iterator() {
 		return Arrays.asList(parts).iterator();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#transform(java.util.function.UnaryOperator)
-	 */
 	@Override
 	public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
 		throw new UnsupportedOperationException("Composite SQL Identifiers cannot be transformed");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#toSql(org.springframework.data.relational.domain.IdentifierProcessing)
-	 */
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 
@@ -76,19 +64,11 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 		return stringJoiner.toString();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.SqlIdentifier#getReference(org.springframework.data.relational.domain.IdentifierProcessing)
-	 */
 	@Override
 	public String getReference(IdentifierProcessing processing) {
 		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object o) {
 
@@ -103,19 +83,11 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return toSql(IdentifierProcessing.ANSI);

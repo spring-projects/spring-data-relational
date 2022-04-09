@@ -29,7 +29,7 @@ public interface UpdateBuilder {
 	/**
 	 * Configure the {@link Table} to which the update is applied.
 	 *
-	 * @param count the top count.
+	 * @param table the table to update.
 	 * @return {@code this} {@link SelectBuilder}.
 	 */
 	UpdateAssign table(Table table);

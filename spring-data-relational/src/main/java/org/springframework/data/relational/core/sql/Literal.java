@@ -39,10 +39,6 @@ public class Literal<T> extends AbstractSegment implements Expression {
 		return content;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 

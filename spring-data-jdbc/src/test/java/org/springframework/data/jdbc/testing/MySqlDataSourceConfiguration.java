@@ -43,10 +43,6 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration implements In
 
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
-	 */
 	@Override
 	protected DataSource createDataSource() {
 

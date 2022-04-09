@@ -19,8 +19,9 @@ import org.springframework.util.Assert;
 
 /**
  * Comparing {@link Condition} comparing two {@link Expression}s.
- * <p/>
+ * <p>
  * Results in a rendered condition: {@code <left> <comparator> <right>} (e.g. {@code col = 'predicate'}.
+ * </p>
  *
  * @author Mark Paluch
  * @author Jens Schauder

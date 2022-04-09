@@ -67,10 +67,6 @@ interface JdbcQueryExecution<T> {
 					mappingContext, instantiators));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.core.convert.converter.Converter#convert(java.lang.Object)
-		 */
 		@Override
 		public Object convert(Object source) {
 

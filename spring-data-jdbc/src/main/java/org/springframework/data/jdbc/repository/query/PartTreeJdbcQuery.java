@@ -114,10 +114,6 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		return parameters.potentiallySortsDynamically() ? accessor.getSort() : Sort.unsorted();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.Object[])
-	 */
 	@Override
 	public Object execute(Object[] values) {
 

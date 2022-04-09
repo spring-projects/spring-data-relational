@@ -56,37 +56,21 @@ class DefaultSelect implements Select {
 		this.lockMode = lockMode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Select#getFrom()
-	 */
 	@Override
 	public From getFrom() {
 		return this.from;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Select#getOrderBy()
-	 */
 	@Override
 	public List<OrderByField> getOrderBy() {
 		return this.orderBy;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Select#getLimit()
-	 */
 	@Override
 	public OptionalLong getLimit() {
 		return limit == -1 ? OptionalLong.empty() : OptionalLong.of(limit);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Select#getOffset()
-	 */
 	@Override
 	public OptionalLong getOffset() {
 		return offset == -1 ? OptionalLong.empty() : OptionalLong.of(offset);
@@ -97,20 +81,12 @@ class DefaultSelect implements Select {
 		return distinct;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Select#getLockMode()
-	 */
 	@Nullable
 	@Override
 	public LockMode getLockMode() {
 		return lockMode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
 	@Override
 	public void visit(Visitor visitor) {
 

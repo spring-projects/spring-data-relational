@@ -132,10 +132,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		this.spELContext = new SpELContext(ResultSetAccessorPropertyAccessor.INSTANCE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
-	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.spELContext = new SpELContext(this.spELContext, applicationContext);
@@ -166,10 +162,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return getColumnType(referencedEntity.getRequiredIdProperty());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getSqlType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
 	@Override
 	public SQLType getTargetSqlType(RelationalPersistentProperty property) {
 		return JdbcUtil.targetSqlTypeFor(getColumnType(property));
@@ -181,10 +173,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return JdbcUtil.sqlTypeFor(getColumnType(property));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getColumnType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
 	@Override
 	public Class<?> getColumnType(RelationalPersistentProperty property) {
 		return doGetColumnType(property);
@@ -217,10 +205,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return componentColumnType;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#readValue(java.lang.Object, org.springframework.data.util.TypeInformation)
-	 */
 	@Override
 	@Nullable
 	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
@@ -240,10 +224,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.readValue(value, type);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#writeValue(java.lang.Object, org.springframework.data.util.TypeInformation)
-	 */
 	@Override
 	@Nullable
 	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
@@ -615,10 +595,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				this.entity = entity;
 			}
 
-			/*
-			 * (non-Javadoc)
-			 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
-			 */
 			@Override
 			@Nullable
 			public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {

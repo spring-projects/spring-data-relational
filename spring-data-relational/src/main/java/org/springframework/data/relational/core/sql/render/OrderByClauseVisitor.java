@@ -38,10 +38,6 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(OrderByField segment) {
 
@@ -53,10 +49,6 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 		return super.enterMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(OrderByField segment) {
 
@@ -76,10 +68,6 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 		return Delegation.leave();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -90,10 +78,6 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

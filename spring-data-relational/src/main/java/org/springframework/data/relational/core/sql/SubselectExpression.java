@@ -32,10 +32,6 @@ public class SubselectExpression extends AbstractSegment implements Expression {
 		this.subselect = subselect;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "(" + subselect + ")";

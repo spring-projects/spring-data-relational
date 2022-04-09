@@ -33,21 +33,22 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  *
  * @author Thomas Lang
  * @author Myeonghyeon Lee
+ * @author Chirag Taylor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityUpdateWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	RelationalEntityUpdateWriter converter = new RelationalEntityUpdateWriter(new RelationalMappingContext());
+	private final RelationalMappingContext context = new RelationalMappingContext();
 
 	@Test // DATAJDBC-112
 	public void existingEntityGetsConvertedToDeletePlusUpdate() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		MutableAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
+		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
-		converter.write(entity, aggregateChange);
+		new RelationalEntityUpdateWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,

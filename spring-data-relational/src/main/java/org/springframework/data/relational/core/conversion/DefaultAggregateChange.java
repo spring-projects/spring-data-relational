@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  * @since 2.0
  */
 class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
@@ -38,14 +39,14 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
-	/** Aggregate root, to which the change applies, if available */
-	private @Nullable T entity;
+	/** The previous version assigned to the instance being changed, if available */
+	@Nullable private final Number previousVersion;
 
-	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable T entity) {
+	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
 
 		this.kind = kind;
 		this.entityType = entityType;
-		this.entity = entity;
+		this.previousVersion = previousVersion;
 	}
 
 	/**
@@ -61,53 +62,22 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		actions.add(action);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getKind()
-	 */
 	@Override
 	public Kind getKind() {
 		return this.kind;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntityType()
-	 */
 	@Override
 	public Class<T> getEntityType() {
 		return this.entityType;
 	}
 
-	/**
-	 * Set the root object of the {@code AggregateChange}.
-	 *
-	 * @param aggregateRoot may be {@literal null} if the change refers to a list of aggregates or references it by id.
-	 */
+	@Nullable
 	@Override
-	public void setEntity(@Nullable T aggregateRoot) {
-
-		if (aggregateRoot != null) {
-			Assert.isInstanceOf(this.entityType, aggregateRoot,
-					String.format("AggregateRoot must be of type %s", entityType.getName()));
-		}
-
-		this.entity = aggregateRoot;
+	public Number getPreviousVersion() {
+		return previousVersion;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntity()
-	 */
-	@Override
-	public T getEntity() {
-		return this.entity;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#forEachAction(java.util.function.Consumer)
-	 */
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 

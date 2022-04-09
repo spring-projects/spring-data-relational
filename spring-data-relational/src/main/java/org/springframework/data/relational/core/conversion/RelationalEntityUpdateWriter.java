@@ -15,20 +15,19 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import java.util.List;
-
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Converts an aggregate represented by its root into an {@link MutableAggregateChange}. Does not perform any isNew
+ * Converts an aggregate represented by its root into an {@link AggregateChangeWithRoot}. Does not perform any isNew
  * check.
  *
  * @author Thomas Lang
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 1.1
  */
-public class RelationalEntityUpdateWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
+public class RelationalEntityUpdateWriter<T> implements EntityWriter<T, AggregateChangeWithRoot<T>> {
 
 	private final RelationalMappingContext context;
 
@@ -36,14 +35,8 @@ public class RelationalEntityUpdateWriter implements EntityWriter<Object, Mutabl
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.convert.EntityWriter#save(java.lang.Object, java.lang.Object)
-	 */
 	@Override
-	public void write(Object root, MutableAggregateChange<?> aggregateChange) {
-
-		List<DbAction<?>> actions = new WritingContext(context, root, aggregateChange).update();
-		actions.forEach(aggregateChange::addAction);
+	public void write(T root, AggregateChangeWithRoot<T> aggregateChange) {
+		new WritingContext<>(context, root, aggregateChange).update();
 	}
 }

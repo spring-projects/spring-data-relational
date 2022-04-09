@@ -17,12 +17,14 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -33,6 +35,7 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 public interface DbAction<T> {
 
@@ -43,21 +46,24 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class Insert<T> implements WithGeneratedId<T>, WithDependingOn<T> {
+	class Insert<T> implements WithDependingOn<T> {
 
 		private final T entity;
 		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 		private final WithEntity<?> dependingOn;
+		private final IdValueSource idValueSource;
 
 		final Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers;
 
 		public Insert(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
-				WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers) {
+				WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
+				IdValueSource idValueSource) {
 
 			this.entity = entity;
 			this.propertyPath = propertyPath;
 			this.dependingOn = dependingOn;
 			this.qualifiers = Collections.unmodifiableMap(new HashMap<>(qualifiers));
+			this.idValueSource = idValueSource;
 		}
 
 		@Override
@@ -81,9 +87,14 @@ public interface DbAction<T> {
 			return this.qualifiers;
 		}
 
+		public IdValueSource getIdValueSource() {
+			return idValueSource;
+		}
+
+		@Override
 		public String toString() {
-			return "DbAction.Insert(entity=" + this.getEntity() + ", propertyPath=" + this.getPropertyPath()
-					+ ", dependingOn=" + this.getDependingOn() + ", qualifiers=" + this.getQualifiers() + ")";
+			return "Insert{" + "entity=" + entity + ", propertyPath=" + propertyPath + ", dependingOn=" + dependingOn
+					+ ", idValueSource=" + idValueSource + ", qualifiers=" + qualifiers + '}';
 		}
 	}
 
@@ -93,48 +104,33 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class InsertRoot<T> implements WithGeneratedId<T> {
+	class InsertRoot<T> implements WithRoot<T> {
 
-		private final T entity;
+		private T entity;
+		private final IdValueSource idValueSource;
 
-		public InsertRoot(T entity) {
+		public InsertRoot(T entity, IdValueSource idValueSource) {
+
 			this.entity = entity;
+			this.idValueSource = idValueSource;
 		}
 
 		public T getEntity() {
 			return this.entity;
 		}
 
-		public String toString() {
-			return "DbAction.InsertRoot(entity=" + this.getEntity() + ")";
-		}
-	}
-
-	/**
-	 * Represents an update statement for a single entity that is not the root of an aggregate.
-	 *
-	 * @param <T> type of the entity for which this represents a database interaction.
-	 */
-	final class Update<T> implements WithEntity<T> {
-
-		private final T entity;
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-
-		public Update(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		@Override
+		public void setEntity(T entity) {
 			this.entity = entity;
-			this.propertyPath = propertyPath;
 		}
 
-		public T getEntity() {
-			return this.entity;
+		public IdValueSource getIdValueSource() {
+			return idValueSource;
 		}
 
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
-
+		@Override
 		public String toString() {
-			return "DbAction.Update(entity=" + this.getEntity() + ", propertyPath=" + this.getPropertyPath() + ")";
+			return "InsertRoot{" + "entity=" + entity + ", idValueSource=" + idValueSource + '}';
 		}
 	}
 
@@ -143,62 +139,38 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class UpdateRoot<T> implements WithEntity<T> {
+	class UpdateRoot<T> implements WithRoot<T> {
 
-		private final T entity;
+		private T entity;
 
-		public UpdateRoot(T entity) {
+		@Nullable private final Number previousVersion;
+
+		public UpdateRoot(T entity, @Nullable Number previousVersion) {
 			this.entity = entity;
+			this.previousVersion = previousVersion;
 		}
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		@Override
+		public void setEntity(T entity) {
+			this.entity = entity;
+		}
+
+		@Override
+		public IdValueSource getIdValueSource() {
+			return IdValueSource.PROVIDED;
+		}
+
+		@Nullable
+		public Number getPreviousVersion() {
+			return previousVersion;
 		}
 
 		public String toString() {
 			return "DbAction.UpdateRoot(entity=" + this.getEntity() + ")";
-		}
-	}
-
-	/**
-	 * Represents a merge statement for a single entity that is not the root of an aggregate.
-	 *
-	 * @param <T> type of the entity for which this represents a database interaction.
-	 */
-	final class Merge<T> implements WithDependingOn<T>, WithPropertyPath<T> {
-
-		private final T entity;
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		private final WithEntity<?> dependingOn;
-
-		private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = Collections.emptyMap();
-
-		public Merge(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
-				WithEntity<?> dependingOn) {
-			this.entity = entity;
-			this.propertyPath = propertyPath;
-			this.dependingOn = dependingOn;
-		}
-
-		public T getEntity() {
-			return this.entity;
-		}
-
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
-
-		public DbAction.WithEntity<?> getDependingOn() {
-			return this.dependingOn;
-		}
-
-		public Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers() {
-			return this.qualifiers;
-		}
-
-		public String toString() {
-			return "DbAction.Merge(entity=" + this.getEntity() + ", propertyPath=" + this.getPropertyPath() + ", dependingOn="
-					+ this.getDependingOn() + ", qualifiers=" + this.getQualifiers() + ")";
 		}
 	}
 
@@ -236,7 +208,8 @@ public interface DbAction<T> {
 	 * <p>
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
-	 *
+	 * </p>
+	 * 
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class DeleteRoot<T> implements DbAction<T> {
@@ -300,7 +273,8 @@ public interface DbAction<T> {
 	 * <p>
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
-	 *
+	 * </p>
+	 * 
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class DeleteAllRoot<T> implements DbAction<T> {
@@ -322,7 +296,6 @@ public interface DbAction<T> {
 
 	/**
 	 * Represents an acquire lock statement for a aggregate root when only the ID is known.
-	 * <p>
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
@@ -372,6 +345,41 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a batch insert statement for a multiple entities that are not aggregate roots.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 2.4
+	 */
+	final class InsertBatch<T> implements DbAction<T> {
+		private final List<Insert<T>> inserts;
+		private final IdValueSource idValueSource;
+
+		public InsertBatch(List<Insert<T>> inserts, IdValueSource idValueSource) {
+			Assert.notEmpty(inserts, "Inserts must contains at least one insert");
+			this.inserts = inserts;
+			this.idValueSource = idValueSource;
+		}
+
+		@Override
+		public Class<T> getEntityType() {
+			return inserts.get(0).getEntityType();
+		}
+
+		public List<Insert<T>> getInserts() {
+			return inserts;
+		}
+
+		public IdValueSource getIdValueSource() {
+			return idValueSource;
+		}
+
+		@Override
+		public String toString() {
+			return "InsertBatch{" + "inserts=" + inserts + ", idValueSource=" + idValueSource + '}';
+		}
+	}
+
+	/**
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
 	 * @author Jens Schauder
@@ -392,7 +400,8 @@ public interface DbAction<T> {
 		 * Additional values to be set during insert or update statements.
 		 * <p>
 		 * Values come from parent entities but one might also add values manually.
-		 *
+		 * </p>
+		 * 
 		 * @return guaranteed to be not {@code null}.
 		 */
 		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
@@ -429,6 +438,7 @@ public interface DbAction<T> {
 	 * A {@link DbAction} that stores the information of a single entity in the database.
 	 *
 	 * @author Jens Schauder
+	 * @author Chirag Tailor
 	 */
 	interface WithEntity<T> extends DbAction<T> {
 
@@ -442,21 +452,23 @@ public interface DbAction<T> {
 		default Class<T> getEntityType() {
 			return (Class<T>) getEntity().getClass();
 		}
+
+		/**
+		 * @return the {@link IdValueSource} for the entity to persist. Guaranteed to be not {@code null}.
+		 */
+		IdValueSource getIdValueSource();
 	}
 
 	/**
-	 * A {@link DbAction} that may "update" its entity. In order to support immutable entities this requires at least
-	 * potentially creating a new instance, which this interface makes available.
+	 * A {@link DbAction} pertaining to the root on an aggregate.
 	 *
-	 * @author Jens Schauder
+	 * @author Chirag Tailor
 	 */
-	interface WithGeneratedId<T> extends WithEntity<T> {
-
-		@SuppressWarnings("unchecked")
-		@Override
-		default Class<T> getEntityType() {
-			return (Class<T>) getEntity().getClass();
-		}
+	interface WithRoot<T> extends WithEntity<T> {
+		/**
+		 * @param entity the entity to persist. Must not be {@code null}.
+		 */
+		void setEntity(T entity);
 	}
 
 	/**

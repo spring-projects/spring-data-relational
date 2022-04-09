@@ -45,16 +45,10 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 		this.tableEntity = tableEntity;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.core.EntityMetadata#getJavaType()
-	 */
 	public Class<T> getJavaType() {
 		return type;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.relational.repository.query.RelationalEntityMetadata#getTableName()
-	 */
 	public SqlIdentifier getTableName() {
 		return tableEntity.getTableName();
 	}

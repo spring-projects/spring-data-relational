@@ -40,10 +40,6 @@ class DefaultInsert implements Insert {
 		this.values = new Values(new ArrayList<>(values));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
 	@Override
 	public void visit(Visitor visitor) {
 
@@ -58,10 +54,6 @@ class DefaultInsert implements Insert {
 		visitor.leave(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 

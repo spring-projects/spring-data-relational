@@ -33,21 +33,21 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * Unit tests for the {@link RelationalEntityInsertWriter}
  *
  * @author Thomas Lang
+ * @author Chirag Taylor
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityInsertWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	RelationalEntityInsertWriter converter = new RelationalEntityInsertWriter(new RelationalMappingContext());
+	RelationalMappingContext context = new RelationalMappingContext();
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				MutableAggregateChange.forSave(entity);
+		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
-		converter.write(entity, aggregateChange);
+		new RelationalEntityInsertWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
@@ -62,10 +62,9 @@ public class RelationalEntityInsertWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				MutableAggregateChange.forSave(entity);
+		AggregateChangeWithRoot<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
-		converter.write(entity, aggregateChange);
+		new RelationalEntityInsertWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,

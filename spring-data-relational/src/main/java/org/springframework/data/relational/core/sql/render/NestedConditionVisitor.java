@@ -39,10 +39,6 @@ class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 		this.target = target;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -61,10 +57,6 @@ class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 

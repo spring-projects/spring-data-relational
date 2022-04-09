@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
 public interface TableLike extends Segment {
 	/**
 	 * Creates a new {@link Column} associated with this {@link Table}.
-	 * <p/>
+	 * <p>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
 	 *
@@ -47,7 +47,7 @@ public interface TableLike extends Segment {
 
 	/**
 	 * Creates a new {@link Column} associated with this {@link Table}.
-	 * <p/>
+	 * <p>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
 	 *
@@ -64,7 +64,7 @@ public interface TableLike extends Segment {
 
 	/**
 	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
-	 * <p/>
+	 * <p>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
 	 *
@@ -80,7 +80,7 @@ public interface TableLike extends Segment {
 
 	/**
 	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
-	 * <p/>
+	 * <p>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
 	 *
@@ -102,7 +102,7 @@ public interface TableLike extends Segment {
 
 	/**
 	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
-	 * <p/>
+	 * <p>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
 	 *

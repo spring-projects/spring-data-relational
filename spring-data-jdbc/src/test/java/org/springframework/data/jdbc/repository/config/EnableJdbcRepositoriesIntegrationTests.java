@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
@@ -60,6 +63,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Greg Turnquist
  * @author Evgeni Dimitrov
  * @author Fei Dong
+ * @author Chirag Tailor
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfiguration.class)
@@ -159,7 +163,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
-					template);
+					template, new SqlParametersFactory(context, converter, dialect),
+					new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
 		}
 
 		@Bean

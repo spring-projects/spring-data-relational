@@ -70,17 +70,11 @@ public class JdbcQueryMethod extends QueryMethod {
 		this.annotationCache = new ConcurrentReferenceHashMap<>();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryMethod#createParameters(java.lang.reflect.Method)
-	 */
 	@Override
 	protected RelationalParameters createParameters(Method method) {
 		return new RelationalParameters(method);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryMethod#getEntityInformation()
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public RelationalEntityMetadata<?> getEntityInformation() {
@@ -111,9 +105,6 @@ public class JdbcQueryMethod extends QueryMethod {
 		return this.metadata;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryMethod#getParameters()
-	 */
 	@Override
 	public RelationalParameters getParameters() {
 		return (RelationalParameters) super.getParameters();

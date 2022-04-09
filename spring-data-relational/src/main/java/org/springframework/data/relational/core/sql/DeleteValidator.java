@@ -17,9 +17,10 @@ package org.springframework.data.relational.core.sql;
 
 /**
  * Validator for {@link Delete} statements.
- * <p/>
+ * <p>
  * Validates that all {@link Column}s using a table qualifier have a table import from the {@code FROM} clause.
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @since 1.1
  */

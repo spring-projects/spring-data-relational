@@ -29,20 +29,12 @@ public class StringLiteral extends Literal<CharSequence> {
 		super(content);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Literal#getContent()
-	 */
 	@Override
 	@Nullable
 	public CharSequence getContent() {
 		return super.getContent();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Literal#toString()
-	 */
 	@Override
 	public String toString() {
 		return "'" + super.toString() + "'";

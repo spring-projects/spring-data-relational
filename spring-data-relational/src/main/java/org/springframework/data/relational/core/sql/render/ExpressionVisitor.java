@@ -61,10 +61,6 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		this.aliasHandling = aliasHandling;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(Expression segment) {
 
@@ -117,10 +113,6 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		return Delegation.retain();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -134,10 +126,6 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		return super.enterNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Expression segment) {
 
@@ -150,10 +138,6 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		return super.leaveMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return value;

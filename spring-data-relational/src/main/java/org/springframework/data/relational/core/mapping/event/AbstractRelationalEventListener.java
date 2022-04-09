@@ -43,10 +43,6 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 		this.domainClass = typeArgument == null ? Object.class : typeArgument;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onApplicationEvent(AbstractRelationalEvent<?> event) {

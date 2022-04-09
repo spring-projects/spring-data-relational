@@ -46,10 +46,6 @@ public class From extends AbstractSegment {
 		return this.tables;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "FROM " + StringUtils.collectionToDelimitedString(tables, ", ");

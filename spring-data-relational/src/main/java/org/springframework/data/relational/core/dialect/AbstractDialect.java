@@ -34,10 +34,6 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  */
 public abstract class AbstractDialect implements Dialect {
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#getSelectContext()
-	 */
 	@Override
 	public SelectRenderContext getSelectContext() {
 
@@ -117,19 +113,11 @@ public abstract class AbstractDialect implements Dialect {
 			this.orderByNullPrecedence = orderByNullPrecedence;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.render.SelectRenderContext#afterFromTable()
-		 */
 		@Override
 		public Function<Select, ? extends CharSequence> afterFromTable() {
 			return afterFromTable;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.render.SelectRenderContext#afterOrderBy(boolean)
-		 */
 		@Override
 		public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
 			return afterOrderBy;
@@ -152,10 +140,6 @@ public abstract class AbstractDialect implements Dialect {
 			this.clause = clause;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.util.function.Function#apply(java.lang.Object)
-		 */
 		@Override
 		public CharSequence apply(Select select) {
 
@@ -189,10 +173,6 @@ public abstract class AbstractDialect implements Dialect {
 			this.clause = clause;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.util.function.Function#apply(java.lang.Object)
-		 */
 		@Override
 		public CharSequence apply(Select select) {
 
@@ -213,10 +193,6 @@ public abstract class AbstractDialect implements Dialect {
 
 		INSTANCE;
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.util.function.Function#apply(java.lang.Object)
-		 */
 		@Override
 		public CharSequence apply(CharSequence charSequence) {
 

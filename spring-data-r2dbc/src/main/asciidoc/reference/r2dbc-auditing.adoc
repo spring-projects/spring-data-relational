@@ -1,0 +1,23 @@
+[[r2dbc.auditing]]
+== General Auditing Configuration for R2DBC
+
+Since Spring Data R2DBC 1.2, auditing can be enabled by annotating a configuration class with the `@EnableR2dbcAuditing` annotation, as the following example shows:
+
+.Activating auditing using JavaConfig
+====
+[source,java]
+----
+@Configuration
+@EnableR2dbcAuditing
+class Config {
+
+  @Bean
+  public ReactiveAuditorAware<AuditableUser> myAuditorProvider() {
+      return new AuditorAwareImpl();
+  }
+}
+----
+====
+
+If you expose a bean of type `ReactiveAuditorAware` to the `ApplicationContext`, the auditing infrastructure picks it up automatically and uses it to determine the current user to be set on domain types.
+If you have multiple implementations registered in the `ApplicationContext`, you can select the one to be used by explicitly setting the `auditorAwareRef` attribute of `@EnableR2dbcAuditing`.

@@ -27,10 +27,6 @@ public class FalseCondition implements Condition {
 
 	private FalseCondition() {}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "1 = 0";

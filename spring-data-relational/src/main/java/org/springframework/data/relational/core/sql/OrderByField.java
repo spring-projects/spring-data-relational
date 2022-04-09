@@ -109,10 +109,6 @@ public class OrderByField extends AbstractSegment {
 		return nullHandling;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return direction != null ? expression + " " + direction : expression.toString();

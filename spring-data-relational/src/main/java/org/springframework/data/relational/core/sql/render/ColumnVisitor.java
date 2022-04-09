@@ -42,10 +42,6 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 		this.considerTablePrefix = considerTablePrefix;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Column segment) {
 
@@ -59,10 +55,6 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 		return super.leaveMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 

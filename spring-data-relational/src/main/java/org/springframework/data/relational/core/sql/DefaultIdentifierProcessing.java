@@ -32,19 +32,11 @@ class DefaultIdentifierProcessing implements IdentifierProcessing {
 		this.letterCasing = letterCasing;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.IdentifierProcessing#quote(java.lang.String)
-	 */
 	@Override
 	public String quote(String identifier) {
 		return quoting.apply(identifier);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.domain.IdentifierProcessing#standardizeLetterCase(java.lang.String)
-	 */
 	@Override
 	public String standardizeLetterCase(String identifier) {
 		return letterCasing.apply(identifier);

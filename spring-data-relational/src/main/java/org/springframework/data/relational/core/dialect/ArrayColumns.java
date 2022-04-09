@@ -48,19 +48,11 @@ public interface ArrayColumns {
 
 		INSTANCE;
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
 			return false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#getArrayType(java.lang.Class)
-		 */
 		@Override
 		public Class<?> getArrayType(Class<?> userType) {
 			throw new UnsupportedOperationException("Array types not supported");

@@ -42,10 +42,6 @@ public abstract class MultipleCondition extends AbstractSegment implements Condi
 		return conditions;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 

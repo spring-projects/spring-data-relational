@@ -35,10 +35,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 		super(context);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -55,10 +51,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(SimpleFunction segment) {
 
@@ -67,10 +59,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 		return super.enterMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(SimpleFunction segment) {
 
@@ -79,10 +67,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 		return super.leaveMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return part;

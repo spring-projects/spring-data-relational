@@ -2,12 +2,14 @@ target/
 .idea/
 .settings/
 *.iml
+.flattened-pom.xml
 .project
 .classpath
 .springBeans
 .sonar4clipse
 *.sonar4clipseExternals
 *.graphml
+*.json
 
 #prevent license accepting file to get accidentially commited to git
 container-license-acceptance.txt

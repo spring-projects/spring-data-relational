@@ -23,10 +23,6 @@ package org.springframework.data.relational.core.sql;
  */
 public class BindMarker extends AbstractSegment implements Expression {
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "?";
@@ -40,19 +36,11 @@ public class BindMarker extends AbstractSegment implements Expression {
 			this.name = name;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Named#getName()
-		 */
 		@Override
 		public SqlIdentifier getName() {
 			return SqlIdentifier.unquoted(name);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.BindMarker#toString()
-		 */
 		@Override
 		public String toString() {
 			return "?[" + name + "]";

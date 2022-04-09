@@ -52,65 +52,37 @@ class CachingNamingStrategy implements NamingStrategy {
 		this.schema = Lazy.of(delegate::getSchema);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getKeyColumn(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
 	@Override
 	public String getKeyColumn(RelationalPersistentProperty property) {
 		return keyColumns.computeIfAbsent(property, delegate::getKeyColumn);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getQualifiedTableName(java.lang.Class)
-	 */
 	@Override
 	@Deprecated
 	public String getQualifiedTableName(Class<?> type) {
 		return qualifiedTableNames.computeIfAbsent(type, delegate::getQualifiedTableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getTableName(java.lang.Class)
-	 */
 	@Override
 	public String getTableName(Class<?> type) {
 		return tableNames.computeIfAbsent(type, delegate::getTableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getReverseColumnName(org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension)
-	 */
 	@Override
 	public String getReverseColumnName(PersistentPropertyPathExtension path) {
 		return delegate.getReverseColumnName(path);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getReverseColumnName(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
 	@Override
 	public String getReverseColumnName(RelationalPersistentProperty property) {
 		return delegate.getReverseColumnName(property);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getSchema()
-	 */
 	@Override
 	public String getSchema() {
 		return schema.get();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getColumnName(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
 	@Override
 	public String getColumnName(RelationalPersistentProperty property) {
 		return columnNames.computeIfAbsent(property, delegate::getColumnName);

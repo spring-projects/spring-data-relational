@@ -34,60 +34,48 @@ public class Db2Dialect extends AbstractDialect {
 	 */
 	public static final Db2Dialect INSTANCE = new Db2Dialect();
 
+	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+		@Override
+		public boolean supportedForBatchOperations() {
+			return false;
+		}
+	};
+
 	protected Db2Dialect() {}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
+	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getLimit(long)
-		 */
 		@Override
 		public String getLimit(long limit) {
 			return "FETCH FIRST " + limit + " ROWS ONLY";
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getOffset(long)
-		 */
 		@Override
 		public String getOffset(long offset) {
 			return "OFFSET " + offset + " ROWS";
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClause(long, long)
-		 */
 		@Override
 		public String getLimitOffset(long limit, long offset) {
 			return String.format("OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", offset, limit);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
 		}
 	};
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#limit()
-	 */
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
-	 */
 	@Override
 	public LockClause lock() {
 
@@ -105,10 +93,6 @@ public class Db2Dialect extends AbstractDialect {
 		};
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#getIdentifierProcessing()
-	 */
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.ANSI;

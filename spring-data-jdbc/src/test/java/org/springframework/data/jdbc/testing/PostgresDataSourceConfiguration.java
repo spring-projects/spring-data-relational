@@ -39,10 +39,6 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
 	private static PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
-	 */
 	@Override
 	protected DataSource createDataSource() {
 
@@ -62,10 +58,6 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.DataSourceFactoryBean#customizePopulator(org.springframework.jdbc.datasource.init.ResourceDatabasePopulator)
-	 */
 	@Override
 	protected void customizePopulator(ResourceDatabasePopulator populator) {
 		populator.setIgnoreFailedDrops(true);

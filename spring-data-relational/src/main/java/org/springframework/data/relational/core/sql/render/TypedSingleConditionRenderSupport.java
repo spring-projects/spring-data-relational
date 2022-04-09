@@ -37,10 +37,6 @@ abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends Ty
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 

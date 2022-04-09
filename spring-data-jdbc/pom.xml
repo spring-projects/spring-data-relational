@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-data-jdbc</artifactId>
-	<version>2.4.0-SNAPSHOT</version>
+	<version>3.0.0-SNAPSHOT</version>
 
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.springframework.data</groupId>
 		<artifactId>spring-data-relational-parent</artifactId>
-		<version>2.4.0-SNAPSHOT</version>
+		<version>3.0.0-SNAPSHOT</version>
 	</parent>
 
 	<properties>
@@ -207,14 +207,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
-		<dependency>
-			<groupId>de.schauderhaft.degraph</groupId>
-			<artifactId>degraph-check</artifactId>
-			<version>${degraph-check.version}</version>
-			<scope>test</scope>
-		</dependency>
-
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mysql</artifactId>
@@ -264,6 +256,156 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit</artifactId>
+			<version>${archunit.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
+
+
+	<profiles>
+		<profile>
+			<id>all-dbs</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>h2-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>h2</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>mysql-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mysql</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>postgres-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>postgres</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>mariadb-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mariadb</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>db2-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>db2</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>oracle-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>oracle</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>mssql-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mssql</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
