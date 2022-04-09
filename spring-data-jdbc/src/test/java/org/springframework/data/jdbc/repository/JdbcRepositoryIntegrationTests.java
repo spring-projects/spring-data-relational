@@ -57,6 +57,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -73,6 +74,7 @@ import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -974,6 +976,168 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isOne();
 	}
 
+	@Test
+	void fetchByExampleFluentAllSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		List<DummyEntity> matches = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).all());
+		assertThat(matches).hasSize(2).contains(two, third);
+		assertThat(matches.get(0)).isEqualTo(two);
+	}
+
+	@Test
+	void fetchByExampleFluentCountSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Long matches = repository.findBy(example, FluentQuery.FetchableFluentQuery::count);
+		assertThat(matches).isEqualTo(2);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantFirstSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyEntity> matches = repository.findBy(example,
+				p -> p.sortBy(Sort.by("pointInTime").descending()).first());
+		assertThat(matches).contains(two);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueError() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		assertThatThrownBy(() -> repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).one()))
+				.isInstanceOf(IncorrectResultSizeDataAccessException.class).hasMessageContaining("expected 1, actual 2");
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyEntity> match = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).one());
+
+		assertThat(match).contains(two);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueAsSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyProjectExample> match = repository.findBy(example, p -> p.as(DummyProjectExample.class).one());
+
+		assertThat(match.get().getName()).contains(two.getName());
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -995,6 +1159,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.saveAll(asList(first, second));
 		return now;
+	}
+
+	interface DummyProjectExample {
+		String getName();
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {

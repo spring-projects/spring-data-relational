@@ -186,6 +186,12 @@ public class SimpleJdbcRepository<T, ID>
 
 	@Override
 	public <S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
-		throw new UnsupportedOperationException("Not implemented");
+		Assert.notNull(example, "Sample must not be null!");
+		Assert.notNull(queryFunction, "Query function must not be null!");
+
+		FluentQuery.FetchableFluentQuery<S> fluentQuery = new FetchableFluentQueryByExample<>(example,
+				example.getProbeType(), this.exampleMapper, this.entityOperations);
+
+		return queryFunction.apply(fluentQuery);
 	}
 }
