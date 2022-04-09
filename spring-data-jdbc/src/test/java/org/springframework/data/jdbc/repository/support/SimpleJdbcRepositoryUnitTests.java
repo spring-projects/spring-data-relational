@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
@@ -36,11 +37,12 @@ public class SimpleJdbcRepositoryUnitTests {
 
 	@Mock JdbcAggregateOperations operations;
 	@Mock RelationalPersistentEntity<Sample> entity;
+	@Mock JdbcConverter converter;
 
 	@Test // DATAJDBC-252
 	public void saveReturnsEntityProducedByOperations() {
 
-		SimpleJdbcRepository<Sample, Object> repository = new SimpleJdbcRepository<>(operations, entity);
+		SimpleJdbcRepository<Sample, Object> repository = new SimpleJdbcRepository<>(operations, entity,converter);
 
 		Sample expected = new Sample();
 		doReturn(expected).when(operations).save(any());

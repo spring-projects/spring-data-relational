@@ -21,6 +21,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.lang.Nullable;
 
 /**
@@ -162,45 +163,50 @@ public interface JdbcAggregateOperations {
 	/**
 	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
 	 *
-	 * @param example must not be null
+	 * @param query must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return exactly one result or {@link Optional#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
-	<T> Optional<T> selectOne(Example<T> example);
+	<T> Optional<T> selectOne(Query query, Class<T> entityClass);
 
 	/**
 	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable} that is sorted.
 	 *
-	 * @param example must not be null
+	 * @param query must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @param sort the sorting that should be used on the result.
 	 * @return a non-null sorted list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
-	<T> Iterable<T> select(Example<T> example, Sort sort);
+	<T> Iterable<T> select(Query query, Class<T> entityClass, Sort sort);
 
 	/**
-	 * Determine whether the result matches {@link Example}
+	 * Determine whether there are aggregates that match the {@link Query}
 	 *
-	 * @param example must not be {@literal null}.
+	 * @param query must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return {@literal true} if the object exists.
 	 */
-	<T> boolean exists(Example<T> example);
+	<T> boolean exists(Query query, Class<T> entityClass);
 
 	/**
-	 * Counts the number of aggregates of a given type that match the given <code>example</code>.
+	 * Counts the number of aggregates of a given type that match the given <code>query</code>.
 	 *
-	 * @param example the example to match.
+	 * @param query must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return the number of instances stored in the database. Guaranteed to be not {@code null}.
 	 */
-	<T> long count(Example<T> example);
+	<T> long count(Query query, Class<T> entityClass);
 
 	/**
-	 * Returns a {@link Page} of entities matching the given {@link Example}. In case no match could be found, an empty
+	 * Returns a {@link Page} of entities matching the given {@link Query}. In case no match could be found, an empty
 	 * {@link Page} is returned.
-	 * 
-	 * @param example must not be null
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @param pageable can be null.
 	 * @return a {@link Page} of entities matching the given {@link Example}.
 	 */
-	<T> Page<T> select(Example<T> example, Pageable pageable);
+	<T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable);
 }

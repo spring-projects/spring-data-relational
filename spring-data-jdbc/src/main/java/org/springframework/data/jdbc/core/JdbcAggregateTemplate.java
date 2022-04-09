@@ -24,7 +24,6 @@ import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -44,7 +43,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -71,7 +69,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private final DataAccessStrategy accessStrategy;
 	private final AggregateChangeExecutor executor;
 
-	private final RelationalExampleMapper exampleMapper;
 	private final JdbcConverter converter;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
@@ -101,7 +98,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
-		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 
 		setEntityCallbacks(EntityCallbacks.create(publisher));
 	}
@@ -129,7 +125,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
-		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
 	/**
@@ -242,46 +237,31 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Optional<T> selectOne(Example<T> example) {
-		Query query = this.exampleMapper.getMappedExample(example);
-		Class<T> probeType = example.getProbeType();
-
-		return accessStrategy.selectOne(query, probeType);
+	public <T> Optional<T> selectOne(Query query, Class<T> entityClass) {
+		return accessStrategy.selectOne(query, entityClass);
 	}
 
 	@Override
-	public <T> Iterable<T> select(Example<T> example, Sort sort) {
-		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
-		Class<T> probeType = example.getProbeType();
-
-		return accessStrategy.select(query, probeType);
+	public <T> Iterable<T> select(Query query, Class<T> entityClass, Sort sort) {
+		return accessStrategy.select(query, entityClass);
 	}
 
 	@Override
-	public <T> boolean exists(Example<T> example) {
-		Query query = this.exampleMapper.getMappedExample(example);
-
-		Class<T> probeType = example.getProbeType();
-
-		return accessStrategy.exists(query, probeType);
+	public <T> boolean exists(Query query, Class<T> entityClass) {
+		return accessStrategy.exists(query, entityClass);
 	}
 
 	@Override
-	public <T> long count(Example<T> example) {
-		Query query = this.exampleMapper.getMappedExample(example);
-		Class<T> probeType = example.getProbeType();
-		return accessStrategy.count(query, probeType);
+	public <T> long count(Query query, Class<T> entityClass) {
+		return accessStrategy.count(query, entityClass);
 	}
 
 	@Override
-	public <T> Page<T> select(Example<T> example, Pageable pageable) {
-		Query query = this.exampleMapper.getMappedExample(example);
-		Class<T> probeType = example.getProbeType();
-
-		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, probeType, pageable));
+	public <T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable) {
+		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, entityClass, pageable));
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
-		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, probeType));
+		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, entityClass));
 	}
 
 	/*

@@ -64,6 +64,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Evgeni Dimitrov
  * @author Fei Dong
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfiguration.class)
@@ -175,7 +176,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	private static class DummyRepositoryBaseClass<T, ID> implements CrudRepository<T, ID> {
 
-		DummyRepositoryBaseClass(JdbcAggregateTemplate template, PersistentEntity<?, ?> persistentEntity) {
+		DummyRepositoryBaseClass(JdbcAggregateTemplate template, PersistentEntity<?, ?> persistentEntity,
+				JdbcConverter converter) {
 
 		}
 
