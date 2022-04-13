@@ -164,6 +164,32 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		assertThat(content.id).isNull();
 	}
 
+	@Test // GH-537
+	void batchInsertRootOperation_withGeneratedIds() {
+
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class, IdValueSource.GENERATED))
+				.thenReturn(new Object[] { 123L });
+		executionContext.executeBatchInsertRoot(new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED))));
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoots).containsExactly(root);
+		assertThat(root.id).isEqualTo(123L);
+	}
+
+	@Test // GH-537
+	void batchInsertRootOperation_withoutGeneratedIds() {
+
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class, IdValueSource.PROVIDED))
+				.thenReturn(new Object[] { null });
+		executionContext.executeBatchInsertRoot(new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.PROVIDED))));
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoots).containsExactly(root);
+		assertThat(root.id).isNull();
+	}
+
 	@Test // GH-1201
 	void updates_whenReferencesWithImmutableIdAreInserted() {
 
@@ -177,7 +203,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Identifier identifier = Identifier.empty().withPart(SqlIdentifier.quoted("DUMMY_ENTITY"), 123L, Long.class);
 		when(accessStrategy.insert(contentImmutableId, ContentImmutableId.class, identifier, IdValueSource.GENERATED))
 				.thenReturn(456L);
-		executionContext.executeInsert(createInsert(rootUpdate, "contentImmutableId", contentImmutableId, null, IdValueSource.GENERATED));
+		executionContext.executeInsert(
+				createInsert(rootUpdate, "contentImmutableId", contentImmutableId, null, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 		assertThat(newRoots).containsExactly(root);
@@ -196,7 +223,6 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Content content1 = new Content();
 		when(accessStrategy.insert(content1, Content.class, createBackRef(123L), IdValueSource.GENERATED)).thenReturn(11L);
 		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null, IdValueSource.GENERATED));
-
 
 		DummyEntity root2 = new DummyEntity();
 		DbAction.InsertRoot<DummyEntity> rootInsert2 = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);

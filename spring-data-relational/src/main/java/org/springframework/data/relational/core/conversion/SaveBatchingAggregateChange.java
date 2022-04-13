@@ -43,7 +43,8 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 			Comparator.comparing(PersistentPropertyPath::getLength);
 
 	private final Class<T> entityType;
-	private final List<DbAction.WithRoot<?>> rootActions = new ArrayList<>();
+	private final List<DbAction<?>> rootActions = new ArrayList<>();
+	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<?>>> deleteActions = //
@@ -69,11 +70,15 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		Assert.notNull(consumer, "Consumer must not be null.");
 
 		rootActions.forEach(consumer);
+		if (insertRootBatchCandidates.size() > 1) {
+			consumer.accept(new DbAction.BatchInsertRoot<>(insertRootBatchCandidates));
+		} else {
+			insertRootBatchCandidates.forEach(consumer);
+		}
 		deleteActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator.reversed()))
 				.forEach((entry) -> entry.getValue().forEach(consumer));
-		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
-				.forEach((entry) -> entry.getValue()
-						.forEach((idValueSource, inserts) -> {
+		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator)).forEach((entry) -> entry
+				.getValue().forEach((idValueSource, inserts) -> {
 							if (inserts.size() > 1) {
 								consumer.accept(new DbAction.BatchInsert<>(inserts));
 							} else {
@@ -86,15 +91,32 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	public void add(RootAggregateChange<T> aggregateChange) {
 
 		aggregateChange.forEachAction(action -> {
-			if (action instanceof DbAction.WithRoot<?> rootAction) {
+			if (action instanceof DbAction.UpdateRoot<?> rootAction) {
+				commitBatchCandidates();
 				rootActions.add(rootAction);
-			} else if (action instanceof DbAction.Insert<?>) {
+			} else if (action instanceof DbAction.InsertRoot<?> rootAction) {
+				if (!insertRootBatchCandidates.isEmpty() && !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
+					commitBatchCandidates();
+				}
+				//noinspection unchecked
+				insertRootBatchCandidates.add((DbAction.InsertRoot<T>) rootAction);
+			} else if (action instanceof DbAction.Insert<?> insertAction) {
 				// noinspection unchecked
-				addInsert((DbAction.Insert<Object>) action);
+				addInsert((DbAction.Insert<Object>) insertAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
 				addDelete(deleteAction);
 			}
 		});
+	}
+
+	private void commitBatchCandidates() {
+
+		if (insertRootBatchCandidates.size() > 1) {
+			rootActions.add(new DbAction.BatchInsertRoot<>(List.copyOf(insertRootBatchCandidates)));
+		} else {
+			rootActions.addAll(insertRootBatchCandidates);
+		}
+		insertRootBatchCandidates.clear();
 	}
 
 	private void addInsert(DbAction.Insert<Object> action) {
@@ -103,11 +125,10 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		insertActions.merge(propertyPath,
 				new HashMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))),
 				(map, mapDefaultValue) -> {
-					map.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)),
-							(actions, listDefaultValue) -> {
-								actions.add(action);
-								return actions;
-							});
+					map.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)), (actions, listDefaultValue) -> {
+						actions.add(action);
+						return actions;
+					});
 					return map;
 				});
 	}

@@ -75,6 +75,20 @@ class JdbcAggregateChangeExecutionContext {
 		add(new DbActionExecutionResult(insert, id));
 	}
 
+	<T> void executeBatchInsertRoot(DbAction.BatchInsertRoot<T> batchInsertRoot) {
+
+		List<DbAction.InsertRoot<T>> inserts = batchInsertRoot.getActions();
+		List<InsertSubject<T>> insertSubjects = inserts.stream()
+				.map(insert -> InsertSubject.describedBy(insert.getEntity(), Identifier.empty())).collect(Collectors.toList());
+
+		Object[] ids = accessStrategy.insert(insertSubjects, batchInsertRoot.getEntityType(),
+				batchInsertRoot.getBatchValue());
+
+		for (int i = 0; i < inserts.size(); i++) {
+			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
+		}
+	}
+
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);

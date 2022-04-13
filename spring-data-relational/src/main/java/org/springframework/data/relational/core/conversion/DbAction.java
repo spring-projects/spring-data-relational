@@ -400,6 +400,18 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a batch insert statement for a multiple entities that are aggregate roots.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
+	final class BatchInsertRoot<T> extends BatchWithValue<T, InsertRoot<T>, IdValueSource> {
+		public BatchInsertRoot(List<InsertRoot<T>> actions) {
+			super(actions, InsertRoot::getIdValueSource);
+		}
+	}
+
+	/**
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
 	 * @author Jens Schauder

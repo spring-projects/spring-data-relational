@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -46,23 +47,192 @@ class SaveBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).isEmpty();
 	}
 
-	@Test
-	void yieldsRootActions() {
+	@Nested
+	class RootActionsTests {
+		@Test
+		void yieldsUpdateRoot() {
 
-		Root root1 = new Root(null, null);
-		DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
-		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
-		aggregateChange1.setRootAction(root1Insert);
-		Root root2 = new Root(null, null);
-		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
-		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
-		aggregateChange2.setRootAction(root2Insert);
+			Root root = new Root(1L, null);
+			DbAction.UpdateRoot<Root> rootUpdate = new DbAction.UpdateRoot<>(root, null);
+			RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+			aggregateChange.setRootAction(rootUpdate);
 
-		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
-		change.add(aggregateChange1);
-		change.add(aggregateChange2);
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange);
 
-		assertThat(extractActions(change)).containsExactly(root1Insert, root2Insert);
+			assertThat(extractActions(change)).containsExactly(rootUpdate);
+		}
+
+		@Test
+		void yieldsSingleInsertRoot_followedByUpdateRoot_asIndividualActions() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(1L, null);
+			DbAction.UpdateRoot<Root> root2Update = new DbAction.UpdateRoot<>(root2, null);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Update);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange1);
+			change.add(aggregateChange2);
+
+			assertThat(extractActions(change)) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly( //
+							Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
+							Tuple.tuple(DbAction.UpdateRoot.class, Root.class, IdValueSource.PROVIDED));
+		}
+
+		@Test
+		void yieldsMultipleMatchingInsertRoot_followedByUpdateRoot_asBatchInsertRootAction() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Insert);
+			Root root3 = new Root(1L, null);
+			DbAction.UpdateRoot<Root> root3Update = new DbAction.UpdateRoot<>(root3, null);
+			RootAggregateChange<Root> aggregateChange3 = MutableAggregateChange.forSave(root3);
+			aggregateChange3.setRootAction(root3Update);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange1);
+			change.add(aggregateChange2);
+			change.add(aggregateChange3);
+
+			List<DbAction<?>> actions = extractActions(change);
+			assertThat(actions) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly( //
+							Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED), //
+							Tuple.tuple(DbAction.UpdateRoot.class, Root.class, IdValueSource.PROVIDED));
+			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
+					.containsExactly(root1Insert, root2Insert);
+		}
+
+		@Test
+		void yieldsInsertRoot() {
+
+			Root root = new Root(1L, null);
+			DbAction.InsertRoot<Root> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+			aggregateChange.setRootAction(rootInsert);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange);
+
+			assertThat(extractActions(change)).containsExactly(rootInsert);
+		}
+
+		@Test
+		void yieldsSingleInsertRoot_followedByNonMatchingInsertRoot_asIndividualActions() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.PROVIDED);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Insert);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange1);
+			change.add(aggregateChange2);
+
+			assertThat(extractActions(change)).containsExactly(root1Insert, root2Insert);
+		}
+
+		@Test
+		void yieldsMultipleMatchingInsertRoot_followedByNonMatchingInsertRoot_asBatchInsertRootAction() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Insert);
+			Root root3 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root3Insert = new DbAction.InsertRoot<>(root3, IdValueSource.PROVIDED);
+			RootAggregateChange<Root> aggregateChange3 = MutableAggregateChange.forSave(root3);
+			aggregateChange3.setRootAction(root3Insert);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange1);
+			change.add(aggregateChange2);
+			change.add(aggregateChange3);
+
+			List<DbAction<?>> actions = extractActions(change);
+			assertThat(actions) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly( //
+							Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED), //
+							Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.PROVIDED));
+			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
+					.containsExactly(root1Insert, root2Insert);
+		}
+
+		@Test
+		void yieldsMultipleMatchingInsertRoot_asBatchInsertRootAction() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Insert);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange1);
+			change.add(aggregateChange2);
+
+			List<DbAction<?>> actions = extractActions(change);
+			assertThat(actions) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly(Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED));
+			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
+					.containsExactly(root1Insert, root2Insert);
+		}
+
+		@Test
+		void yieldsPreviouslyYieldedInsertRoot_asBatchInsertRootAction_whenAdditionalMatchingInsertRootIsAdded() {
+
+			Root root1 = new Root(1L, null);
+			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
+			aggregateChange1.setRootAction(root1Insert);
+			Root root2 = new Root(2L, null);
+			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
+			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
+			aggregateChange2.setRootAction(root2Insert);
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+
+			change.add(aggregateChange1);
+
+			assertThat(extractActions(change)) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly(Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED));
+
+			change.add(aggregateChange2);
+
+			List<DbAction<?>> actions = extractActions(change);
+			assertThat(actions) //
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
+					.containsExactly(Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED));
+			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
+					.containsExactly(root1Insert, root2Insert);
+		}
 	}
 
 	@Test
@@ -183,10 +353,10 @@ class SaveBatchingAggregateChangeTest {
 						Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED)) //
 				.doesNotContain(Tuple.tuple(DbAction.Insert.class, Intermediate.class));
-		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.GENERATED).getActions())
-				.containsExactly(intermediateInsertGeneratedId1, intermediateInsertGeneratedId2);
-		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.PROVIDED).getActions())
-				.containsExactly(intermediateInsertProvidedId1, intermediateInsertProvidedId2);
+		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchInsert.class, IdValueSource.GENERATED)
+				.getActions()).containsExactly(intermediateInsertGeneratedId1, intermediateInsertGeneratedId2);
+		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchInsert.class, IdValueSource.PROVIDED)
+				.getActions()).containsExactly(intermediateInsertProvidedId1, intermediateInsertProvidedId2);
 	}
 
 	@Test
@@ -227,7 +397,7 @@ class SaveBatchingAggregateChangeTest {
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
 						Tuple.tuple(DbAction.Insert.class, Leaf.class, IdValueSource.GENERATED));
-		assertThat(getBatchInsertAction(actions, Intermediate.class).getActions()) //
+		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchInsert.class).getActions()) //
 				.containsExactly(root1IntermediateInsert, root2IntermediateInsert);
 	}
 
@@ -258,32 +428,36 @@ class SaveBatchingAggregateChangeTest {
 		assertThat(actions).containsSubsequence(oneInsert, twoInsert);
 	}
 
-	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType,
-			IdValueSource idValueSource) {
-		return getBatchInsertActions(actions, entityType).stream()
-				.filter(batchInsert -> batchInsert.getBatchValue() == idValueSource).findFirst().orElseThrow(
-						() -> new RuntimeException(String.format("No BatchInsert with batch value '%s' found!", idValueSource)));
-	}
-
-	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType) {
-		return getBatchInsertActions(actions, entityType).stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("No BatchInsert action found!"));
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T> List<DbAction.BatchInsert<T>> getBatchInsertActions(List<DbAction<?>> actions, Class<T> entityType) {
-
-		return actions.stream() //
-				.filter(dbAction -> dbAction instanceof DbAction.BatchInsert) //
-				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
-				.map(dbAction -> (DbAction.BatchInsert<T>) dbAction).collect(Collectors.toList());
-	}
-
 	private <T> List<DbAction<?>> extractActions(BatchingAggregateChange<T, RootAggregateChange<T>> change) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
 		change.forEachAction(actions::add);
 		return actions;
+	}
+
+	private <T, A> DbAction.BatchWithValue<T, DbAction<T>, Object> getBatchWithValueAction(List<DbAction<?>> actions,
+			Class<T> entityType, Class<A> batchActionType) {
+
+		return getBatchWithValueActions(actions, entityType, batchActionType).stream().findFirst()
+				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found!"));
+	}
+
+	private <T, A> DbAction.BatchWithValue<T, DbAction<T>, Object> getBatchWithValueAction(List<DbAction<?>> actions,
+			Class<T> entityType, Class<A> batchActionType, Object batchValue) {
+
+		return getBatchWithValueActions(actions, entityType, batchActionType).stream()
+				.filter(batchWithValue -> batchWithValue.getBatchValue() == batchValue).findFirst().orElseThrow(
+						() -> new RuntimeException(String.format("No BatchWithValue with batch value '%s' found!", batchValue)));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T, A> List<DbAction.BatchWithValue<T, DbAction<T>, Object>> getBatchWithValueActions(
+			List<DbAction<?>> actions, Class<T> entityType, Class<A> batchActionType) {
+
+		return actions.stream() //
+				.filter(dbAction -> dbAction.getClass().equals(batchActionType)) //
+				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
+				.map(dbAction -> (DbAction.BatchWithValue<T, DbAction<T>, Object>) dbAction).collect(Collectors.toList());
 	}
 
 	@Value
