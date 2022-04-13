@@ -256,7 +256,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, null), //
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, "other", null, false, null), //
 						tuple(Insert.class, Element.class, "other", Element.class, true, IdValueSource.GENERATED) //
 				);
@@ -372,7 +372,7 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::isWithDependsOn, //
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false, null), //
+						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false, IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, "other.element", null, false, null),
 						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false, null),
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
@@ -531,7 +531,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, MapContainer.class, null, "", null), //
+						tuple(UpdateRoot.class, MapContainer.class, null, "", IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, null, "elements", null), //
 						tuple(Insert.class, Element.class, "one", "elements", IdValueSource.GENERATED) //
 				);
@@ -554,7 +554,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, ListContainer.class, null, "", null), //
+						tuple(UpdateRoot.class, ListContainer.class, null, "", IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, null, "elements", null), //
 						tuple(Insert.class, Element.class, 0, "elements", IdValueSource.GENERATED) //
 				);
@@ -579,7 +579,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, ListMapContainer.class, null, null, "", null), //
+						tuple(UpdateRoot.class, ListMapContainer.class, null, null, "", IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, null, null, "maps.elements", null), //
 						tuple(Delete.class, MapContainer.class, null, null, "maps", null), //
 						tuple(Insert.class, MapContainer.class, 0, null, "maps", IdValueSource.PROVIDED), //
@@ -607,7 +607,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, NoIdListMapContainer.class, null, null, "", null), //
+						tuple(UpdateRoot.class, NoIdListMapContainer.class, null, null, "", IdValueSource.PROVIDED), //
 						tuple(Delete.class, NoIdElement.class, null, null, "maps.elements", null), //
 						tuple(Delete.class, NoIdMapContainer.class, null, null, "maps", null), //
 						tuple(Insert.class, NoIdMapContainer.class, 0, null, "maps", IdValueSource.NONE), //

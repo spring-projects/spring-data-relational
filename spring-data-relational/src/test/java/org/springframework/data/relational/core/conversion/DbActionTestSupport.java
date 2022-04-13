@@ -52,12 +52,12 @@ class DbActionTestSupport {
 	@Nullable
 	static IdValueSource insertIdValueSource(DbAction<?> action) {
 
-		if (action instanceof DbAction.InsertRoot) {
-			return ((DbAction.InsertRoot<?>) action).getIdValueSource();
-		} else if (action instanceof DbAction.Insert) {
-			return ((DbAction.Insert<?>) action).getIdValueSource();
+		if (action instanceof DbAction.WithEntity<?>) {
+			return ((DbAction.WithEntity<?>) action).getIdValueSource();
 		} else if (action instanceof DbAction.BatchInsert) {
 			return ((DbAction.BatchInsert<?>) action).getBatchValue();
+		} else if (action instanceof DbAction.BatchInsertRoot<?>) {
+			return ((DbAction.BatchInsertRoot<?>) action).getBatchValue();
 		} else {
 			return null;
 		}
