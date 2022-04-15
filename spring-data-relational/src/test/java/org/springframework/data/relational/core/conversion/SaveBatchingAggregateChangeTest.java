@@ -143,26 +143,32 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
-		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence( //
-				Tuple.tuple(DbAction.Delete.class, Intermediate.class), //
-				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
+		assertThat(extractActions(change)).containsSubsequence(root2IntermediateDelete, root1IntermediateInsert);
 	}
 
 	@Test
-	void yieldsInsertActionsAsBatchInserts_groupedByIdValueSource() {
+	void yieldsInsertActionsAsBatchInserts_groupedByIdValueSource_whenGroupContainsMultipleInserts() {
 
 		Root root = new Root(null, null);
 		DbAction.InsertRoot<Root> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
-		Intermediate intermediateGeneratedId = new Intermediate(null, "intermediateGeneratedId", null);
-		DbAction.Insert<Intermediate> intermediateInsertGeneratedId = new DbAction.Insert<>(intermediateGeneratedId,
+		Intermediate intermediateGeneratedId1 = new Intermediate(null, "intermediateGeneratedId1", null);
+		DbAction.Insert<Intermediate> intermediateInsertGeneratedId1 = new DbAction.Insert<>(intermediateGeneratedId1,
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.GENERATED);
-		aggregateChange.addAction(intermediateInsertGeneratedId);
-		Intermediate intermediateProvidedId = new Intermediate(123L, "intermediateProvidedId", null);
-		DbAction.Insert<Intermediate> intermediateInsertProvidedId = new DbAction.Insert<>(intermediateProvidedId,
+		aggregateChange.addAction(intermediateInsertGeneratedId1);
+		Intermediate intermediateGeneratedId2 = new Intermediate(null, "intermediateGeneratedId2", null);
+		DbAction.Insert<Intermediate> intermediateInsertGeneratedId2 = new DbAction.Insert<>(intermediateGeneratedId2,
+				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.GENERATED);
+		aggregateChange.addAction(intermediateInsertGeneratedId2);
+		Intermediate intermediateProvidedId1 = new Intermediate(123L, "intermediateProvidedId1", null);
+		DbAction.Insert<Intermediate> intermediateInsertProvidedId1 = new DbAction.Insert<>(intermediateProvidedId1,
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.PROVIDED);
-		aggregateChange.addAction(intermediateInsertProvidedId);
+		aggregateChange.addAction(intermediateInsertProvidedId1);
+		Intermediate intermediateProvidedId2 = new Intermediate(456L, "intermediateProvidedId2", null);
+		DbAction.Insert<Intermediate> intermediateInsertProvidedId2 = new DbAction.Insert<>(intermediateProvidedId2,
+				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.PROVIDED);
+		aggregateChange.addAction(intermediateInsertProvidedId2);
 
 		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 		change.add(aggregateChange);
@@ -178,9 +184,9 @@ class SaveBatchingAggregateChangeTest {
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED)) //
 				.doesNotContain(Tuple.tuple(DbAction.Insert.class, Intermediate.class));
 		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.GENERATED).getActions())
-				.containsExactly(intermediateInsertGeneratedId);
+				.containsExactly(intermediateInsertGeneratedId1, intermediateInsertGeneratedId2);
 		assertThat(getBatchInsertAction(actions, Intermediate.class, IdValueSource.PROVIDED).getActions())
-				.containsExactly(intermediateInsertProvidedId);
+				.containsExactly(intermediateInsertProvidedId1, intermediateInsertProvidedId2);
 	}
 
 	@Test
@@ -220,11 +226,9 @@ class SaveBatchingAggregateChangeTest {
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
-						Tuple.tuple(DbAction.BatchInsert.class, Leaf.class, IdValueSource.GENERATED));
+						Tuple.tuple(DbAction.Insert.class, Leaf.class, IdValueSource.GENERATED));
 		assertThat(getBatchInsertAction(actions, Intermediate.class).getActions()) //
 				.containsExactly(root1IntermediateInsert, root2IntermediateInsert);
-		assertThat(getBatchInsertAction(actions, Leaf.class).getActions()) //
-				.containsExactly(root1LeafInsert);
 	}
 
 	@Test
@@ -251,15 +255,7 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions)
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
-				.containsSubsequence( //
-						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
-						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED));
-		List<DbAction.BatchInsert<Intermediate>> batchInsertActions = getBatchInsertActions(actions, Intermediate.class);
-		assertThat(batchInsertActions).hasSize(2);
-		assertThat(batchInsertActions.get(0).getActions()).containsExactly(oneInsert);
-		assertThat(batchInsertActions.get(1).getActions()).containsExactly(twoInsert);
+		assertThat(actions).containsSubsequence(oneInsert, twoInsert);
 	}
 
 	private <T> DbAction.BatchInsert<T> getBatchInsertAction(List<DbAction<?>> actions, Class<T> entityType,

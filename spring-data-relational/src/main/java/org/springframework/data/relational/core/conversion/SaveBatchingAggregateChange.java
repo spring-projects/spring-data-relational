@@ -73,7 +73,13 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				.forEach((entry) -> entry.getValue().forEach(consumer));
 		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
 				.forEach((entry) -> entry.getValue()
-						.forEach((idValueSource, inserts) -> consumer.accept(new DbAction.BatchInsert<>(inserts))));
+						.forEach((idValueSource, inserts) -> {
+							if (inserts.size() > 1) {
+								consumer.accept(new DbAction.BatchInsert<>(inserts));
+							} else {
+								inserts.forEach(consumer);
+							}
+						}));
 	}
 
 	@Override
