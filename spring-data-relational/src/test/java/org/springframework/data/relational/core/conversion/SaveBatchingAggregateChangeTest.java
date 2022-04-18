@@ -266,17 +266,17 @@ class SaveBatchingAggregateChangeTest {
 		Root root1 = new Root(1L, null);
 		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(new DbAction.UpdateRoot<>(root1, null));
-		DbAction.Delete<?> root1IntermediateDelete = new DbAction.Delete<>(1L,
+		DbAction.Delete<Intermediate> root1IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange1.addAction(root1IntermediateDelete);
 
-		Root root2 = new Root(1L, null);
+		Root root2 = new Root(2L, null);
 		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(new DbAction.UpdateRoot<>(root2, null));
 		DbAction.Delete<?> root2LeafDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate.leaf", Root.class));
 		aggregateChange2.addAction(root2LeafDelete);
-		DbAction.Delete<?> root2IntermediateDelete = new DbAction.Delete<>(1L,
+		DbAction.Delete<Intermediate> root2IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
 
@@ -284,8 +284,38 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
-		assertThat(extractActions(change)).containsSubsequence(root2LeafDelete, root1IntermediateDelete,
-				root2IntermediateDelete);
+		List<DbAction<?>> actions = extractActions(change);
+		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence(
+				Tuple.tuple(DbAction.Delete.class, Leaf.class), //
+				Tuple.tuple(DbAction.BatchDelete.class, Intermediate.class));
+		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchDelete.class).getActions())
+				.containsExactly(root1IntermediateDelete, root2IntermediateDelete);
+	}
+
+	@Test
+	void yieldsDeleteActionsAsBatchDeletes_groupedByPath_whenGroupContainsMultipleDeletes() {
+
+		Root root = new Root(1L, null);
+		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+		DbAction.UpdateRoot<Root> updateRoot = new DbAction.UpdateRoot<>(root, null);
+		aggregateChange.setRootAction(updateRoot);
+		DbAction.Delete<Intermediate> intermediateDelete1 = new DbAction.Delete<>(1L,
+				context.getPersistentPropertyPath("intermediate", Root.class));
+		DbAction.Delete<Intermediate> intermediateDelete2 = new DbAction.Delete<>(2L,
+				context.getPersistentPropertyPath("intermediate", Root.class));
+		aggregateChange.addAction(intermediateDelete1);
+		aggregateChange.addAction(intermediateDelete2);
+
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange);
+
+		List<DbAction<?>> actions = extractActions(change);
+		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType) //
+				.containsExactly( //
+						Tuple.tuple(DbAction.UpdateRoot.class, Root.class), //
+						Tuple.tuple(DbAction.BatchDelete.class, Intermediate.class));
+		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchDelete.class).getActions())
+				.containsExactly(intermediateDelete1, intermediateDelete2);
 	}
 
 	@Test

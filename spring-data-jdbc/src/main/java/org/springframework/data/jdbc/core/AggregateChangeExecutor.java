@@ -92,6 +92,8 @@ class AggregateChangeExecutor {
 				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
 			} else if (action instanceof DbAction.Delete) {
 				executionContext.executeDelete((DbAction.Delete<?>) action);
+			} else if (action instanceof DbAction.BatchDelete<?>) {
+				executionContext.executeBatchDelete((DbAction.BatchDelete<?>) action);
 			} else if (action instanceof DbAction.DeleteAll) {
 				executionContext.executeDeleteAll((DbAction.DeleteAll<?>) action);
 			} else if (action instanceof DbAction.DeleteRoot) {

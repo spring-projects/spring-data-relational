@@ -412,6 +412,18 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a batch delete statement for multiple entities that are reachable via a given path from the aggregate root.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
+	final class BatchDelete<T> extends BatchWithValue<T, Delete<T>, PersistentPropertyPath<RelationalPersistentProperty>> {
+		public BatchDelete(List<Delete<T>> actions) {
+			super(actions, Delete::getPropertyPath);
+		}
+	}
+
+	/**
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
 	 * @author Jens Schauder

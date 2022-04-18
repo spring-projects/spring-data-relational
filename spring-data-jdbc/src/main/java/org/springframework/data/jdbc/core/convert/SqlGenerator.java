@@ -360,7 +360,8 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Create a {@code DELETE} query and filter by {@link PersistentPropertyPath}.
+	 * Create a {@code DELETE} query and filter by {@link PersistentPropertyPath} using {@code WHERE} with the {@code =}
+	 * operator.
 	 *
 	 * @param path must not be {@literal null}.
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
@@ -368,6 +369,18 @@ class SqlGenerator {
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
 		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
 				filterColumn -> filterColumn.isEqualTo(getBindMarker(ROOT_ID_PARAMETER)));
+	}
+
+	/**
+	 * Create a {@code DELETE} query and filter by {@link PersistentPropertyPath} using {@code WHERE} with the {@code IN}
+	 * operator.
+	 *
+	 * @param path must not be {@literal null}.
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	String createDeleteInByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
+				filterColumn -> filterColumn.in(getBindMarker(IDS_SQL_PARAMETER)));
 	}
 
 	private String createFindOneSql() {

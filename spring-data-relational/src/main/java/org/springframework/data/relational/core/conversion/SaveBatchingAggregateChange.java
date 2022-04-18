@@ -31,8 +31,8 @@ import org.springframework.util.Assert;
 /**
  * A {@link BatchingAggregateChange} implementation for save changes that can contain actions for any mix of insert and
  * update operations. When consumed, actions are yielded in the appropriate entity tree order with inserts carried out
- * from root to leaves and deletes in reverse. All insert operations are grouped into batches to offer the ability for
- * an optimized batch operation to be used.
+ * from root to leaves and deletes in reverse. All operations that can be batched are grouped and combined to offer the
+ * ability for an optimized batch operation to be used.
  *
  * @author Chirag Tailor
  * @since 3.0
@@ -47,7 +47,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<?>>> deleteActions = //
+	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = //
 			new HashMap<>();
 
 	public SaveBatchingAggregateChange(Class<T> entityType) {
@@ -76,15 +76,22 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 			insertRootBatchCandidates.forEach(consumer);
 		}
 		deleteActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator.reversed()))
-				.forEach((entry) -> entry.getValue().forEach(consumer));
-		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator)).forEach((entry) -> entry
-				.getValue().forEach((idValueSource, inserts) -> {
-							if (inserts.size() > 1) {
-								consumer.accept(new DbAction.BatchInsert<>(inserts));
-							} else {
-								inserts.forEach(consumer);
-							}
-						}));
+				.forEach((entry) -> {
+					List<DbAction.Delete<Object>> deletes = entry.getValue();
+					if (deletes.size() > 1) {
+						consumer.accept(new DbAction.BatchDelete<>(deletes));
+					} else {
+						deletes.forEach(consumer);
+					}
+				});
+		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
+				.forEach((entry) -> entry.getValue().forEach((idValueSource, inserts) -> {
+					if (inserts.size() > 1) {
+						consumer.accept(new DbAction.BatchInsert<>(inserts));
+					} else {
+						inserts.forEach(consumer);
+					}
+				}));
 	}
 
 	@Override
@@ -95,16 +102,18 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				commitBatchCandidates();
 				rootActions.add(rootAction);
 			} else if (action instanceof DbAction.InsertRoot<?> rootAction) {
-				if (!insertRootBatchCandidates.isEmpty() && !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
+				if (!insertRootBatchCandidates.isEmpty()
+						&& !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
 					commitBatchCandidates();
 				}
-				//noinspection unchecked
+				// noinspection unchecked
 				insertRootBatchCandidates.add((DbAction.InsertRoot<T>) rootAction);
 			} else if (action instanceof DbAction.Insert<?> insertAction) {
 				// noinspection unchecked
 				addInsert((DbAction.Insert<Object>) insertAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
-				addDelete(deleteAction);
+				// noinspection unchecked
+				addDelete((DbAction.Delete<Object>) deleteAction);
 			}
 		});
 	}
@@ -133,7 +142,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				});
 	}
 
-	private void addDelete(DbAction.Delete<?> action) {
+	private void addDelete(DbAction.Delete<Object> action) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
 		deleteActions.merge(propertyPath, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {

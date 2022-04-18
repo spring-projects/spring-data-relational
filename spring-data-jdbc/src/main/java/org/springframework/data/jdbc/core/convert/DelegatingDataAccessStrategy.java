@@ -72,6 +72,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		delegate.delete(rootIds, propertyPath);
+	}
+
+	@Override
 	public void delete(Object id, Class<?> domainType) {
 		delegate.delete(id, domainType);
 	}

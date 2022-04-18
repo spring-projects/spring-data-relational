@@ -197,6 +197,21 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
+		RelationalPersistentEntity<?> rootEntity = context
+				.getRequiredPersistentEntity(propertyPath.getBaseProperty().getOwner().getType());
+
+		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
+		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
+
+		String delete = sql(rootEntity.getType()).createDeleteInByPath(propertyPath);
+
+		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryByIds(rootIds, rootEntity.getType());
+		operations.update(delete, parameters);
+	}
+
+	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		operations.getJdbcOperations().update(sql(domainType).createDeleteAllSql(null));
 	}

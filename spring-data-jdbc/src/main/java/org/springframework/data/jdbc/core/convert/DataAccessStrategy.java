@@ -152,6 +152,14 @@ public interface DataAccessStrategy extends RelationResolver {
 	void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
+	 * Deletes all entities reachable via {@literal propertyPath} from the instances identified by {@literal rootIds}.
+	 *
+	 * @param rootIds Ids of the root objects on which the {@literal propertyPath} is based. Must not be {@code null} or empty.
+	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
+	 */
+	void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
+
+	/**
 	 * Deletes all entities of the given domain type.
 	 *
 	 * @param domainType the domain type for which to delete all entries. Must not be {@code null}.
