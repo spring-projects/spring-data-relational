@@ -135,6 +135,12 @@ class JdbcAggregateChangeExecutionContext {
 		accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
 	}
 
+	<T> void executeBatchDelete(DbAction.BatchDelete<T> batchDelete) {
+
+		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.Delete::getRootId).toList();
+		accessStrategy.delete(rootIds, batchDelete.getBatchValue());
+	}
+
 	<T> void executeDeleteAllRoot(DbAction.DeleteAllRoot<T> deleteAllRoot) {
 
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());

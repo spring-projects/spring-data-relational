@@ -31,8 +31,8 @@ import org.springframework.util.Assert;
 /**
  * A {@link BatchingAggregateChange} implementation for save changes that can contain actions for any mix of insert and
  * update operations. When consumed, actions are yielded in the appropriate entity tree order with inserts carried out
- * from root to leaves and deletes in reverse. All insert operations are grouped into batches to offer the ability for
- * an optimized batch operation to be used.
+ * from root to leaves and deletes in reverse. All operations that can be batched are grouped and combined to offer the
+ * ability for an optimized batch operation to be used.
  *
  * @author Chirag Tailor
  * @since 3.0
@@ -51,7 +51,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<?>>> deleteActions = //
+	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = //
 			new HashMap<>();
 
 	SaveBatchingAggregateChange(Class<T> entityType) {
@@ -80,9 +80,17 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 			insertRootBatchCandidates.forEach(consumer);
 		}
 		deleteActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator.reversed()))
-				.forEach((entry) -> entry.getValue().forEach(consumer));
-		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator)).forEach((entry) -> entry
-				.getValue().forEach((idValueSource, inserts) -> consumer.accept(new DbAction.BatchInsert<>(inserts))));
+				.forEach((entry) -> {
+					List<DbAction.Delete<Object>> deletes = entry.getValue();
+					if (deletes.size() > 1) {
+						consumer.accept(new DbAction.BatchDelete<>(deletes));
+					} else {
+						deletes.forEach(consumer);
+					}
+				});
+		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
+				.forEach((entry) -> entry.getValue().forEach((idValueSource, inserts) ->
+						consumer.accept(new DbAction.BatchInsert<>(inserts))));
 	}
 
 	@Override
@@ -107,7 +115,8 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				// noinspection unchecked
 				addInsert((DbAction.Insert<Object>) insertAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
-				addDelete(deleteAction);
+				// noinspection unchecked
+				addDelete((DbAction.Delete<Object>) deleteAction);
 			}
 		});
 	}
@@ -140,7 +149,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				});
 	}
 
-	private void addDelete(DbAction.Delete<?> action) {
+	private void addDelete(DbAction.Delete<Object> action) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
 		deleteActions.merge(propertyPath, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {

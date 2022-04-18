@@ -88,6 +88,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		collectVoid(das -> das.delete(rootIds, propertyPath));
+	}
+
+	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		collectVoid(das -> das.deleteAll(domainType));
 	}

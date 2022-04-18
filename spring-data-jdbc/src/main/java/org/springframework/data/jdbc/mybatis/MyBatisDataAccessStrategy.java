@@ -219,6 +219,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		rootIds.forEach(rootId -> delete(rootId, propertyPath));
+	}
+
+	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".deleteAll";

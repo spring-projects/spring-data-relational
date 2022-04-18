@@ -147,6 +147,14 @@ class SqlGeneratorUnitTests {
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE referenced_entity.dummy_entity = :rootId");
 	}
 
+	@Test // GH-537
+	void cascadingDeleteInByPathFirstLevel() {
+
+		String sql = sqlGenerator.createDeleteInByPath(getPath("ref", DummyEntity.class));
+
+		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE referenced_entity.dummy_entity IN (:ids)");
+	}
+
 	@Test // DATAJDBC-112
 	void cascadingDeleteByPathSecondLevel() {
 
@@ -154,6 +162,15 @@ class SqlGeneratorUnitTests {
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM second_level_referenced_entity WHERE second_level_referenced_entity.referenced_entity IN (SELECT referenced_entity.x_l1id FROM referenced_entity WHERE referenced_entity.dummy_entity = :rootId)");
+	}
+
+	@Test // GH-537
+	void cascadingDeleteInByPathSecondLevel() {
+
+		String sql = sqlGenerator.createDeleteInByPath(getPath("ref.further", DummyEntity.class));
+
+		assertThat(sql).isEqualTo(
+				"DELETE FROM second_level_referenced_entity WHERE second_level_referenced_entity.referenced_entity IN (SELECT referenced_entity.x_l1id FROM referenced_entity WHERE referenced_entity.dummy_entity IN (:ids))");
 	}
 
 	@Test // DATAJDBC-112
