@@ -25,7 +25,7 @@
 
 		<!-- dependency versions -->
 		<jsr305.version>3.0.2</jsr305.version>
-		<mybatis-spring.version>2.0.7</mybatis-spring.version>
+		<mybatis-spring.version>2.1.0</mybatis-spring.version>
 		<mybatis.version>3.5.9</mybatis.version>
 
 		<!-- databases and jdbc drivers -->
@@ -151,10 +151,6 @@
 		<repository>
 			<id>spring-libs-snapshot</id>
 			<url>https://repo.spring.io/libs-snapshot</url>
-		</repository>
-		<repository>
-			<id>oss-sonatype-snapshot</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</repository>
 	</repositories>
 
