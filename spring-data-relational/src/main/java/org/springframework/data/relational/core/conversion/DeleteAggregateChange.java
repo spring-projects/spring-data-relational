@@ -30,9 +30,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @since 2.0
  */
-class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
-
-	private final Kind kind;
+public class DeleteAggregateChange<T> implements MutableAggregateChange<T> {
 
 	/** Type of the aggregate root to be changed */
 	private final Class<T> entityType;
@@ -42,9 +40,7 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 	/** The previous version assigned to the instance being changed, if available */
 	@Nullable private final Number previousVersion;
 
-	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
-
-		this.kind = kind;
+	public DeleteAggregateChange(Class<T> entityType, @Nullable Number previousVersion) {
 		this.entityType = entityType;
 		this.previousVersion = previousVersion;
 	}
@@ -64,7 +60,7 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 
 	@Override
 	public Kind getKind() {
-		return this.kind;
+		return Kind.DELETE;
 	}
 
 	@Override

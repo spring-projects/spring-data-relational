@@ -329,6 +329,38 @@ class JdbcAggregateTemplateIntegrationTests {
 		softly.assertAll();
 	}
 
+	@Test // GH-537
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
+	void saveAndDeleteAllByAggregateRootsWithReferencedEntity() {
+		LegoSet legoSet1 = template.save(legoSet);
+		LegoSet legoSet2 = template.save(createLegoSet("Some Name"));
+
+		template.deleteAll(List.of(legoSet1, legoSet2), LegoSet.class);
+
+		SoftAssertions softly = new SoftAssertions();
+
+		assertThat(template.findAll(LegoSet.class)).isEmpty();
+		assertThat(template.findAll(Manual.class)).isEmpty();
+
+		softly.assertAll();
+	}
+
+	@Test // GH-537
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
+	void saveAndDeleteAllByIdsWithReferencedEntity() {
+		LegoSet legoSet1 = template.save(legoSet);
+		LegoSet legoSet2 = template.save(createLegoSet("Some Name"));
+
+		template.deleteAllById(List.of(legoSet1.id, legoSet2.id), LegoSet.class);
+
+		SoftAssertions softly = new SoftAssertions();
+
+		assertThat(template.findAll(LegoSet.class)).isEmpty();
+		assertThat(template.findAll(Manual.class)).isEmpty();
+
+		softly.assertAll();
+	}
+
 	@Test // DATAJDBC-112
 	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
 	void updateReferencedEntityFromNull() {
