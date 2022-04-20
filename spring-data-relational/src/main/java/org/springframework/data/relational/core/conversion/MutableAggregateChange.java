@@ -59,15 +59,15 @@ public interface MutableAggregateChange<T> extends AggregateChange<T> {
 	}
 
 	/**
-	 * Factory method to create an {@link MutableAggregateChange} for deleting entities.
+	 * Factory method to create a {@link DeleteAggregateChange} for deleting entities.
 	 *
 	 * @param entity aggregate root to delete.
 	 * @param <T> entity type.
-	 * @return the {@link MutableAggregateChange} for deleting the root {@code entity}.
+	 * @return the {@link DeleteAggregateChange} for deleting the root {@code entity}.
 	 * @since 1.2
 	 */
 	@SuppressWarnings("unchecked")
-	static <T> MutableAggregateChange<T> forDelete(T entity) {
+	static <T> DeleteAggregateChange<T> forDelete(T entity) {
 
 		Assert.notNull(entity, "Entity must not be null");
 
@@ -75,31 +75,31 @@ public interface MutableAggregateChange<T> extends AggregateChange<T> {
 	}
 
 	/**
-	 * Factory method to create an {@link MutableAggregateChange} for deleting entities.
+	 * Factory method to create a {@link DeleteAggregateChange} for deleting entities.
 	 *
 	 * @param entityClass aggregate root type.
 	 * @param <T> entity type.
-	 * @return the {@link MutableAggregateChange} for deleting the root {@code entity}.
+	 * @return the {@link DeleteAggregateChange} for deleting the root {@code entity}.
 	 * @since 1.2
 	 */
-	static <T> MutableAggregateChange<T> forDelete(Class<T> entityClass) {
+	static <T> DeleteAggregateChange<T> forDelete(Class<T> entityClass) {
 		return forDelete(entityClass, null);
 	}
 
 	/**
-	 * Factory method to create an {@link MutableAggregateChange} for deleting entities.
+	 * Factory method to create a {@link DeleteAggregateChange} for deleting entities.
 	 *
 	 * @param entityClass aggregate root type.
 	 * @param previousVersion the previous version assigned to the instance being saved. May be {@literal null}.
 	 * @param <T> entity type.
-	 * @return the {@link MutableAggregateChange} for deleting the root {@code entity}.
+	 * @return the {@link DeleteAggregateChange} for deleting the root {@code entity}.
 	 * @since 2.4
 	 */
-	static <T> MutableAggregateChange<T> forDelete(Class<T> entityClass, @Nullable Number previousVersion) {
+	static <T> DeleteAggregateChange<T> forDelete(Class<T> entityClass, @Nullable Number previousVersion) {
 
 		Assert.notNull(entityClass, "Entity class must not be null");
 
-		return new DefaultAggregateChange<>(Kind.DELETE, entityClass, previousVersion);
+		return new DeleteAggregateChange<>(entityClass, previousVersion);
 	}
 
 	/**

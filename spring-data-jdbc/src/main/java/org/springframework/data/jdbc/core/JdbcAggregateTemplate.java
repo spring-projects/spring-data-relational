@@ -17,7 +17,9 @@ package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -33,6 +35,7 @@ import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.BatchingAggregateChange;
+import org.springframework.data.relational.core.conversion.DeleteAggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
@@ -276,12 +279,53 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
+	public <T> void deleteAllById(Iterable<?> ids, Class<T> domainType) {
+
+		Assert.isTrue(ids.iterator().hasNext(), "Ids must not be empty!");
+
+		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
+				.forDelete(domainType);
+
+		ids.forEach(id -> {
+			DeleteAggregateChange<T> change = createDeletingChange(id, null, domainType);
+			triggerBeforeDelete(null, id, change);
+			batchingAggregateChange.add(change);
+		});
+
+		executor.executeDelete(batchingAggregateChange);
+
+		ids.forEach(id -> triggerAfterDelete(null, id, batchingAggregateChange));
+	}
+
+	@Override
 	public void deleteAll(Class<?> domainType) {
 
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		MutableAggregateChange<?> change = createDeletingChange(domainType);
 		executor.executeDelete(change);
+	}
+
+	@Override
+	public <T> void deleteAll(Iterable<? extends T> instances, Class<T> domainType) {
+
+		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty!");
+
+		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
+				.forDelete(domainType);
+		Map<Object, T> instancesBeforeExecute = new LinkedHashMap<>();
+
+		instances.forEach(instance -> {
+			Object id = context.getRequiredPersistentEntity(domainType).getIdentifierAccessor(instance)
+					.getRequiredIdentifier();
+			DeleteAggregateChange<T> change = createDeletingChange(id, instance, domainType);
+			instancesBeforeExecute.put(id, triggerBeforeDelete(instance, id, change));
+			batchingAggregateChange.add(change);
+		});
+
+		executor.executeDelete(batchingAggregateChange);
+
+		instancesBeforeExecute.forEach((id, instance) -> triggerAfterDelete(instance, id, batchingAggregateChange));
 	}
 
 	private <T> T afterExecute(AggregateChange<T> change, T entityAfterExecution) {
@@ -416,7 +460,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(instance.getClass());
 	}
 
-	private <T> MutableAggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
+	private <T> DeleteAggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
 
 		Number previousVersion = null;
 		if (entity != null) {
@@ -425,7 +469,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(entity, persistentEntity, converter);
 			}
 		}
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forDelete(domainType, previousVersion);
+		DeleteAggregateChange<T> aggregateChange = MutableAggregateChange.forDelete(domainType, previousVersion);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}
@@ -475,7 +519,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot);
 	}
 
-	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, MutableAggregateChange<T> change) {
+	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<T> change) {
 
 		publisher.publishEvent(new AfterDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
 

@@ -81,6 +81,15 @@ public interface JdbcAggregateOperations {
 	<T> void deleteById(Object id, Class<T> domainType);
 
 	/**
+	 * Deletes all aggregates identified by their aggregate root ids.
+	 *
+	 * @param ids the ids of the aggregate roots of the aggregates to be deleted. Must not be {@code null}.
+	 * @param domainType the type of the aggregate root.
+	 * @param <T> the type of the aggregate root.
+	 */
+	<T> void deleteAllById(Iterable<?> ids, Class<T> domainType);
+
+	/**
 	 * Delete an aggregate identified by it's aggregate root.
 	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
@@ -95,6 +104,15 @@ public interface JdbcAggregateOperations {
 	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
 	 */
 	void deleteAll(Class<?> domainType);
+
+	/**
+	 * Delete all aggregates identified by their aggregate roots.
+	 *
+	 * @param aggregateRoots to delete. Must not be {@code null}.
+	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots.
+	 */
+	<T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType);
 
 	/**
 	 * Counts the number of aggregates of a given type.

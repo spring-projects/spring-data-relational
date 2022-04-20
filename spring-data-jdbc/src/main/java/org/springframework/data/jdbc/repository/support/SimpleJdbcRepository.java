@@ -101,14 +101,13 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, Paging
 
 	@Override
 	public void deleteAllById(Iterable<? extends ID> ids) {
-		ids.forEach(it -> entityOperations.deleteById(it, entity.getType()));
+		entityOperations.deleteAllById(ids, entity.getType());
 	}
 
 	@Transactional
 	@Override
-	@SuppressWarnings("unchecked")
 	public void deleteAll(Iterable<? extends T> entities) {
-		entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
+		entityOperations.deleteAll(entities, entity.getType());
 	}
 
 	@Transactional

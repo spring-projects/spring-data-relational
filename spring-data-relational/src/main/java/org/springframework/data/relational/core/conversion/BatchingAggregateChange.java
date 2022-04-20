@@ -47,4 +47,19 @@ public interface BatchingAggregateChange<T, C extends MutableAggregateChange<T>>
 
 		return new SaveBatchingAggregateChange<>(entityClass);
 	}
+
+	/**
+	 * Factory method to create a {@link BatchingAggregateChange} for deleting entities.
+	 *
+	 * @param entityClass aggregate root type.
+	 * @param <T> entity type.
+	 * @return the {@link BatchingAggregateChange} for deleting root entities.
+	 * @since 3.0
+	 */
+	static <T> BatchingAggregateChange<T, DeleteAggregateChange<T>> forDelete(Class<T> entityClass) {
+
+		Assert.notNull(entityClass, "Entity class must not be null");
+
+		return new DeleteBatchingAggregateChange<>(entityClass);
+	}
 }
