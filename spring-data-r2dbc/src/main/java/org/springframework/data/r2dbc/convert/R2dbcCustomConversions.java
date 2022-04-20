@@ -43,7 +43,8 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 */
 	@Deprecated
 	public R2dbcCustomConversions(Collection<?> converters) {
-		super(new R2dbcCustomConversionsConfiguration(STORE_CONVERSIONS, appendOverrides(converters)));
+		super(new R2dbcCustomConversionsConfiguration(STORE_CONVERSIONS,
+				converters instanceof List ? (List<?>) converters : new ArrayList<>(converters)));
 	}
 
 	/**
@@ -53,7 +54,12 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public R2dbcCustomConversions(StoreConversions storeConversions, Collection<?> converters) {
-		super(new R2dbcCustomConversionsConfiguration(storeConversions, appendOverrides(converters)));
+		super(new R2dbcCustomConversionsConfiguration(storeConversions,
+				converters instanceof List ? (List<?>) converters : new ArrayList<>(converters)));
+	}
+
+	protected R2dbcCustomConversions(ConverterConfiguration converterConfiguration) {
+		super(converterConfiguration);
 	}
 
 	/**
@@ -84,19 +90,12 @@ public class R2dbcCustomConversions extends CustomConversions {
 		return new R2dbcCustomConversions(StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), converters);
 	}
 
-	private static List<?> appendOverrides(Collection<?> converters) {
-
-		List<Object> objects = new ArrayList<>(converters);
-		objects.addAll(R2dbcConverters.getOverrideConvertersToRegister());
-
-		return objects;
-	}
-
 	static class R2dbcCustomConversionsConfiguration extends ConverterConfiguration {
 
 		public R2dbcCustomConversionsConfiguration(StoreConversions storeConversions, List<?> userConverters) {
 			super(storeConversions, userConverters, convertiblePair -> {
 
+				// Avoid JSR-310 temporal types conversion into java.util.Date
 				if (convertiblePair.getSourceType().getName().startsWith("java.time.")
 						&& convertiblePair.getTargetType().equals(Date.class)) {
 					return false;
