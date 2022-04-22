@@ -193,12 +193,22 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> ids, Class<?> domainType) {
+		ids.forEach(id -> delete(id, domainType));
+	}
+
+	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
 		String statement = namespace(domainType) + ".deleteWithVersion";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType,
 				Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion));
 		sqlSession().delete(statement, parameter);
+	}
+
+	@Override
+	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
+		ids.forEach(id -> deleteWithVersion(id, domainType, previousVersion));
 	}
 
 	@Override

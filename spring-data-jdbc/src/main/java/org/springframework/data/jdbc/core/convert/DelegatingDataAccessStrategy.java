@@ -82,8 +82,18 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> ids, Class<?> domainType) {
+		delegate.delete(ids, domainType);
+	}
+
+	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 		delegate.deleteWithVersion(id, domainType, previousVersion);
+	}
+
+	@Override
+	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
+		delegate.deleteWithVersion(ids, domainType, previousVersion);
 	}
 
 	@Override

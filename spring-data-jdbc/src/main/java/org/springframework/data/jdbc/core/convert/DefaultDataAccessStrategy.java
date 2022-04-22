@@ -164,6 +164,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> ids, Class<?> domainType) {
+
+		String deleteByIdInSql = sql(domainType).getDeleteByIdIn();
+		SqlParameterSource parameter = sqlParametersFactory.forQueryByIds(ids, domainType);
+
+		operations.update(deleteByIdInSql, parameter);
+	}
+
+	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
 		Assert.notNull(id, "Id must not be null.");
@@ -173,6 +182,21 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
+
+		if (affectedRows == 0) {
+			throw new OptimisticLockingFailureException(
+					String.format("Optimistic lock exception deleting entity of type %s.", persistentEntity.getName()));
+		}
+	}
+
+	@Override
+	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
+		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
+		int affectedRows = operations.update(sql(domainType).getDeleteByIdInAndVersion(), parameterSource);
 
 		if (affectedRows == 0) {
 			throw new OptimisticLockingFailureException(

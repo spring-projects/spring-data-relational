@@ -131,6 +131,18 @@ class JdbcAggregateChangeExecutionContext {
 		}
 	}
 
+	<T> void executeBatchDeleteRoot(DbAction.BatchDeleteRoot<T> batchDelete) {
+
+		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.DeleteRoot::getId).toList();
+		accessStrategy.delete(rootIds, batchDelete.getEntityType());
+	}
+
+	<T> void executeBatchDeleteRootWithVersion(DbAction.BatchDeleteRootWithVersion<T> batchDelete) {
+
+		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.DeleteRoot::getId).toList();
+		accessStrategy.deleteWithVersion(rootIds, batchDelete.getEntityType(), batchDelete.getBatchValue());
+	}
+
 	<T> void executeDelete(DbAction.Delete<T> delete) {
 
 		accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());

@@ -432,6 +432,18 @@ public interface DbAction<T> {
 		}
 	}
 
+	final class BatchDeleteRootWithVersion<T> extends BatchWithValue<T, DeleteRoot<T>, Number> {
+		public BatchDeleteRootWithVersion(List<DeleteRoot<T>> actions) {
+			super(actions, DeleteRoot::getPreviousVersion);
+		}
+	}
+
+	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
+		public BatchDeleteRoot(List<DeleteRoot<T>> actions) {
+			super(actions, DeleteRoot::getEntityType);
+		}
+	}
+
 	/**
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
