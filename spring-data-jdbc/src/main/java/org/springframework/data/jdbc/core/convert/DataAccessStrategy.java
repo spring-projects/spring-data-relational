@@ -131,6 +131,20 @@ public interface DataAccessStrategy extends RelationResolver {
 	void delete(Object id, Class<?> domainType);
 
 	/**
+	 * Deletes multiple rows identified by the ids, from the table identified by the domainType. Does not handle cascading
+	 * deletes.
+	 * <P>
+	 * The statement will be of the form : {@code DELETE FROM … WHERE ID IN (:ids) } and throw an optimistic record
+	 * locking exception if no rows have been updated.
+	 *
+	 * @param ids the ids of the rows to be deleted. Must not be {@code null}.
+	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
+	 *          {@code null}.
+	 * @since 3.0
+	 */
+	void delete(Iterable<Object> ids, Class<?> domainType);
+
+	/**
 	 * Deletes a single entity from the database and enforce optimistic record locking using the version property. Does
 	 * not handle cascading deletes.
 	 *
@@ -155,7 +169,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	/**
 	 * Deletes all entities reachable via {@literal propertyPath} from the instances identified by {@literal rootIds}.
 	 *
-	 * @param rootIds Ids of the root objects on which the {@literal propertyPath} is based. Must not be {@code null} or empty.
+	 * @param rootIds Ids of the root objects on which the {@literal propertyPath} is based. Must not be {@code null} or
+	 *          empty.
 	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
 	 */
 	void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath);

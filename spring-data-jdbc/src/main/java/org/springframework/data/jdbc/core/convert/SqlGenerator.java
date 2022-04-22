@@ -79,8 +79,10 @@ class SqlGenerator {
 	private final Lazy<String> updateSql = Lazy.of(this::createUpdateSql);
 	private final Lazy<String> updateWithVersionSql = Lazy.of(this::createUpdateWithVersionSql);
 
-	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteSql);
+	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteByIdSql);
+	private final Lazy<String> deleteByIdInSql = Lazy.of(this::createDeleteByIdInSql);
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
+	private final Lazy<String> deleteByIdInAndVersionSql = Lazy.of(this::createDeleteByIdInAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 
 	/**
@@ -323,12 +325,30 @@ class SqlGenerator {
 	}
 
 	/**
+	 * Create a {@code DELETE FROM … WHERE :id IN …} statement.
+	 *
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	String getDeleteByIdIn() {
+		return deleteByIdInSql.get();
+	}
+
+	/**
 	 * Create a {@code DELETE FROM … WHERE :id = … and :___oldOptimisticLockingVersion = ...} statement.
 	 *
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getDeleteByIdAndVersion() {
 		return deleteByIdAndVersionSql.get();
+	}
+
+	/**
+	 * Create a {@code DELETE FROM … WHERE :id In … and :___oldOptimisticLockingVersion = ...} statement.
+	 *
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	String getDeleteByIdInAndVersion() {
+		return deleteByIdInAndVersionSql.get();
 	}
 
 	/**
@@ -635,8 +655,12 @@ class SqlGenerator {
 				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn())));
 	}
 
-	private String createDeleteSql() {
+	private String createDeleteByIdSql() {
 		return render(createBaseDeleteById(getTable()).build());
+	}
+
+	private String createDeleteByIdInSql() {
+		return render(createBaseDeleteByIdIn(getTable()).build());
 	}
 
 	private String createDeleteByIdAndVersionSql() {
@@ -648,9 +672,23 @@ class SqlGenerator {
 		return render(delete);
 	}
 
+	private String createDeleteByIdInAndVersionSql() {
+
+		Delete delete = createBaseDeleteByIdIn(getTable()) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
+				.build();
+
+		return render(delete);
+	}
+
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 		return Delete.builder().from(table)
 				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
+	}
+
+	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteByIdIn(Table table) {
+		return Delete.builder().from(table)
+				.where(getIdColumn().in(SQL.bindMarker(":" + renderReference(IDS_SQL_PARAMETER))));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,

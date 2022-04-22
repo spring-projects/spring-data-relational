@@ -164,6 +164,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void delete(Iterable<Object> ids, Class<?> domainType) {
+
+		String deleteByIdInSql = sql(domainType).getDeleteByIdIn();
+		SqlParameterSource parameter = sqlParametersFactory.forQueryByIds(ids, domainType);
+
+		operations.update(deleteByIdInSql, parameter);
+	}
+
+	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
 		Assert.notNull(id, "Id must not be null");

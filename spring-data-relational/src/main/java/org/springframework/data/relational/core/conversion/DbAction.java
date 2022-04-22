@@ -433,6 +433,18 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a batch delete statement for multiple entities that are aggregate roots.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
+	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
+		public BatchDeleteRoot(List<DeleteRoot<T>> actions) {
+			super(actions, DeleteRoot::getEntityType);
+		}
+	}
+
+	/**
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
 	 * @author Jens Schauder

@@ -2,11 +2,15 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+
+import static java.util.Collections.*;
 
 /**
  * A {@link BatchingAggregateChange} implementation for delete changes that can contain actions for one or more delete
@@ -19,11 +23,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  */
 public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange<T, DeleteAggregateChange<T>> {
 
-	private static final Comparator<PersistentPropertyPath<RelationalPersistentProperty>> pathLengthComparator = //
-			Comparator.comparing(PersistentPropertyPath::getLength);
-
 	private final Class<T> entityType;
-	private final List<DbAction.DeleteRoot<T>> rootActions = new ArrayList<>();
+	private final List<DbAction.DeleteRoot<T>> rootActionsWithoutVersion = new ArrayList<>();
+	private final List<DbAction.DeleteRoot<T>> rootActionsWithVersion = new ArrayList<>();
 	private final List<DbAction.AcquireLockRoot<?>> lockActions = new ArrayList<>();
 	private final BatchedActions deleteActions = BatchedActions.batchedDeletes();
 
@@ -46,7 +48,12 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 		lockActions.forEach(consumer);
 		deleteActions.forEach(consumer);
-		rootActions.forEach(consumer);
+		if (rootActionsWithoutVersion.size() > 1) {
+			consumer.accept(new DbAction.BatchDeleteRoot<>(rootActionsWithoutVersion));
+		} else {
+			rootActionsWithoutVersion.forEach(consumer);
+		}
+		rootActionsWithVersion.forEach(consumer);
 	}
 
 	@Override
@@ -54,12 +61,22 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 		aggregateChange.forEachAction(action -> {
 			if (action instanceof DbAction.DeleteRoot<?> deleteRootAction) {
-				rootActions.add((DbAction.DeleteRoot<T>) deleteRootAction);
+				// noinspection unchecked
+				addDeleteRoot((DbAction.DeleteRoot<T>) deleteRootAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
 				deleteActions.add(deleteAction);
 			} else if (action instanceof DbAction.AcquireLockRoot<?> lockRootAction) {
 				lockActions.add(lockRootAction);
 			}
 		});
+	}
+
+	private void addDeleteRoot(DbAction.DeleteRoot<T> action) {
+
+		if (action.getPreviousVersion() == null) {
+			rootActionsWithoutVersion.add(action);
+		} else {
+			rootActionsWithVersion.add(action);
+		}
 	}
 }
