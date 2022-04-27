@@ -138,13 +138,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<T> one() {
-			Query q = query;
-			/* If the query has not a defined limit, a limit of 2 is employed
-			    to catch cases where the query would yield more than one result. */
-			if (query.getLimit() == -1) {
-				q = query.limit(2);
-			} // else: use the already defined limit.
-			return template.doSelect(q, domainType, getTableName(), returnType, RowsFetchSpec::one);
+			return template.doSelect(query.limit(2), domainType, getTableName(), returnType, RowsFetchSpec::one);
 		}
 
 		/*

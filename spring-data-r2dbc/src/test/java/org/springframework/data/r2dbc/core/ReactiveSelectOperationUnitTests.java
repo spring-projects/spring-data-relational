@@ -174,29 +174,6 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 2");
 	}
 
-	@Test // gh-220, gh-758
-	void shouldSelectOneDoNoOverrideExistingLimit() {
-
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
-		MockResult result = MockResult.builder()
-				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
-
-		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
-
-		entityTemplate.select(Person.class) //
-				.matching(query(where("name").is("Walter")).limit(1)) //
-				.one() //
-				.as(StepVerifier::create) //
-				.expectNextCount(1) //
-				.verifyComplete();
-
-		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
-
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 1");
-	}
-
 	@Test // gh-220
 	void shouldSelectExists() {
 
