@@ -39,7 +39,6 @@ import org.springframework.r2dbc.core.DatabaseClient;
  * Unit test for {@link ReactiveSelectOperation}.
  *
  * @author Mark Paluch
- * @author Robert Heim
  */
 public class ReactiveSelectOperationUnitTests {
 

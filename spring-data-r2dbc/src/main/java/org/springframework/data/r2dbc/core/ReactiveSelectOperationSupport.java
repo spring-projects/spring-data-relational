@@ -28,7 +28,6 @@ import org.springframework.util.Assert;
  * Implementation of {@link ReactiveSelectOperation}.
  *
  * @author Mark Paluch
- * @author Robert Heim
  * @since 1.1
  */
 class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
