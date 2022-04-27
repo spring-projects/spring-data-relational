@@ -87,6 +87,7 @@ import org.springframework.util.Assert;
  * @author Bogdan Ilchyshyn
  * @author Jens Schauder
  * @author Jose Luis Leon
+ * @author Robert Heim
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -420,7 +421,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 */
 	@Override
 	public <T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException {
-		return doSelect(query.limit(2), entityClass, getTableName(entityClass), entityClass, RowsFetchSpec::one);
+		Query q = query;
+		/* If the query has not a defined limit, a limit of 2 is employed
+			to catch cases where the query would yield more than one result. */
+		if (query.getLimit() == -1) {
+			q = query.limit(2);
+		} // else: use the already defined limit.
+		return doSelect(q, entityClass, getTableName(entityClass), entityClass, RowsFetchSpec::one);
 	}
 
 	/*

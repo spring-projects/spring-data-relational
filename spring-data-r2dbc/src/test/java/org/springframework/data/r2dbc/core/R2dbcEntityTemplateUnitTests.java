@@ -68,6 +68,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Mark Paluch
  * @author Jose Luis Leon
+ * @author Robert Heim
  */
 public class R2dbcEntityTemplateUnitTests {
 
@@ -199,6 +200,22 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 2");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
+
+	@Test // gh-220, gh-758
+	void shouldSelectOneDoNotOverrideExistingLimit() {
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
+
+		entityTemplate.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")).limit(1), Person.class) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
