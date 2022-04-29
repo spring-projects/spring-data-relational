@@ -41,6 +41,8 @@ import org.springframework.util.Assert;
  */
 public class Query {
 
+	private static final int NO_LIMIT = -1;
+
 	private final @Nullable CriteriaDefinition criteria;
 
 	private final List<SqlIdentifier> columns;
@@ -64,7 +66,7 @@ public class Query {
 	 * @param criteria must not be {@literal null}.
 	 */
 	private Query(@Nullable CriteriaDefinition criteria) {
-		this(criteria, Collections.emptyList(), Sort.unsorted(), -1, -1);
+		this(criteria, Collections.emptyList(), Sort.unsorted(), NO_LIMIT, NO_LIMIT);
 	}
 
 	private Query(@Nullable CriteriaDefinition criteria, List<SqlIdentifier> columns, Sort sort, int limit, long offset) {
@@ -246,6 +248,17 @@ public class Query {
 	 */
 	public int getLimit() {
 		return this.limit;
+	}
+
+	/**
+	 * Return whether the query has a limit.
+	 *
+	 * @return {@code true} if a limit is set.
+	 * @see #getLimit()
+	 * @since 3.0
+	 */
+	public boolean isLimited() {
+		return getLimit() != NO_LIMIT;
 	}
 
 	private static void assertNoCaseSort(Sort sort) {

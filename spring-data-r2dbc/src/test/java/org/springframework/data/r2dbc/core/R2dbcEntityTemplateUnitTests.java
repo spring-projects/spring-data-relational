@@ -90,8 +90,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-		MockResult result = MockResult.builder()
-				.row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
@@ -111,8 +110,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-		MockResult result = MockResult.builder()
-				.row(MockRow.builder().identified(0, Object.class, null).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
@@ -129,8 +127,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-		MockResult result = MockResult.builder()
-				.row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
@@ -208,7 +205,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
-		entityTemplate.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")).limit(1), Person.class) //
+		entityTemplate
+				.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")).limit(1), Person.class) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 

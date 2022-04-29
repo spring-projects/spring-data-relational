@@ -151,8 +151,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @param databaseClient must not be {@literal null}.
 	 * @since 1.2
 	 */
-	public R2dbcEntityTemplate(DatabaseClient databaseClient,
-			ReactiveDataAccessStrategy strategy) {
+	public R2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy strategy) {
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null");
 		Assert.notNull(strategy, "ReactiveDataAccessStrategy must not be null");
@@ -421,13 +420,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 */
 	@Override
 	public <T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException {
-		Query q = query;
-		/* If the query has not a defined limit, a limit of 2 is employed
-			to catch cases where the query would yield more than one result. */
-		if (query.getLimit() == -1) {
-			q = query.limit(2);
-		} // else: use the already defined limit.
-		return doSelect(q, entityClass, getTableName(entityClass), entityClass, RowsFetchSpec::one);
+		return doSelect(query.isLimited() ? query : query.limit(2), entityClass, getTableName(entityClass), entityClass,
+				RowsFetchSpec::one);
 	}
 
 	/*
