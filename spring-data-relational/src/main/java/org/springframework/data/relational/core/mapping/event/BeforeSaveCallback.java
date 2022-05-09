@@ -21,6 +21,14 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
 /**
  * An {@link EntityCallback} that gets invoked before changes are applied to the database, after the aggregate was
  * converted to a database change.
+ * <p>
+ * Changes to the aggregate are not taken into account to decide whether the change will be an insert or update. Use the
+ * {@link BeforeConvertCallback} to change the persistent the entity before being converted.
+ * <p>
+ * Currently a {@link BeforeSaveCallback} may be used to create an Id for new aggregate roots. This is for backward
+ * compatibility purposes within the 2.x development line. The preferred way to do this is to use a
+ * {@link BeforeConvertCallback} or {@link BeforeConvertEvent} and beginning with 3.0. this will be the only correct way
+ * to do this.
  *
  * @author Jens Schauder
  * @author Mark Paluch
@@ -32,9 +40,7 @@ public interface BeforeSaveCallback<T> extends EntityCallback<T> {
 	/**
 	 * Entity callback method invoked before an aggregate root is saved. Can return either the same or a modified instance
 	 * of the aggregate and can modify {@link MutableAggregateChange} contents. This method is called after converting the
-	 * {@code aggregate} to {@link MutableAggregateChange}. Changes to the aggregate are not taken into account to decide
-	 * whether the change will be an insert or update. Use the {@link BeforeConvertCallback} to change the persistent the
-	 * entity before being converted.
+	 * {@code aggregate} to {@link MutableAggregateChange}.
 	 *
 	 * @param aggregate the aggregate.
 	 * @param aggregateChange the associated {@link MutableAggregateChange}.

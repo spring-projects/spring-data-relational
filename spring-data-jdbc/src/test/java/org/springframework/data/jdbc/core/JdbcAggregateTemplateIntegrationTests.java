@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,11 +61,15 @@ import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
@@ -93,8 +98,16 @@ class JdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
+	@Autowired Config.ConfigurableBeforeSaveCallback beforeSaveCallback;
+	@Autowired Config.ConfigurableBeforeConvertCallback beforeConvertCallback;
 
 	LegoSet legoSet = createLegoSet("Star Destroyer");
+
+	@BeforeEach
+	void beforeEach() {
+		((JdbcAggregateTemplate) template)
+				.setEntityCallbacks(EntityCallbacks.create(beforeSaveCallback, beforeConvertCallback));
+	}
 
 	/**
 	 * creates an instance of {@link NoIdListChain4} with the following properties:
@@ -258,14 +271,15 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-821
-	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE})
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE })
 	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullPrecedence() {
 
 		template.save(createLegoSet(null));
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
-		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class,
+				Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(reloadedLegoSets) //
 				.extracting("name") //
@@ -843,7 +857,8 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(updatedRoot.version).isEqualTo(1L);
 
 		// Expect only one assignment of the version to AggregateWithImmutableVersion
-		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
+		assertThat(AggregateWithImmutableVersion.constructorInvocations)
+				.containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
 	}
 
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
@@ -954,6 +969,31 @@ class JdbcAggregateTemplateIntegrationTests {
 		WithIdOnly entity = new WithIdOnly();
 
 		assertThat(template.save(entity).id).isNotNull();
+	}
+
+	@Test // GH-1232
+	@EnabledOnFeature(IS_HSQL)
+	void beforeSaveCallbackEffectsAreVisibleForInsert() {
+
+		beforeSaveCallback.behavior = m -> {
+
+			ManualId result = new ManualId();
+			result.id = 23L;
+			result.content = "changed by before safe";
+
+			return result;
+		};
+
+		ManualId manual = new ManualId();
+		manual.content = "original manual";
+
+		ManualId saved = template.save(manual);
+
+		assertThat(saved.content).isEqualTo("changed by before safe");
+
+		ManualId reloaded = template.findById(saved.id, ManualId.class);
+		assertThat(reloaded.content).isEqualTo("changed by before safe");
+
 	}
 
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
@@ -1373,6 +1413,11 @@ class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 	}
 
+	static class ManualId {
+		@Id private Long id;
+		private String content;
+	}
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -1385,7 +1430,46 @@ class JdbcAggregateTemplateIntegrationTests {
 		@Bean
 		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
 				DataAccessStrategy dataAccessStrategy, JdbcConverter converter) {
+
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		}
+
+		@Bean
+		ConfigurableBeforeSaveCallback beforeSaveCallback() {
+			return new ConfigurableBeforeSaveCallback();
+		}
+
+		@Bean
+		ConfigurableBeforeConvertCallback beforeConvertCallback() {
+			return new ConfigurableBeforeConvertCallback();
+		}
+
+		private static class ConfigurableBeforeSaveCallback implements BeforeSaveCallback<ManualId> {
+
+			Function<ManualId, ManualId> behavior;
+
+			@Override
+			public ManualId onBeforeSave(ManualId aggregate, MutableAggregateChange<ManualId> aggregateChange) {
+
+				if (behavior == null) {
+					return aggregate;
+				}
+				return behavior.apply(aggregate);
+			}
+		}
+
+		private static class ConfigurableBeforeConvertCallback implements BeforeConvertCallback<ManualId> {
+
+			Function<ManualId, ManualId> behavior;
+
+			@Override
+			public ManualId onBeforeConvert(ManualId aggregate) {
+
+				if (behavior == null) {
+					return aggregate;
+				}
+				return behavior.apply(aggregate);
+			}
 		}
 	}
 }

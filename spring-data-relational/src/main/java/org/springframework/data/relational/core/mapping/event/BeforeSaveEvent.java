@@ -15,10 +15,20 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.context.ApplicationEvent;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
- * Gets published before an entity gets saved to the database.
+ * An {@link ApplicationEvent} that gets triggered before changes are applied to the database, after the aggregate was
+ * converted to a database change.
+ * <p>
+ * Changes to the aggregate are not taken into account to decide whether the change will be an insert or update. Use the
+ * {@link BeforeConvertCallback} to change the persistent the entity before being converted.
+ * <p>
+ * Currently a {@link BeforeSaveEvent} may be used to create an Id for new aggregate roots. This is for backward
+ * compatibility purposes within the 2.x development line. The preferred way to do this is to use a
+ * {@link BeforeConvertCallback} or {@link BeforeConvertEvent} and beginning with 3.0. this will be the only correct way
+ * to do this.
  *
  * @author Jens Schauder
  */

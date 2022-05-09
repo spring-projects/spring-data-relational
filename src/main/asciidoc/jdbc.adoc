@@ -902,6 +902,8 @@ This is the correct callback if you want to set an id programmatically.
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets inserted or updated was made).
 
+In the 2.x version of Spring Data JDBC you may use it to create ids for entities. The preferred way an in the future only correct callback to use is `BeforeConvertCallback`.
+
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveCallback.html[`AfterSaveCallback`]
 | After an aggregate root gets saved (that is, inserted or updated).
 

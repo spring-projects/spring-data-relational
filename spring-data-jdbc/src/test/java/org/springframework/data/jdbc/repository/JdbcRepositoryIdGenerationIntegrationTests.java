@@ -110,7 +110,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		assertThat(saved.getId()).isNotNull();
 
-		assertThat(immutableWithManualIdEntityRepository.findAll()).hasSize(1);
+		final Iterable<ImmutableWithManualIdEntity> reloaded = immutableWithManualIdEntityRepository.findAll();
+		assertThat(reloaded).extracting(i -> i.id).containsExactly(TestConfiguration.lastId.get());
 	}
 
 	private interface PrimitiveIdEntityRepository extends CrudRepository<PrimitiveIdEntity, Long> {}
@@ -147,7 +148,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			includeFilters = @ComponentScan.Filter(value = CrudRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class TestConfiguration {
 
-		AtomicLong lastId = new AtomicLong(0);
+		static AtomicLong lastId = new AtomicLong(0);
 
 		@Bean
 		Class<?> testClass() {

@@ -31,6 +31,8 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
@@ -339,9 +341,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		MutableAggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
-		aggregateRoot = triggerBeforeSave(change.getEntity(), change);
+		T newAggregateRoot = triggerBeforeSave(change.getEntity(), change);
 
-		change.setEntity(aggregateRoot);
+		change.setEntity(newAggregateRoot);
+
+		change.forEachAction(a -> {
+
+			if (a instanceof DbAction.InsertRoot) {
+
+				IdValueSource idValueSource = IdValueSource.forInstance(newAggregateRoot, persistentEntity);
+				((DbAction.InsertRoot<T>) a).updateAction(newAggregateRoot,
+						idValueSource);
+			}
+		});
 
 		T entityAfterExecution = executor.execute(change);
 

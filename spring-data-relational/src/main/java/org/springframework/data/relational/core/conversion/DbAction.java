@@ -106,8 +106,8 @@ public interface DbAction<T> {
 	 */
 	class InsertRoot<T> implements WithGeneratedId<T> {
 
-		private final T entity;
-		private final IdValueSource idValueSource;
+		private T entity;
+		private IdValueSource idValueSource;
 
 		public InsertRoot(T entity, IdValueSource idValueSource) {
 
@@ -126,6 +126,21 @@ public interface DbAction<T> {
 		@Override
 		public String toString() {
 			return "InsertRoot{" + "entity=" + entity + ", idValueSource=" + idValueSource + '}';
+		}
+
+		/**
+		 * Updates the entity and {@link IdValueSource} of this action.
+		 * 
+		 * @param newAggregateRoot must not be {@literal null}.
+		 * @param idValueSource must not be {@literal null}.
+		 * @deprecated This method exists only to support a temporary workaround. It will be removed completely without
+		 *             replacement.
+		 */
+		@Deprecated
+		public void updateAction(T newAggregateRoot, IdValueSource idValueSource) {
+
+			this.entity = newAggregateRoot;
+			this.idValueSource = idValueSource;
 		}
 	}
 
