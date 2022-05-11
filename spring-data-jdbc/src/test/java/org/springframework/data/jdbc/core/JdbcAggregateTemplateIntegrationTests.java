@@ -278,8 +278,8 @@ class JdbcAggregateTemplateIntegrationTests {
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
-		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class,
-				Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		final Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST));
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, sort);
 
 		assertThat(reloadedLegoSets) //
 				.extracting("name") //
