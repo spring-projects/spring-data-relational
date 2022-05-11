@@ -402,10 +402,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> T triggerAfterConvert(T entity) {
 
-		publisher.publishEvent(new AfterLoadEvent<>(entity));
 		publisher.publishEvent(new AfterConvertEvent<>(entity));
-
-		entity = entityCallbacks.callback(AfterLoadCallback.class, entity);
 		return entityCallbacks.callback(AfterConvertCallback.class, entity);
 	}
 

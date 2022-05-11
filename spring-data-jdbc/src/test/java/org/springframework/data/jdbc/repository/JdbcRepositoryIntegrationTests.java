@@ -50,7 +50,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -60,8 +59,8 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
-import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -312,7 +311,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.findAllWithSql();
 
-		assertThat(eventListener.events).hasSize(2).hasOnlyElementsOfTypes(AfterLoadEvent.class, AfterConvertEvent.class);
+		assertThat(eventListener.events).hasSize(1).hasOnlyElementsOfType(AfterConvertEvent.class);
 	}
 
 	@Test // DATAJDBC-318

@@ -51,9 +51,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 			return;
 		}
 
-		if (event instanceof AfterLoadEvent) {
-			onAfterLoad((AfterLoadEvent<E>) event);
-		} else if (event instanceof AfterConvertEvent) {
+		if (event instanceof AfterConvertEvent) {
 			onAfterConvert((AfterConvertEvent<E>) event);
 		} else if (event instanceof AfterDeleteEvent) {
 			onAfterDelete((AfterDeleteEvent<E>) event);
@@ -101,20 +99,6 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 
 		if (LOG.isDebugEnabled()) {
 			LOG.debug(String.format("onAfterSave(%s)", event.getAggregateChange()));
-		}
-	}
-
-	/**
-	 * Captures {@link AfterLoadEvent}.
-	 *
-	 * @param event will never be {@literal null}.
-	 * @deprecated use {@link #onAfterConvert(AfterConvertEvent)} instead.
-	 */
-	@Deprecated
-	protected void onAfterLoad(AfterLoadEvent<E> event) {
-
-		if (LOG.isDebugEnabled()) {
-			LOG.debug(String.format("onAfterLoad(%s)", event.getEntity()));
 		}
 	}
 

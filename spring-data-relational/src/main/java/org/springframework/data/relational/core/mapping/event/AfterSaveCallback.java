@@ -18,7 +18,22 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.data.mapping.callback.EntityCallback;
 
 /**
- * An {@link EntityCallback} that gets invoked after an aggregate was saved.
+ * An {@link EntityCallback} that gets invoked after an aggregate was saved to the database.
+ * <p>
+ * The persisting process works as follows:
+ * <ol>
+ * <li>A decision is made, if the aggregate is new and therefore should be inserted or if it is not new and therefore
+ * should be updated.</li>
+ * <li>{@link BeforeConvertCallback} and {@link BeforeConvertEvent} get published.</li>
+ * <li>An {@link org.springframework.data.relational.core.conversion.AggregateChange} object is created for the
+ * aggregate. It includes the {@link org.springframework.data.relational.core.conversion.DbAction} instances to be
+ * executed. This means that all the deletes, updates and inserts to be performed are determined. These actions
+ * reference entities of the aggregates in order to access values to be used in the SQL statements. This step also
+ * determines if the id of an entity gets passed to the database or if the database is expected to generate that id.</li>
+ * <li>{@link BeforeSaveCallback} and {@link BeforeSaveEvent} get published.</li>
+ * <li>SQL statements get applied to the database.</li>
+ * <li>{@link AfterSaveCallback} and {@link AfterSaveEvent} get published.</li>
+ * </ol>
  *
  * @author Jens Schauder
  * @author Mark Paluch

@@ -190,9 +190,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class, //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class //
 				);
 	}
@@ -211,9 +209,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class, //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class //
 				);
 	}
@@ -231,7 +227,6 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class //
 				);
 	}
@@ -250,9 +245,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class, //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class //
 				);
 	}
@@ -272,9 +265,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class, //
-						AfterLoadEvent.class, //
 						AfterConvertEvent.class //
 				);
 	}
