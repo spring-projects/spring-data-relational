@@ -24,6 +24,7 @@ import java.io.IOException;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -58,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("hsql")
 @Transactional
 @ExtendWith(SpringExtension.class)
+@Disabled("Temporary disabled because no mybatis-spring release compatible with the current Spring Framework 6 release is available. See https://github.com/mybatis/spring/pull/663")
 public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
 	@Autowired SqlSessionFactory sqlSessionFactory;

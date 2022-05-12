@@ -22,6 +22,7 @@ import junit.framework.AssertionFailedError;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -42,8 +43,6 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -57,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("hsql")
 @Transactional
 @ExtendWith(SpringExtension.class)
+@Disabled("Temporary disabled because no mybatis-spring release compatible with the current Spring Framework 6 release is available. See https://github.com/mybatis/spring/pull/663")
 public class MyBatisHsqlIntegrationTests {
 
 	@Autowired SqlSessionFactory sqlSessionFactory;
