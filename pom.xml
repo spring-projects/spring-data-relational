@@ -30,7 +30,7 @@
 
 		<!-- databases and jdbc drivers -->
 		<!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
-		<db2.version>11.5.5.0</db2.version>
+		<db2.version>11.5.7.0</db2.version>
 		<h2.version>1.4.200</h2.version>
 		<hsqldb.version>2.5.2</hsqldb.version>
 		<mariadb-java-client.version>2.7.2</mariadb-java-client.version>
