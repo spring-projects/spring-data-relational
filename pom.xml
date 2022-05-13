@@ -1,296 +1,443 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  	
-  <modelVersion>4.0.0</modelVersion>
-  	
-  <groupId>org.springframework.data</groupId>
-  	
-  <artifactId>spring-data-relational-parent</artifactId>
-  	
-  <version>3.0.0-SNAPSHOT</version>
-  	
-  <packaging>pom</packaging>
-  	
-  <name>Spring Data Relational Parent</name>
-  	
-  <description>Parent module for Spring Data Relational repositories.</description>
-  	
-  <url>https://projects.spring.io/spring-data-jdbc</url>
-  	
-  <parent>
-    		
-    <groupId>org.springframework.data.build</groupId>
-    		
-    <artifactId>spring-data-parent</artifactId>
-    		
-    <version>3.0.0-M4</version>
     	
-  </parent>
-  	
-  <properties>
-    		
-    <dist.id>spring-data-jdbc</dist.id>
-    		
-    <springdata.commons>3.0.0-M4</springdata.commons>
-    		
-    <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-    		
-    <!-- dependency versions -->
-    		
-    <jsr305.version>3.0.2</jsr305.version>
-    		
-    <mybatis-spring.version>2.0.7</mybatis-spring.version>
-    		
-    <mybatis.version>3.5.9</mybatis.version>
-    		
-    <!-- databases and jdbc drivers -->
-    		
-    <!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
-    		
-    <db2.version>11.5.7.0</db2.version>
-    		
-    <h2.version>1.4.200</h2.version>
-    		
-    <hsqldb.version>2.6.1</hsqldb.version>
-    		
-    <mariadb-java-client.version>2.7.5</mariadb-java-client.version>
-    		
-    <mssql.version>9.2.1.jre8</mssql.version>
-    		
-    <mysql-connector-java.version>8.0.29</mysql-connector-java.version>
-    		
-    <postgresql.version>42.3.5</postgresql.version>
-    		
-    <oracle.version>19.6.0.0</oracle.version>
-    		
-    <!-- test utilities-->
-    		
-    <awaitility.version>4.2.0</awaitility.version>
-    		
-    <archunit.version>0.23.1</archunit.version>
-    	
-  </properties>
-  	
-  <inceptionYear>2017</inceptionYear>
-  	
-  <modules>
-    		
-    <module>spring-data-relational</module>
-    		
-    <module>spring-data-jdbc</module>
-    		
-    <module>spring-data-r2dbc</module>
-    		
-    <module>spring-data-jdbc-distribution</module>
-    	
-  </modules>
-  	
-  <developers>
-    		
-    <developer>
-      			
-      <id>schauder</id>
-      			
-      <name>Jens Schauder</name>
-      			
-      <email>jschauder(at)pivotal.io</email>
-      			
-      <organization>Pivotal Software, Inc.</organization>
-      			
-      <organizationUrl>https://pivotal.io</organizationUrl>
-      			
-      <roles>
-        				
-        <role>Project Lead</role>
-        			
-      </roles>
-      			
-      <timezone>+1</timezone>
-      		
-    </developer>
-    		
-    <developer>
-      			
-      <id>mpaluch</id>
-      			
-      <name>Mark Paluch</name>
-      			
-      <email>mpaluch(at)pivotal.io</email>
-      			
-      <organization>Pivotal Software, Inc.</organization>
-      			
-      <organizationUrl>https://pivotal.io</organizationUrl>
-      			
-      <roles>
-        				
-        <role>Project Lead</role>
-        			
-      </roles>
-      			
-      <timezone>+1</timezone>
-      		
-    </developer>
-    		
-    <developer>
-      			
-      <id>gregturn</id>
-      			
-      <name>Greg L. Turnquist</name>
-      			
-      <email>gturnquist(at)pivotal.io</email>
-      			
-      <organization>Pivotal Software, Inc.</organization>
-      			
-      <organizationUrl>https://pivotal.io</organizationUrl>
-      			
-      <roles>
-        				
-        <role>Project Contributor</role>
-        			
-      </roles>
-      			
-      <timezone>-6</timezone>
-      		
-    </developer>
-    	
-  </developers>
-  	
-  <profiles>
-    		
-    <profile>
-      			
-      <id>no-jacoco</id>
-      			
-      <build>
-        				
-        <plugins>
-          					
-          <plugin>
-            						
-            <groupId>org.jacoco</groupId>
-            						
-            <artifactId>jacoco-maven-plugin</artifactId>
-            						
-            <executions>
-              							
-              <execution>
-                								
-                <id>jacoco-initialize</id>
-                								
-                <phase>none</phase>
-                							
-              </execution>
-              						
-            </executions>
-            					
-          </plugin>
-          				
-        </plugins>
-        			
-      </build>
-      		
-    </profile>
-    		
-    <profile>
-      			
-      <id>ignore-missing-license</id>
-      			
-      <build>
-        				
-        <plugins>
-          					
-          <plugin>
-            						
-            <groupId>org.apache.maven.plugins</groupId>
-            						
-            <artifactId>maven-surefire-plugin</artifactId>
-            						
-            <configuration>
-              							
-              <systemPropertyVariables>
-                								
-                <on-missing-license>ignore-test</on-missing-license>
-                							
-              </systemPropertyVariables>
-              						
-            </configuration>
-            					
-          </plugin>
-          				
-        </plugins>
-        			
-      </build>
-      		
-    </profile>
-    	
-  </profiles>
-  	
-  <build>
-    		
-    <plugins>
-      			
-      <plugin>
-        				
-        <groupId>org.apache.maven.plugins</groupId>
-        				
-        <artifactId>maven-surefire-plugin</artifactId>
-        				
-        <executions>
-          					
-          <execution>
-            						
-            <id>default-test</id>
-            						
-            <configuration>
-              							
-              <includes>
-                								
-                <include>**/*Tests.java</include>
-                							
-              </includes>
-              						
-            </configuration>
-            					
-          </execution>
-          				
-        </executions>
-        			
-      </plugin>
-      		
-    </plugins>
-    	
-  </build>
-  	
-  <repositories>
-    		
-    <repository>
-      			
-      <id>spring-libs-milestone</id>
-      			
-      <url>https://repo.spring.io/libs-milestone</url>
-      		
-    </repository>
-    		
-    <repository>
-      			
-      <id>oss-sonatype-snapshot</id>
-      			
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      		
-    </repository>
-    	
-  </repositories>
-  	
-  <pluginRepositories>
-    		
-    <pluginRepository>
-      			
-      <id>spring-plugins-snapshot</id>
-      			
-      <url>https://repo.spring.io/plugins-snapshot</url>
-      		
-    </pluginRepository>
-    	
-  </pluginRepositories>
   
+  <modelVersion>4.0.0</modelVersion>
+    	
+  
+  <groupId>org.springframework.data</groupId>
+    	
+  
+  <artifactId>spring-data-relational-parent</artifactId>
+    	
+  
+  <version>3.0.0-SNAPSHOT</version>
+    	
+  
+  <packaging>pom</packaging>
+    	
+  
+  <name>Spring Data Relational Parent</name>
+    	
+  
+  <description>Parent module for Spring Data Relational repositories.</description>
+    	
+  
+  <url>https://projects.spring.io/spring-data-jdbc</url>
+    	
+  
+  <parent>
+        		
+    
+    <groupId>org.springframework.data.build</groupId>
+        		
+    
+    <artifactId>spring-data-parent</artifactId>
+        		
+    
+    <version>3.0.0-SNAPSHOT</version>
+        	
+  
+  </parent>
+    	
+  
+  <properties>
+        		
+    
+    <dist.id>spring-data-jdbc</dist.id>
+        		
+    
+    <springdata.commons>3.0.0-SNAPSHOT</springdata.commons>
+        		
+    
+    <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        		
+    
+    <!-- dependency versions -->
+        		
+    
+    <jsr305.version>3.0.2</jsr305.version>
+        		
+    
+    <mybatis-spring.version>2.0.7</mybatis-spring.version>
+        		
+    
+    <mybatis.version>3.5.9</mybatis.version>
+        		
+    
+    <!-- databases and jdbc drivers -->
+        		
+    
+    <!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
+        		
+    
+    <db2.version>11.5.7.0</db2.version>
+        		
+    
+    <h2.version>1.4.200</h2.version>
+        		
+    
+    <hsqldb.version>2.6.1</hsqldb.version>
+        		
+    
+    <mariadb-java-client.version>2.7.5</mariadb-java-client.version>
+        		
+    
+    <mssql.version>9.2.1.jre8</mssql.version>
+        		
+    
+    <mysql-connector-java.version>8.0.29</mysql-connector-java.version>
+        		
+    
+    <postgresql.version>42.3.5</postgresql.version>
+        		
+    
+    <oracle.version>19.6.0.0</oracle.version>
+        		
+    
+    <!-- test utilities-->
+        		
+    
+    <awaitility.version>4.2.0</awaitility.version>
+        		
+    
+    <archunit.version>0.23.1</archunit.version>
+        	
+  
+  </properties>
+    	
+  
+  <inceptionYear>2017</inceptionYear>
+    	
+  
+  <modules>
+        		
+    
+    <module>spring-data-relational</module>
+        		
+    
+    <module>spring-data-jdbc</module>
+        		
+    
+    <module>spring-data-r2dbc</module>
+        		
+    
+    <module>spring-data-jdbc-distribution</module>
+        	
+  
+  </modules>
+    	
+  
+  <developers>
+        		
+    
+    <developer>
+            			
+      
+      <id>schauder</id>
+            			
+      
+      <name>Jens Schauder</name>
+            			
+      
+      <email>jschauder(at)pivotal.io</email>
+            			
+      
+      <organization>Pivotal Software, Inc.</organization>
+            			
+      
+      <organizationUrl>https://pivotal.io</organizationUrl>
+            			
+      
+      <roles>
+                				
+        
+        <role>Project Lead</role>
+                			
+      
+      </roles>
+            			
+      
+      <timezone>+1</timezone>
+            		
+    
+    </developer>
+        		
+    
+    <developer>
+            			
+      
+      <id>mpaluch</id>
+            			
+      
+      <name>Mark Paluch</name>
+            			
+      
+      <email>mpaluch(at)pivotal.io</email>
+            			
+      
+      <organization>Pivotal Software, Inc.</organization>
+            			
+      
+      <organizationUrl>https://pivotal.io</organizationUrl>
+            			
+      
+      <roles>
+                				
+        
+        <role>Project Lead</role>
+                			
+      
+      </roles>
+            			
+      
+      <timezone>+1</timezone>
+            		
+    
+    </developer>
+        		
+    
+    <developer>
+            			
+      
+      <id>gregturn</id>
+            			
+      
+      <name>Greg L. Turnquist</name>
+            			
+      
+      <email>gturnquist(at)pivotal.io</email>
+            			
+      
+      <organization>Pivotal Software, Inc.</organization>
+            			
+      
+      <organizationUrl>https://pivotal.io</organizationUrl>
+            			
+      
+      <roles>
+                				
+        
+        <role>Project Contributor</role>
+                			
+      
+      </roles>
+            			
+      
+      <timezone>-6</timezone>
+            		
+    
+    </developer>
+        	
+  
+  </developers>
+    	
+  
+  <profiles>
+        		
+    
+    <profile>
+            			
+      
+      <id>no-jacoco</id>
+            			
+      
+      <build>
+                				
+        
+        <plugins>
+                    					
+          
+          <plugin>
+                        						
+            
+            <groupId>org.jacoco</groupId>
+                        						
+            
+            <artifactId>jacoco-maven-plugin</artifactId>
+                        						
+            
+            <executions>
+                            							
+              
+              <execution>
+                                								
+                
+                <id>jacoco-initialize</id>
+                                								
+                
+                <phase>none</phase>
+                                							
+              
+              </execution>
+                            						
+            
+            </executions>
+                        					
+          
+          </plugin>
+                    				
+        
+        </plugins>
+                			
+      
+      </build>
+            		
+    
+    </profile>
+        		
+    
+    <profile>
+            			
+      
+      <id>ignore-missing-license</id>
+            			
+      
+      <build>
+                				
+        
+        <plugins>
+                    					
+          
+          <plugin>
+                        						
+            
+            <groupId>org.apache.maven.plugins</groupId>
+                        						
+            
+            <artifactId>maven-surefire-plugin</artifactId>
+                        						
+            
+            <configuration>
+                            							
+              
+              <systemPropertyVariables>
+                                								
+                
+                <on-missing-license>ignore-test</on-missing-license>
+                                							
+              
+              </systemPropertyVariables>
+                            						
+            
+            </configuration>
+                        					
+          
+          </plugin>
+                    				
+        
+        </plugins>
+                			
+      
+      </build>
+            		
+    
+    </profile>
+        	
+  
+  </profiles>
+    	
+  
+  <build>
+        		
+    
+    <plugins>
+            			
+      
+      <plugin>
+                				
+        
+        <groupId>org.apache.maven.plugins</groupId>
+                				
+        
+        <artifactId>maven-surefire-plugin</artifactId>
+                				
+        
+        <executions>
+                    					
+          
+          <execution>
+                        						
+            
+            <id>default-test</id>
+                        						
+            
+            <configuration>
+                            							
+              
+              <includes>
+                                								
+                
+                <include>**/*Tests.java</include>
+                                							
+              
+              </includes>
+                            						
+            
+            </configuration>
+                        					
+          
+          </execution>
+                    				
+        
+        </executions>
+                			
+      
+      </plugin>
+            		
+    
+    </plugins>
+        	
+  
+  </build>
+    	
+  
+  <repositories>
+        		
+    
+    <repository>
+            			
+      
+      <id>spring-libs-snapshot</id>
+            			
+      
+      <url>https://repo.spring.io/libs-snapshot</url>
+            		
+    
+    </repository>
+        		
+    
+    <repository>
+            			
+      
+      <id>oss-sonatype-snapshot</id>
+            			
+      
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            		
+    
+    </repository>
+        	
+  
+  </repositories>
+    	
+  
+  <pluginRepositories>
+        		
+    
+    <pluginRepository>
+            			
+      
+      <id>spring-plugins-snapshot</id>
+            			
+      
+      <url>https://repo.spring.io/plugins-snapshot</url>
+            		
+    
+    </pluginRepository>
+        	
+  
+  </pluginRepositories>
+    
+
 </project>
