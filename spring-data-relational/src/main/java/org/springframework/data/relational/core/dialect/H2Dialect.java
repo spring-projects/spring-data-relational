@@ -30,6 +30,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Christph Strobl
+ * @author Jens Schauder
  * @since 2.0
  */
 public class H2Dialect extends AbstractDialect {
@@ -105,13 +106,6 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public Set<Class<?>> simpleTypes() {
 
-		if (!ClassUtils.isPresent("org.h2.api.TimestampWithTimeZone", getClass().getClassLoader())) {
-			return Collections.emptySet();
-		}
-		try {
-			return Collections.singleton(ClassUtils.forName("org.h2.api.TimestampWithTimeZone", getClass().getClassLoader()));
-		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException(e);
-		}
+		return Collections.emptySet();
 	}
 }

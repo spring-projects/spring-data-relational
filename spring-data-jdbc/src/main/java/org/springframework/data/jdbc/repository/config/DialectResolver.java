@@ -29,11 +29,11 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
-import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.MariaDbDialect;
 import org.springframework.data.relational.core.dialect.OracleDialect;
@@ -119,7 +119,7 @@ public class DialectResolver {
 				return HsqlDbDialect.INSTANCE;
 			}
 			if (name.contains("h2")) {
-				return JdbcH2Dialect.INSTANCE;
+				return H2Dialect.INSTANCE;
 			}
 			if (name.contains("mysql")) {
 				return new JdbcMySqlDialect(getIdentifierProcessing(metaData));
