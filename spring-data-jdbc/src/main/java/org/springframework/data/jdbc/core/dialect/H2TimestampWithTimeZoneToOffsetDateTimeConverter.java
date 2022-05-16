@@ -23,13 +23,15 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 
 /**
- * Converter converting from an H2 internal representation of a timestamp with time zone to an OffsetDateTime.
- *
- * Only required for H2 versions < 2.0
+ * Converter converting from an H2 internal representation of a timestamp with time zone to an OffsetDateTime. Only
+ * required for H2 versions < 2.0
  * 
  * @author Jens Schauder
  * @since 2.7
+ * @deprecated This is only used for H2 1.x support which will be dropped with the next major release. Use H2Dialect
+ *             instead.
  */
+@Deprecated
 @ReadingConverter
 public enum H2TimestampWithTimeZoneToOffsetDateTimeConverter
 		implements Converter<TimestampWithTimeZone, OffsetDateTime> {

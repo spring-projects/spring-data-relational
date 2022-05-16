@@ -28,7 +28,10 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @since 2.3
+ * @deprecated This is only used for H2 1.x support which will be dropped with the next major release. Use H2Dialect
+ *             instead.
  */
+@Deprecated
 public class JdbcH2Dialect extends H2Dialect {
 
 	public static JdbcH2Dialect INSTANCE = new JdbcH2Dialect();
@@ -56,7 +59,7 @@ public class JdbcH2Dialect extends H2Dialect {
 
 			JdbcH2Dialect.class.getClassLoader().loadClass("org.h2.api.TimestampWithTimeZone");
 			return true;
-		}  catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			return false;
 		}
 	}
