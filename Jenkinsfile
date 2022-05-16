@@ -38,12 +38,10 @@ pipeline {
 
 			steps {
 				script {
-					docker.withRegistry(p['docker.registry'], p['docker.credentials']) {
-						docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.docker']) {
-							sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
-							sh "PROFILE=ci,all-dbs ci/test.sh"
-							sh "ci/clean.sh"
-						}
+					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.docker']) {
+						sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
+						sh "PROFILE=ci,all-dbs ci/test.sh"
+						sh "ci/clean.sh"
 					}
 				}
 			}
@@ -71,12 +69,10 @@ pipeline {
 
 					steps {
 						script {
-							docker.withRegistry(p['docker.registry'], p['docker.credentials']) {
-								docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
-									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
-									sh "PROFILE=ci ci/test.sh"
-									sh "ci/clean.sh"
-								}
+							docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
+								sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
+								sh "PROFILE=ci ci/test.sh"
+								sh "ci/clean.sh"
 							}
 						}
 					}
@@ -95,12 +91,10 @@ pipeline {
 
 					steps {
 						script {
-							docker.withRegistry(p['docker.registry'], p['docker.credentials']) {
-								docker.image(p['docker.java.lts.image']).inside(p['docker.java.inside.docker']) {
-									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
-									sh "PROFILE=ci ci/test.sh"
-									sh "ci/clean.sh"
-								}
+							docker.image(p['docker.java.lts.image']).inside(p['docker.java.inside.docker']) {
+								sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
+								sh "PROFILE=ci ci/test.sh"
+								sh "ci/clean.sh"
 							}
 						}
 					}
@@ -127,17 +121,15 @@ pipeline {
 
 			steps {
 				script {
-					docker.withRegistry(p['docker.registry'], p['docker.credentials']) {
-						docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.basic']) {
-							sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -s settings.xml -Pci,artifactory -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
-								'-Dartifactory.server=https://repo.spring.io ' +
-								"-Dartifactory.username=${ARTIFACTORY_USR} " +
-								"-Dartifactory.password=${ARTIFACTORY_PSW} " +
-								"-Dartifactory.staging-repository=libs-snapshot-local " +
-								"-Dartifactory.build-name=spring-data-jdbc " +
-								"-Dartifactory.build-number=${BUILD_NUMBER} " +
-								'-Dmaven.test.skip=true clean deploy -U -B'
-						}
+					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.basic']) {
+						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -s settings.xml -Pci,artifactory -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
+							'-Dartifactory.server=https://repo.spring.io ' +
+							"-Dartifactory.username=${ARTIFACTORY_USR} " +
+							"-Dartifactory.password=${ARTIFACTORY_PSW} " +
+							"-Dartifactory.staging-repository=libs-snapshot-local " +
+							"-Dartifactory.build-name=spring-data-jdbc " +
+							"-Dartifactory.build-number=${BUILD_NUMBER} " +
+							'-Dmaven.test.skip=true clean deploy -U -B'
 					}
 				}
 			}
