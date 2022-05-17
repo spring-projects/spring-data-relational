@@ -179,6 +179,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	}
 
 	interface EntityWithStringyBigDecimalRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {
+
 		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION IN (:types)")
 		List<EntityWithStringyBigDecimal> findByEnumTypeIn(List<Direction> types);
 
