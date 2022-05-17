@@ -157,7 +157,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		RelationalParameters.RelationalParameter parameter = queryMethod.getParameters().getParameter(p.getIndex());
 		ResolvableType resolvableType = parameter.getResolvableType();
 		Class<?> type = resolvableType.resolve();
-		Assert.notNull(type, "@Query parameter could not be resolved!");
+		Assert.notNull(type, "@Query parameter type could not be resolved!");
 
 		JdbcValue jdbcValue;
 		if (value instanceof Iterable) {
@@ -166,7 +166,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			SQLType jdbcType = null;
 
 			Class<?> elementType = resolvableType.getGeneric(0).resolve();
+
 			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved!");
+
 			for (Object o : (Iterable<?>) value) {
 				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,
 						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
