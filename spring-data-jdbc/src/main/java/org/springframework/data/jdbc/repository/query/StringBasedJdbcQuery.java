@@ -171,13 +171,13 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		if (value instanceof Iterable) {
 
 			List<Object> mapped = new ArrayList<>();
-			SQLType jdbcType = null;
+			JDBCType jdbcType = null;
 
 			Class<?> elementType = resolvableType.getGeneric(0).resolve();
 			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved!");
 			for (Object o : (Iterable<?>) value) {
 				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,
-						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
+						JdbcUtil.sqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
 				if (jdbcType == null) {
 					jdbcType = elementJdbcValue.getJdbcType();
 				}
