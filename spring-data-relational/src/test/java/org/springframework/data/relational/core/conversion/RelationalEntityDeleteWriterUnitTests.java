@@ -20,12 +20,14 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.conversion.DbAction.AcquireLockAllRoot;
 import org.springframework.data.relational.core.conversion.DbAction.AcquireLockRoot;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -108,6 +110,39 @@ public class RelationalEntityDeleteWriterUnitTests {
 				.containsExactly(Tuple.tuple(DeleteAllRoot.class, SingleEntity.class, ""));
 	}
 
+	@Test // GH-1249
+	public void deleteDoesNotDeleteReadOnlyReferences() {
+
+		WithReadOnlyReference entity = new WithReadOnlyReference(23L);
+
+		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forDelete(WithReadOnlyReference.class);
+
+		converter.write(entity.id, aggregateChange);
+
+		Assertions.assertThat(extractActions(aggregateChange))
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+				.containsExactly( //
+						Tuple.tuple(DeleteRoot.class, WithReadOnlyReference.class, "") //
+				);
+	}
+
+	@Test // GH-1249
+	public void deleteAllDoesNotDeleteReadOnlyReferences() {
+
+		WithReadOnlyReference entity = new WithReadOnlyReference(23L);
+
+		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forDelete(WithReadOnlyReference.class);
+
+		converter.write(null, aggregateChange);
+
+		Assertions.assertThat(extractActions(aggregateChange))
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+				.containsExactly( //
+						Tuple.tuple(DeleteAllRoot.class, WithReadOnlyReference.class, "") //
+				);
+	}
+
+
 	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
@@ -140,5 +175,12 @@ public class RelationalEntityDeleteWriterUnitTests {
 	private class SingleEntity {
 		@Id final Long id;
 		String name;
+	}
+
+	@RequiredArgsConstructor
+	private static class WithReadOnlyReference {
+		@Id final Long id;
+		@ReadOnlyProperty
+		OtherEntity other;
 	}
 }

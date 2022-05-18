@@ -21,8 +21,10 @@ import java.util.List;
 
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -72,8 +74,10 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 		List<DbAction<?>> deleteReferencedActions = new ArrayList<>();
 
-		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity)
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> deleteReferencedActions.add(new DbAction.DeleteAll<>(p)));
+		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity) //
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded() //
+						&& PersistentPropertyPathExtension.isWritable(p)) //
+				.forEach(p -> deleteReferencedActions.add(new DbAction.DeleteAll<>(p)));
 
 		Collections.reverse(deleteReferencedActions);
 
@@ -114,8 +118,10 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 		List<DbAction<?>> actions = new ArrayList<>();
 
-		context.findPersistentPropertyPaths(aggregateChange.getEntityType(), PersistentProperty::isEntity)
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
+		context.findPersistentPropertyPaths(aggregateChange.getEntityType(), p -> p.isEntity()) //
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded() //
+						&& PersistentPropertyPathExtension.isWritable(p)) //
+				.forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
 
 		Collections.reverse(actions);
 
