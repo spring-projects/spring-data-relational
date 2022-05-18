@@ -417,12 +417,23 @@ include::{spring-data-commons-docs}/is-new-state-detection.adoc[leveloffset=+2]
 Spring Data JDBC uses the ID to identify entities.
 The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
 
-When your data base has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
+When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
 One important constraint is that, after saving an entity, the entity must not be new any more.
 Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
 If you are not using auto-increment columns, you can use a `BeforeConvert` listener, which sets the ID of the entity (covered later in this document).
+
+[[jdbc.entity-persistence.read-only-properties]]
+=== Read Only Properties
+
+Attributes annotated with `@ReadOnlyProperty` will not be written to the database by Spring Data JDBC, but they will be read when an entity gets loaded.
+
+Spring Data JDBC will not automatically reload an entity after writing it.
+Therefore, you have to reload it explicitly if you want to see data that was generated in the database for such columns.
+
+If the annotated attribute is an entity or collection of entities, it is represented by one or more separate rows in separate tables.
+Spring Data JDBC will not perform any insert, delete or update for these rows.
 
 [[jdbc.entity-persistence.optimistic-locking]]
 === Optimistic Locking

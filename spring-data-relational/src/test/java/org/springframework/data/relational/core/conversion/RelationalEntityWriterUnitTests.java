@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -817,6 +818,46 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
+	@Test // GH-1249
+	public void readOnlyReferenceDoesNotCreateInsertsOnCreation() {
+
+		WithReadOnlyReference entity = new WithReadOnlyReference(null);
+		entity.readOnly = new Element(SOME_ENTITY_ID);
+
+		AggregateChangeWithRoot<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
+
+		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
+
+		assertThat(extractActions(aggregateChange)) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
+				.containsExactly( //
+						tuple(InsertRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //
+						// no insert for element
+				);
+
+	}
+
+	@Test // GH-1249
+	public void readOnlyReferenceDoesNotCreateDeletesOrInsertsDuringUpdate() {
+
+		WithReadOnlyReference entity = new WithReadOnlyReference(SOME_ENTITY_ID);
+		entity.readOnly = new Element(SOME_ENTITY_ID);
+
+		AggregateChangeWithRoot<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forSave(entity);
+
+		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
+
+		assertThat(extractActions(aggregateChange)) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
+				.containsExactly( //
+						tuple(UpdateRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //
+						// no insert for element
+				);
+
+	}
+
 	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
@@ -1015,4 +1056,13 @@ public class RelationalEntityWriterUnitTests {
 		// empty classes feel weird.
 		String name;
 	}
+
+	@RequiredArgsConstructor
+	private static class WithReadOnlyReference {
+
+		@Id final Long id;
+		@ReadOnlyProperty
+		Element readOnly;
+	}
+
 }

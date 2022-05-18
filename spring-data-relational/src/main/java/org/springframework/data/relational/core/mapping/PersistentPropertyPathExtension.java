@@ -80,6 +80,11 @@ public class PersistentPropertyPathExtension {
 		this.path = path;
 	}
 
+	public static boolean isWritable(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+
+		return path.isEmpty() || (path.getRequiredLeafProperty().isWritable() && isWritable(path.getParentPath()));
+	}
+
 	/**
 	 * Returns {@literal true} exactly when the path is non empty and the leaf property an embedded one.
 	 *

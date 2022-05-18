@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
@@ -22,6 +23,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -202,7 +204,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test // GH--1164
+	@Test // GH-1164
 	void equalsWorks() {
 
 		PersistentPropertyPathExtension root1 = extPath(entity);
@@ -222,6 +224,17 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
+	@Test // GH-1249
+	void isWritable() {
+
+		assertSoftly(softly -> {
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("withId"))).describedAs("simple path is writable").isTrue();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("secondList.third2"))).describedAs("long path is writable").isTrue();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second"))).describedAs("simple read only path is not writable").isFalse();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second.third"))).describedAs("long path containing read only element is not writable").isFalse();
+		});
+	}
+
 	private PersistentPropertyPathExtension extPath(RelationalPersistentEntity<?> entity) {
 		return new PersistentPropertyPathExtension(context, entity);
 	}
@@ -237,6 +250,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 		@Id Long entityId;
+		@ReadOnlyProperty
 		Second second;
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
 		@Embedded(onEmpty = OnEmpty.USE_NULL) Second second3;
