@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PersistentPropertyPaths;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -47,7 +47,7 @@ class WritingContext<T> {
 	private final RelationalMappingContext context;
 	private final T root;
 	private final Class<T> entityType;
-	private final PersistentPropertyPaths<?, RelationalPersistentProperty> paths;
+	private final List<PersistentPropertyPath<RelationalPersistentProperty>> paths;
 	private final Map<PathNode, DbAction<?>> previousActions = new HashMap<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 	private final IdValueSource rootIdValueSource;
@@ -63,7 +63,9 @@ class WritingContext<T> {
 		this.aggregateChange = aggregateChange;
 		this.rootIdValueSource = IdValueSource.forInstance(root,
 				context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
-		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded() && p.isWritable());
+		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded()) //
+				.filter(PersistentPropertyPathExtension::isWritable) //
+				.stream().toList();
 	}
 
 	/**
