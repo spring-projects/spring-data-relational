@@ -15,13 +15,14 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +58,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		converter.write(entity.id, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(AcquireLockRoot.class, SomeEntity.class, ""), //
@@ -76,7 +77,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		converter.write(entity.id, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly(Tuple.tuple(DeleteRoot.class, SingleEntity.class, ""));
 	}
@@ -88,7 +89,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		converter.write(null, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(AcquireLockAllRoot.class, SomeEntity.class, ""), //
@@ -105,7 +106,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		converter.write(null, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly(Tuple.tuple(DeleteAllRoot.class, SingleEntity.class, ""));
 	}
@@ -115,11 +116,12 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		WithReadOnlyReference entity = new WithReadOnlyReference(23L);
 
-		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forDelete(WithReadOnlyReference.class);
+		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange
+				.forDelete(WithReadOnlyReference.class);
 
 		converter.write(entity.id, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteRoot.class, WithReadOnlyReference.class, "") //
@@ -131,17 +133,17 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		WithReadOnlyReference entity = new WithReadOnlyReference(23L);
 
-		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange.forDelete(WithReadOnlyReference.class);
+		MutableAggregateChange<WithReadOnlyReference> aggregateChange = MutableAggregateChange
+				.forDelete(WithReadOnlyReference.class);
 
 		converter.write(null, aggregateChange);
 
-		Assertions.assertThat(extractActions(aggregateChange))
+		assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAllRoot.class, WithReadOnlyReference.class, "") //
 				);
 	}
-
 
 	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
 
@@ -179,8 +181,8 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 	@RequiredArgsConstructor
 	private static class WithReadOnlyReference {
+
 		@Id final Long id;
-		@ReadOnlyProperty
-		OtherEntity other;
+		@ReadOnlyProperty OtherEntity other;
 	}
 }

@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
@@ -73,9 +72,7 @@ public class RelationalEntityInsertWriterUnitTests {
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
 				);
-
 	}
-
 
 	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
 

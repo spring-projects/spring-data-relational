@@ -18,12 +18,12 @@ package org.springframework.data.relational.core.conversion;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.springframework.data.convert.EntityWriter;
-import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -74,10 +74,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 		List<DbAction<?>> deleteReferencedActions = new ArrayList<>();
 
-		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity) //
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded() //
-						&& PersistentPropertyPathExtension.isWritable(p)) //
-				.forEach(p -> deleteReferencedActions.add(new DbAction.DeleteAll<>(p)));
+		forAllTableRepresentingPaths(entityType, p -> deleteReferencedActions.add(new DbAction.DeleteAll<>(p)));
 
 		Collections.reverse(deleteReferencedActions);
 
@@ -118,14 +115,18 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 		List<DbAction<?>> actions = new ArrayList<>();
 
-		context.findPersistentPropertyPaths(aggregateChange.getEntityType(), p -> p.isEntity()) //
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded() //
-						&& PersistentPropertyPathExtension.isWritable(p)) //
-				.forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
+		forAllTableRepresentingPaths(aggregateChange.getEntityType(), p -> actions.add(new DbAction.Delete<>(id, p)));
 
 		Collections.reverse(actions);
 
 		return actions;
 	}
 
+	private void forAllTableRepresentingPaths(Class<?> entityType,
+			Consumer<PersistentPropertyPath<RelationalPersistentProperty>> pathConsumer) {
+
+		context.findPersistentPropertyPaths(entityType, property -> property.isEntity() && !property.isEmbedded()) //
+				.filter(PersistentPropertyPathExtension::isWritable) //
+				.forEach(pathConsumer);
+	}
 }
