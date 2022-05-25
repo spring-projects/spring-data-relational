@@ -49,7 +49,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<?>>> deleteActions = //
 			new HashMap<>();
 
-	public SaveBatchingAggregateChange(Class<T> entityType) {
+	SaveBatchingAggregateChange(Class<T> entityType) {
 		this.entityType = entityType;
 	}
 

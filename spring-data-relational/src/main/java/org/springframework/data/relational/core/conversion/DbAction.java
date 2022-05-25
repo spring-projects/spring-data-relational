@@ -353,18 +353,29 @@ public interface DbAction<T> {
 	 * @since 3.0
 	 */
 	abstract class BatchWithValue<T, A extends DbAction<T>, B> implements DbAction<T> {
+
 		private final List<A> actions;
 		private final B batchValue;
 
-		public BatchWithValue(List<A> actions, Function<A, B> batchValueExtractor) {
+		/**
+		 * Creates a {@link BatchWithValue} instance from the given actions and the value which can be extracted by applying #batchValueExtractor on any of the actions.
+		 *
+		 * All actions must result in the same value when #batchValueExtractor is applied.
+		 *
+		 * @param actions the actions forming the batch.
+		 * @param batchValueExtractor function for extracting the {@link #batchValue} from an action.
+		 */
+		BatchWithValue(List<A> actions, Function<A, B> batchValueExtractor) {
+
 			Assert.notEmpty(actions, "Actions must contain at least one action");
+
 			Iterator<A> actionIterator = actions.iterator();
 			this.batchValue = batchValueExtractor.apply(actionIterator.next());
 			actionIterator.forEachRemaining(action -> {
-				if (!batchValueExtractor.apply(action).equals(batchValue)) {
-					throw new IllegalArgumentException("All actions in the batch must have matching batchValue");
-				}
+				Assert.isTrue(batchValueExtractor.apply(action).equals(batchValue),
+						"All actions in the batch must have matching batchValue");
 			});
+
 			this.actions = actions;
 		}
 
