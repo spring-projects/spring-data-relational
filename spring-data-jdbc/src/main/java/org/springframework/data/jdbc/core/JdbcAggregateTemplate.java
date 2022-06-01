@@ -415,9 +415,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 			// If the root aggregate has a version property, increment it.
 			previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance, persistentEntity, converter);
 
-			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
-
-			long newVersion = previousVersion.longValue() + 1;
+			long newVersion = (previousVersion == null ? 0 : previousVersion.longValue()) + 1;
 
 			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity(instance, newVersion, persistentEntity,
 					converter);
