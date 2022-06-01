@@ -70,6 +70,7 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
+
 			Root root2 = new Root(1L, null);
 			DbAction.UpdateRoot<Root> root2Update = new DbAction.UpdateRoot<>(root2, null);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
@@ -93,11 +94,13 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
-			Root root2 = new Root(1L, null);
+
+			Root root2 = new Root(2L, null);
 			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 			aggregateChange2.setRootAction(root2Insert);
-			Root root3 = new Root(1L, null);
+
+			Root root3 = new Root(3L, null);
 			DbAction.UpdateRoot<Root> root3Update = new DbAction.UpdateRoot<>(root3, null);
 			RootAggregateChange<Root> aggregateChange3 = MutableAggregateChange.forSave(root3);
 			aggregateChange3.setRootAction(root3Update);
@@ -138,7 +141,8 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
-			Root root2 = new Root(1L, null);
+
+			Root root2 = new Root(2L, null);
 			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.PROVIDED);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 			aggregateChange2.setRootAction(root2Insert);
@@ -157,11 +161,13 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
-			Root root2 = new Root(1L, null);
+
+			Root root2 = new Root(2L, null);
 			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 			aggregateChange2.setRootAction(root2Insert);
-			Root root3 = new Root(1L, null);
+
+			Root root3 = new Root(3L, null);
 			DbAction.InsertRoot<Root> root3Insert = new DbAction.InsertRoot<>(root3, IdValueSource.PROVIDED);
 			RootAggregateChange<Root> aggregateChange3 = MutableAggregateChange.forSave(root3);
 			aggregateChange3.setRootAction(root3Insert);
@@ -188,7 +194,8 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
-			Root root2 = new Root(1L, null);
+
+			Root root2 = new Root(2L, null);
 			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 			aggregateChange2.setRootAction(root2Insert);
@@ -212,10 +219,12 @@ class SaveBatchingAggregateChangeTest {
 			DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 			aggregateChange1.setRootAction(root1Insert);
+
 			Root root2 = new Root(2L, null);
 			DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 			RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 			aggregateChange2.setRootAction(root2Insert);
+
 			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
 
 			change.add(aggregateChange1);
@@ -242,9 +251,11 @@ class SaveBatchingAggregateChangeTest {
 		DbAction.UpdateRoot<Root> root1Update = new DbAction.UpdateRoot<>(root1, null);
 		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Update);
+
 		DbAction.Delete<?> root1IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange1.addAction(root1IntermediateDelete);
+
 		Root root2 = new Root(null, null);
 		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
@@ -270,12 +281,14 @@ class SaveBatchingAggregateChangeTest {
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange1.addAction(root1IntermediateDelete);
 
-		Root root2 = new Root(1L, null);
+		Root root2 = new Root(2L, null);
 		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(new DbAction.UpdateRoot<>(root2, null));
+
 		DbAction.Delete<?> root2LeafDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate.leaf", Root.class));
 		aggregateChange2.addAction(root2LeafDelete);
+
 		DbAction.Delete<?> root2IntermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange2.addAction(root2IntermediateDelete);
@@ -325,10 +338,12 @@ class SaveBatchingAggregateChangeTest {
 		DbAction.InsertRoot<Root> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
+
 		Intermediate intermediateGeneratedId = new Intermediate(null, "intermediateGeneratedId", null);
 		DbAction.Insert<Intermediate> intermediateInsertGeneratedId = new DbAction.Insert<>(intermediateGeneratedId,
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.GENERATED);
 		aggregateChange.addAction(intermediateInsertGeneratedId);
+
 		Intermediate intermediateProvidedId = new Intermediate(123L, "intermediateProvidedId", null);
 		DbAction.Insert<Intermediate> intermediateInsertProvidedId = new DbAction.Insert<>(intermediateProvidedId,
 				context.getPersistentPropertyPath("intermediate", Root.class), rootInsert, emptyMap(), IdValueSource.PROVIDED);
@@ -360,11 +375,13 @@ class SaveBatchingAggregateChangeTest {
 		DbAction.InsertRoot<Root> root1Insert = new DbAction.InsertRoot<>(root1, IdValueSource.GENERATED);
 		RootAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forSave(root1);
 		aggregateChange1.setRootAction(root1Insert);
+
 		Intermediate root1Intermediate = new Intermediate(null, "root1Intermediate", null);
 		DbAction.Insert<Intermediate> root1IntermediateInsert = new DbAction.Insert<>(root1Intermediate,
 				context.getPersistentPropertyPath("intermediate", Root.class), root1Insert, emptyMap(),
 				IdValueSource.GENERATED);
 		aggregateChange1.addAction(root1IntermediateInsert);
+
 		Leaf root1Leaf = new Leaf(null, "root1Leaf");
 		DbAction.Insert<Leaf> root1LeafInsert = new DbAction.Insert<>(root1Leaf,
 				context.getPersistentPropertyPath("intermediate.leaf", Root.class), root1IntermediateInsert, emptyMap(),
@@ -375,6 +392,7 @@ class SaveBatchingAggregateChangeTest {
 		DbAction.InsertRoot<Root> root2Insert = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);
 		RootAggregateChange<Root> aggregateChange2 = MutableAggregateChange.forSave(root2);
 		aggregateChange2.setRootAction(root2Insert);
+
 		Intermediate root2Intermediate = new Intermediate(null, "root2Intermediate", null);
 		DbAction.Insert<Intermediate> root2IntermediateInsert = new DbAction.Insert<>(root2Intermediate,
 				context.getPersistentPropertyPath("intermediate", Root.class), root2Insert, emptyMap(),
@@ -405,11 +423,13 @@ class SaveBatchingAggregateChangeTest {
 				IdValueSource.GENERATED);
 		RootAggregateChange<RootWithSameLengthReferences> aggregateChange = MutableAggregateChange.forSave(root);
 		aggregateChange.setRootAction(rootInsert);
+
 		Intermediate one = new Intermediate(null, "one", null);
 		DbAction.Insert<Intermediate> oneInsert = new DbAction.Insert<>(one,
 				context.getPersistentPropertyPath("one", RootWithSameLengthReferences.class), rootInsert, emptyMap(),
 				IdValueSource.GENERATED);
 		aggregateChange.addAction(oneInsert);
+
 		Intermediate two = new Intermediate(null, "two", null);
 		DbAction.Insert<Intermediate> twoInsert = new DbAction.Insert<>(two,
 				context.getPersistentPropertyPath("two", RootWithSameLengthReferences.class), rootInsert, emptyMap(),
@@ -426,8 +446,8 @@ class SaveBatchingAggregateChangeTest {
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED));
-		List<DbAction.BatchWithValue<Intermediate, DbAction<Intermediate>, Object>> batchInsertActions = getBatchWithValueActions(actions, Intermediate.class,
-				DbAction.BatchInsert.class);
+		List<DbAction.BatchWithValue<Intermediate, DbAction<Intermediate>, Object>> batchInsertActions = getBatchWithValueActions(
+				actions, Intermediate.class, DbAction.BatchInsert.class);
 		assertThat(batchInsertActions).hasSize(2);
 		assertThat(batchInsertActions.get(0).getActions()).containsExactly(oneInsert);
 		assertThat(batchInsertActions.get(1).getActions()).containsExactly(twoInsert);
@@ -467,6 +487,7 @@ class SaveBatchingAggregateChangeTest {
 
 	@Value
 	static class RootWithSameLengthReferences {
+
 		@Id Long id;
 		Intermediate one;
 		Intermediate two;
@@ -474,12 +495,14 @@ class SaveBatchingAggregateChangeTest {
 
 	@Value
 	static class Root {
+
 		@Id Long id;
 		Intermediate intermediate;
 	}
 
 	@Value
 	static class Intermediate {
+
 		@Id Long id;
 		String name;
 		Leaf leaf;
@@ -487,6 +510,7 @@ class SaveBatchingAggregateChangeTest {
 
 	@Value
 	static class Leaf {
+
 		@Id Long id;
 		String name;
 	}

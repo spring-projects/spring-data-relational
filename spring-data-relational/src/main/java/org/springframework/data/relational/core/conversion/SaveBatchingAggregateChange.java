@@ -44,6 +44,10 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 
 	private final Class<T> entityType;
 	private final List<DbAction<?>> rootActions = new ArrayList<>();
+	/**
+	 * Holds a list of InsertRoot actions that are compatible with each other, in the sense, that they might be combined
+	 * into a single batch.
+	 */
 	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
@@ -85,16 +89,21 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	public void add(RootAggregateChange<T> aggregateChange) {
 
 		aggregateChange.forEachAction(action -> {
+
 			if (action instanceof DbAction.UpdateRoot<?> rootAction) {
-				commitBatchCandidates();
+
+				combineBatchCandidatesIntoSingleBatchRootAction();
 				rootActions.add(rootAction);
 			} else if (action instanceof DbAction.InsertRoot<?> rootAction) {
-				if (!insertRootBatchCandidates.isEmpty() && !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
-					commitBatchCandidates();
+
+				if (!insertRootBatchCandidates.isEmpty()
+						&& !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
+					combineBatchCandidatesIntoSingleBatchRootAction();
 				}
-				//noinspection unchecked
+				// noinspection unchecked
 				insertRootBatchCandidates.add((DbAction.InsertRoot<T>) rootAction);
 			} else if (action instanceof DbAction.Insert<?> insertAction) {
+
 				// noinspection unchecked
 				addInsert((DbAction.Insert<Object>) insertAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
@@ -103,7 +112,11 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		});
 	}
 
-	private void commitBatchCandidates() {
+	/**
+	 * All actions gathered in {@link #insertRootBatchCandidates} are combined into a single root action and the list of
+	 * batch candidates is emptied.
+	 */
+	private void combineBatchCandidatesIntoSingleBatchRootAction() {
 
 		if (insertRootBatchCandidates.size() > 1) {
 			rootActions.add(new DbAction.BatchInsertRoot<>(List.copyOf(insertRootBatchCandidates)));
