@@ -203,6 +203,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				.getRequiredPersistentEntity(propertyPath.getBaseProperty().getOwner().getType());
 
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
+
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
 		String delete = sql(rootEntity.getType()).createDeleteInByPath(propertyPath);

@@ -51,8 +51,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
 			new HashMap<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = //
-			new HashMap<>();
+	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = new HashMap<>();
 
 	SaveBatchingAggregateChange(Class<T> entityType) {
 		this.entityType = entityType;
@@ -88,9 +87,8 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 						deletes.forEach(consumer);
 					}
 				});
-		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator))
-				.forEach((entry) -> entry.getValue().forEach((idValueSource, inserts) ->
-						consumer.accept(new DbAction.BatchInsert<>(inserts))));
+		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator)).forEach((entry) -> entry
+				.getValue().forEach((idValueSource, inserts) -> consumer.accept(new DbAction.BatchInsert<>(inserts))));
 	}
 
 	@Override

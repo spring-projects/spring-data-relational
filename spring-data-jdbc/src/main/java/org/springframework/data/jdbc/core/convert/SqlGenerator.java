@@ -379,6 +379,7 @@ class SqlGenerator {
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteInByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
+
 		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
 				filterColumn -> filterColumn.in(getBindMarker(IDS_SQL_PARAMETER)));
 	}
