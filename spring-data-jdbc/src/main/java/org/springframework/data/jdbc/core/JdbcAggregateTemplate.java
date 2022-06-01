@@ -131,7 +131,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	/**
-	 * @param entityCallbacks
+	 * Sets the callbacks to be invoked on life cycle events.
+	 *
+	 * @param entityCallbacks must not be {@literal null}.
 	 * @since 1.1
 	 */
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
@@ -216,10 +218,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		T entity = accessStrategy.findById(id, domainType);
-		if (entity != null) {
-			return triggerAfterConvert(entity);
+		if (entity == null) {
+			return null;
 		}
-		return entity;
+		return triggerAfterConvert(entity);
 	}
 
 	/*
