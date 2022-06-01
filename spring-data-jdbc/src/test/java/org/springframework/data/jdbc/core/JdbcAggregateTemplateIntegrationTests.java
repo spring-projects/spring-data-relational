@@ -53,6 +53,7 @@ import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -258,14 +259,15 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-821
-	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE})
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE })
 	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullPrecedence() {
 
 		template.save(createLegoSet(null));
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
-		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class,
+				Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(reloadedLegoSets) //
 				.extracting("name") //
@@ -843,7 +845,8 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(updatedRoot.version).isEqualTo(1L);
 
 		// Expect only one assignment of the version to AggregateWithImmutableVersion
-		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
+		assertThat(AggregateWithImmutableVersion.constructorInvocations)
+				.containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
 	}
 
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
@@ -906,6 +909,16 @@ class JdbcAggregateTemplateIntegrationTests {
 	@Test // DATAJDBC-219
 	void saveAndUpdateAggregateWithPrimitiveShortVersion() {
 		saveAndUpdateAggregateWithPrimitiveVersion(new AggregateWithPrimitiveShortVersion(), Number::shortValue);
+	}
+
+	@Test // GH-1254
+	void saveAndUpdateAggregateWithIdAndNullVersion() {
+
+		PersistableVersionedAggregate aggregate = new PersistableVersionedAggregate();
+		aggregate.setVersion(null);
+		aggregate.setId(23L);
+
+		assertThatThrownBy(() -> template.save(aggregate)).isInstanceOf(DbActionExecutionException.class);
 	}
 
 	@Test // DATAJDBC-462
@@ -1075,18 +1088,15 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		@Column("id4") @Id private Long id;
 		String name;
-		@MappedCollection(idColumn = "LIST_PARENT")
-		List<ElementNoId> content = new ArrayList<>();
+		@MappedCollection(idColumn = "LIST_PARENT") List<ElementNoId> content = new ArrayList<>();
 	}
 
 	@Table("LIST_PARENT")
 	static class ListParentAllArgs {
 
-		@Column("id4") @Id
-		private final Long id;
+		@Column("id4") @Id private final Long id;
 		private final String name;
-		@MappedCollection(idColumn = "LIST_PARENT")
-		private final List<ElementNoId> content = new ArrayList<>();
+		@MappedCollection(idColumn = "LIST_PARENT") private final List<ElementNoId> content = new ArrayList<>();
 
 		@PersistenceConstructor
 		ListParentAllArgs(Long id, String name, List<ElementNoId> content) {
@@ -1245,6 +1255,20 @@ class JdbcAggregateTemplateIntegrationTests {
 		abstract Number getVersion();
 
 		abstract void setVersion(Number newVersion);
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class PersistableVersionedAggregate implements Persistable<Long> {
+
+		@Id private Long id;
+
+		@Version Long version;
+
+		@Override
+		public boolean isNew() {
+			return getId() == null;
+		}
 	}
 
 	@Value
