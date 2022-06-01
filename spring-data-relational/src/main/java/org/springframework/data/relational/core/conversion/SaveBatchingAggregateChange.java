@@ -15,13 +15,9 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import static java.util.Collections.*;
-
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -49,9 +45,8 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	 * into a single batch.
 	 */
 	private final List<DbAction.InsertRoot<T>> insertRootBatchCandidates = new ArrayList<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, Map<IdValueSource, List<DbAction.Insert<Object>>>> insertActions = //
-			new HashMap<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = new HashMap<>();
+	private final BatchedActions insertActions = BatchedActions.batchedInserts();
+	private final BatchedActions deleteActions = BatchedActions.batchedDeletes();
 
 	SaveBatchingAggregateChange(Class<T> entityType) {
 		this.entityType = entityType;
@@ -70,7 +65,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 
-		Assert.notNull(consumer, "Consumer must not be null.");
+		Assert.notNull(consumer, "Consumer must not be null");
 
 		rootActions.forEach(consumer);
 		if (insertRootBatchCandidates.size() > 1) {
@@ -78,17 +73,8 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		} else {
 			insertRootBatchCandidates.forEach(consumer);
 		}
-		deleteActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator.reversed()))
-				.forEach((entry) -> {
-					List<DbAction.Delete<Object>> deletes = entry.getValue();
-					if (deletes.size() > 1) {
-						consumer.accept(new DbAction.BatchDelete<>(deletes));
-					} else {
-						deletes.forEach(consumer);
-					}
-				});
-		insertActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator)).forEach((entry) -> entry
-				.getValue().forEach((idValueSource, inserts) -> consumer.accept(new DbAction.BatchInsert<>(inserts))));
+		deleteActions.forEach(consumer);
+		insertActions.forEach(consumer);
 	}
 
 	@Override
@@ -109,12 +95,9 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 				// noinspection unchecked
 				insertRootBatchCandidates.add((DbAction.InsertRoot<T>) rootAction);
 			} else if (action instanceof DbAction.Insert<?> insertAction) {
-
-				// noinspection unchecked
-				addInsert((DbAction.Insert<Object>) insertAction);
+				insertActions.add(insertAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
-				// noinspection unchecked
-				addDelete((DbAction.Delete<Object>) deleteAction);
+				deleteActions.add(deleteAction);
 			}
 		});
 	}
@@ -133,26 +116,4 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		insertRootBatchCandidates.clear();
 	}
 
-	private void addInsert(DbAction.Insert<Object> action) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
-		insertActions.merge(propertyPath,
-				new HashMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))),
-				(map, mapDefaultValue) -> {
-					map.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)), (actions, listDefaultValue) -> {
-						actions.add(action);
-						return actions;
-					});
-					return map;
-				});
-	}
-
-	private void addDelete(DbAction.Delete<Object> action) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
-		deleteActions.merge(propertyPath, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {
-			actions.add(action);
-			return actions;
-		});
-	}
 }

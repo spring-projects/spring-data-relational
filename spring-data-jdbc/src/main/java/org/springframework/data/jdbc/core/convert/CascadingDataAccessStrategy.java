@@ -27,6 +27,8 @@ import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.LockMode;
 
+import static java.lang.Boolean.*;
+
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
  * not throw an exception.
@@ -155,7 +157,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
 
-		// Keep <T> as Eclipse fails to compile if <> is used.
 		return strategies.stream().collect(new FunctionCollector<>(function));
 	}
 
@@ -163,7 +164,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 		collect(das -> {
 			consumer.accept(das);
-			return null;
+			return TRUE;
 		});
 	}
 }

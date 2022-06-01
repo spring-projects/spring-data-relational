@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -45,8 +45,15 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
+import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
+import org.springframework.data.relational.core.mapping.event.RelationalEvent;
+import org.springframework.data.relational.core.mapping.event.WithId;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -129,12 +136,12 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(RelationalEvent::getClass, e -> ((DummyEntity) e.getEntity()).getId()) //
 				.containsExactly( //
-						Tuple.tuple(BeforeConvertEvent.class, null), //
-						Tuple.tuple(BeforeSaveEvent.class, null), //
-						Tuple.tuple(BeforeConvertEvent.class, 23L), //
-						Tuple.tuple(BeforeSaveEvent.class, 23L), //
-						Tuple.tuple(AfterSaveEvent.class, generatedId), //
-						Tuple.tuple(AfterSaveEvent.class, 23L) //
+						tuple(BeforeConvertEvent.class, null), //
+						tuple(BeforeSaveEvent.class, null), //
+						tuple(BeforeConvertEvent.class, 23L), //
+						tuple(BeforeSaveEvent.class, 23L), //
+						tuple(AfterSaveEvent.class, generatedId), //
+						tuple(AfterSaveEvent.class, 23L) //
 				);
 	}
 
@@ -150,8 +157,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				this::getEntity, //
 				this::getId //
 		).containsExactly( //
-				Tuple.tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
-				Tuple.tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
+				tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
+				tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
 		);
 	}
 

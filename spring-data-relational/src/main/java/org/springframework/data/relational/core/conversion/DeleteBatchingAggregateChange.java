@@ -1,16 +1,12 @@
 package org.springframework.data.relational.core.conversion;
 
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
-import static java.util.Collections.*;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * A {@link BatchingAggregateChange} implementation for delete changes that can contain actions for one or more delete
@@ -29,10 +25,9 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 	private final Class<T> entityType;
 	private final List<DbAction.DeleteRoot<T>> rootActions = new ArrayList<>();
 	private final List<DbAction.AcquireLockRoot<?>> lockActions = new ArrayList<>();
-	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<DbAction.Delete<Object>>> deleteActions = //
-			new HashMap<>();
+	private final BatchedActions deleteActions = BatchedActions.batchedDeletes();
 
-	public DeleteBatchingAggregateChange(Class<T> entityType) {
+	DeleteBatchingAggregateChange(Class<T> entityType) {
 		this.entityType = entityType;
 	}
 
@@ -50,15 +45,7 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 
 		lockActions.forEach(consumer);
-		deleteActions.entrySet().stream().sorted(Map.Entry.comparingByKey(pathLengthComparator.reversed()))
-				.forEach((entry) -> {
-					List<DbAction.Delete<Object>> deletes = entry.getValue();
-					if (deletes.size() > 1) {
-						consumer.accept(new DbAction.BatchDelete<>(deletes));
-					} else {
-						deletes.forEach(consumer);
-					}
-				});
+		deleteActions.forEach(consumer);
 		rootActions.forEach(consumer);
 	}
 
@@ -67,23 +54,12 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 		aggregateChange.forEachAction(action -> {
 			if (action instanceof DbAction.DeleteRoot<?> deleteRootAction) {
-				//noinspection unchecked
 				rootActions.add((DbAction.DeleteRoot<T>) deleteRootAction);
 			} else if (action instanceof DbAction.Delete<?> deleteAction) {
-				// noinspection unchecked
-				addDelete((DbAction.Delete<Object>) deleteAction);
+				deleteActions.add(deleteAction);
 			} else if (action instanceof DbAction.AcquireLockRoot<?> lockRootAction) {
 				lockActions.add(lockRootAction);
 			}
-		});
-	}
-
-	private void addDelete(DbAction.Delete<Object> action) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = action.getPropertyPath();
-		deleteActions.merge(propertyPath, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {
-			actions.add(action);
-			return actions;
 		});
 	}
 }

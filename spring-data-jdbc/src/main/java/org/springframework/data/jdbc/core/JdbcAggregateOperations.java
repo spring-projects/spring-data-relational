@@ -21,7 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 
 /**
- * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
+ * Specifies operations one can perform on a database, based on an <em>Domain Type</em>.
  *
  * @author Jens Schauder
  * @author Thomas Lang
@@ -90,7 +90,7 @@ public interface JdbcAggregateOperations {
 	<T> void deleteAllById(Iterable<?> ids, Class<T> domainType);
 
 	/**
-	 * Delete an aggregate identified by it's aggregate root.
+	 * Delete an aggregate identified by its aggregate root.
 	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root. Must not be {@code null}.

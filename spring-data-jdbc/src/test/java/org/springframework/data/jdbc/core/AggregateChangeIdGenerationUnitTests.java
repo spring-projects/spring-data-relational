@@ -380,28 +380,17 @@ public class AggregateChangeIdGenerationUnitTests {
 		@Id Integer id;
 	}
 
-	private static class IncrementingIds implements Answer {
+	private static class IncrementingIds implements Answer<Object> {
 		long id = 1;
 
 		@Override
-		public Object answer(InvocationOnMock invocation) throws Throwable {
+		public Object answer(InvocationOnMock invocation) {
 
 			if (!invocation.getMethod().getReturnType().equals(Object.class)) {
 				throw new UnsupportedOperationException("This mock does not support this invocation: " + invocation);
 			}
 
 			return id++;
-		}
-
-		private DbAction<?> findAction(Object[] arguments) {
-
-			for (Object argument : arguments) {
-
-				if (argument instanceof DbAction) {
-					return (DbAction<?>) argument;
-				}
-			}
-			return null;
 		}
 	}
 }

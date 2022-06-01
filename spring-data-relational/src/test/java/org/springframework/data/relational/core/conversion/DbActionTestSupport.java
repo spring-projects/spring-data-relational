@@ -28,7 +28,7 @@ import org.springframework.lang.Nullable;
 @UtilityClass
 class DbActionTestSupport {
 
-	static String extractPath(DbAction action) {
+	static String extractPath(DbAction<?> action) {
 
 		if (action instanceof DbAction.WithPropertyPath) {
 			return ((DbAction.WithPropertyPath<?>) action).getPropertyPath().toDotPath();
@@ -37,14 +37,15 @@ class DbActionTestSupport {
 		return "";
 	}
 
-	static boolean isWithDependsOn(DbAction dbAction) {
+	static boolean isWithDependsOn(DbAction<?> dbAction) {
 		return dbAction instanceof DbAction.WithDependingOn;
 	}
 
-	static Class<?> actualEntityType(DbAction a) {
+	@Nullable
+	static Class<?> actualEntityType(DbAction<?> a) {
 
 		if (a instanceof DbAction.WithEntity) {
-			return ((DbAction.WithEntity) a).getEntity().getClass();
+			return ((DbAction.WithEntity<?>) a).getEntity().getClass();
 		}
 		return null;
 	}

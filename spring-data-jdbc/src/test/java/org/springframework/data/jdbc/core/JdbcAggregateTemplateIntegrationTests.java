@@ -49,7 +49,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
@@ -205,14 +205,13 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloadedLegoSet.manual).isNotNull();
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
+			softly.assertThat(reloadedLegoSet.manual.getId()) //
+					.isEqualTo(legoSet.getManual().getId()) //
+					.isNotNull();
+			softly.assertThat(reloadedLegoSet.manual.getContent()).isEqualTo(legoSet.getManual().getContent());
+		});
 
-		softly.assertThat(reloadedLegoSet.manual.getId()) //
-				.isEqualTo(legoSet.getManual().getId()) //
-				.isNotNull();
-		softly.assertThat(reloadedLegoSet.manual.getContent()).isEqualTo(legoSet.getManual().getContent());
-
-		softly.assertAll();
 	}
 
 	@Test // DATAJDBC-112
@@ -307,12 +306,11 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		template.delete(legoSet, LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
 
-		softly.assertThat(template.findAll(LegoSet.class)).isEmpty();
-		softly.assertThat(template.findAll(Manual.class)).isEmpty();
-
-		softly.assertAll();
+			softly.assertThat(template.findAll(LegoSet.class)).isEmpty();
+			softly.assertThat(template.findAll(Manual.class)).isEmpty();
+		});
 	}
 
 	@Test // DATAJDBC-112
@@ -323,44 +321,46 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		template.deleteAll(LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
 
-		assertThat(template.findAll(LegoSet.class)).isEmpty();
-		assertThat(template.findAll(Manual.class)).isEmpty();
+			softly.assertThat(template.findAll(LegoSet.class)).isEmpty();
+			softly.assertThat(template.findAll(Manual.class)).isEmpty();
+		});
 
-		softly.assertAll();
 	}
 
 	@Test // GH-537
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAllByAggregateRootsWithReferencedEntity() {
+
 		LegoSet legoSet1 = template.save(legoSet);
 		LegoSet legoSet2 = template.save(createLegoSet("Some Name"));
+		template.save(createLegoSet("Some other Name"));
 
 		template.deleteAll(List.of(legoSet1, legoSet2), LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
 
-		assertThat(template.findAll(LegoSet.class)).isEmpty();
-		assertThat(template.findAll(Manual.class)).isEmpty();
-
-		softly.assertAll();
+			softly.assertThat(template.findAll(LegoSet.class)).extracting(l -> l.name).containsExactly("Some other Name");
+			softly.assertThat(template.findAll(Manual.class)).hasSize(1);
+		});
 	}
 
 	@Test // GH-537
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAllByIdsWithReferencedEntity() {
+
 		LegoSet legoSet1 = template.save(legoSet);
 		LegoSet legoSet2 = template.save(createLegoSet("Some Name"));
+		template.save(createLegoSet("Some other Name"));
 
 		template.deleteAllById(List.of(legoSet1.id, legoSet2.id), LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
 
-		assertThat(template.findAll(LegoSet.class)).isEmpty();
-		assertThat(template.findAll(Manual.class)).isEmpty();
-
-		softly.assertAll();
+			softly.assertThat(template.findAll(LegoSet.class)).extracting(l -> l.name).containsExactly("Some other Name");
+			softly.assertThat(template.findAll(Manual.class)).hasSize(1);
+		});
 	}
 
 	@Test // DATAJDBC-112
@@ -427,12 +427,11 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
+		assertSoftly(softly -> {
 
-		softly.assertThat(reloadedLegoSet.manual.content).isEqualTo("other content");
-		softly.assertThat(template.findAll(Manual.class)).describedAs("There should be only one manual").hasSize(1);
-
-		softly.assertAll();
+			softly.assertThat(reloadedLegoSet.manual.content).isEqualTo("other content");
+			softly.assertThat(template.findAll(Manual.class)).describedAs("There should be only one manual").hasSize(1);
+		});
 	}
 
 	@Test // DATAJDBC-112
@@ -524,14 +523,14 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
 
-		SoftAssertions softly = new SoftAssertions();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions).isNotNull();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotNull();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotEqualTo(reloadedLegoSet.manual.id);
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.content)
-				.isEqualTo(reloadedLegoSet.alternativeInstructions.content);
+		assertSoftly(softly -> {
 
-		softly.assertAll();
+			softly.assertThat(reloadedLegoSet.alternativeInstructions).isNotNull();
+			softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotNull();
+			softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotEqualTo(reloadedLegoSet.manual.id);
+			softly.assertThat(reloadedLegoSet.alternativeInstructions.content)
+					.isEqualTo(reloadedLegoSet.alternativeInstructions.content);
+		});
 	}
 
 	@Test // DATAJDBC-276
@@ -559,7 +558,7 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		ElementNoId element = new ElementNoId();
 		element.content = "content";
-		ListParentAllArgs entity = new ListParentAllArgs("name", asList(element));
+		ListParentAllArgs entity = new ListParentAllArgs("name", singletonList(element));
 
 		entity = template.save(entity);
 
@@ -1103,6 +1102,7 @@ class JdbcAggregateTemplateIntegrationTests {
 
 	}
 
+	@SuppressWarnings("unused")
 	static class OneToOneParent {
 
 		@Column("id3") @Id private Long id;
@@ -1116,6 +1116,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Table("LIST_PARENT")
+	@SuppressWarnings("unused")
 	static class ListParent {
 
 		@Column("id4") @Id private Long id;
@@ -1130,7 +1131,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		private final String name;
 		@MappedCollection(idColumn = "LIST_PARENT") private final List<ElementNoId> content = new ArrayList<>();
 
-		@PersistenceConstructor
+		@PersistenceCreator
 		ListParentAllArgs(Long id, String name, List<ElementNoId> content) {
 
 			this.id = id;
@@ -1150,23 +1151,27 @@ class JdbcAggregateTemplateIntegrationTests {
 	/**
 	 * One may think of ChainN as a chain with N further elements
 	 */
+	@SuppressWarnings("unused")
 	static class Chain0 {
 		@Id Long zero;
 		String zeroValue;
 	}
 
+	@SuppressWarnings("unused")
 	static class Chain1 {
 		@Id Long one;
 		String oneValue;
 		Chain0 chain0;
 	}
 
+	@SuppressWarnings("unused")
 	static class Chain2 {
 		@Id Long two;
 		String twoValue;
 		Chain1 chain1;
 	}
 
+	@SuppressWarnings("unused")
 	static class Chain3 {
 		@Id Long three;
 		String threeValue;
@@ -1273,6 +1278,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		Map<String, NoIdMapChain3> chain3 = new HashMap<>();
 	}
 
+	@SuppressWarnings("unused")
 	static class WithReadOnly {
 		@Id Long id;
 		String name;

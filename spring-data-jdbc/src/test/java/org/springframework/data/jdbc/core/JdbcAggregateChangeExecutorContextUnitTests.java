@@ -167,9 +167,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	@Test // GH-537
 	void batchInsertRootOperation_withGeneratedIds() {
 
-		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class, IdValueSource.GENERATED))
-				.thenReturn(new Object[] { 123L });
-		executionContext.executeBatchInsertRoot(new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED))));
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class,
+				IdValueSource.GENERATED)).thenReturn(new Object[] { 123L });
+		executionContext.executeBatchInsertRoot(
+				new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED))));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -180,9 +181,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	@Test // GH-537
 	void batchInsertRootOperation_withoutGeneratedIds() {
 
-		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class, IdValueSource.PROVIDED))
-				.thenReturn(new Object[] { null });
-		executionContext.executeBatchInsertRoot(new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.PROVIDED))));
+		when(accessStrategy.insert(singletonList(InsertSubject.describedBy(root, Identifier.empty())), DummyEntity.class,
+				IdValueSource.PROVIDED)).thenReturn(new Object[] { null });
+		executionContext.executeBatchInsertRoot(
+				new DbAction.BatchInsertRoot<>(singletonList(new DbAction.InsertRoot<>(root, IdValueSource.PROVIDED))));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
 
@@ -242,7 +244,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-									@Nullable Object key, IdValueSource idValueSource) {
+			@Nullable Object key, IdValueSource idValueSource) {
 
 		return new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
 				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), idValueSource);
@@ -269,6 +271,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
+	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
 		@Id Long id;

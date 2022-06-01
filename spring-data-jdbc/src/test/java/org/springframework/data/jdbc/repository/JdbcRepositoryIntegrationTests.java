@@ -21,6 +21,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
@@ -48,8 +52,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.core.mapping.MappedCollection;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -57,6 +59,7 @@ import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -74,10 +77,6 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Value;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -607,8 +606,7 @@ public class JdbcRepositoryIntegrationTests {
 		repository.saveAll(asList(dummyA, dummyB, dummyC));
 
 		assertThat(repository.findByEnumTypeIn(Set.of(Direction.LEFT, Direction.RIGHT)))
-				.extracting(DummyEntity::getDirection)
-				.containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
+				.extracting(DummyEntity::getDirection).containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
 	}
 
 	@Test // GH-1212
@@ -622,13 +620,13 @@ public class JdbcRepositoryIntegrationTests {
 		dummyC.setDirection(Direction.RIGHT);
 		repository.saveAll(asList(dummyA, dummyB, dummyC));
 
-		assertThat(repository.findByEnumType(Direction.CENTER))
-				.extracting(DummyEntity::getDirection)
+		assertThat(repository.findByEnumType(Direction.CENTER)).extracting(DummyEntity::getDirection)
 				.containsExactlyInAnyOrder(Direction.CENTER);
 	}
 
 	@Test // GH-537
 	void manyInsertsWithNestedEntities() {
+
 		Root root1 = createRoot("root1");
 		Root root2 = createRoot("root2");
 
@@ -644,6 +642,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // GH-537
 	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	void manyUpdatesWithNestedEntities() {
+
 		Root root1 = createRoot("root1");
 		Root root2 = createRoot("root2");
 		List<Root> roots = rootRepository.saveAll(asList(root1, root2));
@@ -669,6 +668,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // GH-537
 	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	void manyInsertsAndUpdatesWithNestedEntities() {
+
 		Root root1 = createRoot("root1");
 		Root savedRoot1 = rootRepository.save(root1);
 		Root updatedRoot1 = new Root(savedRoot1.id, "updated" + savedRoot1.name,
@@ -685,6 +685,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	private Root createRoot(String namePrefix) {
+
 		return new Root(null, namePrefix,
 				new Intermediate(null, namePrefix + "Intermediate", new Leaf(null, namePrefix + "Leaf"), emptyList()),
 				singletonList(new Intermediate(null, namePrefix + "QualifiedIntermediate", null,
@@ -692,6 +693,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	private void assertIsEqualToWithNonNullIds(Root reloadedRoot1, Root root1) {
+
 		assertThat(reloadedRoot1.id).isNotNull();
 		assertThat(reloadedRoot1.name).isEqualTo(root1.name);
 		assertThat(reloadedRoot1.intermediate.id).isNotNull();
@@ -840,6 +842,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Value
 	static class Root {
+
 		@Id Long id;
 		String name;
 		Intermediate intermediate;
@@ -848,6 +851,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Value
 	static class Intermediate {
+
 		@Id Long id;
 		String name;
 		Leaf leaf;
@@ -856,13 +860,14 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Value
 	static class Leaf {
+
 		@Id Long id;
 		String name;
 	}
 
 	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
 
-		private List<AbstractRelationalEvent<?>> events = new ArrayList<>();
+		private final List<AbstractRelationalEvent<?>> events = new ArrayList<>();
 
 		@Override
 		public void onApplicationEvent(AbstractRelationalEvent<?> event) {
@@ -892,13 +897,11 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	interface DummyProjection {
-
 		String getName();
 	}
 
 	@Value
 	static class DtoProjection {
-
 		String name;
 	}
 

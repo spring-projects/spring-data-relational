@@ -84,8 +84,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()),
 				eq(IdValueSource.GENERATED))).thenReturn(23L);
-		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef(23L)), eq(IdValueSource.GENERATED)))
-				.thenReturn(24L);
+		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef(23L)),
+				eq(IdValueSource.GENERATED))).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
@@ -133,7 +133,6 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		Content content1 = new Content();
 		when(accessStrategy.insert(content1, Content.class, createBackRef(123L), IdValueSource.GENERATED)).thenReturn(11L);
 		executionContext.executeInsert(createInsert(rootUpdate1, "content", content1, null));
-
 
 		DummyEntity root2 = new DummyEntity();
 		DbAction.InsertRoot<DummyEntity> rootInsert2 = new DbAction.InsertRoot<>(root2, IdValueSource.GENERATED);

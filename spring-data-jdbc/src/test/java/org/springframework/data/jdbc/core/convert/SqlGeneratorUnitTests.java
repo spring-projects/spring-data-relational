@@ -50,6 +50,7 @@ import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -65,16 +66,17 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Mikhail Polivakha
  * @author Chirag Tailor
  */
+@SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
 
 	private static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
 
-	private SqlGenerator sqlGenerator;
-	private NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-	private RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
-	private JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	private final NamingStrategy namingStrategy = new PrefixingNamingStrategy();
+	private final RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+	private final JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
+	private SqlGenerator sqlGenerator;
 
 	@BeforeEach
 	void setUp() {
@@ -267,7 +269,8 @@ class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, PostgresDialect.INSTANCE);
 
-		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		String sql = sqlGenerator
+				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(sql).contains("ORDER BY \"dummy_entity\".\"x_name\" ASC NULLS LAST");
 	}
@@ -277,7 +280,8 @@ class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, SqlServerDialect.INSTANCE);
 
-		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		String sql = sqlGenerator
+				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(sql).endsWith("ORDER BY dummy_entity.x_name ASC");
 	}
@@ -695,6 +699,7 @@ class SqlGeneratorUnitTests {
 		});
 	}
 
+	@Nullable
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
 		return createSqlGenerator(type, AnsiDialect.INSTANCE)
 				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
@@ -733,6 +738,7 @@ class SqlGeneratorUnitTests {
 						SqlIdentifier.quoted("child"), SqlIdentifier.quoted("CHILD_PARENT_OF_NO_ID_CHILD"));
 	}
 
+	@Nullable
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
@@ -741,6 +747,7 @@ class SqlGeneratorUnitTests {
 		return null;
 	}
 
+	@Nullable
 	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
 
 		return createSqlGenerator(type, AnsiDialect.INSTANCE)
@@ -762,6 +769,7 @@ class SqlGeneratorUnitTests {
 		AggregateReference<OtherAggregate, Long> other;
 	}
 
+	@SuppressWarnings("unused")
 	static class VersionedEntity extends DummyEntity {
 		@Version Integer version;
 	}
@@ -781,6 +789,7 @@ class SqlGeneratorUnitTests {
 		String something;
 	}
 
+	@SuppressWarnings("unused")
 	static class Element {
 		@Id Long id;
 		String content;
@@ -795,6 +804,7 @@ class SqlGeneratorUnitTests {
 
 	private static class NoIdChild {}
 
+	@SuppressWarnings("unused")
 	static class OtherAggregate {
 		@Id Long id;
 		String name;
@@ -823,6 +833,7 @@ class SqlGeneratorUnitTests {
 		@ReadOnlyProperty String readOnlyValue;
 	}
 
+	@SuppressWarnings("unused")
 	static class EntityWithQuotedColumnName {
 
 		// these column names behave like single double quote in the name since the get quoted and then doubling the double
@@ -865,36 +876,43 @@ class SqlGeneratorUnitTests {
 		Chain3 chain3;
 	}
 
+	@SuppressWarnings("unused")
 	static class NoIdChain0 {
 		String zeroValue;
 	}
 
+	@SuppressWarnings("unused")
 	static class NoIdChain1 {
 		String oneValue;
 		NoIdChain0 chain0;
 	}
 
+	@SuppressWarnings("unused")
 	static class NoIdChain2 {
 		String twoValue;
 		NoIdChain1 chain1;
 	}
 
+	@SuppressWarnings("unused")
 	static class NoIdChain3 {
 		String threeValue;
 		NoIdChain2 chain2;
 	}
 
+	@SuppressWarnings("unused")
 	static class NoIdChain4 {
 		@Id Long four;
 		String fourValue;
 		NoIdChain3 chain3;
 	}
 
+	@SuppressWarnings("unused")
 	static class IdNoIdChain {
 		@Id Long id;
 		NoIdChain4 chain4;
 	}
 
+	@SuppressWarnings("unused")
 	static class IdIdNoIdChain {
 		@Id Long id;
 		IdNoIdChain idNoIdChain;

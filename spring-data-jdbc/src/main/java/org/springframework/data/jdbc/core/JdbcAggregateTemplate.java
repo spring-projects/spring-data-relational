@@ -287,6 +287,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				.forDelete(domainType);
 
 		ids.forEach(id -> {
+
 			DeleteAggregateChange<T> change = createDeletingChange(id, null, domainType);
 			triggerBeforeDelete(null, id, change);
 			batchingAggregateChange.add(change);
@@ -316,6 +317,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Map<Object, T> instancesBeforeExecute = new LinkedHashMap<>();
 
 		instances.forEach(instance -> {
+
 			Object id = context.getRequiredPersistentEntity(domainType).getIdentifierAccessor(instance)
 					.getRequiredIdentifier();
 			DeleteAggregateChange<T> change = createDeletingChange(id, instance, domainType);
@@ -384,6 +386,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		for (T instance : instances) {
 			if (batchingAggregateChange == null) {
+				// noinspection unchecked
 				batchingAggregateChange = BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance));
 			}
 			batchingAggregateChange.add(beforeExecute(instance, changeCreatorSelectorForSave(instance)));
@@ -540,15 +543,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return null;
 	}
 
-	private static class EntityAndPreviousVersion<T> {
-
-		private final T entity;
-		private final Number version;
-
-		EntityAndPreviousVersion(T entity, @Nullable Number version) {
-
-			this.entity = entity;
-			this.version = version;
-		}
+	private record EntityAndPreviousVersion<T> (T entity, @Nullable Number version) {
 	}
 }

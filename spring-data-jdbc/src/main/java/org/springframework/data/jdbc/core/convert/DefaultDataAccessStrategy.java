@@ -183,8 +183,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		RelationalPersistentEntity<?> rootEntity = context
-				.getRequiredPersistentEntity(propertyPath.getBaseProperty().getOwner().getType());
+		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
 
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
@@ -199,8 +198,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		RelationalPersistentEntity<?> rootEntity = context
-				.getRequiredPersistentEntity(propertyPath.getBaseProperty().getOwner().getType());
+		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
 
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
 
@@ -220,8 +218,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		operations.getJdbcOperations()
-				.update(sql(propertyPath.getBaseProperty().getOwner().getType()).createDeleteAllSql(propertyPath));
+		operations.getJdbcOperations().update(sql(getBaseType(propertyPath)).createDeleteAllSql(propertyPath));
 	}
 
 	@Override
@@ -364,5 +361,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return Optional.ofNullable(context.getRequiredPersistentEntity(domainType).getIdProperty())
 				.map(RelationalPersistentProperty::getColumnName).orElse(null);
+	}
+
+	private Class<?> getBaseType(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
+		RelationalPersistentProperty baseProperty = propertyPath.getBaseProperty();
+
+		Assert.notNull(baseProperty, "The base property must not be null");
+
+		return baseProperty.getOwner().getType();
 	}
 }

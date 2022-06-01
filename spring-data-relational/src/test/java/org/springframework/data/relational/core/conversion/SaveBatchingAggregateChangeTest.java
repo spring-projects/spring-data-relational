@@ -39,7 +39,7 @@ class SaveBatchingAggregateChangeTest {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 
-	@Test
+	@Test // GH-537
 	void startsWithNoActions() {
 
 		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
@@ -49,7 +49,7 @@ class SaveBatchingAggregateChangeTest {
 
 	@Nested
 	class RootActionsTests {
-		@Test
+		@Test // GH-537
 		void yieldsUpdateRoot() {
 
 			Root root = new Root(1L, null);
@@ -63,7 +63,7 @@ class SaveBatchingAggregateChangeTest {
 			assertThat(extractActions(change)).containsExactly(rootUpdate);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsSingleInsertRoot_followedByUpdateRoot_asIndividualActions() {
 
 			Root root1 = new Root(1L, null);
@@ -87,7 +87,7 @@ class SaveBatchingAggregateChangeTest {
 							Tuple.tuple(DbAction.UpdateRoot.class, Root.class, IdValueSource.PROVIDED));
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsMultipleMatchingInsertRoot_followedByUpdateRoot_asBatchInsertRootAction() {
 
 			Root root1 = new Root(1L, null);
@@ -120,7 +120,7 @@ class SaveBatchingAggregateChangeTest {
 					.containsExactly(root1Insert, root2Insert);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsInsertRoot() {
 
 			Root root = new Root(1L, null);
@@ -134,7 +134,7 @@ class SaveBatchingAggregateChangeTest {
 			assertThat(extractActions(change)).containsExactly(rootInsert);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsSingleInsertRoot_followedByNonMatchingInsertRoot_asIndividualActions() {
 
 			Root root1 = new Root(1L, null);
@@ -154,7 +154,7 @@ class SaveBatchingAggregateChangeTest {
 			assertThat(extractActions(change)).containsExactly(root1Insert, root2Insert);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsMultipleMatchingInsertRoot_followedByNonMatchingInsertRoot_asBatchInsertRootAction() {
 
 			Root root1 = new Root(1L, null);
@@ -187,7 +187,7 @@ class SaveBatchingAggregateChangeTest {
 					.containsExactly(root1Insert, root2Insert);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsMultipleMatchingInsertRoot_asBatchInsertRootAction() {
 
 			Root root1 = new Root(1L, null);
@@ -212,7 +212,7 @@ class SaveBatchingAggregateChangeTest {
 					.containsExactly(root1Insert, root2Insert);
 		}
 
-		@Test
+		@Test // GH-537
 		void yieldsPreviouslyYieldedInsertRoot_asBatchInsertRootAction_whenAdditionalMatchingInsertRootIsAdded() {
 
 			Root root1 = new Root(1L, null);
@@ -244,7 +244,7 @@ class SaveBatchingAggregateChangeTest {
 		}
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsRootActionsBeforeDeleteActions() {
 
 		Root root1 = new Root(null, null);
@@ -271,7 +271,7 @@ class SaveBatchingAggregateChangeTest {
 				Tuple.tuple(DbAction.Delete.class, Intermediate.class));
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsNestedDeleteActionsInTreeOrderFromLeavesToRoot() {
 
 		Root root1 = new Root(1L, null);
@@ -305,7 +305,7 @@ class SaveBatchingAggregateChangeTest {
 				.containsExactly(root1IntermediateDelete, root2IntermediateDelete);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteActionsAsBatchDeletes_groupedByPath_whenGroupContainsMultipleDeletes() {
 
 		Root root = new Root(1L, null);
@@ -331,7 +331,7 @@ class SaveBatchingAggregateChangeTest {
 				.containsExactly(intermediateDelete1, intermediateDelete2);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteActionsBeforeInsertActions() {
 
 		Root root1 = new Root(null, null);
@@ -361,7 +361,7 @@ class SaveBatchingAggregateChangeTest {
 				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsInsertActionsAsBatchInserts_groupedByIdValueSource() {
 
 		Root root = new Root(null, null);
@@ -398,7 +398,7 @@ class SaveBatchingAggregateChangeTest {
 				.getActions()).containsExactly(intermediateInsertProvidedId);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsNestedInsertActionsInTreeOrderFromRootToLeaves() {
 
 		Root root1 = new Root(null, null);
@@ -445,7 +445,7 @@ class SaveBatchingAggregateChangeTest {
 				.containsExactly(root1LeafInsert);
 	}
 
-	@Test
+	@Test  // GH-537
 	void yieldsInsertsWithSameLengthReferences_asSeparateInserts() {
 
 		RootWithSameLengthReferences root = new RootWithSameLengthReferences(null, null, null);

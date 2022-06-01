@@ -42,7 +42,7 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 	/** The previous version assigned to the instance being changed, if available */
 	@Nullable private final Number previousVersion;
 
-	public DefaultRootAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
+	DefaultRootAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
 
 		this.kind = kind;
 		this.entityType = entityType;

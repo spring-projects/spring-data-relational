@@ -98,7 +98,7 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1159
 	void newEntityWithPrimitiveLongId_insertDoesNotIncludeId_whenIdValueIsZero() {
 		PrimitiveLongIdEntity entity = new PrimitiveLongIdEntity();
 
@@ -119,7 +119,7 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1159
 	void newEntityWithPrimitiveIntId_insertDoesNotIncludeId_whenIdValueIsZero() {
 		PrimitiveIntIdEntity entity = new PrimitiveIntIdEntity();
 
@@ -187,7 +187,7 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1159
 	void newEntityWithReference_whenReferenceHasPrimitiveId_insertDoesNotIncludeId_whenIdValueIsZero() {
 
 		EntityWithReferencesToPrimitiveIdEntity entity = new EntityWithReferencesToPrimitiveIdEntity(null);
@@ -665,7 +665,7 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1159
 	void newEntityWithCollection_whenElementHasPrimitiveId_doesNotIncludeId_whenIdValueIsZero() {
 
 		EntityWithReferencesToPrimitiveIdEntity entity = new EntityWithReferencesToPrimitiveIdEntity(null);

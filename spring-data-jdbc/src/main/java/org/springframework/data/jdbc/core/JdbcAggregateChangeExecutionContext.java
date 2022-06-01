@@ -50,6 +50,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  */
+@SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
 
 	private static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
@@ -192,15 +193,13 @@ class JdbcAggregateChangeExecutionContext {
 	private DbAction.WithEntity<?> getIdOwningAction(DbAction.WithEntity<?> action,
 			PersistentPropertyPathExtension idPath) {
 
-		if (!(action instanceof DbAction.WithDependingOn)) {
+		if (!(action instanceof DbAction.WithDependingOn<?> withDependingOn)) {
 
 			Assert.state(idPath.getLength() == 0,
 					"When the id path is not empty the id providing action should be of type WithDependingOn");
 
 			return action;
 		}
-
-		DbAction.WithDependingOn<?> withDependingOn = (DbAction.WithDependingOn<?>) action;
 
 		if (idPath.matches(withDependingOn.getPropertyPath())) {
 			return action;
@@ -257,9 +256,8 @@ class JdbcAggregateChangeExecutionContext {
 				roots.add((T) newEntity);
 			}
 
-			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != action.getEntity() && action instanceof DbAction.Insert) {
-				DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
+			// the id property was immutable, so we have to propagate changes up the tree
+			if (newEntity != action.getEntity() && action instanceof DbAction.Insert<?> insert) {
 
 				Pair<?, ?> qualifier = insert.getQualifier();
 
@@ -463,6 +461,7 @@ class JdbcAggregateChangeExecutionContext {
 		public List add(@Nullable List list, @Nullable Object qualifier, Object value) {
 
 			Assert.notNull(list, "List must not be null.");
+			Assert.notNull(qualifier, "ListAggregator can't handle a null qualifier.");
 
 			int index = (int) qualifier;
 			if (index >= list.size()) {

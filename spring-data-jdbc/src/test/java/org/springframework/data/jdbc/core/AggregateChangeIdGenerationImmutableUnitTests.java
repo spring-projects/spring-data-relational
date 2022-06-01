@@ -406,11 +406,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
+		return new DbAction.Insert<>(value,
 				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert,
 				singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
-
-		return insert;
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
@@ -418,10 +416,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
 				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, propertyPath, parentInsert,
-				singletonMap(propertyPath, key), IdValueSource.GENERATED);
 
-		return insert;
+		return new DbAction.Insert<>(value, propertyPath, parentInsert,
+				singletonMap(propertyPath, key), IdValueSource.GENERATED);
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

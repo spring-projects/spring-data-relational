@@ -21,10 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -63,11 +60,9 @@ import org.springframework.util.Assert;
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
-	private static final Log LOG = LogFactory.getLog(MyBatisDataAccessStrategy.class);
 	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
 	private final SqlSession sqlSession;
-	private final IdentifierProcessing identifierProcessing;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
 
 	/**
@@ -133,7 +128,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
 
 		this.sqlSession = sqlSession;
-		this.identifierProcessing = identifierProcessing;
 	}
 
 	/**
@@ -210,7 +204,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		Class<?> ownerType = propertyPath.getBaseProperty().getOwner().getType();
+		Class<?> ownerType = getOwnerTyp(propertyPath);
 		String statement = namespace(ownerType) + ".delete-" + toDashPath(propertyPath);
 		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
 		MyBatisContext parameter = new MyBatisContext(rootId, null, leafType, Collections.emptyMap());
@@ -234,10 +228,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		Class<?> baseType = propertyPath.getBaseProperty().getOwner().getType();
 		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
 
-		String statement = namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath);
+		String statement = namespace(getOwnerTyp(propertyPath)) + ".deleteAll-" + toDashPath(propertyPath);
 		MyBatisContext parameter = new MyBatisContext(null, null, leafType, Collections.emptyMap());
 		sqlSession().delete(statement, parameter);
 	}
@@ -291,8 +284,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-		String statementName = namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath-"
-				+ path.toDotPath();
+		String statementName = namespace(getOwnerTyp(path)) + ".findAllByPath-" + path.toDotPath();
 
 		return sqlSession().selectList(statementName,
 				new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
@@ -333,12 +325,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().selectOne(statement, parameter);
 	}
 
-	private Map<String, Object> convertToParameterMap(Map<SqlIdentifier, Object> additionalParameters) {
-
-		return additionalParameters.entrySet().stream() //
-				.collect(Collectors.toMap(e -> e.getKey().toSql(identifierProcessing), Map.Entry::getValue));
-	}
-
 	private String namespace(Class<?> domainType) {
 		return this.namespaceStrategy.getNamespace(domainType);
 	}
@@ -348,6 +334,20 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private static String toDashPath(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-		return propertyPath.toDotPath().replaceAll("\\.", "-");
+
+		String dotPath = propertyPath.toDotPath();
+		if (dotPath == null) {
+			return "";
+		}
+		return dotPath.replaceAll("\\.", "-");
+	}
+
+	private Class<?> getOwnerTyp(PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
+
+		RelationalPersistentProperty baseProperty = propertyPath.getBaseProperty();
+
+		Assert.notNull(baseProperty, "BaseProperty must not be null.");
+
+		return baseProperty.getOwner().getType();
 	}
 }

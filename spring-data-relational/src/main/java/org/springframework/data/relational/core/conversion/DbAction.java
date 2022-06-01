@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +62,7 @@ public interface DbAction<T> {
 			this.entity = entity;
 			this.propertyPath = propertyPath;
 			this.dependingOn = dependingOn;
-			this.qualifiers = Collections.unmodifiableMap(new HashMap<>(qualifiers));
+			this.qualifiers = Map.copyOf(qualifiers);
 			this.idValueSource = idValueSource;
 		}
 
@@ -358,9 +356,9 @@ public interface DbAction<T> {
 		private final B batchValue;
 
 		/**
-		 * Creates a {@link BatchWithValue} instance from the given actions and the value which can be extracted by applying #batchValueExtractor on any of the actions.
-		 *
-		 * All actions must result in the same value when #batchValueExtractor is applied.
+		 * Creates a {@link BatchWithValue} instance from the given actions and the value which can be extracted by applying
+		 * #batchValueExtractor on any of the actions. All actions must result in the same value when #batchValueExtractor
+		 * is applied.
 		 *
 		 * @param actions the actions forming the batch.
 		 * @param batchValueExtractor function for extracting the {@link #batchValue} from an action.
@@ -371,10 +369,8 @@ public interface DbAction<T> {
 
 			Iterator<A> actionIterator = actions.iterator();
 			this.batchValue = batchValueExtractor.apply(actionIterator.next());
-			actionIterator.forEachRemaining(action -> {
-				Assert.isTrue(batchValueExtractor.apply(action).equals(batchValue),
-						"All actions in the batch must have matching batchValue");
-			});
+			actionIterator.forEachRemaining(action -> Assert.isTrue(batchValueExtractor.apply(action).equals(batchValue),
+					"All actions in the batch must have matching batchValue"));
 
 			this.actions = actions;
 		}
@@ -423,12 +419,14 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents a batch delete statement for multiple entities that are reachable via a given path from the aggregate root.
+	 * Represents a batch delete statement for multiple entities that are reachable via a given path from the aggregate
+	 * root.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 * @since 3.0
 	 */
-	final class BatchDelete<T> extends BatchWithValue<T, Delete<T>, PersistentPropertyPath<RelationalPersistentProperty>> {
+	final class BatchDelete<T>
+			extends BatchWithValue<T, Delete<T>, PersistentPropertyPath<RelationalPersistentProperty>> {
 		public BatchDelete(List<Delete<T>> actions) {
 			super(actions, Delete::getPropertyPath);
 		}

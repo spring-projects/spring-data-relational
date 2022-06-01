@@ -103,7 +103,7 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Construct a IN-condition based on a {@link Select Sub-Select} which selects the ids (or stand ins for ids) of the
+	 * Construct an IN-condition based on a {@link Select Sub-Select} which selects the ids (or stand-ins for ids) of the
 	 * given {@literal path} to those that reference the root entities specified by the {@literal rootCondition}.
 	 *
 	 * @param path specifies the table and id to select
@@ -135,7 +135,7 @@ class SqlGenerator {
 			innerCondition = rootCondition.apply(selectFilterColumn);
 		} else {
 
-			// otherwise we need another layer of subselect
+			// otherwise, we need another layer of subselect
 			innerCondition = getSubselectCondition(parentPath, rootCondition, selectFilterColumn);
 		}
 
@@ -502,7 +502,7 @@ class SqlGenerator {
 	@Nullable
 	Column getColumn(PersistentPropertyPathExtension path) {
 
-		// an embedded itself doesn't give an column, its members will though.
+		// an embedded itself doesn't give a column, its members will though.
 		// if there is a collection or map on the path it won't get selected at all, but it will get loaded with a separate
 		// select
 		// only the parent path is considered in order to handle arrays that get stored as BINARY properly
@@ -512,7 +512,7 @@ class SqlGenerator {
 
 		if (path.isEntity()) {
 
-			// Simple entities without id include there backreference as an synthetic id in order to distinguish null entities
+			// Simple entities without id include there backreference as a synthetic id in order to distinguish null entities
 			// from entities with only null values.
 
 			if (path.isQualified() //
@@ -622,7 +622,7 @@ class SqlGenerator {
 
 		Table table = getTable();
 
-		List<AssignValue> assignments = columns.getUpdateableColumns() //
+		List<AssignValue> assignments = columns.getUpdatableColumns() //
 				.stream() //
 				.map(columnName -> Assignments.value( //
 						table.column(columnName), //
@@ -807,7 +807,7 @@ class SqlGenerator {
 		private final List<SqlIdentifier> nonIdColumnNames = new ArrayList<>();
 		private final Set<SqlIdentifier> readOnlyColumnNames = new HashSet<>();
 		private final Set<SqlIdentifier> insertableColumns;
-		private final Set<SqlIdentifier> updateableColumns;
+		private final Set<SqlIdentifier> updatableColumns;
 
 		Columns(RelationalPersistentEntity<?> entity,
 				MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext,
@@ -823,12 +823,12 @@ class SqlGenerator {
 
 			this.insertableColumns = Collections.unmodifiableSet(insertable);
 
-			Set<SqlIdentifier> updateable = new LinkedHashSet<>(columnNames);
+			Set<SqlIdentifier> updatable = new LinkedHashSet<>(columnNames);
 
-			updateable.removeAll(idColumnNames);
-			updateable.removeAll(readOnlyColumnNames);
+			updatable.removeAll(idColumnNames);
+			updatable.removeAll(readOnlyColumnNames);
 
-			this.updateableColumns = Collections.unmodifiableSet(updateable);
+			this.updatableColumns = Collections.unmodifiableSet(updatable);
 		}
 
 		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {
@@ -881,8 +881,8 @@ class SqlGenerator {
 		/**
 		 * @return Column names that can be used for {@code UPDATE}.
 		 */
-		Set<SqlIdentifier> getUpdateableColumns() {
-			return updateableColumns;
+		Set<SqlIdentifier> getUpdatableColumns() {
+			return updatableColumns;
 		}
 	}
 }

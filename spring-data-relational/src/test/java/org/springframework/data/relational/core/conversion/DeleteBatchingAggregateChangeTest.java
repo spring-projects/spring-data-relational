@@ -22,7 +22,7 @@ class DeleteBatchingAggregateChangeTest {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteActions() {
 
 		Root root = new Root(1L, null);
@@ -37,7 +37,7 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).containsExactly(intermediateDelete);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsNestedDeleteActionsInTreeOrderFromLeavesToRoot() {
 
 		Root root = new Root(2L, null);
@@ -45,6 +45,7 @@ class DeleteBatchingAggregateChangeTest {
 		DbAction.Delete<Intermediate> intermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange.addAction(intermediateDelete);
+
 		DbAction.Delete<?> leafDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate.leaf", Root.class));
 		aggregateChange.addAction(leafDelete);
@@ -56,16 +57,18 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(actions).containsExactly(leafDelete, intermediateDelete);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteActionsAsBatchDeletes_groupedByPath_whenGroupContainsMultipleDeletes() {
 
 		Root root = new Root(1L, null);
 		DeleteAggregateChange<Root> aggregateChange = MutableAggregateChange.forDelete(root);
+
 		DbAction.Delete<Intermediate> intermediateDelete1 = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
+		aggregateChange.addAction(intermediateDelete1);
+
 		DbAction.Delete<Intermediate> intermediateDelete2 = new DbAction.Delete<>(2L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
-		aggregateChange.addAction(intermediateDelete1);
 		aggregateChange.addAction(intermediateDelete2);
 
 		BatchingAggregateChange<Root, DeleteAggregateChange<Root>> change = BatchingAggregateChange.forDelete(Root.class);
@@ -78,7 +81,7 @@ class DeleteBatchingAggregateChangeTest {
 				.containsExactly(intermediateDelete1, intermediateDelete2);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteRootActions() {
 
 		DeleteAggregateChange<Root> aggregateChange = MutableAggregateChange.forDelete(new Root(null, null));
@@ -91,12 +94,14 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).containsExactly(deleteRoot);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsDeleteRootActionsAfterDeleteActions() {
 
 		DeleteAggregateChange<Root> aggregateChange = MutableAggregateChange.forDelete(new Root(null, null));
+
 		DbAction.DeleteRoot<Root> deleteRoot = new DbAction.DeleteRoot<>(1L, Root.class, null);
 		aggregateChange.addAction(deleteRoot);
+
 		DbAction.Delete<?> intermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange.addAction(intermediateDelete);
@@ -107,10 +112,11 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).containsExactly(intermediateDelete, deleteRoot);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsLockRootActions() {
 
 		DeleteAggregateChange<Root> aggregateChange = MutableAggregateChange.forDelete(new Root(null, null));
+
 		DbAction.AcquireLockRoot<Root> lockRootAction = new DbAction.AcquireLockRoot<>(1L, Root.class);
 		aggregateChange.addAction(lockRootAction);
 
@@ -120,13 +126,15 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).containsExactly(lockRootAction);
 	}
 
-	@Test
+	@Test // GH-537
 	void yieldsLockRootActionsBeforeDeleteActions() {
 
 		DeleteAggregateChange<Root> aggregateChange = MutableAggregateChange.forDelete(new Root(null, null));
+
 		DbAction.Delete<?> intermediateDelete = new DbAction.Delete<>(1L,
 				context.getPersistentPropertyPath("intermediate", Root.class));
 		aggregateChange.addAction(intermediateDelete);
+
 		DbAction.AcquireLockRoot<Root> lockRootAction = new DbAction.AcquireLockRoot<>(1L, Root.class);
 		aggregateChange.addAction(lockRootAction);
 
@@ -150,14 +158,6 @@ class DeleteBatchingAggregateChangeTest {
 				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found!"));
 	}
 
-	private <T, A> DbAction.BatchWithValue<T, DbAction<T>, Object> getBatchWithValueAction(List<DbAction<?>> actions,
-			Class<T> entityType, Class<A> batchActionType, Object batchValue) {
-
-		return getBatchWithValueActions(actions, entityType, batchActionType).stream()
-				.filter(batchWithValue -> batchWithValue.getBatchValue() == batchValue).findFirst().orElseThrow(
-						() -> new RuntimeException(String.format("No BatchWithValue with batch value '%s' found!", batchValue)));
-	}
-
 	@SuppressWarnings("unchecked")
 	private <T, A> List<DbAction.BatchWithValue<T, DbAction<T>, Object>> getBatchWithValueActions(
 			List<DbAction<?>> actions, Class<T> entityType, Class<A> batchActionType) {
@@ -170,12 +170,14 @@ class DeleteBatchingAggregateChangeTest {
 
 	@Value
 	static class Root {
+
 		@Id Long id;
 		Intermediate intermediate;
 	}
 
 	@Value
 	static class Intermediate {
+
 		@Id Long id;
 		String name;
 		Leaf leaf;
@@ -183,6 +185,7 @@ class DeleteBatchingAggregateChangeTest {
 
 	@Value
 	static class Leaf {
+
 		@Id Long id;
 		String name;
 	}
