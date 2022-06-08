@@ -54,7 +54,7 @@ public interface AggregateReference<T, ID> {
 
 		public IdOnlyAggregateReference(ID id) {
 
-			Assert.notNull(id, "Id must not be null.");
+			Assert.notNull(id, "Id must not be null");
 
 			this.id = id;
 		}

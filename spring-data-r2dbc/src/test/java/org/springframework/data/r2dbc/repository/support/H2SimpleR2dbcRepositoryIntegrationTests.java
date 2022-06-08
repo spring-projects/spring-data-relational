@@ -117,7 +117,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 				.verifyErrorSatisfies(actual -> {
 
 					assertThat(actual).isInstanceOf(TransientDataAccessException.class)
-							.hasMessage("Failed to update table [legoset]. Row with Id [9999] does not exist.");
+							.hasMessage("Failed to update table [legoset]; Row with Id [9999] does not exist");
 				});
 	}
 

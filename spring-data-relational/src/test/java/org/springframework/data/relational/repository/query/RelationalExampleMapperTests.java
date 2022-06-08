@@ -220,7 +220,7 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		assertThatIllegalStateException().isThrownBy(() -> exampleMapper.getMappedExample(example))
-				.withMessageContaining("REGEX is not supported!");
+				.withMessageContaining("REGEX is not supported");
 	}
 
 	@Test // GH-929

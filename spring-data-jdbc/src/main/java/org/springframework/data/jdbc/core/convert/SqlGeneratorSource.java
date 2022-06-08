@@ -39,9 +39,9 @@ public class SqlGeneratorSource {
 
 	public SqlGeneratorSource(RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 
-		Assert.notNull(context, "Context must not be null.");
-		Assert.notNull(converter, "Converter must not be null.");
-		Assert.notNull(dialect, "Dialect must not be null.");
+		Assert.notNull(context, "Context must not be null");
+		Assert.notNull(converter, "Converter must not be null");
+		Assert.notNull(dialect, "Dialect must not be null");
 
 		this.context = context;
 		this.converter = converter;

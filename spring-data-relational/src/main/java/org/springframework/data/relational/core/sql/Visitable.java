@@ -33,7 +33,7 @@ public interface Visitable {
 	 */
 	default void visit(Visitor visitor) {
 
-		Assert.notNull(visitor, "Visitor must not be null!");
+		Assert.notNull(visitor, "Visitor must not be null");
 
 		visitor.enter(this);
 		visitor.leave(this);

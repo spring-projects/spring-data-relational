@@ -74,7 +74,7 @@ public abstract class SQL {
 	 */
 	public static BindMarker bindMarker(String name) {
 
-		Assert.hasText(name, "Name must not be null or empty!");
+		Assert.hasText(name, "Name must not be null or empty");
 
 		return new NamedBindMarker(name);
 	}

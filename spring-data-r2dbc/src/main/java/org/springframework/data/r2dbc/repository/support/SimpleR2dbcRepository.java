@@ -117,7 +117,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public <S extends T> Mono<S> save(S objectToSave) {
 
-		Assert.notNull(objectToSave, "Object to save must not be null!");
+		Assert.notNull(objectToSave, "Object to save must not be null");
 
 		if (this.entity.isNew(objectToSave)) {
 			return this.entityOperations.insert(objectToSave);
@@ -134,7 +134,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public <S extends T> Flux<S> saveAll(Iterable<S> objectsToSave) {
 
-		Assert.notNull(objectsToSave, "Objects to save must not be null!");
+		Assert.notNull(objectsToSave, "Objects to save must not be null");
 
 		return Flux.fromIterable(objectsToSave).concatMap(this::save);
 	}
@@ -147,7 +147,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public <S extends T> Flux<S> saveAll(Publisher<S> objectsToSave) {
 
-		Assert.notNull(objectsToSave, "Object publisher must not be null!");
+		Assert.notNull(objectsToSave, "Object publisher must not be null");
 
 		return Flux.from(objectsToSave).concatMap(this::save);
 	}
@@ -159,7 +159,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Mono<T> findById(ID id) {
 
-		Assert.notNull(id, "Id must not be null!");
+		Assert.notNull(id, "Id must not be null");
 
 		return this.entityOperations.selectOne(getIdQuery(id), this.entity.getJavaType());
 	}
@@ -180,7 +180,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Mono<Boolean> existsById(ID id) {
 
-		Assert.notNull(id, "Id must not be null!");
+		Assert.notNull(id, "Id must not be null");
 
 		return this.entityOperations.exists(getIdQuery(id), this.entity.getJavaType());
 	}
@@ -210,7 +210,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Flux<T> findAllById(Iterable<ID> iterable) {
 
-		Assert.notNull(iterable, "The iterable of Id's must not be null!");
+		Assert.notNull(iterable, "The iterable of Id's must not be null");
 
 		return findAllById(Flux.fromIterable(iterable));
 	}
@@ -222,7 +222,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Flux<T> findAllById(Publisher<ID> idPublisher) {
 
-		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
+		Assert.notNull(idPublisher, "The Id Publisher must not be null");
 
 		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
@@ -253,7 +253,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public Mono<Void> deleteById(ID id) {
 
-		Assert.notNull(id, "Id must not be null!");
+		Assert.notNull(id, "Id must not be null");
 
 		return this.entityOperations.delete(getIdQuery(id), this.entity.getJavaType()).then();
 	}
@@ -266,7 +266,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public Mono<Void> deleteById(Publisher<ID> idPublisher) {
 
-		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
+		Assert.notNull(idPublisher, "The Id Publisher must not be null");
 
 		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
@@ -288,7 +288,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public Mono<Void> delete(T objectToDelete) {
 
-		Assert.notNull(objectToDelete, "Object to delete must not be null!");
+		Assert.notNull(objectToDelete, "Object to delete must not be null");
 
 		return deleteById(this.entity.getRequiredId(objectToDelete));
 	}
@@ -300,7 +300,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
 
-		Assert.notNull(ids, "The iterable of Id's must not be null!");
+		Assert.notNull(ids, "The iterable of Id's must not be null");
 
 		List<? extends ID> idsList = Streamable.of(ids).toList();
 		String idProperty = getIdProperty().getName();
@@ -316,7 +316,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public Mono<Void> deleteAll(Iterable<? extends T> iterable) {
 
-		Assert.notNull(iterable, "The iterable of Id's must not be null!");
+		Assert.notNull(iterable, "The iterable of Id's must not be null");
 
 		return deleteAll(Flux.fromIterable(iterable));
 	}
@@ -329,7 +329,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Transactional
 	public Mono<Void> deleteAll(Publisher<? extends T> objectPublisher) {
 
-		Assert.notNull(objectPublisher, "The Object Publisher must not be null!");
+		Assert.notNull(objectPublisher, "The Object Publisher must not be null");
 
 		Flux<ID> idPublisher = Flux.from(objectPublisher) //
 				.map(this.entity::getRequiredId);
@@ -358,7 +358,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public Flux<T> findAll(Sort sort) {
 
-		Assert.notNull(sort, "Sort must not be null!");
+		Assert.notNull(sort, "Sort must not be null");
 
 		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
 	}
@@ -370,7 +370,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public <S extends T> Mono<S> findOne(Example<S> example) {
 
-		Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(example, "Example must not be null");
 
 		Query query = this.exampleMapper.getMappedExample(example);
 
@@ -380,7 +380,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public <S extends T> Flux<S> findAll(Example<S> example) {
 
-		Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(example, "Example must not be null");
 
 		return findAll(example, Sort.unsorted());
 	}
@@ -388,8 +388,8 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public <S extends T> Flux<S> findAll(Example<S> example, Sort sort) {
 
-		Assert.notNull(example, "Example must not be null!");
-		Assert.notNull(sort, "Sort must not be null!");
+		Assert.notNull(example, "Example must not be null");
+		Assert.notNull(sort, "Sort must not be null");
 
 		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
 
@@ -399,7 +399,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public <S extends T> Mono<Long> count(Example<S> example) {
 
-		Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(example, "Example must not be null");
 
 		Query query = this.exampleMapper.getMappedExample(example);
 
@@ -409,7 +409,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	@Override
 	public <S extends T> Mono<Boolean> exists(Example<S> example) {
 
-		Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(example, "Example must not be null");
 
 		Query query = this.exampleMapper.getMappedExample(example);
 
@@ -420,8 +420,8 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	public <S extends T, R, P extends Publisher<R>> P findBy(Example<S> example,
 			Function<FluentQuery.ReactiveFluentQuery<S>, P> queryFunction) {
 
-		Assert.notNull(example, "Sample must not be null!");
-		Assert.notNull(queryFunction, "Query function must not be null!");
+		Assert.notNull(example, "Sample must not be null");
+		Assert.notNull(queryFunction, "Query function must not be null");
 
 		return queryFunction.apply(new ReactiveFluentQueryByExample<>(example, example.getProbeType()));
 	}
@@ -490,7 +490,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		@Override
 		public Mono<Page<T>> page(Pageable pageable) {
 
-			Assert.notNull(pageable, "Pageable must not be null!");
+			Assert.notNull(pageable, "Pageable must not be null");
 
 			Mono<List<T>> items = createQuery(q -> q.with(pageable)).all().collectList();
 

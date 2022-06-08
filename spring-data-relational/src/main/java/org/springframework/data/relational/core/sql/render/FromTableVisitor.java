@@ -62,7 +62,7 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 	@Override
 	Delegation leaveMatched(TableLike segment) {
 
-		Assert.state(builder != null, "Builder must not be null in leaveMatched.");
+		Assert.state(builder != null, "Builder must not be null in leaveMatched");
 
 		if (delegate != null) {
 

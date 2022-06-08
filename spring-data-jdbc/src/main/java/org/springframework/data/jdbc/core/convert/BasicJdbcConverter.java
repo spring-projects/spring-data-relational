@@ -217,7 +217,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			try {
 				return super.readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
-				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
+				LOG.info("Failed to extract a value of type %s from an Array; Attempting to use standard conversions", e);
 			}
 		}
 
@@ -380,7 +380,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				Object key) {
 			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
 
-			Assert.notNull(entity, "The rootPath must point to an entity.");
+			Assert.notNull(entity, "The rootPath must point to an entity");
 
 			this.entity = entity;
 			this.rootPath = rootPath;

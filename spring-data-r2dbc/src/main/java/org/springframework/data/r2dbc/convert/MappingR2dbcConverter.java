@@ -185,7 +185,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
-			throw new MappingException(String.format("Could not read property %s from column %s!", property, identifier),
+			throw new MappingException(String.format("Could not read property %s from column %s", property, identifier),
 					o_O);
 		}
 	}
@@ -216,7 +216,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	@SuppressWarnings("unchecked")
 	private Object readCollectionOrArray(Collection<?> source, TypeInformation<?> targetType) {
 
-		Assert.notNull(targetType, "Target type must not be null!");
+		Assert.notNull(targetType, "Target type must not be null");
 
 		Class<?> collectionType = targetType.isSubTypeOf(Collection.class) //
 				? targetType.getType() //
@@ -240,7 +240,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			if (!Object.class.equals(rawComponentType) && element instanceof Collection) {
 				if (!rawComponentType.isArray() && !ClassUtils.isAssignable(Iterable.class, rawComponentType)) {
 					throw new MappingException(String.format(
-							"Cannot convert %1$s of type %2$s into an instance of %3$s! Implement a custom Converter<%2$s, %3$s> and register it with the CustomConversions",
+							"Cannot convert %1$s of type %2$s into an instance of %3$s; Implement a custom Converter<%2$s, %3$s> and register it with the CustomConversions",
 							element, element.getClass(), rawComponentType));
 				}
 			}
@@ -603,7 +603,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	@SuppressWarnings("unchecked")
 	public <T> BiFunction<Row, RowMetadata, T> populateIdIfNecessary(T object) {
 
-		Assert.notNull(object, "Entity object must not be null!");
+		Assert.notNull(object, "Entity object must not be null");
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
 		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(userClass);
@@ -744,7 +744,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			try {
 				return this.converter.getConversionService().convert(value, type);
 			} catch (Exception o_O) {
-				throw new MappingException(String.format("Couldn't read parameter %s.", parameter.getName()), o_O);
+				throw new MappingException(String.format("Couldn't read parameter %s", parameter.getName()), o_O);
 			}
 		}
 	}

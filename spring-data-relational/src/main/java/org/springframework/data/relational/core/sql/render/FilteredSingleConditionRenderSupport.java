@@ -85,7 +85,7 @@ abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisit
 	 */
 	protected CharSequence consumeRenderedPart() {
 
-		Assert.state(hasDelegatedRendering(), "Rendering not delegated. Cannot consume delegated rendering part.");
+		Assert.state(hasDelegatedRendering(), "Rendering not delegated; Cannot consume delegated rendering part");
 
 		PartRenderer current = this.current;
 		this.current = null;

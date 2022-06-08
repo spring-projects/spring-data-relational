@@ -98,7 +98,7 @@ public final class JdbcUtil {
 	@Deprecated
 	public static int sqlTypeFor(Class<?> type) {
 
-		Assert.notNull(type, "Type must not be null.");
+		Assert.notNull(type, "Type must not be null");
 
 		return sqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //
@@ -116,7 +116,7 @@ public final class JdbcUtil {
 	 */
 	public static SQLType targetSqlTypeFor(Class<?> type) {
 
-		Assert.notNull(type, "Type must not be null.");
+		Assert.notNull(type, "Type must not be null");
 
 		return sqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //

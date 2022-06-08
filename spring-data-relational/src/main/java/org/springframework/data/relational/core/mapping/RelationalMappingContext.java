@@ -51,7 +51,7 @@ public class RelationalMappingContext
 	 */
 	public RelationalMappingContext(NamingStrategy namingStrategy) {
 
-		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
+		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
 		this.namingStrategy = new CachingNamingStrategy(namingStrategy);
 

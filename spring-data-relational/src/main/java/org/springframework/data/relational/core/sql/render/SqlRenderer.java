@@ -35,7 +35,7 @@ public class SqlRenderer implements Renderer {
 
 	private SqlRenderer(RenderContext context) {
 
-		Assert.notNull(context, "RenderContext must not be null!");
+		Assert.notNull(context, "RenderContext must not be null");
 
 		this.context = context;
 	}

@@ -93,8 +93,8 @@ public class BasicRelationalConverter implements RelationalConverter {
 			CustomConversions conversions, ConfigurableConversionService conversionService,
 			EntityInstantiators entityInstantiators) {
 
-		Assert.notNull(context, "MappingContext must not be null!");
-		Assert.notNull(conversions, "CustomConversions must not be null!");
+		Assert.notNull(context, "MappingContext must not be null");
+		Assert.notNull(conversions, "CustomConversions must not be null");
 
 		this.context = (MappingContext) context;
 		this.conversionService = conversionService;
@@ -254,7 +254,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		ConvertingParameterValueProvider(Function<Parameter<?, P>, Object> delegate) {
 
-			Assert.notNull(delegate, "Delegate must not be null.");
+			Assert.notNull(delegate, "Delegate must not be null");
 
 			this.delegate = delegate;
 		}

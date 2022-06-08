@@ -87,7 +87,7 @@ public interface RenderNamingStrategy {
 	 */
 	default RenderNamingStrategy map(Function<String, String> mappingFunction) {
 
-		Assert.notNull(mappingFunction, "Mapping function must not be null!");
+		Assert.notNull(mappingFunction, "Mapping function must not be null");
 
 		return new DelegatingRenderNamingStrategy(this, mappingFunction);
 	}

@@ -76,11 +76,11 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
 			NamedParameterJdbcOperations operations) {
 
-		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(context, "RelationalMappingContext must not be null!");
-		Assert.notNull(converter, "RelationalConverter must not be null!");
-		Assert.notNull(dialect, "Dialect must not be null!");
-		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 
 		this.publisher = publisher;
 		this.context = context;
@@ -96,7 +96,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 */
 	public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
 
-		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null!");
+		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
 
 		this.queryMappingConfiguration = queryMappingConfiguration;
 	}

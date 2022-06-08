@@ -42,7 +42,7 @@ public class RenderContextFactory {
 	 */
 	public RenderContextFactory(Dialect dialect) {
 
-		Assert.notNull(dialect, "Dialect must not be null!");
+		Assert.notNull(dialect, "Dialect must not be null");
 
 		this.dialect = dialect;
 	}

@@ -494,7 +494,7 @@ class SaveBatchingAggregateChangeTest {
 			Class<T> entityType, Class<A> batchActionType) {
 
 		return getBatchWithValueActions(actions, entityType, batchActionType).stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found!"));
+				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found"));
 	}
 
 	private <T, A> DbAction.BatchWithValue<T, DbAction<T>, Object> getBatchWithValueAction(List<DbAction<?>> actions,
@@ -502,7 +502,7 @@ class SaveBatchingAggregateChangeTest {
 
 		return getBatchWithValueActions(actions, entityType, batchActionType).stream()
 				.filter(batchWithValue -> batchWithValue.getBatchValue() == batchValue).findFirst().orElseThrow(
-						() -> new RuntimeException(String.format("No BatchWithValue with batch value '%s' found!", batchValue)));
+						() -> new RuntimeException(String.format("No BatchWithValue with batch value '%s' found", batchValue)));
 	}
 
 	@SuppressWarnings("unchecked")

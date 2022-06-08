@@ -80,7 +80,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		super(property, owner, simpleTypeHolder);
 		this.namingStrategy = namingStrategy;
 
-		Assert.notNull(namingStrategy, "NamingStrategy must not be null.");
+		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
 		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
 

@@ -32,7 +32,7 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	@Override
 	public DeleteWhere from(Table table) {
 
-		Assert.notNull(table, "Table must not be null!");
+		Assert.notNull(table, "Table must not be null");
 
 		this.from = table;
 		return this;
@@ -41,7 +41,7 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	@Override
 	public DeleteWhereAndOr where(Condition condition) {
 
-		Assert.notNull(condition, "Where Condition must not be null!");
+		Assert.notNull(condition, "Where Condition must not be null");
 		this.where = condition;
 		return this;
 	}
@@ -49,7 +49,7 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	@Override
 	public DeleteWhereAndOr and(Condition condition) {
 
-		Assert.notNull(condition, "Condition must not be null!");
+		Assert.notNull(condition, "Condition must not be null");
 		this.where = this.where.and(condition);
 		return this;
 	}
@@ -57,7 +57,7 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	@Override
 	public DeleteWhereAndOr or(Condition condition) {
 
-		Assert.notNull(condition, "Condition must not be null!");
+		Assert.notNull(condition, "Condition must not be null");
 		this.where = this.where.or(condition);
 		return this;
 	}

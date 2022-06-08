@@ -64,8 +64,8 @@ class MapBindParameterSource implements BindParameterSource {
 	 */
 	MapBindParameterSource addValue(String paramName, Object value) {
 
-		Assert.notNull(paramName, "Parameter name must not be null!");
-		Assert.notNull(value, "Value must not be null!");
+		Assert.notNull(paramName, "Parameter name must not be null");
+		Assert.notNull(value, "Value must not be null");
 
 		this.values.put(paramName, Parameter.fromOrEmpty(value, value.getClass()));
 		return this;
@@ -78,7 +78,7 @@ class MapBindParameterSource implements BindParameterSource {
 	@Override
 	public boolean hasValue(String paramName) {
 
-		Assert.notNull(paramName, "Parameter name must not be null!");
+		Assert.notNull(paramName, "Parameter name must not be null");
 
 		return values.containsKey(paramName);
 	}
@@ -90,7 +90,7 @@ class MapBindParameterSource implements BindParameterSource {
 	@Override
 	public Class<?> getType(String paramName) {
 
-		Assert.notNull(paramName, "Parameter name must not be null!");
+		Assert.notNull(paramName, "Parameter name must not be null");
 
 		Parameter settableValue = this.values.get(paramName);
 		if (settableValue != null) {

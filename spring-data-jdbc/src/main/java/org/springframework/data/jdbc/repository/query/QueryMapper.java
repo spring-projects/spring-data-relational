@@ -73,8 +73,8 @@ class QueryMapper {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	QueryMapper(Dialect dialect, JdbcConverter converter) {
 
-		Assert.notNull(dialect, "Dialect must not be null!");
-		Assert.notNull(converter, "JdbcConverter must not be null!");
+		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(converter, "JdbcConverter must not be null");
 
 		this.converter = converter;
 		this.dialect = dialect;
@@ -123,7 +123,7 @@ class QueryMapper {
 			Field field = createPropertyField(entity, column.getName());
 			TableLike table = column.getTable();
 
-			Assert.state(table != null, String.format("The column %s must have a table set.", column));
+			Assert.state(table != null, String.format("The column %s must have a table set", column));
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
@@ -160,9 +160,9 @@ class QueryMapper {
 	Condition getMappedObject(MapSqlParameterSource parameterSource, CriteriaDefinition criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(parameterSource, "MapSqlParameterSource must not be null!");
-		Assert.notNull(criteria, "CriteriaDefinition must not be null!");
-		Assert.notNull(table, "Table must not be null!");
+		Assert.notNull(parameterSource, "MapSqlParameterSource must not be null");
+		Assert.notNull(criteria, "CriteriaDefinition must not be null");
+		Assert.notNull(table, "Table must not be null");
 
 		if (criteria.isEmpty()) {
 			throw new IllegalArgumentException("Cannot map empty Criteria");
@@ -667,7 +667,7 @@ class QueryMapper {
 		 */
 		Field(SqlIdentifier name) {
 
-			Assert.notNull(name, "Name must not be null!");
+			Assert.notNull(name, "Name must not be null");
 			this.name = name;
 		}
 
@@ -736,7 +736,7 @@ class QueryMapper {
 
 			super(name);
 
-			Assert.notNull(entity, "MongoPersistentEntity must not be null!");
+			Assert.notNull(entity, "MongoPersistentEntity must not be null");
 
 			this.entity = entity;
 			this.mappingContext = context;

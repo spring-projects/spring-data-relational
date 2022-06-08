@@ -71,7 +71,7 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 			R2dbcQueryCreator.validate(this.tree, this.parameters);
 		} catch (RuntimeException e) {
 			throw new IllegalArgumentException(
-					String.format("Failed to create query for method %s! %s", method, e.getMessage()), e);
+					String.format("Failed to create query for method %s; %s", method, e.getMessage()), e);
 		}
 	}
 

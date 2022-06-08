@@ -32,7 +32,7 @@ public class Cast extends AbstractSegment implements Expression {
 
 		super(expression);
 
-		Assert.notNull(targetType, "Cast target must not be null!");
+		Assert.notNull(targetType, "Cast target must not be null");
 
 		this.expression = expression;
 		this.targetType = targetType;

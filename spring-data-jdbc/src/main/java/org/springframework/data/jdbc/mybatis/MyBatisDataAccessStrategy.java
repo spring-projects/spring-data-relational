@@ -244,7 +244,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		long result = sqlSession().selectOne(statement, parameter);
 		if (result < 1) {
 
-			String message = String.format("The lock target does not exist. id: %s, statement: %s", id, statement);
+			String message = String.format("The lock target does not exist; id: %s, statement: %s", id, statement);
 			throw new EmptyResultDataAccessException(message, 1);
 		}
 	}
@@ -346,7 +346,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		RelationalPersistentProperty baseProperty = propertyPath.getBaseProperty();
 
-		Assert.notNull(baseProperty, "BaseProperty must not be null.");
+		Assert.notNull(baseProperty, "BaseProperty must not be null");
 
 		return baseProperty.getOwner().getType();
 	}

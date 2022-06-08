@@ -187,7 +187,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		entity.setName(name);
 
 		Manual manual = new Manual();
-		manual.setContent("Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
+		manual.setContent("Accelerates to 99% of light speed; Destroys almost everything. See https://what-if.xkcd.com/1/");
 		entity.setManual(manual);
 
 		return entity;

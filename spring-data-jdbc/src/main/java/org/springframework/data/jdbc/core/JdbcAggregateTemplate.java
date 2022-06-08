@@ -87,10 +87,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
 			DataAccessStrategy dataAccessStrategy) {
 
-		Assert.notNull(publisher, "ApplicationContext must not be null!");
-		Assert.notNull(context, "RelationalMappingContext must not be null!");
-		Assert.notNull(converter, "RelationalConverter must not be null!");
-		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
+		Assert.notNull(publisher, "ApplicationContext must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
 
 		this.publisher = publisher;
 		this.context = context;
@@ -115,10 +115,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
 			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
-		Assert.notNull(context, "RelationalMappingContext must not be null!");
-		Assert.notNull(converter, "RelationalConverter must not be null!");
-		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
 
 		this.publisher = publisher;
 		this.context = context;
@@ -137,7 +137,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 */
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
 
-		Assert.notNull(entityCallbacks, "Callbacks must not be null.");
+		Assert.notNull(entityCallbacks, "Callbacks must not be null");
 
 		this.entityCallbacks = entityCallbacks;
 	}
@@ -145,7 +145,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> T save(T instance) {
 
-		Assert.notNull(instance, "Aggregate instance must not be null!");
+		Assert.notNull(instance, "Aggregate instance must not be null");
 
 		return performSave(instance, changeCreatorSelectorForSave(instance));
 	}
@@ -153,7 +153,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Iterable<T> saveAll(Iterable<T> instances) {
 
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty!");
+		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
 
 		return performSaveAll(instances);
 	}
@@ -168,7 +168,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> T insert(T instance) {
 
-		Assert.notNull(instance, "Aggregate instance must not be null!");
+		Assert.notNull(instance, "Aggregate instance must not be null");
 
 		return performSave(instance, entity -> createInsertChange(prepareVersionForInsert(entity)));
 	}
@@ -183,7 +183,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> T update(T instance) {
 
-		Assert.notNull(instance, "Aggregate instance must not be null!");
+		Assert.notNull(instance, "Aggregate instance must not be null");
 
 		return performSave(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity)));
 	}
@@ -199,8 +199,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
-		Assert.notNull(id, "Id must not be null!");
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(id, "Id must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		T entity = accessStrategy.findById(id, domainType);
 		if (entity == null) {
@@ -212,8 +212,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
-		Assert.notNull(id, "Id must not be null!");
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(id, "Id must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		return accessStrategy.existsById(id, domainType);
 	}
@@ -221,7 +221,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
 
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		Iterable<T> all = accessStrategy.findAll(domainType, sort);
 		return triggerAfterConvert(all);
@@ -230,7 +230,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(domainType, pageable));
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
@@ -241,7 +241,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		Iterable<T> all = accessStrategy.findAll(domainType);
 		return triggerAfterConvert(all);
@@ -250,8 +250,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
-		Assert.notNull(ids, "Ids must not be null!");
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(ids, "Ids must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		Iterable<T> allById = accessStrategy.findAllById(ids, domainType);
 		return triggerAfterConvert(allById);
@@ -260,8 +260,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <S> void delete(S aggregateRoot, Class<S> domainType) {
 
-		Assert.notNull(aggregateRoot, "Aggregate root must not be null!");
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(aggregateRoot, "Aggregate root must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
 				.getIdentifierAccessor(aggregateRoot);
@@ -272,8 +272,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <S> void deleteById(Object id, Class<S> domainType) {
 
-		Assert.notNull(id, "Id must not be null!");
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(id, "Id must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		deleteTree(id, null, domainType);
 	}
@@ -281,7 +281,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void deleteAllById(Iterable<?> ids, Class<T> domainType) {
 
-		Assert.isTrue(ids.iterator().hasNext(), "Ids must not be empty!");
+		Assert.isTrue(ids.iterator().hasNext(), "Ids must not be empty");
 
 		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
 				.forDelete(domainType);
@@ -301,7 +301,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public void deleteAll(Class<?> domainType) {
 
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(domainType, "Domain type must not be null");
 
 		MutableAggregateChange<?> change = createDeletingChange(domainType);
 		executor.executeDelete(change);
@@ -310,7 +310,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void deleteAll(Iterable<? extends T> instances, Class<T> domainType) {
 
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty!");
+		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
 
 		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
 				.forDelete(domainType);
@@ -335,14 +335,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Object identifier = context.getRequiredPersistentEntity(change.getEntityType())
 				.getIdentifierAccessor(entityAfterExecution).getIdentifier();
 
-		Assert.notNull(identifier, "After saving the identifier must not be null!");
+		Assert.notNull(identifier, "After saving the identifier must not be null");
 
 		return triggerAfterSave(entityAfterExecution, change);
 	}
 
 	private <T> RootAggregateChange<T> beforeExecute(T aggregateRoot, Function<T, RootAggregateChange<T>> changeCreator) {
 
-		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
+		Assert.notNull(aggregateRoot, "Aggregate instance must not be null");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
 
@@ -375,7 +375,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Iterator<T> afterExecutionIterator = executor.executeSave(batchingAggregateChange).iterator();
 
-		Assert.isTrue(afterExecutionIterator.hasNext(), "Instances after execution must not be empty!");
+		Assert.isTrue(afterExecutionIterator.hasNext(), "Instances after execution must not be empty");
 
 		return afterExecute(batchingAggregateChange, afterExecutionIterator.next());
 	}

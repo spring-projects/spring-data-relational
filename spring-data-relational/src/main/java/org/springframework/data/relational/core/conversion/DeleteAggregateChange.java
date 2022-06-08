@@ -53,7 +53,7 @@ public class DeleteAggregateChange<T> implements MutableAggregateChange<T> {
 	@Override
 	public void addAction(DbAction<?> action) {
 
-		Assert.notNull(action, "Action must not be null.");
+		Assert.notNull(action, "Action must not be null");
 
 		actions.add(action);
 	}
@@ -77,7 +77,7 @@ public class DeleteAggregateChange<T> implements MutableAggregateChange<T> {
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 
-		Assert.notNull(consumer, "Consumer must not be null.");
+		Assert.notNull(consumer, "Consumer must not be null");
 
 		actions.forEach(consumer);
 	}

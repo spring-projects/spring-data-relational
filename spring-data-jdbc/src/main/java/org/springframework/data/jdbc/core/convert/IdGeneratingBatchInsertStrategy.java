@@ -84,7 +84,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 			} else {
 				ids[i] = keys.entrySet().stream().findFirst() //
 						.map(Map.Entry::getValue) //
-						.orElseThrow(() -> new IllegalStateException("KeyHolder contains an empty key list."));
+						.orElseThrow(() -> new IllegalStateException("KeyHolder contains an empty key list"));
 			}
 		}
 		return ids;

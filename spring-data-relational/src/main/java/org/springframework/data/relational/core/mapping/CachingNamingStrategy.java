@@ -46,7 +46,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 */
 	CachingNamingStrategy(NamingStrategy delegate) {
 
-		Assert.notNull(delegate, "Delegate must not be null!");
+		Assert.notNull(delegate, "Delegate must not be null");
 
 		this.delegate = delegate;
 		this.schema = Lazy.of(delegate::getSchema);

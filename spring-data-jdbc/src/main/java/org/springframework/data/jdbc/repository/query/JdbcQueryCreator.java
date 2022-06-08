@@ -341,9 +341,9 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		Join(Table joinTable, Column joinColumn, Column parentId) {
 
-			Assert.notNull(joinTable, "JoinTable must not be null.");
-			Assert.notNull(joinColumn, "JoinColumn must not be null.");
-			Assert.notNull(parentId, "ParentId must not be null.");
+			Assert.notNull(joinTable, "JoinTable must not be null");
+			Assert.notNull(joinColumn, "JoinColumn must not be null");
+			Assert.notNull(parentId, "ParentId must not be null");
 
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;

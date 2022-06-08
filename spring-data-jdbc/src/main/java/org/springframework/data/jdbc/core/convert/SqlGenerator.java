@@ -205,7 +205,7 @@ class SqlGenerator {
 	String getFindAllByProperty(Identifier parentIdentifier, @Nullable SqlIdentifier keyColumn, boolean ordered) {
 
 		Assert.isTrue(keyColumn != null || !ordered,
-				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
+				"If the SQL statement should be ordered a keyColumn to order by must be provided");
 
 		Table table = getTable();
 
@@ -487,7 +487,7 @@ class SqlGenerator {
 		SelectBuilder.SelectLimitOffset limitResult = limitable.limitOffset(pageable.getPageSize(), pageable.getOffset());
 
 		Assert.state(limitResult instanceof SelectBuilder.SelectOrdered, String.format(
-				"The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s.",
+				"The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s",
 				select.getClass()));
 
 		return (SelectBuilder.SelectOrdered) limitResult;
@@ -747,9 +747,9 @@ class SqlGenerator {
 
 		Join(Table joinTable, Column joinColumn, Column parentId) {
 
-			Assert.notNull(joinTable, "JoinTable must not be null.");
-			Assert.notNull(joinColumn, "JoinColumn must not be null.");
-			Assert.notNull(parentId, "ParentId must not be null.");
+			Assert.notNull(joinTable, "JoinTable must not be null");
+			Assert.notNull(joinColumn, "JoinColumn must not be null");
+			Assert.notNull(parentId, "ParentId must not be null");
 
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;

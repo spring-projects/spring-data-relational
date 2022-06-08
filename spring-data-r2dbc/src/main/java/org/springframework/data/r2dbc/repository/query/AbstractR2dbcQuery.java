@@ -59,9 +59,9 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 */
 	public AbstractR2dbcQuery(R2dbcQueryMethod method, R2dbcEntityOperations entityOperations, R2dbcConverter converter) {
 
-		Assert.notNull(method, "R2dbcQueryMethod must not be null!");
-		Assert.notNull(entityOperations, "R2dbcEntityOperations must not be null!");
-		Assert.notNull(converter, "R2dbcConverter must not be null!");
+		Assert.notNull(method, "R2dbcQueryMethod must not be null");
+		Assert.notNull(entityOperations, "R2dbcEntityOperations must not be null");
+		Assert.notNull(converter, "R2dbcConverter must not be null");
 
 		this.method = method;
 		this.entityOperations = entityOperations;

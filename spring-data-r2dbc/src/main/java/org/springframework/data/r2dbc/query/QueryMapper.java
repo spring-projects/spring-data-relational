@@ -73,8 +73,8 @@ public class QueryMapper {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public QueryMapper(R2dbcDialect dialect, R2dbcConverter converter) {
 
-		Assert.notNull(converter, "R2dbcConverter must not be null!");
-		Assert.notNull(dialect, "R2dbcDialect must not be null!");
+		Assert.notNull(converter, "R2dbcConverter must not be null");
+		Assert.notNull(dialect, "R2dbcDialect must not be null");
 
 		this.converter = converter;
 		this.dialect = dialect;
@@ -199,9 +199,9 @@ public class QueryMapper {
 	public BoundCondition getMappedObject(BindMarkers markers, CriteriaDefinition criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(markers, "BindMarkers must not be null!");
-		Assert.notNull(criteria, "CriteriaDefinition must not be null!");
-		Assert.notNull(table, "Table must not be null!");
+		Assert.notNull(markers, "BindMarkers must not be null");
+		Assert.notNull(criteria, "CriteriaDefinition must not be null");
+		Assert.notNull(table, "Table must not be null");
 
 		MutableBindings bindings = new MutableBindings(markers);
 
@@ -228,9 +228,9 @@ public class QueryMapper {
 	public BoundCondition getMappedObject(BindMarkers markers, Criteria criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(markers, "BindMarkers must not be null!");
-		Assert.notNull(criteria, "Criteria must not be null!");
-		Assert.notNull(table, "Table must not be null!");
+		Assert.notNull(markers, "BindMarkers must not be null");
+		Assert.notNull(criteria, "Criteria must not be null");
+		Assert.notNull(table, "Table must not be null");
 
 		MutableBindings bindings = new MutableBindings(markers);
 
@@ -618,7 +618,7 @@ public class QueryMapper {
 		 */
 		public Field(SqlIdentifier name) {
 
-			Assert.notNull(name, "Name must not be null!");
+			Assert.notNull(name, "Name must not be null");
 			this.name = name;
 		}
 
@@ -674,7 +674,7 @@ public class QueryMapper {
 
 			super(name);
 
-			Assert.notNull(entity, "RelationalPersistentEntity must not be null!");
+			Assert.notNull(entity, "RelationalPersistentEntity must not be null");
 
 			this.entity = entity;
 			this.mappingContext = context;

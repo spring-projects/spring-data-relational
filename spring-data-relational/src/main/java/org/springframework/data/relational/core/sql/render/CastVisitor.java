@@ -58,8 +58,8 @@ class CastVisitor extends TypedSubtreeVisitor<Cast> implements PartRenderer {
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		Assert.state(joiner != null, "Joiner must not be null.");
-		Assert.state(expressionVisitor != null, "ExpressionVisitor must not be null.");
+		Assert.state(joiner != null, "Joiner must not be null");
+		Assert.state(expressionVisitor != null, "ExpressionVisitor must not be null");
 
 		joiner.add(expressionVisitor.getRenderedPart());
 		return super.leaveNested(segment);
@@ -69,7 +69,7 @@ class CastVisitor extends TypedSubtreeVisitor<Cast> implements PartRenderer {
 	public CharSequence getRenderedPart() {
 
 		if (joiner == null) {
-			throw new IllegalStateException("Joiner must not be null.");
+			throw new IllegalStateException("Joiner must not be null");
 		}
 
 		return joiner.toString();

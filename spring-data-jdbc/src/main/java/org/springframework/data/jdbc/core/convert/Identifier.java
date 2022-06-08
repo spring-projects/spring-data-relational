@@ -66,8 +66,8 @@ public final class Identifier {
 	 */
 	public static Identifier of(SqlIdentifier name, Object value, Class<?> targetType) {
 
-		Assert.notNull(name, "Name must not be empty!");
-		Assert.notNull(targetType, "Target type must not be null!");
+		Assert.notNull(name, "Name must not be empty");
+		Assert.notNull(targetType, "Target type must not be null");
 
 		return new Identifier(Collections.singletonList(new SingleIdentifierValue(name, value, targetType)));
 	}
@@ -80,7 +80,7 @@ public final class Identifier {
 	 */
 	public static Identifier from(Map<SqlIdentifier, Object> map) {
 
-		Assert.notNull(map, "Map must not be null!");
+		Assert.notNull(map, "Map must not be null");
 
 		if (map.isEmpty()) {
 			return empty();
@@ -108,8 +108,8 @@ public final class Identifier {
 	 */
 	public Identifier withPart(SqlIdentifier name, Object value, Class<?> targetType) {
 
-		Assert.notNull(name, "Name must not be null!");
-		Assert.notNull(targetType, "Target type must not be null!");
+		Assert.notNull(name, "Name must not be null");
+		Assert.notNull(targetType, "Target type must not be null");
 
 		boolean overwritten = false;
 		List<SingleIdentifierValue> keys = new ArrayList<>(this.parts.size() + 1);
@@ -187,8 +187,8 @@ public final class Identifier {
 
 		private SingleIdentifierValue(SqlIdentifier name, @Nullable Object value, Class<?> targetType) {
 
-			Assert.notNull(name, "Name must not be null.");
-			Assert.notNull(targetType, "TargetType must not be null.");
+			Assert.notNull(name, "Name must not be null");
+			Assert.notNull(targetType, "TargetType must not be null");
 
 			this.name = name;
 			this.value = value;

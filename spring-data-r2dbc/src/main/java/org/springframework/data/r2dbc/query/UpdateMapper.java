@@ -86,9 +86,9 @@ public class UpdateMapper extends QueryMapper {
 	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ? extends Object> assignments,
 			Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(markers, "BindMarkers must not be null!");
-		Assert.notNull(assignments, "Assignments must not be null!");
-		Assert.notNull(table, "Table must not be null!");
+		Assert.notNull(markers, "BindMarkers must not be null");
+		Assert.notNull(assignments, "Assignments must not be null");
+		Assert.notNull(table, "Table must not be null");
 
 		MutableBindings bindings = new MutableBindings(markers);
 		List<Assignment> result = new ArrayList<>();

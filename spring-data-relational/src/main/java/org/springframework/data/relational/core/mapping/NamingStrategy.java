@@ -56,7 +56,7 @@ public interface NamingStrategy {
 	 */
 	default String getTableName(Class<?> type) {
 
-		Assert.notNull(type, "Type must not be null.");
+		Assert.notNull(type, "Type must not be null");
 
 		return ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_");
 	}
@@ -67,7 +67,7 @@ public interface NamingStrategy {
 	 */
 	default String getColumnName(RelationalPersistentProperty property) {
 
-		Assert.notNull(property, "Property must not be null.");
+		Assert.notNull(property, "Property must not be null");
 
 		return ParsingUtils.reconcatenateCamelCase(property.getName(), "_");
 	}
@@ -91,7 +91,7 @@ public interface NamingStrategy {
 	 */
 	default String getReverseColumnName(RelationalPersistentProperty property) {
 
-		Assert.notNull(property, "Property must not be null.");
+		Assert.notNull(property, "Property must not be null");
 
 		return property.getOwner().getTableName().getReference(IdentifierProcessing.NONE);
 	}
@@ -109,7 +109,7 @@ public interface NamingStrategy {
 	 */
 	default String getKeyColumn(RelationalPersistentProperty property) {
 
-		Assert.notNull(property, "Property must not be null.");
+		Assert.notNull(property, "Property must not be null");
 
 		return getReverseColumnName(property) + "_key";
 	}

@@ -50,7 +50,7 @@ public class RelationalExampleMapper {
 
 	/**
 	 * Use the {@link Example} to extract a {@link Query}.
-	 * 
+	 *
 	 * @param example
 	 * @return query
 	 */
@@ -61,15 +61,15 @@ public class RelationalExampleMapper {
 	/**
 	 * Transform each property of the {@link Example}'s probe into a {@link Criteria} and assemble them into a
 	 * {@link Query}.
-	 * 
+	 *
 	 * @param example
 	 * @param entity
 	 * @return query
 	 */
 	private <T> Query getMappedExample(Example<T> example, RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(example, "Example must not be null!");
-		Assert.notNull(entity, "RelationalPersistentEntity must not be null!");
+		Assert.notNull(example, "Example must not be null");
+		Assert.notNull(entity, "RelationalPersistentEntity must not be null");
 
 		PersistentPropertyAccessor<T> propertyAccessor = entity.getPropertyAccessor(example.getProbe());
 		ExampleMatcherAccessor matcherAccessor = new ExampleMatcherAccessor(example.getMatcher());
@@ -119,7 +119,7 @@ public class RelationalExampleMapper {
 							: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
 					break;
 				default:
-					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported!");
+					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported");
 			}
 		});
 

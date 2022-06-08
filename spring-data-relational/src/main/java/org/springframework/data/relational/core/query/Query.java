@@ -189,7 +189,7 @@ public class Query {
 	 */
 	public Query sort(Sort sort) {
 
-		Assert.notNull(sort, "Sort must not be null!");
+		Assert.notNull(sort, "Sort must not be null");
 
 		if (sort.isUnsorted()) {
 			return this;

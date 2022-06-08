@@ -42,7 +42,7 @@ public class Functions {
 	 */
 	public static SimpleFunction count(Expression... columns) {
 
-		Assert.notNull(columns, "Columns must not be null!");
+		Assert.notNull(columns, "Columns must not be null");
 		Assert.notEmpty(columns, "Columns must contains at least one column");
 
 		return SimpleFunction.create("COUNT", Arrays.asList(columns));
@@ -56,7 +56,7 @@ public class Functions {
 	 */
 	public static SimpleFunction count(Collection<? extends Expression> columns) {
 
-		Assert.notNull(columns, "Columns must not be null!");
+		Assert.notNull(columns, "Columns must not be null");
 
 		return SimpleFunction.create("COUNT", new ArrayList<>(columns));
 	}
@@ -70,7 +70,7 @@ public class Functions {
 	 */
 	public static SimpleFunction upper(Expression expression) {
 
-		Assert.notNull(expression, "Expression must not be null!");
+		Assert.notNull(expression, "Expression must not be null");
 
 		return SimpleFunction.create("UPPER", Collections.singletonList(expression));
 	}
@@ -84,7 +84,7 @@ public class Functions {
 	 */
 	public static SimpleFunction lower(Expression expression) {
 
-		Assert.notNull(expression, "Columns must not be null!");
+		Assert.notNull(expression, "Columns must not be null");
 
 		return SimpleFunction.create("LOWER", Collections.singletonList(expression));
 	}

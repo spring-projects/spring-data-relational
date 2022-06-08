@@ -40,7 +40,7 @@ public interface TableLike extends Segment {
 	 */
 	default Column column(String name) {
 
-		Assert.hasText(name, "Name must not be null or empty!");
+		Assert.hasText(name, "Name must not be null or empty");
 
 		return new Column(name, this);
 	}

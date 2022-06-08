@@ -66,7 +66,7 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
 
-		Assert.notNull(configuration, "AuditingConfiguration must not be null!");
+		Assert.notNull(configuration, "AuditingConfiguration must not be null");
 
 		BeanDefinitionBuilder builder = configureDefaultAuditHandlerAttributes(configuration,
 				BeanDefinitionBuilder.rootBeanDefinition(IsNewAwareAuditingHandler.class));

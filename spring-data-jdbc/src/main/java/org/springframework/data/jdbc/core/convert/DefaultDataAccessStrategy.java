@@ -148,7 +148,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (affectedRows == 0) {
 
 			throw new OptimisticLockingFailureException(
-					String.format("Optimistic lock exception on saving entity of type %s.", persistentEntity.getName()));
+					String.format("Optimistic lock exception on saving entity of type %s", persistentEntity.getName()));
 		}
 
 		return true;
@@ -166,7 +166,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
-		Assert.notNull(id, "Id must not be null.");
+		Assert.notNull(id, "Id must not be null");
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
@@ -176,7 +176,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		if (affectedRows == 0) {
 			throw new OptimisticLockingFailureException(
-					String.format("Optimistic lock exception deleting entity of type %s.", persistentEntity.getName()));
+					String.format("Optimistic lock exception deleting entity of type %s", persistentEntity.getName()));
 		}
 	}
 
@@ -242,7 +242,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Long result = operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
 
-		Assert.notNull(result, "The result of a count query must not be null.");
+		Assert.notNull(result, "The result of a count query must not be null");
 
 		return result;
 	}
@@ -287,8 +287,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
 
-		Assert.notNull(identifier, "identifier must not be null.");
-		Assert.notNull(propertyPath, "propertyPath must not be null.");
+		Assert.notNull(identifier, "identifier must not be null");
+		Assert.notNull(propertyPath, "propertyPath must not be null");
 
 		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, propertyPath);
 

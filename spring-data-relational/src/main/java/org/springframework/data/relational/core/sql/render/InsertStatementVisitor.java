@@ -44,7 +44,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 	InsertStatementVisitor(RenderContext renderContext) {
 
-		Assert.notNull(renderContext, "renderContext must not be null!");
+		Assert.notNull(renderContext, "renderContext must not be null");
 
 		this.renderContext = renderContext;
 		this.intoClauseVisitor = createIntoClauseVisitor(renderContext);

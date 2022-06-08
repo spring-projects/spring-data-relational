@@ -42,7 +42,7 @@ class CriteriaFactory {
 	 * @param parameterMetadataProvider parameter metadata provider (must not be {@literal null})
 	 */
 	public CriteriaFactory(ParameterMetadataProvider parameterMetadataProvider) {
-		Assert.notNull(parameterMetadataProvider, "Parameter metadata provider must not be null!");
+		Assert.notNull(parameterMetadataProvider, "Parameter metadata provider must not be null");
 		this.parameterMetadataProvider = parameterMetadataProvider;
 	}
 

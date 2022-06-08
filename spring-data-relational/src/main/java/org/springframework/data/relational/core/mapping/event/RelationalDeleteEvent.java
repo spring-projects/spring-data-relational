@@ -44,8 +44,8 @@ public abstract class RelationalDeleteEvent<E> extends AbstractRelationalEvent<E
 
 		super(id);
 
-		Assert.notNull(id, "Id must not be null.");
-		Assert.notNull(change, "Change must not be null.");
+		Assert.notNull(id, "Id must not be null");
+		Assert.notNull(change, "Change must not be null");
 
 		this.id = id;
 		this.entity = entity;

@@ -51,8 +51,8 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 	 */
 	public static InlineQuery create(Select select, SqlIdentifier alias) {
 
-		Assert.notNull(select, "Select must not be null!");
-		Assert.notNull(alias, "Alias must not be null or empty!");
+		Assert.notNull(select, "Select must not be null");
+		Assert.notNull(alias, "Alias must not be null or empty");
 
 		return new InlineQuery(select, alias);
 	}

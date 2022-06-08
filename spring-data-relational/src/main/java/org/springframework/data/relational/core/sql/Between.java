@@ -54,9 +54,9 @@ public class Between extends AbstractSegment implements Condition {
 	 */
 	public static Between create(Expression columnOrExpression, Expression begin, Expression end) {
 
-		Assert.notNull(columnOrExpression, "Column or expression must not be null!");
-		Assert.notNull(begin, "Begin value must not be null!");
-		Assert.notNull(end, "end value must not be null!");
+		Assert.notNull(columnOrExpression, "Column or expression must not be null");
+		Assert.notNull(begin, "Begin value must not be null");
+		Assert.notNull(end, "end value must not be null");
 
 		return new Between(columnOrExpression, begin, end, false);
 	}

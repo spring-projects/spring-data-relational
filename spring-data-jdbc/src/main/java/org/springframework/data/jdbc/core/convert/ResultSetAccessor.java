@@ -92,7 +92,7 @@ class ResultSetAccessor {
 			int index = findColumnIndex(columnName);
 			return index > 0 ? JdbcUtils.getResultSetValue(resultSet, index) : null;
 		} catch (SQLException o_O) {
-			throw new MappingException(String.format("Could not read value %s from result set!", columnName), o_O);
+			throw new MappingException(String.format("Could not read value %s from result set", columnName), o_O);
 		}
 	}
 

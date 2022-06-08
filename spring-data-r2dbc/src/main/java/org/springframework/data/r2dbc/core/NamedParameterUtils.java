@@ -538,7 +538,7 @@ abstract class NamedParameterUtils {
 
 			Assert.isTrue(markers.hasNext(),
 					() -> String.format(
-							"No bind marker for value [%s] in SQL [%s]. Check that the query was expanded using the same arguments.",
+							"No bind marker for value [%s] in SQL [%s]; Check that the query was expanded using the same arguments",
 							valueToBind, toQuery()));
 
 			markers.next().bind(target, valueToBind);

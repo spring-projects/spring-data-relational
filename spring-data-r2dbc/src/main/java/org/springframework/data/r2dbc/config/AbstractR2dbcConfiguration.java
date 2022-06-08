@@ -120,8 +120,8 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient,
 			ReactiveDataAccessStrategy dataAccessStrategy) {
 
-		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
-		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null!");
+		Assert.notNull(databaseClient, "DatabaseClient must not be null");
+		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null");
 
 		return new R2dbcEntityTemplate(databaseClient, dataAccessStrategy);
 	}
@@ -138,7 +138,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			R2dbcCustomConversions r2dbcCustomConversions) {
 
-		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
+		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
 		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
@@ -159,7 +159,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	@Bean
 	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(R2dbcConverter converter) {
 
-		Assert.notNull(converter, "MappingContext must not be null!");
+		Assert.notNull(converter, "MappingContext must not be null");
 
 		return new DefaultReactiveDataAccessStrategy(getDialect(lookupConnectionFactory()), converter);
 	}
@@ -180,7 +180,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	public MappingR2dbcConverter r2dbcConverter(R2dbcMappingContext mappingContext,
 			R2dbcCustomConversions r2dbcCustomConversions) {
 
-		Assert.notNull(mappingContext, "MappingContext must not be null!");
+		Assert.notNull(mappingContext, "MappingContext must not be null");
 
 		return new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
 	}

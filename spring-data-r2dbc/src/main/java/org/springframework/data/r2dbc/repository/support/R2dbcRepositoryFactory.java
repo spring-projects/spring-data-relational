@@ -70,8 +70,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 */
 	public R2dbcRepositoryFactory(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
 
-		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
-		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null!");
+		Assert.notNull(databaseClient, "DatabaseClient must not be null");
+		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null");
 
 		this.databaseClient = databaseClient;
 		this.dataAccessStrategy = dataAccessStrategy;
@@ -89,7 +89,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 */
 	public R2dbcRepositoryFactory(R2dbcEntityOperations operations) {
 
-		Assert.notNull(operations, "R2dbcEntityOperations must not be null!");
+		Assert.notNull(operations, "R2dbcEntityOperations must not be null");
 
 		this.databaseClient = operations.getDatabaseClient();
 		this.dataAccessStrategy = operations.getDataAccessStrategy();

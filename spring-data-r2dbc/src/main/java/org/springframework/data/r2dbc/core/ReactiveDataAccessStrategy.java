@@ -135,7 +135,7 @@ public interface ReactiveDataAccessStrategy {
 	 */
 	default String renderForGeneratedValues(SqlIdentifier identifier) {
 
-		Assert.notNull(identifier, "SqlIdentifier must not be null.");
+		Assert.notNull(identifier, "SqlIdentifier must not be null");
 
 		return identifier.toSql(IdentifierProcessing.NONE);
 	}

@@ -63,8 +63,8 @@ class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<I
 	@Override
 	public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
 
-		Assert.notNull(sourceType, "Source type must not be null.");
-		Assert.notNull(targetType, "Target type must not be null.");
+		Assert.notNull(sourceType, "Source type must not be null");
+		Assert.notNull(targetType, "Target type must not be null");
 
 		if (!sourceType.isAssignableTo(TypeDescriptor.valueOf(Iterable.class)))
 			return false;

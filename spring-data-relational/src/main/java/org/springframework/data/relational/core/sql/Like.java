@@ -50,8 +50,8 @@ public class Like extends AbstractSegment implements Condition {
 	 */
 	public static Like create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
 
-		Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
-		Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
+		Assert.notNull(leftColumnOrExpression, "Left expression must not be null");
+		Assert.notNull(rightColumnOrExpression, "Right expression must not be null");
 
 		return new Like(leftColumnOrExpression, rightColumnOrExpression, false);
 	}

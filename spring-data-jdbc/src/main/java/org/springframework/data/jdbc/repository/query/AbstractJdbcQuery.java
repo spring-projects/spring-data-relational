@@ -58,8 +58,8 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 */
 	AbstractJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations) {
 
-		Assert.notNull(queryMethod, "Query method must not be null!");
-		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
+		Assert.notNull(queryMethod, "Query method must not be null");
+		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 
 		this.queryMethod = queryMethod;
 		this.operations = operations;

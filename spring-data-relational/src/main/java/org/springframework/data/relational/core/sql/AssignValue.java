@@ -45,8 +45,8 @@ public class AssignValue extends AbstractSegment implements Assignment {
 	 */
 	public static AssignValue create(Column target, Expression value) {
 
-		Assert.notNull(target, "Target column must not be null!");
-		Assert.notNull(value, "Value must not be null!");
+		Assert.notNull(target, "Target column must not be null");
+		Assert.notNull(value, "Value must not be null");
 
 		return new AssignValue(target, value);
 	}

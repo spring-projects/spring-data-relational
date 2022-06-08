@@ -75,8 +75,8 @@ public class Table extends AbstractSegment implements TableLike {
 	 */
 	public static Table aliased(String name, String alias) {
 
-		Assert.hasText(name, "Name must not be null or empty!");
-		Assert.hasText(alias, "Alias must not be null or empty!");
+		Assert.hasText(name, "Name must not be null or empty");
+		Assert.hasText(alias, "Alias must not be null or empty");
 
 		return new AliasedTable(name, alias);
 	}
@@ -89,7 +89,7 @@ public class Table extends AbstractSegment implements TableLike {
 	 */
 	public Table as(String alias) {
 
-		Assert.hasText(alias, "Alias must not be null or empty!");
+		Assert.hasText(alias, "Alias must not be null or empty");
 
 		return new AliasedTable(name, SqlIdentifier.unquoted(alias));
 	}

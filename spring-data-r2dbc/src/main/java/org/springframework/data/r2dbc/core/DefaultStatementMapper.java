@@ -80,7 +80,7 @@ class DefaultStatementMapper implements StatementMapper {
 	@SuppressWarnings("unchecked")
 	public <T> TypedStatementMapper<T> forType(Class<T> type) {
 
-		Assert.notNull(type, "Type must not be null!");
+		Assert.notNull(type, "Type must not be null");
 
 		return new DefaultTypedStatementMapper<>(
 				(RelationalPersistentEntity<T>) this.mappingContext.getRequiredPersistentEntity(type));

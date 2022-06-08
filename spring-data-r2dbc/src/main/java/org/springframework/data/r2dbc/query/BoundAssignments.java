@@ -34,8 +34,8 @@ public class BoundAssignments {
 
 	public BoundAssignments(Bindings bindings, List<Assignment> assignments) {
 
-		Assert.notNull(bindings, "Bindings must not be null!");
-		Assert.notNull(assignments, "Assignments must not be null!");
+		Assert.notNull(bindings, "Bindings must not be null");
+		Assert.notNull(assignments, "Assignments must not be null");
 
 		this.bindings = bindings;
 		this.assignments = assignments;

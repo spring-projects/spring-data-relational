@@ -157,9 +157,9 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 
 		if (operations == null) {
 
-			Assert.state(client != null, "DatabaseClient must not be null when R2dbcEntityOperations is not configured!");
+			Assert.state(client != null, "DatabaseClient must not be null when R2dbcEntityOperations is not configured");
 			Assert.state(dataAccessStrategy != null,
-					"ReactiveDataAccessStrategy must not be null when R2dbcEntityOperations is not configured!");
+					"ReactiveDataAccessStrategy must not be null when R2dbcEntityOperations is not configured");
 
 			R2dbcEntityTemplate template = new R2dbcEntityTemplate(client, dataAccessStrategy);
 

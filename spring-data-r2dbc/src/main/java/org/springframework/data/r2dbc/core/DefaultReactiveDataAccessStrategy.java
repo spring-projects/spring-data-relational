@@ -179,7 +179,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 */
 	public OutboundRow getOutboundRow(Object object) {
 
-		Assert.notNull(object, "Entity object must not be null!");
+		Assert.notNull(object, "Entity object must not be null");
 
 		OutboundRow row = new OutboundRow();
 

@@ -38,7 +38,7 @@ class PreparedOperationBindableQuery implements BindableQuery {
 	 */
 	PreparedOperationBindableQuery(PreparedOperation<?> preparedQuery) {
 
-		Assert.notNull(preparedQuery, "Prepared query must not be null!");
+		Assert.notNull(preparedQuery, "Prepared query must not be null");
 
 		this.preparedQuery = preparedQuery;
 	}

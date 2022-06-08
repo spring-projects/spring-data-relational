@@ -123,7 +123,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		} catch (NoSuchBeanDefinitionException exception) {
 
-			LOG.warn("No dialect found. CustomConversions will be configured without dialect specific conversions.");
+			LOG.warn("No dialect found; CustomConversions will be configured without dialect specific conversions");
 
 			return new JdbcCustomConversions();
 		}

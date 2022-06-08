@@ -90,7 +90,7 @@ class DefaultSelect implements Select {
 	@Override
 	public void visit(Visitor visitor) {
 
-		Assert.notNull(visitor, "Visitor must not be null!");
+		Assert.notNull(visitor, "Visitor must not be null");
 
 		visitor.enter(this);
 

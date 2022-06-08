@@ -39,7 +39,7 @@ import org.springframework.util.Assert;
 /**
  * Creates the {@link SqlIdentifierParameterSource} for various SQL operations, dialect identifier processing rules and
  * applicable converters.
- * 
+ *
  * @author Jens Schauder
  * @author Chirag Tailor
  * @since 2.4
@@ -213,7 +213,7 @@ public class SqlParametersFactory {
 			convertedIds.add(jdbcValue.getValue());
 		}
 
-		Assert.state(jdbcValue != null, "JdbcValue must be not null at this point. Please report this as a bug.");
+		Assert.state(jdbcValue != null, "JdbcValue must be not null at this point; Please report this as a bug");
 
 		SQLType jdbcType = jdbcValue.getJdbcType();
 		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
@@ -279,7 +279,7 @@ public class SqlParametersFactory {
 
 		@Override
 		public void setProperty(PersistentProperty<?> property, @Nullable Object value) {
-			throw new UnsupportedOperationException("Cannot set value on 'null' target object.");
+			throw new UnsupportedOperationException("Cannot set value on 'null' target object");
 		}
 
 		@Override

@@ -32,8 +32,8 @@ public class BoundCondition {
 
 	public BoundCondition(Bindings bindings, Condition condition) {
 
-		Assert.notNull(bindings, "Bindings must not be null!");
-		Assert.notNull(condition, "Condition must not be null!");
+		Assert.notNull(bindings, "Bindings must not be null");
+		Assert.notNull(condition, "Condition must not be null");
 
 		this.bindings = bindings;
 		this.condition = condition;

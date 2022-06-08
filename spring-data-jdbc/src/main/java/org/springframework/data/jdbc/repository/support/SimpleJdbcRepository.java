@@ -43,8 +43,8 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, Paging
 
 	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations,PersistentEntity<T, ?> entity) {
 
-		Assert.notNull(entityOperations, "EntityOperations must not be null.");
-		Assert.notNull(entity, "Entity must not be null.");
+		Assert.notNull(entityOperations, "EntityOperations must not be null");
+		Assert.notNull(entity, "Entity must not be null");
 
 		this.entityOperations = entityOperations;
 		this.entity = entity;

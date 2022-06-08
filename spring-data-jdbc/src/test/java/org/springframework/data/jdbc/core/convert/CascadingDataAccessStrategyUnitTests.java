@@ -36,7 +36,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 public class CascadingDataAccessStrategyUnitTests {
 
 	int errorIndex = 1;
-	String[] errorMessages = { "Sorry I don't support this method. Please try again later", "Still no luck" };
+	String[] errorMessages = { "Sorry I don't support this method; Please try again later", "Still no luck" };
 
 	DataAccessStrategy alwaysFails = mock(DataAccessStrategy.class, i -> {
 		errorIndex++;

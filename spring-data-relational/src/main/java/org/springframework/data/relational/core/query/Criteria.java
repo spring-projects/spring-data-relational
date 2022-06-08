@@ -150,7 +150,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public static CriteriaStep where(String column) {
 
-		Assert.hasText(column, "Column name must not be null or empty!");
+		Assert.hasText(column, "Column name must not be null or empty");
 
 		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column));
 	}
@@ -163,7 +163,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public CriteriaStep and(String column) {
 
-		Assert.hasText(column, "Column name must not be null or empty!");
+		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
@@ -183,7 +183,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria and(CriteriaDefinition criteria) {
 
-		Assert.notNull(criteria, "Criteria must not be null!");
+		Assert.notNull(criteria, "Criteria must not be null");
 
 		return and(Collections.singletonList(criteria));
 	}
@@ -197,7 +197,7 @@ public class Criteria implements CriteriaDefinition {
 	@SuppressWarnings("unchecked")
 	public Criteria and(List<? extends CriteriaDefinition> criteria) {
 
-		Assert.notNull(criteria, "Criteria must not be null!");
+		Assert.notNull(criteria, "Criteria must not be null");
 
 		return new Criteria(Criteria.this, Combinator.AND, (List<CriteriaDefinition>) criteria);
 	}
@@ -210,7 +210,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public CriteriaStep or(String column) {
 
-		Assert.hasText(column, "Column name must not be null or empty!");
+		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
@@ -230,7 +230,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria or(CriteriaDefinition criteria) {
 
-		Assert.notNull(criteria, "Criteria must not be null!");
+		Assert.notNull(criteria, "Criteria must not be null");
 
 		return or(Collections.singletonList(criteria));
 	}
@@ -245,7 +245,7 @@ public class Criteria implements CriteriaDefinition {
 	@SuppressWarnings("unchecked")
 	public Criteria or(List<? extends CriteriaDefinition> criteria) {
 
-		Assert.notNull(criteria, "Criteria must not be null!");
+		Assert.notNull(criteria, "Criteria must not be null");
 
 		return new Criteria(Criteria.this, Combinator.OR, (List<CriteriaDefinition>) criteria);
 	}
@@ -646,7 +646,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria is(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.EQ, value);
 		}
@@ -654,7 +654,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria not(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.NEQ, value);
 		}
@@ -662,8 +662,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria in(Object... values) {
 
-			Assert.notNull(values, "Values must not be null!");
-			Assert.noNullElements(values, "Values must not contain a null value!");
+			Assert.notNull(values, "Values must not be null");
+			Assert.noNullElements(values, "Values must not contain a null value");
 
 			if (values.length > 1 && values[1] instanceof Collection) {
 				throw new InvalidDataAccessApiUsageException(
@@ -676,8 +676,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria in(Collection<?> values) {
 
-			Assert.notNull(values, "Values must not be null!");
-			Assert.noNullElements(values.toArray(), "Values must not contain a null value!");
+			Assert.notNull(values, "Values must not be null");
+			Assert.noNullElements(values.toArray(), "Values must not contain a null value");
 
 			return createCriteria(Comparator.IN, values);
 		}
@@ -685,8 +685,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria notIn(Object... values) {
 
-			Assert.notNull(values, "Values must not be null!");
-			Assert.noNullElements(values, "Values must not contain a null value!");
+			Assert.notNull(values, "Values must not be null");
+			Assert.noNullElements(values, "Values must not contain a null value");
 
 			if (values.length > 1 && values[1] instanceof Collection) {
 				throw new InvalidDataAccessApiUsageException(
@@ -699,8 +699,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria notIn(Collection<?> values) {
 
-			Assert.notNull(values, "Values must not be null!");
-			Assert.noNullElements(values.toArray(), "Values must not contain a null value!");
+			Assert.notNull(values, "Values must not be null");
+			Assert.noNullElements(values.toArray(), "Values must not contain a null value");
 
 			return createCriteria(Comparator.NOT_IN, values);
 		}
@@ -708,8 +708,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria between(Object begin, Object end) {
 
-			Assert.notNull(begin, "Begin value must not be null!");
-			Assert.notNull(end, "End value must not be null!");
+			Assert.notNull(begin, "Begin value must not be null");
+			Assert.notNull(end, "End value must not be null");
 
 			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
 		}
@@ -717,8 +717,8 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria notBetween(Object begin, Object end) {
 
-			Assert.notNull(begin, "Begin value must not be null!");
-			Assert.notNull(end, "End value must not be null!");
+			Assert.notNull(begin, "Begin value must not be null");
+			Assert.notNull(end, "End value must not be null");
 
 			return createCriteria(Comparator.NOT_BETWEEN, Pair.of(begin, end));
 		}
@@ -726,7 +726,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria lessThan(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.LT, value);
 		}
@@ -734,7 +734,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria lessThanOrEquals(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.LTE, value);
 		}
@@ -742,7 +742,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria greaterThan(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.GT, value);
 		}
@@ -750,7 +750,7 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria greaterThanOrEquals(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.GTE, value);
 		}
@@ -758,14 +758,14 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria like(Object value) {
 
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 
 			return createCriteria(Comparator.LIKE, value);
 		}
 
 		@Override
 		public Criteria notLike(Object value) {
-			Assert.notNull(value, "Value must not be null!");
+			Assert.notNull(value, "Value must not be null");
 			return createCriteria(Comparator.NOT_LIKE, value);
 		}
 

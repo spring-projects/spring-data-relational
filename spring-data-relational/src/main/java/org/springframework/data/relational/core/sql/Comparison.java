@@ -53,9 +53,9 @@ public class Comparison extends AbstractSegment implements Condition {
 	public static Comparison create(Expression leftColumnOrExpression, String comparator,
 			Expression rightColumnOrExpression) {
 
-		Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
-		Assert.notNull(comparator, "Comparator must not be null!");
-		Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
+		Assert.notNull(leftColumnOrExpression, "Left expression must not be null");
+		Assert.notNull(comparator, "Comparator must not be null");
+		Assert.notNull(rightColumnOrExpression, "Right expression must not be null");
 
 		return new Comparison(leftColumnOrExpression, comparator, rightColumnOrExpression);
 	}
@@ -73,9 +73,9 @@ public class Comparison extends AbstractSegment implements Condition {
 	 */
 	public static Comparison create(String unqualifiedColumnName, String comparator, Object rightValue) {
 
-		Assert.notNull(unqualifiedColumnName, "UnqualifiedColumnName must not be null.");
-		Assert.notNull(comparator, "Comparator must not be null.");
-		Assert.notNull(rightValue, "RightValue must not be null.");
+		Assert.notNull(unqualifiedColumnName, "UnqualifiedColumnName must not be null");
+		Assert.notNull(comparator, "Comparator must not be null");
+		Assert.notNull(rightValue, "RightValue must not be null");
 
 		return new Comparison(Expressions.just(unqualifiedColumnName), comparator, SQL.literalOf(rightValue));
 	}

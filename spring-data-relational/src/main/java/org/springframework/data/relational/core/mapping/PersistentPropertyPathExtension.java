@@ -53,8 +53,8 @@ public class PersistentPropertyPathExtension {
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			RelationalPersistentEntity<?> entity) {
 
-		Assert.notNull(context, "Context must not be null.");
-		Assert.notNull(entity, "Entity must not be null.");
+		Assert.notNull(context, "Context must not be null");
+		Assert.notNull(entity, "Entity must not be null");
 
 		this.context = context;
 		this.entity = entity;
@@ -71,8 +71,8 @@ public class PersistentPropertyPathExtension {
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-		Assert.notNull(context, "Context must not be null.");
-		Assert.notNull(path, "Path must not be null.");
+		Assert.notNull(context, "Context must not be null");
+		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(path.getBaseProperty(), "Path must not be empty.");
 
 		this.context = context;
@@ -406,7 +406,7 @@ public class PersistentPropertyPathExtension {
 		}
 
 		if (path.getLength() == 1) {
-			Assert.notNull(prefix, "Prefix mus not be null.");
+			Assert.notNull(prefix, "Prefix mus not be null");
 			return StringUtils.hasText(prefix) ? SqlIdentifier.quoted(prefix) : null;
 		}
 

@@ -34,8 +34,8 @@ public interface TestUtils {
 	 */
 	public static String createScriptName(Class<?> testClass, String databaseType) {
 
-		Assert.notNull(testClass, "Test class must not be null!");
-		Assert.hasText(databaseType, "Database type must not be null or empty!");
+		Assert.notNull(testClass, "Test class must not be null");
+		Assert.hasText(databaseType, "Database type must not be null or empty");
 
 		String path = String.format("%s/%s-%s.sql", testClass.getPackage().getName(), testClass.getSimpleName(),
 				databaseType.toLowerCase());

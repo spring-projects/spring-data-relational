@@ -79,7 +79,7 @@ public class DialectResolver {
 				.flatMap(Optionals::toStream) //
 				.findFirst() //
 				.orElseThrow(() -> new NoDialectException(
-						String.format("Cannot determine a dialect for %s. Please provide a Dialect.", operations)));
+						String.format("Cannot determine a dialect for %s; Please provide a Dialect", operations)));
 	}
 
 	/**

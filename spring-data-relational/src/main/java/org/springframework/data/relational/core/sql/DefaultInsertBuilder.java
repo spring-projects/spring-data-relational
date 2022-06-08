@@ -39,7 +39,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild into(Table table) {
 
-		Assert.notNull(table, "Insert Into Table must not be null!");
+		Assert.notNull(table, "Insert Into Table must not be null");
 
 		this.into = table;
 		return this;
@@ -48,7 +48,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild column(Column column) {
 
-		Assert.notNull(column, "Column must not be null!");
+		Assert.notNull(column, "Column must not be null");
 
 		this.columns.add(column);
 
@@ -58,7 +58,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild columns(Column... columns) {
 
-		Assert.notNull(columns, "Columns must not be null!");
+		Assert.notNull(columns, "Columns must not be null");
 
 		return columns(Arrays.asList(columns));
 	}
@@ -66,7 +66,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild columns(Collection<Column> columns) {
 
-		Assert.notNull(columns, "Columns must not be null!");
+		Assert.notNull(columns, "Columns must not be null");
 
 		this.columns.addAll(columns);
 
@@ -76,7 +76,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertValuesWithBuild value(Expression value) {
 
-		Assert.notNull(value, "Value must not be null!");
+		Assert.notNull(value, "Value must not be null");
 
 		this.values.add(value);
 
@@ -86,7 +86,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertValuesWithBuild values(Expression... values) {
 
-		Assert.notNull(values, "Values must not be null!");
+		Assert.notNull(values, "Values must not be null");
 
 		return values(Arrays.asList(values));
 	}
@@ -94,7 +94,7 @@ class DefaultInsertBuilder
 	@Override
 	public InsertValuesWithBuild values(Collection<? extends Expression> values) {
 
-		Assert.notNull(values, "Values must not be null!");
+		Assert.notNull(values, "Values must not be null");
 
 		this.values.addAll(values);
 

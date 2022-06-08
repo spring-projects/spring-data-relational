@@ -155,7 +155,7 @@ class DeleteBatchingAggregateChangeTest {
 			Class<T> entityType, Class<A> batchActionType) {
 
 		return getBatchWithValueActions(actions, entityType, batchActionType).stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found!"));
+				.orElseThrow(() -> new RuntimeException("No BatchWithValue action found"));
 	}
 
 	@SuppressWarnings("unchecked")

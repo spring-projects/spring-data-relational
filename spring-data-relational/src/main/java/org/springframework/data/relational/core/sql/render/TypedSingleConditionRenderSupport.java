@@ -73,7 +73,7 @@ abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends Ty
 	 */
 	protected CharSequence consumeRenderedPart() {
 
-		Assert.state(hasDelegatedRendering(), "Rendering not delegated. Cannot consume delegated rendering part.");
+		Assert.state(hasDelegatedRendering(), "Rendering not delegated; Cannot consume delegated rendering part");
 
 		PartRenderer current = this.current;
 		this.current = null;

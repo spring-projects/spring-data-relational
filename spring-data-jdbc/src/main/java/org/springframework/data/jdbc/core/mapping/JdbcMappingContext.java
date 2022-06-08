@@ -39,7 +39,7 @@ import org.springframework.util.StringUtils;
  */
 public class JdbcMappingContext extends RelationalMappingContext {
 
-	private static final String MISSING_PARAMETER_NAME = "A constructor parameter name must not be null to be used with Spring Data JDBC! Offending parameter: %s";
+	private static final String MISSING_PARAMETER_NAME = "A constructor parameter name must not be null to be used with Spring Data JDBC; Offending parameter: %s";
 
 	/**
 	 * Creates a new {@link JdbcMappingContext}.

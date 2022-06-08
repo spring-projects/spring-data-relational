@@ -53,8 +53,8 @@ import org.springframework.util.Assert;
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
 
-	private static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
-	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]. The entity was updated since it was rea or it isn't in the database at all.";
+	private static final String UPDATE_FAILED = "Failed to update entity [%s]; Id [%s] not found in database";
+	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]; The entity was updated since it was rea or it isn't in the database at all";
 
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context;
 	private final JdbcConverter converter;
@@ -268,7 +268,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		if (roots.isEmpty()) {
 			throw new IllegalStateException(
-					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed.",
+					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed",
 							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
 		}
 
@@ -312,7 +312,7 @@ class JdbcAggregateChangeExecutionContext {
 			return pathToValue;
 		}
 
-		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported.", action.getClass()));
+		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported", action.getClass()));
 	}
 
 	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(Class<T> type) {
@@ -331,7 +331,7 @@ class JdbcAggregateChangeExecutionContext {
 	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update) {
 
 		Number previousVersion = update.getPreviousVersion();
-		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
+		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null");
 
 		if (!accessStrategy.updateWithVersion(update.getEntity(), update.getEntityType(), previousVersion)) {
 
@@ -460,8 +460,8 @@ class JdbcAggregateChangeExecutionContext {
 		@Override
 		public List add(@Nullable List list, @Nullable Object qualifier, Object value) {
 
-			Assert.notNull(list, "List must not be null.");
-			Assert.notNull(qualifier, "ListAggregator can't handle a null qualifier.");
+			Assert.notNull(list, "List must not be null");
+			Assert.notNull(qualifier, "ListAggregator can't handle a null qualifier");
 
 			int index = (int) qualifier;
 			if (index >= list.size()) {
@@ -492,7 +492,7 @@ class JdbcAggregateChangeExecutionContext {
 		@Override
 		public Map add(@Nullable Map map, @Nullable Object qualifier, Object value) {
 
-			Assert.notNull(map, "Map must not be null.");
+			Assert.notNull(map, "Map must not be null");
 
 			map.put(qualifier, value);
 			return map;

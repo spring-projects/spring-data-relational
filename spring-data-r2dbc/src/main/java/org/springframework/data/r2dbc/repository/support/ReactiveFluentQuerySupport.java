@@ -50,7 +50,7 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 	@Override
 	public ReactiveFluentQuery<T> sortBy(Sort sort) {
 
-		Assert.notNull(sort, "Sort must not be null!");
+		Assert.notNull(sort, "Sort must not be null");
 
 		return create(predicate, sort, resultType, fieldsToInclude);
 	}
@@ -62,7 +62,7 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 	@Override
 	public <R> ReactiveFluentQuery<R> as(Class<R> projection) {
 
-		Assert.notNull(projection, "Projection target type must not be null!");
+		Assert.notNull(projection, "Projection target type must not be null");
 
 		return create(predicate, sort, projection, fieldsToInclude);
 	}
@@ -74,7 +74,7 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 	@Override
 	public ReactiveFluentQuery<T> project(Collection<String> properties) {
 
-		Assert.notNull(properties, "Projection properties must not be null!");
+		Assert.notNull(properties, "Projection properties must not be null");
 
 		return create(predicate, sort, resultType, new ArrayList<>(properties));
 	}

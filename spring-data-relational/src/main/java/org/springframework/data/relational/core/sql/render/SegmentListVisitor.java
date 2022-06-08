@@ -44,9 +44,9 @@ class SegmentListVisitor extends TypedSubtreeVisitor<SegmentList<?>> implements 
 	 */
 	SegmentListVisitor(String start, String separator, DelegatingVisitor nestedVisitor) {
 
-		Assert.notNull(start, "Start must not be null.");
-		Assert.notNull(separator, "Separator must not be null.");
-		Assert.notNull(nestedVisitor, "Nested Visitor must not be null.");
+		Assert.notNull(start, "Start must not be null");
+		Assert.notNull(separator, "Separator must not be null");
+		Assert.notNull(nestedVisitor, "Nested Visitor must not be null");
 		Assert.isInstanceOf(PartRenderer.class, nestedVisitor, "Nested visitor must implement PartRenderer");
 
 		this.start = start;

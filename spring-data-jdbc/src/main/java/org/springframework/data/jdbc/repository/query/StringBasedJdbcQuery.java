@@ -62,7 +62,7 @@ import org.springframework.util.StringUtils;
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
-	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
+	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters";
 
 	private final JdbcQueryMethod queryMethod;
 	private final JdbcConverter converter;
@@ -104,12 +104,12 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		if (queryMethod.isSliceQuery()) {
 			throw new UnsupportedOperationException(
-					"Slice queries are not supported using string-based queries. Offending method: " + queryMethod);
+					"Slice queries are not supported using string-based queries; Offending method: " + queryMethod);
 		}
 
 		if (queryMethod.isPageQuery()) {
 			throw new UnsupportedOperationException(
-					"Page queries are not supported using string-based queries. Offending method: " + queryMethod);
+					"Page queries are not supported using string-based queries; Offending method: " + queryMethod);
 		}
 	}
 
@@ -157,7 +157,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		RelationalParameters.RelationalParameter parameter = queryMethod.getParameters().getParameter(p.getIndex());
 		ResolvableType resolvableType = parameter.getResolvableType();
 		Class<?> type = resolvableType.resolve();
-		Assert.notNull(type, "@Query parameter type could not be resolved!");
+		Assert.notNull(type, "@Query parameter type could not be resolved");
 
 		JdbcValue jdbcValue;
 		if (value instanceof Iterable) {
@@ -167,7 +167,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			Class<?> elementType = resolvableType.getGeneric(0).resolve();
 
-			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved!");
+			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved");
 
 			for (Object o : (Iterable<?>) value) {
 				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,

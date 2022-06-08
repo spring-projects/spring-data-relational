@@ -61,7 +61,7 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 	private ParameterMetadataProvider(Parameters<?, ?> parameters,
 			@Nullable Iterator<Object> bindableParameterValueIterator) {
 
-		Assert.notNull(parameters, "Parameters must not be null!");
+		Assert.notNull(parameters, "Parameters must not be null");
 
 		this.bindableParameterIterator = parameters.getBindableParameters().iterator();
 		this.bindableParameterValueIterator = bindableParameterValueIterator;
@@ -120,7 +120,7 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 		if (parameterValue == null && !Part.Type.SIMPLE_PROPERTY.equals(partType)) {
 			throw new IllegalArgumentException(
-					String.format("Value of parameter with name %s must not be null!", parameterName));
+					String.format("Value of parameter with name %s must not be null", parameterName));
 		}
 	}
 

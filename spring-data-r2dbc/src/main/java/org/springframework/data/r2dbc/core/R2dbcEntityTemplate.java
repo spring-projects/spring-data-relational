@@ -226,7 +226,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 */
 	public void setEntityCallbacks(ReactiveEntityCallbacks entityCallbacks) {
 
-		Assert.notNull(entityCallbacks, "EntityCallbacks must not be null!");
+		Assert.notNull(entityCallbacks, "EntityCallbacks must not be null");
 		this.entityCallbacks = entityCallbacks;
 	}
 
@@ -717,13 +717,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
-		return String.format("Failed to update table [%s]. Version does not match for row with Id [%s].",
+		return String.format("Failed to update table [%s]; Version does not match for row with Id [%s]",
 				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	private <T> String formatTransientEntityExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
-		return String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
+		return String.format("Failed to update table [%s]; Row with Id [%s] does not exist",
 				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
@@ -812,7 +812,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	private <T> Query getByIdQuery(T entity, RelationalPersistentEntity<?> persistentEntity) {
 
 		if (!persistentEntity.hasIdProperty()) {
-			throw new MappingException("No id property found for object of type " + persistentEntity.getType() + "!");
+			throw new MappingException("No id property found for object of type " + persistentEntity.getType());
 		}
 
 		IdentifierAccessor identifierAccessor = persistentEntity.getIdentifierAccessor(entity);

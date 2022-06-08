@@ -145,7 +145,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 				if (queryMethod.hasAnnotatedQuery() && queryMethod.hasAnnotatedQueryName()) {
 					LOG.warn(String.format(
-							"Query method %s is annotated with both, a query and a query name. Using the declared query.", method));
+							"Query method %s is annotated with both, a query and a query name; Using the declared query", method));
 				}
 
 				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, getOperations(), this::createMapper,
@@ -155,7 +155,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			}
 
 			throw new IllegalStateException(
-					String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
+					String.format("Did neither find a NamedQuery nor an annotated query for method %s", method));
 		}
 	}
 
@@ -186,8 +186,8 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, beanfactory);
 
-			Assert.notNull(createStrategy, "CreateQueryLookupStrategy must not be null!");
-			Assert.notNull(lookupStrategy, "DeclaredQueryLookupStrategy must not be null!");
+			Assert.notNull(createStrategy, "CreateQueryLookupStrategy must not be null");
+			Assert.notNull(lookupStrategy, "DeclaredQueryLookupStrategy must not be null");
 
 			this.createStrategy = createStrategy;
 			this.lookupStrategy = lookupStrategy;
@@ -258,7 +258,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 				return new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, context, converter, dialect,
 						queryMappingConfiguration, operations, beanFactory, createQueryLookupStrategy, declaredQueryLookupStrategy);
 			default:
-				throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+				throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s", key));
 		}
 	}
 

@@ -38,8 +38,8 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	 */
 	public SimpleRelationalEntityMetadata(Class<T> type, RelationalPersistentEntity<?> tableEntity) {
 
-		Assert.notNull(type, "Type must not be null!");
-		Assert.notNull(tableEntity, "Table entity must not be null!");
+		Assert.notNull(type, "Type must not be null");
+		Assert.notNull(tableEntity, "Table entity must not be null");
 
 		this.type = type;
 		this.tableEntity = tableEntity;

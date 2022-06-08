@@ -30,7 +30,7 @@ public final class Identifier {
 
 	private Identifier(Object value) {
 
-		Assert.notNull(value, "Identifier must not be null!");
+		Assert.notNull(value, "Identifier must not be null");
 
 		this.value = value;
 	}
