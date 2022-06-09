@@ -432,12 +432,12 @@ public interface DbAction<T> {
 		}
 	}
 
-	final class BatchDeleteRootWithVersion<T> extends BatchWithValue<T, DeleteRoot<T>, Number> {
-		public BatchDeleteRootWithVersion(List<DeleteRoot<T>> actions) {
-			super(actions, DeleteRoot::getPreviousVersion);
-		}
-	}
-
+	/**
+	 * Represents a batch delete statement for multiple entities that are aggregate roots.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @since 3.0
+	 */
 	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
 		public BatchDeleteRoot(List<DeleteRoot<T>> actions) {
 			super(actions, DeleteRoot::getEntityType);

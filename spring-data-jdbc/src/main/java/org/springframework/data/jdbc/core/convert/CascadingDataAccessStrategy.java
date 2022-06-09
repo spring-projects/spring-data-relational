@@ -90,11 +90,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
-		collectVoid(das -> das.deleteWithVersion(ids, domainType, previousVersion));
-	}
-
-	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.delete(rootId, propertyPath));
 	}

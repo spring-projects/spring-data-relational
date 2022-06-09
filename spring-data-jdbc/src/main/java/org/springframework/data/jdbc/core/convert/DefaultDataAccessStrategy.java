@@ -190,21 +190,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
-
-		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
-		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
-		int affectedRows = operations.update(sql(domainType).getDeleteByIdInAndVersion(), parameterSource);
-
-		if (affectedRows == 0) {
-			throw new OptimisticLockingFailureException(
-					String.format("Optimistic lock exception deleting entity of type %s.", persistentEntity.getName()));
-		}
-	}
-
-	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));

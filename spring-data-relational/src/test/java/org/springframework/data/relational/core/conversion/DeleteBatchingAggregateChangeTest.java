@@ -144,8 +144,9 @@ class DeleteBatchingAggregateChangeTest {
 		assertThat(extractActions(change)).containsExactly(lockRootAction, intermediateDelete);
 	}
 
-	@Test
-	void yieldsDeleteRootActionsAsBatchDeleteRoots_groupedByPreviousVersion_whenGroupContainsMultipleDeleteRoots() {
+	@Test // GH-537
+	void yieldsDeleteRootActionsWithoutVersionAsBatchDeleteRoots_whenGroupContainsMultipleDeleteRoots() {
+
 		DeleteAggregateChange<Root> aggregateChange1 = MutableAggregateChange.forDelete(new Root(null, null));
 		DbAction.DeleteRoot<Root> deleteRoot1 = new DbAction.DeleteRoot<>(1L, Root.class, null);
 		aggregateChange1.addAction(deleteRoot1);
@@ -166,13 +167,13 @@ class DeleteBatchingAggregateChangeTest {
 		change.add(aggregateChange4);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType).containsExactlyInAnyOrder( //
+		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
 				Tuple.tuple(DbAction.BatchDeleteRoot.class, Root.class), //
-				Tuple.tuple(DbAction.BatchDeleteRootWithVersion.class, Root.class));
+				Tuple.tuple(DbAction.DeleteRoot.class, Root.class), //
+				Tuple.tuple(DbAction.DeleteRoot.class, Root.class));
 		assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchDeleteRoot.class).getActions())
 				.containsExactly(deleteRoot1, deleteRoot3);
-		assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchDeleteRootWithVersion.class).getActions())
-				.containsExactly(deleteRoot2, deleteRoot4);
+		assertThat(actions).containsSubsequence(deleteRoot2, deleteRoot4);
 	}
 
 	private <T> List<DbAction<?>> extractActions(BatchingAggregateChange<T, ? extends MutableAggregateChange<T>> change) {

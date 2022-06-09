@@ -207,11 +207,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteWithVersion(Iterable<Object> ids, Class<T> domainType, Number previousVersion) {
-		ids.forEach(id -> deleteWithVersion(id, domainType, previousVersion));
-	}
-
-	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		Class<?> ownerType = getOwnerTyp(propertyPath);

@@ -24,7 +24,8 @@ import static java.util.Collections.*;
 public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange<T, DeleteAggregateChange<T>> {
 
 	private final Class<T> entityType;
-	private final Map<Number, List<DbAction.DeleteRoot<T>>> rootActions = new HashMap<>();
+	private final List<DbAction.DeleteRoot<T>> rootActionsWithoutVersion = new ArrayList<>();
+	private final List<DbAction.DeleteRoot<T>> rootActionsWithVersion = new ArrayList<>();
 	private final List<DbAction.AcquireLockRoot<?>> lockActions = new ArrayList<>();
 	private final BatchedActions deleteActions = BatchedActions.batchedDeletes();
 
@@ -47,14 +48,12 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 		lockActions.forEach(consumer);
 		deleteActions.forEach(consumer);
-		rootActions.forEach((previousVersion, deleteRoots) -> {
-			if (deleteRoots.size() > 1) {
-				consumer.accept(previousVersion != null ? new DbAction.BatchDeleteRootWithVersion<>(deleteRoots)
-						: new DbAction.BatchDeleteRoot<>(deleteRoots));
-			} else {
-				deleteRoots.forEach(consumer);
-			}
-		});
+		if (rootActionsWithoutVersion.size() > 1) {
+			consumer.accept(new DbAction.BatchDeleteRoot<>(rootActionsWithoutVersion));
+		} else {
+			rootActionsWithoutVersion.forEach(consumer);
+		}
+		rootActionsWithVersion.forEach(consumer);
 	}
 
 	@Override
@@ -74,10 +73,10 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 	private void addDeleteRoot(DbAction.DeleteRoot<T> action) {
 
-		Number previousVersion = action.getPreviousVersion();
-		rootActions.merge(previousVersion, new ArrayList<>(singletonList(action)), (actions, defaultValue) -> {
-			actions.add(action);
-			return actions;
-		});
+		if (action.getPreviousVersion() == null) {
+			rootActionsWithoutVersion.add(action);
+		} else {
+			rootActionsWithVersion.add(action);
+		}
 	}
 }
