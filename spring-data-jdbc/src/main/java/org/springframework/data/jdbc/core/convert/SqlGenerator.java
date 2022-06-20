@@ -82,7 +82,6 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteByIdSql);
 	private final Lazy<String> deleteByIdInSql = Lazy.of(this::createDeleteByIdInSql);
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
-	private final Lazy<String> deleteByIdInAndVersionSql = Lazy.of(this::createDeleteByIdInAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 
 	/**
@@ -340,15 +339,6 @@ class SqlGenerator {
 	 */
 	String getDeleteByIdAndVersion() {
 		return deleteByIdAndVersionSql.get();
-	}
-
-	/**
-	 * Create a {@code DELETE FROM … WHERE :id In … and :___oldOptimisticLockingVersion = ...} statement.
-	 *
-	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
-	 */
-	String getDeleteByIdInAndVersion() {
-		return deleteByIdInAndVersionSql.get();
 	}
 
 	/**
@@ -682,11 +672,13 @@ class SqlGenerator {
 	}
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
+
 		return Delete.builder().from(table)
 				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
 	}
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteByIdIn(Table table) {
+
 		return Delete.builder().from(table)
 				.where(getIdColumn().in(SQL.bindMarker(":" + renderReference(IDS_SQL_PARAMETER))));
 	}

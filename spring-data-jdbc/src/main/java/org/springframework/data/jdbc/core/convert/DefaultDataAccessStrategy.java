@@ -42,7 +42,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
+ * The default {@link DataAccessStrategy} is to generate SQL statements based on metadata from the entity.
  *
  * @author Jens Schauder
  * @author Mark Paluch

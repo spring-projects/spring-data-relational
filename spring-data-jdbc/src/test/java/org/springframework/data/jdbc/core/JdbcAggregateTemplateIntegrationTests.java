@@ -364,8 +364,9 @@ class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
-	@Test
+	@Test // GH-537
 	void saveAndDeleteAllByAggregateRootsWithVersion() {
+
 		AggregateWithImmutableVersion aggregate1 = new AggregateWithImmutableVersion(null, null);
 		AggregateWithImmutableVersion aggregate2 = new AggregateWithImmutableVersion(null, null);
 		AggregateWithImmutableVersion aggregate3 = new AggregateWithImmutableVersion(null, null);

@@ -1,16 +1,8 @@
 package org.springframework.data.relational.core.conversion;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-
-import static java.util.Collections.*;
 
 /**
  * A {@link BatchingAggregateChange} implementation for delete changes that can contain actions for one or more delete

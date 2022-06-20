@@ -439,7 +439,8 @@ public interface DbAction<T> {
 	 * @since 3.0
 	 */
 	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
-		public BatchDeleteRoot(List<DeleteRoot<T>> actions) {
+
+		BatchDeleteRoot(List<DeleteRoot<T>> actions) {
 			super(actions, DeleteRoot::getEntityType);
 		}
 	}
