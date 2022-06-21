@@ -50,7 +50,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		if (ORACLE_CONTAINER == null) {
 
 			LOG.info("Oracle starting...");
-			OracleContainer container = new OracleContainer("gvenzl/oracle-xe:18.4.0-slim").withReuse(true);
+			OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim").withReuse(true);
 			container.start();
 			LOG.info("Oracle started");
 

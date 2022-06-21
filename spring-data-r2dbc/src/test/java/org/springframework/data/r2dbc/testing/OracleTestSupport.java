@@ -125,7 +125,7 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:18.4.0-slim")
+				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim")
 						.withReuse(true);
 				container.start();
 
