@@ -44,7 +44,7 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (POSTGRESQL_CONTAINER == null) {
 
-			PostgreSQLContainer<?> container = new PostgreSQLContainer<>();
+			PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:14.3");
 			container.start();
 
 			POSTGRESQL_CONTAINER = container;

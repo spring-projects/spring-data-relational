@@ -118,7 +118,7 @@ public class PostgresTestSupport {
 
 			try {
 				PostgreSQLContainer container = new PostgreSQLContainer(
-						PostgreSQLContainer.IMAGE + ":" + PostgreSQLContainer.DEFAULT_TAG);
+						"postgres:14.3");
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container).database(container.getDatabaseName()).build();
