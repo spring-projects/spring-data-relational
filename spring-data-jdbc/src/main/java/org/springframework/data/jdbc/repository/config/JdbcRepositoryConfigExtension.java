@@ -57,6 +57,11 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	}
 
 	@Override
+	public String getModuleIdentifier() {
+		return getModulePrefix();
+	}
+
+	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
 
 		source.getAttribute("jdbcOperationsRef") //

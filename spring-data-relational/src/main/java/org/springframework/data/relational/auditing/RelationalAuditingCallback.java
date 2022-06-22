@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.auditing;
 
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
@@ -41,13 +42,13 @@ public class RelationalAuditingCallback implements BeforeConvertCallback<Object>
 	 */
 	public static final int AUDITING_ORDER = 100;
 
-	private final IsNewAwareAuditingHandler handler;
+	private final ObjectFactory<IsNewAwareAuditingHandler> auditingHandlerFactory;
 
-	public RelationalAuditingCallback(IsNewAwareAuditingHandler handler) {
+	public RelationalAuditingCallback(ObjectFactory<IsNewAwareAuditingHandler> auditingHandlerFactory) {
 
-		Assert.notNull(handler, "Handler must not be null;");
+		Assert.notNull(auditingHandlerFactory, "IsNewAwareAuditingHandler must not be null;");
 
-		this.handler = handler;
+		this.auditingHandlerFactory = auditingHandlerFactory;
 	}
 
 	@Override
@@ -57,6 +58,6 @@ public class RelationalAuditingCallback implements BeforeConvertCallback<Object>
 
 	@Override
 	public Object onBeforeConvert(Object entity) {
-		return handler.markAudited(entity);
+		return auditingHandlerFactory.getObject().markAudited(entity);
 	}
 }

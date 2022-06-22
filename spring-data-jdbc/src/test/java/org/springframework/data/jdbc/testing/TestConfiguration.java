@@ -72,11 +72,11 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			Dialect dialect, JdbcConverter converter, Optional<NamedQueries> namedQueries) {
+			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, namedParameterJdbcTemplate());
-		namedQueries.ifPresent(factory::setNamedQueries);
+		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 		return factory;
 	}
 
