@@ -37,6 +37,7 @@ import org.testcontainers.containers.Db2Container;
 @Profile("db2")
 class Db2DataSourceConfiguration extends DataSourceConfiguration {
 
+	public static final String DOCKER_IMAGE_NAME = "ibmcom/db2:11.5.7.0a";
 	private static final Log LOG = LogFactory.getLog(Db2DataSourceConfiguration.class);
 
 	private static Db2Container DB_2_CONTAINER;
@@ -47,7 +48,7 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 		if (DB_2_CONTAINER == null) {
 
 			LOG.info("DB2 starting...");
-			Db2Container container = new Db2Container().withReuse(true);
+			Db2Container container = new Db2Container(DOCKER_IMAGE_NAME).withReuse(true);
 			container.start();
 			LOG.info("DB2 started");
 

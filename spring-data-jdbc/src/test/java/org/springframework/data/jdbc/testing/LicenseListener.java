@@ -43,7 +43,7 @@ public class LicenseListener implements TestExecutionListener {
 		environment = new StandardEnvironment();
 
 		if (environment.acceptsProfiles(Profiles.of("db2"))) {
-			assumeLicenseAccepted(Db2Container.DEFAULT_DB2_IMAGE_NAME + ":" + Db2Container.DEFAULT_TAG);
+			assumeLicenseAccepted(Db2DataSourceConfiguration.DOCKER_IMAGE_NAME);
 		}
 
 		if (environment.acceptsProfiles(Profiles.of("mssql"))) {
