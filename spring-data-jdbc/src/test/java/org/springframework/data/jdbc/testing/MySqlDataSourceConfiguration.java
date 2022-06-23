@@ -48,7 +48,7 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration implements In
 
 		if (MYSQL_CONTAINER == null) {
 
-			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.24").withUsername("test").withPassword("test")
+			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.29").withUsername("test").withPassword("test")
 					.withConfigurationOverride("");
 
 			container.start();
