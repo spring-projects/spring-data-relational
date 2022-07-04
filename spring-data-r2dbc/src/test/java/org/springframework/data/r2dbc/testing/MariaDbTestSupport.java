@@ -117,7 +117,7 @@ public class MariaDbTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				MariaDBContainer container = new MariaDBContainer(MariaDBContainer.IMAGE + ":" + MariaDBContainer.DEFAULT_TAG);
+				MariaDBContainer container = new MariaDBContainer("mariadb:10.8.3");
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
