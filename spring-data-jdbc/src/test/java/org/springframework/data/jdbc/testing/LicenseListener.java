@@ -25,6 +25,8 @@ import org.testcontainers.containers.Db2Container;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.utility.LicenseAcceptance;
 
+import static org.springframework.data.jdbc.testing.MsSqlDataSourceConfiguration.*;
+
 /**
  * {@link TestExecutionListener} to selectively skip tests if the license for a particular database container was not
  * accepted.
@@ -47,7 +49,7 @@ public class LicenseListener implements TestExecutionListener {
 		}
 
 		if (environment.acceptsProfiles(Profiles.of("mssql"))) {
-			assumeLicenseAccepted(MSSQLServerContainer.IMAGE + ":" + MSSQLServerContainer.DEFAULT_TAG);
+			assumeLicenseAccepted(MS_SQL_SERVER_VERSION);
 		}
 	}
 

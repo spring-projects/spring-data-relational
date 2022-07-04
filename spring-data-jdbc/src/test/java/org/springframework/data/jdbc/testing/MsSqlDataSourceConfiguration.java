@@ -39,6 +39,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 @Profile({"mssql"})
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
+	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2019-CU16-ubuntu-20.04";
 	private static MSSQLServerContainer<?> MSSQL_CONTAINER;
 
     @Override
@@ -46,7 +47,7 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MSSQL_CONTAINER == null) {
 
-			MSSQLServerContainer<?> container = new MSSQLServerContainer<>() //
+			MSSQLServerContainer<?> container = new MSSQLServerContainer<>(MS_SQL_SERVER_VERSION) //
 					.withReuse(true);
 			container.start();
 
