@@ -734,6 +734,20 @@ class PartTreeR2dbcQueryUnitTests {
 				.where("users.first_name = $1 AND (users.age = $2) FOR SHARE OF users");
 	}
 
+	@Test // GH-1285
+	void bindsParametersFromPublisher() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findByFirstName", Mono.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(queryMethod, new Object[] { Mono.just("John") });
+
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor.resolveParameters().block());
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
+
+		verify(bindTarget, times(1)).bind(0, "John");
+	}
+
 	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,
 			Object... parameters) {
 		return createQuery(r2dbcQuery, getAccessor(queryMethod, parameters));
@@ -927,6 +941,9 @@ class PartTreeR2dbcQueryUnitTests {
 		Mono<Integer> deleteByFirstName(String firstName);
 
 		Mono<Long> countByFirstName(String firstName);
+
+		Mono<User> findByFirstName(Mono<String> firstName);
+
 	}
 
 	@Table("users")

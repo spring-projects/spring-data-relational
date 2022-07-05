@@ -18,14 +18,12 @@ package org.springframework.data.r2dbc.repository.query;
 import reactor.core.publisher.Mono;
 
 import org.reactivestreams.Publisher;
-
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
-import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -41,6 +39,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Stephen Cohen
+ * @author Christoph Strobl
  */
 public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
@@ -83,13 +82,12 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 */
 	public Object execute(Object[] parameters) {
 
-		RelationalParameterAccessor parameterAccessor = new RelationalParametersParameterAccessor(method, parameters);
-
-		return createQuery(parameterAccessor).flatMapMany(it -> executeQuery(parameterAccessor, it));
+		Mono<R2dbcParameterAccessor> resolveParameters = new R2dbcParameterAccessor(method, parameters).resolveParameters();
+		return resolveParameters.flatMapMany(it -> createQuery(it).flatMapMany(foo -> executeQuery(it, foo)));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Publisher<?> executeQuery(RelationalParameterAccessor parameterAccessor, PreparedOperation<?> operation) {
+	private Publisher<?> executeQuery(R2dbcParameterAccessor parameterAccessor, PreparedOperation<?> operation) {
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
 
