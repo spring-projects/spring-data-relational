@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
@@ -44,13 +45,15 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Integration tests for {@link AbstractJdbcConfiguration}.
  *
  * @author Oliver Drotbohm
+ * @author Mark Paluch
  */
-public class AbstractJdbcConfigurationIntegrationTests {
+class AbstractJdbcConfigurationIntegrationTests {
 
 	@Test // DATAJDBC-395
 	void configuresInfrastructureComponents() {
@@ -97,7 +100,22 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
-	protected static void assertApplicationContext(Consumer<ConfigurableApplicationContext> verification,
+	@Test // GH-1269
+	void detectsInitialEntities() {
+
+		assertApplicationContext(context -> {
+
+			JdbcMappingContext mappingContext = context.getBean(JdbcMappingContext.class);
+			RelationalManagedTypes managedTypes = (RelationalManagedTypes) ReflectionTestUtils.getField(mappingContext,
+					"managedTypes");
+
+			assertThat(managedTypes.toList()).contains(JdbcRepositoryConfigExtensionUnitTests.Sample.class,
+					TopLevelEntity.class);
+
+		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
+	}
+
+	static void assertApplicationContext(Consumer<ConfigurableApplicationContext> verification,
 			Class<?>... configurationClasses) {
 
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {

@@ -16,33 +16,43 @@
 package org.springframework.data.jdbc.repository.config;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.
@@ -64,18 +74,49 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	private ApplicationContext applicationContext;
 
 	/**
+	 * Returns the base packages to scan for JDBC mapped entities at startup. Returns the package name of the
+	 * configuration class' (the concrete class, not this one here) by default. So if you have a
+	 * {@code com.acme.AppConfig} extending {@link AbstractJdbcConfiguration} the base package will be considered
+	 * {@code com.acme} unless the method is overridden to implement alternate behavior.
+	 *
+	 * @return the base packages to scan for mapped {@link Table} classes or an empty collection to not enable scanning
+	 *         for entities.
+	 * @since 3.0
+	 */
+	protected Collection<String> getMappingBasePackages() {
+
+		Package mappingBasePackage = getClass().getPackage();
+		return Collections.singleton(mappingBasePackage == null ? null : mappingBasePackage.getName());
+	}
+
+	/**
+	 * Returns the a {@link RelationalManagedTypes} object holding the initial entity set.
+	 *
+	 * @return new instance of {@link RelationalManagedTypes}.
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	@Bean
+	public RelationalManagedTypes jdbcManagedTypes() throws ClassNotFoundException {
+		return RelationalManagedTypes.fromIterable(getInitialEntitySet());
+	}
+
+	/**
 	 * Register a {@link JdbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
 	 * @param customConversions see {@link #jdbcCustomConversions()}.
+	 * @param jdbcManagedTypes JDBC managed types, typically discovered through {@link #jdbcManagedTypes() an entity
+	 *          scan}.
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
 	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
-			JdbcCustomConversions customConversions) {
+			JdbcCustomConversions customConversions, RelationalManagedTypes jdbcManagedTypes) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
+		mappingContext.setManagedTypes(jdbcManagedTypes);
 
 		return mappingContext;
 	}
@@ -189,5 +230,57 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
+	}
+
+	/**
+	 * Scans the mapping base package for classes annotated with {@link Table}. By default, it scans for entities in all
+	 * packages returned by {@link #getMappingBasePackages()}.
+	 *
+	 * @see #getMappingBasePackages()
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	protected Set<Class<?>> getInitialEntitySet() throws ClassNotFoundException {
+
+		Set<Class<?>> initialEntitySet = new HashSet<>();
+
+		for (String basePackage : getMappingBasePackages()) {
+			initialEntitySet.addAll(scanForEntities(basePackage));
+		}
+
+		return initialEntitySet;
+	}
+
+	/**
+	 * Scans the given base package for entities, i.e. JDBC-specific types annotated with {@link Table}.
+	 *
+	 * @param basePackage must not be {@literal null}.
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	protected Set<Class<?>> scanForEntities(String basePackage) throws ClassNotFoundException {
+
+		if (!StringUtils.hasText(basePackage)) {
+			return Collections.emptySet();
+		}
+
+		Set<Class<?>> initialEntitySet = new HashSet<>();
+
+		if (StringUtils.hasText(basePackage)) {
+
+			ClassPathScanningCandidateComponentProvider componentProvider = new ClassPathScanningCandidateComponentProvider(
+					false);
+			componentProvider.addIncludeFilter(new AnnotationTypeFilter(Table.class));
+
+			for (BeanDefinition candidate : componentProvider.findCandidateComponents(basePackage)) {
+
+				initialEntitySet
+						.add(ClassUtils.forName(candidate.getBeanClassName(), AbstractJdbcConfiguration.class.getClassLoader()));
+			}
+		}
+
+		return initialEntitySet;
 	}
 }
