@@ -35,6 +35,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.EnabledOnClass;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.OracleTestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -66,9 +67,10 @@ public class OracleR2dbcRepositoryWithMixedCaseNamesIntegrationTests
 
 		@Override
 		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
-				R2dbcCustomConversions r2dbcCustomConversions) {
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
 
-			R2dbcMappingContext r2dbcMappingContext = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions);
+			R2dbcMappingContext r2dbcMappingContext = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
 			r2dbcMappingContext.setForceQuote(true);
 
 			return r2dbcMappingContext;

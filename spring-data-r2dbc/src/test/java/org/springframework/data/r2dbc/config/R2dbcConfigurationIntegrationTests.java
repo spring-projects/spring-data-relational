@@ -27,7 +27,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests for {@link AbstractR2dbcConfiguration}.
@@ -84,6 +87,22 @@ class R2dbcConfigurationIntegrationTests {
 
 		assertThat(bean.callCounter).isEqualTo(1);
 		assertThat(context.getBeanNamesForType(ConnectionFactory.class)).hasSize(1);
+
+		context.stop();
+	}
+
+	@Test // GH-1279
+	void shouldScanForInitialEntities() {
+
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				CustomConnectionFactoryBeanNameConfiguration.class);
+
+		R2dbcMappingContext mappingContext = context.getBean(R2dbcMappingContext.class);
+
+		RelationalManagedTypes managedTypes = (RelationalManagedTypes) ReflectionTestUtils.getField(mappingContext,
+				"managedTypes");
+
+		assertThat(managedTypes.toList()).contains(H2IntegrationTests.LegoSet.class, TopLevelEntity.class);
 
 		context.stop();
 	}

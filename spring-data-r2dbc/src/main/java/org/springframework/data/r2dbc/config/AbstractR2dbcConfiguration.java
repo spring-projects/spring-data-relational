@@ -18,16 +18,22 @@ package org.springframework.data.r2dbc.config;
 import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -39,11 +45,15 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Base class for Spring Data R2DBC configuration containing bean declarations that must be registered for Spring Data
@@ -79,13 +89,42 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	public abstract ConnectionFactory connectionFactory();
 
 	/**
+	 * Returns the base packages to scan for R2DBC mapped entities at startup. Returns the package name of the
+	 * configuration class' (the concrete class, not this one here) by default. So if you have a
+	 * {@code com.acme.AppConfig} extending {@link AbstractR2dbcConfiguration} the base package will be considered
+	 * {@code com.acme} unless the method is overridden to implement alternate behavior.
+	 *
+	 * @return the base packages to scan for mapped {@link Table} classes or an empty collection to not enable scanning
+	 *         for entities.
+	 * @since 3.0
+	 */
+	protected Collection<String> getMappingBasePackages() {
+
+		Package mappingBasePackage = getClass().getPackage();
+		return Collections.singleton(mappingBasePackage == null ? null : mappingBasePackage.getName());
+	}
+
+	/**
+	 * Returns the a {@link RelationalManagedTypes} object holding the initial entity set.
+	 *
+	 * @return new instance of {@link RelationalManagedTypes}.
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	@Bean
+	public RelationalManagedTypes r2dbcManagedTypes() throws ClassNotFoundException {
+		return RelationalManagedTypes.fromIterable(getInitialEntitySet());
+	}
+
+	/**
 	 * Return a {@link R2dbcDialect} for the given {@link ConnectionFactory}. This method attempts to resolve a
 	 * {@link R2dbcDialect} from {@link io.r2dbc.spi.ConnectionFactoryMetadata}. Override this method to specify a dialect
 	 * instead of attempting to resolve one.
 	 *
 	 * @param connectionFactory the configured {@link ConnectionFactory}.
 	 * @return the resolved {@link R2dbcDialect}.
-	 * @throws org.springframework.data.r2dbc.dialect.DialectResolver.NoDialectException if the {@link R2dbcDialect} cannot be determined.
+	 * @throws org.springframework.data.r2dbc.dialect.DialectResolver.NoDialectException if the {@link R2dbcDialect}
+	 *           cannot be determined.
 	 */
 	public R2dbcDialect getDialect(ConnectionFactory connectionFactory) {
 		return DialectResolver.getDialect(connectionFactory);
@@ -131,17 +170,20 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
+	 * @param r2dbcManagedTypes R2DBC managed types, typically discovered through {@link #r2dbcManagedTypes() an entity
+	 *          scan}.
 	 * @return must not be {@literal null}.
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
 	@Bean
 	public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
-			R2dbcCustomConversions r2dbcCustomConversions) {
+			R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
 		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
+		context.setManagedTypes(r2dbcManagedTypes);
 
 		return context;
 	}
@@ -238,5 +280,57 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 		}
 
 		return connectionFactory();
+	}
+
+	/**
+	 * Scans the mapping base package for classes annotated with {@link Table}. By default, it scans for entities in all
+	 * packages returned by {@link #getMappingBasePackages()}.
+	 *
+	 * @see #getMappingBasePackages()
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	protected Set<Class<?>> getInitialEntitySet() throws ClassNotFoundException {
+
+		Set<Class<?>> initialEntitySet = new HashSet<>();
+
+		for (String basePackage : getMappingBasePackages()) {
+			initialEntitySet.addAll(scanForEntities(basePackage));
+		}
+
+		return initialEntitySet;
+	}
+
+	/**
+	 * Scans the given base package for entities, i.e. R2DBC-specific types annotated with {@link Table}.
+	 *
+	 * @param basePackage must not be {@literal null}.
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @since 3.0
+	 */
+	protected Set<Class<?>> scanForEntities(String basePackage) throws ClassNotFoundException {
+
+		if (!StringUtils.hasText(basePackage)) {
+			return Collections.emptySet();
+		}
+
+		Set<Class<?>> initialEntitySet = new HashSet<>();
+
+		if (StringUtils.hasText(basePackage)) {
+
+			ClassPathScanningCandidateComponentProvider componentProvider = new ClassPathScanningCandidateComponentProvider(
+					false);
+			componentProvider.addIncludeFilter(new AnnotationTypeFilter(Table.class));
+
+			for (BeanDefinition candidate : componentProvider.findCandidateComponents(basePackage)) {
+
+				initialEntitySet
+						.add(ClassUtils.forName(candidate.getBeanClassName(), AbstractR2dbcConfiguration.class.getClassLoader()));
+			}
+		}
+
+		return initialEntitySet;
 	}
 }
