@@ -32,10 +32,12 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
 import org.springframework.lang.Nullable;
 
 /**
+ * {@link RuntimeHintsRegistrar} for JDBC.
+ *
  * @author Christoph Strobl
  * @since 3.0
  */
-public class DataJdbcRuntimeHints implements RuntimeHintsRegistrar {
+class JdbcRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
 	@Override
 	public void registerHints(RuntimeHints hints, @Nullable ClassLoader classLoader) {

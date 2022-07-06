@@ -28,21 +28,22 @@ import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.r2dbc.repository.support.SimpleR2dbcRepository;
 
 /**
+ * {@link RuntimeHintsRegistrar} for R2DBC.
+ *
  * @author Christoph Strobl
  * @since 3.0
  */
-public class R2dbcRuntimeHints implements RuntimeHintsRegistrar {
+class R2dbcRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
 	@Override
 	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
 
-		hints.reflection().registerTypes(Arrays.asList(
-						TypeReference.of(SimpleR2dbcRepository.class),
-						TypeReference.of(AfterConvertCallback.class),
-						TypeReference.of(BeforeConvertCallback.class),
-						TypeReference.of(BeforeSaveCallback.class),
-						TypeReference.of(AfterSaveCallback.class)
-				),
+		hints.reflection()
+				.registerTypes(
+						Arrays.asList(TypeReference.of(SimpleR2dbcRepository.class), TypeReference.of(AfterConvertCallback.class),
+								TypeReference
+										.of(BeforeConvertCallback.class),
+								TypeReference.of(BeforeSaveCallback.class), TypeReference.of(AfterSaveCallback.class)),
 				hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_PUBLIC_METHODS));
 	}
 }

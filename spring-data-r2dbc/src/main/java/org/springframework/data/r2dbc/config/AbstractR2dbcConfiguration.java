@@ -208,12 +208,12 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 	/**
 	 * Creates a {@link org.springframework.data.r2dbc.convert.R2dbcConverter} using the configured
-	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)} R2dbcMappingContext}.
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)} R2dbcMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link R2dbcMappingContext}.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
 	 * @return must not be {@literal null}.
-	 * @see #r2dbcMappingContext(Optional, R2dbcCustomConversions)
+	 * @see #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)
 	 * @see #getDialect(ConnectionFactory)
 	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
 	 * @since 1.2
@@ -230,7 +230,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	/**
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
 	 * {@link CustomConversions} will be registered with the {@link BasicRelationalConverter} and
-	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)}. Returns an empty {@link R2dbcCustomConversions}
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)}. Returns an empty {@link R2dbcCustomConversions}
 	 * instance by default. Override {@link #getCustomConverters()} to supply custom converters.
 	 *
 	 * @return must not be {@literal null}.

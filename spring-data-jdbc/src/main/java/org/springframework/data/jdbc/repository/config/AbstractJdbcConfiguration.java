@@ -123,10 +123,9 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 	/**
 	 * Creates a {@link RelationalConverter} using the configured
-	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions()} ()}
-	 * applied.
+	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)}.
 	 *
-	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions)
+	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)
 	 * @see #jdbcCustomConversions()
 	 * @return must not be {@literal null}.
 	 */
