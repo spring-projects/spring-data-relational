@@ -17,19 +17,15 @@ package org.springframework.data.r2dbc.config;
 
 import java.lang.annotation.Annotation;
 
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.data.auditing.ReactiveIsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
 import org.springframework.data.config.ParsingUtils;
-import org.springframework.data.mapping.context.PersistentEntities;
 import org.springframework.data.r2dbc.mapping.event.ReactiveAuditingEntityCallback;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -62,7 +58,7 @@ class R2dbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected void postProcess(BeanDefinitionBuilder builder, AuditingConfiguration configuration,
 			BeanDefinitionRegistry registry) {
-		potentiallyRegisterR2dbcPersistentEntities(builder, registry);
+		builder.setFactoryMethod("from").addConstructorArgReference("r2dbcMappingContext");
 	}
 
 	/*
@@ -97,39 +93,4 @@ class R2dbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 		registerInfrastructureBeanWithId(listenerBeanDefinitionBuilder.getBeanDefinition(),
 				ReactiveAuditingEntityCallback.class.getName(), registry);
 	}
-
-	static void potentiallyRegisterR2dbcPersistentEntities(BeanDefinitionBuilder builder,
-			BeanDefinitionRegistry registry) {
-
-		String persistentEntitiesBeanName = R2dbcAuditingRegistrar.detectPersistentEntitiesBeanName(registry);
-
-		if (persistentEntitiesBeanName == null) {
-
-			persistentEntitiesBeanName = BeanDefinitionReaderUtils.uniqueBeanName("r2dbcPersistentEntities", registry);
-
-			// TODO: https://github.com/spring-projects/spring-framework/issues/28728
-			BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(PersistentEntities.class) //
-					.setFactoryMethod("of") //
-					.addConstructorArgReference("r2dbcMappingContext");
-
-			registry.registerBeanDefinition(persistentEntitiesBeanName, definition.getBeanDefinition());
-		}
-
-		builder.addConstructorArgReference(persistentEntitiesBeanName);
-	}
-
-	@Nullable
-	private static String detectPersistentEntitiesBeanName(BeanDefinitionRegistry registry) {
-
-		if (registry instanceof ListableBeanFactory beanFactory) {
-			for (String bn : beanFactory.getBeanNamesForType(PersistentEntities.class)) {
-				if (bn.startsWith("r2dbc")) {
-					return bn;
-				}
-			}
-		}
-
-		return null;
-	}
-
 }

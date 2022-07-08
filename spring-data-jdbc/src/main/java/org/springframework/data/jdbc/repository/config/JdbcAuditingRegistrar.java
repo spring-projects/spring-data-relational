@@ -17,19 +17,15 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.lang.annotation.Annotation;
 
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
 import org.springframework.data.config.ParsingUtils;
-import org.springframework.data.mapping.context.PersistentEntities;
 import org.springframework.data.relational.auditing.RelationalAuditingCallback;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -39,6 +35,7 @@ import org.springframework.util.Assert;
  * @see EnableJdbcAuditing
  * @author Kazuki Shimizu
  * @author Jens Schauder
+ * @author Christoph Strobl
  */
 class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
@@ -69,7 +66,7 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected void postProcess(BeanDefinitionBuilder builder, AuditingConfiguration configuration,
 			BeanDefinitionRegistry registry) {
-		potentiallyRegisterJdbcPersistentEntities(builder, registry);
+		builder.setFactoryMethod("from").addConstructorArgReference("jdbcMappingContext");
 	}
 
 	@Override
@@ -96,39 +93,4 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 		registerInfrastructureBeanWithId(listenerBeanDefinitionBuilder.getBeanDefinition(),
 				RelationalAuditingCallback.class.getName(), registry);
 	}
-
-	static void potentiallyRegisterJdbcPersistentEntities(BeanDefinitionBuilder builder,
-			BeanDefinitionRegistry registry) {
-
-		String persistentEntitiesBeanName = JdbcAuditingRegistrar.detectPersistentEntitiesBeanName(registry);
-
-		if (persistentEntitiesBeanName == null) {
-
-			persistentEntitiesBeanName = BeanDefinitionReaderUtils.uniqueBeanName("jdbcPersistentEntities", registry);
-
-			// TODO: https://github.com/spring-projects/spring-framework/issues/28728
-			BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(PersistentEntities.class) //
-					.setFactoryMethod("of") //
-					.addConstructorArgReference("jdbcMappingContext");
-
-			registry.registerBeanDefinition(persistentEntitiesBeanName, definition.getBeanDefinition());
-		}
-
-		builder.addConstructorArgReference(persistentEntitiesBeanName);
-	}
-
-	@Nullable
-	private static String detectPersistentEntitiesBeanName(BeanDefinitionRegistry registry) {
-
-		if (registry instanceof ListableBeanFactory beanFactory) {
-			for (String bn : beanFactory.getBeanNamesForType(PersistentEntities.class)) {
-				if (bn.startsWith("jdbc")) {
-					return bn;
-				}
-			}
-		}
-
-		return null;
-	}
-
 }
