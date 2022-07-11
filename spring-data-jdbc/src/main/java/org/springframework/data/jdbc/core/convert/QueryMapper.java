@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.query;
+package org.springframework.data.jdbc.core.convert;
 
 import java.sql.JDBCType;
 import java.sql.SQLType;
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
