@@ -742,10 +742,10 @@ class SqlGeneratorUnitTests {
 						SqlIdentifier.quoted("child"), SqlIdentifier.quoted("CHILD_PARENT_OF_NO_ID_CHILD"));
 	}
 
-	@Nullable
-	@Test
+	@Test // GH-1192
 	void selectByQueryValidTest() {
-		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		 SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 
 		DummyEntity probe = new DummyEntity();
 		probe.name = "Diego";
@@ -762,9 +762,10 @@ class SqlGeneratorUnitTests {
 				.containsOnly(entry("x_name", probe.name));
 	}
 
-	@Test
+	@Test // GH-1192
 	void existsByQuerySimpleValidTest() {
-		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 
 		DummyEntity probe = new DummyEntity();
 		probe.name = "Diego";
@@ -781,9 +782,10 @@ class SqlGeneratorUnitTests {
 				.containsOnly(entry("x_name", probe.name));
 	}
 
-	@Test
+	@Test // GH-1192
 	void countByQuerySimpleValidTest() {
-		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 
 		DummyEntity probe = new DummyEntity();
 		probe.name = "Diego";
@@ -803,9 +805,10 @@ class SqlGeneratorUnitTests {
 				.containsOnly(entry("x_name", probe.name));
 	}
 
-	@Test
+	@Test // GH-1192
 	void selectByQueryPaginationValidTest() {
-		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 
 		DummyEntity probe = new DummyEntity();
 		probe.name = "Diego";
@@ -829,6 +832,7 @@ class SqlGeneratorUnitTests {
 				.containsOnly(entry("x_name", probe.name));
 	}
 
+	@Nullable
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {

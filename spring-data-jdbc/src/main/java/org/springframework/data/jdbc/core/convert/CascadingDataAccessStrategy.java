@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static java.lang.Boolean.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,10 +31,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 
-import static java.lang.Boolean.*;
-
 /**
- * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
+ * Delegates each method to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
  * not throw an exception.
  *
  * @author Jens Schauder

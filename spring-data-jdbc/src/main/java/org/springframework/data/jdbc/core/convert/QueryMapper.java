@@ -55,7 +55,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Jens Schauder
- * @since 2.0
+ * @since 3.0
  */
 public class QueryMapper {
 
@@ -85,7 +85,7 @@ public class QueryMapper {
 	 *
 	 * @param sort must not be {@literal null}.
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
-	 * @return
+	 * @return a List of {@link OrderByField} objects guaranteed to be not {@literal null}.
 	 */
 	public List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
 
@@ -116,9 +116,8 @@ public class QueryMapper {
 			return expression;
 		}
 
-		if (expression instanceof Column) {
+		if (expression instanceof Column column) {
 
-			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
 			TableLike table = column.getTable();
 
@@ -128,9 +127,7 @@ public class QueryMapper {
 			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
 		}
 
-		if (expression instanceof SimpleFunction) {
-
-			SimpleFunction function = (SimpleFunction) expression;
+		if (expression instanceof SimpleFunction function) {
 
 			List<Expression> arguments = function.getExpressions();
 			List<Expression> mappedArguments = new ArrayList<>(arguments.size());
@@ -280,9 +277,7 @@ public class QueryMapper {
 		Object mappedValue;
 		SQLType sqlType;
 
-		if (criteria.getValue() instanceof JdbcValue) {
-
-			JdbcValue settableValue = (JdbcValue) criteria.getValue();
+		if (criteria.getValue() instanceof JdbcValue settableValue) {
 
 			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
@@ -554,40 +549,39 @@ public class QueryMapper {
 		String refName = column.getName().getReference();
 
 		switch (comparator) {
-			case EQ: {
+			case EQ -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName, ignoreCase);
 				return Conditions.isEqual(columnExpression, expression);
 			}
-			case NEQ: {
+			case NEQ -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName, ignoreCase);
 				return Conditions.isEqual(columnExpression, expression).not();
 			}
-			case LT: {
+			case LT -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName);
 				return column.isLess(expression);
 			}
-			case LTE: {
+			case LTE -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName);
 				return column.isLessOrEqualTo(expression);
 			}
-			case GT: {
+			case GT -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName);
 				return column.isGreater(expression);
 			}
-			case GTE: {
+			case GTE -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName);
 				return column.isGreaterOrEqualTo(expression);
 			}
-			case LIKE: {
+			case LIKE -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName, ignoreCase);
 				return Conditions.like(columnExpression, expression);
 			}
-			case NOT_LIKE: {
+			case NOT_LIKE -> {
 				Expression expression = bind(mappedValue, sqlType, parameterSource, refName, ignoreCase);
 				return Conditions.notLike(columnExpression, expression);
 			}
-			default:
-				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
+			default -> throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 		}
 	}
 
@@ -677,7 +671,7 @@ public class QueryMapper {
 		/**
 		 * Returns the key to be used in the mapped document eventually.
 		 *
-		 * @return
+		 * @return  the key to be used in the mapped document eventually.
 		 */
 		public SqlIdentifier getMappedColumnName() {
 			return this.name;
@@ -774,9 +768,6 @@ public class QueryMapper {
 
 		/**
 		 * Returns the {@link PersistentPropertyPath} for the given {@code pathExpression}.
-		 *
-		 * @param pathExpression
-		 * @return
 		 */
 		@Nullable
 		private PersistentPropertyPath<RelationalPersistentProperty> getPath(String pathExpression) {

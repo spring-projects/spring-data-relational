@@ -20,9 +20,7 @@ import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -262,27 +260,24 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
 
 		try {
-			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
+			return operations.queryForObject(findOneSql, parameter, getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return operations.query(sql(domainType).getFindAll(), (RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		if (!ids.iterator().hasNext()) {
@@ -293,7 +288,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
-		return operations.query(findAllInListSql, parameterSource, (RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(findAllInListSql, parameterSource, getEntityRowMapper(domainType));
 	}
 
 	@Override
@@ -330,73 +325,74 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
-		return operations.query(sql(domainType).getFindAll(sort), (RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(sort), getEntityRowMapper(domainType));
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
-		return operations.query(sql(domainType).getFindAll(pageable), (RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(pageable), getEntityRowMapper(domainType));
 	}
 
 	@Override
 	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
 
-		T foundObject;
 		try {
-			foundObject = operations.queryForObject(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+			return Optional.ofNullable(
+					operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(probeType)));
 		} catch (EmptyResultDataAccessException e) {
-			foundObject = null;
+			return Optional.empty();
 		}
-
-		return Optional.ofNullable(foundObject);
 	}
 
 	@Override
 	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
 
-		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(probeType));
 	}
 
 	@Override
 	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource, pageable);
 
-		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(probeType));
 	}
 
 	@Override
 	public <T> boolean exists(Query query, Class<T> probeType) {
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(probeType).existsByQuery(query, parameterSource);
 
 		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
-		Assert.notNull(result, "The result of an exists query must not be null");
+
+		Assert.state(result != null, "The result of an exists query must not be null");
 
 		return result;
 	}
 
 	@Override
 	public <T> long count(Query query, Class<T> probeType) {
+
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(probeType).countByQuery(query, parameterSource);
 
 		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
 
-		Assert.notNull(result, "The result of a count query must not be null.");
+		Assert.state(result != null, "The result of a count query must not be null.");
 
 		return result;
 	}
 
-	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
+	private <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), converter);
 	}
 

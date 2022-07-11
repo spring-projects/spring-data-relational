@@ -31,6 +31,7 @@ import java.util.function.Function;
  * Support class for {@link FluentQuery.FetchableFluentQuery} implementations.
  *
  * @author Diego Krupitza
+ * @since 3.0
  */
 abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQuery<R> {
 
@@ -42,6 +43,7 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
 
 	FluentQuerySupport(Example<S> example, Sort sort, Class<R> resultType, List<String> fieldsToInclude) {
+
 		this.example = example;
 		this.sort = sort;
 		this.resultType = resultType;
@@ -123,5 +125,4 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 	protected Function<Object, R> getConversionFunction() {
 		return getConversionFunction(this.example.getProbeType(), getResultType());
 	}
-
 }

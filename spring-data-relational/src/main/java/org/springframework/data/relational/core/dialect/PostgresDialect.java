@@ -23,10 +23,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.util.Assert;
@@ -192,5 +195,10 @@ public class PostgresDialect extends AbstractDialect {
 		if (ClassUtils.isPresent(className, PostgresDialect.class.getClassLoader())) {
 			action.accept(ClassUtils.resolveClassName(className, PostgresDialect.class.getClassLoader()));
 		}
+	}
+
+	@Override
+	public SimpleFunction getExistsFunction() {
+		return Functions.least(Functions.count(SQL.literalOf(1)), SQL.literalOf(1));
 	}
 }

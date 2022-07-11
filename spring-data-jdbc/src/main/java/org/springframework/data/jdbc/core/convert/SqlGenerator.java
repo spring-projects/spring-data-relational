@@ -88,6 +88,7 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 	private final QueryMapper queryMapper;
+	private final Dialect dialect;
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
@@ -107,6 +108,7 @@ class SqlGenerator {
 		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
 		this.queryMapper = new QueryMapper(dialect, converter);
+		this.dialect = dialect;
 	}
 
 	/**
@@ -668,15 +670,6 @@ class SqlGenerator {
 		return render(delete);
 	}
 
-	private String createDeleteByIdInAndVersionSql() {
-
-		Delete delete = createBaseDeleteByIdIn(getTable()) //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
-				.build();
-
-		return render(delete);
-	}
-
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 
 		return Delete.builder().from(table)
@@ -827,8 +820,7 @@ class SqlGenerator {
 	 */
 	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
 
-		Expression idColumn = getIdColumn();
-		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(idColumn);
+		SelectBuilder.SelectJoin baseSelect = getExistsSelect();
 
 		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
 				.build();
@@ -859,6 +851,36 @@ class SqlGenerator {
 	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
 	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
 	 *
+	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
+	 *         columns and has only a count in the projection of the select.
+	 */
+	private SelectBuilder.SelectJoin getExistsSelect() {
+
+		Table table = getTable();
+
+		SelectBuilder.SelectJoin baseSelect = StatementBuilder //
+				.select(dialect.getExistsFunction()) //
+				.from(table);
+
+		// add possible joins
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+
+			// add a join if necessary
+			Join join = getJoin(extPath);
+			if (join != null) {
+				baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+			}
+		}
+		return baseSelect;
+	}
+
+	/**
+	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
+	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
+	 *
 	 * @param countExpressions the expression to use as count parameter.
 	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
 	 *         columns and has only a count in the projection of the select.
@@ -869,11 +891,10 @@ class SqlGenerator {
 		Assert.state(countExpressions.length >= 1, "countExpressions must contain at least one expression");
 
 		Table table = getTable();
-		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder //
-				.select(Functions.count(countExpressions)) //
-				.from(table);//
 
-		SelectBuilder.SelectJoin baseSelect = selectBuilder;
+		SelectBuilder.SelectJoin baseSelect = StatementBuilder //
+				.select(Functions.count(countExpressions)) //
+				.from(table);
 
 		// add possible joins
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext

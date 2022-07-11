@@ -74,7 +74,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 	private final AggregateChangeExecutor executor;
-
 	private final JdbcConverter converter;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
@@ -248,7 +247,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> entityClass, Sort sort) {
+	public <T> Iterable<T> select(Query query, Class<T> entityClass) {
 		return accessStrategy.select(query, entityClass);
 	}
 
@@ -264,16 +263,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable) {
+
 		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, entityClass, pageable));
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, entityClass));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 

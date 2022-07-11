@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,8 +26,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.util.Assert;
-
-import java.util.Optional;
 
 /**
  * Delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with

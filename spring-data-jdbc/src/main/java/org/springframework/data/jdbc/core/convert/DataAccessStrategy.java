@@ -114,8 +114,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param previousVersion The previous version assigned to the instance being saved.
 	 * @param <T> the type of the instance to save.
 	 * @return whether the update actually updated a row.
-	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the
-	 *           optimistic locking version check failed.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the optimistic
+	 *           locking version check failed.
 	 * @since 2.0
 	 */
 	<T> boolean updateWithVersion(T instance, Class<T> domainType, Number previousVersion);
@@ -155,8 +155,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
 	 *          {@code null}.
 	 * @param previousVersion The previous version assigned to the instance being saved.
-	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the
-	 *           optimistic locking version check failed.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the optimistic
+	 *           locking version check failed.
 	 * @since 2.0
 	 */
 	<T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion);
@@ -292,6 +292,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param probeType the type of entities. Must not be {@code null}.
 	 * @return exactly one result or {@link Optional#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
 	 */
 	<T> Optional<T> selectOne(Query query, Class<T> probeType);
 
@@ -302,6 +303,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param probeType the type of entities. Must not be {@code null}.
 	 * @return a non-null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
 	 */
 	<T> Iterable<T> select(Query query, Class<T> probeType);
 
@@ -314,6 +316,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param pageable the pagination that should be applied. Must not be {@literal null}.
 	 * @return a non-null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
 	 */
 	<T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable);
 
@@ -323,6 +326,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param query must not be {@literal null}.
 	 * @param probeType the type of entities. Must not be {@code null}.
 	 * @return {@literal true} if the object exists.
+	 * @since 3.0
 	 */
 	<T> boolean exists(Query query, Class<T> probeType);
 
@@ -332,6 +336,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param probeType the probe type for which to count the elements. Must not be {@code null}.
 	 * @param query the query which elements have to match.
 	 * @return the count. Guaranteed to be not {@code null}.
+	 * @since 3.0
 	 */
 	<T> long count(Query query, Class<T> probeType);
 }

@@ -34,6 +34,7 @@ import org.springframework.data.relational.repository.query.RelationalExampleMap
  * {@link org.springframework.data.repository.query.FluentQuery.FetchableFluentQuery} using {@link Example}.
  *
  * @author Diego Krupitza
+ * @since 3.0
  */
 class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
@@ -47,40 +48,47 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
 	FetchableFluentQueryByExample(Example<S> example, Sort sort, Class<R> resultType, List<String> fieldsToInclude,
 			RelationalExampleMapper exampleMapper, JdbcAggregateOperations entityOperations) {
+
 		super(example, sort, resultType, fieldsToInclude);
+
 		this.exampleMapper = exampleMapper;
 		this.entityOperations = entityOperations;
 	}
 
 	@Override
 	public R oneValue() {
+
 		return this.entityOperations.selectOne(createQuery(), getExampleType())
 				.map(item -> this.getConversionFunction().apply(item)).get();
 	}
 
 	@Override
 	public R firstValue() {
+
 		return this.getConversionFunction()
-				.apply(this.entityOperations.select(createQuery(), getExampleType(), getSort()).iterator().next());
+				.apply(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).iterator().next());
 	}
 
 	@Override
 	public List<R> all() {
+
 		return StreamSupport
-				.stream(this.entityOperations.select(createQuery(), getExampleType(), getSort()).spliterator(), false)
+				.stream(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
 				.map(item -> this.getConversionFunction().apply(item)).collect(Collectors.toList());
 	}
 
 	@Override
 	public Page<R> page(Pageable pageable) {
+
 		return this.entityOperations.select(createQuery(p -> p.with(pageable)), getExampleType(), pageable)
 				.map(item -> this.getConversionFunction().apply(item));
 	}
 
 	@Override
 	public Stream<R> stream() {
+
 		return StreamSupport
-				.stream(this.entityOperations.select(createQuery(), getExampleType(), getSort()).spliterator(), false)
+				.stream(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
 				.map(item -> this.getConversionFunction().apply(item));
 	}
 
@@ -102,10 +110,6 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
 		Query query = exampleMapper.getMappedExample(getExample());
 
-		if (getSort().isSorted()) {
-			query = query.sort(getSort());
-		}
-
 		if (!getFieldsToInclude().isEmpty()) {
 			query = query.columns(getFieldsToInclude().toArray(new String[0]));
 		}
@@ -118,6 +122,7 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	@Override
 	protected <R> FluentQuerySupport<S, R> create(Example<S> example, Sort sort, Class<R> resultType,
 			List<String> fieldsToInclude) {
+
 		return new FetchableFluentQueryByExample<>(example, sort, resultType, fieldsToInclude, this.exampleMapper,
 				this.entityOperations);
 	}

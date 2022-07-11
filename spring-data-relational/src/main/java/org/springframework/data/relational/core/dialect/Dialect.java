@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
@@ -130,5 +133,15 @@ public interface Dialect {
 	 */
 	default OrderByNullPrecedence orderByNullHandling() {
 		return OrderByNullPrecedence.SQL_STANDARD;
+	}
+
+	/**
+	 * Provide a SQL function that is suitable for implementing an exists-query.
+	 * The default is `COUNT(1)`, but for some database a `LEAST(COUNT(1), 1)` might be required, which doesn't get accepted by other databases.
+	 *
+	 * @since 3.0
+	 */
+	default SimpleFunction getExistsFunction(){
+		return Functions.count(SQL.literalOf(1));
 	}
 }

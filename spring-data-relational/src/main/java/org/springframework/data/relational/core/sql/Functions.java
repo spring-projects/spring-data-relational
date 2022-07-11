@@ -48,6 +48,11 @@ public class Functions {
 		return SimpleFunction.create("COUNT", Arrays.asList(columns));
 	}
 
+	public static SimpleFunction least(Expression... expressions) {
+
+		return SimpleFunction.create("LEAST", Arrays.asList(expressions));
+	}
+
 	/**
 	 * Creates a new {@code COUNT} function.
 	 *

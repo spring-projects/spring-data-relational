@@ -7,7 +7,7 @@ CREATE TABLE dummy_entity
 (
     id_Prop          BIGINT IDENTITY PRIMARY KEY,
     NAME             VARCHAR(100),
-    POINT_IN_TIME    DATETIME,
+    POINT_IN_TIME    DATETIME2,
     OFFSET_DATE_TIME DATETIMEOFFSET,
     FLAG             BIT,
     REF              BIGINT,

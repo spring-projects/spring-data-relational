@@ -22,10 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -352,10 +349,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
-	 */
 	@Override
 	public long count(Class<?> domainType) {
 

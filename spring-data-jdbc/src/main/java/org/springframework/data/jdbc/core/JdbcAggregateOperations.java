@@ -196,6 +196,7 @@ public interface JdbcAggregateOperations {
 	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return exactly one result or {@link Optional#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
 	 */
 	<T> Optional<T> selectOne(Query query, Class<T> entityClass);
 
@@ -204,11 +205,11 @@ public interface JdbcAggregateOperations {
 	 *
 	 * @param query must not be {@literal null}.
 	 * @param entityClass the entity type must not be {@literal null}.
-	 * @param sort the sorting that should be used on the result.
 	 * @return a non-null sorted list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
 	 */
-	<T> Iterable<T> select(Query query, Class<T> entityClass, Sort sort);
+	<T> Iterable<T> select(Query query, Class<T> entityClass);
 
 	/**
 	 * Determine whether there are aggregates that match the {@link Query}
@@ -216,6 +217,7 @@ public interface JdbcAggregateOperations {
 	 * @param query must not be {@literal null}.
 	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return {@literal true} if the object exists.
+	 * @since 3.0
 	 */
 	<T> boolean exists(Query query, Class<T> entityClass);
 
@@ -225,6 +227,7 @@ public interface JdbcAggregateOperations {
 	 * @param query must not be {@literal null}.
 	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return the number of instances stored in the database. Guaranteed to be not {@code null}.
+	 * @since 3.0
 	 */
 	<T> long count(Query query, Class<T> entityClass);
 
@@ -236,6 +239,7 @@ public interface JdbcAggregateOperations {
 	 * @param entityClass the entity type must not be {@literal null}.
 	 * @param pageable can be null.
 	 * @return a {@link Page} of entities matching the given {@link Example}.
+	 * @since 3.0
 	 */
 	<T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable);
 }

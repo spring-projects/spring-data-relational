@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -567,7 +568,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // GH-987
 	void queryBySimpleReference() {
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = createDummyEntity();
 		two.ref = AggregateReference.to(one.idProp);
 		two = repository.save(two);
@@ -580,7 +581,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // GH-987
 	void queryByAggregateReference() {
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = createDummyEntity();
 		two.ref = AggregateReference.to(one.idProp);
 		two = repository.save(two);
@@ -696,59 +697,28 @@ public class JdbcRepositoryIntegrationTests {
 		assertIsEqualToWithNonNullIds(reloadedRoots.get(1), root2);
 	}
 
-	private Root createRoot(String namePrefix) {
-
-		return new Root(null, namePrefix,
-				new Intermediate(null, namePrefix + "Intermediate", new Leaf(null, namePrefix + "Leaf"), emptyList()),
-				singletonList(new Intermediate(null, namePrefix + "QualifiedIntermediate", null,
-						singletonList(new Leaf(null, namePrefix + "QualifiedLeaf")))));
-	}
-
-	private void assertIsEqualToWithNonNullIds(Root reloadedRoot1, Root root1) {
-
-		assertThat(reloadedRoot1.id).isNotNull();
-		assertThat(reloadedRoot1.name).isEqualTo(root1.name);
-		assertThat(reloadedRoot1.intermediate.id).isNotNull();
-		assertThat(reloadedRoot1.intermediate.name).isEqualTo(root1.intermediate.name);
-		assertThat(reloadedRoot1.intermediates.get(0).id).isNotNull();
-		assertThat(reloadedRoot1.intermediates.get(0).name).isEqualTo(root1.intermediates.get(0).name);
-		assertThat(reloadedRoot1.intermediate.leaf.id).isNotNull();
-		assertThat(reloadedRoot1.intermediate.leaf.name).isEqualTo(root1.intermediate.leaf.name);
-		assertThat(reloadedRoot1.intermediates.get(0).leaves.get(0).id).isNotNull();
-		assertThat(reloadedRoot1.intermediates.get(0).leaves.get(0).name)
-				.isEqualTo(root1.intermediates.get(0).leaves.get(0).name);
-	}
-
-	@Test
+	@Test // GH-1192
 	void findOneByExampleShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
 		dummyEntity1.setFlag(true);
-
 		repository.save(dummyEntity1);
 
 		DummyEntity dummyEntity2 = createDummyEntity();
 		dummyEntity2.setName("Diego");
-
 		repository.save(dummyEntity2);
 
 		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("Diego"));
-
 		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
 
-		assertThat(foundExampleDiego).isPresent();
-		assertThat(foundExampleDiego.get()).isNotNull();
 		assertThat(foundExampleDiego.get().getName()).isEqualTo("Diego");
 	}
 
-	@Test
+	@Test // GH-1192
 	void findOneByExampleMultipleMatchShouldGetOne() {
 
-		DummyEntity dummyEntity1 = createDummyEntity();
-		repository.save(dummyEntity1);
-
-		DummyEntity dummyEntity2 = createDummyEntity();
-		repository.save(dummyEntity2);
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		Example<DummyEntity> example = Example.of(createDummyEntity());
 
@@ -756,12 +726,11 @@ public class JdbcRepositoryIntegrationTests {
 				.hasMessageContaining("expected 1, actual 2");
 	}
 
-	@Test
+	@Test // GH-1192
 	void findOneByExampleShouldGetNone() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
 		dummyEntity1.setFlag(true);
-
 		repository.save(dummyEntity1);
 
 		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("NotExisting"));
@@ -771,51 +740,42 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(foundExampleDiego).isNotPresent();
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExampleShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
 		dummyEntity1.setFlag(true);
-
 		repository.save(dummyEntity1);
 
 		DummyEntity dummyEntity2 = createDummyEntity();
 		dummyEntity2.setName("Diego");
-
 		repository.save(dummyEntity2);
 
 		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
 
 		Iterable<DummyEntity> allFound = repository.findAll(example);
 
-		assertThat(allFound) //
-				.isNotNull() //
-				.hasSize(1) //
-				.extracting(DummyEntity::getName) //
+		assertThat(allFound).extracting(DummyEntity::getName) //
 				.containsExactly(example.getProbe().getName());
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExampleMultipleMatchShouldGetOne() {
 
-		DummyEntity dummyEntity1 = createDummyEntity();
-		repository.save(dummyEntity1);
-
-		DummyEntity dummyEntity2 = createDummyEntity();
-		repository.save(dummyEntity2);
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		Example<DummyEntity> example = Example.of(createDummyEntity());
 
 		Iterable<DummyEntity> allFound = repository.findAll(example);
 
 		assertThat(allFound) //
-				.isNotNull() //
 				.hasSize(2) //
 				.extracting(DummyEntity::getName) //
 				.containsOnly(example.getProbe().getName());
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExampleShouldGetNone() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -827,12 +787,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		Iterable<DummyEntity> allFound = repository.findAll(example);
 
-		assertThat(allFound) //
-				.isNotNull() //
-				.isEmpty();
+		assertThat(allFound).isEmpty();
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExamplePageableShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -850,21 +808,15 @@ public class JdbcRepositoryIntegrationTests {
 
 		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
 
-		assertThat(allFound) //
-				.isNotNull() //
-				.hasSize(1) //
-				.extracting(DummyEntity::getName) //
+		assertThat(allFound).extracting(DummyEntity::getName) //
 				.containsExactly(example.getProbe().getName());
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExamplePageableMultipleMatchShouldGetOne() {
 
-		DummyEntity dummyEntity1 = createDummyEntity();
-		repository.save(dummyEntity1);
-
-		DummyEntity dummyEntity2 = createDummyEntity();
-		repository.save(dummyEntity2);
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		Example<DummyEntity> example = Example.of(createDummyEntity());
 		Pageable pageRequest = PageRequest.of(0, 10);
@@ -872,13 +824,12 @@ public class JdbcRepositoryIntegrationTests {
 		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
 
 		assertThat(allFound) //
-				.isNotNull() //
 				.hasSize(2) //
 				.extracting(DummyEntity::getName) //
 				.containsOnly(example.getProbe().getName());
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExamplePageableShouldGetNone() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -891,19 +842,14 @@ public class JdbcRepositoryIntegrationTests {
 
 		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
 
-		assertThat(allFound) //
-				.isNotNull() //
-				.isEmpty();
+		assertThat(allFound).isEmpty();
 	}
 
-	@Test
+	@Test // GH-1192
 	void findAllByExamplePageableOutsidePageShouldGetNone() {
 
-		DummyEntity dummyEntity1 = createDummyEntity();
-		repository.save(dummyEntity1);
-
-		DummyEntity dummyEntity2 = createDummyEntity();
-		repository.save(dummyEntity2);
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		Example<DummyEntity> example = Example.of(createDummyEntity());
 		Pageable pageRequest = PageRequest.of(10, 10);
@@ -915,7 +861,7 @@ public class JdbcRepositoryIntegrationTests {
 				.isEmpty();
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest // GH-1192
 	@MethodSource("findAllByExamplePageableSource")
 	void findAllByExamplePageable(Pageable pageRequest, int size, int totalPages, List<String> notContains) {
 
@@ -964,17 +910,15 @@ public class JdbcRepositoryIntegrationTests {
 		);
 	}
 
-	@Test
+	@Test // GH-1192
 	void existsByExampleShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
 		dummyEntity1.setFlag(true);
-
 		repository.save(dummyEntity1);
 
 		DummyEntity dummyEntity2 = createDummyEntity();
 		dummyEntity2.setName("Diego");
-
 		repository.save(dummyEntity2);
 
 		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
@@ -984,7 +928,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(exists).isTrue();
 	}
 
-	@Test
+	@Test // GH-1192
 	void existsByExampleMultipleMatchShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -999,7 +943,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(exists).isTrue();
 	}
 
-	@Test
+	@Test // GH-1192
 	void existsByExampleShouldGetNone() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -1014,17 +958,17 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(exists).isFalse();
 	}
 
-	@Test
+	@Test // GH-1192
 	void existsByExampleComplex() {
 
-		final Instant pointInTime = Instant.now().minusSeconds(10000);
+		Instant pointInTime = Instant.now().truncatedTo(ChronoUnit.MILLIS).minusSeconds(10000);
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
 		two.setName("Diego");
 		two.setPointInTime(pointInTime);
-		two = repository.save(two);
+		repository.save(two);
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName("Diego");
@@ -1036,7 +980,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(exists).isTrue();
 	}
 
-	@Test
+	@Test // GH-1192
 	void countByExampleShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -1056,7 +1000,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isOne();
 	}
 
-	@Test
+	@Test // GH-1192
 	void countByExampleMultipleMatchShouldGetOne() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -1071,7 +1015,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isEqualTo(2);
 	}
 
-	@Test
+	@Test // GH-1192
 	void countByExampleShouldGetNone() {
 
 		DummyEntity dummyEntity1 = createDummyEntity();
@@ -1086,17 +1030,16 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isNotNull().isZero();
 	}
 
-	@Test
+	@Test // GH-1192
 	void countByExampleComplex() {
 
-		final Instant pointInTime = Instant.now().minusSeconds(10000);
-
-		final DummyEntity one = repository.save(createDummyEntity());
+		Instant pointInTime = Instant.now().minusSeconds(10000).truncatedTo(ChronoUnit.MILLIS);
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
 		two.setName("Diego");
 		two.setPointInTime(pointInTime);
-		two = repository.save(two);
+		repository.save(two);
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName("Diego");
@@ -1108,11 +1051,11 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isOne();
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentAllSimple() {
-		String searchName = "Diego";
 
-		Instant now = Instant.now();
+		String searchName = "Diego";
+		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
 		final DummyEntity one = repository.save(createDummyEntity());
 
@@ -1121,11 +1064,17 @@ public class JdbcRepositoryIntegrationTests {
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
 		two = repository.save(two);
+		// certain databases consider it a great idea to assign default values to timestamp fields.
+		// I'm looking at you MariaDb.
+		two = repository.findById(two.idProp).orElseThrow();
 
 		DummyEntity third = createDummyEntity();
 		third.setName(searchName);
 		third.setPointInTime(now.minusSeconds(200000));
 		third = repository.save(third);
+		// certain databases consider it a great idea to assign default values to timestamp fields.
+		// I'm looking at you MariaDb.
+		third = repository.findById(third.idProp).orElseThrow();
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName(searchName);
@@ -1133,28 +1082,27 @@ public class JdbcRepositoryIntegrationTests {
 		Example<DummyEntity> example = Example.of(exampleEntitiy);
 
 		List<DummyEntity> matches = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).all());
-		assertThat(matches).hasSize(2).contains(two, third);
-		assertThat(matches.get(0)).isEqualTo(two);
+		assertThat(matches).containsExactly(two, third);
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentCountSimple() {
-		String searchName = "Diego";
 
+		String searchName = "Diego";
 		Instant now = Instant.now();
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
 
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
-		two = repository.save(two);
+		repository.save(two);
 
 		DummyEntity third = createDummyEntity();
 		third.setName(searchName);
 		third.setPointInTime(now.minusSeconds(200000));
-		third = repository.save(third);
+		repository.save(third);
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName(searchName);
@@ -1165,53 +1113,56 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(matches).isEqualTo(2);
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantFirstSimple() {
+
 		String searchName = "Diego";
+		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-		Instant now = Instant.now();
-
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
 
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
 		two = repository.save(two);
+		// certain databases consider it a great idea to assign default values to timestamp fields.
+		// I'm looking at you MariaDb.
+		two = repository.findById(two.idProp).orElseThrow();
 
 		DummyEntity third = createDummyEntity();
 		third.setName(searchName);
 		third.setPointInTime(now.minusSeconds(200000));
-		third = repository.save(third);
+		repository.save(third);
 
-		DummyEntity exampleEntitiy = createDummyEntity();
-		exampleEntitiy.setName(searchName);
+		DummyEntity exampleEntity = createDummyEntity();
+		exampleEntity.setName(searchName);
 
-		Example<DummyEntity> example = Example.of(exampleEntitiy);
+		Example<DummyEntity> example = Example.of(exampleEntity);
 
 		Optional<DummyEntity> matches = repository.findBy(example,
 				p -> p.sortBy(Sort.by("pointInTime").descending()).first());
+
 		assertThat(matches).contains(two);
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantOneValueError() {
-		String searchName = "Diego";
 
+		String searchName = "Diego";
 		Instant now = Instant.now();
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
-
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
-		two = repository.save(two);
+		repository.save(two);
 
 		DummyEntity third = createDummyEntity();
 		third.setName(searchName);
 		third.setPointInTime(now.minusSeconds(200000));
-		third = repository.save(third);
+		repository.save(third);
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName(searchName);
@@ -1222,19 +1173,21 @@ public class JdbcRepositoryIntegrationTests {
 				.isInstanceOf(IncorrectResultSizeDataAccessException.class).hasMessageContaining("expected 1, actual 2");
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantOneValueSimple() {
+
 		String searchName = "Diego";
+		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-		Instant now = Instant.now();
-
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
-
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
 		two = repository.save(two);
+		// certain databases consider it a great idea to assign default values to timestamp fields.
+		// I'm looking at you MariaDb.
+		two = repository.findById(two.idProp).orElseThrow();
 
 		DummyEntity exampleEntitiy = createDummyEntity();
 		exampleEntitiy.setName(searchName);
@@ -1246,28 +1199,50 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(match).contains(two);
 	}
 
-	@Test
+	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantOneValueAsSimple() {
-		String searchName = "Diego";
 
+		String searchName = "Diego";
 		Instant now = Instant.now();
 
-		final DummyEntity one = repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
 		DummyEntity two = createDummyEntity();
-
 		two.setName(searchName);
 		two.setPointInTime(now.minusSeconds(10000));
 		two = repository.save(two);
 
-		DummyEntity exampleEntitiy = createDummyEntity();
-		exampleEntitiy.setName(searchName);
+		DummyEntity exampleEntity = createDummyEntity();
+		exampleEntity.setName(searchName);
 
-		Example<DummyEntity> example = Example.of(exampleEntitiy);
+		Example<DummyEntity> example = Example.of(exampleEntity);
 
 		Optional<DummyProjectExample> match = repository.findBy(example, p -> p.as(DummyProjectExample.class).one());
 
 		assertThat(match.get().getName()).contains(two.getName());
+	}
+
+	private Root createRoot(String namePrefix) {
+
+		return new Root(null, namePrefix,
+				new Intermediate(null, namePrefix + "Intermediate", new Leaf(null, namePrefix + "Leaf"), emptyList()),
+				singletonList(new Intermediate(null, namePrefix + "QualifiedIntermediate", null,
+						singletonList(new Leaf(null, namePrefix + "QualifiedLeaf")))));
+	}
+
+	private void assertIsEqualToWithNonNullIds(Root reloadedRoot1, Root root1) {
+
+		assertThat(reloadedRoot1.id).isNotNull();
+		assertThat(reloadedRoot1.name).isEqualTo(root1.name);
+		assertThat(reloadedRoot1.intermediate.id).isNotNull();
+		assertThat(reloadedRoot1.intermediate.name).isEqualTo(root1.intermediate.name);
+		assertThat(reloadedRoot1.intermediates.get(0).id).isNotNull();
+		assertThat(reloadedRoot1.intermediates.get(0).name).isEqualTo(root1.intermediates.get(0).name);
+		assertThat(reloadedRoot1.intermediate.leaf.id).isNotNull();
+		assertThat(reloadedRoot1.intermediate.leaf.name).isEqualTo(root1.intermediate.leaf.name);
+		assertThat(reloadedRoot1.intermediates.get(0).leaves.get(0).id).isNotNull();
+		assertThat(reloadedRoot1.intermediates.get(0).leaves.get(0).name)
+				.isEqualTo(root1.intermediates.get(0).leaves.get(0).name);
 	}
 
 	private Instant createDummyBeforeAndAfterNow() {
