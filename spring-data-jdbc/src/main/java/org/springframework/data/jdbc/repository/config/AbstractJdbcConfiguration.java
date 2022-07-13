@@ -25,18 +25,14 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
@@ -50,8 +46,8 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.util.TypeScanner;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -255,31 +251,19 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * Scans the given base package for entities, i.e. JDBC-specific types annotated with {@link Table}.
 	 *
 	 * @param basePackage must not be {@literal null}.
-	 * @return
-	 * @throws ClassNotFoundException
+	 * @return a set of classes identified as entities.
 	 * @since 3.0
 	 */
-	protected Set<Class<?>> scanForEntities(String basePackage) throws ClassNotFoundException {
+	@SuppressWarnings("unchecked")
+	protected Set<Class<?>> scanForEntities(String basePackage) {
 
 		if (!StringUtils.hasText(basePackage)) {
 			return Collections.emptySet();
 		}
 
-		Set<Class<?>> initialEntitySet = new HashSet<>();
-
-		if (StringUtils.hasText(basePackage)) {
-
-			ClassPathScanningCandidateComponentProvider componentProvider = new ClassPathScanningCandidateComponentProvider(
-					false);
-			componentProvider.addIncludeFilter(new AnnotationTypeFilter(Table.class));
-
-			for (BeanDefinition candidate : componentProvider.findCandidateComponents(basePackage)) {
-
-				initialEntitySet
-						.add(ClassUtils.forName(candidate.getBeanClassName(), AbstractJdbcConfiguration.class.getClassLoader()));
-			}
-		}
-
-		return initialEntitySet;
+		return TypeScanner.typeScanner(AbstractJdbcConfiguration.class.getClassLoader()) //
+				.forTypesAnnotatedWith(Table.class) //
+				.scanPackages(basePackage) //
+				.collectAsSet();
 	}
 }

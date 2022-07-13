@@ -26,14 +26,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -49,10 +46,10 @@ import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.util.TypeScanner;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -230,8 +227,9 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	/**
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
 	 * {@link CustomConversions} will be registered with the {@link BasicRelationalConverter} and
-	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)}. Returns an empty {@link R2dbcCustomConversions}
-	 * instance by default. Override {@link #getCustomConverters()} to supply custom converters.
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)}. Returns an empty
+	 * {@link R2dbcCustomConversions} instance by default. Override {@link #getCustomConverters()} to supply custom
+	 * converters.
 	 *
 	 * @return must not be {@literal null}.
 	 * @see #getCustomConverters()
@@ -306,31 +304,18 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * Scans the given base package for entities, i.e. R2DBC-specific types annotated with {@link Table}.
 	 *
 	 * @param basePackage must not be {@literal null}.
-	 * @return
-	 * @throws ClassNotFoundException
+	 * @return a set of classes identified as entities.
 	 * @since 3.0
 	 */
-	protected Set<Class<?>> scanForEntities(String basePackage) throws ClassNotFoundException {
+	protected Set<Class<?>> scanForEntities(String basePackage) {
 
 		if (!StringUtils.hasText(basePackage)) {
 			return Collections.emptySet();
 		}
 
-		Set<Class<?>> initialEntitySet = new HashSet<>();
-
-		if (StringUtils.hasText(basePackage)) {
-
-			ClassPathScanningCandidateComponentProvider componentProvider = new ClassPathScanningCandidateComponentProvider(
-					false);
-			componentProvider.addIncludeFilter(new AnnotationTypeFilter(Table.class));
-
-			for (BeanDefinition candidate : componentProvider.findCandidateComponents(basePackage)) {
-
-				initialEntitySet
-						.add(ClassUtils.forName(candidate.getBeanClassName(), AbstractR2dbcConfiguration.class.getClassLoader()));
-			}
-		}
-
-		return initialEntitySet;
+		return TypeScanner.typeScanner(AbstractR2dbcConfiguration.class.getClassLoader()) //
+				.forTypesAnnotatedWith(Table.class) //
+				.scanPackages(basePackage) //
+				.collectAsSet();
 	}
 }
