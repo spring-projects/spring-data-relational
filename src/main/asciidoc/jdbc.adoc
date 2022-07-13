@@ -700,6 +700,9 @@ You can specify the following return types:
 * `int` (updated record count)
 * `boolean`(whether a record was updated)
 
+include::{spring-data-commons-docs}/query-by-example.adoc[leveloffset=+1]
+include::query-by-example.adoc[leveloffset=+1]
+
 include::{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
 
 [[jdbc.mybatis]]
