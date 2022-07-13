@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.util.Streamable;
@@ -41,7 +42,21 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 	private final JdbcAggregateOperations entityOperations;
 	private final PersistentEntity<T, ?> entity;
 
-	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations,PersistentEntity<T, ?> entity) {
+	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity,
+			JdbcConverter converter) {
+
+		Assert.notNull(entityOperations, "EntityOperations must not be null.");
+		Assert.notNull(entity, "Entity must not be null.");
+
+		this.entityOperations = entityOperations;
+		this.entity = entity;
+	}
+
+	/**
+	 * @deprecated Use {@link #SimpleJdbcRepository(JdbcAggregateOperations, PersistentEntity, JdbcConverter)} instead.
+	 */
+	@Deprecated
+	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity) {
 
 		Assert.notNull(entityOperations, "EntityOperations must not be null.");
 		Assert.notNull(entity, "Entity must not be null.");
