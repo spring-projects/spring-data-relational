@@ -20,18 +20,6 @@ To do so:
 ====
 [source,xml,subs="+attributes"]
 ----
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>io.r2dbc</groupId>
-      <artifactId>r2dbc-bom</artifactId>
-      <version>${r2dbc-releasetrain.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-
 <dependencies>
 
   <!-- other dependency elements omitted -->
@@ -46,7 +34,7 @@ To do so:
   <dependency>
     <groupId>io.r2dbc</groupId>
     <artifactId>r2dbc-h2</artifactId>
-    <version>{r2dbcVersion}</version>
+    <version>x.y.z</version>
   </dependency>
 
 </dependencies>
@@ -188,7 +176,6 @@ Spring Data R2DBC ships with dialect implementations for the following drivers:
 * https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
 * https://github.com/mariadb-corporation/mariadb-connector-r2dbc[MariaDB] (`org.mariadb:r2dbc-mariadb`)
 * https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
-* https://github.com/mirromutth/r2dbc-mysql[MySQL] (`dev.miku:r2dbc-mysql`)
 * https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
 * https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
 * https://github.com/oracle/oracle-r2dbc[Oracle] (`com.oracle.database.r2dbc:oracle-r2dbc`)

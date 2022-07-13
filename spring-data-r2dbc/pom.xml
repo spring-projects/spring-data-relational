@@ -27,12 +27,12 @@
 
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<postgresql.version>42.4.0</postgresql.version>
-		<mysql.version>8.0.29</mysql.version>
-		<r2dbc-spi-test.version>0.9.1.RELEASE</r2dbc-spi-test.version>
-		<mariadb-jdbc.version>2.5.4</mariadb-jdbc.version>
-		<r2dbc-releasetrain.version>Borca-SR1</r2dbc-releasetrain.version>
-		<reactive-streams.version>1.0.3</reactive-streams.version>
-		<netty>4.1.75.Final</netty>
+		<r2dbc-postgresql.version>1.0.0.RC1</r2dbc-postgresql.version>
+		<r2dbc-h2.version>1.0.0.RC1</r2dbc-h2.version>
+		<oracle-r2dbc.version>1.0.0</oracle-r2dbc.version>
+		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
+		<reactive-streams.version>1.0.4</reactive-streams.version>
+		<netty>4.1.79.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
@@ -64,13 +64,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>io.r2dbc</groupId>
-				<artifactId>r2dbc-bom</artifactId>
-				<version>${r2dbc-releasetrain.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
@@ -135,6 +128,7 @@
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-spi</artifactId>
+			<version>${r2dbc-spi.version}</version>
 		</dependency>
 
 		<dependency>
@@ -190,20 +184,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${mysql.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mariadb.jdbc</groupId>
-			<artifactId>mariadb-java-client</artifactId>
-			<version>${mariadb-jdbc.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql.version}</version>
@@ -213,7 +193,7 @@
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc11</artifactId>
-			<version>21.6.0.0.1</version>
+			<version>21.5.0.0</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -222,38 +202,28 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>r2dbc-postgresql</artifactId>
+			<version>${r2dbc-postgresql.version}</version>
 			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-h2</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>io.r2dbc</groupId>
-			<artifactId>r2dbc-mssql</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mariadb</groupId>
-			<artifactId>r2dbc-mariadb</artifactId>
+			<version>${r2dbc-h2.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.oracle.database.r2dbc</groupId>
 			<artifactId>oracle-r2dbc</artifactId>
-			<version>0.4.0</version>
+			<version>${oracle-r2dbc.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-spi-test</artifactId>
-			<version>${r2dbc-spi-test.version}</version>
+			<version>${r2dbc-spi.version}</version>
 			<scope>test</scope>
 		</dependency>
 

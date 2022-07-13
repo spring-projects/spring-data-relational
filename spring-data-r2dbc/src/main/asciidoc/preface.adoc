@@ -48,7 +48,7 @@ While the open source ecosystem hosts various non-blocking relational database d
 [[get-started:first-steps:reactive]]
 == What is Reactive?
 
-The term, "`reactive`", refers to programming models that are built around reacting to change, availability, and processability -— network components reacting to I/O events, UI controllers reacting to mouse events, resources being made available, and others.
+The term, "`reactive`", refers to programming models that are built around reacting to change, availability, and processability-network components reacting to I/O events, UI controllers reacting to mouse events, resources being made available, and others.
 In that sense, non-blocking is reactive, because, instead of being blocked, we are now in the mode of reacting to notifications as operations complete or data becomes available.
 
 There is also another important mechanism that we on the Spring team associate with reactive, and that is non-blocking back pressure.
@@ -62,7 +62,7 @@ The main purpose of Reactive Streams is to let the subscriber control how quickl
 [[get-started:first-steps:reactive-api]]
 == Reactive API
 
-Reactive Streams plays an important role for interoperability. It is of interest to libraries and infrastructure components but less useful as an application API, because it is too low-level.
+Reactive Streams plays an important role for interoperability.It is of interest to libraries and infrastructure components but less useful as an application API, because it is too low-level.
 Applications need a higher-level and richer, functional API to compose async logic —- similar to the Java 8 Stream API but not only for tables.
 This is the role that reactive libraries play.
 
@@ -79,9 +79,9 @@ Whenever feasible, Spring Data adapts transparently to the use of RxJava or anot
 [[requirements]]
 == Requirements
 
-The Spring Data R2DBC 1.x binaries require:
+The Spring Data R2DBC 3.x binaries require:
 
-* JDK level 8.0 and above
+* JDK level 17 and above
 * https://spring.io/docs[Spring Framework] {springVersion} and above
 * https://r2dbc.io[R2DBC] {r2dbcVersion} and above
 
@@ -97,7 +97,7 @@ Community Forum :: Spring Data on https://stackoverflow.com/questions/tagged/spr
 Note that registration is needed only for posting.
 
 [[get-started:help:professional]]
-Professional Support :: Professional, from-the-source support, with guaranteed response time, is available from https://pivotal.io/[Pivotal Sofware, Inc.], the company behind Spring Data and Spring.
+Professional Support :: Professional, from-the-source support, with guaranteed response time, is available from https://pivotal.io/[Pivotal Software, Inc.], the company behind Spring Data and Spring.
 
 [[get-started:up-to-date]]
 == Following Development

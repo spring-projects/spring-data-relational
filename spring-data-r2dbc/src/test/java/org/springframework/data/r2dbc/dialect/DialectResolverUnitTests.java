@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
-import io.r2dbc.mssql.MssqlConnectionConfiguration;
-import io.r2dbc.mssql.MssqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.Connection;
@@ -36,12 +34,9 @@ public class DialectResolverUnitTests {
 
 		PostgresqlConnectionFactory postgres = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
 				.host("localhost").database("foo").username("bar").password("password").build());
-		MssqlConnectionFactory mssql = new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host("localhost")
-				.database("foo").username("bar").password("password").build());
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
-		assertThat(DialectResolver.getDialect(mssql)).isEqualTo(SqlServerDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
 	}
 

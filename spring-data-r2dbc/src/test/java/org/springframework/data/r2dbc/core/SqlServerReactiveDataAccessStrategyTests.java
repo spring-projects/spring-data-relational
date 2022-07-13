@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
 
 /**
