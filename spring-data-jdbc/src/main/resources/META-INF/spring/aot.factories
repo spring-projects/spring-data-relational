@@ -1,2 +1,2 @@
 org.springframework.aot.hint.RuntimeHintsRegistrar=\
-	org.springframework.data.jdbc.aot.JdbcRuntimeHintsRegistrar
+	org.springframework.data.jdbc.aot.JdbcRuntimeHints

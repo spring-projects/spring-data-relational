@@ -33,7 +33,7 @@ import org.springframework.data.r2dbc.repository.support.SimpleR2dbcRepository;
  * @author Christoph Strobl
  * @since 3.0
  */
-class R2dbcRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
+class R2dbcRuntimeHints implements RuntimeHintsRegistrar {
 
 	@Override
 	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {

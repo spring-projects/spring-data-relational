@@ -28,10 +28,12 @@ import org.springframework.util.ClassUtils;
  */
 class RelationalManagedTypesBeanRegistrationAotProcessor extends ManagedTypesBeanRegistrationAotProcessor {
 
+	@Override
 	protected boolean isMatch(@Nullable Class<?> beanType, @Nullable String beanName) {
 		return this.matchesByType(beanType);
 	}
 
+	@Override
 	protected boolean matchesByType(@Nullable Class<?> beanType) {
 		return beanType != null && ClassUtils.isAssignable(RelationalManagedTypes.class, beanType);
 	}
