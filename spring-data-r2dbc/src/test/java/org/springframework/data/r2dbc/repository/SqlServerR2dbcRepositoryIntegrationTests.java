@@ -21,7 +21,6 @@ import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -45,7 +44,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
-@Disabled("Requires 1.0 driver")
 public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 
 	@RegisterExtension public static final ExternalDatabase database = SqlServerTestSupport.database();
@@ -82,7 +80,7 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 		return SqlServerLegoSetRepository.class;
 	}
 
-	@Ignore("SQL server locks a SELECT COUNT so we cannot proceed.")
+	@Disabled("SQL server locks a SELECT COUNT so we cannot proceed.")
 	@Override
 	public void shouldInsertItemsTransactional() {}
 

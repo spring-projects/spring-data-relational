@@ -17,9 +17,14 @@ package org.springframework.data.r2dbc.testing;
 
 import io.r2dbc.spi.ConnectionFactory;
 
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import javax.sql.DataSource;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
+
+import org.testcontainers.containers.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
@@ -31,6 +36,9 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  * @author Jens Schauder
  */
 public class SqlServerTestSupport {
+
+	private static ExternalDatabase testContainerDatabase;
+
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
@@ -59,14 +67,37 @@ public class SqlServerTestSupport {
 	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE LegoSet";
 
 	/**
-	 * Returns a locally provided database at {@code sqlserver:@localhost:1433/master}.
+	 * Returns a database either hosted locally at {@code jdbc:sqlserver://localhost:1433;database=master;} or running
+	 * inside Docker.
 	 */
 	public static ExternalDatabase database() {
-		return local();
+
+		if (Boolean.getBoolean("spring.data.r2dbc.test.preferLocalDatabase")) {
+
+			return getFirstWorkingDatabase( //
+					SqlServerTestSupport::local, //
+					SqlServerTestSupport::testContainer //
+			);
+		} else {
+
+			return getFirstWorkingDatabase( //
+					SqlServerTestSupport::testContainer, //
+					SqlServerTestSupport::local //
+			);
+		}
+	}
+
+	@SafeVarargs
+	private static ExternalDatabase getFirstWorkingDatabase(Supplier<ExternalDatabase>... suppliers) {
+
+		return Stream.of(suppliers).map(Supplier::get) //
+				.filter(ExternalDatabase::checkValidity) //
+				.findFirst() //
+				.orElse(ExternalDatabase.unavailable());
 	}
 
 	/**
-	 * Returns a locally provided database at {@code sqlserver:@localhost:1433/master}.
+	 * Returns a locally provided database at {@code jdbc:sqlserver://localhost:1433;database=master}.
 	 */
 	private static ExternalDatabase local() {
 
@@ -76,7 +107,39 @@ public class SqlServerTestSupport {
 				.database("master") //
 				.username("sa") //
 				.password("A_Str0ng_Required_Password") //
+				.jdbcUrl("jdbc:sqlserver://localhost:1433;database=master;encrypt=false")
 				.build();
+	}
+
+	/**
+	 * Returns a database provided via Testcontainers.
+	 */
+	@SuppressWarnings("rawtypes")
+	private static ExternalDatabase testContainer() {
+
+		if (testContainerDatabase == null) {
+
+			try {
+				MSSQLServerContainer<?> container = new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2022-latest") {
+					@Override
+					public String getDatabaseName() {
+						return "master";
+					}
+				};
+				container.withReuse(true);
+				container.withUrlParam("encrypt", "false");
+				container.start();
+
+				testContainerDatabase = ProvidedDatabase.builder(container).database(container.getDatabaseName()).build();
+
+			} catch (IllegalStateException ise) {
+				// docker not available.
+				testContainerDatabase = ExternalDatabase.unavailable();
+			}
+
+		}
+
+		return testContainerDatabase;
 	}
 
 	/**

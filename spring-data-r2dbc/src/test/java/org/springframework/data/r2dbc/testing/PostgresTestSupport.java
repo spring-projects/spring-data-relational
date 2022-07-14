@@ -63,8 +63,10 @@ public class PostgresTestSupport {
 			+ ");";
 
 	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE \"LegoSet\"";
+
 	/**
-	 * Returns a database either hosted locally at {@code postgres:@localhost:5432/postgres} or running inside Docker.
+	 * Returns a database either hosted locally at {@code jdbc:postgres//localhost:5432/postgres} or running inside
+	 * Docker.
 	 *
 	 * @return information about the database. Guaranteed to be not {@literal null}.
 	 */
