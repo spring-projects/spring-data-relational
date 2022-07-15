@@ -515,7 +515,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingName() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(0, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
 		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
@@ -549,10 +549,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingGlobalStringMatcher() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(1, 'Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(2, 'Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(3, 'Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(4, 'Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -634,10 +634,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleIgnoringCase() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(1, 'Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(2, 'Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(3, 'Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(4, 'Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -665,10 +665,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldFailSelectByExampleWhenUsingRegEx() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(1, 'Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(2, 'Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(3, 'Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(4, 'Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -702,10 +702,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleIncludingNull() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, extra, manual) VALUES(1, 'Moon space base', 'base', 12)");
-		jdbc.execute("INSERT INTO legoset (id, name, extra, manual) VALUES(2, 'Mars space base', 'base', 13)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(3, 'Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(4, 'Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO legoset (name, extra, manual) VALUES('Moon space base', 'base', 12)");
+		jdbc.execute("INSERT INTO legoset (name, extra, manual) VALUES( 'Mars space base', 'base', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setExtra("base");
@@ -722,10 +722,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleWithAnyMatching() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(1, 'Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(2, 'Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(3, 'Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(4, 'Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSet legoSet = new LegoSet();
 		legoSet.setName("Moon space base");
