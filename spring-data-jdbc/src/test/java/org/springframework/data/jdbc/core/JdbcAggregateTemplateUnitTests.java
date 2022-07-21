@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -62,7 +63,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
 @ExtendWith(MockitoExtension.class)
 public class JdbcAggregateTemplateUnitTests {
 
-	JdbcAggregateOperations template;
+	JdbcAggregateTemplate template;
 
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher eventPublisher;
@@ -97,7 +98,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(template.findAllById(emptyList(), SampleEntity.class)).isEmpty();
 	}
 
-	@Test // DATAJDBC-393
+	@Test // DATAJDBC-393, GH-1291
 	public void callbackOnSave() {
 
 		SampleEntity first = new SampleEntity(null, "Alfred");
@@ -112,6 +113,22 @@ public class JdbcAggregateTemplateUnitTests {
 		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterSaveCallback.class, third);
 		assertThat(last).isEqualTo(third);
+		verify(eventPublisher, times(3)).publishEvent(any(Object.class));
+	}
+
+	@Test // GH-1291
+	public void doesNotEmitEvents() {
+
+		SampleEntity first = new SampleEntity(null, "Alfred");
+		SampleEntity second = new SampleEntity(23L, "Alfred E.");
+		SampleEntity third = new SampleEntity(23L, "Neumann");
+
+		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second, third);
+
+		template.setEntityLifecycleEventsEnabled(false);
+		template.save(first);
+
+		verifyNoInteractions(eventPublisher);
 	}
 
 	@Test // GH-1137

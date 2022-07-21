@@ -829,6 +829,10 @@ Note that the type used for prefixing the statement name is the name of the aggr
 == Lifecycle Events
 
 Spring Data JDBC triggers events that get published to any matching `ApplicationListener` beans in the application context.
+
+Entity lifecycle events can be costly and you may notice a change in the performance profile when loading large result sets.
+You can disable lifecycle events on the link:{javadoc-base}org/springframework/data/jdbc/core/JdbcAggregateTemplate.html#setEntityLifecycleEventsEnabled(boolean)[Template API].
+
 For example, the following listener gets invoked before an aggregate gets saved:
 
 ====

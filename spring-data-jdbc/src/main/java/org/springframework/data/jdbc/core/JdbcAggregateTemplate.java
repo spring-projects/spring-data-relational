@@ -34,6 +34,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.EntityLifecycleEventDelegate;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.BatchingAggregateChange;
 import org.springframework.data.relational.core.conversion.DeleteAggregateChange;
@@ -67,7 +68,7 @@ import org.springframework.util.ClassUtils;
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
-	private final ApplicationEventPublisher publisher;
+	private final EntityLifecycleEventDelegate eventDelegate = new EntityLifecycleEventDelegate();
 	private final RelationalMappingContext context;
 
 	private final RelationalEntityDeleteWriter jdbcEntityDeleteWriter;
@@ -95,7 +96,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(converter, "RelationalConverter must not be null");
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
 
-		this.publisher = publisher;
+		this.eventDelegate.setPublisher(publisher);
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
 		this.converter = converter;
@@ -123,7 +124,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(converter, "RelationalConverter must not be null");
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
 
-		this.publisher = publisher;
+		this.eventDelegate.setPublisher(publisher);
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
 		this.converter = converter;
@@ -143,6 +144,18 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(entityCallbacks, "Callbacks must not be null");
 
 		this.entityCallbacks = entityCallbacks;
+	}
+
+	/**
+	 * Configure whether lifecycle events such as {@link AfterSaveEvent}, {@link BeforeSaveEvent}, etc. should be
+	 * published or whether emission should be suppressed. Enabled by default.
+	 *
+	 * @param enabled {@code true} to enable entity lifecycle events; {@code false} to disable entity lifecycle events.
+	 * @since 3.0
+	 * @see AbstractRelationalEvent
+	 */
+	public void setEntityLifecycleEventsEnabled(boolean enabled) {
+		this.eventDelegate.setEventsEnabled(enabled);
 	}
 
 	@Override
@@ -529,34 +542,32 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> T triggerAfterConvert(T entity) {
 
-		publisher.publishEvent(new AfterConvertEvent<>(entity));
+		eventDelegate.publishEvent(() -> new AfterConvertEvent<>(entity));
 		return entityCallbacks.callback(AfterConvertCallback.class, entity);
 	}
 
 	private <T> T triggerBeforeConvert(T aggregateRoot) {
 
-		publisher.publishEvent(new BeforeConvertEvent<>(aggregateRoot));
-
+		eventDelegate.publishEvent(() -> new BeforeConvertEvent<>(aggregateRoot));
 		return entityCallbacks.callback(BeforeConvertCallback.class, aggregateRoot);
 	}
 
 	private <T> T triggerBeforeSave(T aggregateRoot, AggregateChange<T> change) {
 
-		publisher.publishEvent(new BeforeSaveEvent<>(aggregateRoot, change));
+		eventDelegate.publishEvent(() -> new BeforeSaveEvent<>(aggregateRoot, change));
 
 		return entityCallbacks.callback(BeforeSaveCallback.class, aggregateRoot, change);
 	}
 
 	private <T> T triggerAfterSave(T aggregateRoot, AggregateChange<T> change) {
 
-		publisher.publishEvent(new AfterSaveEvent<>(aggregateRoot, change));
-
+		eventDelegate.publishEvent(() -> new AfterSaveEvent<>(aggregateRoot, change));
 		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot);
 	}
 
 	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<T> change) {
 
-		publisher.publishEvent(new AfterDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
+		eventDelegate.publishEvent(() -> new AfterDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
 
 		if (aggregateRoot != null) {
 			entityCallbacks.callback(AfterDeleteCallback.class, aggregateRoot);
@@ -566,7 +577,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Nullable
 	private <T> T triggerBeforeDelete(@Nullable T aggregateRoot, Object id, MutableAggregateChange<T> change) {
 
-		publisher.publishEvent(new BeforeDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
+		eventDelegate.publishEvent(() -> new BeforeDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
 
 		if (aggregateRoot != null) {
 			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, change);
