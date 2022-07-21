@@ -67,7 +67,7 @@ public class H2Dialect extends AbstractDialect {
 		 */
 		@Override
 		public String getLimitOffset(long limit, long offset) {
-			return String.format("LIMIT %d OFFSET %d", limit, offset);
+			return String.format("OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", offset, limit);
 		}
 
 		/*
