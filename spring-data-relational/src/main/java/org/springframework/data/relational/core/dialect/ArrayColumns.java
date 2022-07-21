@@ -58,4 +58,21 @@ public interface ArrayColumns {
 			throw new UnsupportedOperationException("Array types not supported");
 		}
 	}
+
+	/**
+	 * Unwrap the nested {@link Class#getComponentType()} from a given {@link Class}.
+	 *
+	 * @param clazz the type to inspect.
+	 * @return the unwrapped component type.
+	 * @since 3.0
+	 */
+	static Class<?> unwrapComponentType(Class<?> clazz) {
+
+		Class<?> componentType = clazz;
+		while (componentType.isArray()) {
+			componentType = componentType.getComponentType();
+		}
+
+		return componentType;
+	}
 }

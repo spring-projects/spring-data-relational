@@ -23,19 +23,14 @@ import org.springframework.data.relational.core.dialect.ArrayColumns;
  * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC-specific functionality.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 2.3
  */
 public interface JdbcArrayColumns extends ArrayColumns {
 
 	@Override
 	default Class<?> getArrayType(Class<?> userType) {
-
-		Class<?> componentType = userType;
-		while (componentType.isArray()) {
-			componentType = componentType.getComponentType();
-		}
-
-		return componentType;
+		return ArrayColumns.unwrapComponentType(userType);
 	}
 
 	/**
