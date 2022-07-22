@@ -9,6 +9,7 @@ ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1
 :reactiveStreamsJavadoc: https://www.reactive-streams.org/reactive-streams-{reactiveStreamsVersion}-javadoc
 :example-root: ../../../src/test/java/org/springframework/data/r2dbc/documentation
 :tabsize: 2
+:include-xml-namespaces: false
 
 (C) 2018-2022 The original authors.
 

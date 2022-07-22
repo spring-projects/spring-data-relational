@@ -6,6 +6,7 @@ Jens Schauder, Jay Bryant, Mark Paluch, Bastian Wilhelm
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
 :spring-data-commons-docs: ../../../../../spring-data-commons/src/main/asciidoc
 :spring-framework-docs: https://docs.spring.io/spring-framework/docs/{springVersion}/reference/html
+:include-xml-namespaces: false
 
 (C) 2018-2022 The original authors.
 
@@ -28,7 +29,6 @@ include::jdbc.adoc[leveloffset=+1]
 
 :numbered!:
 include::glossary.adoc[leveloffset=+1]
-include::{spring-data-commons-docs}/repository-namespace-reference.adoc[leveloffset=+1]
 include::{spring-data-commons-docs}/repository-populator-namespace-reference.adoc[leveloffset=+1]
 include::{spring-data-commons-docs}/repository-query-keywords-reference.adoc[leveloffset=+1]
 include::{spring-data-commons-docs}/repository-query-return-types-reference.adoc[leveloffset=+1]
