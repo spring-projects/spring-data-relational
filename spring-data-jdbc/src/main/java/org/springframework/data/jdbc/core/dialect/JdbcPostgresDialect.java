@@ -38,11 +38,11 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 		return ARRAY_COLUMNS;
 	}
 
-	static class JdbcPostgresArrayColumns extends PostgresArrayColumns implements JdbcArrayColumns {
+	static class JdbcPostgresArrayColumns implements JdbcArrayColumns {
 
 		@Override
-		public Class<?> getArrayType(Class<?> userType) {
-			return JdbcArrayColumns.super.getArrayType(userType);
+		public boolean isSupported() {
+			return true;
 		}
 
 		@Override

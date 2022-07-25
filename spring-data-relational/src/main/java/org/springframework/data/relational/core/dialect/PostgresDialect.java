@@ -32,7 +32,6 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
-import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -76,7 +75,7 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	};
 
-	private final PostgresArrayColumns ARRAY_COLUMNS = new PostgresArrayColumns();
+	private static final ObjectArrayColumns ARRAY_COLUMNS = ObjectArrayColumns.INSTANCE;
 
 	@Override
 	public LimitClause limit() {
@@ -146,22 +145,6 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	}
 
-	protected static class PostgresArrayColumns implements ArrayColumns {
-
-		@Override
-		public boolean isSupported() {
-			return true;
-		}
-
-		@Override
-		public Class<?> getArrayType(Class<?> userType) {
-
-			Assert.notNull(userType, "Array component type must not be null");
-
-			return ClassUtils.resolvePrimitiveIfNecessary(userType);
-		}
-	}
-
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
@@ -179,7 +162,7 @@ public class PostgresDialect extends AbstractDialect {
 				"org.postgresql.geometric.PGline", //
 				"org.postgresql.geometric.PGpath", //
 				"org.postgresql.geometric.PGpolygon", //
-				"org.postgresql.geometric.PGlseg"  //
+				"org.postgresql.geometric.PGlseg" //
 		);
 		simpleTypeNames.forEach(name -> ifClassPresent(name, simpleTypes::add));
 		return Collections.unmodifiableSet(simpleTypes);

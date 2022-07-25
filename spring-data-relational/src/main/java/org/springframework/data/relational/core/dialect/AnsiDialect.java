@@ -17,8 +17,6 @@ package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
  * An SQL dialect for the ANSI SQL standard.
@@ -72,7 +70,7 @@ public class AnsiDialect extends AbstractDialect {
 		}
 	};
 
-	private final AnsiArrayColumns ARRAY_COLUMNS = new AnsiArrayColumns();
+	private final ArrayColumns ARRAY_COLUMNS = ObjectArrayColumns.INSTANCE;
 
 	@Override
 	public LimitClause limit() {
@@ -87,22 +85,6 @@ public class AnsiDialect extends AbstractDialect {
 	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
-	}
-
-	static class AnsiArrayColumns implements ArrayColumns {
-
-		@Override
-		public boolean isSupported() {
-			return true;
-		}
-
-		@Override
-		public Class<?> getArrayType(Class<?> userType) {
-
-			Assert.notNull(userType, "Array component type must not be null");
-
-			return ClassUtils.resolvePrimitiveIfNecessary(userType);
-		}
 	}
 
 	@Override

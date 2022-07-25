@@ -24,8 +24,8 @@ import org.springframework.data.geo.Box;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Point;
 import org.springframework.data.geo.Polygon;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
+import org.springframework.data.relational.core.dialect.ObjectArrayColumns;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.NonNull;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
@@ -79,9 +79,8 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 
 	private static final BindMarkersFactory INDEXED = BindMarkersFactory.indexed("$", 1);
 
-	private final Lazy<ArrayColumns> arrayColumns = Lazy.of(() -> new R2dbcArrayColumns(
-			org.springframework.data.relational.core.dialect.PostgresDialect.INSTANCE.getArraySupport(),
-			getSimpleTypeHolder()));
+	private final Lazy<ArrayColumns> arrayColumns = Lazy
+			.of(() -> new SimpleTypeArrayColumns(ObjectArrayColumns.INSTANCE, getSimpleTypeHolder()));
 
 	/*
 	 * (non-Javadoc)
@@ -135,37 +134,6 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 		}
 
 		return converters;
-	}
-
-	private static class R2dbcArrayColumns implements ArrayColumns {
-
-		private final ArrayColumns delegate;
-		private final SimpleTypeHolder simpleTypeHolder;
-
-		R2dbcArrayColumns(ArrayColumns delegate, SimpleTypeHolder simpleTypeHolder) {
-			this.delegate = delegate;
-			this.simpleTypeHolder = simpleTypeHolder;
-		}
-
-		@Override
-		public boolean isSupported() {
-			return this.delegate.isSupported();
-		}
-
-		@Override
-		public Class<?> getArrayType(Class<?> userType) {
-
-			Class<?> typeToUse = userType;
-			while (typeToUse.getComponentType() != null) {
-				typeToUse = typeToUse.getComponentType();
-			}
-
-			if (!this.simpleTypeHolder.isSimpleType(typeToUse)) {
-				throw new IllegalArgumentException("Unsupported array type: " + ClassUtils.getQualifiedName(typeToUse));
-			}
-
-			return this.delegate.getArrayType(typeToUse);
-		}
 	}
 
 	/**
