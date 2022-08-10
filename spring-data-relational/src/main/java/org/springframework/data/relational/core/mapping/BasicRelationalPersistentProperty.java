@@ -137,11 +137,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
-	public boolean isReference() {
-		return false;
-	}
-
-	@Override
 	public SqlIdentifier getColumnName() {
 		return columnName.get();
 	}

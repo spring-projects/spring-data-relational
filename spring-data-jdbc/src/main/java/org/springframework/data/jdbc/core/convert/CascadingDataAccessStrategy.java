@@ -53,11 +53,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-		return collect(das -> das.insert(instance, domainType, identifier));
-	}
-
-	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 		return collect(das -> das.insert(instance, domainType, identifier, idValueSource));
 	}

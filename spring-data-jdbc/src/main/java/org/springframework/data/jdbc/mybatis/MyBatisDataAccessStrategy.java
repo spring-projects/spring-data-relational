@@ -145,15 +145,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-
-		MyBatisContext myBatisContext = new MyBatisContext(identifier, instance, domainType);
-		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
-
-		return myBatisContext.getId();
-	}
-
-	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
 		MyBatisContext myBatisContext = new MyBatisContext(identifier, instance, domainType);

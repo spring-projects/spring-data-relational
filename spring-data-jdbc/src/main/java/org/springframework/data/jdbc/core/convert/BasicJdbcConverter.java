@@ -168,12 +168,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	}
 
 	@Override
-	@Deprecated
-	public int getSqlType(RelationalPersistentProperty property) {
-		return JdbcUtil.sqlTypeFor(getColumnType(property));
-	}
-
-	@Override
 	public Class<?> getColumnType(RelationalPersistentProperty property) {
 		return doGetColumnType(property);
 	}
@@ -259,12 +253,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(value.getClass());
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
-	}
-
-	@Override
-	@Deprecated
-	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
-		return writeJdbcValue(value, columnType, JdbcUtil.jdbcTypeFor(sqlType));
 	}
 
 	/*

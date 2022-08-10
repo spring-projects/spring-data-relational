@@ -26,6 +26,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * A {@link NamingStrategy} to cache the results of the target one.
  *
  * @author Oliver Drotbohm
+ * @author Jens Schauder
  * @since 1.1
  */
 class CachingNamingStrategy implements NamingStrategy {
@@ -55,12 +56,6 @@ class CachingNamingStrategy implements NamingStrategy {
 	@Override
 	public String getKeyColumn(RelationalPersistentProperty property) {
 		return keyColumns.computeIfAbsent(property, delegate::getKeyColumn);
-	}
-
-	@Override
-	@Deprecated
-	public String getQualifiedTableName(Class<?> type) {
-		return qualifiedTableNames.computeIfAbsent(type, delegate::getQualifiedTableName);
 	}
 
 	@Override

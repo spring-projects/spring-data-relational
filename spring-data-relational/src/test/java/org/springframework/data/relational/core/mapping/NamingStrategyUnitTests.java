@@ -72,21 +72,6 @@ public class NamingStrategyUnitTests {
 		assertThat(target.getSchema()).isEqualTo("");
 	}
 
-	@Test
-	public void getQualifiedTableName() {
-
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
-
-		NamingStrategy strategy = new NamingStrategy() {
-			@Override
-			public String getSchema() {
-				return "schema";
-			}
-		};
-
-		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.dummy_entity");
-	}
-
 	static class DummyEntity {
 
 		@Id int id;

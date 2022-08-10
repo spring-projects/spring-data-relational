@@ -23,6 +23,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  *
  * @author Mark Paluch
  * @author Mikhail Polivakha
+ * @author Jens Schauder
  * @since 1.1
  */
 public interface RenderContext {
@@ -44,17 +45,8 @@ public interface RenderContext {
 
 	/**
 	 * @return the {@link SelectRenderContext}.
-	 * @deprecated Use {@link #getInsertRenderContext()} instead.
 	 */
-	@Deprecated
-	SelectRenderContext getSelect();
-
-	/**
-	 * @return the {@link SelectRenderContext}.
-	 */
-	default SelectRenderContext getSelectRenderContext() {
-		return getSelect();
-	}
+	SelectRenderContext getSelectRenderContext();
 
 	/**
 	 * @return the {@link InsertRenderContext}

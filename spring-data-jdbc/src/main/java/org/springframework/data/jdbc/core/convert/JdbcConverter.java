@@ -1,4 +1,4 @@
-/*
+	/*
  * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,17 +34,6 @@ import org.springframework.lang.Nullable;
  * @since 1.1
  */
 public interface JdbcConverter extends RelationalConverter {
-
-	/**
-	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind it
-	 * to JDBC parameters.
-	 *
-	 * @param value a value as it is used in the object model. May be {@code null}.
-	 * @param type {@literal Class} into which the value is to be converted. Must not be {@code null}.
-	 * @param sqlType the type constant from {@link java.sql.Types} to be used if non is specified by a converter.
-	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
-	 */
-	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
 
 	/**
 	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind it
@@ -99,8 +88,4 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @since 2.0
 	 */
 	SQLType getTargetSqlType(RelationalPersistentProperty property);
-
-	@Deprecated
-	int getSqlType(RelationalPersistentProperty property);
-
 }

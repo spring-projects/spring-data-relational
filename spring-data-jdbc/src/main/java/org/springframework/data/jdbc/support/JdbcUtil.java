@@ -88,27 +88,6 @@ public final class JdbcUtil {
 	}
 
 	/**
-	 * Returns the {@link Types} value suitable for passing a value of the provided type to a
-	 * {@link java.sql.PreparedStatement}.
-	 *
-	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
-	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
-	 * @deprecated use {@link #targetSqlTypeFor(Class)} instead.
-	 */
-	@Deprecated
-	public static int sqlTypeFor(Class<?> type) {
-
-		Assert.notNull(type, "Type must not be null");
-
-		return sqlTypeMappings.keySet().stream() //
-				.filter(k -> k.isAssignableFrom(type)) //
-				.findFirst() //
-				.map(sqlTypeMappings::get) //
-				.map(SQLType::getVendorTypeNumber)
-				.orElse(JdbcUtils.TYPE_UNKNOWN);
-	}
-
-	/**
 	 * Returns the {@link SQLType} value suitable for passing a value of the provided type to JDBC driver.
 	 *
 	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
@@ -123,50 +102,5 @@ public final class JdbcUtil {
 				.findFirst() //
 				.map(sqlTypeMappings::get) //
 				.orElse(JdbcUtil.TYPE_UNKNOWN);
-	}
-
-	/**
-	 * Converts a {@link JDBCType} to an {@code int} value as defined in {@link Types}.
-	 *
-	 * @param jdbcType value to be converted. May be {@literal null}.
-	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
-	 * @deprecated there is no replacement.
-	 */
-	@Deprecated
-	public static int sqlTypeFor(@Nullable SQLType jdbcType) {
-		return jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
-	}
-
-	/**
-	 * Converts a value defined in {@link Types} into a {@link JDBCType} instance or {@literal null} if the value is
-	 * {@link JdbcUtils#TYPE_UNKNOWN}
-	 *
-	 * @param sqlType One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
-	 * @return a matching {@link JDBCType} instance or {@literal null}.
-	 * @deprecated This is now a noop
-	 */
-	@Nullable
-	@Deprecated
-	public static SQLType jdbcTypeFor(int sqlType) {
-
-		if (sqlType == JdbcUtils.TYPE_UNKNOWN) {
-			return null;
-		}
-
-		return JDBCType.valueOf(sqlType);
-	}
-
-	/**
-	 * Returns the {@link JDBCType} suitable for passing a value of the provided type to a
-	 * {@link java.sql.PreparedStatement}.
-	 *
-	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
-	 * @return a matching {@link JDBCType} instance or {@literal null}.
-	 * @deprecated Use {@link #targetSqlTypeFor(Class)} instead.
-	 */
-	@Deprecated
-	public static SQLType jdbcTypeFor(Class<?> type) {
-
-		return targetSqlTypeFor(type);
 	}
 }
