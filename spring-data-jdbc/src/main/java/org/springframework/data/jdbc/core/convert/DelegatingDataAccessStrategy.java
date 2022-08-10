@@ -44,11 +44,6 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	private DataAccessStrategy delegate;
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-		return delegate.insert(instance, domainType, identifier);
-	}
-
-	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 		return delegate.insert(instance, domainType, identifier, idValueSource);
 	}

@@ -77,12 +77,6 @@ public class NamingStrategyUnitTests {
 		assertThat(target.getSchema()).isEqualTo("");
 	}
 
-	@Test // DATAJDBC-184
-	public void getQualifiedTableName() {
-
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
-	}
-
 	@Data
 	private static class DummyEntity {
 

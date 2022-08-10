@@ -23,6 +23,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * Default {@link RenderContext} implementation.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 final class SimpleRenderContext implements RenderContext {
@@ -36,11 +37,6 @@ final class SimpleRenderContext implements RenderContext {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.NONE;
-	}
-
-	@Override
-	public SelectRenderContext getSelect() {
-		return getSelectRenderContext();
 	}
 
 	@Override
@@ -64,7 +60,7 @@ final class SimpleRenderContext implements RenderContext {
 	}
 
 	enum DefaultSelectRenderContext implements SelectRenderContext {
-		INSTANCE;
+		INSTANCE
 	}
 
 }

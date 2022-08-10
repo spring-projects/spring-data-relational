@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Mikhail Polivakha
+ * @author Jens Schauder
  * @since 1.1
  */
 public class RenderContextFactory {
@@ -104,11 +105,6 @@ public class RenderContextFactory {
 		@Override
 		public IdentifierProcessing getIdentifierProcessing() {
 			return renderingDialect.getIdentifierProcessing();
-		}
-
-		@Override
-		public SelectRenderContext getSelect() {
-			return getSelectRenderContext();
 		}
 
 		@Override

@@ -99,13 +99,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(domainType);
-		return insert(instance, domainType, identifier, IdValueSource.forInstance(instance, persistentEntity));
-	}
-
-	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
