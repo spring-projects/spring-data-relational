@@ -380,7 +380,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			return (P) ((Mono<?>) result).flatMap(it -> maybeCallAfterConvert(it, tableName));
 		}
 
-		return (P) ((Flux<?>) result).flatMap(it -> maybeCallAfterConvert(it, tableName));
+		return (P) ((Flux<?>) result).concatMap(it -> maybeCallAfterConvert(it, tableName));
 	}
 
 	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
@@ -942,7 +942,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		@Override
 		public Flux<T> all() {
-			return delegate.all().flatMap(it -> maybeCallAfterConvert(it, tableName));
+			return delegate.all().concatMap(it -> maybeCallAfterConvert(it, tableName));
 		}
 	}
 
