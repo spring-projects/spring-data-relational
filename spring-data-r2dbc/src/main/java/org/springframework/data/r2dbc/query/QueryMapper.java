@@ -153,7 +153,8 @@ public class QueryMapper {
 	 */
 	public Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
 
-		if (entity == null || expression instanceof AsteriskFromTable) {
+		if (entity == null || expression instanceof AsteriskFromTable
+				|| expression instanceof Expressions.SimpleExpression) {
 			return expression;
 		}
 

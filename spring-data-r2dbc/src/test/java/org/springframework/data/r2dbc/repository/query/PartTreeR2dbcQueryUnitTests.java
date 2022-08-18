@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
@@ -49,10 +50,10 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -748,6 +749,32 @@ class PartTreeR2dbcQueryUnitTests {
 		verify(bindTarget, times(1)).bind(0, "John");
 	}
 
+	@Test // GH-1310
+	void createsQueryWithoutIdForCountProjection() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod(WithoutIdRepository.class, "countByFirstName", String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
+
+		PreparedOperationAssert.assertThat(query) //
+				.selects("COUNT(1)") //
+				.from(TABLE) //
+				.where(TABLE + ".first_name = $1");
+	}
+
+	@Test // GH-1310
+	void createsQueryWithoutIdForExistsProjection() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod(WithoutIdRepository.class, "existsByFirstName", String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
+
+		PreparedOperationAssert.assertThat(query) //
+				.selects("1") //
+				.from(TABLE) //
+				.where(TABLE + ".first_name = $1 LIMIT 1");
+	}
+
 	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,
 			Object... parameters) {
 		return createQuery(r2dbcQuery, getAccessor(queryMethod, parameters));
@@ -759,8 +786,13 @@ class PartTreeR2dbcQueryUnitTests {
 	}
 
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
-		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
-		return new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
+		return getQueryMethod(UserRepository.class, methodName, parameterTypes);
+	}
+
+	private R2dbcQueryMethod getQueryMethod(Class<?> repository, String methodName, Class<?>... parameterTypes)
+			throws Exception {
+		Method method = repository.getMethod(methodName, parameterTypes);
+		return new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(repository),
 				new SpelAwareProxyProjectionFactory(), mappingContext);
 	}
 
@@ -946,6 +978,13 @@ class PartTreeR2dbcQueryUnitTests {
 
 	}
 
+	interface WithoutIdRepository extends Repository<WithoutId, Long> {
+
+		Mono<Boolean> existsByFirstName(String firstName);
+
+		Mono<Long> countByFirstName(String firstName);
+	}
+
 	@Table("users")
 	@Data
 	private static class User {
@@ -956,6 +995,13 @@ class PartTreeR2dbcQueryUnitTests {
 		private Date dateOfBirth;
 		private Integer age;
 		private Boolean active;
+	}
+
+	@Table("users")
+	@Data
+	private static class WithoutId {
+
+		private String firstName;
 	}
 
 	interface UserProjection {

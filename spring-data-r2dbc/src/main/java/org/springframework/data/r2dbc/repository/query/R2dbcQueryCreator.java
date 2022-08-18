@@ -25,11 +25,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.StatementMapper;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
@@ -164,18 +169,14 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 				expressions.add(column);
 			}
 
-		} else if (tree.isExistsProjection()) {
-
-			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream() //
-					.map(table::column) //
-					.collect(Collectors.toList());
-		} else if (tree.isCountProjection()) {
+		} else if (tree.isExistsProjection() || tree.isCountProjection()) {
 
 			Expression countExpression = entityMetadata.getTableEntity().hasIdProperty()
 					? table.column(entityMetadata.getTableEntity().getRequiredIdProperty().getColumnName())
-					: Expressions.asterisk();
+					: Expressions.just("1");
 
-			expressions = Collections.singletonList(Functions.count(countExpression));
+			expressions = Collections
+					.singletonList(tree.isCountProjection() ? Functions.count(countExpression) : countExpression);
 		} else {
 			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream() //
 					.map(table::column) //

@@ -298,7 +298,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 					Expression countExpression = entity.hasIdProperty()
 							? table.column(entity.getRequiredIdProperty().getColumnName())
-							: Expressions.asterisk();
+							: Expressions.just("1");
 					return spec.withProjection(Functions.count(countExpression));
 				});
 
@@ -333,13 +333,14 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		RelationalPersistentEntity<?> entity = getRequiredEntity(entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
-		SqlIdentifier columnName = entity.hasIdProperty() ? entity.getRequiredIdProperty().getColumnName()
-				: SqlIdentifier.unquoted("*");
+		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(tableName).limit(1);
+		if (entity.hasIdProperty()) {
+			selectSpec = selectSpec //
+					.withProjection(entity.getRequiredIdProperty().getColumnName());
 
-		StatementMapper.SelectSpec selectSpec = statementMapper //
-				.createSelect(tableName) //
-				.withProjection(columnName) //
-				.limit(1);
+		} else {
+			selectSpec = selectSpec.withProjection(Expressions.just("1"));
+		}
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
