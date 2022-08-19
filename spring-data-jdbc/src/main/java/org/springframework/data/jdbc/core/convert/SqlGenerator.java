@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -783,10 +784,53 @@ class SqlGenerator {
 	}
 
 	private OrderByField orderToOrderByField(Sort.Order order) {
-
-		SqlIdentifier columnName = this.entity.getRequiredPersistentProperty(order.getProperty()).getColumnName();
+		SqlIdentifier columnName = getColumnNameToSortBy(order);
 		Column column = Column.create(columnName, this.getTable());
 		return OrderByField.from(column, order.getDirection()).withNullHandling(order.getNullHandling());
+	}
+
+	private SqlIdentifier getColumnNameToSortBy(Sort.Order order) {
+		SqlIdentifier columnName = null;
+		RelationalPersistentProperty propertyToSortBy = entity.getPersistentProperty(order.getProperty());
+		if (propertyToSortBy != null) {
+			return propertyToSortBy.getColumnName();
+		}
+
+		PersistentPropertyPath<RelationalPersistentProperty> persistentPropertyPath = mappingContext.getPersistentPropertyPath(
+				order.getProperty(), entity.getType()
+		);
+
+		propertyToSortBy = persistentPropertyPath.getBaseProperty();
+
+		if (propertyToSortBy == null || !propertyToSortBy.isEmbedded()) {
+			throwPropertyNotMarkedAsEmbeddedException(order);
+		} else {
+			RelationalPersistentEntity<?> embeddedEntity = mappingContext.getRequiredPersistentEntity(propertyToSortBy.getType());
+			columnName = embeddedEntity.getRequiredPersistentProperty(extractFieldNameFromEmbeddedProperty(order)).getColumnName();
+		}
+		return columnName;
+	}
+
+	private void throwPropertyNotMarkedAsEmbeddedException(Sort.Order order) {
+		throw new IllegalArgumentException(
+				String.format(
+						"Specified sorting property '%s' is expected to " +
+						"be the property, named '%s', of embedded entity '%s', but field '%s' is " +
+						"not marked with @Embedded",
+						order.getProperty(),
+						extractFieldNameFromEmbeddedProperty(order),
+						extractEmbeddedPropertyName(order),
+						extractEmbeddedPropertyName(order)
+				)
+		);
+	}
+
+	public String extractEmbeddedPropertyName(Sort.Order order) {
+		return order.getProperty().substring(0, order.getProperty().indexOf("."));
+	}
+
+	public String extractFieldNameFromEmbeddedProperty(Sort.Order order) {
+		return order.getProperty().substring(order.getProperty().indexOf(".") + 1);
 	}
 
 	/**
