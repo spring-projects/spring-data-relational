@@ -18,8 +18,12 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import lombok.NoArgsConstructor;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +31,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -39,11 +49,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
  * @author Christoph Strobl
+ * @author Mikhail Polivakha
  */
 @ContextConfiguration
 @Transactional
@@ -66,10 +79,21 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 
+		@Bean
+		PersonRepository personRepository() {
+			return factory.getRepository(PersonRepository.class);
+		}
+
+		@Bean
+		WithDotColumnRepo withDotColumnRepo() { return factory.getRepository(WithDotColumnRepo.class);}
+
 	}
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired PersonRepository personRepository;
+
+	@Autowired WithDotColumnRepo withDotColumnRepo;
 
 	@Test // DATAJDBC-111
 	public void savesAnEntity() {
@@ -220,6 +244,35 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 				"id = " + entity.getId())).isEqualTo(1);
 	}
 
+	@Test // GH-1286
+	public void findOrderedByEmbeddedProperty() {
+		Person first = new Person(null, "Bob", "Seattle", new PersonContacts("ddd@example.com", "+1 111 1111 11 11"));
+		Person second = new Person(null, "Alex", "LA", new PersonContacts("aaa@example.com", "+2 222 2222 22 22"));
+		Person third = new Person(null, "Sarah", "NY", new PersonContacts("ggg@example.com", "+3 333 3333 33 33"));
+
+		personRepository.saveAll(List.of(first, second, third));
+
+		Iterable<Person> fetchedPersons = personRepository.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "personContacts.email")));
+
+		Assertions.assertThat(fetchedPersons).hasSize(3);
+		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
+	}
+
+	@Test // GH-1286
+	public void sortingWorksCorrectlyIfColumnHasDotInItsName() {
+
+		WithDotColumn first = new WithDotColumn(null, "Salt Lake City");
+		WithDotColumn second = new WithDotColumn(null, "Istanbul");
+		WithDotColumn third = new WithDotColumn(null, "Tokyo");
+
+		withDotColumnRepo.saveAll(List.of(first, second, third));
+
+		Iterable<WithDotColumn> fetchedPersons = withDotColumnRepo.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "address")));
+
+		Assertions.assertThat(fetchedPersons).hasSize(3);
+		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
+	}
+
 	private static DummyEntity createDummyEntity() {
 		DummyEntity entity = new DummyEntity();
 
@@ -245,6 +298,43 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+
+	interface PersonRepository extends PagingAndSortingRepository<Person, Long>, CrudRepository<Person, Long> {}
+
+	interface WithDotColumnRepo extends PagingAndSortingRepository<WithDotColumn, Integer>, CrudRepository<WithDotColumn, Integer> {}
+
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	static class WithDotColumn {
+
+		@Id
+		private Integer id;
+		@Column("address.city")
+		private String address;
+	}
+
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Table("SORT_EMBEDDED_ENTITY")
+	static class Person {
+		@Id
+		private Long id;
+		private String firstName;
+		private String address;
+
+		@Embedded.Nullable
+		private PersonContacts personContacts;
+	}
+
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	static class PersonContacts {
+		private String email;
+		private String phoneNumber;
+	}
 
 	@Data
 	static class DummyEntity {
