@@ -866,11 +866,11 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 0L)))
 				.describedAs("saving an aggregate with an outdated version should raise an exception")
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+				.isInstanceOf(OptimisticLockingFailureException.class);
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 2L)))
 				.describedAs("saving an aggregate with a future version should raise an exception")
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+				.isInstanceOf(OptimisticLockingFailureException.class);
 	}
 
 	@Test // GH-1137
@@ -915,12 +915,12 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThatThrownBy(
 				() -> template.delete(new AggregateWithImmutableVersion(id, 0L), AggregateWithImmutableVersion.class))
 						.describedAs("deleting an aggregate with an outdated version should raise an exception")
-						.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+						.isInstanceOf(OptimisticLockingFailureException.class);
 
 		assertThatThrownBy(
 				() -> template.delete(new AggregateWithImmutableVersion(id, 2L), AggregateWithImmutableVersion.class))
 						.describedAs("deleting an aggregate with a future version should raise an exception")
-						.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+						.isInstanceOf(OptimisticLockingFailureException.class);
 
 		// This should succeed
 		template.delete(aggregate, AggregateWithImmutableVersion.class);
@@ -1060,12 +1060,12 @@ class JdbcAggregateTemplateIntegrationTests {
 		reloadedAggregate.setVersion(toConcreteNumber.apply(initialId));
 		assertThatThrownBy(() -> template.save(reloadedAggregate))
 				.withFailMessage("saving an aggregate with an outdated version should raise an exception")
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+				.isInstanceOf(OptimisticLockingFailureException.class);
 
 		reloadedAggregate.setVersion(toConcreteNumber.apply(initialId + 2));
 		assertThatThrownBy(() -> template.save(reloadedAggregate))
 				.withFailMessage("saving an aggregate with a future version should raise an exception")
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
+				.isInstanceOf(OptimisticLockingFailureException.class);
 	}
 
 	private Long count(String tableName) {

@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.AggregateChange;
@@ -110,6 +111,10 @@ class AggregateChangeExecutor {
 				throw new RuntimeException("unexpected action");
 			}
 		} catch (Exception e) {
+
+			if (e instanceof OptimisticLockingFailureException) {
+				throw e;
+			}
 			throw new DbActionExecutionException(action, e);
 		}
 	}
