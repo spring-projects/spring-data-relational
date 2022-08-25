@@ -41,7 +41,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Integration tests for {@link JdbcAggregateTemplate} using an entity mapped with an explicite schema.
+ * Integration tests for {@link JdbcAggregateTemplate} using an entity mapped with an explicit schema.
  *
  * @author Jens Schauder
  */
