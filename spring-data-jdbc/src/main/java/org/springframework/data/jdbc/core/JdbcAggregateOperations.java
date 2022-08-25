@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Optional;
 
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,8 @@ public interface JdbcAggregateOperations {
 	 * @param instance the aggregate root of the aggregate to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instance.
+	 * @throws IncorrectUpdateSemanticsDataAccessException when the instance is determined to be not new and the resulting
+	 *           update does not update any rows.
 	 */
 	<T> T save(T instance);
 
@@ -50,6 +53,8 @@ public interface JdbcAggregateOperations {
 	 * @param instances the aggregate roots to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instances.
+	 * @throws IncorrectUpdateSemanticsDataAccessException when at least one instance is determined to be not new and the
+	 *           resulting update does not update any rows.
 	 * @since 3.0
 	 */
 	<T> Iterable<T> saveAll(Iterable<T> instances);
@@ -78,6 +83,11 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Deletes a single Aggregate including all entities contained in that aggregate.
+	 * <p>
+	 * Since no version attribute is provided this method will never throw a
+	 * {@link org.springframework.dao.OptimisticLockingFailureException}. If no rows match the generated delete operation
+	 * this fact will be silently ignored.
+	 * </p>
 	 *
 	 * @param id the id of the aggregate root of the aggregate to be deleted. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root.
@@ -87,7 +97,12 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Deletes all aggregates identified by their aggregate root ids.
-	 *
+	 * <p>
+	 * Since no version attribute is provided this method will never throw a
+	 * {@link org.springframework.dao.OptimisticLockingFailureException}. If no rows match the generated delete operation
+	 * this fact will be silently ignored.
+	 * </p>
+	 * 
 	 * @param ids the ids of the aggregate roots of the aggregates to be deleted. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root.
 	 * @param <T> the type of the aggregate root.
@@ -100,6 +115,9 @@ public interface JdbcAggregateOperations {
 	 * @param aggregateRoot to delete. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and the
+	 *           version attribute of the provided entity does not match the version attribute in the database, or when
+	 *           there is no aggregate root with matching id. In other cases a NOOP delete is silently ignored.
 	 */
 	<T> void delete(T aggregateRoot, Class<T> domainType);
 
@@ -116,6 +134,9 @@ public interface JdbcAggregateOperations {
 	 * @param aggregateRoots to delete. Must not be {@code null}.
 	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate roots.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and for at least on entity the
+	 *           version attribute of the entity does not match the version attribute in the database, or when
+	 *           there is no aggregate root with matching id. In other cases a NOOP delete is silently ignored.
 	 */
 	<T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType);
 
