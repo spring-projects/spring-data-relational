@@ -139,7 +139,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
-		return operations.update(sql(domainType).getUpdate(), sqlParametersFactory.forUpdate(instance, domainType)) != 0;
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
+		if (parameterSource.size() <= 1) {
+			return true; // returning true, because conceptually the one row was correctly updated
+		}
+		return operations.update(sql(domainType).getUpdate(), parameterSource) != 0;
 	}
 
 	/*

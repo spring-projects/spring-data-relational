@@ -81,4 +81,8 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
 	}
+
+	int size() {
+		return namesToValues.size();
+	}
 }

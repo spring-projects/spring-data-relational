@@ -983,6 +983,16 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(template.save(entity).id).isNotNull();
 	}
 
+	@Test // GH-1309
+	void updateIdOnlyAggregate() {
+
+		WithIdOnly entity = new WithIdOnly();
+
+		assertThat(template.save(entity).id).isNotNull();
+
+		template.save(entity);
+	}
+
 	@Test // GH-1232
 	@EnabledOnFeature(IS_HSQL)
 	void beforeSaveCallbackEffectsAreVisibleForInsert() {
