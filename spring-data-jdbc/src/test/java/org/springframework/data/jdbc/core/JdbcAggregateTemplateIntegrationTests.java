@@ -1021,6 +1021,16 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(template.save(entity).id).isNotNull();
 	}
 
+	@Test // GH-1309
+	void updateIdOnlyAggregate() {
+
+		WithIdOnly entity = new WithIdOnly();
+
+		assertThat(template.save(entity).id).isNotNull();
+
+		template.save(entity);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1455,6 +1465,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	class WithIdOnly {
 		@Id Long id;
 	}
+
 
 	@Configuration
 	@Import(TestConfiguration.class)
