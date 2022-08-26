@@ -25,14 +25,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -110,7 +107,7 @@ public class SimpleJdbcRepository<T, ID>
 	@Transactional
 	@Override
 	public void delete(T instance) {
-		entityOperations.delete(instance, entity.getType());
+		entityOperations.delete(instance);
 	}
 
 	@Override
@@ -121,7 +118,7 @@ public class SimpleJdbcRepository<T, ID>
 	@Transactional
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
-		entityOperations.deleteAll(entities, entity.getType());
+		entityOperations.deleteAll(entities);
 	}
 
 	@Transactional

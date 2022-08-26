@@ -98,10 +98,22 @@ public interface JdbcAggregateOperations {
 	 * Delete an aggregate identified by its aggregate root.
 	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
-	 * @param domainType the type of the aggregate root. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 */
-	<T> void delete(T aggregateRoot, Class<T> domainType);
+	<T> void delete(T aggregateRoot);
+
+	/**
+	 * Delete an aggregate identified by its aggregate root.
+	 *
+	 * @param aggregateRoot to delete. Must not be {@code null}.
+	 * @param domainType the type of the aggregate root. Must not be {@code null}.
+	 * @param <T> the type of the aggregate root.
+	 * @deprecated since 3.0 use {@link #delete(Object)} instead
+	 */
+	@Deprecated
+	default <T> void delete(T aggregateRoot, Class<T> domainType) {
+		delete(aggregateRoot);
+	}
 
 	/**
 	 * Delete all aggregates of a given type.
@@ -114,10 +126,22 @@ public interface JdbcAggregateOperations {
 	 * Delete all aggregates identified by their aggregate roots.
 	 *
 	 * @param aggregateRoots to delete. Must not be {@code null}.
-	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate roots.
 	 */
-	<T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType);
+	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
+
+	/**
+	 * Delete all aggregates identified by their aggregate roots.
+	 *
+	 * @param aggregateRoots to delete. Must not be {@code null}.
+	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots.
+	 * @deprecated since 3.0 use {@link #deleteAll(Iterable)} instead.
+	 */
+	@Deprecated
+	default <T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType) {
+		deleteAll(aggregateRoots);
+	}
 
 	/**
 	 * Counts the number of aggregates of a given type.

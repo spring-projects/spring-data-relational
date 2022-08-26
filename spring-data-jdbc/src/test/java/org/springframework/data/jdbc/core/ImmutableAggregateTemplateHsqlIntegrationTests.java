@@ -161,7 +161,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		LegoSet saved = template.save(legoSet);
 
-		template.delete(saved, LegoSet.class);
+		template.delete(saved);
 
 		SoftAssertions softly = new SoftAssertions();
 
