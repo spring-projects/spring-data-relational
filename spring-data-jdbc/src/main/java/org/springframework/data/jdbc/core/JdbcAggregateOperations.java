@@ -102,7 +102,7 @@ public interface JdbcAggregateOperations {
 	 * {@link org.springframework.dao.OptimisticLockingFailureException}. If no rows match the generated delete operation
 	 * this fact will be silently ignored.
 	 * </p>
-	 * 
+	 *
 	 * @param ids the ids of the aggregate roots of the aggregates to be deleted. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root.
 	 * @param <T> the type of the aggregate root.
@@ -113,13 +113,25 @@ public interface JdbcAggregateOperations {
 	 * Delete an aggregate identified by its aggregate root.
 	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
+	 * @param <T> the type of the aggregate root.
+	 */
+	<T> void delete(T aggregateRoot);
+
+	/**
+	 * Delete an aggregate identified by its aggregate root.
+	 *
+	 * @param aggregateRoot to delete. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and the
 	 *           version attribute of the provided entity does not match the version attribute in the database, or when
 	 *           there is no aggregate root with matching id. In other cases a NOOP delete is silently ignored.
+	 * @deprecated since 3.0 use {@link #delete(Object)} instead
 	 */
-	<T> void delete(T aggregateRoot, Class<T> domainType);
+	@Deprecated
+	default <T> void delete(T aggregateRoot, Class<T> domainType) {
+		delete(aggregateRoot);
+	}
 
 	/**
 	 * Delete all aggregates of a given type.
@@ -132,13 +144,25 @@ public interface JdbcAggregateOperations {
 	 * Delete all aggregates identified by their aggregate roots.
 	 *
 	 * @param aggregateRoots to delete. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots.
+	 */
+	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
+
+	/**
+	 * Delete all aggregates identified by their aggregate roots.
+	 *
+	 * @param aggregateRoots to delete. Must not be {@code null}.
 	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate roots.
 	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and for at least on entity the
 	 *           version attribute of the entity does not match the version attribute in the database, or when
 	 *           there is no aggregate root with matching id. In other cases a NOOP delete is silently ignored.
+	 * @deprecated since 3.0 use {@link #deleteAll(Iterable)} instead.
 	 */
-	<T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType);
+	@Deprecated
+	default <T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType) {
+		deleteAll(aggregateRoots);
+	}
 
 	/**
 	 * Counts the number of aggregates of a given type.

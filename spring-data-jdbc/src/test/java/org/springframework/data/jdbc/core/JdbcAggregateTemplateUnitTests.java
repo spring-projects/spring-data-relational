@@ -30,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -247,7 +246,7 @@ public class JdbcAggregateTemplateUnitTests {
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
 		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
 
-		template.delete(entity, EntityWithImmutableVersion.class);
+		template.delete(entity);
 
 		ArgumentCaptor<Object> aggregateChangeCaptor = ArgumentCaptor.forClass(Object.class);
 		verify(callbacks).callback(eq(BeforeDeleteCallback.class), any(), aggregateChangeCaptor.capture());
@@ -264,7 +263,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second);
 
-		template.delete(first, SampleEntity.class);
+		template.delete(first);
 
 		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterDeleteCallback.class, second);

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -303,11 +304,11 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <S> void delete(S aggregateRoot, Class<S> domainType) {
+	public <S> void delete(S aggregateRoot) {
 
 		Assert.notNull(aggregateRoot, "Aggregate root must not be null");
-		Assert.notNull(domainType, "Domain type must not be null");
 
+		Class<S> domainType = (Class<S>) aggregateRoot.getClass();
 		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
 				.getIdentifierAccessor(aggregateRoot);
 
@@ -353,9 +354,25 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> void deleteAll(Iterable<? extends T> instances, Class<T> domainType) {
+	public <T> void deleteAll(Iterable<? extends T> instances) {
 
 		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
+
+		Map<Class, List<Object>> groupedByType = new HashMap<>();
+
+		for (T instance : instances) {
+			Class<?> type = instance.getClass();
+			final List<Object> list = groupedByType.computeIfAbsent(type, __ -> new ArrayList<>());
+			list.add(instance);
+		}
+
+		for (Class type : groupedByType.keySet()) {
+			doDeleteAll(groupedByType.get(type), type);
+		}
+	}
+
+	private <T> void doDeleteAll(Iterable<? extends T> instances, Class<T> domainType) {
+
 
 		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
 				.forDelete(domainType);

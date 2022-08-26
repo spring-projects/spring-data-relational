@@ -305,7 +305,7 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		template.save(legoSet);
 
-		template.delete(legoSet, LegoSet.class);
+		template.delete(legoSet);
 
 		assertSoftly(softly -> {
 
@@ -338,7 +338,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		LegoSet legoSet2 = template.save(createLegoSet("Some Name"));
 		template.save(createLegoSet("Some other Name"));
 
-		template.deleteAll(List.of(legoSet1, legoSet2), LegoSet.class);
+		template.deleteAll(List.of(legoSet1, legoSet2));
 
 		assertSoftly(softly -> {
 
@@ -378,8 +378,7 @@ class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(template.count(AggregateWithImmutableVersion.class)).isEqualTo(3);
 
-		template.deleteAll(List.of(savedAggregate1, twiceSavedAggregate2, twiceSavedAggregate3),
-				AggregateWithImmutableVersion.class);
+		template.deleteAll(List.of(savedAggregate1, twiceSavedAggregate2, twiceSavedAggregate3));
 
 		assertThat(template.count(AggregateWithImmutableVersion.class)).isEqualTo(0);
 	}
@@ -737,7 +736,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.four).isEqualTo(chain4.four);
 		assertThat(reloaded.chain3.chain2.chain1.chain0.zeroValue).isEqualTo(chain4.chain3.chain2.chain1.chain0.zeroValue);
 
-		template.delete(chain4, Chain4.class);
+		template.delete(chain4);
 
 		assertThat(count("CHAIN0")).isEqualTo(0);
 	}
@@ -768,7 +767,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.four).isEqualTo(chain4.four);
 		assertThat(reloaded.chain3.chain2.chain1.chain0.zeroValue).isEqualTo(chain4.chain3.chain2.chain1.chain0.zeroValue);
 
-		template.delete(chain4, NoIdChain4.class);
+		template.delete(chain4);
 
 		assertThat(count("CHAIN0")).isEqualTo(0);
 	}
@@ -913,17 +912,17 @@ class JdbcAggregateTemplateIntegrationTests {
 		final Long id = aggregate.getId();
 
 		assertThatThrownBy(
-				() -> template.delete(new AggregateWithImmutableVersion(id, 0L), AggregateWithImmutableVersion.class))
+				() -> template.delete(new AggregateWithImmutableVersion(id, 0L)))
 						.describedAs("deleting an aggregate with an outdated version should raise an exception")
 						.isInstanceOf(OptimisticLockingFailureException.class);
 
 		assertThatThrownBy(
-				() -> template.delete(new AggregateWithImmutableVersion(id, 2L), AggregateWithImmutableVersion.class))
+				() -> template.delete(new AggregateWithImmutableVersion(id, 2L)))
 						.describedAs("deleting an aggregate with a future version should raise an exception")
 						.isInstanceOf(OptimisticLockingFailureException.class);
 
 		// This should succeed
-		template.delete(aggregate, AggregateWithImmutableVersion.class);
+		template.delete(aggregate);
 
 		aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
