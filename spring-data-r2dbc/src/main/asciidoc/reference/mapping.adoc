@@ -68,11 +68,7 @@ public class MyAppConfig extends AbstractR2dbcConfiguration {
 
   @Override
   protected List<Object> getCustomConverters() {
-
-    List<Converter<?, ?>> converterList = new ArrayList<Converter<?, ?>>();
-    converterList.add(new org.springframework.data.r2dbc.test.PersonReadConverter());
-    converterList.add(new org.springframework.data.r2dbc.test.PersonWriteConverter());
-    return converterList;
+    return List.of(new PersonReadConverter(), new PersonWriteConverter());
   }
 }
 ----
