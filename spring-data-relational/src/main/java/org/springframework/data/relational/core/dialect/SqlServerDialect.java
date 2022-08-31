@@ -44,6 +44,9 @@ public class SqlServerDialect extends AbstractDialect {
 		}
 	};
 
+	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing
+			.create(IdentifierProcessing.Quoting.ANSI, IdentifierProcessing.LetterCasing.AS_IS);
+
 	protected SqlServerDialect() {}
 
 	@Override
@@ -122,7 +125,7 @@ public class SqlServerDialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.NONE;
+		return IDENTIFIER_PROCESSING;
 	}
 
 	@Override

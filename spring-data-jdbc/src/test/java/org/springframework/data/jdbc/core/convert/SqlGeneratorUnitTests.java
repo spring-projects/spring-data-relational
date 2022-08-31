@@ -287,7 +287,7 @@ class SqlGeneratorUnitTests {
 		String sql = sqlGenerator
 				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
-		assertThat(sql).endsWith("ORDER BY dummy_entity.x_name ASC");
+		assertThat(sql).endsWith("ORDER BY \"dummy_entity\".\"x_name\" ASC");
 	}
 
 	@Test // DATAJDBC-101
