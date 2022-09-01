@@ -37,7 +37,7 @@ class SqlContext {
 	SqlContext(RelationalPersistentEntity<?> entity) {
 
 		this.entity = entity;
-		this.table = Table.create(entity.getTableName());
+		this.table = Table.create(entity.getFullTableName());
 	}
 
 	Column getIdColumn() {

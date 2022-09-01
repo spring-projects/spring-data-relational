@@ -201,6 +201,26 @@ class SqlGenerator {
     }
 
     /**
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships.
+	 * Results are limited to those rows referencing some parent entity. This is used to select values for a complex
+	 * property ({@link Set}, {@link Map} ...) based on a referencing entity.
+	 *
+	 * @param parentIdentifier name of the column of the FK back to the referencing entity.
+	 * @param propertyPath used to determine if the property is ordered and if there is a key column.
+	 * @return a SQL String.
+	 */
+	String getFindAllByProperty(Identifier parentIdentifier,
+			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
+
+		Assert.notNull(parentIdentifier, "identifier must not be null");
+		Assert.notNull(propertyPath, "propertyPath must not be null");
+
+		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(mappingContext, propertyPath);
+
+		return getFindAllByProperty(parentIdentifier, path.getQualifierColumn(), path.isOrdered());
+	}
+
+	/**
      * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships.
      * Results are limited to those rows referencing some other entity using the column specified by
      * {@literal columnName}. This is used to select values for a complex property ({@link Set}, {@link Map} ...) based on
@@ -915,7 +935,7 @@ class SqlGenerator {
     private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,
                                                            SelectBuilder.SelectWhere selectBuilder) {
 
-        Table table = Table.create(this.entity.getTableName());
+        Table table = Table.create(this.entity.getFullTableName());
 
         SelectBuilder.SelectOrdered selectOrdered = query //
                 .getCriteria() //
@@ -982,15 +1002,15 @@ class SqlGenerator {
         @Override
         public boolean equals(Object o) {
 
-            if (this == o) {
+			if (this == o) {
                 return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Join join = (Join) o;
-            return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
-        }
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Join join = (Join) o;
+			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
+		}
 
         @Override
         public int hashCode() {

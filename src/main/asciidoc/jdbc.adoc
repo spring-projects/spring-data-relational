@@ -216,21 +216,22 @@ The properties of the following types are currently supported:
 * References to other entities.
 They are considered a one-to-one relationship, or an embedded type.
 It is optional for one-to-one relationship entities to have an `id` attribute.
-The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)`.
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see <<jdbc.entity-persistence.types.backrefs>>.
 Embedded entities do not need an `id`.
 If one is present it gets ignored.
 
 * `Set<some entity>` is considered a one-to-many relationship.
-The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)`.
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see <<jdbc.entity-persistence.types.backrefs>>.
 
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
-The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
+The table of the referenced entity is expected to have two additional columns: One named based on the referencing entity for the foreign key (see <<jdbc.entity-persistence.types.backrefs>>) and one with the same name and an additional `_key` suffix for the map key.
 You can change this behavior by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
 Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
+
+[[jdbc.entity-persistence.types.referenced-entities]]
+==== Referenced Entities
 
 The handling of referenced entities is limited.
 This is based on the idea of aggregate roots as described above.
@@ -240,9 +241,22 @@ This also means references are 1-1 or 1-n, but not n-1 or n-m.
 
 If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
 References between those may be encoded as simple `id` values, which map properly with Spring Data JDBC.
-A better way to encode these is to make them instances of `AggregateReference`.
+A better way to encode these, is to make them instances of `AggregateReference`.
 An `AggregateReference` is a wrapper around an id value which marks that value as a reference to a different aggregate.
 Also, the type of that aggregate is encoded in a type parameter.
+
+[[jdbc.entity-persistence.types.backrefs]]
+==== Back References
+
+All references in an aggregate result in a foreign key relationship in the opposite direction in the database.
+By default, the name of the foreign key column is the table name of the referencing entity, ignoring any table annotations.
+
+Alternatively you may choose to have them named by the actual table name of the referencing entity.
+You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.APPLY_RENAMING)` on the `RelationalMappingContext`.
+
+For `List` and `Map` references an additional column is required for holding the list index or map key. It is based on the foreign key column with an additional `_KEY` suffix.
+
+If you want a completely different way of naming these back references you may implement `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` in a way that fits your needs.
 
 
 .Declaring and setting an `AggregateReference`

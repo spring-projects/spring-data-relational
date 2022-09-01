@@ -87,7 +87,7 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 	}
 
 	public SqlIdentifier getTableName() {
-		return customTableName == null ? entityMetadata.getTableName() : customTableName;
+		return customTableName == null ? entityMetadata.getFullTableName() : customTableName;
 	}
 
 	public String getIdAttribute() {

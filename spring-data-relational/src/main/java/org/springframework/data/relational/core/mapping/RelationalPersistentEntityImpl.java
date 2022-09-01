@@ -81,11 +81,16 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 	@Override
 	public SqlIdentifier getTableName() {
+		return getFullTableName();
+	}
+
+	@Override
+	public SqlIdentifier getFullTableName() {
 
 		SqlIdentifier schema = determineCurrentEntitySchema();
 		Optional<SqlIdentifier> explicitlySpecifiedTableName = tableName.get();
 
-		final SqlIdentifier schemalessTableIdentifier = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
+		SqlIdentifier schemalessTableIdentifier = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
 
 		if (schema == null) {
 			return explicitlySpecifiedTableName.orElse(schemalessTableIdentifier);
@@ -94,6 +99,15 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		return explicitlySpecifiedTableName
 				.map(sqlIdentifier -> SqlIdentifier.from(schema, sqlIdentifier))
 				.orElse(SqlIdentifier.from(schema, schemalessTableIdentifier));
+	}
+
+	@Override
+	public SqlIdentifier getSimpleTableName() {
+
+		Optional<SqlIdentifier> explicitlySpecifiedTableName = tableName.get();
+		SqlIdentifier schemalessTableIdentifier = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
+
+		return explicitlySpecifiedTableName.orElse(schemalessTableIdentifier);
 	}
 
 	/**

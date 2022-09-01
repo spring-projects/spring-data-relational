@@ -36,6 +36,7 @@ public class RelationalMappingContext
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
+	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.IGNORE_RENAMING;
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
@@ -53,6 +54,7 @@ public class RelationalMappingContext
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
+		namingStrategy.setForeignKeyNaming(foreignKeyNaming);
 		this.namingStrategy = new CachingNamingStrategy(namingStrategy);
 
 		setSimpleTypeHolder(SimpleTypeHolder.DEFAULT);
@@ -100,5 +102,21 @@ public class RelationalMappingContext
 
 	public NamingStrategy getNamingStrategy() {
 		return this.namingStrategy;
+	}
+
+	/**
+	 * Sets the {@link ForeignKeyNaming} to be used by this mapping context.
+	 *
+	 * @param foreignKeyNaming must not be {@literal null}.
+	 * @since 2.4
+	 */
+	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
+
+		Assert.notNull(foreignKeyNaming, "foreignKeyNaming must not be null");
+
+		this.foreignKeyNaming = foreignKeyNaming;
+		if (namingStrategy != null) {
+			namingStrategy.setForeignKeyNaming(foreignKeyNaming);
+		}
 	}
 }
