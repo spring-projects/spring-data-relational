@@ -50,7 +50,7 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	}
 
 	public SqlIdentifier getTableName() {
-		return tableEntity.getTableName();
+		return tableEntity.getFullTableName();
 	}
 
 	public RelationalPersistentEntity<?> getTableEntity() {

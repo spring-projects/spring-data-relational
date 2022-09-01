@@ -82,4 +82,9 @@ class CachingNamingStrategy implements NamingStrategy {
 	public String getColumnName(RelationalPersistentProperty property) {
 		return columnNames.computeIfAbsent(property, delegate::getColumnName);
 	}
+
+	@Override
+	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
+		delegate.setForeignKeyNaming(foreignKeyNaming);
+	}
 }

@@ -38,8 +38,11 @@ public interface NamingStrategy {
 	 * Empty implementation of the interface utilizing only the default implementation.
 	 * <p>
 	 * Using this avoids creating essentially the same class over and over again.
+	 *
+	 * @deprecated use {@link DefaultNamingStrategy#INSTANCE} instead.
 	 */
-	NamingStrategy INSTANCE = new NamingStrategy() {};
+	@Deprecated(since = "2.4")
+	NamingStrategy INSTANCE = DefaultNamingStrategy.INSTANCE;
 
 	/**
 	 * Defaults to no schema.
@@ -82,7 +85,7 @@ public interface NamingStrategy {
 
 		Assert.notNull(property, "Property must not be null");
 
-		return property.getOwner().getTableName().getReference(IdentifierProcessing.NONE);
+		return property.getOwner().getSimpleTableName().getReference(IdentifierProcessing.NONE);
 	}
 
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
@@ -102,4 +105,12 @@ public interface NamingStrategy {
 
 		return getReverseColumnName(property) + "_key";
 	}
+
+	/**
+	 * Set the {@link ForeignKeyNaming} strategy used in this {@link NamingStrategy}.
+	 *
+	 * @param foreignKeyNaming the ForeignKeyNaming strategy to be used. Must not be {@literal null}.
+	 * @since 2.4
+	 */
+	default void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {}
 }

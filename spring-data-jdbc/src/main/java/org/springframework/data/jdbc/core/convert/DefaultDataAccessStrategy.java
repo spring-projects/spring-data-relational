@@ -298,10 +298,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(propertyPath, "propertyPath must not be null");
 
 		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, propertyPath);
-
 		Class<?> actualType = path.getActualType();
+
 		String findAllByProperty = sql(actualType) //
-				.getFindAllByProperty(identifier, path.getQualifierColumn(), path.isOrdered());
+				.getFindAllByProperty(identifier, propertyPath);
 
 		RowMapper<?> rowMapper = path.isMap() ? this.getMapEntityRowMapper(path, identifier)
 				: this.getEntityRowMapper(path, identifier);
