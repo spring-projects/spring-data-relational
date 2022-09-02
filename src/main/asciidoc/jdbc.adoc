@@ -249,10 +249,10 @@ Also, the type of that aggregate is encoded in a type parameter.
 ==== Back References
 
 All references in an aggregate result in a foreign key relationship in the opposite direction in the database.
-By default, the name of the foreign key column is the table name of the referencing entity, ignoring any table annotations.
+By default, the name of the foreign key column is the table name of the referencing entity.
 
-Alternatively you may choose to have them named by the actual table name of the referencing entity.
-You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.APPLY_RENAMING)` on the `RelationalMappingContext`.
+Alternatively you may choose to have them named by the entity name of the referencing entity ignoreing `@Table` annotations.
+You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `RelationalMappingContext`.
 
 For `List` and `Map` references an additional column is required for holding the list index or map key. It is based on the foreign key column with an additional `_KEY` suffix.
 
