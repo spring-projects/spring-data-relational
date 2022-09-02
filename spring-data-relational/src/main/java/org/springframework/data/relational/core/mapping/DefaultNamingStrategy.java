@@ -32,7 +32,7 @@ public class DefaultNamingStrategy implements NamingStrategy {
 	 */
 	public static NamingStrategy INSTANCE = new DefaultNamingStrategy();
 
-	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.IGNORE_RENAMING;
+	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.APPLY_RENAMING;
 
 	@Override
 	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {

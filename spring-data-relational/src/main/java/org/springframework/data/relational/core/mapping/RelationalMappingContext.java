@@ -36,7 +36,7 @@ public class RelationalMappingContext
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
-	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.IGNORE_RENAMING;
+	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.APPLY_RENAMING;
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
