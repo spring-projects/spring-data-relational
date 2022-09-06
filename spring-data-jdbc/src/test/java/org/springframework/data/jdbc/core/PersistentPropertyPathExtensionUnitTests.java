@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
@@ -228,10 +227,14 @@ public class PersistentPropertyPathExtensionUnitTests {
 	void isWritable() {
 
 		assertSoftly(softly -> {
-			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("withId"))).describedAs("simple path is writable").isTrue();
-			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("secondList.third2"))).describedAs("long path is writable").isTrue();
-			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second"))).describedAs("simple read only path is not writable").isFalse();
-			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second.third"))).describedAs("long path containing read only element is not writable").isFalse();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("withId")))
+					.describedAs("simple path is writable").isTrue();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("secondList.third2")))
+					.describedAs("long path is writable").isTrue();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second")))
+					.describedAs("simple read only path is not writable").isFalse();
+			softly.assertThat(PersistentPropertyPathExtension.isWritable(createSimplePath("second.third")))
+					.describedAs("long path containing read only element is not writable").isFalse();
 		});
 	}
 
@@ -250,8 +253,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 		@Id Long entityId;
-		@ReadOnlyProperty
-		Second second;
+		@ReadOnlyProperty Second second;
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
 		@Embedded(onEmpty = OnEmpty.USE_NULL) Second second3;
 		List<Second> secondList;
