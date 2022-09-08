@@ -95,7 +95,7 @@ public class SqlParametersFactory {
 	 */
 	<T> SqlIdentifierParameterSource forUpdate(T instance, Class<T> domainType) {
 
-		return getParameterSource(instance, getRequiredPersistentEntity(domainType), "", Predicates.includeAll(),
+		return getParameterSource(instance, getRequiredPersistentEntity(domainType), "", RelationalPersistentProperty::isInsertOnly,
 				dialect.getIdentifierProcessing());
 	}
 

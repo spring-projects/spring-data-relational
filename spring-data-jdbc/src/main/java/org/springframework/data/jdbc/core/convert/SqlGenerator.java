@@ -1024,6 +1024,7 @@ class SqlGenerator {
 		private final List<SqlIdentifier> idColumnNames = new ArrayList<>();
 		private final List<SqlIdentifier> nonIdColumnNames = new ArrayList<>();
 		private final Set<SqlIdentifier> readOnlyColumnNames = new HashSet<>();
+		private final Set<SqlIdentifier> insertOnlyColumnNames = new HashSet<>();
 		private final Set<SqlIdentifier> insertableColumns;
 		private final Set<SqlIdentifier> updatableColumns;
 
@@ -1045,6 +1046,7 @@ class SqlGenerator {
 
 			updatable.removeAll(idColumnNames);
 			updatable.removeAll(readOnlyColumnNames);
+			updatable.removeAll(insertOnlyColumnNames);
 
 			this.updatableColumns = Collections.unmodifiableSet(updatable);
 		}
@@ -1076,6 +1078,10 @@ class SqlGenerator {
 
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
+			}
+
+			if (property.isInsertOnly()) {
+				insertOnlyColumnNames.add(columnName);
 			}
 		}
 
