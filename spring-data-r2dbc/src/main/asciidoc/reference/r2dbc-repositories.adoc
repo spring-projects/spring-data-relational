@@ -253,6 +253,10 @@ The result of a modifying query can be:
 The `@Modifying` annotation is only relevant in combination with the `@Query` annotation.
 Derived custom methods do not require this annotation.
 
+Modifying queries are executed directly against the database.
+No events or callbacks get called.
+Therefore also fields with auditing annotations do not get updated if they don't get updated in the annotated query.
+
 Alternatively, you can add custom modifying behavior by using the facilities described in <<repositories.custom-implementations,Custom Implementations for Spring Data Repositories>>.
 
 [[r2dbc.repositories.queries.spel]]

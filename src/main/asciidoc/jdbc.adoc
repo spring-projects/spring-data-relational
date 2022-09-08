@@ -700,6 +700,10 @@ You can specify the following return types:
 * `int` (updated record count)
 * `boolean`(whether a record was updated)
 
+Modifying queries are executed directly against the database.
+No events or callbacks get called.
+Therefore also fields with auditing annotations do not get updated if they don't get updated in the annotated query.
+
 include::{spring-data-commons-docs}/query-by-example.adoc[leveloffset=+1]
 include::query-by-example.adoc[leveloffset=+1]
 
