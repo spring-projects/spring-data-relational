@@ -833,8 +833,10 @@ Note that the type used for prefixing the statement name is the name of the aggr
 == Lifecycle Events
 
 Spring Data JDBC triggers events that get published to any matching `ApplicationListener` beans in the application context.
+Events and callbacks get only triggered for aggregate roots.
+If you want to process non-root entities, you need to do that through a listener for the containing aggregate root.
 
-Entity lifecycle events can be costly and you may notice a change in the performance profile when loading large result sets.
+Entity lifecycle events can be costly, and you may notice a change in the performance profile when loading large result sets.
 You can disable lifecycle events on the link:{javadoc-base}org/springframework/data/jdbc/core/JdbcAggregateTemplate.html#setEntityLifecycleEventsEnabled(boolean)[Template API].
 
 For example, the following listener gets invoked before an aggregate gets saved:
@@ -855,7 +857,7 @@ ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 ====
 
 If you want to handle events only for a specific domain type you may derive your listener from `AbstractRelationalEventListener` and overwrite one or more of the `onXXX` methods, where `XXX` stands for an event type.
-Callback methods will only get invoked for events related to the domain type and their subtypes so you don't require further casting.
+Callback methods will only get invoked for events related to the domain type and their subtypes, therefore you don't require further casting.
 
 ====
 [source,java]
