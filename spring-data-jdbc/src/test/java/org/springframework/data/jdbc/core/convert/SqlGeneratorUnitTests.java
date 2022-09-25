@@ -69,6 +69,7 @@ import org.springframework.lang.Nullable;
  * @author Mikhail Polivakha
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Hari Ohm Prasath
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -777,6 +778,15 @@ class SqlGeneratorUnitTests {
 
 		assertThat(parameterSource.getValues()) //
 				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test // GH-1329
+	void selectWithOutAnyCriteriaTest() {
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+		Query query = Query.query(Criteria.empty());
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource);
+		assertThat(generatedSQL).isNotNull().doesNotContain("where");
 	}
 
 	@Test // GH-1192

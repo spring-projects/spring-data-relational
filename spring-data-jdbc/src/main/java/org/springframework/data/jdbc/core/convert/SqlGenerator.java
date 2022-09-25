@@ -56,6 +56,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Hari Ohm Prasath
  */
 class SqlGenerator {
 
@@ -941,7 +942,7 @@ class SqlGenerator {
 	SelectBuilder.SelectOrdered applyCriteria(@Nullable CriteriaDefinition criteria,
 			SelectBuilder.SelectWhere whereBuilder, MapSqlParameterSource parameterSource, Table table) {
 
-		return criteria != null //
+		return criteria != null && !criteria.isEmpty() // Check for null and empty criteria
 				? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
 				: whereBuilder;
 	}
