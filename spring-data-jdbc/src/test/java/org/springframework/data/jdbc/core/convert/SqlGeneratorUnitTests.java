@@ -782,10 +782,13 @@ class SqlGeneratorUnitTests {
 
 	@Test // GH-1329
 	void selectWithOutAnyCriteriaTest() {
+
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 		Query query = Query.query(Criteria.empty());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
 		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource);
+
 		assertThat(generatedSQL).isNotNull().doesNotContain("where");
 	}
 
