@@ -26,7 +26,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.type.StandardAnnotationMetadata;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
@@ -43,14 +43,13 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
  */
 class R2dbcRepositoryConfigurationExtensionUnitTests {
 
-	private final StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(Config.class, true);
+	private final AnnotationMetadata metadata = AnnotationMetadata.introspect(Config.class);
 	private final ResourceLoader loader = new PathMatchingResourcePatternResolver();
 	private final Environment environment = new StandardEnvironment();
 	private final BeanDefinitionRegistry registry = new DefaultListableBeanFactory();
 
 	private final RepositoryConfigurationSource configurationSource = new AnnotationRepositoryConfigurationSource(
-			metadata,
-			EnableR2dbcRepositories.class, loader, environment, registry);
+			metadata, EnableR2dbcRepositories.class, loader, environment, registry);
 
 	@Test // gh-13
 	void isStrictMatchIfDomainTypeIsAnnotatedWithDocument() {

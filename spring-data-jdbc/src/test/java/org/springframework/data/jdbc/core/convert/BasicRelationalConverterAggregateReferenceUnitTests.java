@@ -20,13 +20,12 @@ import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for the handling of {@link AggregateReference}s in the
@@ -59,7 +58,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 		AggregateReference<Object, Integer> reference = AggregateReference.to(23);
 
-		Object writeValue = converter.writeValue(reference, ClassTypeInformation.from(converter.getColumnType(property)));
+		Object writeValue = converter.writeValue(reference, TypeInformation.of(converter.getColumnType(property)));
 
 		Assertions.assertThat(writeValue).isEqualTo(23L);
 	}

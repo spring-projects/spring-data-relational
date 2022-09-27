@@ -85,8 +85,7 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 	public void beforeAll(ExtensionContext context) {
 
 		if (!checkValidity()) {
-			throw new TestAbortedException(
-					String.format("Cannot connect to %s. Skipping tests.", this));
+			throw new TestAbortedException(String.format("Cannot connect to %s. Skipping tests.", this));
 		}
 	}
 
@@ -134,7 +133,7 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 		 */
 		public static ProvidedDatabaseBuilder builder(JdbcDatabaseContainer container) {
 
-			return builder().hostname(container.getContainerIpAddress()) //
+			return builder().hostname(container.getHost()) //
 					.port(container.getFirstMappedPort()) //
 					.username(container.getUsername()) //
 					.password(container.getPassword()) //

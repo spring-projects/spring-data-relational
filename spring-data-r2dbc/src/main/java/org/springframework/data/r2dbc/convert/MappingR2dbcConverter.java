@@ -50,7 +50,6 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
@@ -107,7 +106,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	@Override
 	public <R> R read(Class<R> type, Row row, @Nullable RowMetadata metadata) {
 
-		TypeInformation<? extends R> typeInfo = ClassTypeInformation.from(type);
+		TypeInformation<? extends R> typeInfo = TypeInformation.of(type);
 		Class<? extends R> rawType = typeInfo.getType();
 
 		if (Row.class.isAssignableFrom(rawType)) {
@@ -132,7 +131,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 			for (RelationalPersistentProperty property : entity) {
 
-				if (entity.isConstructorArgument(property)) {
+				if (entity.isCreatorArgument(property)) {
 					continue;
 				}
 
@@ -185,11 +184,9 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
-			throw new MappingException(String.format("Could not read property %s from column %s", property, identifier),
-					o_O);
+			throw new MappingException(String.format("Could not read property %s from column %s", property, identifier), o_O);
 		}
 	}
-
 
 	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
 
@@ -224,7 +221,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		TypeInformation<?> componentType = targetType.getComponentType() != null //
 				? targetType.getComponentType() //
-				: ClassTypeInformation.OBJECT;
+				: TypeInformation.OBJECT;
 		Class<?> rawComponentType = componentType.getType();
 
 		Collection<Object> items = targetType.getType().isArray() //
@@ -302,7 +299,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 					getConversionService());
 
 			for (RelationalPersistentProperty p : entity) {
-				if (!entity.isConstructorArgument(property)) {
+				if (!entity.isCreatorArgument(property)) {
 					propertyAccessor.setProperty(p, readFrom(row, metadata, p, prefix));
 				}
 			}
@@ -405,7 +402,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private void writePropertyInternal(OutboundRow sink, Object value, boolean isNew,
 			RelationalPersistentProperty property) {
 
-		TypeInformation<?> valueType = ClassTypeInformation.from(value.getClass());
+		TypeInformation<?> valueType = TypeInformation.of(value.getClass());
 
 		if (valueType.isCollectionLike()) {
 

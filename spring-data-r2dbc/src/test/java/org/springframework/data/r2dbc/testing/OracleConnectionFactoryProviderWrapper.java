@@ -47,7 +47,7 @@ public class OracleConnectionFactoryProviderWrapper implements ConnectionFactory
 
 		try {
 			return (ConnectionFactoryProvider) Class.forName("oracle.r2dbc.impl.OracleConnectionFactoryProviderImpl")
-					.newInstance();
+					.getDeclaredConstructor().newInstance();
 		} catch (ReflectiveOperationException e) {
 			ReflectionUtils.handleReflectionException(e);
 		}

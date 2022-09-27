@@ -45,7 +45,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -211,7 +210,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String resultSetExtractorRef = queryMethod.getResultSetExtractorRef();
 
-		if (!StringUtils.isEmpty(resultSetExtractorRef)) {
+		if (!ObjectUtils.isEmpty(resultSetExtractorRef)) {
 
 			Assert.notNull(beanFactory, "When a ResultSetExtractorRef is specified the BeanFactory must not be null");
 
@@ -253,7 +252,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String rowMapperRef = queryMethod.getRowMapperRef();
 
-		if (!StringUtils.isEmpty(rowMapperRef)) {
+		if (!ObjectUtils.isEmpty(rowMapperRef)) {
 
 			Assert.notNull(beanFactory, "When a RowMapperRef is specified the BeanFactory must not be null");
 

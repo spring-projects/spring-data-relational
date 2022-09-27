@@ -38,7 +38,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -392,7 +392,7 @@ public class QueryMapper {
 			return Parameter.empty(converter.getTargetType(value.getType()));
 		}
 
-		return Parameter.from(convertValue(value.getValue(), ClassTypeInformation.OBJECT));
+		return Parameter.from(convertValue(value.getValue(), TypeInformation.OBJECT));
 	}
 
 	@Nullable
@@ -408,11 +408,11 @@ public class QueryMapper {
 
 			Object first = convertValue(pair.getFirst(),
 					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-							: ClassTypeInformation.OBJECT);
+							: TypeInformation.OBJECT);
 
 			Object second = convertValue(pair.getSecond(),
 					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-							: ClassTypeInformation.OBJECT);
+							: TypeInformation.OBJECT);
 
 			return Pair.of(first, second);
 		}
@@ -423,14 +423,14 @@ public class QueryMapper {
 
 			for (Object o : (Iterable<?>) value) {
 				mapped.add(convertValue(o, typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-						: ClassTypeInformation.OBJECT));
+						: TypeInformation.OBJECT));
 			}
 
 			return mapped;
 		}
 
 		if (value.getClass().isArray()
-				&& (ClassTypeInformation.OBJECT.equals(typeInformation) || typeInformation.isCollectionLike())) {
+				&& (TypeInformation.OBJECT.equals(typeInformation) || typeInformation.isCollectionLike())) {
 			return value;
 		}
 
@@ -633,7 +633,7 @@ public class QueryMapper {
 		}
 
 		public TypeInformation<?> getTypeHint() {
-			return ClassTypeInformation.OBJECT;
+			return TypeInformation.OBJECT;
 		}
 	}
 
@@ -734,7 +734,7 @@ public class QueryMapper {
 			}
 
 			if (this.property.getType().isPrimitive()) {
-				return ClassTypeInformation.from(ClassUtils.resolvePrimitiveIfNecessary(this.property.getType()));
+				return TypeInformation.of(ClassUtils.resolvePrimitiveIfNecessary(this.property.getType()));
 			}
 
 			if (this.property.getType().isArray()) {
@@ -743,7 +743,7 @@ public class QueryMapper {
 
 			if (this.property.getType().isInterface()
 					|| (java.lang.reflect.Modifier.isAbstract(this.property.getType().getModifiers()))) {
-				return ClassTypeInformation.OBJECT;
+				return TypeInformation.OBJECT;
 			}
 
 			return this.property.getTypeInformation();

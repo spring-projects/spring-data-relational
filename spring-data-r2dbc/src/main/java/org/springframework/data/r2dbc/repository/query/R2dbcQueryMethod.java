@@ -28,11 +28,11 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
@@ -41,7 +41,6 @@ import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
 import org.springframework.data.repository.util.ReactiveWrappers;
-import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.data.util.TypeInformation;
@@ -59,10 +58,10 @@ import org.springframework.util.ClassUtils;
 public class R2dbcQueryMethod extends QueryMethod {
 
 	@SuppressWarnings("rawtypes") //
-	private static final ClassTypeInformation<Page> PAGE_TYPE = ClassTypeInformation.from(Page.class);
+	private static final TypeInformation<Page> PAGE_TYPE = TypeInformation.of(Page.class);
 
 	@SuppressWarnings("rawtypes") //
-	private static final ClassTypeInformation<Slice> SLICE_TYPE = ClassTypeInformation.from(Slice.class);
+	private static final TypeInformation<Slice> SLICE_TYPE = TypeInformation.of(Slice.class);
 
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final Optional<Query> query;
@@ -91,7 +90,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 		if (hasParameterOfType(method, Pageable.class)) {
 
-			TypeInformation<?> returnType = ClassTypeInformation.fromReturnTypeOf(method);
+			TypeInformation<?> returnType = TypeInformation.fromReturnTypeOf(method);
 
 			boolean multiWrapper = ReactiveWrappers.isMultiValueType(returnType.getType());
 			boolean singleWrapperWithWrappedPageableResult = ReactiveWrappers.isSingleValueType(returnType.getType())

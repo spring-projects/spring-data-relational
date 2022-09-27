@@ -33,6 +33,7 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -50,7 +51,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -267,7 +268,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return jdbcValue;
 		}
 
-		Object convertedValue = writeValue(value, ClassTypeInformation.from(columnType));
+		Object convertedValue = writeValue(value, TypeInformation.of(columnType));
 
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
 
@@ -293,7 +294,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		if (canWriteAsJdbcValue(value)) {
 
-			Object converted = writeValue(value, ClassTypeInformation.from(JdbcValue.class));
+			Object converted = writeValue(value, TypeInformation.of(JdbcValue.class));
 			if (converted instanceof JdbcValue) {
 				return (JdbcValue) converted;
 			}
@@ -414,11 +415,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private T populateProperties(T instance, @Nullable Object idValue) {
 
 			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
-			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+			InstanceCreatorMetadata<RelationalPersistentProperty> creatorMetadata = entity.getInstanceCreatorMetadata();
 
 			entity.doWithAll(property -> {
 
-				if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
+				if (creatorMetadata != null && creatorMetadata.isCreatorParameter(property)) {
 					return;
 				}
 
@@ -548,10 +549,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private T createInstanceInternal(@Nullable Object idValue) {
 
-			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+			InstanceCreatorMetadata<RelationalPersistentProperty> creatorMetadata = entity.getInstanceCreatorMetadata();
 			ParameterValueProvider<RelationalPersistentProperty> provider;
 
-			if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
+			if (creatorMetadata != null && creatorMetadata.hasParameters()) {
 
 				SpELExpressionEvaluator expressionEvaluator = new DefaultSpELExpressionEvaluator(accessor, spELContext);
 				provider = new SpELExpressionParameterValueProvider<>(expressionEvaluator, getConversionService(),

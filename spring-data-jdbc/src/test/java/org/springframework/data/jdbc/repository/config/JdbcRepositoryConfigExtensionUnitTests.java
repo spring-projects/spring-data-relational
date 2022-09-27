@@ -26,7 +26,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.type.StandardAnnotationMetadata;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
@@ -40,13 +40,13 @@ import org.springframework.data.repository.config.RepositoryConfigurationSource;
  */
 public class JdbcRepositoryConfigExtensionUnitTests {
 
-	StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(Config.class, true);
+	AnnotationMetadata metadata = AnnotationMetadata.introspect(Config.class);
 	ResourceLoader loader = new PathMatchingResourcePatternResolver();
 	Environment environment = new StandardEnvironment();
 	BeanDefinitionRegistry registry = new DefaultListableBeanFactory();
 
 	RepositoryConfigurationSource configurationSource = new AnnotationRepositoryConfigurationSource(metadata,
-			EnableJdbcRepositories.class, loader, environment, registry);
+			EnableJdbcRepositories.class, loader, environment, registry, null);
 
 	@Test // DATAJPA-437
 	public void isStrictMatchOnlyIfDomainTypeIsAnnotatedWithDocument() {

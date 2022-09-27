@@ -33,7 +33,6 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -78,7 +77,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // DATAJDBC-235
 	void shouldConvertEnumToString() {
 
-		Object result = converter.writeValue(MyEnum.ON, ClassTypeInformation.from(String.class));
+		Object result = converter.writeValue(MyEnum.ON, TypeInformation.of(String.class));
 
 		assertThat(result).isEqualTo("ON");
 	}
@@ -86,7 +85,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // DATAJDBC-235
 	void shouldConvertStringToEnum() {
 
-		Object result = converter.readValue("OFF", ClassTypeInformation.from(MyEnum.class));
+		Object result = converter.readValue("OFF", TypeInformation.of(MyEnum.class));
 
 		assertThat(result).isEqualTo(MyEnum.OFF);
 	}
@@ -94,7 +93,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // GH-1046
 	void shouldConvertArrayElementsToTargetElementType() throws NoSuchMethodException {
 
-		TypeInformation<Object> typeInformation = ClassTypeInformation
+		TypeInformation<?> typeInformation = TypeInformation
 				.fromReturnTypeOf(EntityWithArray.class.getMethod("getFloats"));
 		Double[] value = { 1.2d, 1.3d, 1.4d };
 		Object result = converter.readValue(value, typeInformation);
@@ -116,7 +115,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // DATAJDBC-516
 	void shouldConsiderWriteConverter() {
 
-		Object result = converter.writeValue(new MyValue("hello-world"), ClassTypeInformation.from(MyValue.class));
+		Object result = converter.writeValue(new MyValue("hello-world"), TypeInformation.of(MyValue.class));
 
 		assertThat(result).isEqualTo("hello-world");
 	}
@@ -124,7 +123,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // DATAJDBC-516
 	void shouldConsiderReadConverter() {
 
-		Object result = converter.readValue("hello-world", ClassTypeInformation.from(MyValue.class));
+		Object result = converter.readValue("hello-world", TypeInformation.of(MyValue.class));
 
 		assertThat(result).isEqualTo(new MyValue("hello-world"));
 	}

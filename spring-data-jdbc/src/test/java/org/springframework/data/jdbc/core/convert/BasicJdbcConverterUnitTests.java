@@ -44,7 +44,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link BasicJdbcConverter}.
@@ -147,7 +147,7 @@ public class BasicJdbcConverterUnitTests {
 
 		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
 
-		Object converted = converter.writeValue(value, ClassTypeInformation.from(converter.getColumnType(property)));
+		Object converted = converter.writeValue(value, TypeInformation.of(converter.getColumnType(property)));
 		Object convertedBack = converter.readValue(converted, property.getTypeInformation());
 
 		softly.assertThat(convertedBack).describedAs(propertyName).isEqualTo(value);

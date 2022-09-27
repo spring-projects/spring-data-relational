@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -126,13 +126,15 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 	@NoArgsConstructor
 	public static class LegoSet {
 
-		@Nullable @Column("Id") @Id Integer id;
+		@Nullable
+		@Column("Id")
+		@Id Integer id;
 
 		@Column("Name") String name;
 
 		@Column("Manual") Integer manual;
 
-		@PersistenceConstructor
+		@PersistenceCreator
 		LegoSet(@Nullable Integer id, String name, Integer manual) {
 			this.id = id;
 			this.name = name;

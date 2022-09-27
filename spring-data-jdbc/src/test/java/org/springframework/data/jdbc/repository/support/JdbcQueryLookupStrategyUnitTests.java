@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -42,7 +41,7 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -77,7 +76,7 @@ class JdbcQueryLookupStrategyUnitTests {
 		this.metadata = mock(RepositoryMetadata.class);
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
-		doReturn(ClassTypeInformation.from(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
+		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
 	}
 
 	@Test // DATAJDBC-166

@@ -38,7 +38,6 @@ import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -162,7 +161,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		if (getConversions().isSimpleType(value.getClass())) {
 
-			if (ClassTypeInformation.OBJECT != type) {
+			if (TypeInformation.OBJECT != type) {
 
 				if (conversionService.canConvert(value.getClass(), type.getType())) {
 					value = conversionService.convert(value, type.getType());
