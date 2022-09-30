@@ -29,9 +29,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
-import org.springframework.data.jdbc.repository.query.parameter.ParameterBindingParser;
-import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.Metadata;
-import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.ParameterBinding;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -41,16 +38,12 @@ import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.SpelEvaluator;
 import org.springframework.data.repository.query.SpelQueryContext;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -130,16 +123,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@Override
 	public Object execute(Object[] objects) {
 
-//		List<ParameterBinding> parameterBindings = new ArrayList<>();
-//		SpelQueryContext queryContext = SpelQueryContext.of((counter, expression) -> {
-//
-//			String parameterName = String.format("__synthetic_%d__", counter);
-//			parameterBindings.add(new ParameterBinding(parameterName, expression));
-//			return parameterName;
-//		}, String::concat);
-//
-//		SpelQueryContext.SpelExtractor parsed = queryContext.parse(query);
-
 		RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(), objects);
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
 		ResultProcessingConverter converter = new ResultProcessingConverter(processor, this.converter.getMappingContext(),
@@ -153,51 +136,28 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				determineResultSetExtractor(rowMapper), //
 				rowMapper);
 
-		Metadata queryMeta = new Metadata();
+		MapSqlParameterSource parameterMap = this.bindParameters(accessor);
 
 		String query = determineQuery();
 
 		if (ObjectUtils.isEmpty(query)) {
 			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
 		}
-		List<ParameterBinding> bindings = new ArrayList<>();
 
-		query = ParameterBindingParser.INSTANCE.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query,
-				bindings, queryMeta);
-
-		SqlParameterSource parameterMap = this.bindParameters(accessor);
-		extendParametersFromSpELEvaluation((MapSqlParameterSource) parameterMap, bindings, objects);
-		return queryExecution.execute(query, parameterMap);
+		return queryExecution.execute(processSpelExpressions(objects, parameterMap, query), parameterMap);
 	}
 
-	/**
-	 * Extend the {@link MapSqlParameterSource} by evaluating each detected SpEL parameter in the original query. This is
-	 * basically a simple variant of Spring Data JPA's SPeL implementation.
-	 *
-	 * @param parameterMap
-	 * @param bindings
-	 * @param values
-	 */
-	void extendParametersFromSpELEvaluation(MapSqlParameterSource parameterMap, List<ParameterBinding> bindings,
-			Object[] values) {
+	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
 
-		if (bindings.size() == 0) {
-			return;
-		}
+		SpelQueryContext.EvaluatingSpelQueryContext queryContext = SpelQueryContext
+				.of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
+				.withEvaluationContextProvider(evaluationContextProvider);
 
-		ExpressionParser parser = new SpelExpressionParser();
+		SpelEvaluator spelEvaluator = queryContext.parse(query, queryMethod.getParameters());
 
-		bindings.forEach(binding -> {
-			if (!binding.isExpression()) {
-				return;
-			}
+		spelEvaluator.evaluate(objects).forEach(parameterMap::addValue);
 
-			Expression expression = parser.parseExpression(binding.getExpression());
-			EvaluationContext context = evaluationContextProvider.getEvaluationContext(this.queryMethod.getParameters(),
-					values);
-
-			parameterMap.addValue(binding.getName(), expression.getValue(context, Object.class));
-		});
+		return spelEvaluator.getQueryString();
 	}
 
 	@Override
