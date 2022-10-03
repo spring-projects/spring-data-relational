@@ -61,6 +61,7 @@ import org.springframework.util.ObjectUtils;
  * @author Hebert Coelho
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Hari Ohm Prasath Rajagopal
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -188,7 +189,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		Assert.notNull(type, "@Query parameter type could not be resolved");
 
 		JdbcValue jdbcValue;
-		if (value instanceof Iterable) {
+		if (value instanceof Iterable && resolvableType.hasGenerics()) {
 
 			List<Object> mapped = new ArrayList<>();
 			SQLType jdbcType = null;
