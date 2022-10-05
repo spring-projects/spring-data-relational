@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
@@ -111,4 +113,20 @@ class OrderByClauseVisitorUnitTests {
 		assertThat(visitor.getRenderedPart().toString()).isEqualTo("GREATEST(emp.id, emp.name) ASC, emp.name ASC");
 	}
 
+	@Test // GH-1348
+	void shouldRenderOrderBySimpleExpression() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name");
+
+		Expression simpleExpression = Expressions.just("1");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(simpleExpression).asc())
+				.build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("1 ASC");
+	}
 }
