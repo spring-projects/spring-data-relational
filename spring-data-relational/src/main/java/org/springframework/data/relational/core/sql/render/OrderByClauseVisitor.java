@@ -17,7 +17,9 @@ package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.lang.Nullable;
 
 /**
  * {@link PartRenderer} for {@link OrderByField}s.
@@ -25,6 +27,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Chirag Tailor
+ * @author Koen Punt
  * @since 1.1
  */
 class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements PartRenderer {
@@ -32,6 +35,9 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	private final RenderContext context;
 
 	private final StringBuilder builder = new StringBuilder();
+
+	@Nullable private PartRenderer delegate;
+
 	private boolean first = true;
 
 	OrderByClauseVisitor(RenderContext context) {
@@ -69,7 +75,21 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	}
 
 	@Override
+	Delegation enterNested(Visitable segment) {
+		if (segment instanceof SimpleFunction) {
+			delegate = new SimpleFunctionVisitor(context);
+			return Delegation.delegateTo((SimpleFunctionVisitor)delegate);
+		}
+
+		return super.enterNested(segment);
+	}
+
+	@Override
 	Delegation leaveNested(Visitable segment) {
+		if (delegate instanceof SimpleFunctionVisitor) {
+			builder.append(delegate.getRenderedPart());
+			delegate = null;
+		}
 
 		if (segment instanceof Column) {
 			builder.append(NameRenderer.fullyQualifiedReference(context, (Column) segment));
