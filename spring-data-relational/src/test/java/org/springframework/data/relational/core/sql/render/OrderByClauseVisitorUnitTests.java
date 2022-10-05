@@ -19,16 +19,23 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Table;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Unit tests for {@link OrderByClauseVisitor}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Koen Punt
  */
 class OrderByClauseVisitorUnitTests {
 
@@ -88,4 +95,38 @@ class OrderByClauseVisitorUnitTests {
 		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp.name ASC");
 	}
 
+	@Test // GH-1348
+	void shouldRenderOrderBySimpleFunction() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name");
+		List<Expression> columns = Arrays.asList(employee.column("id"), column);
+
+		SimpleFunction simpleFunction = SimpleFunction.create("GREATEST", columns);
+
+		Select select = Select.builder().select(column).from(employee)
+				.orderBy(OrderByField.from(simpleFunction).asc(), OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("GREATEST(emp.id, emp.name) ASC, emp.name ASC");
+	}
+
+	@Test // GH-1348
+	void shouldRenderOrderBySimpleExpression() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name");
+
+		Expression simpleExpression = Expressions.just("1");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(simpleExpression).asc())
+				.build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("1 ASC");
+	}
 }
