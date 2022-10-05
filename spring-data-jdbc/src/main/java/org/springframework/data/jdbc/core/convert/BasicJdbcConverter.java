@@ -37,7 +37,6 @@ import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
 import org.springframework.data.mapping.model.ParameterValueProvider;
@@ -51,7 +50,6 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;

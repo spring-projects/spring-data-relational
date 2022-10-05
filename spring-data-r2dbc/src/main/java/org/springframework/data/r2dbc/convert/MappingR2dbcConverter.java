@@ -32,10 +32,10 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
@@ -311,7 +311,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private <S> S createInstance(Row row, @Nullable RowMetadata rowMetadata, String prefix,
 			RelationalPersistentEntity<S> entity) {
 
-		PreferredConstructor<S, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+		InstanceCreatorMetadata<RelationalPersistentProperty> persistenceConstructor = entity.getInstanceCreatorMetadata();
 		ParameterValueProvider<RelationalPersistentProperty> provider;
 
 		if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
@@ -716,10 +716,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			this.prefix = prefix;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
-		 */
 		@Override
 		@Nullable
 		public <T> T getParameterValue(
