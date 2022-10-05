@@ -43,21 +43,21 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Radim Tlusty
  * @author Chirag Tailor
  */
-public class DefaultDataAccessStrategyUnitTests {
+class DefaultDataAccessStrategyUnitTests {
 
-	public static final long ORIGINAL_ID = 4711L;
+	static final long ORIGINAL_ID = 4711L;
 
-	NamedParameterJdbcOperations namedJdbcOperations = mock(NamedParameterJdbcOperations.class);
-	JdbcOperations jdbcOperations = mock(JdbcOperations.class);
-	RelationalMappingContext context = new JdbcMappingContext();
-	SqlParametersFactory sqlParametersFactory = mock(SqlParametersFactory.class);
-	InsertStrategyFactory insertStrategyFactory = mock(InsertStrategyFactory.class);
+	private NamedParameterJdbcOperations namedJdbcOperations = mock(NamedParameterJdbcOperations.class);
+	private JdbcOperations jdbcOperations = mock(JdbcOperations.class);
+	private RelationalMappingContext context = new JdbcMappingContext();
+	private SqlParametersFactory sqlParametersFactory = mock(SqlParametersFactory.class);
+	private InsertStrategyFactory insertStrategyFactory = mock(InsertStrategyFactory.class);
 
-	JdbcConverter converter;
-	DefaultDataAccessStrategy accessStrategy;
+	private JdbcConverter converter;
+	private DefaultDataAccessStrategy accessStrategy;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
 		Dialect dialect = HsqlDbDialect.INSTANCE;
@@ -80,7 +80,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-1159
-	public void insert() {
+	void insert() {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.empty(), IdValueSource.PROVIDED);
 
@@ -88,7 +88,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-1159
-	public void batchInsert() {
+	void batchInsert() {
 
 		accessStrategy.insert(singletonList(InsertSubject.describedBy(new DummyEntity(ORIGINAL_ID), Identifier.empty())),
 				DummyEntity.class, IdValueSource.PROVIDED);
@@ -97,7 +97,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-1159
-	public void insertForEntityWithNoId() {
+	void insertForEntityWithNoId() {
 
 		accessStrategy.insert(new DummyEntityWithoutIdAnnotation(ORIGINAL_ID), DummyEntityWithoutIdAnnotation.class,
 				Identifier.empty(), IdValueSource.GENERATED);
@@ -106,7 +106,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-1159
-	public void batchInsertForEntityWithNoId() {
+	void batchInsertForEntityWithNoId() {
 
 		accessStrategy.insert(
 				singletonList(InsertSubject.describedBy(new DummyEntityWithoutIdAnnotation(ORIGINAL_ID), Identifier.empty())),

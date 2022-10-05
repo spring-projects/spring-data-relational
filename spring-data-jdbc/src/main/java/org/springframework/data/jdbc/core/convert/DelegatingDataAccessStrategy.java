@@ -43,6 +43,14 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	private DataAccessStrategy delegate;
 
+	public DelegatingDataAccessStrategy() {}
+
+	public DelegatingDataAccessStrategy(DataAccessStrategy delegate) {
+
+		Assert.notNull(delegate, "DataAccessStrategy must not be null");
+		this.delegate = delegate;
+	}
+
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 		return delegate.insert(instance, domainType, identifier, idValueSource);
@@ -182,7 +190,9 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	 * Must be called exactly once before calling any of the other methods.
 	 *
 	 * @param delegate Must not be {@literal null}
+	 * @deprecated since 3.0, use {@link #DelegatingDataAccessStrategy(DataAccessStrategy)} to avoid mutable state.
 	 */
+	@Deprecated(since = "3.0", forRemoval = true)
 	public void setDelegate(DataAccessStrategy delegate) {
 
 		Assert.isNull(this.delegate, "The delegate must be set exactly once");

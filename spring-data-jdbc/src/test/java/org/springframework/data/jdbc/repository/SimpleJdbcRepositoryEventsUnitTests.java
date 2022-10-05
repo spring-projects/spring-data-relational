@@ -32,12 +32,22 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
+import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -73,22 +83,23 @@ import org.springframework.lang.Nullable;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  */
-public class SimpleJdbcRepositoryEventsUnitTests {
+class SimpleJdbcRepositoryEventsUnitTests {
 
 	private static final long generatedId = 4711L;
 
-	CollectingEventPublisher publisher = new CollectingEventPublisher();
+	private CollectingEventPublisher publisher = new CollectingEventPublisher();
 
-	DummyEntityRepository repository;
-	DefaultDataAccessStrategy dataAccessStrategy;
+	private DummyEntityRepository repository;
+	private DefaultDataAccessStrategy dataAccessStrategy;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		RelationalMappingContext context = new JdbcMappingContext();
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
-		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+
 		Dialect dialect = HsqlDbDialect.INSTANCE;
+		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
@@ -109,7 +120,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-99
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnSave() {
+	void publishesEventsOnSave() {
 
 		DummyEntity entity = new DummyEntity(23L);
 
@@ -126,7 +137,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-99
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnSaveMany() {
+	void publishesEventsOnSaveMany() {
 
 		DummyEntity entity1 = new DummyEntity(null);
 		DummyEntity entity2 = new DummyEntity(23L);
@@ -146,7 +157,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	}
 
 	@Test // DATAJDBC-99
-	public void publishesEventsOnDelete() {
+	void publishesEventsOnDelete() {
 
 		DummyEntity entity = new DummyEntity(23L);
 
@@ -173,7 +184,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-99
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnDeleteById() {
+	void publishesEventsOnDeleteById() {
 
 		repository.deleteById(23L);
 
@@ -187,7 +198,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-197
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnFindAll() {
+	void publishesEventsOnFindAll() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
@@ -206,7 +217,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-197
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnFindAllById() {
+	void publishesEventsOnFindAllById() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
@@ -225,7 +236,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-197
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnFindById() {
+	void publishesEventsOnFindById() {
 
 		DummyEntity entity1 = new DummyEntity(23L);
 
@@ -242,7 +253,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-101
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnFindAllSorted() {
+	void publishesEventsOnFindAllSorted() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
@@ -261,7 +272,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Test // DATAJDBC-101
 	@SuppressWarnings("rawtypes")
-	public void publishesEventsOnFindAllPaged() {
+	void publishesEventsOnFindAllPaged() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
