@@ -543,7 +543,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		Assert.notNull(entity, "Entity must not be null");
 
-		return doInsert(entity, getRequiredEntity(entity).getFullTableName());
+		return doInsert(entity, getRequiredEntity(entity).getQualifiedTableName());
 	}
 
 	<T> Mono<T> doInsert(T entity, SqlIdentifier tableName) {
@@ -646,7 +646,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		Assert.notNull(entity, "Entity must not be null");
 
-		return doUpdate(entity, getRequiredEntity(entity).getFullTableName());
+		return doUpdate(entity, getRequiredEntity(entity).getQualifiedTableName());
 	}
 
 	private <T> Mono<T> doUpdate(T entity, SqlIdentifier tableName) {
@@ -719,13 +719,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
 		return String.format("Failed to update table [%s]; Version does not match for row with Id [%s]",
-				persistentEntity.getFullTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
+				persistentEntity.getQualifiedTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	private <T> String formatTransientEntityExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
 		return String.format("Failed to update table [%s]; Row with Id [%s] does not exist",
-				persistentEntity.getFullTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
+				persistentEntity.getQualifiedTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -823,14 +823,14 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	SqlIdentifier getTableName(Class<?> entityClass) {
-		return getRequiredEntity(entityClass).getFullTableName();
+		return getRequiredEntity(entityClass).getQualifiedTableName();
 	}
 
 	SqlIdentifier getTableNameOrEmpty(Class<?> entityClass) {
 
 		RelationalPersistentEntity<?> entity = this.mappingContext.getPersistentEntity(entityClass);
 
-		return entity != null ? entity.getFullTableName() : SqlIdentifier.EMPTY;
+		return entity != null ? entity.getQualifiedTableName() : SqlIdentifier.EMPTY;
 	}
 
 	private RelationalPersistentEntity<?> getRequiredEntity(Class<?> entityClass) {

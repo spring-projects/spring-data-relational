@@ -101,13 +101,13 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(extPath(entity).getTableName()).isEqualTo(quoted("DUMMY_ENTITY"));
-			softly.assertThat(extPath("second").getTableName()).isEqualTo(quoted("SECOND"));
-			softly.assertThat(extPath("second.third2").getTableName()).isEqualTo(quoted("SECOND"));
-			softly.assertThat(extPath("second.third2.value").getTableName()).isEqualTo(quoted("SECOND"));
-			softly.assertThat(extPath("secondList.third2").getTableName()).isEqualTo(quoted("SECOND"));
-			softly.assertThat(extPath("secondList.third2.value").getTableName()).isEqualTo(quoted("SECOND"));
-			softly.assertThat(extPath("secondList").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath(entity).getQualifiedTableName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("second").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("second.third2").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("second.third2.value").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList.third2").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList.third2.value").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList").getQualifiedTableName()).isEqualTo(quoted("SECOND"));
 		});
 	}
 

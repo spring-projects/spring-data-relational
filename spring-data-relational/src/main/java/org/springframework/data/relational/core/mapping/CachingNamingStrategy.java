@@ -35,7 +35,6 @@ class CachingNamingStrategy implements NamingStrategy {
 
 	private final Map<RelationalPersistentProperty, String> columnNames = new ConcurrentHashMap<>();
 	private final Map<RelationalPersistentProperty, String> keyColumns = new ConcurrentHashMap<>();
-	private final Map<Class<?>, String> qualifiedTableNames = new ConcurrentReferenceHashMap<>();
 	private final Map<Class<?>, String> tableNames = new ConcurrentReferenceHashMap<>();
 
 	private final Lazy<String> schema;
@@ -83,8 +82,4 @@ class CachingNamingStrategy implements NamingStrategy {
 		return columnNames.computeIfAbsent(property, delegate::getColumnName);
 	}
 
-	@Override
-	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
-		delegate.setForeignKeyNaming(foreignKeyNaming);
-	}
 }

@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
-import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -37,9 +37,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Greg Turnquist
  * @author Mark Paluch
  */
-public class SqlGeneratorFixedNamingStrategyUnitTests {
+class SqlGeneratorFixedNamingStrategyUnitTests {
 
-	final NamingStrategy fixedCustomTablePrefixStrategy = new NamingStrategy() {
+	private final NamingStrategy fixedCustomTablePrefixStrategy = new NamingStrategy() {
 
 		@Override
 		public String getSchema() {
@@ -57,7 +57,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 	};
 
-	final NamingStrategy upperCaseLowerCaseStrategy = new NamingStrategy() {
+	private final NamingStrategy upperCaseLowerCaseStrategy = new NamingStrategy() {
 
 		@Override
 		public String getTableName(Class<?> type) {
@@ -73,7 +73,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	private RelationalMappingContext context = new JdbcMappingContext();
 
 	@Test // DATAJDBC-107
-	public void findOneWithOverriddenFixedTableName() {
+	void findOneWithOverriddenFixedTableName() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -96,7 +96,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void findOneWithUppercasedTablesAndLowercasedColumns() {
+	void findOneWithUppercasedTablesAndLowercasedColumns() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(upperCaseLowerCaseStrategy);
 
@@ -115,7 +115,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void cascadingDeleteFirstLevel() {
+	void cascadingDeleteFirstLevel() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -126,7 +126,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void cascadingDeleteAllSecondLevel() {
+	void cascadingDeleteAllSecondLevel() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -141,7 +141,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void deleteAll() {
+	void deleteAll() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -151,7 +151,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void cascadingDeleteAllFirstLevel() {
+	void cascadingDeleteAllFirstLevel() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -162,7 +162,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-107
-	public void cascadingDeleteSecondLevel() {
+	void cascadingDeleteSecondLevel() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
@@ -177,7 +177,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void deleteByList() {
+	void deleteByList() {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 

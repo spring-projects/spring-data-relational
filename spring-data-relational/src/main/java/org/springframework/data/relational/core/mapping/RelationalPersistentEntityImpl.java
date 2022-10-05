@@ -51,16 +51,11 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 		this.namingStrategy = namingStrategy;
 
-		this.tableName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class))
-				.map(Table::value)
-				.filter(StringUtils::hasText)
-				.map(this::createSqlIdentifier)
-		);
+		this.tableName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class)).map(Table::value)
+				.filter(StringUtils::hasText).map(this::createSqlIdentifier));
 
-		this.schemaName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class))
-				.map(Table::schema)
-				.filter(StringUtils::hasText)
-				.map(this::createSqlIdentifier));
+		this.schemaName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class)).map(Table::schema)
+				.filter(StringUtils::hasText).map(this::createSqlIdentifier));
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -81,11 +76,15 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 	@Override
 	public SqlIdentifier getTableName() {
-		return getFullTableName();
+
+		Optional<SqlIdentifier> explicitlySpecifiedTableName = tableName.get();
+		SqlIdentifier schemalessTableIdentifier = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
+
+		return explicitlySpecifiedTableName.orElse(schemalessTableIdentifier);
 	}
 
 	@Override
-	public SqlIdentifier getFullTableName() {
+	public SqlIdentifier getQualifiedTableName() {
 
 		SqlIdentifier schema = determineCurrentEntitySchema();
 		Optional<SqlIdentifier> explicitlySpecifiedTableName = tableName.get();
@@ -96,32 +95,21 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 			return explicitlySpecifiedTableName.orElse(schemalessTableIdentifier);
 		}
 
-		return explicitlySpecifiedTableName
-				.map(sqlIdentifier -> SqlIdentifier.from(schema, sqlIdentifier))
+		return explicitlySpecifiedTableName.map(sqlIdentifier -> SqlIdentifier.from(schema, sqlIdentifier))
 				.orElse(SqlIdentifier.from(schema, schemalessTableIdentifier));
-	}
-
-	@Override
-	public SqlIdentifier getSimpleTableName() {
-
-		Optional<SqlIdentifier> explicitlySpecifiedTableName = tableName.get();
-		SqlIdentifier schemalessTableIdentifier = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
-
-		return explicitlySpecifiedTableName.orElse(schemalessTableIdentifier);
 	}
 
 	/**
 	 * @return {@link SqlIdentifier} representing the current entity schema. If the schema is not specified, neither
-	 * explicitly, nor via {@link NamingStrategy}, then return {@link null}
+	 *         explicitly, nor via {@link NamingStrategy}, then return {@link null}
 	 */
 	@Nullable
 	private SqlIdentifier determineCurrentEntitySchema() {
 
 		Optional<SqlIdentifier> explicitlySpecifiedSchema = schemaName.get();
 		return explicitlySpecifiedSchema.orElseGet(
-				() -> StringUtils.hasText(namingStrategy.getSchema())
-				? createDerivedSqlIdentifier(namingStrategy.getSchema())
-				: null);
+				() -> StringUtils.hasText(namingStrategy.getSchema()) ? createDerivedSqlIdentifier(namingStrategy.getSchema())
+						: null);
 	}
 
 	@Override

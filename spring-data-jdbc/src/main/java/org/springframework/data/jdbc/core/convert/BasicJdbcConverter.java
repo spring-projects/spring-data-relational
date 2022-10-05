@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -37,7 +38,6 @@ import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
 import org.springframework.data.mapping.model.ParameterValueProvider;
@@ -51,7 +51,6 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -504,9 +503,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private boolean hasInstanceValues(@Nullable Object idValue) {
 
-			RelationalPersistentEntity<?> persistentEntity = path.getLeafEntity();
-
-			Assert.state(persistentEntity != null, "Entity must not be null");
+			RelationalPersistentEntity<?> persistentEntity = path.getRequiredLeafEntity();
 
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 

@@ -24,35 +24,26 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Mark Paluch
  */
 public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T, RelationalPersistentProperty> {
 
 	/**
-	 * Returns the name of the table backing the given entity.
+	 * Returns the unqualified name of the table (i.e. without schema or owner) backing the given entity.
 	 *
 	 * @return the table name.
-	 * @deprecated Use either {@link #getFullTableName()} or {@link #getSimpleTableName()}
 	 */
-	@Deprecated(since = "2.4")
 	SqlIdentifier getTableName();
 
 	/**
-	 * Returns the name of the table backing the given entity, including the schema.
+	 * Returns the qualified name of the table backing the given entity, including the schema.
 	 *
 	 * @return the table name including the schema if there is any specified.
-	 * @since 2.4
+	 * @since 3.0
 	 */
-	default SqlIdentifier getFullTableName() {
+	default SqlIdentifier getQualifiedTableName() {
 		return getTableName();
 	}
-
-	/**
-	 * Returns the name of the table backing the given entity, without any schema.
-	 *
-	 * @return the table name.
-	 * @since 2.4
-	 */
-	SqlIdentifier getSimpleTableName();
 
 	/**
 	 * Returns the column representing the identifier.

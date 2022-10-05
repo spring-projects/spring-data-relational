@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -43,7 +44,6 @@ import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -78,8 +78,8 @@ class SqlGeneratorUnitTests {
 
 	private static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
 
-	private final NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-	private final RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+	private final PrefixingNamingStrategy namingStrategy = new PrefixingNamingStrategy();
+	private RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 	private final JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
@@ -749,7 +749,6 @@ class SqlGeneratorUnitTests {
 
 	@Test // DATAJDBC-340
 	void noColumnForReferencedEntity() {
-
 		assertThat(generatedColumn("ref", DummyEntity.class)).isNull();
 	}
 
@@ -778,8 +777,8 @@ class SqlGeneratorUnitTests {
 		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource);
 		assertThat(generatedSQL).isNotNull().contains(":x_name");
 
-		assertThat(parameterSource.getValues()) //
-				.containsOnly(entry("x_name", probe.name));
+		assertThat(parameterSource.getValues()).hasSize(1) //
+				.containsEntry("x_name", probe.name);
 	}
 
 	@Test // GH-1329
@@ -810,8 +809,8 @@ class SqlGeneratorUnitTests {
 		String generatedSQL = sqlGenerator.existsByQuery(query, parameterSource);
 		assertThat(generatedSQL).isNotNull().contains(":x_name");
 
-		assertThat(parameterSource.getValues()) //
-				.containsOnly(entry("x_name", probe.name));
+		assertThat(parameterSource.getValues()).hasSize(1) //
+				.containsEntry("x_name", probe.name);
 	}
 
 	@Test // GH-1192
@@ -833,8 +832,8 @@ class SqlGeneratorUnitTests {
 				.containsIgnoringCase("COUNT(1)") //
 				.contains(":x_name");
 
-		assertThat(parameterSource.getValues()) //
-				.containsOnly(entry("x_name", probe.name));
+		assertThat(parameterSource.getValues()).hasSize(1) //
+				.containsEntry("x_name", probe.name);
 	}
 
 	@Test // GH-1192
@@ -860,25 +859,26 @@ class SqlGeneratorUnitTests {
 				.containsIgnoringCase("LIMIT 1") //
 				.containsIgnoringCase("OFFSET 2 LIMIT 1");
 
-		assertThat(parameterSource.getValues()) //
-				.containsOnly(entry("x_name", probe.name));
+		assertThat(parameterSource.getValues()).hasSize(1) //
+				.containsEntry("x_name", probe.name);
 	}
 
 	@Test // GH-1161
 	void backReferenceShouldConsiderRenamedParent() {
 
-		context.setForeignKeyNaming(APPLY_RENAMING);
+		namingStrategy.setForeignKeyNaming(APPLY_RENAMING);
+		context = new JdbcMappingContext(namingStrategy);
 
 		String sql = sqlGenerator.createDeleteInByPath(getPath("ref", RenamedDummy.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE referenced_entity.renamed IN (:ids)");
-
 	}
 
 	@Test // GH-1161
 	void backReferenceShouldIgnoreRenamedParent() {
 
-		context.setForeignKeyNaming(IGNORE_RENAMING);
+		namingStrategy.setForeignKeyNaming(IGNORE_RENAMING);
+		context = new JdbcMappingContext(namingStrategy);
 
 		String sql = sqlGenerator.createDeleteInByPath(getPath("ref", RenamedDummy.class));
 
@@ -888,25 +888,29 @@ class SqlGeneratorUnitTests {
 	@Test // GH-1161
 	void keyColumnShouldConsiderRenamedParent() {
 
-		context.setForeignKeyNaming(APPLY_RENAMING);
-		SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
-		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class), getPath("ref", RenamedDummy.class));
+		namingStrategy.setForeignKeyNaming(APPLY_RENAMING);
+		context = new JdbcMappingContext(namingStrategy);
 
-		assertThat(sql)
-				.contains("referenced_entity.renamed_key AS renamed_key", "WHERE referenced_entity.parentId");
+		SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
+		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class),
+				getPath("ref", RenamedDummy.class));
+
+		assertThat(sql).contains("referenced_entity.renamed_key AS renamed_key", "WHERE referenced_entity.parentId");
 	}
 
 	@Test // GH-1161
 	void keyColumnShouldIgnoreRenamedParent() {
 
-		context.setForeignKeyNaming(IGNORE_RENAMING);
+		namingStrategy.setForeignKeyNaming(IGNORE_RENAMING);
+		context = new JdbcMappingContext(namingStrategy);
+
 		SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
-		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class), getPath("ref", RenamedDummy.class));
+		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class),
+				getPath("ref", RenamedDummy.class));
 
-		assertThat(sql)
-				.contains("referenced_entity.renamed_dummy_key AS renamed_dummy_key", "WHERE referenced_entity.parentId");
+		assertThat(sql).contains("referenced_entity.renamed_dummy_key AS renamed_dummy_key",
+				"WHERE referenced_entity.parentId");
 	}
-
 
 	@Nullable
 	private SqlIdentifier getAlias(Object maybeAliased) {
@@ -931,7 +935,8 @@ class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1") @Id Long id;
+		@Column("id1")
+		@Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
@@ -1018,7 +1023,8 @@ class SqlGeneratorUnitTests {
 
 		// these column names behave like single double quote in the name since the get quoted and then doubling the double
 		// quote escapes it.
-		@Id @Column("test\"\"_@id") Long id;
+		@Id
+		@Column("test\"\"_@id") Long id;
 		@Column("test\"\"_@123") String name;
 	}
 

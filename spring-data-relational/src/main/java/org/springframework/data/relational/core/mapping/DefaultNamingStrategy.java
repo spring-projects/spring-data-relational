@@ -15,26 +15,18 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.util.Assert;
 
 /**
- * The default naming strategy used by Spring Data Relational. Names are in SNAKE_CASE.
+ * The default naming strategy used by Spring Data Relational. Names are in {@code SNAKE_CASE}.
  *
  * @author Jens Schauder
- * @since 2.4
+ * @since 3.0
  */
 public class DefaultNamingStrategy implements NamingStrategy {
 
-	/**
-	 * Since in most cases it doesn't make sense to have more than one {@link NamingStrategy} use of this instance is
-	 * recommended.
-	 */
-	public static NamingStrategy INSTANCE = new DefaultNamingStrategy();
-
 	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.APPLY_RENAMING;
 
-	@Override
 	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
 
 		Assert.notNull(foreignKeyNaming, "foreignKeyNaming must not be null");
@@ -51,19 +43,17 @@ public class DefaultNamingStrategy implements NamingStrategy {
 	@Override
 	public String getReverseColumnName(PersistentPropertyPathExtension path) {
 
-		RelationalPersistentEntity<?> leafEntity = path.getIdDefiningParentPath().getLeafEntity();
+		RelationalPersistentEntity<?> leafEntity = path.getIdDefiningParentPath().getRequiredLeafEntity();
 
 		return getColumnNameReferencing(leafEntity);
 	}
 
 	private String getColumnNameReferencing(RelationalPersistentEntity<?> leafEntity) {
 
-		Assert.state(leafEntity != null, "Leaf Entity must not be null.");
-
 		if (foreignKeyNaming == ForeignKeyNaming.IGNORE_RENAMING) {
 			return getTableName(leafEntity.getType());
 		}
 
-		return leafEntity.getSimpleTableName().getReference();
+		return leafEntity.getTableName().getReference();
 	}
 }
