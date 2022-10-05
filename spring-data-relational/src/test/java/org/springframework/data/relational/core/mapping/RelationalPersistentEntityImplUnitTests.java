@@ -32,55 +32,55 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  * @author Mikhail Polivakha
  */
-public class RelationalPersistentEntityImplUnitTests {
+class RelationalPersistentEntityImplUnitTests {
 
-	RelationalMappingContext mappingContext = new RelationalMappingContext();
+	private RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 	@Test // DATAJDBC-106
-	public void discoversAnnotatedTableName() {
+	void discoversAnnotatedTableName() {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(DummySubEntity.class);
 
 		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
-		assertThat(entity.getFullTableName()).isEqualTo(quoted("dummy_sub_entity"));
-		assertThat(entity.getSimpleTableName()).isEqualTo(quoted("dummy_sub_entity"));
+		assertThat(entity.getQualifiedTableName()).isEqualTo(quoted("dummy_sub_entity"));
+		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
 	}
 
 	@Test // DATAJDBC-294
-	public void considerIdColumnName() {
+	void considerIdColumnName() {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(DummySubEntity.class);
 
 		assertThat(entity.getIdColumn()).isEqualTo(quoted("renamedId"));
 	}
 
 	@Test // DATAJDBC-296
-	public void emptyTableAnnotationFallsBackToNamingStrategy() {
+	void emptyTableAnnotationFallsBackToNamingStrategy() {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
+		RelationalPersistentEntity<?> entity = mappingContext
+				.getRequiredPersistentEntity(DummyEntityWithEmptyAnnotation.class);
 
 		assertThat(entity.getTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
-		assertThat(entity.getFullTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
-		assertThat(entity.getSimpleTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
+		assertThat(entity.getQualifiedTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
+		assertThat(entity.getTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
 	}
 
 	@Test // DATAJDBC-491
-	public void namingStrategyWithSchemaReturnsCompositeTableName() {
+	void namingStrategyWithSchemaReturnsCompositeTableName() {
 
 		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
+		RelationalPersistentEntity<?> entity = mappingContext
+				.getRequiredPersistentEntity(DummyEntityWithEmptyAnnotation.class);
 
 		SqlIdentifier simpleExpected = quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION");
 		SqlIdentifier fullExpected = SqlIdentifier.from(quoted("MY_SCHEMA"), simpleExpected);
 
+		assertThat(entity.getQualifiedTableName())
+				.isEqualTo(fullExpected);
 		assertThat(entity.getTableName())
-				.isEqualTo(fullExpected);
-		assertThat(entity.getFullTableName())
-				.isEqualTo(fullExpected);
-		assertThat(entity.getSimpleTableName())
 				.isEqualTo(simpleExpected);
 
-		assertThat(entity.getTableName().toSql(IdentifierProcessing.ANSI))
+		assertThat(entity.getQualifiedTableName().toSql(IdentifierProcessing.ANSI))
 				.isEqualTo("\"MY_SCHEMA\".\"DUMMY_ENTITY_WITH_EMPTY_ANNOTATION\"");
 	}
 
@@ -88,34 +88,32 @@ public class RelationalPersistentEntityImplUnitTests {
 	void testRelationalPersistentEntitySchemaNameChoice() {
 
 		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(EntityWithSchemaAndName.class);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(EntityWithSchemaAndName.class);
 
 		SqlIdentifier simpleExpected = quoted("I_AM_THE_SENATE");
 		SqlIdentifier expected = SqlIdentifier.from(quoted("DART_VADER"), simpleExpected);
-		assertThat(entity.getTableName()).isEqualTo(expected);
-		assertThat(entity.getFullTableName()).isEqualTo(expected);
-		assertThat(entity.getSimpleTableName()).isEqualTo(simpleExpected);
+		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
+		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
 	}
 
 	@Test // GH-1099
 	void specifiedSchemaGetsCombinedWithNameFromNamingStrategy() {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(EntityWithSchema.class);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(EntityWithSchema.class);
 
 		SqlIdentifier simpleExpected = quoted("ENTITY_WITH_SCHEMA");
 		SqlIdentifier expected = SqlIdentifier.from(quoted("ANAKYN_SKYWALKER"), simpleExpected);
-		assertThat(entity.getTableName()).isEqualTo(expected);
-		assertThat(entity.getFullTableName()).isEqualTo(expected);
-		assertThat(entity.getSimpleTableName()).isEqualTo(simpleExpected);
+		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
+		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
 	}
 
 	@Table(schema = "ANAKYN_SKYWALKER")
-	static class EntityWithSchema {
+	private static class EntityWithSchema {
 		@Id private Long id;
 	}
 
 	@Table(schema = "DART_VADER", name = "I_AM_THE_SENATE")
-	static class EntityWithSchemaAndName {
+	private static class EntityWithSchemaAndName {
 		@Id private Long id;
 	}
 

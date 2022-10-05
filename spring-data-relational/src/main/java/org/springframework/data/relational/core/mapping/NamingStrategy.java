@@ -41,8 +41,12 @@ public interface NamingStrategy {
 	 *
 	 * @deprecated use {@link DefaultNamingStrategy#INSTANCE} instead.
 	 */
-	@Deprecated(since = "2.4")
-	NamingStrategy INSTANCE = DefaultNamingStrategy.INSTANCE;
+	@Deprecated(since = "2.4") NamingStrategy INSTANCE = new DefaultNamingStrategy() {
+		@Override
+		public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
+			throw new UnsupportedOperationException("Cannot update immutable DefaultNamingStrategy");
+		}
+	};
 
 	/**
 	 * Defaults to no schema.
@@ -78,19 +82,18 @@ public interface NamingStrategy {
 	/**
 	 * For a reference A -&gt; B this is the name in the table for B which references A.
 	 *
-	 * @param property The property who's column name in the owner table is required
+	 * @param property The property whose column name in the owner table is required
 	 * @return a column name. Must not be {@code null}.
 	 */
 	default String getReverseColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null");
 
-		return property.getOwner().getSimpleTableName().getReference(IdentifierProcessing.NONE);
+		return property.getOwner().getTableName().getReference(IdentifierProcessing.NONE);
 	}
 
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
-
-		return getTableName(path.getIdDefiningParentPath().getLeafEntity().getType());
+		return getTableName(path.getIdDefiningParentPath().getRequiredLeafEntity().getType());
 	}
 
 	/**
@@ -105,12 +108,4 @@ public interface NamingStrategy {
 
 		return getReverseColumnName(property) + "_key";
 	}
-
-	/**
-	 * Set the {@link ForeignKeyNaming} strategy used in this {@link NamingStrategy}.
-	 *
-	 * @param foreignKeyNaming the ForeignKeyNaming strategy to be used. Must not be {@literal null}.
-	 * @since 2.4
-	 */
-	default void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {}
 }

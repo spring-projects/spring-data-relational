@@ -277,7 +277,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	@Override
 	public SqlIdentifier getTableName(Class<?> type) {
-		return getRequiredPersistentEntity(type).getFullTableName();
+		return getRequiredPersistentEntity(type).getQualifiedTableName();
 	}
 
 	@Override

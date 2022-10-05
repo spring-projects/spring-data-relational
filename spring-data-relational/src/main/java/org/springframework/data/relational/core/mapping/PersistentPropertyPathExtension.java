@@ -139,6 +139,30 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
+	 * The {@link RelationalPersistentEntity} associated with the leaf of this path or throw {@link IllegalStateException}
+	 * if the leaf cannot be resolved.
+	 *
+	 * @return the required {@link RelationalPersistentEntity} associated with the leaf of this path.
+	 * @since 3.0
+	 * @throws IllegalStateException if the persistent entity cannot be resolved.
+	 */
+	public RelationalPersistentEntity<?> getRequiredLeafEntity() {
+
+		RelationalPersistentEntity<?> entity = getLeafEntity();
+
+		if (entity == null) {
+
+			if (this.path == null) {
+				throw new IllegalStateException("Couldn't resolve leaf PersistentEntity absent path");
+			}
+			throw new IllegalStateException(String.format("Couldn't resolve leaf PersistentEntity for type %s",
+					path.getRequiredLeafProperty().getActualType()));
+		}
+
+		return entity;
+	}
+
+	/**
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
 	public boolean isEntity() {
@@ -231,9 +255,21 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
+	 * The fully qualified name of the table this path is tied to or of the longest ancestor path that is actually tied to
+	 * a table.
+	 *
+	 * @return the name of the table. Guaranteed to be not {@literal null}.
+	 * @since 3.0
+	 */
+	public SqlIdentifier getQualifiedTableName() {
+		return getTableOwningAncestor().getRequiredLeafEntity().getQualifiedTableName();
+	}
+
+	/**
 	 * The name of the table this path is tied to or of the longest ancestor path that is actually tied to a table.
 	 *
 	 * @return the name of the table. Guaranteed to be not {@literal null}.
+	 * @since 3.0
 	 */
 	public SqlIdentifier getTableName() {
 		return getTableOwningAncestor().getRequiredLeafEntity().getTableName();
@@ -440,10 +476,6 @@ public class PersistentPropertyPathExtension {
 		String embeddedPrefix = parentLeaf.getEmbeddedPrefix();
 
 		return getParentPath().assembleColumnName(suffix.transform(embeddedPrefix::concat));
-	}
-
-	private RelationalPersistentEntity<?> getRequiredLeafEntity() {
-		return path == null ? entity : context.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
 	}
 
 	private SqlIdentifier prefixWithTableAlias(SqlIdentifier columnName) {

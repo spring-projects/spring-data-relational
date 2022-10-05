@@ -133,7 +133,7 @@ class SqlGenerator {
 			return rootCondition.apply(filterColumn);
 		}
 
-		Table subSelectTable = Table.create(parentPath.getTableName());
+		Table subSelectTable = Table.create(parentPath.getQualifiedTableName());
 		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
 		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
 
@@ -208,6 +208,7 @@ class SqlGenerator {
 	 * @param parentIdentifier name of the column of the FK back to the referencing entity.
 	 * @param propertyPath used to determine if the property is ordered and if there is a key column.
 	 * @return a SQL String.
+	 * @since 3.0
 	 */
 	String getFindAllByProperty(Identifier parentIdentifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
@@ -706,7 +707,7 @@ class SqlGenerator {
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
 			Function<Column, Condition> rootCondition) {
 
-		Table table = Table.create(path.getTableName());
+		Table table = Table.create(path.getQualifiedTableName());
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
@@ -935,7 +936,7 @@ class SqlGenerator {
 	private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,
 			SelectBuilder.SelectWhere selectBuilder) {
 
-		Table table = Table.create(this.entity.getFullTableName());
+		Table table = Table.create(this.entity.getQualifiedTableName());
 
 		SelectBuilder.SelectOrdered selectOrdered = query //
 				.getCriteria() //
@@ -1098,8 +1099,7 @@ class SqlGenerator {
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
-
-			if (property.isInsertOnly()) {
+		if (property.isInsertOnly()) {
 				insertOnlyColumnNames.add(columnName);
 			}
 		}

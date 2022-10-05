@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -498,9 +499,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private boolean hasInstanceValues(@Nullable Object idValue) {
 
-			RelationalPersistentEntity<?> persistentEntity = path.getLeafEntity();
-
-			Assert.state(persistentEntity != null, "Entity must not be null");
+			RelationalPersistentEntity<?> persistentEntity = path.getRequiredLeafEntity();
 
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 

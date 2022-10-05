@@ -37,7 +37,7 @@ class SqlContext {
 	SqlContext(RelationalPersistentEntity<?> entity) {
 
 		this.entity = entity;
-		this.table = Table.create(entity.getFullTableName());
+		this.table = Table.create(entity.getQualifiedTableName());
 	}
 
 	Column getIdColumn() {
@@ -55,7 +55,7 @@ class SqlContext {
 	Table getTable(PersistentPropertyPathExtension path) {
 
 		SqlIdentifier tableAlias = path.getTableAlias();
-		Table table = Table.create(path.getTableName());
+		Table table = Table.create(path.getQualifiedTableName());
 		return tableAlias == null ? table : table.as(tableAlias);
 	}
 
