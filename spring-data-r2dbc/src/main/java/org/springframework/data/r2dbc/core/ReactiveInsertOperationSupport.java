@@ -35,10 +35,6 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 		this.template = template;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation#insert(java.lang.Class)
-	 */
 	@Override
 	public <T> ReactiveInsert<T> insert(Class<T> domainType) {
 
@@ -60,10 +56,6 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 			this.tableName = tableName;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation.InsertWithTable#into(SqlIdentifier)
-		 */
 		@Override
 		public TerminatingInsert<T> into(SqlIdentifier tableName) {
 
@@ -72,10 +64,6 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 			return new ReactiveInsertSupport<>(template, domainType, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation.TerminatingInsert#one(java.lang.Object)
-		 */
 		@Override
 		public Mono<T> using(T object) {
 

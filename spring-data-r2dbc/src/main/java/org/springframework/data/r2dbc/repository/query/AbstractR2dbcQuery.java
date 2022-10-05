@@ -68,18 +68,10 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		this.instantiators = new EntityInstantiators();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
-	 */
 	public R2dbcQueryMethod getQueryMethod() {
 		return method;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.Object[])
-	 */
 	public Object execute(Object[] parameters) {
 
 		Mono<R2dbcParameterAccessor> resolveParameters = new R2dbcParameterAccessor(method, parameters).resolveParameters();

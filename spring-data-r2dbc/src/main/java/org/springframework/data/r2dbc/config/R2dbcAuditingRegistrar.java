@@ -37,19 +37,11 @@ import org.springframework.util.Assert;
  */
 class R2dbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAnnotation()
-	 */
 	@Override
 	protected Class<? extends Annotation> getAnnotation() {
 		return EnableR2dbcAuditing.class;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAuditingHandlerBeanName()
-	 */
 	@Override
 	protected String getAuditingHandlerBeanName() {
 		return "r2dbcAuditingHandler";
@@ -61,10 +53,6 @@ class R2dbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 		builder.setFactoryMethod("from").addConstructorArgReference("r2dbcMappingContext");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAuditHandlerBeanDefinitionBuilder(org.springframework.data.auditing.config.AuditingConfiguration)
-	 */
 	@Override
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
 
@@ -74,10 +62,6 @@ class R2dbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 				BeanDefinitionBuilder.rootBeanDefinition(ReactiveIsNewAwareAuditingHandler.class));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#registerAuditListener(org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.support.BeanDefinitionRegistry)
-	 */
 	@Override
 	protected void registerAuditListenerBeanDefinition(BeanDefinition auditingHandlerDefinition,
 			BeanDefinitionRegistry registry) {

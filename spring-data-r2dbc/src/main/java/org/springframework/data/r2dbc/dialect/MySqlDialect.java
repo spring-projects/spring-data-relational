@@ -56,28 +56,16 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	private static final List<Object> CONVERTERS = Arrays.asList(ByteToBooleanConverter.INSTANCE,
 			BooleanToByteConverter.INSTANCE);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
-	 */
 	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
 		return ANONYMOUS;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
-	 */
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.R2dbcDialect#getConverters()
-	 */
 	@Override
 	public Collection<Object> getConverters() {
 		return CONVERTERS;

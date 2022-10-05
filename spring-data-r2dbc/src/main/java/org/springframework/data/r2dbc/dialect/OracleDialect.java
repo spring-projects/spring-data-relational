@@ -34,10 +34,6 @@ public class OracleDialect extends org.springframework.data.relational.core.dial
 	private static final BindMarkersFactory NAMED = BindMarkersFactory.named(":", "P", 32,
 			OracleDialect::filterBindMarker);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
-	 */
 	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
 		return NAMED;

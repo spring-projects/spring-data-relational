@@ -26,19 +26,11 @@ public class SqlServerDialect extends org.springframework.data.relational.core.d
 	private static final BindMarkersFactory NAMED = BindMarkersFactory.named("@", "P", 32,
 			SqlServerDialect::filterBindMarker);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
-	 */
 	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
 		return NAMED;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
-	 */
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;

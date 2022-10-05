@@ -603,10 +603,6 @@ abstract class NamedParameterUtils {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
 		@Override
 		public String toQuery() {
 			return this.expandedSql;

@@ -43,10 +43,6 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 		this.fieldsToInclude = fieldsToInclude;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#sortBy(org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public ReactiveFluentQuery<T> sortBy(Sort sort) {
 
@@ -55,10 +51,6 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 		return create(predicate, sort, resultType, fieldsToInclude);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#as(java.lang.Class)
-	 */
 	@Override
 	public <R> ReactiveFluentQuery<R> as(Class<R> projection) {
 
@@ -67,10 +59,6 @@ abstract class ReactiveFluentQuerySupport<P, T> implements FluentQuery.ReactiveF
 		return create(predicate, sort, projection, fieldsToInclude);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#project(java.util.Collection)
-	 */
 	@Override
 	public ReactiveFluentQuery<T> project(Collection<String> properties) {
 

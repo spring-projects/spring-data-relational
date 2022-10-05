@@ -84,10 +84,6 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		this.operations = operations;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#setMappingContext(org.springframework.data.mapping.context.MappingContext)
-	 */
 	@Override
 	protected void setMappingContext(MappingContext<?, ?> mappingContext) {
 
@@ -95,10 +91,6 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		super.setMappingContext(mappingContext);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#createRepositoryFactory()
-	 */
 	@Override
 	protected final RepositoryFactorySupport createRepositoryFactory() {
 
@@ -106,10 +98,6 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 				: getFactoryInstance(this.client, this.dataAccessStrategy);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#createDefaultQueryMethodEvaluationContextProvider(ListableBeanFactory)
-	 */
 	@Override
 	protected Optional<QueryMethodEvaluationContextProvider> createDefaultQueryMethodEvaluationContextProvider(
 			ListableBeanFactory beanFactory) {
@@ -139,19 +127,11 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		return new R2dbcRepositoryFactory(operations);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
-	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
-	 */
 	@Override
 	public void afterPropertiesSet() {
 

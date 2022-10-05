@@ -132,10 +132,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				this.mappingContext);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getAllColumns(java.lang.Class)
-	 */
 	@Override
 	public List<SqlIdentifier> getAllColumns(Class<?> entityType) {
 
@@ -153,10 +149,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return columnNames;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getIdentifierColumns(java.lang.Class)
-	 */
 	@Override
 	public List<SqlIdentifier> getIdentifierColumns(Class<?> entityType) {
 
@@ -173,10 +165,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return columnNames;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getOutboundRow(java.lang.Object)
-	 */
 	public OutboundRow getOutboundRow(Object object) {
 
 		Assert.notNull(object, "Entity object must not be null");
@@ -256,28 +244,16 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				actualType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindValue(Parameter)
-	 */
 	@Override
 	public Parameter getBindValue(Parameter value) {
 		return this.updateMapper.getBindValue(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getRowMapper(java.lang.Class)
-	 */
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
 		return new EntityRowMapper<>(typeToRead, this.converter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy#processNamedParameters(java.lang.String, org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy.NamedParameterProvider)
-	 */
 	@Override
 	public PreparedOperation<?> processNamedParameters(String query, NamedParameterProvider parameterProvider) {
 
@@ -299,37 +275,21 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return this.expander.expand(query, this.dialect.getBindMarkersFactory(), new MapBindParameterSource(namedBindings));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getTableName(java.lang.Class)
-	 */
 	@Override
 	public SqlIdentifier getTableName(Class<?> type) {
 		return getRequiredPersistentEntity(type).getTableName();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#toSql(SqlIdentifier)
-	 */
 	@Override
 	public String toSql(SqlIdentifier identifier) {
 		return this.updateMapper.toSql(identifier);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getStatementMapper()
-	 */
 	@Override
 	public StatementMapper getStatementMapper() {
 		return this.statementMapper;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getConverter()
-	 */
 	public R2dbcConverter getConverter() {
 		return this.converter;
 	}

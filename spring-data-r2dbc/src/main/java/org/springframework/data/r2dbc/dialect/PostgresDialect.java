@@ -82,37 +82,21 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 	private final Lazy<ArrayColumns> arrayColumns = Lazy
 			.of(() -> new SimpleTypeArrayColumns(ObjectArrayColumns.INSTANCE, getSimpleTypeHolder()));
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
-	 */
 	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
 		return INDEXED;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
-	 */
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getArraySupport()
-	 */
 	@Override
 	public ArrayColumns getArraySupport() {
 		return this.arrayColumns.get();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getConverters()
-	 */
 	@Override
 	public Collection<Object> getConverters() {
 

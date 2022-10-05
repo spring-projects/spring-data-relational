@@ -37,10 +37,6 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 		this.template = template;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation#update(java.lang.Class)
-	 */
 	@Override
 	public ReactiveUpdate update(Class<?> domainType) {
 
@@ -65,10 +61,6 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 			this.tableName = tableName;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.UpdateWithTable#inTable(SqlIdentifier)
-		 */
 		@Override
 		public UpdateWithQuery inTable(SqlIdentifier tableName) {
 
@@ -77,10 +69,6 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 			return new ReactiveUpdateSupport(template, domainType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.UpdateWithQuery#matching(org.springframework.data.r2dbc.query.Query)
-		 */
 		@Override
 		public TerminatingUpdate matching(Query query) {
 
@@ -89,10 +77,6 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 			return new ReactiveUpdateSupport(template, domainType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.TerminatingUpdate#apply(org.springframework.data.r2dbc.query.Update)
-		 */
 		@Override
 		public Mono<Long> apply(Update update) {
 

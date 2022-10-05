@@ -75,37 +75,21 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isModifyingQuery()
-	 */
 	@Override
 	protected boolean isModifyingQuery() {
 		return this.tree.isDelete();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isCountQuery()
-	 */
 	@Override
 	protected boolean isCountQuery() {
 		return this.tree.isCountProjection();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isExistsQuery()
-	 */
 	@Override
 	protected boolean isExistsQuery() {
 		return this.tree.isExistsProjection();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
-	 */
 	@Override
 	protected Mono<PreparedOperation<?>> createQuery(RelationalParameterAccessor accessor) {
 

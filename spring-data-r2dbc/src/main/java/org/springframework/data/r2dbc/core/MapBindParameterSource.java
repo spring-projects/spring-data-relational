@@ -71,10 +71,6 @@ class MapBindParameterSource implements BindParameterSource {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.SqlParameterSource#hasValue(java.lang.String)
-	 */
 	@Override
 	public boolean hasValue(String paramName) {
 
@@ -83,10 +79,6 @@ class MapBindParameterSource implements BindParameterSource {
 		return values.containsKey(paramName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.SqlParameterSource#getType(java.lang.String)
-	 */
 	@Override
 	public Class<?> getType(String paramName) {
 
@@ -100,10 +92,6 @@ class MapBindParameterSource implements BindParameterSource {
 		return Object.class;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.SqlParameterSource#getValue(java.lang.String)
-	 */
 	@Override
 	public Object getValue(String paramName) throws IllegalArgumentException {
 
@@ -114,10 +102,6 @@ class MapBindParameterSource implements BindParameterSource {
 		return this.values.get(paramName).getValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.SqlParameterSource#getParameterNames()
-	 */
 	@Override
 	public Streamable<String> getParameterNames() {
 		return Streamable.of(this.values.keySet());

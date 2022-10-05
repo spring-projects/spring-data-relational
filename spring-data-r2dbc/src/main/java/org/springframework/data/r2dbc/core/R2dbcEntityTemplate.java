@@ -162,46 +162,25 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#getDatabaseClient()
-	 */
 	@Override
 	public DatabaseClient getDatabaseClient() {
 		return this.databaseClient;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#getDataAccessStrategy()
-	 */
 	@Override
 	public ReactiveDataAccessStrategy getDataAccessStrategy() {
 		return this.dataAccessStrategy;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#getConverter()
-	 */
 	@Override
 	public R2dbcConverter getConverter() {
 		return this.dataAccessStrategy.getConverter();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.beans.factory.BeanFactoryAware#setBeanFactory(org.springframework.beans.factory.BeanFactory)
-	 * @deprecated since 1.2 in favor of #setApplicationContext.
-	 */
 	@Override
 	@Deprecated
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
-	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 
@@ -234,37 +213,21 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	// Methods dealing with org.springframework.data.r2dbc.core.FluentR2dbcOperations
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation#select(java.lang.Class)
-	 */
 	@Override
 	public <T> ReactiveSelect<T> select(Class<T> domainType) {
 		return new ReactiveSelectOperationSupport(this).select(domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation#insert(java.lang.Class)
-	 */
 	@Override
 	public <T> ReactiveInsert<T> insert(Class<T> domainType) {
 		return new ReactiveInsertOperationSupport(this).insert(domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation#update(java.lang.Class)
-	 */
 	@Override
 	public ReactiveUpdate update(Class<?> domainType) {
 		return new ReactiveUpdateOperationSupport(this).update(domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation#delete(java.lang.Class)
-	 */
 	@Override
 	public ReactiveDelete delete(Class<?> domainType) {
 		return new ReactiveDeleteOperationSupport(this).delete(domainType);
@@ -274,10 +237,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	// Methods dealing with org.springframework.data.r2dbc.query.Query
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#count(org.springframework.data.r2dbc.query.Query, java.lang.Class)
-	 */
 	@Override
 	public Mono<Long> count(Query query, Class<?> entityClass) throws DataAccessException {
 
@@ -315,10 +274,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				.defaultIfEmpty(0L);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#exists(org.springframework.data.r2dbc.query.Query, java.lang.Class)
-	 */
 	@Override
 	public Mono<Boolean> exists(Query query, Class<?> entityClass) throws DataAccessException {
 
@@ -355,10 +310,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				.hasElement();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#select(org.springframework.data.r2dbc.query.Query, java.lang.Class)
-	 */
 	@Override
 	public <T> Flux<T> select(Query query, Class<T> entityClass) throws DataAccessException {
 
@@ -415,20 +366,12 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return getRowsFetchSpec(databaseClient.sql(operation), entityClass, returnType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#selectOne(org.springframework.data.r2dbc.query.Query, java.lang.Class)
-	 */
 	@Override
 	public <T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException {
 		return doSelect(query.isLimited() ? query : query.limit(2), entityClass, getTableName(entityClass), entityClass,
 				RowsFetchSpec::one);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#update(org.springframework.data.r2dbc.query.Query, org.springframework.data.r2dbc.query.Update, java.lang.Class)
-	 */
 	@Override
 	public Mono<Long> update(Query query, Update update, Class<?> entityClass) throws DataAccessException {
 
@@ -455,10 +398,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return this.databaseClient.sql(operation).fetch().rowsUpdated();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#delete(org.springframework.data.r2dbc.query.Query, java.lang.Class)
-	 */
 	@Override
 	public Mono<Long> delete(Query query, Class<?> entityClass) throws DataAccessException {
 
@@ -488,10 +427,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	// Methods dealing with org.springframework.r2dbc.core.PreparedOperation
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.lang.Class)
-	 */
 	@Override
 	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<T> entityClass) {
 
@@ -502,10 +437,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				getTableNameOrEmpty(entityClass));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.util.function.BiFunction)
-	 */
 	@Override
 	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, BiFunction<Row, RowMetadata, T> rowMapper) {
 
@@ -515,10 +446,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return new EntityCallbackAdapter<>(databaseClient.sql(operation).map(rowMapper), SqlIdentifier.EMPTY);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.lang.Class, java.util.function.BiFunction)
-	 */
 	@Override
 	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass,
 			BiFunction<Row, RowMetadata, T> rowMapper) {
@@ -534,10 +461,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	// Methods dealing with entities
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#insert(java.lang.Object)
-	 */
 	@Override
 	public <T> Mono<T> insert(T entity) throws DataAccessException {
 
@@ -637,10 +560,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return (T) propertyAccessor.getBean();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#update(java.lang.Object)
-	 */
 	@Override
 	public <T> Mono<T> update(T entity) throws DataAccessException {
 
@@ -760,10 +679,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#delete(java.lang.Object)
-	 */
 	@Override
 	public <T> Mono<T> delete(T entity) throws DataAccessException {
 

@@ -162,11 +162,6 @@ public class R2dbcQueryMethod extends QueryMethod {
 		return this.lock;
 	}
 
-	/*
-	 * All reactive query methods are streaming queries.
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryMethod#isStreamQuery()
-	 */
 	@Override
 	public boolean isStreamQuery() {
 		return true;

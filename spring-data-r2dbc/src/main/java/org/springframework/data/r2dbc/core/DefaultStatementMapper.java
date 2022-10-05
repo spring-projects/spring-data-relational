@@ -72,10 +72,6 @@ class DefaultStatementMapper implements StatementMapper {
 		this.mappingContext = mappingContext;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#forType(java.lang.Class)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> TypedStatementMapper<T> forType(Class<T> type) {
@@ -86,10 +82,6 @@ class DefaultStatementMapper implements StatementMapper {
 				(RelationalPersistentEntity<T>) this.mappingContext.getRequiredPersistentEntity(type));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.SelectSpec)
-	 */
 	@Override
 	public PreparedOperation<?> getMappedObject(SelectSpec selectSpec) {
 		return getMappedObject(selectSpec, null);
@@ -157,10 +149,6 @@ class DefaultStatementMapper implements StatementMapper {
 		return mapped;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.InsertSpec)
-	 */
 	@Override
 	public PreparedOperation<Insert> getMappedObject(InsertSpec insertSpec) {
 		return getMappedObject(insertSpec, null);
@@ -195,10 +183,6 @@ class DefaultStatementMapper implements StatementMapper {
 		return new DefaultPreparedOperation<>(withBuild.build(), this.renderContext, bindings);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.UpdateSpec)
-	 */
 	@Override
 	public PreparedOperation<Update> getMappedObject(UpdateSpec updateSpec) {
 		return getMappedObject(updateSpec, null);
@@ -239,19 +223,11 @@ class DefaultStatementMapper implements StatementMapper {
 		return new DefaultPreparedOperation<>(update, this.renderContext, bindings);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.DeleteSpec)
-	 */
 	@Override
 	public PreparedOperation<Delete> getMappedObject(DeleteSpec deleteSpec) {
 		return getMappedObject(deleteSpec, null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#getRenderContext()
-	 */
 	@Override
 	public RenderContext getRenderContext() {
 		return renderContext;
@@ -284,10 +260,6 @@ class DefaultStatementMapper implements StatementMapper {
 		return new DefaultPreparedOperation<>(delete, this.renderContext, bindings);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.StatementMapper#toSql(SqlIdentifier)
-	 */
 	private String toSql(SqlIdentifier identifier) {
 
 		Assert.notNull(identifier, "SqlIdentifier must not be null");
@@ -313,19 +285,11 @@ class DefaultStatementMapper implements StatementMapper {
 			this.bindings = bindings;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.PreparedOperation#getSource()
-		 */
 		@Override
 		public T getSource() {
 			return this.source;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
 		@Override
 		public String toQuery() {
 
@@ -365,55 +329,31 @@ class DefaultStatementMapper implements StatementMapper {
 			this.entity = entity;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.StatementMapper#forType(java.lang.Class)
-		 */
 		@Override
 		public <TC> TypedStatementMapper<TC> forType(Class<TC> type) {
 			return DefaultStatementMapper.this.forType(type);
 		}
 
-		/*
-		* (non-Javadoc)
-		* @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.SelectSpec)
-		*/
 		@Override
 		public PreparedOperation<?> getMappedObject(SelectSpec selectSpec) {
 			return DefaultStatementMapper.this.getMappedObject(selectSpec, this.entity);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.InsertSpec)
-		 */
 		@Override
 		public PreparedOperation<?> getMappedObject(InsertSpec insertSpec) {
 			return DefaultStatementMapper.this.getMappedObject(insertSpec, this.entity);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.UpdateSpec)
-		 */
 		@Override
 		public PreparedOperation<?> getMappedObject(UpdateSpec updateSpec) {
 			return DefaultStatementMapper.this.getMappedObject(updateSpec, this.entity);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.StatementMapper#getMappedObject(org.springframework.data.r2dbc.function.StatementMapper.DeleteSpec)
-		 */
 		@Override
 		public PreparedOperation<?> getMappedObject(DeleteSpec deleteSpec) {
 			return DefaultStatementMapper.this.getMappedObject(deleteSpec, this.entity);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.StatementMapper#getRenderContext()
-		 */
 		@Override
 		public RenderContext getRenderContext() {
 			return DefaultStatementMapper.this.getRenderContext();

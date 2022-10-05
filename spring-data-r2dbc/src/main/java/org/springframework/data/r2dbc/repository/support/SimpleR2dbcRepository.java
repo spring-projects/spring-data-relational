@@ -109,10 +109,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	// Methods from ReactiveCrudRepository
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#save(S)
-	 */
 	@Override
 	@Transactional
 	public <S extends T> Mono<S> save(S objectToSave) {
@@ -126,10 +122,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return this.entityOperations.update(objectToSave);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(java.lang.Iterable)
-	 */
 	@Override
 	@Transactional
 	public <S extends T> Flux<S> saveAll(Iterable<S> objectsToSave) {
@@ -139,10 +131,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return Flux.fromIterable(objectsToSave).concatMap(this::save);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(org.reactivestreams.Publisher)
-	 */
 	@Override
 	@Transactional
 	public <S extends T> Flux<S> saveAll(Publisher<S> objectsToSave) {
@@ -152,10 +140,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return Flux.from(objectsToSave).concatMap(this::save);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findById(java.lang.Object)
-	 */
 	@Override
 	public Mono<T> findById(ID id) {
 
@@ -164,19 +148,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return this.entityOperations.selectOne(getIdQuery(id), this.entity.getJavaType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findById(org.reactivestreams.Publisher)
-	 */
 	@Override
 	public Mono<T> findById(Publisher<ID> publisher) {
 		return Mono.from(publisher).flatMap(this::findById);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#existsById(java.lang.Object)
-	 */
 	@Override
 	public Mono<Boolean> existsById(ID id) {
 
@@ -185,28 +161,16 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return this.entityOperations.exists(getIdQuery(id), this.entity.getJavaType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#existsById(org.reactivestreams.Publisher)
-	 */
 	@Override
 	public Mono<Boolean> existsById(Publisher<ID> publisher) {
 		return Mono.from(publisher).flatMap(this::findById).hasElement();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAll()
-	 */
 	@Override
 	public Flux<T> findAll() {
 		return this.entityOperations.select(Query.empty(), this.entity.getJavaType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAllById(java.lang.Iterable)
-	 */
 	@Override
 	public Flux<T> findAllById(Iterable<ID> iterable) {
 
@@ -215,10 +179,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return findAllById(Flux.fromIterable(iterable));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAllById(org.reactivestreams.Publisher)
-	 */
 	@Override
 	public Flux<T> findAllById(Publisher<ID> idPublisher) {
 
@@ -236,19 +196,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#count()
-	 */
 	@Override
 	public Mono<Long> count() {
 		return this.entityOperations.count(Query.empty(), this.entity.getJavaType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(java.lang.Object)
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteById(ID id) {
@@ -258,10 +210,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return this.entityOperations.delete(getIdQuery(id), this.entity.getJavaType()).then();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(org.reactivestreams.Publisher)
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteById(Publisher<ID> idPublisher) {
@@ -280,10 +228,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		}).then();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#delete(java.lang.Object)
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> delete(T objectToDelete) {
@@ -293,10 +237,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return deleteById(this.entity.getRequiredId(objectToDelete));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAllById(java.lang.Iterable)
-	 */
 	@Override
 	public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
 
@@ -308,10 +248,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 				.then();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(java.lang.Iterable)
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteAll(Iterable<? extends T> iterable) {
@@ -321,10 +257,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return deleteAll(Flux.fromIterable(iterable));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(org.reactivestreams.Publisher)
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteAll(Publisher<? extends T> objectPublisher) {
@@ -337,10 +269,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return deleteById(idPublisher);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll()
-	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteAll() {
@@ -351,10 +279,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	// Methods from ReactiveSortingRepository
 	// -------------------------------------------------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveSortingRepository#findAll(org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public Flux<T> findAll(Sort sort) {
 
@@ -456,37 +380,21 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 			return new ReactiveFluentQueryByExample<>(predicate, sort, resultType, fieldsToInclude);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#one()
-		 */
 		@Override
 		public Mono<T> one() {
 			return createQuery().one();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#first()
-		 */
 		@Override
 		public Mono<T> first() {
 			return createQuery().first();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#all()
-		 */
 		@Override
 		public Flux<T> all() {
 			return createQuery().all();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#page(org.springframework.data.domain.Pageable)
-		 */
 		@Override
 		public Mono<Page<T>> page(Pageable pageable) {
 
@@ -497,19 +405,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 			return items.flatMap(content -> ReactivePageableExecutionUtils.getPage(content, pageable, this.count()));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#count()
-		 */
 		@Override
 		public Mono<Long> count() {
 			return createQuery().count();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#exists()
-		 */
 		@Override
 		public Mono<Boolean> exists() {
 			return createQuery().exists();

@@ -48,10 +48,6 @@ class DefaultR2dbcSpELExpressionEvaluator implements R2dbcSpELExpressionEvaluato
 		return NoOpExpressionEvaluator.INSTANCE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.mapping.model.R2dbcSpELExpressionEvaluator#evaluate(java.lang.String)
-	 */
 	@Override
 	public Parameter evaluate(String expression) {
 

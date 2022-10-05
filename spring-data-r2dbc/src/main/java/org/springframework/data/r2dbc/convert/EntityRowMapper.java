@@ -37,10 +37,6 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		this.converter = converter;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.function.BiFunction#apply(java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public T apply(Row row, RowMetadata metadata) {
 		return converter.read(typeRoRead, row, metadata);

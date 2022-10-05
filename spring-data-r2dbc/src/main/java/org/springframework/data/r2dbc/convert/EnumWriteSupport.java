@@ -47,10 +47,6 @@ import org.springframework.data.convert.WritingConverter;
 @WritingConverter
 public abstract class EnumWriteSupport<E extends Enum<E>> implements Converter<E, E> {
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.core.convert.converter.Converter#convert(java.lang.Object)
-	 */
 	@Override
 	public E convert(E enumInstance) {
 		return enumInstance;

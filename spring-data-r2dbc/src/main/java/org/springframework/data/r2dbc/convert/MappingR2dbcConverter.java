@@ -90,19 +90,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity reading
 	// ----------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.convert.EntityReader#read(java.lang.Class, S)
-	 */
 	@Override
 	public <R> R read(Class<R> type, Row row) {
 		return read(type, row, null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#read(java.lang.Class, io.r2dbc.spi.Row, io.r2dbc.spi.RowMetadata)
-	 */
 	@Override
 	public <R> R read(Class<R> type, Row row, @Nullable RowMetadata metadata) {
 
@@ -331,10 +323,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity writing
 	// ----------------------------------
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.convert.EntityWriter#write(java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void write(Object source, OutboundRow sink) {
 
@@ -532,10 +520,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#getArrayValue(org.springframework.data.r2dbc.dialect.ArrayColumns, org.springframework.data.relational.core.mapping.RelationalPersistentProperty, java.lang.Object)
-	 */
 	@Override
 	public Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {
 
@@ -562,10 +546,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return value;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#getTargetType(Class)
-	 */
 	@Override
 	public Class<?> getTargetType(Class<?> valueType) {
 
@@ -576,10 +556,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#isSimpleType(Class)
-	 */
 	@Override
 	public boolean isSimpleType(Class<?> type) {
 		return getConversions().isSimpleType(type);

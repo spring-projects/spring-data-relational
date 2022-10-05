@@ -36,10 +36,6 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 		this.template = template;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation#delete(java.lang.Class)
-	 */
 	@Override
 	public ReactiveDelete delete(Class<?> domainType) {
 
@@ -64,10 +60,6 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 			this.tableName = tableName;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.DeleteWithTable#from(SqlIdentifier)
-		 */
 		@Override
 		public DeleteWithQuery from(SqlIdentifier tableName) {
 
@@ -76,10 +68,6 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 			return new ReactiveDeleteSupport(template, domainType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.DeleteWithQuery#matching(org.springframework.data.r2dbc.query.Query)
-		 */
 		@Override
 		public TerminatingDelete matching(Query query) {
 
@@ -88,10 +76,6 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 			return new ReactiveDeleteSupport(template, domainType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.TerminatingDelete#all()
-		 */
 		public Mono<Long> all() {
 			return template.doDelete(query, domainType, getTableName());
 		}

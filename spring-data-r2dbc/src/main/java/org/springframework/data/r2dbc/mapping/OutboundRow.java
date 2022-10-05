@@ -125,135 +125,75 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#size()
-	 */
 	@Override
 	public int size() {
 		return this.rowAsMap.size();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return this.rowAsMap.isEmpty();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#clone()
-	 */
 	@Override
 	protected OutboundRow clone() {
 		return new OutboundRow(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#containsKey(java.lang.Object)
-	 */
 	@Override
 	public boolean containsKey(Object key) {
 		return this.rowAsMap.containsKey(convertKeyIfNecessary(key));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#containsValue(java.lang.Object)
-	 */
 	@Override
 	public boolean containsValue(Object value) {
 		return this.rowAsMap.containsValue(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#get(java.lang.Object)
-	 */
 	@Override
 	public Parameter get(Object key) {
 		return this.rowAsMap.get(convertKeyIfNecessary(key));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#put(java.lang.Object, java.lang.Object)
-	 */
 	public Parameter put(String key, Parameter value) {
 		return put(SqlIdentifier.unquoted(key), value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#put(java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public Parameter put(SqlIdentifier key, Parameter value) {
 		return this.rowAsMap.put(key, value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#remove(java.lang.Object)
-	 */
 	@Override
 	public Parameter remove(Object key) {
 		return this.rowAsMap.remove(key);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#putAll(java.util.Map)
-	 */
 	@Override
 	public void putAll(Map<? extends SqlIdentifier, ? extends Parameter> m) {
 		this.rowAsMap.putAll(m);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#clear()
-	 */
 	@Override
 	public void clear() {
 		this.rowAsMap.clear();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#keySet()
-	 */
 	@Override
 	public Set<SqlIdentifier> keySet() {
 		return this.rowAsMap.keySet();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#values()
-	 */
 	@Override
 	public Collection<Parameter> values() {
 		return this.rowAsMap.values();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Map#entrySet()
-	 */
 	@Override
 	public Set<Entry<SqlIdentifier, Parameter>> entrySet() {
 		return this.rowAsMap.entrySet();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(final Object o) {
 
@@ -270,19 +210,11 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 		return this.rowAsMap.equals(row.rowAsMap);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return this.rowAsMap.hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "OutboundRow[" + this.rowAsMap + "]";

@@ -38,10 +38,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		this.template = template;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation#select(java.lang.Class)
-	 */
 	@Override
 	public <T> ReactiveSelect<T> select(Class<T> domainType) {
 
@@ -68,10 +64,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			this.tableName = tableName;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithTable#from(java.lang.String)
-		 */
 		@Override
 		public SelectWithProjection<T> from(SqlIdentifier tableName) {
 
@@ -80,10 +72,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithProjection#as(java.lang.Class)
-		 */
 		@Override
 		public <R> SelectWithQuery<R> as(Class<R> returnType) {
 
@@ -92,10 +80,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithQuery#matching(org.springframework.data.r2dbc.query.Query)
-		 */
 		@Override
 		public TerminatingSelect<T> matching(Query query) {
 
@@ -104,46 +88,26 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#count()
-		 */
 		@Override
 		public Mono<Long> count() {
 			return template.doCount(query, domainType, getTableName());
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#exists()
-		 */
 		@Override
 		public Mono<Boolean> exists() {
 			return template.doExists(query, domainType, getTableName());
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#first()
-		 */
 		@Override
 		public Mono<T> first() {
 			return template.doSelect(query.limit(1), domainType, getTableName(), returnType, RowsFetchSpec::first);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#one()
-		 */
 		@Override
 		public Mono<T> one() {
 			return template.doSelect(query.limit(2), domainType, getTableName(), returnType, RowsFetchSpec::one);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#all()
-		 */
 		@Override
 		public Flux<T> all() {
 			return template.doSelect(query, domainType, getTableName(), returnType, RowsFetchSpec::all);

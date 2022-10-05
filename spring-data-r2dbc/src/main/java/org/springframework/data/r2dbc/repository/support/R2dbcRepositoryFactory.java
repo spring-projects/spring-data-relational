@@ -99,19 +99,11 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getRepositoryBaseClass(org.springframework.data.repository.core.RepositoryMetadata)
-	 */
 	@Override
 	protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
 		return SimpleR2dbcRepository.class;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getTargetRepository(org.springframework.data.repository.core.RepositoryInformation)
-	 */
 	@Override
 	protected Object getTargetRepository(RepositoryInformation information) {
 
@@ -122,10 +114,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 				operations, this.converter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getQueryLookupStrategy(org.springframework.data.repository.query.QueryLookupStrategy.Key, org.springframework.data.repository.query.EvaluationContextProvider)
-	 */
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -134,10 +122,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 				this.dataAccessStrategy));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getEntityInformation(java.lang.Class)
-	 */
 	public <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
 		return getEntityInformation(domainClass, null);
 	}
@@ -174,10 +158,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.repository.query.QueryLookupStrategy#resolveQuery(java.lang.reflect.Method, org.springframework.data.repository.core.RepositoryMetadata, org.springframework.data.projection.ProjectionFactory, org.springframework.data.repository.core.NamedQueries)
-		 */
 		@Override
 		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 				NamedQueries namedQueries) {

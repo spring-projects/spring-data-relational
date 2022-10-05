@@ -48,19 +48,11 @@ public class ReactiveAuditingEntityCallback implements BeforeConvertCallback<Obj
 		this.auditingHandlerFactory = auditingHandlerFactory;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.mapping.event.ReactiveBeforeConvertCallback#onBeforeConvert(java.lang.Object, SqlIdentifier)
-	 */
 	@Override
 	public Publisher<Object> onBeforeConvert(Object entity, SqlIdentifier table) {
 		return auditingHandlerFactory.getObject().markAudited(entity);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.core.Ordered#getOrder()
-	 */
 	@Override
 	public int getOrder() {
 		return 100;

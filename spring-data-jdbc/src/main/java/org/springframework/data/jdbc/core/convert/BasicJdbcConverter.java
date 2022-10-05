@@ -254,10 +254,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
-	 */
 	@Override
 	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, SQLType sqlType) {
 

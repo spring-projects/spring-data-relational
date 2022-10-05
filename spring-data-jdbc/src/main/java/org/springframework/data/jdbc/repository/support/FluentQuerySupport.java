@@ -50,10 +50,6 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 		this.fieldsToInclude = fieldsToInclude;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#sortBy(org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public FetchableFluentQuery<R> sortBy(Sort sort) {
 
@@ -62,10 +58,6 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 		return create(example, sort, resultType, fieldsToInclude);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#as(java.lang.Class)
-	 */
 	@Override
 	public <R> FetchableFluentQuery<R> as(Class<R> projection) {
 
@@ -74,10 +66,6 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 		return create(example, sort, projection, fieldsToInclude);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#project(java.util.Collection)
-	 */
 	@Override
 	public FetchableFluentQuery<R> project(Collection<String> properties) {
 

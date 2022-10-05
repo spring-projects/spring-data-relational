@@ -62,19 +62,11 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 		actions.add(action);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getKind()
-	 */
 	@Override
 	public Kind getKind() {
 		return this.kind;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntityType()
-	 */
 	@Override
 	public Class<T> getEntityType() {
 		return this.entityType;
@@ -103,19 +95,11 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 		return previousVersion;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntity()
-	 */
 	@Override
 	public T getRoot() {
 		return this.rootAction.getEntity();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#forEachAction(java.util.function.Consumer)
-	 */
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 
