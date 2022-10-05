@@ -159,28 +159,28 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
-		return collect(das -> das.selectOne(query, probeType));
+	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
+		return collect(das -> das.findOne(query, domainType));
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType) {
-		return collect(das -> das.select(query, probeType));
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
+		return collect(das -> das.findAll(query, domainType));
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
-		return collect(das -> das.select(query, probeType, pageable));
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
+		return collect(das -> das.findAll(query, domainType, pageable));
 	}
 
 	@Override
-	public <T> boolean exists(Query query, Class<T> probeType) {
-		return collect(das -> das.exists(query, probeType));
+	public <T> boolean exists(Query query, Class<T> domainType) {
+		return collect(das -> das.exists(query, domainType));
 	}
 
 	@Override
-	public <T> long count(Query query, Class<T> probeType) {
-		return collect(das -> das.count(query, probeType));
+	public <T> long count(Query query, Class<T> domainType) {
+		return collect(das -> das.count(query, domainType));
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {

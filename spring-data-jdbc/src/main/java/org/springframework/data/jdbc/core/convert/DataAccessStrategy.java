@@ -201,6 +201,36 @@ public interface DataAccessStrategy extends RelationResolver {
 	long count(Class<?> domainType);
 
 	/**
+	 * Counts the rows in the table representing the given probe type, that match the given <code>query</code>.
+	 *
+	 * @param domainType the probe type for which to count the elements. Must not be {@code null}.
+	 * @param query the query which elements have to match.
+	 * @return the count. Guaranteed to be not {@code null}.
+	 * @since 3.0
+	 */
+	<T> long count(Query query, Class<T> domainType);
+
+	/**
+	 * Determine whether there is an aggregate of type <code>domainType</code> that matches the provided {@link Query}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param domainType the type of entities. Must not be {@code null}.
+	 * @return {@literal true} if the object exists.
+	 * @since 3.0
+	 */
+	<T> boolean exists(Query query, Class<T> domainType);
+
+	/**
+	 * returns if a row with the given id exists for the given type.
+	 *
+	 * @param id the id of the entity for which to check. Must not be {@code null}.
+	 * @param domainType the type of the entity to check for. Must not be {@code null}.
+	 * @param <T> the type of the entity.
+	 * @return {@code true} if a matching row exists, otherwise {@code false}.
+	 */
+	<T> boolean existsById(Object id, Class<T> domainType);
+
+	/**
 	 * Loads a single entity identified by type and id.
 	 *
 	 * @param id the id of the entity to load. Must not be {@code null}.
@@ -236,16 +266,6 @@ public interface DataAccessStrategy extends RelationResolver {
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path);
 
 	/**
-	 * returns if a row with the given id exists for the given type.
-	 *
-	 * @param id the id of the entity for which to check. Must not be {@code null}.
-	 * @param domainType the type of the entity to check for. Must not be {@code null}.
-	 * @param <T> the type of the entity.
-	 * @return {@code true} if a matching row exists, otherwise {@code false}.
-	 */
-	<T> boolean existsById(Object id, Class<T> domainType);
-
-	/**
 	 * Loads all entities of the given type, sorted.
 	 *
 	 * @param domainType the type of entities to load. Must not be {@code null}.
@@ -271,54 +291,35 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @param domainType the type of entities. Must not be {@code null}.
 	 * @return exactly one result or {@link Optional#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
-	<T> Optional<T> selectOne(Query query, Class<T> probeType);
+	<T> Optional<T> findOne(Query query, Class<T> domainType);
 
 	/**
 	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @param domainType the type of entities. Must not be {@code null}.
 	 * @return a non-null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
-	<T> Iterable<T> select(Query query, Class<T> probeType);
+	<T> Iterable<T> findAll(Query query, Class<T> domainType);
 
 	/**
 	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}. Applies the {@link Pageable}
 	 * to the result.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param probeType the type of entities. Must not be {@literal  null}.
+	 * @param domainType the type of entities. Must not be {@literal  null}.
 	 * @param pageable the pagination that should be applied. Must not be {@literal null}.
 	 * @return a non-null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
-	<T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable);
+	<T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable);
 
-	/**
-	 * Determine whether there is an aggregate of type <code>probeType</code> that matches the provided {@link Query}.
-	 *
-	 * @param query must not be {@literal null}.
-	 * @param probeType the type of entities. Must not be {@code null}.
-	 * @return {@literal true} if the object exists.
-	 * @since 3.0
-	 */
-	<T> boolean exists(Query query, Class<T> probeType);
-
-	/**
-	 * Counts the rows in the table representing the given probe type, that match the given <code>query</code>.
-	 *
-	 * @param probeType the probe type for which to count the elements. Must not be {@code null}.
-	 * @param query the query which elements have to match.
-	 * @return the count. Guaranteed to be not {@code null}.
-	 * @since 3.0
-	 */
-	<T> long count(Query query, Class<T> probeType);
 }

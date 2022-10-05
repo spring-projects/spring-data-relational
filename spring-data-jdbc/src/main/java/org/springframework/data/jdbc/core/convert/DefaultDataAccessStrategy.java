@@ -333,42 +333,42 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
+		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
 		try {
 			return Optional.ofNullable(
-					operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(probeType)));
+					operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(domainType)));
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
+		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
-		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(probeType));
+		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(domainType));
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource, pageable);
+		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource, pageable);
 
-		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(probeType));
+		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(domainType));
 	}
 
 	@Override
-	public <T> boolean exists(Query query, Class<T> probeType) {
+	public <T> boolean exists(Query query, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).existsByQuery(query, parameterSource);
+		String sqlQuery = sql(domainType).existsByQuery(query, parameterSource);
 
 		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
 
@@ -378,10 +378,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> long count(Query query, Class<T> probeType) {
+	public <T> long count(Query query, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).countByQuery(query, parameterSource);
+		String sqlQuery = sql(domainType).countByQuery(query, parameterSource);
 
 		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
 

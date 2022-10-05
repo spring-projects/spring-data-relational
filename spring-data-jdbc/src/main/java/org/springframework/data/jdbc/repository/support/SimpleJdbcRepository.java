@@ -142,7 +142,7 @@ public class SimpleJdbcRepository<T, ID>
 
 		Assert.notNull(example, "Example must not be null");
 
-		return this.entityOperations.selectOne(this.exampleMapper.getMappedExample(example), example.getProbeType());
+		return this.entityOperations.findOne(this.exampleMapper.getMappedExample(example), example.getProbeType());
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public class SimpleJdbcRepository<T, ID>
 		Assert.notNull(example, "Example must not be null");
 		Assert.notNull(sort, "Sort must not be null");
 
-		return this.entityOperations.select(this.exampleMapper.getMappedExample(example).sort(sort),
+		return this.entityOperations.findAll(this.exampleMapper.getMappedExample(example).sort(sort),
 				example.getProbeType());
 	}
 
@@ -168,7 +168,8 @@ public class SimpleJdbcRepository<T, ID>
 
 		Assert.notNull(example, "Example must not be null");
 
-		return this.entityOperations.select(this.exampleMapper.getMappedExample(example), example.getProbeType(), pageable);
+		return this.entityOperations.findAll(this.exampleMapper.getMappedExample(example), example.getProbeType(),
+				pageable);
 	}
 
 	@Override

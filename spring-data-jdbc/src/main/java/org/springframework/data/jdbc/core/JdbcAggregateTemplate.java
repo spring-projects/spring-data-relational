@@ -214,6 +214,25 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
+	public <T> long count(Query query, Class<T> domainType) {
+		return accessStrategy.count(query, domainType);
+	}
+
+	@Override
+	public <T> boolean exists(Query query, Class<T> domainType) {
+		return accessStrategy.exists(query, domainType);
+	}
+
+	@Override
+	public <T> boolean existsById(Object id, Class<T> domainType) {
+
+		Assert.notNull(id, "Id must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
+
+		return accessStrategy.existsById(id, domainType);
+	}
+
+	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		Assert.notNull(id, "Id must not be null");
@@ -224,15 +243,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 			return null;
 		}
 		return triggerAfterConvert(entity);
-	}
-
-	@Override
-	public <T> boolean existsById(Object id, Class<T> domainType) {
-
-		Assert.notNull(id, "Id must not be null");
-		Assert.notNull(domainType, "Domain type must not be null");
-
-		return accessStrategy.existsById(id, domainType);
 	}
 
 	@Override
@@ -256,32 +266,22 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Optional<T> selectOne(Query query, Class<T> entityClass) {
-		return accessStrategy.selectOne(query, entityClass);
+	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
+		return accessStrategy.findOne(query, domainType);
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> entityClass) {
-		return accessStrategy.select(query, entityClass);
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
+		return accessStrategy.findAll(query, domainType);
 	}
 
 	@Override
-	public <T> boolean exists(Query query, Class<T> entityClass) {
-		return accessStrategy.exists(query, entityClass);
-	}
+	public <T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
-	@Override
-	public <T> long count(Query query, Class<T> entityClass) {
-		return accessStrategy.count(query, entityClass);
-	}
-
-	@Override
-	public <T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable) {
-
-		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, entityClass, pageable));
+		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(query, domainType, pageable));
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
-		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, entityClass));
+		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, domainType));
 	}
 
 	@Override
@@ -372,7 +372,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> void doDeleteAll(Iterable<? extends T> instances, Class<T> domainType) {
-
 
 		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
 				.forDelete(domainType);

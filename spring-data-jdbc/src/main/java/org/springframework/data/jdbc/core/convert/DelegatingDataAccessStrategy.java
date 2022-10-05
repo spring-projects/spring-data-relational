@@ -154,28 +154,28 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
-		return delegate.selectOne(query, probeType);
+	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
+		return delegate.findOne(query, domainType);
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType) {
-		return delegate.select(query, probeType);
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
+		return delegate.findAll(query, domainType);
 	}
 
 	@Override
-	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
-		return delegate.select(query, probeType, pageable);
+	public <T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
+		return delegate.findAll(query, domainType, pageable);
 	}
 
 	@Override
-	public <T> boolean exists(Query query, Class<T> probeType) {
-		return delegate.exists(query, probeType);
+	public <T> boolean exists(Query query, Class<T> domainType) {
+		return delegate.exists(query, domainType);
 	}
 
 	@Override
-	public <T> long count(Query query, Class<T> probeType) {
-		return delegate.count(query, probeType);
+	public <T> long count(Query query, Class<T> domainType) {
+		return delegate.count(query, domainType);
 	}
 
 	/**

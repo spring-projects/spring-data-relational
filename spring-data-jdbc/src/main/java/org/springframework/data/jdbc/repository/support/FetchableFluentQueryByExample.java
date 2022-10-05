@@ -58,7 +58,7 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	@Override
 	public R oneValue() {
 
-		return this.entityOperations.selectOne(createQuery(), getExampleType())
+		return this.entityOperations.findOne(createQuery(), getExampleType())
 				.map(item -> this.getConversionFunction().apply(item)).get();
 	}
 
@@ -66,21 +66,21 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	public R firstValue() {
 
 		return this.getConversionFunction()
-				.apply(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).iterator().next());
+				.apply(this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).iterator().next());
 	}
 
 	@Override
 	public List<R> all() {
 
 		return StreamSupport
-				.stream(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
+				.stream(this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
 				.map(item -> this.getConversionFunction().apply(item)).collect(Collectors.toList());
 	}
 
 	@Override
 	public Page<R> page(Pageable pageable) {
 
-		return this.entityOperations.select(createQuery(p -> p.with(pageable)), getExampleType(), pageable)
+		return this.entityOperations.findAll(createQuery(p -> p.with(pageable)), getExampleType(), pageable)
 				.map(item -> this.getConversionFunction().apply(item));
 	}
 
@@ -88,7 +88,7 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	public Stream<R> stream() {
 
 		return StreamSupport
-				.stream(this.entityOperations.select(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
+				.stream(this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
 				.map(item -> this.getConversionFunction().apply(item));
 	}
 
