@@ -435,6 +435,14 @@ Therefore, you have to reload it explicitly if you want to see data that was gen
 If the annotated attribute is an entity or collection of entities, it is represented by one or more separate rows in separate tables.
 Spring Data JDBC will not perform any insert, delete or update for these rows.
 
+[[jdbc.entity-persistence.insert-only-properties]]
+=== Insert Only Properties
+
+Attributes annotated with `@InsertOnlyProperty` will only be written to the database by Spring Data JDBC during insert operations.
+For updates these properties will be ignored.
+
+`@InsertOnlyProperty` is only supported for the aggregate root.
+
 [[jdbc.entity-persistence.optimistic-locking]]
 === Optimistic Locking
 

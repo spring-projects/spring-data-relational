@@ -31,7 +31,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -594,6 +593,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 						SqlIdentifier idColumn = persistentEntity.getRequiredIdProperty().getColumnName();
 						Parameter id = outboundRow.remove(idColumn);
+
+						persistentEntity.forEach(p -> {
+							if (p.isInsertOnly()) {
+								outboundRow.remove(p.getColumnName());
+							}
+						});
+
 						Criteria criteria = Criteria.where(dataAccessStrategy.toSql(idColumn)).is(id);
 
 						if (matchingVersionCriteria != null) {

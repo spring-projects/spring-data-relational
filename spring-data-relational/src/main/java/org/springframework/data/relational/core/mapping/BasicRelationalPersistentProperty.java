@@ -199,6 +199,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return findAnnotation != null && OnEmpty.USE_EMPTY.equals(findAnnotation.onEmpty());
 	}
 
+	@Override
+	public boolean isInsertOnly() {
+		return findAnnotation(InsertOnlyProperty.class) != null;
+	}
+
 	private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
 	}

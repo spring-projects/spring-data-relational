@@ -64,6 +64,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
@@ -1030,6 +1031,20 @@ class JdbcAggregateTemplateIntegrationTests {
 		template.save(entity);
 	}
 
+	@Test // GH-637
+	void insertOnlyPropertyDoesNotGetUpdated() {
+
+		WithInsertOnly entity = new WithInsertOnly();
+		entity.insertOnly = "first value";
+
+		assertThat(template.save(entity).id).isNotNull();
+
+		entity.insertOnly = "second value";
+		template.save(entity);
+
+		assertThat(template.findById(entity.id, WithInsertOnly.class).insertOnly).isEqualTo("first value");
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1461,10 +1476,16 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Table
-	class WithIdOnly {
+	static class WithIdOnly {
 		@Id Long id;
 	}
 
+	@Table
+	static class WithInsertOnly {
+		@Id Long id;
+		@InsertOnlyProperty
+		String insertOnly;
+	}
 
 	@Configuration
 	@Import(TestConfiguration.class)
