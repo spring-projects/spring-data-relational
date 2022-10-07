@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-relational-parent</artifactId>
-	<version>3.0.0-SNAPSHOT</version>
+	<version>3.0.0-1351-release-notes-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Spring Data Relational Parent</name>
@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.0.0-unified-release-notes-SNAPSHOT</version>
 	</parent>
 
 	<properties>
