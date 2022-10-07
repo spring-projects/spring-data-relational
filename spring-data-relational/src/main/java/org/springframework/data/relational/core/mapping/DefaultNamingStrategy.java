@@ -25,6 +25,14 @@ import org.springframework.util.Assert;
  */
 public class DefaultNamingStrategy implements NamingStrategy {
 
+
+	/**
+	 * Static instance of the class.
+	 * <p>
+	 * Using this avoids creating essentially the same class over and over again.
+	 */
+	public static NamingStrategy INSTANCE = new DefaultNamingStrategy();
+
 	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.APPLY_RENAMING;
 
 	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {

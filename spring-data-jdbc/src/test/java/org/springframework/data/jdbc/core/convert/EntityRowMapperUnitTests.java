@@ -54,6 +54,7 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -847,7 +848,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
-		return createRowMapper(type, NamingStrategy.INSTANCE);
+		return createRowMapper(type, DefaultNamingStrategy.INSTANCE);
 	}
 
 	@SuppressWarnings("unchecked")

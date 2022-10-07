@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
@@ -36,9 +37,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  * @author Jens Schauder
  * @author Mark Paluch
  */
-public class NamingStrategyUnitTests {
+public class DefaultNamingStrategyUnitTests {
 
-	private final NamingStrategy target = NamingStrategy.INSTANCE;
+	private final NamingStrategy target = DefaultNamingStrategy.INSTANCE;
 
 	private final RelationalPersistentEntity<?> persistentEntity = //
 			new JdbcMappingContext(target).getRequiredPersistentEntity(DummyEntity.class);

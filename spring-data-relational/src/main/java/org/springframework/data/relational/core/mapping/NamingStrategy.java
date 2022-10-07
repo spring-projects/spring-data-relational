@@ -41,7 +41,7 @@ public interface NamingStrategy {
 	 *
 	 * @deprecated use {@link DefaultNamingStrategy#INSTANCE} instead.
 	 */
-	@Deprecated(since = "2.4") NamingStrategy INSTANCE = new DefaultNamingStrategy() {
+	@Deprecated(since = "2.4", forRemoval = true) NamingStrategy INSTANCE = new DefaultNamingStrategy() {
 		@Override
 		public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
 			throw new UnsupportedOperationException("Cannot update immutable DefaultNamingStrategy");

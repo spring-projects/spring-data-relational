@@ -31,9 +31,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  * @author Oliver Gierke
  * @author Jens Schauder
  */
-public class NamingStrategyUnitTests {
+public class DefaultNamingStrategyUnitTests {
 
-	private final NamingStrategy target = NamingStrategy.INSTANCE;
+	private final NamingStrategy target = DefaultNamingStrategy.INSTANCE;
 	private final RelationalMappingContext context = new RelationalMappingContext(target);
 	private final RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
