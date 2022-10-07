@@ -25,6 +25,19 @@ import org.springframework.util.Assert;
  */
 public class DefaultNamingStrategy implements NamingStrategy {
 
+	/**
+	 * Static immutable instance of the class. It is made immutable by letting
+	 * {@link #setForeignKeyNaming(ForeignKeyNaming)} throw an exception.
+	 * <p>
+	 * Using this avoids creating essentially the same class over and over again.
+	 */
+	public static NamingStrategy INSTANCE = new DefaultNamingStrategy() {
+		@Override
+		public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {
+			throw new UnsupportedOperationException("Cannot update immutable DefaultNamingStrategy");
+		}
+	};
+
 	private ForeignKeyNaming foreignKeyNaming = ForeignKeyNaming.APPLY_RENAMING;
 
 	public void setForeignKeyNaming(ForeignKeyNaming foreignKeyNaming) {

@@ -44,6 +44,7 @@ import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.util.TypeScanner;
@@ -57,6 +58,7 @@ import org.springframework.util.StringUtils;
  * R2DBC to work.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see ConnectionFactory
  * @see DatabaseClient
  * @see org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
@@ -161,7 +163,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	/**
 	 * Register a {@link R2dbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
-	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
+	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link DefaultNamingStrategy#INSTANCE} as fallback.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
 	 * @param r2dbcManagedTypes R2DBC managed types, typically discovered through {@link #r2dbcManagedTypes() an entity
 	 *          scan}.
@@ -174,7 +176,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
-		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
 		context.setManagedTypes(r2dbcManagedTypes);
 

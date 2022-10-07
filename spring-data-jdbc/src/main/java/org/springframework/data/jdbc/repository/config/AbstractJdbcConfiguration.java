@@ -44,6 +44,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.util.TypeScanner;
@@ -100,7 +101,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	/**
 	 * Register a {@link JdbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
-	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
+	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link org.springframework.data.relational.core.mapping.DefaultNamingStrategy#INSTANCE} as fallback.
 	 * @param customConversions see {@link #jdbcCustomConversions()}.
 	 * @param jdbcManagedTypes JDBC managed types, typically discovered through {@link #jdbcManagedTypes() an entity
 	 *          scan}.
@@ -110,7 +111,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			JdbcCustomConversions customConversions, RelationalManagedTypes jdbcManagedTypes) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
 		mappingContext.setManagedTypes(jdbcManagedTypes);
 

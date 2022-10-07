@@ -42,7 +42,6 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteCallback;
@@ -72,7 +71,7 @@ public class JdbcAggregateTemplateUnitTests {
 	@BeforeEach
 	public void setUp() {
 
-		RelationalMappingContext mappingContext = new RelationalMappingContext(NamingStrategy.INSTANCE);
+		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		JdbcConverter converter = new BasicJdbcConverter(mappingContext, relationResolver);
 
 		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
