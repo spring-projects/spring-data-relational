@@ -15,16 +15,19 @@
  */
 package org.springframework.data.r2dbc;
 
-import static de.schauderhaft.degraph.check.JCheck.*;
-import static org.junit.Assert.*;
-
-import de.schauderhaft.degraph.check.JCheck;
-import de.schauderhaft.degraph.configuration.NamedPattern;
-import scala.runtime.AbstractFunction1;
-
-import org.junit.Assume;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.library.dependencies.SliceAssignment;
+import com.tngtech.archunit.library.dependencies.SliceIdentifier;
+import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 
 /**
  * Test package dependencies for violations.
@@ -35,40 +38,131 @@ import org.junit.jupiter.api.Test;
 public class DependencyTests {
 
 	@Test // DATAJDBC-114
-	public void cycleFree() {
+	void cycleFree() {
 
-		Assume.assumeThat( //
-				classpath() //
-						.noJars() //
-						.including("org.springframework.data.jdbc.**") //
-						.including("org.springframework.data.relational.**") //
-						.including("org.springframework.data.r2dbc.**") //
-						.filterClasspath("*target/classes") // exclude test code
-						.withSlicing("modules", "org.springframework.data.(*).**").printOnFailure("degraph.graphml"),
-				JCheck.violationFree());
+		JavaClasses importedClasses = new ClassFileImporter() //
+				.withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS) //
+				.withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_JARS) // we just analyze the code of this module.
+				.importPackages("org.springframework.data.r2dbc").that( //
+						onlySpringData() //
+				);
+
+		ArchRule rule = SlicesRuleDefinition.slices() //
+				.matching("org.springframework.data.r2dbc.(**)") //
+				.should() //
+				.beFreeOfCycles();
+
+		rule.check(importedClasses);
 	}
 
 	@Test // DATAJDBC-220
-	public void acrossModules() {
+	void acrossModules() {
 
-		assertThat( //
-				classpath() //
-						// include only Spring Data related classes (for example no JDK code)
-						.including("org.springframework.data.**") //
-						.filterClasspath(new AbstractFunction1<String, Object>() {
-							@Override
-							public Object apply(String s) { //
-								// only the current module + commons
-								return s.endsWith("target/classes") || s.contains("spring-data-commons");
-							}
-						}) // exclude test code
-						.withSlicing("sub-modules", // sub-modules are defined by any of the following pattern.
-								"org.springframework.data.jdbc.(**).*", //
-								"org.springframework.data.relational.(**).*", //
-								new NamedPattern("org.springframework.data.r2dbc.**", "repository.reactive"), //
-								"org.springframework.data.(**).*") //
-						.printTo("degraph-across-modules.graphml"), // writes a graphml to this location
-				JCheck.violationFree());
+		JavaClasses importedClasses = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+				.importPackages( //
+						"org.springframework.data.r2dbc", // Spring Data Relational
+						"org.springframework.data.relational", // Spring Data Relational
+						"org.springframework.data" // Spring Data Commons
+				).that(onlySpringData()) //
+				.that(ignorePackage("org.springframework.data.aot.hint")) // ignoring aot, since it causes cycles in commons
+				.that(ignorePackage("org.springframework.data.aot")); // ignoring aot, since it causes cycles in commons
+
+		ArchRule rule = SlicesRuleDefinition.slices() //
+				.assignedFrom(subModuleSlicing()) //
+				.should().beFreeOfCycles();
+
+		rule.check(importedClasses);
 	}
 
+	@Test // GH-1058
+	void testGetFirstPackagePart() {
+
+		SoftAssertions.assertSoftly(softly -> {
+			softly.assertThat(getFirstPackagePart("a.b.c")).isEqualTo("a");
+			softly.assertThat(getFirstPackagePart("a")).isEqualTo("a");
+		});
+	}
+
+	private DescribedPredicate<JavaClass> onlySpringData() {
+
+		return new DescribedPredicate<>("Spring Data Classes") {
+			@Override
+			public boolean test(JavaClass input) {
+				return input.getPackageName().startsWith("org.springframework.data");
+			}
+		};
+	}
+
+	private DescribedPredicate<JavaClass> ignore(Class<?> type) {
+
+		return new DescribedPredicate<>("ignored class " + type.getName()) {
+			@Override
+			public boolean test(JavaClass input) {
+				return !input.getFullName().startsWith(type.getName());
+			}
+		};
+	}
+
+	private DescribedPredicate<JavaClass> ignorePackage(String type) {
+
+		return new DescribedPredicate<>("ignored class " + type) {
+			@Override
+			public boolean test(JavaClass input) {
+				return !input.getPackageName().equals(type);
+			}
+		};
+	}
+
+	private String getFirstPackagePart(String subpackage) {
+
+		int index = subpackage.indexOf(".");
+		if (index < 0) {
+			return subpackage;
+		}
+		return subpackage.substring(0, index);
+	}
+
+	private String subModule(String basePackage, String packageName) {
+
+		if (packageName.startsWith(basePackage) && packageName.length() > basePackage.length()) {
+
+			final int index = basePackage.length() + 1;
+			String subpackage = packageName.substring(index);
+			return getFirstPackagePart(subpackage);
+		}
+		return "";
+	}
+
+	private SliceAssignment subModuleSlicing() {
+		return new SliceAssignment() {
+
+			@Override
+			public SliceIdentifier getIdentifierOf(JavaClass javaClass) {
+
+				String packageName = javaClass.getPackageName();
+
+				String subModule = subModule("org.springframework.data.jdbc", packageName);
+				if (!subModule.isEmpty()) {
+					return SliceIdentifier.of(subModule);
+				}
+
+				subModule = subModule("org.springframework.data.relational", packageName);
+				if (!subModule.isEmpty()) {
+					return SliceIdentifier.of(subModule);
+				}
+
+				subModule = subModule("org.springframework.data", packageName);
+				if (!subModule.isEmpty()) {
+					return SliceIdentifier.of(subModule);
+				}
+
+				return SliceIdentifier.ignore();
+			}
+
+			@Override
+			public String getDescription() {
+				return "Submodule";
+			}
+		};
+	}
 }

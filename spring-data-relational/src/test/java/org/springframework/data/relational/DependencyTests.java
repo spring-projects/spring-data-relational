@@ -16,7 +16,6 @@
 package org.springframework.data.relational;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -59,7 +58,6 @@ public class DependencyTests {
 	}
 
 	@Test
-	@Disabled("Cycle in Spring Data Commons")
 	void acrossModules() {
 
 		JavaClasses importedClasses = new ClassFileImporter() //
@@ -67,8 +65,9 @@ public class DependencyTests {
 				.importPackages( //
 						"org.springframework.data.relational", // Spring Data Relational
 						"org.springframework.data" // Spring Data Commons
-				).that(onlySpringData());
-
+				).that(onlySpringData()) //
+				.that(ignorePackage("org.springframework.data.aot.hint")) // ignoring aot, since it causes cycles in commons
+				.that(ignorePackage("org.springframework.data.aot")); // ignoring aot, since it causes cycles in commons;
 
 		ArchRule rule = SlicesRuleDefinition.slices() //
 				.assignedFrom(subModuleSlicing()) //
@@ -100,7 +99,7 @@ public class DependencyTests {
 
 		return new DescribedPredicate<>("Spring Data Classes") {
 			@Override
-			public boolean apply(JavaClass input) {
+			public boolean test(JavaClass input) {
 				return input.getPackageName().startsWith("org.springframework.data");
 			}
 		};
@@ -110,8 +109,18 @@ public class DependencyTests {
 
 		return new DescribedPredicate<>("ignored class " + type.getName()) {
 			@Override
-			public boolean apply(JavaClass input) {
+			public boolean test(JavaClass input) {
 				return !input.getFullName().startsWith(type.getName());
+			}
+		};
+	}
+
+	private DescribedPredicate<JavaClass> ignorePackage(String type) {
+
+		return new DescribedPredicate<>("ignored class " + type) {
+			@Override
+			public boolean test(JavaClass input) {
+				return !input.getPackageName().equals(type);
 			}
 		};
 	}
