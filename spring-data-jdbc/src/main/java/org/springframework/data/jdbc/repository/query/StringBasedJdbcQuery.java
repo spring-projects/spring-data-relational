@@ -20,6 +20,7 @@ import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.
 import java.lang.reflect.Constructor;
 import java.sql.SQLType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
@@ -189,7 +190,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		Assert.notNull(type, "@Query parameter type could not be resolved");
 
 		JdbcValue jdbcValue;
-		if (value instanceof Iterable) {
+		if (value instanceof Collection && resolvableType.hasGenerics()) {
 
 			List<Object> mapped = new ArrayList<>();
 			SQLType jdbcType = null;

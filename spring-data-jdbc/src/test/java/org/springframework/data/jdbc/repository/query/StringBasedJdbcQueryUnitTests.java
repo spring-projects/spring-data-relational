@@ -22,12 +22,14 @@ import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -211,7 +213,6 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder(-1, 1);
 	}
 
-
 	@Test // GH-1212
 	void doesNotConvertNonCollectionParameter() {
 
@@ -220,6 +221,18 @@ class StringBasedJdbcQueryUnitTests {
 				.extractParameterSource();
 
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(1);
+	}
+
+	@Test // GH-1343
+	void appliesConverterToIterable() {
+
+		SqlParameterSource sqlParameterSource = forMethod("findByListContainer", ListContainer.class) //
+				.withCustomConverters(ListContainerToStringConverter.INSTANCE)
+				.withArguments(new ListContainer("one", "two", "three")) //
+				.extractParameterSource();
+
+		assertThat(sqlParameterSource.getValue("value")).isEqualTo("one");
+
 	}
 
 	QueryFixture forMethod(String name, Class... paramTypes) {
@@ -321,6 +334,9 @@ class StringBasedJdbcQueryUnitTests {
 		@Query(value = "some sql statement")
 		List<Object> findBySimpleValue(Integer value);
 
+		@Query(value = "some sql statement")
+		List<Object> findByListContainer(ListContainer value);
+
 		@Query("SELECT * FROM table WHERE c = :#{myext.testValue} AND c2 = :#{myext.doSomething()}")
 		Object findBySpelExpression(Object object);
 	}
@@ -414,6 +430,32 @@ class StringBasedJdbcQueryUnitTests {
 			} else {
 				return Direction.RIGHT;
 			}
+		}
+	}
+
+	static class ListContainer implements Iterable<String> {
+
+		private final List<String> values;
+
+		ListContainer(String... values) {
+			this.values = List.of(values);
+		}
+
+		@NotNull
+		@Override
+		public Iterator<String> iterator() {
+			return values.iterator();
+		}
+	}
+
+	@WritingConverter
+	enum ListContainerToStringConverter implements Converter<ListContainer, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(ListContainer source) {
+			return source.values.get(0);
 		}
 	}
 
