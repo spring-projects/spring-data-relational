@@ -77,6 +77,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 	@Override
 	Delegation enterNested(Visitable segment) {
+
 		if (segment instanceof SimpleFunction) {
 			delegate = new SimpleFunctionVisitor(context);
 			return Delegation.delegateTo((SimpleFunctionVisitor)delegate);
@@ -92,12 +93,8 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 	@Override
 	Delegation leaveNested(Visitable segment) {
-		if (delegate instanceof SimpleFunctionVisitor) {
-			builder.append(delegate.getRenderedPart());
-			delegate = null;
-		}
 
-		if (delegate instanceof ExpressionVisitor) {
+		if (delegate instanceof SimpleFunctionVisitor || delegate instanceof ExpressionVisitor) {
 			builder.append(delegate.getRenderedPart());
 			delegate = null;
 		}
