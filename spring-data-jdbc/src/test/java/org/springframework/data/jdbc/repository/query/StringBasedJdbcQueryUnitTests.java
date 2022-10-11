@@ -194,57 +194,85 @@ class StringBasedJdbcQueryUnitTests {
 	@Test // GH-1212
 	void convertsEnumCollectionParameterIntoStringCollectionParameter() {
 
-		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
-				mock(RelationResolver.class));
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
-				converter, evaluationContextProvider);
+		SqlParameterSource sqlParameterSource = forMethod("findByEnumTypeIn", Set.class)
+				.withArguments(Set.of(Direction.LEFT, Direction.RIGHT)).extractParameterSource();
 
-		query.execute(new Object[] { Set.of(Direction.LEFT, Direction.RIGHT) });
-
-		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
-
-		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder("LEFT", "RIGHT");
 	}
 
 	@Test // GH-1212
 	void convertsEnumCollectionParameterUsingCustomConverterWhenRegisteredForType() {
 
-		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
-				mock(RelationResolver.class),
-				new JdbcCustomConversions(List.of(DirectionToIntegerConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE)),
-				JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
-				converter, evaluationContextProvider);
+		SqlParameterSource sqlParameterSource = forMethod("findByEnumTypeIn", Set.class) //
+				.withCustomConverters(DirectionToIntegerConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE)
+				.withArguments(Set.of(Direction.LEFT, Direction.RIGHT)) //
+				.extractParameterSource();
 
-		query.execute(new Object[] { Set.of(Direction.LEFT, Direction.RIGHT) });
-
-		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
-
-		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder(-1, 1);
 	}
+
 
 	@Test // GH-1212
 	void doesNotConvertNonCollectionParameter() {
 
-		JdbcQueryMethod queryMethod = createMethod("findBySimpleValue", Integer.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
-				mock(RelationResolver.class));
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
-				converter, evaluationContextProvider);
+		SqlParameterSource sqlParameterSource = forMethod("findBySimpleValue", Integer.class) //
+				.withArguments(1) //
+				.extractParameterSource();
 
-		query.execute(new Object[] { 1 });
-
-		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
-
-		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(1);
+	}
+
+	QueryFixture forMethod(String name, Class... paramTypes) {
+		return new QueryFixture(createMethod(name, paramTypes));
+	}
+
+	private class QueryFixture {
+
+		private final JdbcQueryMethod method;
+		private Object[] arguments;
+		private BasicJdbcConverter converter;
+
+		public QueryFixture(JdbcQueryMethod method) {
+			this.method = method;
+		}
+
+		public QueryFixture withArguments(Object... arguments) {
+
+			this.arguments = arguments;
+
+			return this;
+		}
+
+		public SqlParameterSource extractParameterSource() {
+
+			BasicJdbcConverter converter = this.converter == null //
+					? new BasicJdbcConverter(mock(RelationalMappingContext.class), //
+							mock(RelationResolver.class))
+					: this.converter;
+
+			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method, operations, result -> mock(RowMapper.class),
+					converter, evaluationContextProvider);
+
+			query.execute(arguments);
+
+			ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+			verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+
+			return captor.getValue();
+		}
+
+		public QueryFixture withConverter(BasicJdbcConverter converter) {
+
+			this.converter = converter;
+
+			return this;
+		}
+
+		public QueryFixture withCustomConverters(Object... converters) {
+
+			return withConverter(new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class),
+					new JdbcCustomConversions(List.of(converters)), JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI));
+		}
 	}
 
 	private JdbcQueryMethod createMethod(String methodName, Class<?>... paramTypes) {
