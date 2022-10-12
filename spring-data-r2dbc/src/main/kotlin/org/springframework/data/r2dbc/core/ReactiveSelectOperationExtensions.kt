@@ -17,13 +17,13 @@ package org.springframework.data.r2dbc.core
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 
 /**
  * Extensions for [ReactiveSelectOperation].
  *
- * @author Mark Paluch
+ * @author Mark Paluch, George Papadopoulos
  * @since 1.1
  */
 
@@ -49,7 +49,7 @@ suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T
  * Nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.one].
  */
 suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitOneOrNull(): T? =
-		one().awaitFirstOrNull()
+		one().awaitSingleOrNull()
 
 /**
  * Non-nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.first].
@@ -61,7 +61,7 @@ suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T
  * Nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.first].
  */
 suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitFirstOrNull(): T? =
-		first().awaitFirstOrNull()
+		first().awaitSingleOrNull()
 
 /**
  * Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.count].
