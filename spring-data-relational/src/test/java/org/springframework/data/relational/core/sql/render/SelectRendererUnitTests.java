@@ -232,6 +232,36 @@ class SelectRendererUnitTests {
 				+ "ON one.department_id = department.id");
 	}
 
+	@Test // GH-1362
+	void shouldRenderNestedJoins() {
+
+		Table merchantCustomers = Table.create("merchants_customers");
+		Table customerDetails = Table.create("customer_details");
+
+		Select innerSelect = Select.builder()
+				.select(customerDetails.column("cd_user_id"))
+				.from(customerDetails).join(merchantCustomers)
+				.on(merchantCustomers.column("mc_user_id").isEqualTo(customerDetails.column("cd_user_id")))
+				.build();
+
+		InlineQuery innerTable = InlineQuery.create(innerSelect, "inner");
+
+		Select select = Select.builder().select(merchantCustomers.asterisk()) //
+				.from(merchantCustomers) //
+				.join(innerTable).on(innerTable.column("i_user_id").isEqualTo(merchantCustomers.column("mc_user_id"))) //
+				.build();
+
+		String sql = SqlRenderer.toString(select);
+
+		assertThat(sql).isEqualTo("SELECT merchants_customers.* FROM merchants_customers " + //
+				"JOIN (" + //
+				"SELECT customer_details.cd_user_id " + //
+				"FROM customer_details " + //
+				"JOIN merchants_customers ON merchants_customers.mc_user_id = customer_details.cd_user_id" + //
+				") inner " + //
+				"ON inner.i_user_id = merchants_customers.mc_user_id");
+	}
+
 	@Test // GH-1003
 	void shouldRenderJoinWithTwoInlineQueries() {
 
