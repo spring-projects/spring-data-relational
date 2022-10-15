@@ -239,11 +239,10 @@ class SelectRendererUnitTests {
 		BindMarker merchantIdMarker = SQL.bindMarker(":merchantId");
 
 		Select innerSelect = Select.builder()
-				.select(customerDetails.column("user_id").as("user_id"), customerDetails.column("user_id").as("name"))
+				.select(customerDetails.column("user_id").as("user_id"))
 				.from(customerDetails).join(merchantCustomers)
-				.on(merchantCustomers.column("user_id").isEqualTo(customerDetails.column("user_id"))).where(
-						customerDetails.column("user_id").isEqualTo(merchantCustomers.column("user_id"))
-								.and(merchantCustomers.column("merchant_id").isEqualTo(merchantIdMarker))).build();
+				.on(merchantCustomers.column("user_id").isEqualTo(customerDetails.column("user_id")))
+				.build();
 
 		InlineQuery innerTable = InlineQuery.create(innerSelect, "inner");
 
@@ -256,10 +255,9 @@ class SelectRendererUnitTests {
 
 		assertThat(sql).isEqualTo("SELECT merchants_customers.* FROM merchants_customers " + //
 				"JOIN (" + //
-				"SELECT customer_details.user_id AS user_id, customer_details.user_id AS name " + //
+				"SELECT customer_details.user_id AS user_id " + //
 				"FROM customer_details " + //
-				"JOIN merchants_customers ON merchants_customers.user_id = customer_details.user_id " + //
-				"WHERE customer_details.user_id = merchants_customers.user_id AND merchants_customers.merchant_id = :merchantId" + //
+				"JOIN merchants_customers ON merchants_customers.user_id = customer_details.user_id" + //
 				") inner " + //
 				"ON inner.user_id = merchants_customers.user_id");
 	}
