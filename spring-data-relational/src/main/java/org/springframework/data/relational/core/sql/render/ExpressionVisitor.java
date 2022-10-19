@@ -123,6 +123,11 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			return Delegation.delegateTo(visitor);
 		}
 
+		if (segment instanceof InlineQuery) {
+
+			NoopVisitor<InlineQuery> partRenderer = new NoopVisitor(InlineQuery.class);
+			return Delegation.delegateTo(partRenderer);
+		}
 		return super.enterNested(segment);
 	}
 
