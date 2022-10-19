@@ -92,6 +92,29 @@ class SqlGenerator {
 	private final Dialect dialect;
 
 	/**
+	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext}, {@link RelationalPersistentEntity} and
+	 * Function<{@link RenderContext}, {@link SqlRenderer}>.
+	 *
+	 * @param mappingContext must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param entity must not be {@literal null}.
+	 * @param sqlRendererFactory must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 */
+	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
+			Function<RenderContext, SqlRenderer> sqlRendererFactory, Dialect dialect) {
+
+		this.mappingContext = mappingContext;
+		this.entity = entity;
+		this.sqlContext = new SqlContext(entity);
+		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
+		this.sqlRenderer = sqlRendererFactory.apply(renderContext);
+		this.columns = new Columns(entity, mappingContext, converter);
+		this.queryMapper = new QueryMapper(dialect, converter);
+		this.dialect = dialect;
+	}
+
+	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
 	 *
 	 * @param mappingContext must not be {@literal null}.
@@ -102,14 +125,7 @@ class SqlGenerator {
 	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
 			Dialect dialect) {
 
-		this.mappingContext = mappingContext;
-		this.entity = entity;
-		this.sqlContext = new SqlContext(entity);
-		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
-		this.sqlRenderer = SqlRenderer.create(renderContext);
-		this.columns = new Columns(entity, mappingContext, converter);
-		this.queryMapper = new QueryMapper(dialect, converter);
-		this.dialect = dialect;
+		this(mappingContext, converter, entity, renderContext -> SqlRenderer.create(renderContext), dialect);
 	}
 
 	/**

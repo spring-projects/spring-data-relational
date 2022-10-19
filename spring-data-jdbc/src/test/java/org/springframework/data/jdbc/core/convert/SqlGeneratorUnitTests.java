@@ -18,11 +18,14 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.mapping.ForeignKeyNaming.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,10 +53,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.LockMode;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.render.RenderContext;
+import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 
@@ -100,6 +102,13 @@ class SqlGeneratorUnitTests {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
 		return new SqlGenerator(context, converter, persistentEntity, dialect);
+	}
+
+	SqlGenerator createSqlGenerator(Class<?> type, Function<RenderContext, SqlRenderer> sqlRendererFactory) {
+
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
+
+		return new SqlGenerator(context, converter, persistentEntity, sqlRendererFactory, NonQuotingDialect.INSTANCE);
 	}
 
 	@Test // DATAJDBC-112
@@ -910,6 +919,19 @@ class SqlGeneratorUnitTests {
 
 		assertThat(sql).contains("referenced_entity.renamed_dummy_key AS renamed_dummy_key",
 				"WHERE referenced_entity.parentId");
+	}
+
+	@Test
+	void customSqlRenderer() {
+		AtomicReference<SqlRenderer> sqlRenderer = new AtomicReference<>();
+		Function<RenderContext, SqlRenderer> sqlRendererFactory = renderContext -> {
+			sqlRenderer.set(spy(SqlRenderer.create(renderContext)));
+			return sqlRenderer.get();
+		};
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, sqlRendererFactory);
+		sqlGenerator.getCount();
+		assertThat(sqlRenderer.get()).isNotNull();
+		verify(sqlRenderer.get()).render(any(Select.class));
 	}
 
 	@Nullable
