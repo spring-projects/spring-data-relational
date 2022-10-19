@@ -36,11 +36,16 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private ExpressionVisitor expressionVisitor;
 	// subelements.
 
-	SelectListVisitor(RenderContext context, RenderTarget target) {
+	SelectListVisitor(RenderContext context, RenderTarget target, ExpressionVisitor expressionVisitor) {
 
 		this.context = context;
 		this.target = target;
-		this.expressionVisitor = new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE);
+		this.expressionVisitor = expressionVisitor;
+	}
+
+	SelectListVisitor(RenderContext context, RenderTarget target) {
+
+		this(context, target, new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE));
 	}
 
 	@Override

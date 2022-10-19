@@ -30,11 +30,11 @@ import org.springframework.util.Assert;
  */
 class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartRenderer {
 
-	private final RenderContext context;
-	private final AliasHandling aliasHandling;
+	protected RenderContext context;
+	protected final AliasHandling aliasHandling;
 
-	private CharSequence value = "";
-	private @Nullable PartRenderer partRenderer;
+	protected CharSequence value = "";
+	protected @Nullable PartRenderer partRenderer;
 
 	/**
 	 * Creates an {@code ExpressionVisitor} that does not use aliases for column names

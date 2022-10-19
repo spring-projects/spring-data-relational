@@ -33,19 +33,19 @@ import org.springframework.data.relational.core.sql.Where;
  */
 class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
-	private final RenderContext context;
-	private final SelectRenderContext selectRenderContext;
+	protected final RenderContext context;
+	protected final SelectRenderContext selectRenderContext;
 
 	private StringBuilder builder = new StringBuilder();
-	private StringBuilder selectList = new StringBuilder();
-	private StringBuilder from = new StringBuilder();
-	private StringBuilder join = new StringBuilder();
-	private StringBuilder where = new StringBuilder();
+	protected StringBuilder selectList = new StringBuilder();
+	protected StringBuilder from = new StringBuilder();
+	protected StringBuilder join = new StringBuilder();
+	protected StringBuilder where = new StringBuilder();
 
-	private SelectListVisitor selectListVisitor;
-	private OrderByClauseVisitor orderByClauseVisitor;
-	private FromClauseVisitor fromClauseVisitor;
-	private WhereClauseVisitor whereClauseVisitor;
+	protected SelectListVisitor selectListVisitor;
+	protected OrderByClauseVisitor orderByClauseVisitor;
+	protected FromClauseVisitor fromClauseVisitor;
+	protected WhereClauseVisitor whereClauseVisitor;
 
 	SelectStatementVisitor(RenderContext context) {
 

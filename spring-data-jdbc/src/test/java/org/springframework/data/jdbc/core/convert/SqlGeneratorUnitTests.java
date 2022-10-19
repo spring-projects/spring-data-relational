@@ -54,6 +54,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.render.CustomSqlRenderer;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -923,15 +924,10 @@ class SqlGeneratorUnitTests {
 
 	@Test
 	void customSqlRenderer() {
-		AtomicReference<SqlRenderer> sqlRenderer = new AtomicReference<>();
-		Function<RenderContext, SqlRenderer> sqlRendererFactory = renderContext -> {
-			sqlRenderer.set(spy(SqlRenderer.create(renderContext)));
-			return sqlRenderer.get();
-		};
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, sqlRendererFactory);
-		sqlGenerator.getCount();
-		assertThat(sqlRenderer.get()).isNotNull();
-		verify(sqlRenderer.get()).render(any(Select.class));
+		Function<RenderContext, SqlRenderer> sqlRendererFactory = renderContext -> new CustomSqlRenderer(renderContext);
+		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, sqlRendererFactory);
+		// TODO: `id_only_entity.x_id` should be changed...
+		assertThat(sqlGenerator.getFindOne()).isEqualTo("SELECT \"X_ID\" AS x_id FROM id_only_entity WHERE id_only_entity.x_id = :id");
 	}
 
 	@Nullable

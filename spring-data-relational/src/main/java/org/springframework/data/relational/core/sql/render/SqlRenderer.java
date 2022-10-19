@@ -31,9 +31,9 @@ import org.springframework.util.Assert;
  */
 public class SqlRenderer implements Renderer {
 
-	private final RenderContext context;
+	protected final RenderContext context;
 
-	private SqlRenderer(RenderContext context) {
+	protected SqlRenderer(RenderContext context) {
 
 		Assert.notNull(context, "RenderContext must not be null");
 
