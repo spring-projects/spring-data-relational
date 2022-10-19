@@ -39,7 +39,9 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	private @Nullable PartRenderer current;
 
 	ComparisonVisitor(RenderContext context, Comparison condition, RenderTarget target) {
+
 		super(it -> it == condition);
+
 		this.condition = condition;
 		this.target = target;
 		this.context = context;
@@ -51,12 +53,6 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
-
-		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor(context);
-			current = visitor;
-			return Delegation.delegateTo(visitor);
-		}
 
 		if (segment instanceof Expression) {
 			ExpressionVisitor visitor = new ExpressionVisitor(context);

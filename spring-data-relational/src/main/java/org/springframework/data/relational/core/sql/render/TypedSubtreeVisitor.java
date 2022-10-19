@@ -54,6 +54,13 @@ abstract class TypedSubtreeVisitor<T extends Visitable> extends DelegatingVisito
 	}
 
 	/**
+	 * Creates a new {@link TypedSubtreeVisitor} with an explicitly provided type.
+	 */
+	TypedSubtreeVisitor(Class <T> type) {
+		this.type = ResolvableType.forType(type);
+	}
+
+	/**
 	 * {@link Visitor#enter(Visitable) Enter} callback for a {@link Visitable} that this {@link Visitor} is responsible
 	 * for. The default implementation retains delegation by default.
 	 *
