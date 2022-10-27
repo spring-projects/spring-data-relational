@@ -57,10 +57,10 @@ class MyJdbcConfiguration extends AbstractJdbcConfiguration {
 
     // …
 
-	@Override
+    @Override
     protected List<?> userConverters() {
-		return Arrays.asList(new BooleanToStringConverter(), new StringToBooleanConverter());
-	}
+	return Arrays.asList(new BooleanToStringConverter(), new StringToBooleanConverter());
+    }
 
 }
 ----
