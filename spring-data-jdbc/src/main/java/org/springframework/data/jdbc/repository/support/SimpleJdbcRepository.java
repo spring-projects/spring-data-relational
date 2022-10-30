@@ -35,6 +35,9 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Milan Milanov
+ * @author Chirag Tailor
+ * @author Diego Krupitza
+ * @author Dmitriy Kovalenko
  */
 @Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID> {
@@ -153,10 +156,7 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 		entityOperations.delete(instance, entity.getType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.deleteAll#delete(java.lang.Iterable)
-	 */
+	@Transactional
 	@Override
 	public void deleteAllById(Iterable<? extends ID> ids) {
 		ids.forEach(it -> entityOperations.deleteById(it, entity.getType()));
