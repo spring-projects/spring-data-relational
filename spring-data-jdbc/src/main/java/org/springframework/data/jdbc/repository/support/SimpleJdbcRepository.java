@@ -41,6 +41,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Dmitriy Kovalenko
  */
 @Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID>
@@ -110,6 +111,7 @@ public class SimpleJdbcRepository<T, ID>
 		entityOperations.delete(instance);
 	}
 
+	@Transactional
 	@Override
 	public void deleteAllById(Iterable<? extends ID> ids) {
 		entityOperations.deleteAllById(ids, entity.getType());
