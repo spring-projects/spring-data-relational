@@ -21,9 +21,9 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
+@DisabledOnOs(architectures = "aarch64")
 public class SqlServerR2dbcRepositoryWithMixedCaseNamesIntegrationTests
 		extends AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests {
 

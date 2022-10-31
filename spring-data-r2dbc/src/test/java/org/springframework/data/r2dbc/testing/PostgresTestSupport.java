@@ -23,9 +23,7 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
-
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -120,7 +118,7 @@ public class PostgresTestSupport {
 
 			try {
 				PostgreSQLContainer container = new PostgreSQLContainer(
-						"postgres:14.3");
+						"postgres:14.5");
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container).database(container.getDatabaseName()).build();

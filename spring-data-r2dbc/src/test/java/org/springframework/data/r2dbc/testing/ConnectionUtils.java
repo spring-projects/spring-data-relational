@@ -30,6 +30,8 @@ import javax.sql.DataSource;
  */
 abstract class ConnectionUtils {
 
+	public static String AARCH64 = "aarch64";
+
 	/**
 	 * Obtain a {@link ConnectionFactory} given {@link ExternalDatabase} and {@code driver}.
 	 *

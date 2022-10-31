@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-
 import org.testcontainers.containers.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
@@ -71,6 +70,11 @@ public class SqlServerTestSupport {
 	 * inside Docker.
 	 */
 	public static ExternalDatabase database() {
+
+		// Disable SQL Server support as there's no M1 support yet.
+		if (ConnectionUtils.AARCH64.equals(System.getProperty("os.arch"))) {
+			return ExternalDatabase.unavailable();
+		}
 
 		if (Boolean.getBoolean("spring.data.r2dbc.test.preferLocalDatabase")) {
 

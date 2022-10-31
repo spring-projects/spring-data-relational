@@ -25,12 +25,10 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.awaitility.Awaitility;
-
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.util.ClassUtils;
-
 import org.testcontainers.containers.OracleContainer;
 
 /**
@@ -72,6 +70,11 @@ public class OracleTestSupport {
 	 * @return information about the database. Guaranteed to be not {@literal null}.
 	 */
 	public static ExternalDatabase database() {
+
+		// Disable Oracle support as there's no M1 support yet.
+		if (ConnectionUtils.AARCH64.equals(System.getProperty("os.arch"))) {
+			return ExternalDatabase.unavailable();
+		}
 
 		if (!ClassUtils.isPresent("oracle.r2dbc.impl.OracleConnectionFactoryProviderImpl",
 				OracleTestSupport.class.getClassLoader())) {
@@ -125,8 +128,7 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim")
-						.withReuse(true);
+				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim").withReuse(true);
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //

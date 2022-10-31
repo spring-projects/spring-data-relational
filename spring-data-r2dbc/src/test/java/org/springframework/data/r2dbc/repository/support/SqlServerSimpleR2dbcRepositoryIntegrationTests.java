@@ -19,9 +19,9 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
@@ -36,6 +36,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
+@DisabledOnOs(architectures = "aarch64")
 public class SqlServerSimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbcRepositoryIntegrationTests {
 
 	@RegisterExtension public static final ExternalDatabase database = SqlServerTestSupport.database();
