@@ -60,7 +60,7 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Christopher Klein
  */
-abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
+public bstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
@@ -74,7 +74,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	@Nullable private final BeanFactory beanfactory;
 	protected final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
-	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+	protected JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			@Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -104,9 +104,9 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @author Diego Krupitza
 	 * @since 2.4
 	 */
-	static class CreateQueryLookupStrategy extends JdbcQueryLookupStrategy {
+	public static class CreateQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
-		CreateQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+		public CreateQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				@Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -133,9 +133,9 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @author Diego Krupitza
 	 * @since 2.4
 	 */
-	static class DeclaredQueryLookupStrategy extends JdbcQueryLookupStrategy {
+	public static class DeclaredQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
-		DeclaredQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+		public DeclaredQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				@Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -175,7 +175,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @author Diego Krupitza
 	 * @since 2.4
 	 */
-	static class CreateIfNotFoundQueryLookupStrategy extends JdbcQueryLookupStrategy {
+	public static class CreateIfNotFoundQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
 		private final DeclaredQueryLookupStrategy lookupStrategy;
 		private final CreateQueryLookupStrategy createStrategy;
@@ -186,7 +186,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		 * @param createStrategy must not be {@literal null}.
 		 * @param lookupStrategy must not be {@literal null}.
 		 */
-		CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+		public CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				@Nullable BeanFactory beanfactory, CreateQueryLookupStrategy createStrategy,
@@ -217,7 +217,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	/**
 	 * Creates a {@link JdbcQueryMethod} based on the parameters
 	 */
-	JdbcQueryMethod getJdbcQueryMethod(Method method, RepositoryMetadata repositoryMetadata,
+	protected JdbcQueryMethod getJdbcQueryMethod(Method method, RepositoryMetadata repositoryMetadata,
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
 		return new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries, context);
 	}
@@ -272,29 +272,29 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		}
 	}
 
-	RelationalMappingContext getContext() {
+	protected RelationalMappingContext getContext() {
 		return context;
 	}
 
-	JdbcConverter getConverter() {
+	protected JdbcConverter getConverter() {
 		return converter;
 	}
 
-	Dialect getDialect() {
+	protected Dialect getDialect() {
 		return dialect;
 	}
 
-	NamedParameterJdbcOperations getOperations() {
+	protected NamedParameterJdbcOperations getOperations() {
 		return operations;
 	}
 
 	@Nullable
-	BeanFactory getBeanFactory() {
+	protected BeanFactory getBeanFactory() {
 		return beanfactory;
 	}
 
 	@SuppressWarnings("unchecked")
-	RowMapper<Object> createMapper(Class<?> returnedObjectType) {
+	protected RowMapper<Object> createMapper(Class<?> returnedObjectType) {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
@@ -306,7 +306,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		return (RowMapper<Object>) determineDefaultMapper(returnedObjectType);
 	}
 
-	private RowMapper<?> determineDefaultMapper(Class<?> returnedObjectType) {
+	protected RowMapper<?> determineDefaultMapper(Class<?> returnedObjectType) {
 
 		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(returnedObjectType);
 
@@ -321,11 +321,11 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		return new PostProcessingRowMapper<>(defaultEntityRowMapper);
 	}
 
-	class PostProcessingRowMapper<T> implements RowMapper<T> {
+	public class PostProcessingRowMapper<T> implements RowMapper<T> {
 
 		private final RowMapper<T> delegate;
 
-		PostProcessingRowMapper(RowMapper<T> delegate) {
+		public PostProcessingRowMapper(RowMapper<T> delegate) {
 			this.delegate = delegate;
 		}
 
