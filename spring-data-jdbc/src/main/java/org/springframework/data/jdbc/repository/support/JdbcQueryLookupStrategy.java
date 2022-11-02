@@ -61,7 +61,7 @@ import org.springframework.util.Assert;
  * @author Christopher Klein
  * @author cdalexndr
  */
-public bstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
+public abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
