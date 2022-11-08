@@ -21,6 +21,7 @@ import java.util.function.UnaryOperator;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -69,7 +70,7 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o) {
 			return true;

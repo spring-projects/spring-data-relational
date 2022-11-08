@@ -208,7 +208,7 @@ public final class Identifier {
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 
 			if (this == o)
 				return true;
@@ -272,7 +272,7 @@ public final class Identifier {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;

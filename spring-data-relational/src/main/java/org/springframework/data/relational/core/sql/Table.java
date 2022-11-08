@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.Objects;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -131,7 +132,7 @@ public class Table extends AbstractSegment implements TableLike {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 		if (this == o) {
 			return true;
 		}
@@ -189,7 +190,7 @@ public class Table extends AbstractSegment implements TableLike {
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 
 			if (this == o) {
 				return true;

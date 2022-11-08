@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.StringJoiner;
 import java.util.function.UnaryOperator;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -70,7 +71,7 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o) {
 			return true;

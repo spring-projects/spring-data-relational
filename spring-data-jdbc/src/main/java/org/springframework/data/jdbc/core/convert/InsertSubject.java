@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.Objects;
 
+import org.springframework.lang.Nullable;
+
 /**
  * The subject of an insert, described by the entity instance and its {@link Identifier}, where identifier contains
  * information about data that needs to be considered for the insert but which is not part of the entity. Namely
@@ -50,7 +52,7 @@ public final class InsertSubject<T> {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o)
 			return true;
