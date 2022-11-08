@@ -360,7 +360,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o) {
 			return true;
@@ -421,7 +421,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 		}
 
 		@Override
-		public boolean equals(Object o) {
+		public boolean equals(@Nullable Object o) {
 
 			if (this == o) {
 				return true;

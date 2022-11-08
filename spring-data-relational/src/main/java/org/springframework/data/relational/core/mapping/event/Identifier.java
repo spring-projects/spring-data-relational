@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.mapping.event;
 
 import java.util.Objects;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -56,7 +57,7 @@ public final class Identifier {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o)
 			return true;

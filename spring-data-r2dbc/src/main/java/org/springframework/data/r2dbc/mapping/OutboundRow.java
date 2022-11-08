@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 
@@ -195,7 +196,7 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
+	public boolean equals(@Nullable final Object o) {
 
 		if (this == o) {
 			return true;

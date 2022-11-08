@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -50,7 +51,7 @@ abstract class AbstractSegment implements Segment {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		return obj instanceof Segment && toString().equals(obj.toString());
 	}
 
