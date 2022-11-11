@@ -27,13 +27,13 @@
 
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<postgresql.version>42.4.1</postgresql.version>
-		<r2dbc-postgresql.version>1.0.0.RC1</r2dbc-postgresql.version>
-		<r2dbc-h2.version>1.0.0.RC1</r2dbc-h2.version>
-		<r2dbc-mssql.version>1.0.0.RC1</r2dbc-mssql.version>
+		<r2dbc-postgresql.version>1.0.0.RELEASE</r2dbc-postgresql.version>
+		<r2dbc-h2.version>1.0.0.RELEASE</r2dbc-h2.version>
+		<r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
 		<oracle-r2dbc.version>1.0.0</oracle-r2dbc.version>
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
-		<netty>4.1.79.Final</netty>
+		<netty>4.1.85.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
