@@ -17,8 +17,11 @@ package org.springframework.data.r2dbc.core;
 
 import static org.springframework.data.r2dbc.testing.Assertions.*;
 
+import io.r2dbc.postgresql.codec.Interval;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -26,8 +29,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.convert.EnumWriteSupport;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -41,7 +44,8 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessStrategyTestSupport {
 
-	private final ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+	private final ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+			Arrays.asList(DurationToIntervalConverter.INSTANCE, IntervalToDurationConverter.INSTANCE));
 
 	@Override
 	protected ReactiveDataAccessStrategy getStrategy() {
@@ -114,6 +118,17 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
 
 		assertThat(outboundRow).containsColumn("my_objects").withColumn("my_objects").isEmpty().hasType(String.class);
+	}
+
+	@Test // gh-1379
+	void shouldApplyCustomConversionForEmptyList() {
+
+		WithDuration withDuration = new WithDuration();
+		withDuration.durations = new ArrayList<>();
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withDuration);
+
+		assertThat(outboundRow).containsColumn("durations").withColumn("durations").hasType(Interval[].class);
 	}
 
 	@Test // gh-252, gh-593
@@ -202,6 +217,11 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		List<String> stringList;
 	}
 
+	static class WithDuration {
+
+		List<Duration> durations;
+	}
+
 	static class WithEnumCollections {
 
 		MyEnum[] enumArray;
@@ -239,6 +259,28 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		@Override
 		public String convert(List<MyObject> myObjects) {
 			return myObjects.toString();
+		}
+	}
+
+	@WritingConverter
+	enum DurationToIntervalConverter implements Converter<Duration, Interval> {
+
+		INSTANCE;
+
+		@Override
+		public Interval convert(Duration duration) {
+			return Interval.of(duration);
+		}
+	}
+
+	@ReadingConverter
+	enum IntervalToDurationConverter implements Converter<Interval, Duration> {
+
+		INSTANCE;
+
+		@Override
+		public Duration convert(Interval interval) {
+			return interval.getDuration();
 		}
 	}
 

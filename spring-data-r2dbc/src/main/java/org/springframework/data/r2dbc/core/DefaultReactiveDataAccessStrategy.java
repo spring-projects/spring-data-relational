@@ -214,7 +214,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		ArrayColumns arrayColumns = this.dialect.getArraySupport();
 
 		if (!arrayColumns.isSupported()) {
-
 			throw new InvalidDataAccessResourceUsageException(
 					"Dialect " + this.dialect.getClass().getName() + " does not support array columns");
 		}

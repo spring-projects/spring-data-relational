@@ -534,6 +534,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			actualType = property.getActualType();
 		}
 
+		actualType = getTargetType(actualType);
+
 		Class<?> targetType = arrayColumns.getArrayType(actualType);
 
 		if (!property.isArray() || !targetType.isAssignableFrom(value.getClass())) {
