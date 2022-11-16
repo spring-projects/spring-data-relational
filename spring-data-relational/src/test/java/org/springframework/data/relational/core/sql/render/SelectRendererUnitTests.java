@@ -21,7 +21,20 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.AnalyticFunction;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Comparison;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.InlineQuery;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.StringUtils;
 
 /**
@@ -269,7 +282,8 @@ class SelectRendererUnitTests {
 		Table department = SQL.table("department");
 
 		Select innerSelectOne = Select.builder()
-				.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
+				.select(employee.column("id").as("empId"), employee.column("department_Id"), employee.column("name"))
+				.from(employee)
 				.build();
 		Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name")).from(department)
 				.build();
@@ -277,15 +291,15 @@ class SelectRendererUnitTests {
 		InlineQuery one = InlineQuery.create(innerSelectOne, "one");
 		InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
 
-		Select select = Select.builder().select(one.column("id"), two.column("name")).from(one) //
-				.join(two).on(two.column("department_id")).equals(one.column("id")) //
+		Select select = Select.builder().select(one.column("empId"), two.column("name")).from(one) //
+				.join(two).on(two.column("department_id")).equals(one.column("empId")) //
 				.build();
 
 		String sql = SqlRenderer.toString(select);
-		assertThat(sql).isEqualTo("SELECT one.id, two.name FROM (" //
-				+ "SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
+		assertThat(sql).isEqualTo("SELECT one.empId, two.name FROM (" //
+				+ "SELECT employee.id AS empId, employee.department_Id, employee.name FROM employee) one " //
 				+ "JOIN (SELECT department.id, department.name FROM department) two " //
-				+ "ON two.department_id = one.id");
+				+ "ON two.department_id = one.empId");
 	}
 
 	@Test // DATAJDBC-309
