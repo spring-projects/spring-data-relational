@@ -65,8 +65,7 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 
 		@Override
 		public String getReference(IdentifierProcessing processing) {
-			throw new UnsupportedOperationException(
-					"An empty SqlIdentifier can't be used in to create column names.");
+			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names.");
 		}
 
 		public String toString() {
