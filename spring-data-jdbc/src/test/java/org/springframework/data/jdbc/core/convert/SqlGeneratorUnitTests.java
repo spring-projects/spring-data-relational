@@ -443,6 +443,17 @@ class SqlGeneratorUnitTests {
 
 	}
 
+	@Test // DATAJDBC-613
+	void findAllByPropertyWithEmptyBackrefColumn() {
+
+		assertThatThrownBy(() -> {
+			sqlGenerator.getFindAllByProperty(Identifier.of(EMPTY, 0, Object.class),
+					unquoted("key-column"),
+					false);
+		}).isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("An empty SqlIdentifier can't be used in condition. Make sure that all composite primary keys are defined in the query.");
+	}
+
 	@Test // DATAJDBC-219
 	void updateWithVersion() {
 
