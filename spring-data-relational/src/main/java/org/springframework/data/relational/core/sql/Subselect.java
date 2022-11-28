@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,27 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * Wrapper for a {@link Select} query to be used as subselect.
- *
+ * Baseclass for all kinds of "select in parenthesis".
+ * 
+ * @since 3.1
+ * @author Mark Paluch
  * @author Jens Schauder
- * @since 1.1
  */
-public class SubselectExpression extends Subselect implements Expression {
+public abstract class Subselect extends AbstractSegment {
 
-	SubselectExpression(Select subselect) {
+	private final Select select;
 
-		super(subselect);
+	protected Subselect(Select select) {
+		this.select = select;
 	}
+
+	public Select getSelect() {
+		return select;
+	}
+
+	@Override
+	public String toString() {
+		return "(" + select + ")";
+	}
+
 }

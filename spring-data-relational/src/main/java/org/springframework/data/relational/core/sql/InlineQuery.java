@@ -29,16 +29,14 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 2.3
  */
-public class InlineQuery extends AbstractSegment implements TableLike {
+public class InlineQuery extends Subselect implements TableLike {
 
-	private final Select select;
 	private final SqlIdentifier alias;
 
 	InlineQuery(Select select, SqlIdentifier alias) {
 
 		super(select);
 
-		this.select = select;
 		this.alias = alias;
 	}
 
@@ -81,10 +79,4 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 	public SqlIdentifier getReferenceName() {
 		return alias;
 	}
-
-	@Override
-	public String toString() {
-		return "(" + select + ") AS " + alias;
-	}
-
 }
