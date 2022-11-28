@@ -35,7 +35,6 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 
 	private final RenderContext context;
 	private final RenderTarget parent;
-	@Nullable private SelectStatementVisitor delegate;
 	@Nullable private StringBuilder builder = null;
 
 	FromTableVisitor(RenderContext context, RenderTarget parent) {
@@ -50,10 +49,7 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 		builder = new StringBuilder();
 
 		if (segment instanceof InlineQuery) {
-
-			builder.append("(");
-			delegate = new SelectStatementVisitor(context);
-			return Delegation.delegateTo(delegate);
+			return Delegation.delegateTo(new SubselectVisitor(context, builder::append));
 		}
 
 		return super.enterMatched(segment);
@@ -63,14 +59,6 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 	Delegation leaveMatched(TableLike segment) {
 
 		Assert.state(builder != null, "Builder must not be null in leaveMatched");
-
-		if (delegate != null) {
-
-			builder.append(delegate.getRenderedPart());
-			builder.append(") ");
-
-			delegate = null;
-		}
 
 		builder.append(NameRenderer.render(context, segment));
 		if (segment instanceof Aliased) {

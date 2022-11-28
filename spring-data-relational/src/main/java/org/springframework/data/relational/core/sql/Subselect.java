@@ -27,6 +27,9 @@ public abstract class Subselect extends AbstractSegment {
 	private final Select select;
 
 	protected Subselect(Select select) {
+
+		super(select);
+
 		this.select = select;
 	}
 
