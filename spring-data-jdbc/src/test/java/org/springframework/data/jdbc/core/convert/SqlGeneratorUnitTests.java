@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -72,6 +71,7 @@ import org.springframework.lang.Nullable;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
+ * @author Viktor Ardelean
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -443,15 +443,14 @@ class SqlGeneratorUnitTests {
 
 	}
 
-	@Test // DATAJDBC-613
+	@Test // GH-833
 	void findAllByPropertyWithEmptyBackrefColumn() {
 
-		assertThatThrownBy(() -> {
-			sqlGenerator.getFindAllByProperty(Identifier.of(EMPTY, 0, Object.class),
-					unquoted("key-column"),
-					false);
-		}).isInstanceOf(UnsupportedOperationException.class)
-				.hasMessageContaining("An empty SqlIdentifier can't be used in condition. Make sure that all composite primary keys are defined in the query.");
+		Identifier emptyIdentifier = Identifier.of(EMPTY, 0, Object.class);
+		assertThatThrownBy(() -> sqlGenerator.getFindAllByProperty(emptyIdentifier, unquoted("key-column"), false)) //
+				.isInstanceOf(IllegalArgumentException.class) //
+				.hasMessageContaining(
+						"An empty SqlIdentifier can't be used in condition. Make sure that all composite primary keys are defined in the query");
 	}
 
 	@Test // DATAJDBC-219

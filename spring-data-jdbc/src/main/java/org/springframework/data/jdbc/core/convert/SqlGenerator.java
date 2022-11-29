@@ -57,6 +57,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
+ * @author Viktor Ardelean
  */
 class SqlGenerator {
 
@@ -260,10 +261,10 @@ class SqlGenerator {
 
 		Condition condition = null;
 		for (SqlIdentifier backReferenceColumn : parentIdentifier.toMap().keySet()) {
-			if (SqlIdentifier.EMPTY.equals(backReferenceColumn)){
-				throw new UnsupportedOperationException(
-						"An empty SqlIdentifier can't be used in condition. Make sure that all composite primary keys are defined in the query.");
-			}
+
+			Assert.isTrue(!SqlIdentifier.EMPTY.equals(backReferenceColumn),
+					"An empty SqlIdentifier can't be used in condition. Make sure that all composite primary keys are defined in the query");
+
 			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
 			condition = condition == null ? newCondition : condition.and(newCondition);
 		}
@@ -1102,7 +1103,7 @@ class SqlGenerator {
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
-		if (property.isInsertOnly()) {
+			if (property.isInsertOnly()) {
 				insertOnlyColumnNames.add(columnName);
 			}
 		}
