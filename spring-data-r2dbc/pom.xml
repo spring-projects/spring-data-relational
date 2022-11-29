@@ -26,7 +26,6 @@
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<degraph-check.version>0.1.4</degraph-check.version>
-		<postgresql.version>42.4.1</postgresql.version>
 		<r2dbc-postgresql.version>1.0.0.RELEASE</r2dbc-postgresql.version>
 		<r2dbc-h2.version>1.0.0.RELEASE</r2dbc-h2.version>
 		<r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
