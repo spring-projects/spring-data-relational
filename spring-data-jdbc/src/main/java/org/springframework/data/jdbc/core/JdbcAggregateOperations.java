@@ -33,6 +33,7 @@ import org.springframework.lang.Nullable;
  * @author Milan Milanov
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Myeonghyeon Lee
  */
 public interface JdbcAggregateOperations {
 
@@ -72,6 +73,19 @@ public interface JdbcAggregateOperations {
 	<T> T insert(T instance);
 
 	/**
+	 * Inserts all aggregate instances, including all the members of each aggregate instance.
+	 * <p>
+	 * This is useful if the client provides an id for new aggregate roots.
+	 * </p>
+	 *
+	 * @param instances the aggregate roots to be inserted. Must not be {@code null}.
+	 * @param <T> the type of the aggregate root.
+	 * @return the saved instances.
+	 * @since 3.1
+	 */
+	<T> Iterable<T> insertAll(Iterable<T> instances);
+
+	/**
 	 * Dedicated update function. This skips the test if the aggregate root is new or not and always performs an update
 	 * operation.
 	 *
@@ -80,6 +94,16 @@ public interface JdbcAggregateOperations {
 	 * @return the saved instance.
 	 */
 	<T> T update(T instance);
+
+	/**
+	 * Updates all aggregate instances, including all the members of each aggregate instance.
+	 *
+	 * @param instances the aggregate roots to be inserted. Must not be {@code null}.
+	 * @param <T> the type of the aggregate root.
+	 * @return the saved instances.
+	 * @since 3.1
+	 */
+	<T> Iterable<T> updateAll(Iterable<T> instances);
 
 	/**
 	 * Counts the number of aggregates of a given type.
