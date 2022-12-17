@@ -384,6 +384,30 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(template.count(AggregateWithImmutableVersion.class)).isEqualTo(0);
 	}
 
+	@Test // GH-1395
+	void insertAndUpdateAllByAggregateRootsWithVersion() {
+
+		AggregateWithImmutableVersion aggregate1 = new AggregateWithImmutableVersion(null, null);
+		AggregateWithImmutableVersion aggregate2 = new AggregateWithImmutableVersion(null, null);
+		AggregateWithImmutableVersion aggregate3 = new AggregateWithImmutableVersion(null, null);
+		Iterator<AggregateWithImmutableVersion> savedAggregatesIterator = template
+				.insertAll(List.of(aggregate1, aggregate2, aggregate3)).iterator();
+		assertThat(template.count(AggregateWithImmutableVersion.class)).isEqualTo(3);
+
+		AggregateWithImmutableVersion savedAggregate1 = savedAggregatesIterator.next();
+		AggregateWithImmutableVersion twiceSavedAggregate2 = template.save(savedAggregatesIterator.next());
+		AggregateWithImmutableVersion twiceSavedAggregate3 = template.save(savedAggregatesIterator.next());
+
+		savedAggregatesIterator = template.updateAll(
+				List.of(savedAggregate1, twiceSavedAggregate2, twiceSavedAggregate3)).iterator();
+
+		assertThat(savedAggregatesIterator.next().version).isEqualTo(1);
+		assertThat(savedAggregatesIterator.next().version).isEqualTo(2);
+		assertThat(savedAggregatesIterator.next().version).isEqualTo(2);
+
+		AggregateWithImmutableVersion.clearConstructorInvocationData();
+	}
+
 	@Test // DATAJDBC-112
 	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
 	void updateReferencedEntityFromNull() {
