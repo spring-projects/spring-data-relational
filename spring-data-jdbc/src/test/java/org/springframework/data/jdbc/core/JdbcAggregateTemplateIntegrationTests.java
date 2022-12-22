@@ -390,6 +390,7 @@ class JdbcAggregateTemplateIntegrationTests {
 		AggregateWithImmutableVersion aggregate1 = new AggregateWithImmutableVersion(null, null);
 		AggregateWithImmutableVersion aggregate2 = new AggregateWithImmutableVersion(null, null);
 		AggregateWithImmutableVersion aggregate3 = new AggregateWithImmutableVersion(null, null);
+
 		Iterator<AggregateWithImmutableVersion> savedAggregatesIterator = template
 				.insertAll(List.of(aggregate1, aggregate2, aggregate3)).iterator();
 		assertThat(template.count(AggregateWithImmutableVersion.class)).isEqualTo(3);

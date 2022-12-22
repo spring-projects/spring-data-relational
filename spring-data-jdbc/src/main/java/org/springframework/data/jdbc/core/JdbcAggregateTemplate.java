@@ -170,6 +170,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> Iterable<T> saveAll(Iterable<T> instances) {
 
+		Assert.notNull(instances, "Aggregate instances must not be null");
 		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
@@ -191,19 +192,22 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null");
 
-		return performSave(new EntityAndChangeCreator<>(
-				instance, entity -> createInsertChange(prepareVersionForInsert(entity))));
+		return performSave(
+				new EntityAndChangeCreator<>(instance, entity -> createInsertChange(prepareVersionForInsert(entity))));
 	}
 
 	@Override
 	public <T> Iterable<T> insertAll(Iterable<T> instances) {
 
+		Assert.notNull(instances, "Aggregate instances must not be null");
 		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
-			entityAndChangeCreators.add(new EntityAndChangeCreator<>(
-					instance, entity -> createInsertChange(prepareVersionForInsert(entity))));
+
+			Function<T, RootAggregateChange<T>> changeCreator = entity -> createInsertChange(prepareVersionForInsert(entity));
+			EntityAndChangeCreator<T> entityChange = new EntityAndChangeCreator<>(instance, changeCreator);
+			entityAndChangeCreators.add(entityChange);
 		}
 		return performSaveAll(entityAndChangeCreators);
 	}
@@ -220,19 +224,22 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null");
 
-		return performSave(new EntityAndChangeCreator<>(
-				instance, entity -> createUpdateChange(prepareVersionForUpdate(entity))));
+		return performSave(
+				new EntityAndChangeCreator<>(instance, entity -> createUpdateChange(prepareVersionForUpdate(entity))));
 	}
 
 	@Override
 	public <T> Iterable<T> updateAll(Iterable<T> instances) {
 
+		Assert.notNull(instances, "Aggregate instances must not be null");
 		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
-			entityAndChangeCreators.add(new EntityAndChangeCreator<>(
-					instance, entity -> createUpdateChange(prepareVersionForUpdate(entity))));
+
+			Function<T, RootAggregateChange<T>> changeCreator = entity -> createUpdateChange(prepareVersionForUpdate(entity));
+			EntityAndChangeCreator<T> entityChange = new EntityAndChangeCreator<>(instance, changeCreator);
+			entityAndChangeCreators.add(entityChange);
 		}
 		return performSaveAll(entityAndChangeCreators);
 	}
@@ -393,6 +400,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Map<Class, List<Object>> groupedByType = new HashMap<>();
 
 		for (T instance : instances) {
+
 			Class<?> type = instance.getClass();
 			final List<Object> list = groupedByType.computeIfAbsent(type, __ -> new ArrayList<>());
 			list.add(instance);
@@ -474,13 +482,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> List<T> performSaveAll(Iterable<EntityAndChangeCreator<T>> instances) {
+
 		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = null;
 
 		for (EntityAndChangeCreator<T> instance : instances) {
 			if (batchingAggregateChange == null) {
 				// noinspection unchecked
-				batchingAggregateChange = BatchingAggregateChange.forSave(
-						(Class<T>) ClassUtils.getUserClass(instance.entity));
+				batchingAggregateChange = BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance.entity));
 			}
 			batchingAggregateChange.add(beforeExecute(instance));
 		}
