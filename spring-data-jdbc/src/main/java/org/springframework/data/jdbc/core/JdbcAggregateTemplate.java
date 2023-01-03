@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -171,7 +172,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public <T> Iterable<T> saveAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
@@ -200,7 +204,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public <T> Iterable<T> insertAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
@@ -232,7 +239,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public <T> Iterable<T> updateAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
@@ -366,7 +376,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void deleteAllById(Iterable<?> ids, Class<T> domainType) {
 
-		Assert.isTrue(ids.iterator().hasNext(), "Ids must not be empty");
+		if (!ids.iterator().hasNext()) {
+			return;
+		}
 
 		BatchingAggregateChange<T, DeleteAggregateChange<T>> batchingAggregateChange = BatchingAggregateChange
 				.forDelete(domainType);
@@ -395,7 +407,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void deleteAll(Iterable<? extends T> instances) {
 
-		Assert.isTrue(instances.iterator().hasNext(), "Aggregate instances must not be empty");
+		if (!instances.iterator().hasNext()) {
+			return;
+		}
 
 		Map<Class, List<Object>> groupedByType = new HashMap<>();
 
