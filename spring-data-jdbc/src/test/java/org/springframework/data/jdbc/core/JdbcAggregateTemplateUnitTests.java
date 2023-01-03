@@ -312,6 +312,21 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(all).containsExactly(alfred2, neumann2);
 	}
 
+	@Test // GH-1401
+	public void saveAllWithEmptyListDoesNothing() {
+		assertThat(template.saveAll(emptyList())).isEmpty();
+	}
+
+	@Test // GH-1401
+	public void deleteAllWithEmptyListDoesNothing() {
+		template.deleteAll(emptyList());
+	}
+
+	@Test // GH-1401
+	public void deleteAllByIdWithEmptyListDoesNothing() {
+		template.deleteAllById(emptyList(), SampleEntity.class);
+	}
+
 	@Data
 	@AllArgsConstructor
 	private static class SampleEntity {
