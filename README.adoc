@@ -163,7 +163,12 @@ To run integration tests against all supported databases specify the Maven Profi
 ./mvnw clean install -Pall-dbs
 ----
 
-This requires an appropriate `container-license-acceptance.txt` to be on the classpath, signaling that you accept the license of the databases used.
+This requires an appropriate `container-license-acceptance.txt` to be on the test classpath (which is by default taken from `src/test/resources`), signaling that you accept the license of the databases used. File `container-license-acceptance.txt` should contain the fully qualified names of the particular images, that require the license acceptance. In this project only `db2` and `mssql` images require licenses to be accepted. So, if you accept the licenses, then your `container-license-acceptance.txt` file should look like this:
+
+```
+ibmcom/db2:11.5.7.0a
+mcr.microsoft.com/mssql/server:2019-CU16-ubuntu-20.04
+```
 
 If you don't want to accept these licences you may add the Maven Profile `ignore-missing-license`.
 This will ignore the tests that require an explicit license acceptance.
