@@ -69,7 +69,9 @@ import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -112,6 +114,8 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired DummyEntityRepository repository;
 	@Autowired MyEventListener eventListener;
 	@Autowired RootRepository rootRepository;
+
+	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
 
 	private static DummyEntity createDummyEntity() {
 
@@ -1238,6 +1242,22 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(match.get().getName()).contains(two.getName());
 	}
 
+	@Test
+	void withDelimitedColumnTest() {
+		WithDelimitedColumn withDelimitedColumn = new WithDelimitedColumn();
+		withDelimitedColumn.setType("TYPICAL");
+		withDelimitedColumn.setIdentifier("UR-123");
+
+		WithDelimitedColumn saved = withDelimitedColumnRepository.save(withDelimitedColumn);
+
+		assertThat(saved.getId()).isNotNull();
+
+		Optional<WithDelimitedColumn> inDatabase = withDelimitedColumnRepository.findById(saved.getId());
+
+		assertThat(inDatabase).isPresent();
+		assertThat(inDatabase.get().getIdentifier()).isEqualTo("UR-123");
+	}
+
 	private Root createRoot(String namePrefix) {
 
 		return new Root(null, namePrefix,
@@ -1361,9 +1381,16 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByEnumType(Direction direction);
 	}
 
+	interface RootRepository extends ListCrudRepository<Root, Long> {
+		List<Root> findAllByOrderByIdAsc();
+	}
+
+	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> { }
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
+
 
 		@Autowired JdbcRepositoryFactory factory;
 
@@ -1381,6 +1408,9 @@ public class JdbcRepositoryIntegrationTests {
 		RootRepository rootRepository() {
 			return factory.getRepository(RootRepository.class);
 		}
+
+		@Bean
+		WithDelimitedColumnRepository withDelimitedColumnRepository() { return factory.getRepository(WithDelimitedColumnRepository.class); }
 
 		@Bean
 		NamedQueries namedQueries() throws IOException {
@@ -1404,15 +1434,11 @@ public class JdbcRepositoryIntegrationTests {
 
 			return extensionAwareQueryMethodEvaluationContextProvider;
 		}
-
 		@Bean
 		public EvaluationContextExtension evaluationContextExtension() {
 			return new MyIdContextProvider();
 		}
-	}
 
-	interface RootRepository extends ListCrudRepository<Root, Long> {
-		List<Root> findAllByOrderByIdAsc();
 	}
 
 	@Value
@@ -1422,6 +1448,14 @@ public class JdbcRepositoryIntegrationTests {
 		String name;
 		Intermediate intermediate;
 		@MappedCollection(idColumn = "ROOT_ID", keyColumn = "ROOT_KEY") List<Intermediate> intermediates;
+	}
+
+	@Data
+	@Table("WITH_DELIMITED_COLUMN")
+	static class WithDelimitedColumn {
+		@Id Long id;
+		@Column("ORG.XTUNIT.IDENTIFIER") String identifier;
+		@Column ("STYPE") String type;
 	}
 
 	@Value
