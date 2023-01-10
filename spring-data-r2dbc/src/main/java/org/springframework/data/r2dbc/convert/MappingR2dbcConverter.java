@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import io.r2dbc.spi.Blob;
+import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -158,7 +160,14 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 			Object value = null;
 			if (metadata == null || RowMetadataUtils.containsColumn(metadata, identifier)) {
-				value = row.get(identifier);
+
+				if (property.getType().equals(Clob.class)) {
+					value = row.get(identifier, Clob.class);
+				} else if (property.getType().equals(Blob.class)) {
+					value = row.get(identifier, Blob.class);
+				} else {
+					value = row.get(identifier);
+				}
 			}
 
 			if (value == null) {
