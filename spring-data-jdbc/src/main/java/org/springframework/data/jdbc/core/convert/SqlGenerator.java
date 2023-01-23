@@ -65,7 +65,6 @@ class SqlGenerator {
 	static final SqlIdentifier IDS_SQL_PARAMETER = SqlIdentifier.unquoted("ids");
 	static final SqlIdentifier ROOT_ID_PARAMETER = SqlIdentifier.unquoted("rootId");
 
-	private static final Pattern parameterPattern = Pattern.compile("\\W");
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final RenderContext renderContext;
@@ -158,7 +157,7 @@ class SqlGenerator {
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(renderReference(columnName)).replaceAll(""));
+		return SQL.bindMarker(":" + BindParameterNameSanitizer.INSTANCE.sanitize(renderReference(columnName)));
 	}
 
 	/**

@@ -104,6 +104,7 @@ import lombok.Data;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
@@ -1242,8 +1243,9 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(match.get().getName()).contains(two.getName());
 	}
 
-	@Test
+	@Test // GH-1405
 	void withDelimitedColumnTest() {
+
 		WithDelimitedColumn withDelimitedColumn = new WithDelimitedColumn();
 		withDelimitedColumn.setType("TYPICAL");
 		withDelimitedColumn.setIdentifier("UR-123");
