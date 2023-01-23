@@ -68,7 +68,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 	void addValue(SqlIdentifier identifier, Object value, int sqlType) {
 
 		identifiers.add(identifier);
-		String name = identifier.getReference(identifierProcessing);
+		String name = BindParameterNameSanitizer.INSTANCE.sanitize(identifier.getReference(identifierProcessing));
 		namesToValues.put(name, value);
 		registerSqlType(name, sqlType);
 	}

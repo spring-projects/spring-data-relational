@@ -38,6 +38,7 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -147,6 +148,21 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(value);
 	}
 
+	@Test // GH-1405
+	void parameterNamesGetSanitized() {
+
+		WithIllegalCharacters entity = new WithIllegalCharacters(23L,"aValue");
+
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithIllegalCharacters.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
+
+		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
+		assertThat(sqlParameterSource.getValue("value")).isEqualTo("aValue");
+
+		assertThat(sqlParameterSource.getValue("i.d")).isNull();
+		assertThat(sqlParameterSource.getValue("val&ue")).isNull();
+	}
+
 	@WritingConverter
 	enum IdValueToStringConverter implements Converter<IdValue, String> {
 
@@ -210,6 +226,16 @@ class SqlParametersFactoryTest {
 	private static class DummyEntity {
 
 		@Id private final Long id;
+	}
+
+	@AllArgsConstructor
+	private static class WithIllegalCharacters {
+
+		@Column("i.d")
+		@Id Long id;
+
+		@Column("val&ue")
+		String value;
 	}
 
 	private SqlParametersFactory createSqlParametersFactoryWithConverters(List<?> converters) {
