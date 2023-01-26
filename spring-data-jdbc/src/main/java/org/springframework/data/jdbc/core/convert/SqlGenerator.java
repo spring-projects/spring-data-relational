@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
@@ -158,7 +157,7 @@ class SqlGenerator {
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + BindParameterNameSanitizer.INSTANCE.sanitize(renderReference(columnName)));
+		return SQL.bindMarker(":" + BindParameterNameSanitizer.sanitize(renderReference(columnName)));
 	}
 
 	/**
@@ -655,7 +654,7 @@ class SqlGenerator {
 	private String createUpdateWithVersionSql() {
 
 		Update update = createBaseUpdate() //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
+				.and(getVersionColumn().isEqualTo(getBindMarker(VERSION_SQL_PARAMETER))) //
 				.build();
 
 		return render(update);
@@ -689,7 +688,7 @@ class SqlGenerator {
 	private String createDeleteByIdAndVersionSql() {
 
 		Delete delete = createBaseDeleteById(getTable()) //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
+				.and(getVersionColumn().isEqualTo(getBindMarker(VERSION_SQL_PARAMETER))) //
 				.build();
 
 		return render(delete);
@@ -698,13 +697,13 @@ class SqlGenerator {
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 
 		return Delete.builder().from(table)
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
+				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER)));
 	}
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteByIdIn(Table table) {
 
 		return Delete.builder().from(table)
-				.where(getIdColumn().in(SQL.bindMarker(":" + renderReference(IDS_SQL_PARAMETER))));
+				.where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER)));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
