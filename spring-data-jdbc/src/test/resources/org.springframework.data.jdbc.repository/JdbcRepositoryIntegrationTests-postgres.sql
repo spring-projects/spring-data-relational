@@ -41,7 +41,7 @@ CREATE TABLE LEAF
 
 CREATE TABLE "WITH_DELIMITED_COLUMN"
 (
-    ID                      BIGINT IDENTITY PRIMARY KEY,
+    ID                      SERIAL PRIMARY KEY,
     "ORG.XTUNIT.IDENTIFIER" VARCHAR(100),
-    STYPE                   VARCHAR(100)
+    "STYPE"                 VARCHAR(100)
 );
