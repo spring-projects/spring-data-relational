@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.regex.Pattern;
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 /**
- * Sanitizes the name of bind parameters, so they don't contain any illegal characters.
+ * Unit tests for {@link BindParameterNameSanitizer}.
  *
- * @author Jens Schauder
- * @since 3.0.2
+ * @author Mark Paluch
  */
-abstract class BindParameterNameSanitizer {
+class BindParameterNameSanitizerUnitTests {
 
-	private static final Pattern parameterPattern = Pattern.compile("\\W");
+	@Test
+	void shouldSanitizeNames() {
 
-	static String sanitize(String rawName) {
-		return parameterPattern.matcher(rawName).replaceAll("");
+		assertThat(BindParameterNameSanitizer.sanitize("___oldOptimisticLockingVersion"))
+				.isEqualTo("___oldOptimisticLockingVersion");
+		assertThat(BindParameterNameSanitizer.sanitize("fooBar")).isEqualTo("fooBar");
+		assertThat(BindParameterNameSanitizer.sanitize("one.two.three")).isEqualTo("onetwothree");
 	}
 }
