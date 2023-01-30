@@ -16,7 +16,6 @@
 package org.springframework.data.r2dbc.support;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 
 import org.springframework.util.Assert;
 
@@ -73,10 +72,7 @@ public abstract class ArrayUtils {
 
 		Assert.notNull(componentType, "Component type must not be null");
 
-		int[] lengths = new int[dimensions];
-		Arrays.fill(lengths, 0);
-
-		return Array.newInstance(componentType, lengths).getClass();
+		return Array.newInstance(componentType, new int[dimensions]).getClass();
 	}
 
 	/**
