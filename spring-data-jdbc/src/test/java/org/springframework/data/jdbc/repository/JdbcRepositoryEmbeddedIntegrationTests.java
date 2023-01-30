@@ -92,7 +92,6 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired PersonRepository personRepository;
-
 	@Autowired WithDotColumnRepo withDotColumnRepo;
 
 	@Test // DATAJDBC-111
@@ -246,6 +245,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 	@Test // GH-1286
 	public void findOrderedByEmbeddedProperty() {
+
 		Person first = new Person(null, "Bob", "Seattle", new PersonContacts("ddd@example.com", "+1 111 1111 11 11"));
 		Person second = new Person(null, "Alex", "LA", new PersonContacts("aaa@example.com", "+2 222 2222 22 22"));
 		Person third = new Person(null, "Sarah", "NY", new PersonContacts("ggg@example.com", "+3 333 3333 33 33"));
@@ -254,7 +254,6 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		Iterable<Person> fetchedPersons = personRepository.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "personContacts.email")));
 
-		Assertions.assertThat(fetchedPersons).hasSize(3);
 		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
 	}
 
@@ -269,7 +268,6 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		Iterable<WithDotColumn> fetchedPersons = withDotColumnRepo.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "address")));
 
-		Assertions.assertThat(fetchedPersons).hasSize(3);
 		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
 	}
 
