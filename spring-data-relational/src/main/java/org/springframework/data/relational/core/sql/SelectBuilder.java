@@ -486,6 +486,16 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		SelectOn leftOuterJoin(TableLike table);
+
+		/**
+		 * Declar a join, where the join type ({@code INNER}, {@code LEFT OUTER}, {@code RIGHT OUTER}, {@code FULL OUTER})
+		 * is specified by an extra argument.
+		 * 
+		 * @param table the table to join. Must not be {@literal null}.
+		 * @param joinType the type of joi. Must not be {@literal null}.
+		 * @return {@code this} builder.
+		 */
+		SelectOn join(TableLike table, Join.JoinType joinType);
 	}
 
 	/**

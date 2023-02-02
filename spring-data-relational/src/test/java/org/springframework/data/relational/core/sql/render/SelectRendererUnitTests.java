@@ -21,20 +21,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.sql.AnalyticFunction;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Comparison;
-import org.springframework.data.relational.core.sql.Conditions;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.InlineQuery;
-import org.springframework.data.relational.core.sql.LockMode;
-import org.springframework.data.relational.core.sql.OrderByField;
-import org.springframework.data.relational.core.sql.SQL;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.util.StringUtils;
 
 /**
@@ -152,6 +139,21 @@ class SelectRendererUnitTests {
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
 				+ "LEFT OUTER JOIN department ON employee.department_id = department.id");
+	}
+
+	@Test // GH-1421
+	void shouldRenderFullOuterJoin() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
+				.from(employee) //
+				.join(department, Join.JoinType.FULL_OUTER_JOIN).on(employee.column("department_id")).equals(department.column("id")) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "FULL OUTER JOIN department ON employee.department_id = department.id");
 	}
 
 	@Test // DATAJDBC-309

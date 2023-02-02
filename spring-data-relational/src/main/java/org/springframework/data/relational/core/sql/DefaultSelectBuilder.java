@@ -181,6 +181,11 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return new JoinBuilder(table, this, JoinType.LEFT_OUTER_JOIN);
 	}
 
+	@Override
+	public SelectOn join(TableLike table, JoinType joinType) {
+		return new JoinBuilder(table, this, joinType);
+	}
+
 	public DefaultSelectBuilder join(Join join) {
 		this.joins.add(join);
 
@@ -321,6 +326,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		public SelectOn leftOuterJoin(TableLike table) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.leftOuterJoin(table);
+		}
+
+		@Override
+		public SelectOn join(TableLike table, JoinType joinType) {
+			selectBuilder.join(finishJoin());
+			return selectBuilder.join(table, joinType);
 		}
 
 		@Override
