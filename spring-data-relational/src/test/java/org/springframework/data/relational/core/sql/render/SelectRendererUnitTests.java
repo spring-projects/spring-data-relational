@@ -154,6 +154,21 @@ class SelectRendererUnitTests {
 				+ "LEFT OUTER JOIN department ON employee.department_id = department.id");
 	}
 
+	@Test // GH-1421
+	void shouldRenderFullOuterJoin() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
+				.from(employee) //
+				.fullOuterJoin(department).on(employee.column("department_id")).equals(department.column("id")) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "FULL OUTER JOIN department ON employee.department_id = department.id");
+	}
+
 	@Test // DATAJDBC-309
 	void shouldRenderSimpleJoinWithAnd() {
 

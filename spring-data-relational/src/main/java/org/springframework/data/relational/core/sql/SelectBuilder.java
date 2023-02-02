@@ -486,6 +486,16 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		SelectOn leftOuterJoin(TableLike table);
+
+		/**
+		 * Declare a {@code FULL OUTER JOIN} {@link Table}.
+		 *
+		 * @param table must not be {@literal null}.
+		 * @return {@code this} builder.
+		 * @see Join
+		 * @see SQL#table(String)
+		 */
+		SelectOn fullOuterJoin(TableLike table);
 	}
 
 	/**
