@@ -22,6 +22,7 @@ import lombok.Data;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -231,9 +232,31 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
+	@Test // DATAJDBC-551
+	public void deleteByTest() {
+
+		DummyEntity one = repository.save(createDummyEntity("root1"));
+		DummyEntity two = repository.save(createDummyEntity("root2"));
+		DummyEntity three = repository.save(createDummyEntity("root3"));
+
+		assertThat(repository.deleteByTest(two.getTest())).isEqualTo(1);
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getId) //
+				.containsExactlyInAnyOrder(one.getId(), three.getId());
+
+		Long count = template.queryForObject("select count(1) from dummy_entity2", Collections.emptyMap(), Long.class);
+		assertThat(count).isEqualTo(4);
+
+	}
+
 	private static DummyEntity createDummyEntity() {
+		return createDummyEntity("root");
+	}
+
+	private static DummyEntity createDummyEntity(String test) {
 		DummyEntity entity = new DummyEntity();
-		entity.setTest("root");
+		entity.setTest(test);
 
 		final Embeddable embeddable = new Embeddable();
 		embeddable.setTest("embedded");
@@ -252,7 +275,9 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 		return entity;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+		int deleteByTest(String test);
+	}
 
 	@Data
 	private static class DummyEntity {
