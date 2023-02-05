@@ -128,13 +128,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		ResultProcessingConverter converter = new ResultProcessingConverter(processor, this.converter.getMappingContext(),
 				this.converter.getEntityInstantiators());
 
-		RowMapper<Object> rowMapper = determineRowMapper(rowMapperFactory.create(resolveTypeToRead(processor)), converter,
-				accessor.findDynamicProjection() != null);
-
-		JdbcQueryExecution<?> queryExecution = getQueryExecution(//
-				queryMethod, //
-				determineResultSetExtractor(rowMapper), //
-				rowMapper);
+		JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor, converter);
 
 		MapSqlParameterSource parameterMap = this.bindParameters(accessor);
 
@@ -145,6 +139,21 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		}
 
 		return queryExecution.execute(processSpelExpressions(objects, parameterMap, query), parameterMap);
+	}
+
+	private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor, ResultProcessor processor, ResultProcessingConverter converter) {
+		JdbcQueryExecution<?> queryExecution;
+
+		if (queryMethod.isModifyingQuery()) {
+			queryExecution = createModifyingQueryExecutor();
+		} else {
+
+			RowMapper<Object> rowMapper = determineRowMapper(rowMapperFactory.create(resolveTypeToRead(processor)), converter,
+					accessor.findDynamicProjection() != null);
+
+			queryExecution = getQueryExecution(queryMethod, determineResultSetExtractor(rowMapper), rowMapper);
+		}
+		return queryExecution;
 	}
 
 	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {

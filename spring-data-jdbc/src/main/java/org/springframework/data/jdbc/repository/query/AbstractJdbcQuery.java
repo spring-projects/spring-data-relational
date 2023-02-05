@@ -82,10 +82,6 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	protected JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
 			@Nullable ResultSetExtractor<?> extractor, RowMapper<?> rowMapper) {
 
-		if (queryMethod.isModifyingQuery()) {
-			return createModifyingQueryExecutor();
-		}
-
 		if (queryMethod.isCollectionQuery()) {
 			return extractor != null ? getQueryExecution(extractor) : collectionQuery(rowMapper);
 		}
@@ -97,7 +93,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		return extractor != null ? getQueryExecution(extractor) : singleObjectQuery(rowMapper);
 	}
 
-	private JdbcQueryExecution<Object> createModifyingQueryExecutor() {
+	protected JdbcQueryExecution<Object> createModifyingQueryExecutor() {
 
 		return (query, parameters) -> {
 
