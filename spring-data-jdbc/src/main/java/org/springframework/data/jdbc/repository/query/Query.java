@@ -29,6 +29,18 @@ import org.springframework.jdbc.core.RowMapper;
  * Annotation to provide SQL statements that will get used for executing the method. The SQL statement may contain named
  * parameters as supported by {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Those
  * parameters will get bound to the arguments of the annotated method.
+ * <p>
+ * You can also specify the way to extract data from {@link java.sql.ResultSet}. There are 4 attribute of this
+ * annotation you can set to do that:
+ * <p>
+ * 1. {@link #resultSetExtractorRef()}
+ * 2. {@link #resultSetExtractorClass()}
+ * 3. {@link #rowMapperRef()}
+ * 4. {@link #rowMapperClass()}
+ *
+ * The annotation attributes above are listed in their preference order, that is - the {@link #resultSetExtractorRef()},
+ * has the highest privilege and, will suppress any other 3 attribute from above, and consequently {@link #rowMapperClass()}
+ * has the lowest privilege and will be used if any of three above are not specified.
  *
  * @author Jens Schauder
  * @author Moises Cisneros
@@ -52,28 +64,23 @@ public @interface Query {
 	String name() default "";
 
 	/**
-	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used
-	 * along with {@link #resultSetExtractorClass()} only one of the two can be set.
+	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances.
 	 */
 	Class<? extends RowMapper> rowMapperClass() default RowMapper.class;
 
 	/**
-	 * Optional name of a bean of type {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used
-	 * along with {@link #resultSetExtractorClass()} only one of the two can be set.
-	 *
+	 * Optional name of a bean of type {@link RowMapper} to use to convert the result of the query to domain class instances.
 	 * @since 2.1
 	 */
 	String rowMapperRef() default "";
 
 	/**
-	 * Optional {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
-	 * used along with {@link #rowMapperClass()} only one of the two can be set.
+	 * Optional {@link ResultSetExtractor} to use to convert the result of the query to domain class instances.
 	 */
 	Class<? extends ResultSetExtractor> resultSetExtractorClass() default ResultSetExtractor.class;
 
 	/**
-	 * Optional name of a bean of type {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
-	 * used along with {@link #rowMapperClass()} only one of the two can be set.
+	 * Optional name of a bean of type {@link ResultSetExtractor} to use to convert the result of the query to domain class instances.
 	 *
 	 * @since 2.1
 	 */

@@ -43,6 +43,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -144,9 +145,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 					resultProcessingConverter);
 		}
 
-		JdbcQueryExecution<?> queryExecution = getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()
-				? collectionQuery(rowMapper)
-				: getQueryExecution(getQueryMethod(), extractor, rowMapper);
+		JdbcQueryExecution<?> queryExecution = getJdbcQueryExecution(extractor, rowMapper);
 
 		if (getQueryMethod().isSliceQuery()) {
 			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable());
@@ -171,6 +170,18 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		}
 
 		return queryExecution;
+	}
+
+	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor, RowMapper<Object> rowMapper) {
+		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()) {
+			return collectionQuery(rowMapper);
+		} else {
+			if (getQueryMethod().isModifyingQuery()) {
+				return createModifyingQueryExecutor();
+			} else {
+				return getQueryExecution(getQueryMethod(), extractor, rowMapper);
+			}
+		}
 	}
 
 	protected ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
