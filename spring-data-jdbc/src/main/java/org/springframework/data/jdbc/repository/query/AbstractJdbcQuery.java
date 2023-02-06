@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
  * @author Maciej Walkowiak
  * @author Mark Paluch
  * @author Dennis Effing
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public abstract class AbstractJdbcQuery implements RepositoryQuery {
@@ -71,26 +72,42 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	}
 
 	/**
-	 * Creates a {@link JdbcQueryExecution} given {@link JdbcQueryMethod}, {@link ResultSetExtractor} an
+	 * Creates a {@link JdbcQueryExecution} given a {@link JdbcQueryMethod}, and ac{@link ResultSetExtractor} or a
 	 * {@link RowMapper}. Prefers the given {@link ResultSetExtractor} over {@link RowMapper}.
 	 *
 	 * @param queryMethod must not be {@literal null}.
 	 * @param extractor must not be {@literal null}.
 	 * @param rowMapper must not be {@literal null}.
 	 * @return a JdbcQueryExecution appropriate for {@literal queryMethod}. Guaranteed to be not {@literal null}.
+	 * @deprecated use {@link #createReadingQueryExecution(ResultSetExtractor, RowMapper)} instead.
 	 */
+	@Deprecated(since = "3.1", forRemoval = true)
+	// a better name would be createReadingQueryExecution
 	protected JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
 			@Nullable ResultSetExtractor<?> extractor, RowMapper<?> rowMapper) {
+		return createReadingQueryExecution(extractor, rowMapper);
+	}
 
-		if (queryMethod.isCollectionQuery()) {
-			return extractor != null ? getQueryExecution(extractor) : collectionQuery(rowMapper);
+	/**
+	 * Creates a {@link JdbcQueryExecution} given a {@link ResultSetExtractor} or a {@link RowMapper}. Prefers the given
+	 * {@link ResultSetExtractor} over {@link RowMapper}.
+	 *
+	 * @param extractor must not be {@literal null}.
+	 * @param rowMapper must not be {@literal null}.
+	 * @return a JdbcQueryExecution appropriate for {@literal queryMethod}. Guaranteed to be not {@literal null}.
+	 */
+	protected JdbcQueryExecution<?> createReadingQueryExecution(@Nullable ResultSetExtractor<?> extractor,
+			RowMapper<?> rowMapper) {
+
+		if (getQueryMethod().isCollectionQuery()) {
+			return extractor != null ? createSingleReadingQueryExecution(extractor) : collectionQuery(rowMapper);
 		}
 
-		if (queryMethod.isStreamQuery()) {
-			return extractor != null ? getQueryExecution(extractor) : streamQuery(rowMapper);
+		if (getQueryMethod().isStreamQuery()) {
+			return extractor != null ? createSingleReadingQueryExecution(extractor) : streamQuery(rowMapper);
 		}
 
-		return extractor != null ? getQueryExecution(extractor) : singleObjectQuery(rowMapper);
+		return extractor != null ? createSingleReadingQueryExecution(extractor) : singleObjectQuery(rowMapper);
 	}
 
 	protected JdbcQueryExecution<Object> createModifyingQueryExecutor() {
@@ -100,7 +117,8 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 			int updatedCount = operations.update(query, parameters);
 			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
-			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0
+			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) //
+					? updatedCount != 0 //
 					: updatedCount;
 		};
 	}
@@ -117,14 +135,15 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	}
 
 	<T> JdbcQueryExecution<List<T>> collectionQuery(RowMapper<T> rowMapper) {
-		return getQueryExecution(new RowMapperResultSetExtractor<>(rowMapper));
+		return createSingleReadingQueryExecution(new RowMapperResultSetExtractor<>(rowMapper));
 	}
 
 	/**
 	 * Obtain the result type to read from {@link ResultProcessor}.
 	 *
-	 * @param resultProcessor  the {@link ResultProcessor} used to determine the result type. Must not be {@literal null}.
-	 * @return the type that should get loaded from the database before it gets converted into the actual return type of a method. Guaranteed to be not {@literal null}.
+	 * @param resultProcessor the {@link ResultProcessor} used to determine the result type. Must not be {@literal null}.
+	 * @return the type that should get loaded from the database before it gets converted into the actual return type of a
+	 *         method. Guaranteed to be not {@literal null}.
 	 */
 	protected Class<?> resolveTypeToRead(ResultProcessor resultProcessor) {
 
@@ -142,7 +161,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		return (query, parameters) -> operations.queryForStream(query, parameters, rowMapper);
 	}
 
-	private <T> JdbcQueryExecution<T> getQueryExecution(ResultSetExtractor<T> resultSetExtractor) {
+	private <T> JdbcQueryExecution<T> createSingleReadingQueryExecution(ResultSetExtractor<T> resultSetExtractor) {
 		return (query, parameters) -> operations.query(query, parameters, resultSetExtractor);
 	}
 

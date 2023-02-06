@@ -52,6 +52,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -172,18 +173,6 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		return queryExecution;
 	}
 
-	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor, RowMapper<Object> rowMapper) {
-		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()) {
-			return collectionQuery(rowMapper);
-		} else {
-			if (getQueryMethod().isModifyingQuery()) {
-				return createModifyingQueryExecutor();
-			} else {
-				return getQueryExecution(getQueryMethod(), extractor, rowMapper);
-			}
-		}
-	}
-
 	protected ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
 
 		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
@@ -191,6 +180,20 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
 				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation());
 		return queryCreator.createQuery(getDynamicSort(accessor));
+	}
+
+	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor, RowMapper<Object> rowMapper) {
+
+		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()) {
+			return collectionQuery(rowMapper);
+		} else {
+
+			if (getQueryMethod().isModifyingQuery()) {
+				return createModifyingQueryExecutor();
+			} else {
+				return createReadingQueryExecution(extractor, rowMapper);
+			}
+		}
 	}
 
 	/**

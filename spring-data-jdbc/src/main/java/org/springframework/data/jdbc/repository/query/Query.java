@@ -33,10 +33,13 @@ import org.springframework.jdbc.core.RowMapper;
  * You can also specify the way to extract data from {@link java.sql.ResultSet}. There are 4 attribute of this
  * annotation you can set to do that:
  * <p>
- * 1. {@link #resultSetExtractorRef()}
- * 2. {@link #resultSetExtractorClass()}
- * 3. {@link #rowMapperRef()}
- * 4. {@link #rowMapperClass()}
+ * <ol>
+ * <li> {@link #resultSetExtractorRef()}
+ * </li><li> {@link #resultSetExtractorClass()}
+ * </li><li> {@link #rowMapperRef()}
+ * </li><li> {@link #rowMapperClass()}
+ * </li>
+ *</ol>
  *
  * The annotation attributes above are listed in their preference order, that is - the {@link #resultSetExtractorRef()},
  * has the highest privilege and, will suppress any other 3 attribute from above, and consequently {@link #rowMapperClass()}
@@ -45,6 +48,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Jens Schauder
  * @author Moises Cisneros
  * @author Hebert Coelho
+ * @author Mikhail Polivakha
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

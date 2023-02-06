@@ -61,13 +61,12 @@ import org.springframework.util.ObjectUtils;
  * @author Hebert Coelho
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters";
-
-	private final JdbcQueryMethod queryMethod;
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private BeanFactory beanFactory;
@@ -104,7 +103,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
-		this.queryMethod = queryMethod;
 		this.converter = converter;
 		this.rowMapperFactory = rowMapperFactory;
 		this.evaluationContextProvider = evaluationContextProvider;
@@ -135,25 +133,24 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		String query = determineQuery();
 
 		if (ObjectUtils.isEmpty(query)) {
-			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+			throw new IllegalStateException(String.format("No query specified on %s", getQueryMethod().getName()));
 		}
 
 		return queryExecution.execute(processSpelExpressions(objects, parameterMap, query), parameterMap);
 	}
 
-	private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor, ResultProcessor processor, ResultProcessingConverter converter) {
-		JdbcQueryExecution<?> queryExecution;
+	private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor,
+			ResultProcessor processor, ResultProcessingConverter converter) {
 
-		if (queryMethod.isModifyingQuery()) {
-			queryExecution = createModifyingQueryExecutor();
+		if (getQueryMethod().isModifyingQuery()) {
+			return createModifyingQueryExecutor();
 		} else {
 
 			RowMapper<Object> rowMapper = determineRowMapper(rowMapperFactory.create(resolveTypeToRead(processor)), converter,
 					accessor.findDynamicProjection() != null);
 
-			queryExecution = getQueryExecution(queryMethod, determineResultSetExtractor(rowMapper), rowMapper);
+			return createReadingQueryExecution(determineResultSetExtractor(rowMapper), rowMapper);
 		}
-		return queryExecution;
 	}
 
 	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap, String query) {
@@ -162,16 +159,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				.of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
 				.withEvaluationContextProvider(evaluationContextProvider);
 
-		SpelEvaluator spelEvaluator = queryContext.parse(query, queryMethod.getParameters());
+		SpelEvaluator spelEvaluator = queryContext.parse(query, getQueryMethod().getParameters());
 
 		spelEvaluator.evaluate(objects).forEach(parameterMap::addValue);
 
 		return spelEvaluator.getQueryString();
-	}
-
-	@Override
-	public JdbcQueryMethod getQueryMethod() {
-		return queryMethod;
 	}
 
 	private MapSqlParameterSource bindParameters(RelationalParameterAccessor accessor) {
@@ -191,7 +183,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
-		RelationalParameters.RelationalParameter parameter = queryMethod.getParameters().getParameter(p.getIndex());
+		RelationalParameters.RelationalParameter parameter = getQueryMethod().getParameters().getParameter(p.getIndex());
 		ResolvableType resolvableType = parameter.getResolvableType();
 		Class<?> type = resolvableType.resolve();
 		Assert.notNull(type, "@Query parameter type could not be resolved");
@@ -233,10 +225,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private String determineQuery() {
 
-		String query = queryMethod.getDeclaredQuery();
+		String query = getQueryMethod().getDeclaredQuery();
 
 		if (ObjectUtils.isEmpty(query)) {
-			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+			throw new IllegalStateException(String.format("No query specified on %s", getQueryMethod().getName()));
 		}
 
 		return query;
@@ -246,7 +238,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	ResultSetExtractor<Object> determineResultSetExtractor(@Nullable RowMapper<Object> rowMapper) {
 
-		String resultSetExtractorRef = queryMethod.getResultSetExtractorRef();
+		String resultSetExtractorRef = getQueryMethod().getResultSetExtractorRef();
 
 		if (!ObjectUtils.isEmpty(resultSetExtractorRef)) {
 
@@ -255,7 +247,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			return (ResultSetExtractor<Object>) beanFactory.getBean(resultSetExtractorRef);
 		}
 
-		Class<? extends ResultSetExtractor> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
+		Class<? extends ResultSetExtractor> resultSetExtractorClass = getQueryMethod().getResultSetExtractorClass();
 
 		if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
 			return null;
@@ -288,7 +280,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@Nullable
 	RowMapper<Object> determineRowMapper(@Nullable RowMapper<?> defaultMapper) {
 
-		String rowMapperRef = queryMethod.getRowMapperRef();
+		String rowMapperRef = getQueryMethod().getRowMapperRef();
 
 		if (!ObjectUtils.isEmpty(rowMapperRef)) {
 
@@ -297,7 +289,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			return (RowMapper<Object>) beanFactory.getBean(rowMapperRef);
 		}
 
-		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
+		Class<?> rowMapperClass = getQueryMethod().getRowMapperClass();
 
 		if (isUnconfigured(rowMapperClass, RowMapper.class)) {
 			return (RowMapper<Object>) defaultMapper;
