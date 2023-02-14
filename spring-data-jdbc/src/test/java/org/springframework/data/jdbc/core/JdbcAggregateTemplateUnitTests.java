@@ -136,10 +136,10 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.findAll(SampleEntity.class)).thenReturn(asList(alfred1, neumann1));
 
-		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
-		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any(Object[].class))).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class);
 
@@ -160,10 +160,10 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.findAll(SampleEntity.class, Sort.by("name"))).thenReturn(asList(alfred1, neumann1));
 
-		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
-		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any(Object[].class))).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, Sort.by("name"));
 
@@ -186,10 +186,10 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.findAll(SampleEntity.class, PageRequest.of(0, 20))).thenReturn(asList(alfred1, neumann1));
 
-		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
-		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any(Object[].class))).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, PageRequest.of(0, 20));
 
@@ -205,7 +205,8 @@ public class JdbcAggregateTemplateUnitTests {
 	@AllArgsConstructor
 	private static class SampleEntity {
 
-		@Column("id1") @Id private Long id;
+		@Column("id1")
+		@Id private Long id;
 
 		private String name;
 	}
