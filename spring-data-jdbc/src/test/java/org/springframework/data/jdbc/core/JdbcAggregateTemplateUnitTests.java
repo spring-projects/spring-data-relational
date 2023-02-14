@@ -103,7 +103,7 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
 		SampleEntity third = new SampleEntity(23L, "Neumann");
 
-		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second, third);
+		when(callbacks.callback(any(Class.class), any(), any(Object[].class))).thenReturn(second, third);
 
 		SampleEntity last = template.save(first);
 
@@ -121,7 +121,7 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
 		SampleEntity third = new SampleEntity(23L, "Neumann");
 
-		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second, third);
+		when(callbacks.callback(any(Class.class), any(), any(Object[].class))).thenReturn(second, third);
 
 		template.setEntityLifecycleEventsEnabled(false);
 		template.save(first);
@@ -133,7 +133,7 @@ public class JdbcAggregateTemplateUnitTests {
 	void savePreparesInstanceWithInitialVersion_onInsert() {
 
 		EntityWithVersion entity = new EntityWithVersion(1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -148,7 +148,7 @@ public class JdbcAggregateTemplateUnitTests {
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsImmutable() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, null);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -163,7 +163,7 @@ public class JdbcAggregateTemplateUnitTests {
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsPrimitiveType() {
 
 		EntityWithPrimitiveVersion entity = new EntityWithPrimitiveVersion(1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -178,7 +178,7 @@ public class JdbcAggregateTemplateUnitTests {
 	void savePreparesInstanceWithInitialVersion_onInsert__whenVersionPropertyIsImmutableAndPrimitiveType() {
 
 		EntityWithImmutablePrimitiveVersion entity = new EntityWithImmutablePrimitiveVersion(1L, 0L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -196,7 +196,7 @@ public class JdbcAggregateTemplateUnitTests {
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
 		EntityWithVersion entity = new EntityWithVersion(1L);
 		entity.setVersion(1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -213,7 +213,7 @@ public class JdbcAggregateTemplateUnitTests {
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
 		EntityWithVersion entity = new EntityWithVersion(1L);
 		entity.setVersion(1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -229,7 +229,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.save(entity);
 
@@ -243,7 +243,7 @@ public class JdbcAggregateTemplateUnitTests {
 	void deletePreparesChangeWithPreviousVersion_onDeleteByInstance() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
-		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
 
 		template.delete(entity);
 
@@ -279,8 +279,8 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.findAll(SampleEntity.class, Sort.by("name"))).thenReturn(asList(alfred1, neumann1));
 
-		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, Sort.by("name"));
 
@@ -301,8 +301,8 @@ public class JdbcAggregateTemplateUnitTests {
 
 		when(dataAccessStrategy.findAll(SampleEntity.class, PageRequest.of(0, 20))).thenReturn(asList(alfred1, neumann1));
 
-		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
-		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, PageRequest.of(0, 20));
 
