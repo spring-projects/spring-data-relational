@@ -16,7 +16,6 @@
 package org.springframework.data.r2dbc;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -34,7 +33,6 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
  *
  * @author Jens Schauder
  */
-@Disabled("To be replaced with ArchUnit")
 public class DependencyTests {
 
 	@Test // DATAJDBC-114
