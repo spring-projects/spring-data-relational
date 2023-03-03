@@ -41,7 +41,7 @@
 
 		<!-- test utilities-->
 		<awaitility.version>4.2.0</awaitility.version>
-		<archunit.version>1.0.0</archunit.version>
+		<archunit.version>1.0.1</archunit.version>
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>
