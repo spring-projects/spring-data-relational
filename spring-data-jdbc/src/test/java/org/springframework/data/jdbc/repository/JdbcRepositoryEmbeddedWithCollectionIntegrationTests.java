@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -216,28 +217,52 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
-	private static DummyEntity createDummyEntity() {
-		DummyEntity entity = new DummyEntity();
-		entity.setTest("root");
+    @Test // DATAJDBC-551
+    public void deleteByTest() {
 
-		final Embeddable embeddable = new Embeddable();
-		embeddable.setTest("embedded");
+        DummyEntity one = repository.save(createDummyEntity("root1"));
+        DummyEntity two = repository.save(createDummyEntity("root2"));
+        DummyEntity three = repository.save(createDummyEntity("root3"));
 
-		final DummyEntity2 dummyEntity21 = new DummyEntity2();
-		dummyEntity21.setTest("entity1");
+        assertThat(repository.deleteByTest(two.getTest())).isEqualTo(1);
 
-		final DummyEntity2 dummyEntity22 = new DummyEntity2();
-		dummyEntity22.setTest("entity2");
+        assertThat(repository.findAll()) //
+                .extracting(DummyEntity::getId) //
+                .containsExactlyInAnyOrder(one.getId(), three.getId());
 
-		embeddable.getList().add(dummyEntity21);
-		embeddable.getList().add(dummyEntity22);
+        Long count = template.queryForObject("select count(1) from dummy_entity2", Collections.emptyMap(), Long.class);
+        assertThat(count).isEqualTo(4);
 
-		entity.setEmbeddable(embeddable);
+    }
 
-		return entity;
-	}
+    private static DummyEntity createDummyEntity() {
+        return createDummyEntity("root");
+    }
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+    private static DummyEntity createDummyEntity(String test) {
+        DummyEntity entity = new DummyEntity();
+        entity.setTest(test);
+
+        final Embeddable embeddable = new Embeddable();
+        embeddable.setTest("embedded");
+
+        final DummyEntity2 dummyEntity21 = new DummyEntity2();
+        dummyEntity21.setTest("entity1");
+
+        final DummyEntity2 dummyEntity22 = new DummyEntity2();
+        dummyEntity22.setTest("entity2");
+
+        embeddable.getList().add(dummyEntity21);
+        embeddable.getList().add(dummyEntity22);
+
+        entity.setEmbeddable(embeddable);
+
+        return entity;
+    }
+
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+        int deleteByTest(String test);
+    }
 
 	private static class DummyEntity {
 		@Column("ID")

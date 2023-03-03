@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.stream.Stream;
 import java.util.function.Supplier;
 
 import org.springframework.core.convert.converter.Converter;
@@ -127,6 +128,13 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
 
+        if (tree.isDelete()) {
+            JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
+            return createDeleteQueries(accessor)
+                    .map(query -> execution.execute(query.getQuery(), query.getParameterSource()))
+                    .reduce((a, b) -> b);
+        }
+
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
 		ParametrizedQuery query = createQuery(accessor, processor.getReturnedType());
 		JdbcQueryExecution<?> execution = getQueryExecution(processor, accessor);
@@ -177,6 +185,15 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation());
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
+
+    private Stream<ParametrizedQuery> createDeleteQueries(RelationalParametersParameterAccessor accessor) {
+
+        RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
+
+        JdbcDeleteQueryCreator queryCreator = new JdbcDeleteQueryCreator(context, tree, converter, dialect, entityMetadata,
+                accessor);
+        return queryCreator.createQuery();
+    }
 
 	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor,
 			Supplier<RowMapper<?>> rowMapper) {

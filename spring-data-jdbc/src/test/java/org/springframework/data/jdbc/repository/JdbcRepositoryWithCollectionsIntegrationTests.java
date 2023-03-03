@@ -173,6 +173,26 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		assertThat(count).isEqualTo(0);
 	}
 
+    @Test // DATAJDBC-551
+    public void deleteByName() {
+
+        Element element1 = createElement("one");
+        Element element2 = createElement("two");
+
+        DummyEntity entity = createDummyEntity();
+        entity.content.add(element1);
+        entity.content.add(element2);
+
+        entity = repository.save(entity);
+
+        assertThat(repository.deleteByName("Entity Name")).isEqualTo(1);
+
+        assertThat(repository.findById(entity.id)).isEmpty();
+
+        Long count = template.queryForObject("select count(1) from Element", new HashMap<>(), Long.class);
+        assertThat(count).isEqualTo(0);
+    }
+
 	private Element createElement(String content) {
 
 		Element element = new Element();
@@ -180,7 +200,9 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		return element;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+        long deleteByName(String name);
+    }
 
 	@Configuration
 	@Import(TestConfiguration.class)
