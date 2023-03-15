@@ -41,7 +41,6 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -276,17 +275,18 @@ public class QueryMapper {
 		Column column = table.column(propertyField.getMappedColumnName());
 		Object mappedValue;
 		SQLType sqlType;
+		Comparator comparator = criteria.getComparator();
 
-		if (criteria.getValue() instanceof JdbcValue settableValue) {
+		if (criteria.getValue()instanceof JdbcValue settableValue) {
 
-			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
+			mappedValue = convertValue(comparator, settableValue.getValue(), propertyField.getTypeHint());
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
 		} else if (criteria.getValue() instanceof ValueFunction) {
 
 			ValueFunction<Object> valueFunction = (ValueFunction<Object>) criteria.getValue();
-			Object value = valueFunction.apply(getEscaper(criteria.getComparator()));
+			Object value = valueFunction.apply(getEscaper(comparator));
 
-			mappedValue = convertValue(value, propertyField.getTypeHint());
+			mappedValue = convertValue(comparator, value, propertyField.getTypeHint());
 			sqlType = propertyField.getSqlType();
 
 		} else if (propertyField instanceof MetadataBackedField //
@@ -296,17 +296,15 @@ public class QueryMapper {
 			RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
 			JdbcValue jdbcValue = convertToJdbcValue(property, criteria.getValue());
 			mappedValue = jdbcValue.getValue();
-			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType()
-					: propertyField.getSqlType();
+			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType() : propertyField.getSqlType();
 
 		} else {
 
-			mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
+			mappedValue = convertValue(comparator, criteria.getValue(), propertyField.getTypeHint());
 			sqlType = propertyField.getSqlType();
 		}
 
-		return createCondition(column, mappedValue, sqlType, parameterSource, criteria.getComparator(),
-				criteria.isIgnoreCase());
+		return createCondition(column, mappedValue, sqlType, parameterSource, comparator, criteria.isIgnoreCase());
 	}
 
 	/**
@@ -429,6 +427,23 @@ public class QueryMapper {
 	}
 
 	@Nullable
+	private Object convertValue(Comparator comparator, @Nullable Object value, TypeInformation<?> typeHint) {
+
+		if (Comparator.IN.equals(comparator) && value instanceof Collection<?> collection && !collection.isEmpty()) {
+
+			Collection<Object> mapped = new ArrayList<>(collection.size());
+
+			for (Object o : collection) {
+				mapped.add(convertValue(o, typeHint));
+			}
+
+			return mapped;
+		}
+
+		return convertValue(value, typeHint);
+	}
+
+	@Nullable
 	protected Object convertValue(@Nullable Object value, TypeInformation<?> typeInformation) {
 
 		if (value == null) {
@@ -450,19 +465,6 @@ public class QueryMapper {
 			return Pair.of(first, second);
 		}
 
-		if (value instanceof Iterable) {
-
-			List<Object> mapped = new ArrayList<>();
-
-			for (Object o : (Iterable<?>) value) {
-
-				mapped.add(convertValue(o, typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-						: TypeInformation.OBJECT));
-			}
-
-			return mapped;
-		}
-
 		if (value.getClass().isArray()
 				&& (TypeInformation.OBJECT.equals(typeInformation) || typeInformation.isCollectionLike())) {
 			return value;
@@ -476,7 +478,7 @@ public class QueryMapper {
 	}
 
 	private Condition createCondition(Column column, @Nullable Object mappedValue, SQLType sqlType,
-									  MapSqlParameterSource parameterSource, Comparator comparator, boolean ignoreCase) {
+			MapSqlParameterSource parameterSource, Comparator comparator, boolean ignoreCase) {
 
 		if (comparator.equals(Comparator.IS_NULL)) {
 			return column.isNull();
@@ -614,12 +616,12 @@ public class QueryMapper {
 	}
 
 	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource,
-							String name) {
+			String name) {
 		return bind(mappedValue, sqlType, parameterSource, name, false);
 	}
 
-	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource, String name,
-							boolean ignoreCase) {
+	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource,
+			String name, boolean ignoreCase) {
 
 		String uniqueName = getUniqueName(parameterSource, name);
 
@@ -671,7 +673,7 @@ public class QueryMapper {
 		/**
 		 * Returns the key to be used in the mapped document eventually.
 		 *
-		 * @return  the key to be used in the mapped document eventually.
+		 * @return the key to be used in the mapped document eventually.
 		 */
 		public SqlIdentifier getMappedColumnName() {
 			return this.name;

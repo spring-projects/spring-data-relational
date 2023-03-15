@@ -22,7 +22,7 @@ import static org.springframework.data.domain.Sort.Order.*;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -39,6 +39,8 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.node.TextNode;
 
 /**
  * Unit tests for {@link QueryMapper}.
@@ -53,7 +55,8 @@ class QueryMapperUnitTests {
 
 	QueryMapper createMapper(R2dbcDialect dialect) {
 
-		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect);
+		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, JsonNodeToStringConverter.INSTANCE,
+				StringToJsonNodeConverter.INSTANCE);
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
@@ -463,6 +466,28 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo((byte) 1);
 	}
 
+	@Test // gh-1452
+	void shouldMapJsonNodeToString() {
+
+		Criteria criteria = Criteria.where("jsonNode").is(new TextNode("foo"));
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.json_node = ?[$1]");
+		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
+	}
+
+	@Test // gh-1452
+	void shouldMapJsonNodeListToString() {
+
+		Criteria criteria = Criteria.where("jsonNode").in(new TextNode("foo"), new TextNode("bar"));
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.json_node IN (?[$1], ?[$2])");
+		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
+	}
+
 	private BoundCondition map(Criteria criteria) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
@@ -478,9 +503,29 @@ class QueryMapperUnitTests {
 		MyEnum enumValue;
 
 		boolean state;
+
+		JsonNode jsonNode;
 	}
 
 	enum MyEnum {
 		ONE, TWO,
+	}
+
+	enum JsonNodeToStringConverter implements Converter<JsonNode, String> {
+		INSTANCE;
+
+		@Override
+		public String convert(JsonNode source) {
+			return source.asText();
+		}
+	}
+
+	enum StringToJsonNodeConverter implements Converter<String, JsonNode> {
+		INSTANCE;
+
+		@Override
+		public JsonNode convert(String source) {
+			return new TextNode(source);
+		}
 	}
 }
