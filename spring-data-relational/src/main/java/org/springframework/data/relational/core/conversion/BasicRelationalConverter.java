@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -169,6 +171,32 @@ public class BasicRelationalConverter implements RelationalConverter {
 			}
 
 			return getPotentiallyConvertedSimpleWrite(value);
+		}
+
+		// TODO: We should add conversion support for arrays, however,
+		// these should consider multi-dimensional arrays as well.
+		if (value.getClass().isArray() && (TypeInformation.OBJECT.equals(type) || type.isCollectionLike())) {
+			return value;
+		}
+
+		if (value instanceof Collection<?>) {
+
+			List<Object> mapped = new ArrayList<>();
+
+			TypeInformation<?> component = TypeInformation.OBJECT;
+			if (type.isCollectionLike() && type.getActualType() != null) {
+				component = type.getRequiredComponentType();
+			}
+
+			for (Object o : (Iterable<?>) value) {
+				mapped.add(writeValue(o, component));
+			}
+
+			if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
+				return mapped;
+			}
+
+			return conversionService.convert(mapped, type.getType());
 		}
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(value.getClass());
