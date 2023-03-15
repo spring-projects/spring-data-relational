@@ -16,7 +16,6 @@
 package org.springframework.data.relational.repository.query;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.List;
 
 import org.springframework.core.MethodParameter;
@@ -24,6 +23,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.repository.query.RelationalParameters.RelationalParameter;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.util.TypeInformation;
 
 /**
  * Custom extension of {@link Parameters}.
@@ -75,10 +75,12 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 			this.parameter = parameter;
 		}
 
-
 		public ResolvableType getResolvableType() {
-			return ResolvableType
-					.forClassWithGenerics(super.getType(), ResolvableType.forMethodParameter(this.parameter).getGenerics());
+			return getTypeInformation().toTypeDescriptor().getResolvableType();
+		}
+
+		public TypeInformation<?> getTypeInformation() {
+			return TypeInformation.fromMethodParameter(parameter);
 		}
 	}
 }

@@ -25,7 +25,6 @@ import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -41,6 +40,7 @@ import org.springframework.data.repository.query.QueryMethodEvaluationContextPro
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.SpelEvaluator;
 import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -185,23 +185,18 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
 		RelationalParameters.RelationalParameter parameter = getQueryMethod().getParameters().getParameter(p.getIndex());
-		ResolvableType resolvableType = parameter.getResolvableType();
-		Class<?> type = resolvableType.resolve();
-		Assert.notNull(type, "@Query parameter type could not be resolved");
+		TypeInformation<?> typeInformation = parameter.getTypeInformation();
 
 		JdbcValue jdbcValue;
-		if (value instanceof Collection && resolvableType.hasGenerics()) {
+		if (typeInformation.isCollectionLike() && value instanceof Collection<?>) {
 
 			List<Object> mapped = new ArrayList<>();
 			SQLType jdbcType = null;
 
-			Class<?> elementType = resolvableType.getGeneric(0).resolve();
-
-			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved");
-
+			TypeInformation<?> actualType = typeInformation.getRequiredActualType();
 			for (Object o : (Iterable<?>) value) {
-				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,
-						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
+				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, actualType.getType(),
+						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(actualType.getType())));
 				if (jdbcType == null) {
 					jdbcType = elementJdbcValue.getJdbcType();
 				}
@@ -211,8 +206,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			jdbcValue = JdbcValue.of(mapped, jdbcType);
 		} else {
-			jdbcValue = converter.writeJdbcValue(value, type,
-					JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(type)));
+			jdbcValue = converter.writeJdbcValue(value, typeInformation.getType(),
+					JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getType())));
 		}
 
 		SQLType jdbcType = jdbcValue.getJdbcType();
