@@ -64,7 +64,7 @@ You can overwrite the repository methods with implementations that match your st
 [[jdbc.getting-started]]
 == Getting Started
 
-An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools/sts[STS] or from https://start.spring.io[Spring Initializr].
+An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools[Spring Tools] or from https://start.spring.io[Spring Initializr].
 
 First, you need to set up a running database server. Refer to your vendor documentation on how to configure your database for JDBC access.
 
@@ -919,9 +919,6 @@ The following table describes the available events. For more details about the e
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveEvent.html[`AfterSaveEvent`]
 | After an aggregate root gets saved (that is, inserted or updated).
-
-| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadEvent.html[`AfterLoadEvent`]
-| After an aggregate root gets created from a database `ResultSet` and all its properties get set. _Note: This is deprecated. Use `AfterConvert` instead_
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterConvertEvent.html[`AfterConvertEvent`]
 | After an aggregate root gets created from a database `ResultSet` and all its properties get set.
