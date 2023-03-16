@@ -14,8 +14,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.mariadb.r2dbc.MariadbConnectionConfiguration;
+import org.mariadb.r2dbc.MariadbConnectionFactory;
 import org.reactivestreams.Publisher;
-
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.LockOptions;
@@ -35,9 +36,12 @@ public class DialectResolverUnitTests {
 		PostgresqlConnectionFactory postgres = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
 				.host("localhost").database("foo").username("bar").password("password").build());
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
+		MariadbConnectionFactory mariadb = new MariadbConnectionFactory(
+				MariadbConnectionConfiguration.builder().socket("/foo").username("bar").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
+		assertThat(DialectResolver.getDialect(mariadb)).isEqualTo(MySqlDialect.INSTANCE);
 	}
 
 	@Test // gh-20, gh-104

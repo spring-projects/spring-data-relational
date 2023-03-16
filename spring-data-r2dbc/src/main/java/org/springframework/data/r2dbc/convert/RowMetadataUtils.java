@@ -18,11 +18,6 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.RowMetadata;
 
-import java.lang.reflect.Method;
-
-import org.springframework.lang.Nullable;
-import org.springframework.util.ReflectionUtils;
-
 /**
  * Utility methods for {@link io.r2dbc.spi.RowMetadata}
  *
@@ -30,9 +25,6 @@ import org.springframework.util.ReflectionUtils;
  * @since 1.3.7
  */
 class RowMetadataUtils {
-
-	private static final @Nullable Method getColumnMetadatas = ReflectionUtils.findMethod(RowMetadata.class,
-			"getColumnMetadatas");
 
 	/**
 	 * Check whether the column {@code name} is contained in {@link RowMetadata}. The check happens case-insensitive.
@@ -63,12 +55,6 @@ class RowMetadataUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Iterable<? extends ColumnMetadata> getColumnMetadata(RowMetadata metadata) {
-
-		if (getColumnMetadatas != null) {
-			// Return type of RowMetadata.getColumnMetadatas was updated with R2DBC 0.9.
-			return (Iterable<? extends ColumnMetadata>) ReflectionUtils.invokeMethod(getColumnMetadatas, metadata);
-		}
-
 		return metadata.getColumnMetadatas();
 	}
 }

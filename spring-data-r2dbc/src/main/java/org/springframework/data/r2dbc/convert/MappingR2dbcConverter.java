@@ -598,6 +598,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		return (row, metadata) -> {
 
+			if (metadata == null) {
+				metadata = row.getMetadata();
+			}
+
 			PersistentPropertyAccessor<?> propertyAccessor = entity.getPropertyAccessor(object);
 			RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
 
