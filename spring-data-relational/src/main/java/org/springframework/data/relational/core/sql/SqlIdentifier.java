@@ -26,7 +26,7 @@ import org.springframework.data.util.Streamable;
  * from a {@link String name} with specifying whether the name should be quoted or unquoted.
  * <p>
  * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use
- * {@link #getReference(IdentifierProcessing)} to refer to an object using the identifier when e.g. obtaining values
+ * {@link #getReference()} to refer to an object using the identifier when e.g. obtaining values
  * from a result or providing values for a prepared statement. {@link #toSql(IdentifierProcessing)} renders the
  * identifier for SQL statement usage.
  * <p>
@@ -39,6 +39,7 @@ import org.springframework.data.util.Streamable;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Kurt Niemi
  * @since 2.0
  */
 public interface SqlIdentifier extends Streamable<SqlIdentifier> {
@@ -77,9 +78,12 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
 	 * programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
+	 * @deprecated Use the toSql(IdentifierProcessing processing) method instead.
+	 *
 	 * @param processing identifier processing rules.
 	 * @return
 	 */
+	@Deprecated(since="3.0.5", forRemoval = false)
 	String getReference(IdentifierProcessing processing);
 
 	/**
@@ -90,7 +94,7 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * @see IdentifierProcessing#NONE
 	 */
 	default String getReference() {
-		return getReference(IdentifierProcessing.NONE);
+		return toSql(IdentifierProcessing.NONE);
 	}
 
 	/**

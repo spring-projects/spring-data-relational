@@ -65,8 +65,9 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
+	@Deprecated(since="3.0.5", forRemoval = false)
 	public String getReference(IdentifierProcessing processing) {
-		return this.name;
+		return toSql(processing);
 	}
 
 	@Override
