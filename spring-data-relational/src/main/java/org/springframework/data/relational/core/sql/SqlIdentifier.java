@@ -26,7 +26,7 @@ import org.springframework.data.util.Streamable;
  * from a {@link String name} with specifying whether the name should be quoted or unquoted.
  * <p>
  * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use
- * {@link #getReference(IdentifierProcessing)} to refer to an object using the identifier when e.g. obtaining values
+ * {@link #getReference()} to refer to an object using the identifier when e.g. obtaining values
  * from a result or providing values for a prepared statement. {@link #toSql(IdentifierProcessing)} renders the
  * identifier for SQL statement usage.
  * <p>
@@ -39,6 +39,7 @@ import org.springframework.data.util.Streamable;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Kurt Niemi
  * @since 2.0
  */
 public interface SqlIdentifier extends Streamable<SqlIdentifier> {
@@ -79,23 +80,26 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 *
 	 * @param processing identifier processing rules.
 	 * @return
+	 * @deprecated since 3.1, use the #getReference() method instead.
 	 */
+	@Deprecated(since="3.1", forRemoval = true)
 	String getReference(IdentifierProcessing processing);
 
 	/**
-	 * Return the reference name without any further transformation. The reference name is used for programmatic access to
-	 * the object identified by this {@link SqlIdentifier}.
+	 * Use this method whenever accessing a column in a ResultSet and we do not want any quoting applied. The
+	 * reference name is used for programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
 	 * @return
 	 * @see IdentifierProcessing#NONE
 	 */
 	default String getReference() {
-		return getReference(IdentifierProcessing.NONE);
+		return toSql(IdentifierProcessing.NONE);
 	}
 
 	/**
-	 * Return the identifier for SQL usage after applying {@link IdentifierProcessing} rules. The identifier name is used
-	 * to construct SQL statements.
+	 * Use this method when rendering an identifier in SQL statements as in:
+	 * <pre><code>select yourColumn from someTable</code></pre>
+	 * {@link IdentifierProcessing} rules are applied to the identifier.
 	 *
 	 * @param processing identifier processing rules.
 	 * @return

@@ -53,7 +53,7 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-		Object key = rs.getObject(keyColumn.getReference(identifierProcessing));
+		Object key = rs.getObject(keyColumn.getReference());
 		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
 	}
 

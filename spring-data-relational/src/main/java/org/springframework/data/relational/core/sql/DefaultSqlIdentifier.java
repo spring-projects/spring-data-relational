@@ -57,12 +57,13 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 	@Override
 	public String toSql(IdentifierProcessing processing) {
-		return quoted ? processing.quote(getReference(processing)) : getReference(processing);
+		return quoted ? processing.quote(name) : name;
 	}
 
 	@Override
+	@Deprecated(since="3.1", forRemoval = true)
 	public String getReference(IdentifierProcessing processing) {
-		return name;
+		return toSql(processing);
 	}
 
 	@Override
