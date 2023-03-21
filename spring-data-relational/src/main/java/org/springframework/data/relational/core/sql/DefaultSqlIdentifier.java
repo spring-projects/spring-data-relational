@@ -61,7 +61,7 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	@Deprecated(since="3.0.5", forRemoval = false)
+	@Deprecated(since="3.1", forRemoval = true)
 	public String getReference(IdentifierProcessing processing) {
 		return toSql(processing);
 	}

@@ -78,17 +78,16 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
 	 * programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
-	 * @deprecated Use the toSql(IdentifierProcessing processing) method instead.
-	 *
 	 * @param processing identifier processing rules.
 	 * @return
+	 * @deprecated since 3.1, use the #getReference() method instead.
 	 */
-	@Deprecated(since="3.0.5", forRemoval = false)
+	@Deprecated(since="3.1", forRemoval = true)
 	String getReference(IdentifierProcessing processing);
 
 	/**
-	 * Return the reference name without any further transformation. The reference name is used for programmatic access to
-	 * the object identified by this {@link SqlIdentifier}.
+	 * Use this method whenever accessing a column in a ResultSet and we do not want any quoting applied. The
+	 * reference name is used for programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
 	 * @return
 	 * @see IdentifierProcessing#NONE
@@ -98,8 +97,9 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	}
 
 	/**
-	 * Return the identifier for SQL usage after applying {@link IdentifierProcessing} rules. The identifier name is used
-	 * to construct SQL statements.
+	 * Use this method when rendering an identifier in SQL statements as in:
+	 * <pre><code>select yourColumn from someTable</code></pre>
+	 * {@link IdentifierProcessing} rules are applied to the identifier.
 	 *
 	 * @param processing identifier processing rules.
 	 * @return
