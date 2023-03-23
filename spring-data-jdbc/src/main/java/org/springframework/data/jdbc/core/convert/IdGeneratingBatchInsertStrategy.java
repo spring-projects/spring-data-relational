@@ -32,6 +32,7 @@ import org.springframework.lang.Nullable;
  * not support id generation for batch operations, this implementation falls back to performing the inserts serially.
  *
  * @author Chirag Tailor
+ * @author Kurt Niemi
  * @since 2.4
  */
 class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {

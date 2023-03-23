@@ -27,6 +27,7 @@ import org.springframework.r2dbc.core.binding.BindMarkersFactory;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Diego Krupitza
+ * @author Kurt Niemi
  */
 public class H2Dialect extends org.springframework.data.relational.core.dialect.H2Dialect implements R2dbcDialect {
 

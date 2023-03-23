@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Kurt Niemi
  */
 public class DerivedSqlIdentifierUnitTests {
 
@@ -41,7 +42,7 @@ public class DerivedSqlIdentifierUnitTests {
 		SqlIdentifier identifier = new DerivedSqlIdentifier("someName", true);
 
 		assertThat(identifier.toSql(BRACKETS_LOWER_CASE)).isEqualTo("[somename]");
-		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("[somename]");
+		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
 		assertThat(identifier.getReference()).isEqualTo("someName");
 
 	}
@@ -53,7 +54,7 @@ public class DerivedSqlIdentifierUnitTests {
 		String sql = identifier.toSql(BRACKETS_LOWER_CASE);
 
 		assertThat(sql).isEqualTo("somename");
-		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("somename");
+		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
 		assertThat(identifier.getReference()).isEqualTo("someName");
 	}
 

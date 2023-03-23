@@ -25,10 +25,9 @@ import org.springframework.data.util.Streamable;
  * Represents a named object that exists in the database like a table name or a column name. SQL identifiers are created
  * from a {@link String name} with specifying whether the name should be quoted or unquoted.
  * <p>
- * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use
- * {@link #getReference()} to refer to an object using the identifier when e.g. obtaining values
- * from a result or providing values for a prepared statement. {@link #toSql(IdentifierProcessing)} renders the
- * identifier for SQL statement usage.
+ * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use {@link #getReference()} to refer
+ * to an object using the identifier when e.g. obtaining values from a result or providing values for a prepared
+ * statement. {@link #toSql(IdentifierProcessing)} renders the identifier for SQL statement usage.
  * <p>
  * {@link SqlIdentifier} objects are immutable. Calling transformational methods such as
  * {@link #transform(UnaryOperator)} creates a new instance.
@@ -82,14 +81,14 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * @return
 	 * @deprecated since 3.1, use the #getReference() method instead.
 	 */
-	@Deprecated(since="3.1", forRemoval = true)
+	@Deprecated(since = "3.1", forRemoval = true)
 	String getReference(IdentifierProcessing processing);
 
 	/**
-	 * Use this method whenever accessing a column in a ResultSet and we do not want any quoting applied. The
-	 * reference name is used for programmatic access to the object identified by this {@link SqlIdentifier}.
+	 * The reference name is used for programmatic access to the object identified by this {@link SqlIdentifier}. Use this
+	 * method whenever accessing a column in a ResultSet and we do not want any quoting applied.
 	 *
-	 * @return
+	 * @return the string representation of the identifier, which may be used to access columns in a {@link java.sql.ResultSet}
 	 * @see IdentifierProcessing#NONE
 	 */
 	default String getReference() {
@@ -98,7 +97,11 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 
 	/**
 	 * Use this method when rendering an identifier in SQL statements as in:
-	 * <pre><code>select yourColumn from someTable</code></pre>
+	 * 
+	 * <pre>
+	 * <code>select yourColumn from someTable</code>
+	 * </pre>
+	 * 
 	 * {@link IdentifierProcessing} rules are applied to the identifier.
 	 *
 	 * @param processing identifier processing rules.

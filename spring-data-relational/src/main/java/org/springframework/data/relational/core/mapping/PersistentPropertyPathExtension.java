@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Jens Schauder
  * @author Daniil Razorenov
+ * @author Kurt Niemi
  * @since 1.1
  */
 public class PersistentPropertyPathExtension {

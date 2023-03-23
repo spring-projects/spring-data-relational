@@ -33,6 +33,7 @@ import org.springframework.lang.Nullable;
  * An {@link InsertStrategy} that expects an id to be generated from the insert.
  *
  * @author Chirag Tailor
+ * @author Kurt Niemi
  * @since 2.4
  */
 class IdGeneratingInsertStrategy implements InsertStrategy {
@@ -84,8 +85,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 	}
 
 	private String[] getKeyColumnNames() {
-		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[] { idColumn.getReference() })
+		return Optional.ofNullable(idColumn).map(idColumn -> new String[] { idColumn.getReference() })
 				.orElse(new String[0]);
 	}
 }

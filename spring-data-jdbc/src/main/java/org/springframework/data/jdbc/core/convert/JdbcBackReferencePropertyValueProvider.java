@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * the value in the resultset under which other entities refer back to it.
  *
  * @author Jens Schauder
+ * @author Kurt Niemi
  * @since 2.0
  */
 class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<RelationalPersistentProperty> {
@@ -49,8 +50,7 @@ class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<Re
 
 	@Override
 	public <T> T getPropertyValue(RelationalPersistentProperty property) {
-		return (T) resultSet
-				.getObject(basePath.extendBy(property).getReverseColumnNameAlias().getReference());
+		return (T) resultSet.getObject(basePath.extendBy(property).getReverseColumnNameAlias().getReference());
 	}
 
 	public JdbcBackReferencePropertyValueProvider extendBy(RelationalPersistentProperty property) {

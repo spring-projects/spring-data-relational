@@ -36,6 +36,7 @@ import org.springframework.r2dbc.core.binding.BindMarkersFactory;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Kurt Niemi
  */
 public class MySqlDialect extends org.springframework.data.relational.core.dialect.MySqlDialect
 		implements R2dbcDialect {

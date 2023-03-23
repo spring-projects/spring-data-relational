@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Kurt Niemi
  */
 public class SqlIdentifierUnitTests {
 
@@ -40,7 +41,7 @@ public class SqlIdentifierUnitTests {
 		SqlIdentifier identifier = quoted("someName");
 
 		assertThat(identifier.toSql(BRACKETS_LOWER_CASE)).isEqualTo("[someName]");
-		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("[someName]");
+		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
 		assertThat(identifier.getReference()).isEqualTo("someName");
 	}
 

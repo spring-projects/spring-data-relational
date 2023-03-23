@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * {@link PropertyValueProvider} obtaining values from a {@link ResultSetAccessor}.
  *
  * @author Jens Schauder
+ * @author Kurt Niemi
  * @since 2.0
  */
 class JdbcPropertyValueProvider implements PropertyValueProvider<RelationalPersistentProperty> {

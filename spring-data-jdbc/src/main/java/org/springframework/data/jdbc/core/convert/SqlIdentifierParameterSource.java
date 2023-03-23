@@ -30,6 +30,7 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  * {@link SqlIdentifier} instead of {@link String} for names.
  *
  * @author Jens Schauder
+ * @author Kurt Niemi
  * @since 2.0
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {

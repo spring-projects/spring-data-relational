@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Kurt Niemi
  * @since 2.0
  */
 class DefaultSqlIdentifier implements SqlIdentifier {
@@ -63,7 +64,7 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	@Override
 	@Deprecated(since="3.1", forRemoval = true)
 	public String getReference(IdentifierProcessing processing) {
-		return toSql(processing);
+		return name;
 	}
 
 	@Override
