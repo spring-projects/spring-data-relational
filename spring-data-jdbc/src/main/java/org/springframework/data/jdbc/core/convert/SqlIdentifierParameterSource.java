@@ -35,13 +35,8 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
-	private final Set<SqlIdentifier> identifiers;
-	private final Map<String, Object> namesToValues;
-
-	SqlIdentifierParameterSource() {
-		this.identifiers = new HashSet<>();
-		this.namesToValues = new HashMap<>();
-	}
+	private final Set<SqlIdentifier> identifiers = new HashSet<>();
+	private final Map<String, Object> namesToValues = new HashMap<>();
 
 	@Override
 	public boolean hasValue(String paramName) {

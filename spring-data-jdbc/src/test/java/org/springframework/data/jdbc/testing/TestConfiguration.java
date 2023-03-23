@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -68,19 +67,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 @ComponentScan // To pick up configuration classes (per activated profile)
 public class TestConfiguration {
 
-	@Autowired
-	DataSource dataSource;
-	@Autowired
-	BeanFactory beanFactory;
+	@Autowired DataSource dataSource;
+	@Autowired BeanFactory beanFactory;
 	@Autowired ApplicationEventPublisher publisher;
-	@Autowired(required = false)
-	SqlSessionFactory sqlSessionFactory;
+	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
-			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy,
-			RelationalMappingContext context, Dialect dialect, JdbcConverter converter,
-			Optional<List<NamedQueries>> namedQueries, List<EvaluationContextExtension> evaulationContextExtensions) {
+			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
+			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
+			List<EvaluationContextExtension> evaulationContextExtensions) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, namedParameterJdbcTemplate());
@@ -90,7 +86,6 @@ public class TestConfiguration {
 				new ExtensionAwareQueryMethodEvaluationContextProvider(evaulationContextExtensions));
 		return factory;
 	}
-
 
 	@Bean
 	NamedParameterJdbcOperations namedParameterJdbcTemplate() {
@@ -104,8 +99,8 @@ public class TestConfiguration {
 
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(
-			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-			RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
+			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
+			JdbcConverter converter, Dialect dialect) {
 
 		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
 				template, new SqlParametersFactory(context, converter),
@@ -140,8 +135,8 @@ public class TestConfiguration {
 
 	@Bean
 	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
-			CustomConversions conversions,
-			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, Dialect dialect) {
+			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+			Dialect dialect) {
 
 		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;

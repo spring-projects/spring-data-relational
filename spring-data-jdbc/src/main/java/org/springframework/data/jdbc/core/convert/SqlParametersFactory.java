@@ -30,7 +30,6 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
@@ -49,11 +48,17 @@ public class SqlParametersFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 
-	@Deprecated
+	/**
+	 * @deprecated use {@link SqlParametersFactory(RelationalMappingContext, JdbcConverter)} instead.
+	 */
+	@Deprecated(since = "3.1", forRemoval = true)
 	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 		this(context, converter);
 	}
 
+	/**
+	 * @since 3.1
+	 */
 	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter) {
 		this.context = context;
 		this.converter = converter;

@@ -151,10 +151,10 @@ class SqlParametersFactoryTest {
 	@Test // GH-1405
 	void parameterNamesGetSanitized() {
 
-		WithIllegalCharacters entity = new WithIllegalCharacters(23L,"aValue");
+		WithIllegalCharacters entity = new WithIllegalCharacters(23L, "aValue");
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithIllegalCharacters.class,
-				Identifier.empty(), IdValueSource.PROVIDED);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity,
+				WithIllegalCharacters.class, Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo("aValue");
@@ -234,8 +234,7 @@ class SqlParametersFactoryTest {
 		@Column("i.d")
 		@Id Long id;
 
-		@Column("val&ue")
-		String value;
+		@Column("val&ue") String value;
 	}
 
 	private SqlParametersFactory createSqlParametersFactoryWithConverters(List<?> converters) {

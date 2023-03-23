@@ -80,10 +80,14 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	@Autowired JdbcRepositoryFactoryBean factoryBean;
 	@Autowired DummyRepository repository;
-	@Autowired @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations defaultOperations;
-	@Autowired @Qualifier("defaultDataAccessStrategy") DataAccessStrategy defaultDataAccessStrategy;
-	@Autowired @Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
-	@Autowired @Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
+	@Autowired
+	@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations defaultOperations;
+	@Autowired
+	@Qualifier("defaultDataAccessStrategy") DataAccessStrategy defaultDataAccessStrategy;
+	@Autowired
+	@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
+	@Autowired
+	@Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
 
 	@BeforeAll
 	public static void setup() {

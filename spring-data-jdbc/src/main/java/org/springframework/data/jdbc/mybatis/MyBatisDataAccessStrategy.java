@@ -87,7 +87,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
 			NamespaceStrategy namespaceStrategy, Dialect dialect) {
 
-
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
@@ -126,15 +125,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
-	 *
-	 * @deprecated because identifierProcessing now will not be considered in the process of applying it to {@link SqlIdentifier},
-	 * 			  use {@link MyBatisDataAccessStrategy(SqlSession)} constructor instead
+	 * @deprecated because identifierProcessing now will not be considered in the process of applying it to
+	 *             {@link SqlIdentifier}, use {@link MyBatisDataAccessStrategy(SqlSession)} constructor instead
 	 */
-	@Deprecated
+	@Deprecated(since = "3.1", forRemoval = true)
 	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
 		this(sqlSession);
 	}
 
+	/**
+	 * @since 3.1
+	 */
 	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
 	}

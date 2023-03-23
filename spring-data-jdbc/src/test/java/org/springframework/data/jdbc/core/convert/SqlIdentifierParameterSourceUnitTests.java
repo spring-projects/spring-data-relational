@@ -18,10 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.assertj.core.api.SoftAssertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-
-import java.util.Arrays;
 
 /**
  * Tests for {@link SqlIdentifierParameterSource}.

@@ -44,7 +44,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	BatchJdbcOperations batchJdbcOperations = mock(BatchJdbcOperations.class);
 	InsertStrategy insertStrategy = mock(InsertStrategy.class);
 	String sql = "some sql";
-	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] {new SqlIdentifierParameterSource() };
+	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] { new SqlIdentifierParameterSource() };
 
 	@Test
 	void insertsSequentially_whenIdGenerationForBatchOperationsNotSupported() {
