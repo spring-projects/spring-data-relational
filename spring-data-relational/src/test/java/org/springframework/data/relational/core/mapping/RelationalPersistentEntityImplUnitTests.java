@@ -31,6 +31,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Bastian Wilhelm
  * @author Mark Paluch
  * @author Mikhail Polivakha
+ * @author Kurt Niemi
  */
 class RelationalPersistentEntityImplUnitTests {
 
@@ -96,6 +97,41 @@ class RelationalPersistentEntityImplUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
 	}
 
+	@Test // GH-1325
+	void testRelationalPersistentEntitySpelExpression() {
+
+		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(EntityWithSchemaAndTableSpelExpression.class);
+
+		SqlIdentifier simpleExpected = quoted("USE_THE_FORCE");
+		SqlIdentifier expected = SqlIdentifier.from(quoted("HELP_ME_OBI_WON"), simpleExpected);
+		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
+		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
+	}
+	@Test // GH-1325
+	void testRelationalPersistentEntitySpelExpression_Sanitized() {
+
+		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(LittleBobbyTables.class);
+
+		SqlIdentifier simpleExpected = quoted("RobertDROPTABLEstudents");
+		SqlIdentifier expected = SqlIdentifier.from(quoted("LITTLE_BOBBY_TABLES"), simpleExpected);
+		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
+		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
+	}
+
+	@Test // GH-1325
+	void testRelationalPersistentEntitySpelExpression_NonSpelExpression() {
+
+		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(EntityWithSchemaAndName.class);
+
+		SqlIdentifier simpleExpected = quoted("I_AM_THE_SENATE");
+		SqlIdentifier expected = SqlIdentifier.from(quoted("DART_VADER"), simpleExpected);
+		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
+		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
+	}
+
 	@Test // GH-1099
 	void specifiedSchemaGetsCombinedWithNameFromNamingStrategy() {
 
@@ -115,6 +151,24 @@ class RelationalPersistentEntityImplUnitTests {
 	@Table(schema = "DART_VADER", name = "I_AM_THE_SENATE")
 	private static class EntityWithSchemaAndName {
 		@Id private Long id;
+	}
+
+	@Table(schema = "HELP_ME_OBI_WON",
+			name="#{T(org.springframework.data.relational.core.mapping." +
+					"RelationalPersistentEntityImplUnitTests$EntityWithSchemaAndTableSpelExpression" +
+					").desiredTableName}")
+	private static class EntityWithSchemaAndTableSpelExpression {
+		@Id private Long id;
+		public static String desiredTableName = "USE_THE_FORCE";
+	}
+
+	@Table(schema = "LITTLE_BOBBY_TABLES",
+			name="#{T(org.springframework.data.relational.core.mapping." +
+					"RelationalPersistentEntityImplUnitTests$LittleBobbyTables" +
+					").desiredTableName}")
+	private static class LittleBobbyTables {
+		@Id private Long id;
+		public static String desiredTableName = "Robert'); DROP TABLE students;--";
 	}
 
 	@Table("dummy_sub_entity")

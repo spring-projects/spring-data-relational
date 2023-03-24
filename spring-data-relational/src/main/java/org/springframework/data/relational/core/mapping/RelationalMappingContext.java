@@ -36,6 +36,7 @@ public class RelationalMappingContext
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
+	private SpelExpressionProcessor spelExpressionProcessor = new SpelExpressionProcessor();
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
@@ -77,12 +78,21 @@ public class RelationalMappingContext
 		this.forceQuote = forceQuote;
 	}
 
+	public SpelExpressionProcessor getSpelExpressionProcessor() {
+		return spelExpressionProcessor;
+	}
+
+	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
+		this.spelExpressionProcessor = spelExpressionProcessor;
+	}
+
 	@Override
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
 		RelationalPersistentEntityImpl<T> entity = new RelationalPersistentEntityImpl<>(typeInformation,
 				this.namingStrategy);
 		entity.setForceQuote(isForceQuote());
+		entity.setSpelExpressionProcessor(getSpelExpressionProcessor());
 
 		return entity;
 	}
@@ -94,6 +104,7 @@ public class RelationalMappingContext
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
 				simpleTypeHolder, this.namingStrategy);
 		persistentProperty.setForceQuote(isForceQuote());
+		persistentProperty.setSpelExpressionProcessor(getSpelExpressionProcessor());
 
 		return persistentProperty;
 	}

@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
  * @author Greg Turnquist
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
+ * @author Kurt Niemi
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -48,6 +49,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<String> embeddedPrefix;
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
+	private SpelExpressionProcessor spelExpressionProcessor = new SpelExpressionProcessor();
 
 	/**
 	 * Creates a new {@link BasicRelationalPersistentProperty}.
@@ -90,6 +92,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
 				.map(Column::value) //
+				.map(spelExpressionProcessor::applySpelExpression) //
 				.filter(StringUtils::hasText) //
 				.map(this::createSqlIdentifier) //
 				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this))));
@@ -108,6 +111,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.filter(StringUtils::hasText).findFirst() //
 				.map(this::createSqlIdentifier) //
 				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
+	}
+	public SpelExpressionProcessor getSpelExpressionProcessor() {
+		return spelExpressionProcessor;
+	}
+
+	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
+		this.spelExpressionProcessor = spelExpressionProcessor;
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
