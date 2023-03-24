@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
  * @author Oliver Gierke
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
+ * @author Kurt Niemi
  */
 public class BasicRelationalPersistentPropertyUnitTests {
 
@@ -66,6 +67,19 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path)))
 				.isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
+	}
+
+	@Test // GH-1325
+	void testRelationalPersistentEntitySpelExpressions() {
+
+		assertThat(entity.getRequiredPersistentProperty("spelExpression1").getColumnName()).isEqualTo(quoted("THE_FORCE_IS_WITH_YOU"));
+		assertThat(entity.getRequiredPersistentProperty("littleBobbyTables").getColumnName())
+				.isEqualTo(quoted("DROPALLTABLES"));
+
+		// Test that sanitizer does affect non-spel expressions
+		assertThat(entity.getRequiredPersistentProperty(
+				"poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot").getColumnName())
+				.isEqualTo(quoted("--; DROP ALL TABLES;--"));
 	}
 
 	@Test // DATAJDBC-111
@@ -148,6 +162,22 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
+
+		public static String spelExpression1Value = "THE_FORCE_IS_WITH_YOU";
+
+		public static String littleBobbyTablesValue = "--; DROP ALL TABLES;--";
+		@Column(value="#{T(org.springframework.data.relational.core.mapping." +
+				"BasicRelationalPersistentPropertyUnitTests$DummyEntity" +
+				").spelExpression1Value}")
+		private String spelExpression1;
+
+		@Column(value="#{T(org.springframework.data.relational.core.mapping." +
+				"BasicRelationalPersistentPropertyUnitTests$DummyEntity" +
+				").littleBobbyTablesValue}")
+		private String littleBobbyTables;
+
+		@Column(value="--; DROP ALL TABLES;--")
+		private String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
 
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddableEntity embeddableEntity;

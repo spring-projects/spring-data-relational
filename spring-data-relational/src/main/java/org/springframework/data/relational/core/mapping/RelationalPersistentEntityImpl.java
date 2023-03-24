@@ -31,6 +31,7 @@ import org.springframework.util.StringUtils;
  * @author Greg Turnquist
  * @author Bastian Wilhelm
  * @author Mikhail Polivakha
+ * @author Kurt Niemi
  */
 class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
@@ -39,6 +40,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	private final Lazy<Optional<SqlIdentifier>> tableName;
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
 	private boolean forceQuote = true;
+	private SpelExpressionProcessor spelExpressionProcessor = new SpelExpressionProcessor();
 
 	/**
 	 * Creates a new {@link RelationalPersistentEntityImpl} for the given {@link TypeInformation}.
@@ -53,6 +55,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 		this.tableName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class)) //
 				.map(Table::value) //
+				.map(spelExpressionProcessor::applySpelExpression) //
 				.filter(StringUtils::hasText) //
 				.map(this::createSqlIdentifier));
 
