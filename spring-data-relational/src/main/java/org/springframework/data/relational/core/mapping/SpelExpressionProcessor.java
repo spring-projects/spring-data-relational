@@ -17,10 +17,11 @@ import org.springframework.util.Assert;
  * and strips out any other characters.
  *
  * Custom sanitization (if desired) can be achieved by creating a class that implements
- * the {@link #SpelExpressionResultSanitizer} interface and then invoking the
+ * the {@link SpelExpressionResultSanitizer} interface and then invoking the
  * {@link #setSpelExpressionResultSanitizer(SpelExpressionResultSanitizer)} method.
  *
  * @author Kurt Niemi
+ * @see SpelExpressionResultSanitizer
  * @since 3.1
  */
 public class SpelExpressionProcessor {
