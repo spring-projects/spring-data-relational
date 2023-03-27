@@ -82,6 +82,7 @@ public class JdbcMappingContext extends RelationalMappingContext {
 		BasicJdbcPersistentProperty persistentProperty = new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder,
 				this.getNamingStrategy());
 		persistentProperty.setForceQuote(isForceQuote());
+		persistentProperty.setSpelExpressionProcessor(getSpelExpressionProcessor());
 		return persistentProperty;
 	}
 

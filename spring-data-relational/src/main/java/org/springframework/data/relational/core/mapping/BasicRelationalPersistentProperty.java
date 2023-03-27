@@ -112,6 +112,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(this::createSqlIdentifier) //
 				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
 	}
+	public SpelExpressionProcessor getSpelExpressionProcessor() {
+		return spelExpressionProcessor;
+	}
+
+	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
+		this.spelExpressionProcessor = spelExpressionProcessor;
+	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
 		return isForceQuote() ? SqlIdentifier.quoted(name) : SqlIdentifier.unquoted(name);

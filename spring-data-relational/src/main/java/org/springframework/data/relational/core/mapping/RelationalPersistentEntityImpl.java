@@ -65,6 +65,14 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 				.map(this::createSqlIdentifier));
 	}
 
+	public SpelExpressionProcessor getSpelExpressionProcessor() {
+		return spelExpressionProcessor;
+	}
+
+	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
+		this.spelExpressionProcessor = spelExpressionProcessor;
+	}
+
 	private SqlIdentifier createSqlIdentifier(String name) {
 		return isForceQuote() ? SqlIdentifier.quoted(name) : SqlIdentifier.unquoted(name);
 	}
