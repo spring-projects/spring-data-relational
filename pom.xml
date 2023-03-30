@@ -37,7 +37,11 @@
 		<mssql.version>10.2.1.jre17</mssql.version>
 		<mysql-connector-java.version>8.0.29</mysql-connector-java.version>
 		<postgresql.version>42.4.3</postgresql.version>
-		<oracle.version>19.15.0.0.1</oracle.version>
+		<!--
+			Oracles later JDBC driver has a problem with returning ids from batch inserts
+		 	https://stackoverflow.com/questions/72717261/autokeyinfo-is-not-initialized-when-trying-to-batch-insert-into-table-with-gen
+		 -->
+		<oracle.version>19.18.0.0</oracle.version>
 
 		<!-- test utilities-->
 		<awaitility.version>4.2.0</awaitility.version>
