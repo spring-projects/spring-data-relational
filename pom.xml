@@ -42,6 +42,7 @@
 		<!-- test utilities-->
 		<awaitility.version>4.2.0</awaitility.version>
 		<degraph-check.version>0.1.4</degraph-check.version>
+		<mockito>4.11.0</mockito>
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>
