@@ -36,7 +36,7 @@
 		<mariadb-java-client.version>3.0.7</mariadb-java-client.version>
 		<mssql.version>10.2.1.jre17</mssql.version>
 		<mysql-connector-java.version>8.0.29</mysql-connector-java.version>
-		<postgresql.version>42.4.3</postgresql.version>
+		<postgresql.version>42.6.0</postgresql.version>
 		<!--
 			Oracles later JDBC driver has a problem with returning ids from batch inserts
 		 	https://stackoverflow.com/questions/72717261/autokeyinfo-is-not-initialized-when-trying-to-batch-insert-into-table-with-gen
