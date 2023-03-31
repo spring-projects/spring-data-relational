@@ -163,6 +163,12 @@
 			<artifactId>assertj-core</artifactId>
 			<version>${assertj}</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>net.bytebuddy</groupId>
+					<artifactId>byte-buddy</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
