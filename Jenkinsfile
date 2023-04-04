@@ -32,7 +32,6 @@ pipeline {
 			options { timeout(time: 30, unit: 'MINUTES') }
 
 			environment {
-				DOCKER_HUB = credentials("${p['docker.credentials']}")
 				ARTIFACTORY = credentials("${p['artifactory.credentials']}")
 			}
 
