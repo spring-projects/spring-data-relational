@@ -230,9 +230,9 @@ class WritingContext<T> {
 
 		PersistentPropertyPath<RelationalPersistentProperty> currentPath = path.getParentPath();
 
-		while (!currentPath.isEmpty()) {
+		while (currentPath != null) {
 
-			if (!currentPath.getRequiredLeafProperty().isEmbedded()) {
+			if (!currentPath.getLeafProperty().isEmbedded()) {
 				return false;
 			}
 			currentPath = currentPath.getParentPath();
@@ -242,9 +242,9 @@ class WritingContext<T> {
 	}
 
 	@Nullable
-	private Object getFromRootValue(PersistentPropertyPath<RelationalPersistentProperty> path) {
+	private Object getFromRootValue(@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		if (path.getLength() == 0) {
+		if (path == null) {
 			return root;
 		}
 
@@ -254,7 +254,7 @@ class WritingContext<T> {
 		}
 
 		return context.getRequiredPersistentEntity(parent.getClass()).getPropertyAccessor(parent)
-				.getProperty(path.getRequiredLeafProperty());
+				.getProperty(path.getLeafProperty());
 	}
 
 	private List<PathNode> createNodes(PersistentPropertyPath<RelationalPersistentProperty> path,

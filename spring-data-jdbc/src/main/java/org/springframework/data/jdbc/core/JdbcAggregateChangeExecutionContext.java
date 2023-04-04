@@ -27,8 +27,8 @@ import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
@@ -290,7 +290,8 @@ class JdbcAggregateChangeExecutionContext {
 
 		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context
 				.getRequiredPersistentEntity(action.getEntityType());
-		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
+		PersistentPropertyPathAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity,
+				originalEntity);
 
 		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);

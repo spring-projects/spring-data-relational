@@ -21,6 +21,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
@@ -72,7 +73,7 @@ public interface RelationalConverter {
 	 * @param instance the instance to operate on. Must not be {@code null}.
 	 * @return guaranteed to be not {@code null}.
 	 */
-	<T> PersistentPropertyAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance);
+	<T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance);
 
 	/**
 	 * Read a relational value into the desired {@link TypeInformation destination type}.

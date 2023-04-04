@@ -754,7 +754,7 @@ public class QueryMapper {
 				throw new IllegalStateException("Cannot obtain a single column name for embedded property");
 			}
 
-			if (this.property != null && this.path != null) {
+			if (this.property != null && this.path != null && this.path.getParentPath() != null) {
 
 				RelationalPersistentProperty owner = this.path.getParentPath().getLeafProperty();
 

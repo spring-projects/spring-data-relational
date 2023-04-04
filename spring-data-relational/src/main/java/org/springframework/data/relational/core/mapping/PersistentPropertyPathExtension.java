@@ -83,7 +83,7 @@ public class PersistentPropertyPathExtension {
 
 	public static boolean isWritable(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-		return path.isEmpty() || (path.getRequiredLeafProperty().isWritable() && isWritable(path.getParentPath()));
+		return path == null || path.getLeafProperty().isWritable() && isWritable(path.getParentPath());
 	}
 
 	/**

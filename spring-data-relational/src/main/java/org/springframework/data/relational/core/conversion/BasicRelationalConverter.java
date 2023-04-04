@@ -32,7 +32,7 @@ import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.EntityInstantiators;
@@ -120,9 +120,10 @@ public class BasicRelationalConverter implements RelationalConverter {
 	}
 
 	@Override
-	public <T> PersistentPropertyAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance) {
+	public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity,
+			T instance) {
 
-		PersistentPropertyAccessor<T> accessor = persistentEntity.getPropertyAccessor(instance);
+		PersistentPropertyPathAccessor<T> accessor = persistentEntity.getPropertyPathAccessor(instance);
 		return new ConvertingPropertyAccessor<>(accessor, conversionService);
 	}
 
