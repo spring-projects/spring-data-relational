@@ -81,8 +81,7 @@ public class PersistentPropertyPathExtension {
 		this.path = path;
 	}
 
-	public static boolean isWritable(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
-
+	public static boolean isWritable(@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 		return path == null || path.getLeafProperty().isWritable() && isWritable(path.getParentPath());
 	}
 
@@ -92,7 +91,7 @@ public class PersistentPropertyPathExtension {
 	 * @return if the leaf property is embedded.
 	 */
 	public boolean isEmbedded() {
-		return path != null && path.getRequiredLeafProperty().isEmbedded();
+		return path != null && path.getLeafProperty().isEmbedded();
 	}
 
 	/**
@@ -123,8 +122,8 @@ public class PersistentPropertyPathExtension {
 	public boolean isMultiValued() {
 
 		return path != null && //
-				(path.getRequiredLeafProperty().isCollectionLike() //
-						|| path.getRequiredLeafProperty().isQualified() //
+				(path.getLeafProperty().isCollectionLike() //
+						|| path.getLeafProperty().isQualified() //
 						|| getParentPath().isMultiValued() //
 				);
 	}
@@ -136,7 +135,7 @@ public class PersistentPropertyPathExtension {
 	 */
 	@Nullable
 	public RelationalPersistentEntity<?> getLeafEntity() {
-		return path == null ? entity : context.getPersistentEntity(path.getRequiredLeafProperty().getActualType());
+		return path == null ? entity : context.getPersistentEntity(path.getLeafProperty().getActualType());
 	}
 
 	/**
@@ -157,7 +156,7 @@ public class PersistentPropertyPathExtension {
 				throw new IllegalStateException("Couldn't resolve leaf PersistentEntity absent path");
 			}
 			throw new IllegalStateException(String.format("Couldn't resolve leaf PersistentEntity for type %s",
-					path.getRequiredLeafProperty().getActualType()));
+					path.getLeafProperty().getActualType()));
 		}
 
 		return entity;
@@ -167,21 +166,21 @@ public class PersistentPropertyPathExtension {
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
 	public boolean isEntity() {
-		return path == null || path.getRequiredLeafProperty().isEntity();
+		return path == null || path.getLeafProperty().isEntity();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.List} or {@link java.util.Map}.
 	 */
 	public boolean isQualified() {
-		return path != null && path.getRequiredLeafProperty().isQualified();
+		return path != null && path.getLeafProperty().isQualified();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.Collection} or an array.
 	 */
 	public boolean isCollectionLike() {
-		return path != null && path.getRequiredLeafProperty().isCollectionLike();
+		return path != null && path.getLeafProperty().isCollectionLike();
 	}
 
 	/**
@@ -192,7 +191,7 @@ public class PersistentPropertyPathExtension {
 	public SqlIdentifier getReverseColumnName() {
 
 		Assert.state(path != null, "Empty paths don't have a reverse column name");
-		return path.getRequiredLeafProperty().getReverseColumnName(this);
+		return path.getLeafProperty().getReverseColumnName(this);
 	}
 
 	/**
@@ -214,7 +213,7 @@ public class PersistentPropertyPathExtension {
 
 		Assert.state(path != null, "Path is null");
 
-		return assembleColumnName(path.getRequiredLeafProperty().getColumnName());
+		return assembleColumnName(path.getLeafProperty().getColumnName());
 	}
 
 	/**
@@ -341,7 +340,7 @@ public class PersistentPropertyPathExtension {
 	 */
 	@Nullable
 	public SqlIdentifier getQualifierColumn() {
-		return path == null ? SqlIdentifier.EMPTY : path.getRequiredLeafProperty().getKeyColumn();
+		return path == null ? SqlIdentifier.EMPTY : path.getLeafProperty().getKeyColumn();
 	}
 
 	/**
@@ -351,7 +350,7 @@ public class PersistentPropertyPathExtension {
 	 */
 	@Nullable
 	public Class<?> getQualifierColumnType() {
-		return path == null ? null : path.getRequiredLeafProperty().getQualifierColumnType();
+		return path == null ? null : path.getLeafProperty().getQualifierColumnType();
 	}
 
 	/**
@@ -385,7 +384,7 @@ public class PersistentPropertyPathExtension {
 
 		return path == null //
 				? entity.getType() //
-				: path.getRequiredLeafProperty().getActualType();
+				: path.getLeafProperty().getActualType();
 	}
 
 	/**
@@ -393,7 +392,7 @@ public class PersistentPropertyPathExtension {
 	 * @see RelationalPersistentProperty#isOrdered()
 	 */
 	public boolean isOrdered() {
-		return path != null && path.getRequiredLeafProperty().isOrdered();
+		return path != null && path.getLeafProperty().isOrdered();
 	}
 
 	/**
@@ -401,7 +400,7 @@ public class PersistentPropertyPathExtension {
 	 * @see RelationalPersistentProperty#isMap()
 	 */
 	public boolean isMap() {
-		return path != null && path.getRequiredLeafProperty().isMap();
+		return path != null && path.getLeafProperty().isMap();
 	}
 
 	/**
@@ -433,7 +432,7 @@ public class PersistentPropertyPathExtension {
 
 		Assert.state(path != null, "Path is null");
 
-		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
+		RelationalPersistentProperty leafProperty = path.getLeafProperty();
 		String prefix;
 		if (isEmbedded()) {
 			prefix = leafProperty.getEmbeddedPrefix();
@@ -468,7 +467,7 @@ public class PersistentPropertyPathExtension {
 		}
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> parentPath = path.getParentPath();
-		RelationalPersistentProperty parentLeaf = parentPath.getRequiredLeafProperty();
+		RelationalPersistentProperty parentLeaf = parentPath.getLeafProperty();
 
 		if (!parentLeaf.isEmbedded()) {
 			return suffix;
