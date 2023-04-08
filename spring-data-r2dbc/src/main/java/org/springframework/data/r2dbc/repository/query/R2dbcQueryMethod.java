@@ -40,7 +40,7 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
-import org.springframework.data.repository.util.ReactiveWrappers;
+import org.springframework.data.util.ReactiveWrappers;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.data.util.TypeInformation;
