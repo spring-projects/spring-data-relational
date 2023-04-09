@@ -15,4 +15,12 @@
  */
 package org.springframework.data.r2dbc.core
 
-data class Person(val id: String)
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Table
+
+@Table("person")
+data class Person(
+    @Id
+    val id: String,
+    val name: String,
+)
