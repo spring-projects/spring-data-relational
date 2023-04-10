@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -26,23 +28,23 @@ import java.io.Serializable;
 public class ColumnModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final String name;
+    private final SqlIdentifier name;
     private final Class<?> type;
     private final boolean nullable;
 
-    public ColumnModel(String name, Class<?> type, boolean nullable) {
+    public ColumnModel(SqlIdentifier name, Class<?> type, boolean nullable) {
         this.name = name;
         this.type = type;
         this.nullable = nullable;
     }
 
-    public ColumnModel(String name, Class<?> type) {
+    public ColumnModel(SqlIdentifier name, Class<?> type) {
         this.name = name;
         this.type = type;
         this.nullable = false;
     }
 
-    public String getName() {
+    public SqlIdentifier getName() {
         return name;
     }
 

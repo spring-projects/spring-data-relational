@@ -116,14 +116,14 @@ public class RelationalMappingContext
 		SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel();
 
 		for (RelationalPersistentEntity entity : getPersistentEntities()) {
-			TableModel tableModel = new TableModel(entity.getTableName().getReference());
+			TableModel tableModel = new TableModel(entity.getTableName());
 
 			Iterator<BasicRelationalPersistentProperty> iter =
 					entity.getPersistentProperties(Column.class).iterator();
 
 			while (iter.hasNext()) {
 				BasicRelationalPersistentProperty p = iter.next();
-				ColumnModel columnModel = new ColumnModel(p.getColumnName().getReference(), p.getActualType());
+				ColumnModel columnModel = new ColumnModel(p.getColumnName(), p.getActualType());
 				tableModel.getColumns().add(columnModel);
 			}
 			model.getTableData().add(tableModel);

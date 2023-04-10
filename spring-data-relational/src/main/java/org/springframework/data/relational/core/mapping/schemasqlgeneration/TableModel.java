@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,24 +31,24 @@ public class TableModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final String schema;
-    private final String name;
+    private final SqlIdentifier name;
     private final List<ColumnModel> columns = new ArrayList<ColumnModel>();
     private final List<ColumnModel> keyColumns = new ArrayList<ColumnModel>();
     private final List<ForeignKeyColumnModel> foreignKeyColumns = new ArrayList<ForeignKeyColumnModel>();
 
-    public TableModel(String schema, String name) {
+    public TableModel(String schema, SqlIdentifier name) {
         this.schema = schema;
         this.name = name;
     }
-    public TableModel(String name) {
-        this(name, null);
+    public TableModel(SqlIdentifier name) {
+        this(null, name);
     }
 
     public String getSchema() {
         return schema;
     }
 
-    public String getName() {
+    public SqlIdentifier getName() {
         return name;
     }
 
