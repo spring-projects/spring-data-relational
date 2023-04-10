@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,14 +26,12 @@ import java.util.List;
  *
  * @author Kurt Niemi
  */
-public class SchemaSQLGenerationDataModel {
-    private List<TableModel> tableData = new ArrayList<TableModel>();
+public class SchemaSQLGenerationDataModel implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private final List<TableModel> tableData = new ArrayList<TableModel>();
 
     public List<TableModel> getTableData() {
         return tableData;
-    }
-
-    public void setTableData(List<TableModel> tableData) {
-        this.tableData = tableData;
     }
 }

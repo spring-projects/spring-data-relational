@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,50 +25,40 @@ import java.util.List;
  *
  * @author Kurt Niemi
  */
-public class TableModel {
-    private String schema;
-    private String name;
-    private List<ColumnModel> columns = new ArrayList<ColumnModel>();
-    private List<ColumnModel> keyColumns = new ArrayList<ColumnModel>();
-    private List<ForeignKeyColumnModel> foreignKeyColumns = new ArrayList<ForeignKeyColumnModel>();
+public class TableModel implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private final String schema;
+    private final String name;
+    private final List<ColumnModel> columns = new ArrayList<ColumnModel>();
+    private final List<ColumnModel> keyColumns = new ArrayList<ColumnModel>();
+    private final List<ForeignKeyColumnModel> foreignKeyColumns = new ArrayList<ForeignKeyColumnModel>();
+
+    public TableModel(String schema, String name) {
+        this.schema = schema;
+        this.name = name;
+    }
+    public TableModel(String name) {
+        this(name, null);
+    }
 
     public String getSchema() {
         return schema;
-    }
-
-    public void setSchema(String schema) {
-        this.schema = schema;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public List<ColumnModel> getColumns() {
         return columns;
-    }
-
-    public void setColumns(List<ColumnModel> columns) {
-        this.columns = columns;
     }
 
     public List<ColumnModel> getKeyColumns() {
         return keyColumns;
     }
 
-    public void setKeyColumns(List<ColumnModel> keyColumns) {
-        this.keyColumns = keyColumns;
-    }
-
     public List<ForeignKeyColumnModel> getForeignKeyColumns() {
         return foreignKeyColumns;
-    }
-
-    public void setForeignKeyColumns(List<ForeignKeyColumnModel> foreignKeyColumns) {
-        this.foreignKeyColumns = foreignKeyColumns;
     }
 }

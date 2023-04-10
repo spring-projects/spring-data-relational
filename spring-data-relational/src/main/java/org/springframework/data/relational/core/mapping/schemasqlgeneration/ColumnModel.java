@@ -15,37 +15,42 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 /**
  * Class that models a Column for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
  */
-public class ColumnModel {
-    private String name;
-    private Class<?> type;
-    private boolean nullable;
+public class ColumnModel implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private final String name;
+    private final Class<?> type;
+    private final boolean nullable;
+
+    public ColumnModel(String name, Class<?> type, boolean nullable) {
+        this.name = name;
+        this.type = type;
+        this.nullable = nullable;
+    }
+
+    public ColumnModel(String name, Class<?> type) {
+        this.name = name;
+        this.type = type;
+        this.nullable = false;
+    }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Class<?> getType() {
         return type;
     }
 
-    public void setType(Class<?> type) {
-        this.type = type;
-    }
-
     public boolean isNullable() {
         return nullable;
-    }
-
-    public void setNullable(boolean nullable) {
-        this.nullable = nullable;
     }
 }
