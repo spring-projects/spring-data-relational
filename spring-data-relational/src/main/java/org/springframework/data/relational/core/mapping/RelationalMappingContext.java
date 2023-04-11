@@ -19,9 +19,6 @@ import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.relational.core.mapping.schemasqlgeneration.ColumnModel;
-import org.springframework.data.relational.core.mapping.schemasqlgeneration.SchemaSQLGenerationDataModel;
-import org.springframework.data.relational.core.mapping.schemasqlgeneration.TableModel;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
@@ -105,30 +102,5 @@ public class RelationalMappingContext
 
 	public NamingStrategy getNamingStrategy() {
 		return this.namingStrategy;
-	}
-
-	/**
-	 * Method to build a data model of Tables/Columns and their relationships
-	 * that will be used in SQL Generation.
-	 */
-	public SchemaSQLGenerationDataModel generateSchemaSQL() {
-
-		SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel();
-
-		for (RelationalPersistentEntity entity : getPersistentEntities()) {
-			TableModel tableModel = new TableModel(entity.getTableName());
-
-			Iterator<BasicRelationalPersistentProperty> iter =
-					entity.getPersistentProperties(Column.class).iterator();
-
-			while (iter.hasNext()) {
-				BasicRelationalPersistentProperty p = iter.next();
-				ColumnModel columnModel = new ColumnModel(p.getColumnName(), p.getActualType());
-				tableModel.getColumns().add(columnModel);
-			}
-			model.getTableData().add(tableModel);
-		}
-
-		return model;
 	}
 }

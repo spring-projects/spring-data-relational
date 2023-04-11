@@ -15,9 +15,15 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -30,6 +36,32 @@ public class SchemaSQLGenerationDataModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<TableModel> tableData = new ArrayList<TableModel>();
+
+    /**
+     * Default constructor so that we can deserialize a model
+     */
+    public SchemaSQLGenerationDataModel() {
+    }
+
+    /**
+     * Create model from a RelationalMappingContext
+     */
+    public SchemaSQLGenerationDataModel(RelationalMappingContext context) {
+
+        for (RelationalPersistentEntity entity : context.getPersistentEntities()) {
+            TableModel tableModel = new TableModel(entity.getTableName());
+
+            Iterator<BasicRelationalPersistentProperty> iter =
+                    entity.getPersistentProperties(Column.class).iterator();
+
+            while (iter.hasNext()) {
+                BasicRelationalPersistentProperty p = iter.next();
+                ColumnModel columnModel = new ColumnModel(p.getColumnName(), p.getActualType());
+                tableModel.getColumns().add(columnModel);
+            }
+            tableData.add(tableModel);
+        }
+    }
 
     public List<TableModel> getTableData() {
         return tableData;

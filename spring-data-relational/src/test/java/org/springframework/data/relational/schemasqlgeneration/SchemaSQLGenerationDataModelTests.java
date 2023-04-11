@@ -20,6 +20,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.SchemaSQLGenerationDataModel;
+import org.springframework.data.relational.core.mapping.schemasqlgeneration.SchemaSQLGenerator;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.TableModel;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,12 +38,12 @@ public class SchemaSQLGenerationDataModelTests {
         context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Luke.class);
         context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
 
-        SchemaSQLGenerationDataModel model = context.generateSchemaSQL();
+        SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
 
         assertThat(model.getTableData().size()).isEqualTo(2);
 
-        TableModel t1 = model.getTableData().get(0);
-        assertThat(t1.getName()).isEqualTo("luke");
+        TableModel t1 = model.getTableData().get(1);
+        assertThat(t1.getName().getReference()).isEqualTo("luke");
         assertThat(t1.getColumns().get(0).getName()).isEqualTo("force");
         assertThat(t1.getColumns().get(1).getName()).isEqualTo("be");
         assertThat(t1.getColumns().get(2).getName()).isEqualTo("with");
