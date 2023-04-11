@@ -15,14 +15,14 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.springframework.core.annotation.AliasFor;
 
 /**
  * The annotation to configure the mapping from a class to a database table.
@@ -38,25 +38,26 @@ import java.lang.annotation.Target;
 public @interface Table {
 
 	/**
-	 * The mapping table name.
+	 * The table name. The attribute supports SpEL expressions to dynamically calculate the table name on a per-operation
+	 * basis.
 	 */
 	@AliasFor("name")
 	String value() default "";
 
 	/**
-	 * The mapping table name.
+	 * The table name. The attribute supports SpEL expressions to dynamically calculate the table name on a per-operation
+	 * basis.
 	 */
 	@AliasFor("value")
 	String name() default "";
 
 	/**
-	 * Name of the schema (or user, for example in case of oracle), in which this table resides in
-	 * The behavior is the following: <br/>
-	 * If the {@link Table#schema()} is specified, then it will be
-	 * used as a schema of current table, i.e. as a prefix to the name of the table, which can
-	 * be specified in {@link Table#value()}. <br/>
-	 * If the {@link Table#schema()} is not specified, then spring data will assume the default schema,
-	 * The default schema itself can be provided by the means of {@link NamingStrategy#getSchema()}
+	 * Name of the schema (or user, for example in case of oracle), in which this table resides in The behavior is the
+	 * following: <br/>
+	 * If the {@link Table#schema()} is specified, then it will be used as a schema of current table, i.e. as a prefix to
+	 * the name of the table, which can be specified in {@link Table#value()}. <br/>
+	 * If the {@link Table#schema()} is not specified, then spring data will assume the default schema, The default schema
+	 * itself can be provided by the means of {@link NamingStrategy#getSchema()}
 	 */
 	String schema() default "";
 }

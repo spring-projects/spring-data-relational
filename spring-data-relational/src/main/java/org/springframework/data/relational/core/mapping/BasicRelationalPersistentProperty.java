@@ -25,13 +25,19 @@ import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ParserContext;
+import org.springframework.expression.common.LiteralExpression;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * Meta data about a property to be used by repository implementations.
+ * SQL-specific {@link org.springframework.data.mapping.PersistentProperty} implementation.
  *
  * @author Jens Schauder
  * @author Greg Turnquist
@@ -42,14 +48,17 @@ import org.springframework.util.StringUtils;
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
 
+	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+
 	private final Lazy<SqlIdentifier> columnName;
+	private final @Nullable Expression columnNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
-	private final Lazy<Boolean> isEmbedded;
-	private final Lazy<String> embeddedPrefix;
+	private final boolean isEmbedded;
+	private final String embeddedPrefix;
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
-	private SpelExpressionProcessor spelExpressionProcessor = new SpelExpressionProcessor();
+	private ExpressionEvaluator spelExpressionProcessor = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
 
 	/**
 	 * Creates a new {@link BasicRelationalPersistentProperty}.
@@ -84,19 +93,26 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
-		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
+		this.isEmbedded = isAnnotationPresent(Embedded.class);
 
-		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)) //
+		this.embeddedPrefix = Optional.ofNullable(findAnnotation(Embedded.class)) //
 				.map(Embedded::prefix) //
-				.orElse(""));
+				.orElse("");
 
-		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
-				.map(Column::value) //
-				.map(spelExpressionProcessor::applySpelExpression) //
-				.filter(StringUtils::hasText) //
-				.map(this::createSqlIdentifier) //
-				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this))));
+		if (isAnnotationPresent(Column.class)) {
 
+			Column column = getRequiredAnnotation(Column.class);
+
+			columnName = Lazy.of(() -> StringUtils.hasText(column.value()) ? createSqlIdentifier(column.value())
+					: createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
+			columnNameExpression = detectExpression(column.value());
+
+		} else {
+			columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
+			columnNameExpression = null;
+		}
+
+		// TODO: support expressions for MappedCollection
 		this.collectionIdColumnName = Lazy.of(() -> Optionals
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)) //
 						.map(MappedCollection::idColumn), //
@@ -112,12 +128,27 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(this::createSqlIdentifier) //
 				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
 	}
-	public SpelExpressionProcessor getSpelExpressionProcessor() {
-		return spelExpressionProcessor;
+
+	void setSpelExpressionProcessor(ExpressionEvaluator spelExpressionProcessor) {
+		this.spelExpressionProcessor = spelExpressionProcessor;
 	}
 
-	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
-		this.spelExpressionProcessor = spelExpressionProcessor;
+	/**
+	 * Returns a SpEL {@link Expression} if the given {@link String} is actually an expression that does not evaluate to a
+	 * {@link LiteralExpression} (indicating that no subsequent evaluation is necessary).
+	 *
+	 * @param potentialExpression can be {@literal null}
+	 * @return can be {@literal null}.
+	 */
+	@Nullable
+	private static Expression detectExpression(@Nullable String potentialExpression) {
+
+		if (!StringUtils.hasText(potentialExpression)) {
+			return null;
+		}
+
+		Expression expression = PARSER.parseExpression(potentialExpression, ParserContext.TEMPLATE_EXPRESSION);
+		return expression instanceof LiteralExpression ? null : expression;
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -148,7 +179,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public SqlIdentifier getColumnName() {
-		return columnName.get();
+
+		if (columnNameExpression == null) {
+			return columnName.get();
+		}
+
+		return createSqlIdentifier(spelExpressionProcessor.evaluate(columnNameExpression));
 	}
 
 	@Override
@@ -193,12 +229,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public boolean isEmbedded() {
-		return isEmbedded.get();
+		return isEmbedded;
 	}
 
 	@Override
 	public String getEmbeddedPrefix() {
-		return isEmbedded() ? embeddedPrefix.get() : null;
+		return isEmbedded() ? embeddedPrefix : null;
 	}
 
 	@Override

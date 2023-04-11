@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImplUnitTests.DummySubEntity;
+import org.springframework.data.relational.core.mapping.BasicRelationalPersistentEntityUnitTests.DummySubEntity;
 
 /**
  * Unit tests for the {@link NamingStrategy}.

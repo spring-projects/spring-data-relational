@@ -15,10 +15,14 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.spel.EvaluationContextProvider;
+import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
@@ -36,7 +40,8 @@ public class RelationalMappingContext
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
-	private SpelExpressionProcessor spelExpressionProcessor = new SpelExpressionProcessor();
+
+	private final ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
@@ -78,21 +83,25 @@ public class RelationalMappingContext
 		this.forceQuote = forceQuote;
 	}
 
-	public SpelExpressionProcessor getSpelExpressionProcessor() {
-		return spelExpressionProcessor;
+	public void setSqlIdentifierSanitizer(SqlIdentifierSanitizer sanitizer) {
+		this.expressionEvaluator.setSanitizer(sanitizer);
 	}
 
-	public void setSpelExpressionProcessor(SpelExpressionProcessor spelExpressionProcessor) {
-		this.spelExpressionProcessor = spelExpressionProcessor;
+	public NamingStrategy getNamingStrategy() {
+		return this.namingStrategy;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.expressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
 	}
 
 	@Override
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
-		RelationalPersistentEntityImpl<T> entity = new RelationalPersistentEntityImpl<>(typeInformation,
-				this.namingStrategy);
+		BasicRelationalPersistentEntity<T> entity = new BasicRelationalPersistentEntity<>(typeInformation,
+				this.namingStrategy, this.expressionEvaluator);
 		entity.setForceQuote(isForceQuote());
-		entity.setSpelExpressionProcessor(getSpelExpressionProcessor());
 
 		return entity;
 	}
@@ -103,14 +112,14 @@ public class RelationalMappingContext
 
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
 				simpleTypeHolder, this.namingStrategy);
-		persistentProperty.setForceQuote(isForceQuote());
-		persistentProperty.setSpelExpressionProcessor(getSpelExpressionProcessor());
+		applyDefaults(persistentProperty);
 
 		return persistentProperty;
 	}
 
-	public NamingStrategy getNamingStrategy() {
-		return this.namingStrategy;
+	protected void applyDefaults(BasicRelationalPersistentProperty persistentProperty) {
+		persistentProperty.setForceQuote(isForceQuote());
+		persistentProperty.setSpelExpressionProcessor(this.expressionEvaluator);
 	}
 
 }

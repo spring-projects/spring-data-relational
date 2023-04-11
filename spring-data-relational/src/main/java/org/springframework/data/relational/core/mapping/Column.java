@@ -34,7 +34,8 @@ import java.lang.annotation.Target;
 public @interface Column {
 
 	/**
-	 * The mapping column name.
+	 * The column name. The attribute supports SpEL expressions to dynamically calculate the column name on a
+	 * per-operation basis.
 	 */
 	String value() default "";
 
