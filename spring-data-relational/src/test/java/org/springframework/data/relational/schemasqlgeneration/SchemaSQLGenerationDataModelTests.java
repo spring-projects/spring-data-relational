@@ -22,6 +22,8 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.SchemaSQLGenerationDataModel;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.SchemaSQLGenerator;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.TableModel;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,27 +35,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SchemaSQLGenerationDataModelTests {
 
     @Test
-    void testBasicModelGeneration() {
+    void testBasicSchemaSQLGeneration() {
+
+        IdentifierProcessing.Quoting quoting = new IdentifierProcessing.Quoting("`");
+        IdentifierProcessing identifierProcessing = IdentifierProcessing.create(quoting, IdentifierProcessing.LetterCasing.LOWER_CASE);
+        SchemaSQLGenerator generator = new SchemaSQLGenerator(identifierProcessing);
+
         RelationalMappingContext context = new RelationalMappingContext();
         context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Luke.class);
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
 
         SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
+        String sql = generator.generateSQL(model);
+        assertThat(sql).isEqualTo("CREATE TABLE `luke` (`force` VARCHAR(255),`be` VARCHAR(255),`with` VARCHAR(255),`you` VARCHAR(255) );\n");
 
-        assertThat(model.getTableData().size()).isEqualTo(2);
+        context = new RelationalMappingContext();
+        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
 
-        TableModel t1 = model.getTableData().get(1);
-        assertThat(t1.getName().getReference()).isEqualTo("luke");
-        assertThat(t1.getColumns().get(0).getName()).isEqualTo("force");
-        assertThat(t1.getColumns().get(1).getName()).isEqualTo("be");
-        assertThat(t1.getColumns().get(2).getName()).isEqualTo("with");
-        assertThat(t1.getColumns().get(3).getName()).isEqualTo("you");
-
-        TableModel t2 = model.getTableData().get(1);
-        assertThat(t2.getName()).isEqualTo("vader");
-        assertThat(t2.getColumns().get(0).getName()).isEqualTo("luke_i_am_your_father");
-        assertThat(t2.getColumns().get(1).getName()).isEqualTo("dark_side");
+        model = new SchemaSQLGenerationDataModel(context);
+        sql = generator.generateSQL(model);
+        assertThat(sql).isEqualTo("CREATE TABLE `vader` (`luke_i_am_your_father` VARCHAR(255),`dark_side` TINYINT,`floater` FLOAT,`double_class` DOUBLE,`integer_class` INT );\n");
     }
+
 
     @Table
     static class Luke {
@@ -73,6 +75,12 @@ public class SchemaSQLGenerationDataModelTests {
         public String lukeIAmYourFather;
         @Column
         public Boolean darkSide;
+        @Column
+        public Float floater;
+        @Column
+        public Double doubleClass;
+        @Column
+        public Integer integerClass;
     }
 
 
