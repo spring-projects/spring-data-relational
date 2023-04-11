@@ -23,6 +23,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class SchemaSQLGenerationDataModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<TableModel> tableData = new ArrayList<TableModel>();
+    BaseTypeMapper typeMapper;
 
     /**
      * Default constructor so that we can deserialize a model
@@ -48,6 +50,10 @@ public class SchemaSQLGenerationDataModel implements Serializable {
      */
     public SchemaSQLGenerationDataModel(RelationalMappingContext context) {
 
+        if (typeMapper == null) {
+            typeMapper = new BaseTypeMapper();
+        }
+
         for (RelationalPersistentEntity entity : context.getPersistentEntities()) {
             TableModel tableModel = new TableModel(entity.getTableName());
 
@@ -56,7 +62,9 @@ public class SchemaSQLGenerationDataModel implements Serializable {
 
             while (iter.hasNext()) {
                 BasicRelationalPersistentProperty p = iter.next();
-                ColumnModel columnModel = new ColumnModel(p.getColumnName(), p.getActualType());
+                ColumnModel columnModel = new ColumnModel(p.getColumnName(),
+                        typeMapper.databaseTypeFromClass(p.getActualType()),
+                        true);
                 tableModel.getColumns().add(columnModel);
             }
             tableData.add(tableModel);

@@ -29,16 +29,16 @@ public class ColumnModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final SqlIdentifier name;
-    private final Class<?> type;
+    private final String type;
     private final boolean nullable;
 
-    public ColumnModel(SqlIdentifier name, Class<?> type, boolean nullable) {
+    public ColumnModel(SqlIdentifier name, String type, boolean nullable) {
         this.name = name;
         this.type = type;
         this.nullable = nullable;
     }
 
-    public ColumnModel(SqlIdentifier name, Class<?> type) {
+    public ColumnModel(SqlIdentifier name, String type) {
         this.name = name;
         this.type = type;
         this.nullable = false;
@@ -48,7 +48,7 @@ public class ColumnModel implements Serializable {
         return name;
     }
 
-    public Class<?> getType() {
+    public String getType() {
         return type;
     }
 
