@@ -18,17 +18,21 @@ package org.springframework.data.r2dbc.core;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.springframework.data.annotation.Transient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.beans.FeatureDescriptor;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.reactivestreams.Publisher;
 import org.springframework.beans.BeansException;
@@ -159,6 +163,26 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.dataAccessStrategy = strategy;
 		this.mappingContext = strategy.getConverter().getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
+	}
+
+	public <T> String getColumnName(Class<T> tableType, Field field) {
+		Transient annotation = field.getDeclaredAnnotation(Transient.class);
+		if (annotation != null) {
+			throw new MappingException("This Column has Transient annotation");
+		}
+
+		org.springframework.data.relational.core.mapping.Column columnAnnotation =
+				field.getDeclaredAnnotation(org.springframework.data.relational.core.mapping.Column.class);
+		if (columnAnnotation != null) {
+			return columnAnnotation.value();
+		}
+
+		return StreamSupport.stream(Objects.requireNonNull(mappingContext.getPersistentEntity(tableType)).spliterator(), false)
+				.filter(column -> field.equals(column.getField()))
+				.findFirst()
+				.orElseThrow(() -> new MappingException("This Column name is not matched"))
+				.getColumnName()
+				.toString();
 	}
 
 	@Override
