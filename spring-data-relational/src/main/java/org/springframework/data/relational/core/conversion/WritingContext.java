@@ -123,14 +123,14 @@ class WritingContext<T> {
 	private List<? extends DbAction<?>> insertAll(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		RelationalPersistentEntity<?> persistentEntity = context
-				.getRequiredPersistentEntity(path.getRequiredLeafProperty());
+				.getRequiredPersistentEntity(path.getLeafProperty());
 		List<DbAction.Insert<Object>> inserts = new ArrayList<>();
 		from(path).forEach(node -> {
 
 			DbAction.WithEntity<?> parentAction = getAction(node.getParent());
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
 			Object instance;
-			if (node.getPath().getRequiredLeafProperty().isQualified()) {
+			if (node.getPath().getLeafProperty().isQualified()) {
 
 				Pair<Object, Object> value = (Pair) node.getValue();
 				qualifiers.put(node.getPath(), value.getFirst());
@@ -213,8 +213,8 @@ class WritingContext<T> {
 				// todo: this should go into pathnode
 				Object parentValue = parentNode.getActualValue();
 
-				Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentValue)
-						.getProperty(path.getRequiredLeafProperty());
+				Object value = path.getLeafProperty().getOwner().getPropertyAccessor(parentValue)
+						.getProperty(path.getLeafProperty());
 
 				nodes.addAll(createNodes(path, parentNode, value));
 			});
@@ -265,11 +265,11 @@ class WritingContext<T> {
 		}
 
 		List<PathNode> nodes = new ArrayList<>();
-		if (path.getRequiredLeafProperty().isEmbedded()) {
+		if (path.getLeafProperty().isEmbedded()) {
 			nodes.add(new PathNode(path, parentNode, value));
-		} else if (path.getRequiredLeafProperty().isQualified()) {
+		} else if (path.getLeafProperty().isQualified()) {
 
-			if (path.getRequiredLeafProperty().isMap()) {
+			if (path.getLeafProperty().isMap()) {
 				((Map<?, ?>) value).forEach((k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))));
 			} else {
 
@@ -278,7 +278,7 @@ class WritingContext<T> {
 					nodes.add(new PathNode(path, parentNode, Pair.of(k, listValue.get(k))));
 				}
 			}
-		} else if (path.getRequiredLeafProperty().isCollectionLike()) { // collection value
+		} else if (path.getLeafProperty().isCollectionLike()) { // collection value
 			if (value.getClass().isArray()) {
 				asList((Object[]) value).forEach(v -> nodes.add(new PathNode(path, parentNode, v)));
 			} else {

@@ -274,7 +274,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 		when(path.getBaseProperty()).thenReturn(property);
 		when(property.getOwner().getType()).thenReturn((Class) String.class);
 
-		when(path.getRequiredLeafProperty()).thenReturn(property);
+		when(path.getLeafProperty()).thenReturn(property);
 		when(property.getType()).thenReturn((Class) Number.class);
 
 		when(path.toDotPath()).thenReturn("dot.path");

@@ -15,7 +15,16 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -386,7 +395,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		private MultiValueAggregator getAggregatorFor(PersistentPropertyPath path) {
 
-			PersistentProperty property = path.getRequiredLeafProperty();
+			PersistentProperty property = path.getLeafProperty();
 			for (MultiValueAggregator aggregator : aggregators) {
 				if (aggregator.handles(property)) {
 					return aggregator;
