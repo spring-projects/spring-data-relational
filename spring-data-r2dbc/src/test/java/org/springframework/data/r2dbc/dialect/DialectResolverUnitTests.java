@@ -2,6 +2,8 @@ package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.asyncer.r2dbc.mysql.MySqlConnectionConfiguration;
+import io.asyncer.r2dbc.mysql.MySqlConnectionFactory;
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
@@ -30,7 +32,7 @@ import org.springframework.r2dbc.core.binding.BindMarkersFactory;
  */
 public class DialectResolverUnitTests {
 
-	@Test // gh-20, gh-104
+	@Test // GH-20, GH-104, GH-1475
 	void shouldResolveDatabaseType() {
 
 		PostgresqlConnectionFactory postgres = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
@@ -38,10 +40,13 @@ public class DialectResolverUnitTests {
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
 		MariadbConnectionFactory mariadb = new MariadbConnectionFactory(
 				MariadbConnectionConfiguration.builder().socket("/foo").username("bar").build());
+		MySqlConnectionFactory mysql = MySqlConnectionFactory
+				.from(MySqlConnectionConfiguration.builder().host("foo").username("bar").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mariadb)).isEqualTo(MySqlDialect.INSTANCE);
+		assertThat(DialectResolver.getDialect(mysql)).isEqualTo(MySqlDialect.INSTANCE);
 	}
 
 	@Test // gh-20, gh-104

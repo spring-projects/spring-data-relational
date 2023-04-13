@@ -6,8 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-data-jdbc</artifactId>
-	<version>3.1.0-1478-SNAPSHOT</version>
-
+	<version>3.1.0-756-SNAPSHOT</version>
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
 	<url>https://projects.spring.io/spring-data-jdbc</url>
@@ -15,7 +14,7 @@
 	<parent>
 		<groupId>org.springframework.data</groupId>
 		<artifactId>spring-data-relational-parent</artifactId>
-		<version>3.1.0-1478-SNAPSHOT</version>
+		<version>3.1.0-756-SNAPSHOT</version>
 	</parent>
 
 	<properties>

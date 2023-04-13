@@ -57,7 +57,7 @@ final class PathNode {
 	 */
 	Object getActualValue() {
 
-		return getPath().getRequiredLeafProperty().isQualified() //
+		return getPath().getLeafProperty().isQualified() //
 				? ((Pair<?,?>) getValue()).getSecond() //
 				: getValue();
 	}

@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-relational-parent</artifactId>
-	<version>3.1.0-1478-SNAPSHOT</version>
+	<version>3.1.0-756-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Spring Data Relational Parent</name>
@@ -161,12 +161,5 @@
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</repository>
 	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-plugins-snapshot</id>
-			<url>https://repo.spring.io/plugins-snapshot</url>
-		</pluginRepository>
-	</pluginRepositories>
 
 </project>

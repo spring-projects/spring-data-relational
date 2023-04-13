@@ -212,7 +212,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		Class<?> ownerType = getOwnerTyp(propertyPath);
 		String statement = namespace(ownerType) + ".delete-" + toDashPath(propertyPath);
-		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
+		Class<?> leafType = propertyPath.getLeafProperty().getTypeInformation().getType();
 		MyBatisContext parameter = new MyBatisContext(rootId, null, leafType, Collections.emptyMap());
 
 		sqlSession().delete(statement, parameter);
@@ -234,7 +234,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
+		Class<?> leafType = propertyPath.getLeafProperty().getTypeInformation().getType();
 
 		String statement = namespace(getOwnerTyp(propertyPath)) + ".deleteAll-" + toDashPath(propertyPath);
 		MyBatisContext parameter = new MyBatisContext(null, null, leafType, Collections.emptyMap());
@@ -293,7 +293,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statementName = namespace(getOwnerTyp(path)) + ".findAllByPath-" + path.toDotPath();
 
 		return sqlSession().selectList(statementName,
-				new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
+				new MyBatisContext(identifier, null, path.getLeafProperty().getType()));
 	}
 
 	@Override

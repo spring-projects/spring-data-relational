@@ -552,7 +552,7 @@ public interface DbAction<T> {
 		@SuppressWarnings("unchecked")
 		@Override
 		default Class<T> getEntityType() {
-			return (Class<T>) getPropertyPath().getRequiredLeafProperty().getActualType();
+			return (Class<T>) getPropertyPath().getLeafProperty().getActualType();
 		}
 	}
 }
