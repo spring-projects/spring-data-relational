@@ -25,53 +25,6 @@
 
 	<inceptionYear>2017</inceptionYear>
 
-	<developers>
-		<developer>
-			<id>schauder</id>
-			<name>Jens Schauder</name>
-			<email>jschauder(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>gregturn</id>
-			<name>Greg L. Turnquist</name>
-			<email>gturnquist(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>-6</timezone>
-		</developer>
-		<developer>
-			<id>ogierke</id>
-			<name>Oliver Gierke</name>
-			<email>ogierke(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>mpaluch</id>
-			<name>Mark Paluch</name>
-			<email>mpaluch(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -267,6 +220,14 @@
 			<artifactId>archunit</artifactId>
 			<version>${archunit.version}</version>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+			<version>${liquibase.version}</version>
+			<scope>compile</scope>
+			<optional>true</optional>
 		</dependency>
 
 	</dependencies>

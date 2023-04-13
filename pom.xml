@@ -21,6 +21,7 @@
 	<properties>
 		<dist.id>spring-data-jdbc</dist.id>
 		<springdata.commons>3.2.0-SNAPSHOT</springdata.commons>
+		<liquibase.version>4.21.1</liquibase.version>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<!-- dependency versions -->
@@ -91,6 +92,29 @@
 			</roles>
 			<timezone>-6</timezone>
 		</developer>
+		<developer>
+			<id>ogierke</id>
+			<name>Oliver Gierke</name>
+			<email>ogierke(at)pivotal.io</email>
+			<organization>Pivotal Software, Inc.</organization>
+			<organizationUrl>https://pivotal.io</organizationUrl>
+			<roles>
+				<role>Project Contributor</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<id>kurtn718</id>
+			<name>Kurt Niemi</name>
+			<email>kniemi(at)vmware.com</email>
+			<organization>VMware.</organization>
+			<organizationUrl>https://vmware.com</organizationUrl>
+			<roles>
+				<role>Project Contributor</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
+
 	</developers>
 
 	<profiles>
