@@ -14,6 +14,7 @@ import org.springframework.data.r2dbc.core.*
 import org.springframework.data.r2dbc.dialect.PostgresDialect
 import org.springframework.data.r2dbc.testing.StatementRecorder
 import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.isEqual
 import org.springframework.r2dbc.core.DatabaseClient
 import reactor.test.StepVerifier
 
@@ -60,7 +61,7 @@ class QueryExtensionsKtTest {
         entityTemplate.select<Person>()
             .matching(
                 query(
-                    queryCondition.nameValue?.run { where("name").`is`(queryCondition.nameValue) }
+                    queryCondition.nameValue?.run { where("name") isEqual queryCondition.nameValue }
                 )
             )
             .all()
