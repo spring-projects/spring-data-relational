@@ -25,6 +25,14 @@ package org.springframework.data.relational.core.query
 infix fun Criteria.CriteriaStep.isEqual(value: Any): Criteria =
         `is`(value)
 
+
+/**
+ * Extension for [Criteria.CriteriaStep.not] providing a
+ * `isNotEqual(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.isNotEqual(value: Any): Criteria =
+        not(value)
+
 /**
  * Extension for [Criteria.CriteriaStep.in] providing a
  * `isIn(value)` variant.
@@ -44,3 +52,46 @@ fun Criteria.CriteriaStep.isIn(vararg value: Any): Criteria =
  */
 fun Criteria.CriteriaStep.isIn(values: Collection<Any>): Criteria =
         `in`(values)
+
+
+/**
+ * Extension for [Criteria.CriteriaStep.lessThan] providing a
+ * `le(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.le(value: Any): Criteria =
+        lessThan(value)
+
+/**
+ * Extension for [Criteria.CriteriaStep.lessThanOrEquals] providing a
+ * `loe(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.loe(value: Any): Criteria =
+        lessThanOrEquals(value)
+
+/**
+ * Extension for [Criteria.CriteriaStep.greaterThan] providing a
+ * `ge(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.ge(value: Any): Criteria =
+        greaterThan(value)
+
+/**
+ * Extension for [Criteria.CriteriaStep.greaterThanOrEquals] providing a
+ * `goe(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.goe(value: Any): Criteria =
+        greaterThanOrEquals(value)
+
+/**
+ * Extension for [Criteria.CriteriaStep.like] providing a
+ * `like(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.like(value: Any): Criteria =
+        like(value)
+
+/**
+ * Extension for [Criteria.CriteriaStep.notLike] providing a
+ * `notLike(value)` variant.
+ */
+infix fun Criteria.CriteriaStep.notLike(value: Any): Criteria =
+        notLike(value)

@@ -43,6 +43,21 @@ class CriteriaStepExtensionsTests {
         }
     }
 
+    @Test // gh-1491
+    fun notEqIsCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.not("test") } returns criteria
+
+        assertThat(spec isNotEqual "test").isEqualTo(criteria)
+
+        verify {
+            spec.not("test")
+        }
+    }
+
     @Test // DATAJDBC-522
     fun inVarargCriteriaStep() {
 
@@ -70,6 +85,96 @@ class CriteriaStepExtensionsTests {
 
         verify {
             spec.`in`(listOf("test"))
+        }
+    }
+
+    @Test // gh-1491
+    fun leCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.lessThan(any()) } returns criteria
+
+        assertThat(spec le 10).isEqualTo(criteria)
+
+        verify {
+            spec.lessThan(10)
+        }
+    }
+
+    @Test // gh-1491
+    fun loeCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.lessThanOrEquals(10) } returns criteria
+
+        assertThat(spec loe 10).isEqualTo(criteria)
+
+        verify {
+            spec.lessThanOrEquals(10)
+        }
+    }
+
+    @Test
+    fun geCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.greaterThan(10) } returns criteria
+
+        assertThat(spec ge 10).isEqualTo(criteria)
+
+        verify {
+            spec.greaterThan(10)
+        }
+    }
+
+    @Test
+    fun goeCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.greaterThanOrEquals(10) } returns criteria
+
+        assertThat(spec goe 10).isEqualTo(criteria)
+
+        verify {
+            spec.greaterThanOrEquals(10)
+        }
+    }
+
+    @Test
+    fun likeCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.like("abc%") } returns criteria
+
+        assertThat(spec like "abc%").isEqualTo(criteria)
+
+        verify {
+            spec.like("abc%")
+        }
+    }
+
+    @Test
+    fun notLikeCriteriaStep() {
+
+        val spec = mockk<Criteria.CriteriaStep>()
+        val criteria = mockk<Criteria>()
+
+        every { spec.notLike("abc%") } returns criteria
+
+        assertThat(spec notLike "abc%").isEqualTo(criteria)
+
+        verify {
+            spec.notLike("abc%")
         }
     }
 }
