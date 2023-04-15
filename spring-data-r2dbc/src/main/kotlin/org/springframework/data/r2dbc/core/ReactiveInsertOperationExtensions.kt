@@ -21,6 +21,7 @@ import kotlinx.coroutines.reactive.awaitSingle
  * Extensions for [ReactiveInsertOperation].
  *
  * @author Mark Paluch
+ * @author Oleg Oshmyan
  * @since 1.1
  */
 
@@ -33,5 +34,5 @@ inline fun <reified T : Any> ReactiveInsertOperation.insert(): ReactiveInsertOpe
 /**
  * Coroutines variant of [ReactiveInsertOperation.TerminatingInsert.using].
  */
-suspend inline fun <reified T : Any> ReactiveInsertOperation.TerminatingInsert<T>.usingAndAwait(o: T): T =
+suspend fun <T : Any> ReactiveInsertOperation.TerminatingInsert<T>.usingAndAwait(o: T): T =
 		using(o).awaitSingle()
