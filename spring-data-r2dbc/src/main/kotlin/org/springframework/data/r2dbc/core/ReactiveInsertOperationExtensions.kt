@@ -33,5 +33,5 @@ inline fun <reified T : Any> ReactiveInsertOperation.insert(): ReactiveInsertOpe
 /**
  * Coroutines variant of [ReactiveInsertOperation.TerminatingInsert.using].
  */
-suspend inline fun <reified T : Any> ReactiveInsertOperation.TerminatingInsert<T>.usingAndAwait(o: T): T =
+suspend fun <T : Any> ReactiveInsertOperation.TerminatingInsert<T>.usingAndAwait(o: T): T =
 		using(o).awaitSingle()

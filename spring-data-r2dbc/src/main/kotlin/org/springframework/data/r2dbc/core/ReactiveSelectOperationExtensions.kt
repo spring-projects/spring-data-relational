@@ -42,25 +42,25 @@ inline fun <reified T : Any> ReactiveSelectOperation.SelectWithProjection<*>.asT
 /**
  * Non-nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.one].
  */
-suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitOne(): T =
+suspend fun <T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitOne(): T =
 		one().awaitSingle()
 
 /**
  * Nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.one].
  */
-suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitOneOrNull(): T? =
+suspend fun <T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitOneOrNull(): T? =
 		one().awaitFirstOrNull()
 
 /**
  * Non-nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.first].
  */
-suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitFirst(): T =
+suspend fun <T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitFirst(): T =
 		first().awaitSingle()
 
 /**
  * Nullable Coroutines variant of [ReactiveSelectOperation.TerminatingSelect.first].
  */
-suspend inline fun <reified T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitFirstOrNull(): T? =
+suspend fun <T : Any> ReactiveSelectOperation.TerminatingSelect<T>.awaitFirstOrNull(): T? =
 		first().awaitFirstOrNull()
 
 /**
