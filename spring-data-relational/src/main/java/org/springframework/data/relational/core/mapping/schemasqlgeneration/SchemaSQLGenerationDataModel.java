@@ -15,17 +15,12 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.*;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.util.Assert;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 /**
  * Model class that contains Table/Column information that can be used
@@ -37,7 +32,7 @@ public class SchemaSQLGenerationDataModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<TableModel> tableData = new ArrayList<TableModel>();
-    BaseTypeMapper typeMapper;
+    public BaseTypeMapper typeMapper;
 
     /**
      * Default constructor so that we can deserialize a model
@@ -71,7 +66,83 @@ public class SchemaSQLGenerationDataModel implements Serializable {
         }
     }
 
+    void diffTableAdditionDeletion(SchemaSQLGenerationDataModel source, SchemaDiff diff) {
+
+        Set<TableModel> sourceTableData = new HashSet<TableModel>(source.getTableData());
+        Set<TableModel> targetTableData = new HashSet<TableModel>(getTableData());
+
+        // Identify deleted tables
+        Set<TableModel> deletedTables = new HashSet<TableModel>(sourceTableData);
+        deletedTables.removeAll(targetTableData);
+        diff.getTableDeletions().addAll(deletedTables);
+
+        // Identify added tables
+        Set<TableModel> addedTables = new HashSet<TableModel>(targetTableData);
+        addedTables.removeAll(sourceTableData);
+        diff.getTableAdditions().addAll(addedTables);
+    }
+
+    void diffTable(SchemaSQLGenerationDataModel source, SchemaDiff diff) {
+
+        HashMap<String, TableModel> sourceTablesMap = new HashMap<String,TableModel>();
+        for (TableModel table : source.getTableData()) {
+            sourceTablesMap.put(table.getSchema() + "." + table.getName().getReference(), table);
+        }
+
+        Set<TableModel> existingTables = new HashSet<TableModel>(getTableData());
+        existingTables.removeAll(diff.getTableAdditions());
+
+        for (TableModel table : existingTables) {
+            TableDiff tableDiff = new TableDiff(table);
+            diff.getTableDiff().add(tableDiff);
+
+            System.out.println("Table " + table.getName().getReference() + " modified");
+            TableModel sourceTable = sourceTablesMap.get(table.getSchema() + "." + table.getName().getReference());
+
+            Set<ColumnModel> sourceTableData = new HashSet<ColumnModel>(sourceTable.getColumns());
+            Set<ColumnModel> targetTableData = new HashSet<ColumnModel>(table.getColumns());
+
+            // Identify deleted columns
+            Set<ColumnModel> deletedColumns = new HashSet<ColumnModel>(sourceTableData);
+            deletedColumns.removeAll(targetTableData);
+
+            tableDiff.getDeletedColumns().addAll(deletedColumns);
+
+            // Identify added columns
+            Set<ColumnModel> addedColumns = new HashSet<ColumnModel>(targetTableData);
+            addedColumns.removeAll(sourceTableData);
+            tableDiff.getAddedColumns().addAll(addedColumns);
+        }
+    }
+
+    public SchemaDiff diffModel(SchemaSQLGenerationDataModel source) {
+
+        SchemaDiff diff = new SchemaDiff();
+
+        diffTableAdditionDeletion(source, diff);
+        diffTable(source, diff);
+
+        return diff;
+    }
+
     public List<TableModel> getTableData() {
         return tableData;
+    }
+
+    public void persist(String fileName) throws IOException {
+        FileOutputStream file = new FileOutputStream(fileName);
+        ObjectOutputStream out = new ObjectOutputStream(file);
+        out.writeObject(this);
+
+        out.close();
+        file.close();
+    }
+
+    public static SchemaSQLGenerationDataModel load(String fileName) throws IOException, ClassNotFoundException {
+        FileInputStream file = new FileInputStream(fileName);
+        ObjectInputStream in = new ObjectInputStream(file);
+
+        SchemaSQLGenerationDataModel model = (SchemaSQLGenerationDataModel) in.readObject();
+        return model;
     }
 }

@@ -15,9 +15,10 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class BaseTypeMapper {
+public class BaseTypeMapper implements Serializable {
 
     final HashMap<Class<?>,String> mapClassToDatabaseType = new HashMap<Class<?>,String>();
 

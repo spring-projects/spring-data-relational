@@ -21,6 +21,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Class that models a Table for generating SQL for Schema generation.
@@ -62,5 +63,18 @@ public class TableModel implements Serializable {
 
     public List<ForeignKeyColumnModel> getForeignKeyColumns() {
         return foreignKeyColumns;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TableModel that = (TableModel) o;
+        return Objects.equals(schema, that.schema) && name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(schema, name);
     }
 }
