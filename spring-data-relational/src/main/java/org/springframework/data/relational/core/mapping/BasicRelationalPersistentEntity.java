@@ -49,6 +49,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	private final @Nullable Expression tableNameExpression;
 
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
+	private final @Nullable Expression schemaNameExpression;
 	private final ExpressionEvaluator expressionEvaluator;
 	private boolean forceQuote = true;
 
@@ -84,12 +85,14 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 			this.schemaName = StringUtils.hasText(table.schema())
 					? Lazy.of(() -> Optional.of(createSqlIdentifier(table.schema())))
 					: defaultSchema;
+			this.schemaNameExpression = detectExpression(table.schema());
 
 		} else {
 
 			this.tableName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getTableName(getType())));
 			this.tableNameExpression = null;
 			this.schemaName = defaultSchema;
+			this.schemaNameExpression = null;
 		}
 	}
 
@@ -144,6 +147,10 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 		if (schema == null) {
 			return getTableName();
+		}
+
+		if (schemaNameExpression != null) {
+			schema = createSqlIdentifier(expressionEvaluator.evaluate(schemaNameExpression));
 		}
 
 		return SqlIdentifier.from(schema, getTableName());
