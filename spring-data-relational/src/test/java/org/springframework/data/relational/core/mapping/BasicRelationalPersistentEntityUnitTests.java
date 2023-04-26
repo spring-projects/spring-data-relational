@@ -126,7 +126,7 @@ class BasicRelationalPersistentEntityUnitTests {
 		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(LittleBobbyTables.class);
 
 		SqlIdentifier simpleExpected = quoted("RobertDROPTABLEstudents");
-		SqlIdentifier expected = SqlIdentifier.from(quoted("LITTLE_BOBBY_TABLES"), simpleExpected);
+		SqlIdentifier expected = SqlIdentifier.from(quoted("RandomSQLToExecute"), simpleExpected);
 		assertThat(entity.getQualifiedTableName()).isEqualTo(expected);
 		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
 	}
@@ -175,18 +175,24 @@ class BasicRelationalPersistentEntityUnitTests {
 		@Id private Long id;
 	}
 
-	@Table(schema = "HELP_ME_OBI_WON", name = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression" + ").desiredTableName}")
+	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
+			+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredSchemaName}",
+			name = "#{T(org.springframework.data.relational.core.mapping."
+					+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredTableName}")
 	private static class EntityWithSchemaAndTableSpelExpression {
 		@Id private Long id;
 		public static String desiredTableName = "USE_THE_FORCE";
+		public static String desiredSchemaName = "HELP_ME_OBI_WON";
 	}
 
-	@Table(schema = "LITTLE_BOBBY_TABLES", name = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables" + ").desiredTableName}")
+	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
+			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredSchemaName}",
+			name = "#{T(org.springframework.data.relational.core.mapping."
+			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredTableName}")
 	private static class LittleBobbyTables {
 		@Id private Long id;
 		public static String desiredTableName = "Robert'); DROP TABLE students;--";
+		public static String desiredSchemaName = "Random SQL To Execute;";
 	}
 
 	@Table("dummy_sub_entity")
