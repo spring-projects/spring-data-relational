@@ -21,13 +21,12 @@ import static org.springframework.data.domain.Sort.Order.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.QueryMapper;
-import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -37,12 +36,14 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 /**
  * Unit tests for {@link QueryMapper}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class QueryMapperUnitTests {
 
@@ -376,8 +377,60 @@ public class QueryMapperUnitTests {
 		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
 				context.getRequiredPersistentEntity(Person.class));
 
-		assertThat(fields).hasSize(1);
-		assertThat(fields.get(0)).hasToString("tbl.\"another_name\" DESC");
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl.\"another_name\" DESC");
+	}
+
+	@Test // GH-1507
+	public void shouldMapSortWithUnknownField() {
+
+		Sort sort = Sort.by(desc("unknownField"));
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				context.getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl.unknownField DESC");
+	}
+
+	@Test // GH-1507
+	public void shouldMapSortWithAllowedSpecialCharacters() {
+
+		Sort sort = Sort.by(desc("x(._)x"));
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				context.getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl.x(._)x DESC");
+	}
+
+	@ParameterizedTest // GH-1507
+	@ValueSource(strings = { " ", ";", "--" })
+	public void shouldNotMapSortWithIllegalExpression(String input) {
+
+		Sort sort = Sort.by(desc("unknown" + input + "Field"));
+
+		assertThatThrownBy(
+				() -> mapper.getMappedSort(Table.create("tbl"), sort, context.getRequiredPersistentEntity(Person.class)))
+						.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test // GH-1507
+	public void shouldMapSortWithUnsafeExpression() {
+
+		String unsafeExpression = "arbitrary expression that may include evil stuff like ; & --";
+		Sort sort = SqlSort.unsafe(unsafeExpression);
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				context.getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl." + unsafeExpression + " ASC");
 	}
 
 	private Condition map(Criteria criteria) {

@@ -38,6 +38,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -56,6 +57,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @author Roman Chigvintsev
  * @author Manousos Mathioudakis
+ * @author Jens Schauder
  */
 public class QueryMapper {
 
@@ -111,6 +113,8 @@ public class QueryMapper {
 
 		for (Sort.Order order : sort) {
 
+			SqlSort.validate(order);
+
 			Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
 			mappedOrder.add(
 					Sort.Order.by(toSql(field.getMappedColumnName())).with(order.getNullHandling()).with(order.getDirection()));
@@ -133,13 +137,22 @@ public class QueryMapper {
 
 		for (Sort.Order order : sort) {
 
-			Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
-			OrderByField orderBy = OrderByField.from(table.column(field.getMappedColumnName()))
+			OrderByField simpleOrderByField = createSimpleOrderByField(table, entity, order);
+			OrderByField orderBy = simpleOrderByField
 					.withNullHandling(order.getNullHandling());
 			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
 		}
 
 		return mappedOrder;
+
+	}
+
+	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
+
+		SqlSort.validate(order);
+
+		Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
+		return OrderByField.from(table.column(field.getMappedColumnName()));
 	}
 
 	/**

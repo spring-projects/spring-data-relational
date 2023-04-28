@@ -62,6 +62,7 @@ import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
@@ -274,6 +275,17 @@ class JdbcAggregateTemplateIntegrationTests {
 				.extracting("name") //
 				.containsExactly("Frozen", "Star", null);
 	}
+
+
+	@Test //
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS})
+	void findByNonPropertySortFails() {
+
+		assertThatThrownBy(() -> template.findAll(LegoSet.class,
+				Sort.by("somethingNotExistant"))).isInstanceOf(InvalidPersistentPropertyPath.class);
+
+	}
+
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)

@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
@@ -35,6 +37,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
@@ -47,6 +50,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.node.TextNode;
  *
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Jens Schauder
  */
 class QueryMapperUnitTests {
 
@@ -421,6 +425,42 @@ class QueryMapperUnitTests {
 
 		Sort mapped = mapper.getMappedObject(sort, mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 		assertThat(mapped.getOrderFor("alternative_name")).isEqualTo(desc("alternative_name"));
+	}
+
+	@Test // GH-1507
+	public void shouldMapSortWithUnknownField() {
+
+		Sort sort = Sort.by(desc("unknownField"));
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl.unknownField DESC");
+	}
+
+	@Test // GH-1507
+	public void shouldMapSortWithAllowedSpecialCharacters() {
+
+		Sort sort = Sort.by(desc("x(._)x"));
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("tbl.x(._)x DESC");
+	}
+
+
+	@Test // GH-1507
+	public void shouldNotMapSortWithIllegalExpression() {
+
+		Sort sort = Sort.by(desc("unknown Field"));
+
+		assertThatThrownBy(() -> mapper.getMappedSort(Table.create("tbl"), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class))).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test // gh-369
