@@ -15,17 +15,12 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Class that models a Foreign Key relationship for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
  */
-public class ForeignKeyColumnModel implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class ForeignKeyColumnModel {
     private final TableModel foreignTable;
     private final ColumnModel foreignColumn;
     private final ColumnModel column;

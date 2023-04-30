@@ -17,17 +17,13 @@ package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
-import java.io.Serial;
-import java.io.Serializable;
 
 /**
  * Class that models a Column for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
  */
-public class ColumnModel implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class ColumnModel {
     private final SqlIdentifier name;
     private final String type;
     private final boolean nullable;

@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.UnaryOperator;
@@ -33,7 +32,7 @@ import org.springframework.util.Assert;
  * @author Kurt Niemi
  * @since 2.0
  */
-class DerivedSqlIdentifier implements SqlIdentifier, Serializable {
+class DerivedSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;

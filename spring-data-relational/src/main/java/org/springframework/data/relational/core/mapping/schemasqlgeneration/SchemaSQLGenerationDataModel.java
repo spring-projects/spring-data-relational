@@ -28,9 +28,7 @@ import java.util.*;
  *
  * @author Kurt Niemi
  */
-public class SchemaSQLGenerationDataModel implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class SchemaSQLGenerationDataModel {
     private final List<TableModel> tableData = new ArrayList<TableModel>();
     public BaseTypeMapper typeMapper;
 

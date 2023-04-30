@@ -98,31 +98,6 @@ public class SchemaSQLGenerationDataModelTests {
         assertThat(diff.getTableDiff().get(0).getDeletedColumns().get(0).getName().getReference().equals("B"));
     }
 
-    @Test
-    void testSerialization() {
-        IdentifierProcessing.Quoting quoting = new IdentifierProcessing.Quoting("`");
-        IdentifierProcessing identifierProcessing = IdentifierProcessing.create(quoting, IdentifierProcessing.LetterCasing.LOWER_CASE);
-        SchemaSQLGenerator generator = new SchemaSQLGenerator(identifierProcessing);
-
-        RelationalMappingContext context = new RelationalMappingContext();
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Luke.class);
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
-
-        SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
-
-        try {
-            model.persist("model.ser");
-
-            SchemaSQLGenerationDataModel loadedModel = SchemaSQLGenerationDataModel.load("model.ser");
-
-            assertThat(loadedModel.getTableData().size() == 2);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            assertThat(false);
-        }
-    }
-
-
     @Table
     static class Luke {
         @Column

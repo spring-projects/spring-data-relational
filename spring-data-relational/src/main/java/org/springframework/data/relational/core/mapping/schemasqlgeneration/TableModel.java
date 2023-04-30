@@ -17,8 +17,6 @@ package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,9 +26,7 @@ import java.util.Objects;
  *
  * @author Kurt Niemi
  */
-public class TableModel implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class TableModel {
     private final String schema;
     private final SqlIdentifier name;
     private final List<ColumnModel> columns = new ArrayList<ColumnModel>();
