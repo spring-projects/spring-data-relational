@@ -70,6 +70,17 @@
 			</roles>
 			<timezone>+1</timezone>
 		</developer>
+		<developer>
+			<id>kurtn718</id>
+			<name>Kurt Niemi</name>
+			<email>kniemi(at)vmware.com</email>
+			<organization>VMware</organization>
+			<organizationUrl>https://vmware.com</organizationUrl>
+			<roles>
+				<role>Project Contributor</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
 	</developers>
 
 	<dependencyManagement>
@@ -267,6 +278,14 @@
 			<artifactId>archunit</artifactId>
 			<version>${archunit.version}</version>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+			<version>${liquibase.version}</version>
+			<scope>compile</scope>
+			<optional>true</optional>
 		</dependency>
 
 	</dependencies>
