@@ -15,12 +15,40 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import liquibase.CatalogAndSchema;
+import liquibase.change.ColumnConfig;
+import liquibase.change.core.CreateTableChange;
+import liquibase.change.core.DropTableChange;
+import liquibase.changelog.ChangeLogChild;
+import liquibase.changelog.ChangeSet;
+import liquibase.changelog.DatabaseChangeLog;
+import liquibase.database.Database;
+import liquibase.database.DatabaseConnection;
+import liquibase.database.MockDatabaseConnection;
+import liquibase.database.core.MySQLDatabase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
+import liquibase.parser.ChangeLogParser;
+import liquibase.parser.core.yaml.YamlChangeLogParser;
+import liquibase.serializer.ChangeLogSerializer;
+import liquibase.serializer.ChangeLogSerializerFactory;
+import liquibase.serializer.SnapshotSerializer;
+import liquibase.serializer.SnapshotSerializerFactory;
+import liquibase.serializer.core.formattedsql.FormattedSqlChangeLogSerializer;
+import liquibase.serializer.core.yaml.YamlChangeLogSerializer;
+import liquibase.snapshot.*;
+import liquibase.structure.DatabaseObject;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.mapping.*;
+import org.springframework.data.relational.core.sql.DefaultSqlIdentifier;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
 
 import java.io.*;
+import java.sql.Connection;
 import java.util.*;
+import java.util.function.UnaryOperator;
 
 /**
  * Model class that contains Table/Column information that can be used
@@ -142,5 +170,83 @@ public class SchemaSQLGenerationDataModel {
 
         SchemaSQLGenerationDataModel model = (SchemaSQLGenerationDataModel) in.readObject();
         return model;
+    }
+
+    public void generateLiquibaseChangeset(Database database, String changeLogFilePath) throws InvalidExampleException, DatabaseException, IOException {
+        String changeSetId = Long.toString(System.currentTimeMillis());
+        generateLiquibaseChangeset(database,changeLogFilePath, changeSetId, "Spring Data JDBC");
+    }
+
+    public void generateLiquibaseChangeset(Database database, String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException {
+        CatalogAndSchema[] schemas = new CatalogAndSchema[] { database.getDefaultSchema() };
+        SnapshotControl snapshotControl = new SnapshotControl(database);
+
+        DatabaseSnapshot snapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(schemas, database, snapshotControl);
+        Set<liquibase.structure.core.Table> tables = snapshot.get(liquibase.structure.core.Table.class);
+
+        SchemaSQLGenerationDataModel liquibaseModel = new SchemaSQLGenerationDataModel();
+
+        for (liquibase.structure.core.Table table : tables) {
+
+            SqlIdentifier tableName = new DefaultSqlIdentifier(table.getName(), false);
+            TableModel tableModel = new TableModel(table.getSchema().getCatalogName(), tableName);
+            liquibaseModel.getTableData().add(tableModel);
+            //System.out.println(table.getName());
+            List<liquibase.structure.core.Column> columns = table.getColumns();
+            for (liquibase.structure.core.Column column : columns) {
+                //System.out.println("--- " + column.getName() + "," + column.getType());
+            }
+        }
+
+        SchemaDiff difference = diffModel(liquibaseModel);
+
+        File changeLogFile = new File(changeLogFilePath);
+
+        ChangeLogSerializerFactory factory = ChangeLogSerializerFactory.getInstance();
+        ChangeLogSerializer serializer = new YamlChangeLogSerializer();
+        DatabaseChangeLog databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
+        ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "" , databaseChangeLog);
+
+        for (TableModel t : difference.getTableAdditions()) {
+            System.out.println(t.getName().getReference() + " to be added.");
+            CreateTableChange newTable = createAddTableChange(t);
+            changeSet.addChange(newTable);
+        }
+
+        for (TableModel t : difference.getTableDeletions()) {
+            System.out.println(t.getName().getReference() + " to be removed.");
+            DropTableChange dropTable = createDropTableChange(t);
+            changeSet.addChange(dropTable);
+        }
+
+        List changes = new ArrayList<ChangeLogChild>();
+        changes.add(changeSet);
+        FileOutputStream fos = new FileOutputStream(changeLogFile);
+        serializer.write(changes, fos);
+
+    }
+
+    CreateTableChange createAddTableChange(TableModel table) {
+        CreateTableChange change = new CreateTableChange();
+        change.setSchemaName(table.getSchema());
+        change.setTableName(table.getName().getReference());
+
+        for (ColumnModel column : table.getColumns()) {
+            ColumnConfig columnConfig = new ColumnConfig();
+            columnConfig.setName(column.getName().getReference());
+            columnConfig.setType(column.getType());
+            change.addColumn(columnConfig);
+        }
+
+        return change;
+    }
+
+    DropTableChange createDropTableChange(TableModel table) {
+        DropTableChange change = new DropTableChange();
+        change.setSchemaName(table.getSchema());
+        change.setTableName(table.getName().getReference());
+        change.setCascadeConstraints(true);
+
+        return change;
     }
 }

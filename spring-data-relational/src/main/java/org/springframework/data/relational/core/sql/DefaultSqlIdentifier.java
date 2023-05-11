@@ -30,12 +30,12 @@ import org.springframework.util.Assert;
  * @author Kurt Niemi
  * @since 2.0
  */
-class DefaultSqlIdentifier implements SqlIdentifier {
+public class DefaultSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
 
-	DefaultSqlIdentifier(String name, boolean quoted) {
+	public DefaultSqlIdentifier(String name, boolean quoted) {
 
 		Assert.hasText(name, "A database object name must not be null or empty");
 
