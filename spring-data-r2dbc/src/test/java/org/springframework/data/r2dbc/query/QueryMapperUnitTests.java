@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
@@ -438,6 +439,19 @@ class QueryMapperUnitTests {
 		assertThat(fields) //
 				.extracting(Objects::toString) //
 				.containsExactly("tbl.unknownField DESC");
+	}
+
+	@Test // GH-1512
+	public void shouldTablePrefixUnsafeOrderExpression() {
+
+		Sort sort = Sort.by(SqlSort.SqlOrder.desc("unknownField").withUnsafe());
+
+		List<OrderByField> fields = mapper.getMappedSort(Table.create("tbl"), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(fields) //
+				.extracting(Objects::toString) //
+				.containsExactly("unknownField DESC");
 	}
 
 	@Test // GH-1507

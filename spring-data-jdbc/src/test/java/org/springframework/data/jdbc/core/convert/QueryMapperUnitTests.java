@@ -430,7 +430,7 @@ public class QueryMapperUnitTests {
 
 		assertThat(fields) //
 				.extracting(Objects::toString) //
-				.containsExactly("tbl." + unsafeExpression + " ASC");
+				.containsExactly( unsafeExpression + " ASC");
 	}
 
 	private Condition map(Criteria criteria) {
