@@ -32,14 +32,13 @@ pipeline {
 			options { timeout(time: 30, unit: 'MINUTES') }
 
 			environment {
-				DOCKER_HUB = credentials("${p['docker.credentials']}")
 				ARTIFACTORY = credentials("${p['artifactory.credentials']}")
+				TESTCONTAINERS_IMAGE_SUBSTITUTOR = 'org.springframework.data.jdbc.ProxyImageNameSubstitutor'
 			}
 
 			steps {
 				script {
 					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.docker']) {
-						sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 						sh "PROFILE=ci,all-dbs ci/test.sh"
 						sh "ci/clean.sh"
 					}
@@ -63,14 +62,13 @@ pipeline {
 					options { timeout(time: 30, unit: 'MINUTES') }
 
 					environment {
-						DOCKER_HUB = credentials("${p['docker.credentials']}")
 						ARTIFACTORY = credentials("${p['artifactory.credentials']}")
+						TESTCONTAINERS_IMAGE_SUBSTITUTOR = 'org.springframework.data.jdbc.ProxyImageNameSubstitutor'
 					}
 
 					steps {
 						script {
 							docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
-								sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 								sh "PROFILE=ci ci/test.sh"
 								sh "ci/clean.sh"
 							}
@@ -85,14 +83,13 @@ pipeline {
 					options { timeout(time: 30, unit: 'MINUTES') }
 
 					environment {
-						DOCKER_HUB = credentials("${p['docker.credentials']}")
 						ARTIFACTORY = credentials("${p['artifactory.credentials']}")
+						TESTCONTAINERS_IMAGE_SUBSTITUTOR = 'org.springframework.data.jdbc.ProxyImageNameSubstitutor'
 					}
 
 					steps {
 						script {
 							docker.image(p['docker.java.lts.image']).inside(p['docker.java.inside.docker']) {
-								sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 								sh "PROFILE=ci ci/test.sh"
 								sh "ci/clean.sh"
 							}
