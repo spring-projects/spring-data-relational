@@ -495,7 +495,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 * @return
 	 */
 	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(@Nullable Object value) {
+	protected Object getPotentiallyConvertedSimpleWrite(@Nullable Object value) {
 		return getPotentiallyConvertedSimpleWrite(value, Object.class);
 	}
 

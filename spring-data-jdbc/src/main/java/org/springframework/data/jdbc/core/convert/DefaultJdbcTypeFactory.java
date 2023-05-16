@@ -29,6 +29,8 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
@@ -67,8 +69,13 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 		Class<?> componentType = arrayColumns.getArrayType(value.getClass());
 
-		SQLType jdbcType = JdbcUtil.targetSqlTypeFor(componentType);
-		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
+		return this.createArray(value, componentType);
+	}
+
+	@Override
+	public Array createArray(Object[] value, Class<?> componentsGenericType) {
+		SQLType jdbcType = JdbcUtil.targetSqlTypeFor(componentsGenericType);
+		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentsGenericType));
 		String typeName = arrayColumns.getArrayTypeName(jdbcType);
 
 		return operations.execute((ConnectionCallback<Array>) c -> c.createArrayOf(typeName, value));

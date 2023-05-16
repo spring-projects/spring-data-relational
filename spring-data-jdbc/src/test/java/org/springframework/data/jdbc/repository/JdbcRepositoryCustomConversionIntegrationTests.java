@@ -15,10 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
@@ -54,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Sanghyuk Jung
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 @ContextConfiguration
 @Transactional
@@ -271,12 +272,11 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		@Override
 		public JdbcValue convert(Direction source) {
 
-			int integer = switch (source) {
-				case LEFT -> -1;
-				case CENTER -> 0;
-				case RIGHT -> 1;
+			return switch (source) {
+				case LEFT -> JdbcValue.of(-1, JDBCType.INTEGER);
+				case CENTER -> JdbcValue.of(0, JDBCType.INTEGER);
+				case RIGHT -> JdbcValue.of(1, JDBCType.INTEGER);
 			};
-			return JdbcValue.of(integer, JDBCType.INTEGER);
 		}
 	}
 

@@ -21,6 +21,8 @@ import java.sql.Array;
  * Allows the creation of instances of database dependent types, e.g. {@link Array}.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public interface JdbcTypeFactory {
@@ -32,8 +34,16 @@ public interface JdbcTypeFactory {
 	 */
 	static JdbcTypeFactory unsupported() {
 
-		return value -> {
-			throw new UnsupportedOperationException("This JdbcTypeFactory does not support Array creation");
+		return new JdbcTypeFactory() {
+			@Override
+			public Array createArray(Object[] value) {
+				throw new UnsupportedOperationException("This JdbcTypeFactory does not support Array creation");
+			}
+
+			@Override
+			public Array createArray(Object[] value, Class<?> componentsGenericType) {
+				throw new UnsupportedOperationException("This JdbcTypeFactory does not support Array creation");
+			}
 		};
 	}
 
@@ -44,4 +54,6 @@ public interface JdbcTypeFactory {
 	 * @return an {@link Array}. Guaranteed to be not {@literal null}.
 	 */
 	Array createArray(Object[] value);
+
+	Array createArray(Object[] value, Class<?> componentsGenericType);
 }
