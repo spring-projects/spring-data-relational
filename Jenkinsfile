@@ -33,6 +33,7 @@ pipeline {
 
 			environment {
 				ARTIFACTORY = credentials("${p['artifactory.credentials']}")
+				TESTCONTAINERS_IMAGE_SUBSTITUTOR = 'org.springframework.data.ProxyImageNameSubstitutor'
 			}
 
 			steps {
@@ -49,7 +50,7 @@ pipeline {
 			when {
 				beforeAgent(true)
 				allOf {
-					branch(pattern: "main|(\\d\\.\\d\\.x)", comparator: "REGEXP")
+					branch(pattern: "issue/proxy|main|(\\d\\.\\d\\.x)", comparator: "REGEXP") // TODO
 					not { triggeredBy 'UpstreamCause' }
 				}
 			}
@@ -61,6 +62,7 @@ pipeline {
 					options { timeout(time: 30, unit: 'MINUTES') }
 					environment {
 						ARTIFACTORY = credentials("${p['artifactory.credentials']}")
+						TESTCONTAINERS_IMAGE_SUBSTITUTOR = 'org.springframework.data.ProxyImageNameSubstitutor'
 					}
 					steps {
 						script {
