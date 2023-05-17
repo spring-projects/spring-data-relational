@@ -32,10 +32,9 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
+import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -736,7 +735,7 @@ class SqlGeneratorUnitTests {
 	@Nullable
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
 		return createSqlGenerator(type, AnsiDialect.INSTANCE)
-				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
+				.getJoin(context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));
 	}
 
 	@Test // DATAJDBC-340
@@ -934,12 +933,12 @@ class SqlGeneratorUnitTests {
 	@Nullable
 	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
 
-		return createSqlGenerator(type, AnsiDialect.INSTANCE)
-				.getColumn(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
+		return createSqlGenerator(type, AnsiDialect.INSTANCE).getColumn(
+				context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));
 	}
 
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> baseType) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, baseType);
+		return PersistentPropertyPathTestUtils.getPath(path, baseType, context);
 	}
 
 	@SuppressWarnings("unused")

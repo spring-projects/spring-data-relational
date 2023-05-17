@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -63,7 +64,7 @@ class WritingContext<T> {
 		this.rootIdValueSource = IdValueSource.forInstance(root,
 				context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
 		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded()) //
-				.filter(PersistentPropertyPathExtension::isWritable).toList();
+				.filter(AggregatePath::isWritable).toList();
 	}
 
 	/**

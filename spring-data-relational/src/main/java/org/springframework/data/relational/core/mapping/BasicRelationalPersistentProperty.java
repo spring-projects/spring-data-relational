@@ -226,6 +226,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
+	public SqlIdentifier getReverseColumnName(AggregatePath path) {
+		return collectionIdColumnName.get()
+				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
+	}
+
+	@Override
 	public SqlIdentifier getKeyColumn() {
 
 		if (!isQualified()) {

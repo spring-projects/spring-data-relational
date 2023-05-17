@@ -31,6 +31,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -65,7 +66,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		String propertyName = "someList";
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty(propertyName);
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(DummyEntity.class, propertyName);
+		AggregatePath path = getPersistentPropertyPath(DummyEntity.class, propertyName);
 
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
@@ -78,7 +79,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		RelationalPersistentProperty listProperty = context //
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty(propertyName);
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(DummyEntity.class, propertyName);
+		AggregatePath path = getPersistentPropertyPath(DummyEntity.class, propertyName);
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("WITH_COLLECTIONS_KEY"));
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("some_value"));
@@ -90,7 +91,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		RelationalPersistentProperty listProperty = context //
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty("overrideList");
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(WithCollections.class, "overrideList");
+		AggregatePath path = getPersistentPropertyPath(WithCollections.class, "overrideList");
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
@@ -128,12 +129,13 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		});
 	}
 
-	private PersistentPropertyPathExtension getPersistentPropertyPath(Class<?> type, String propertyName) {
+	private AggregatePath getPersistentPropertyPath(Class<?> type, String propertyName) {
+
 		PersistentPropertyPath<RelationalPersistentProperty> path = context
 				.findPersistentPropertyPaths(type, p -> p.getName().equals(propertyName)).getFirst()
 				.orElseThrow(() -> new AssertionFailedError(String.format("Couldn't find path for '%s'", propertyName)));
 
-		return new PersistentPropertyPathExtension(context, path);
+		return context.getAggregatePath( path);
 	}
 
 	@SuppressWarnings("unused")

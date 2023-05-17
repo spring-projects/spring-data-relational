@@ -29,14 +29,18 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Jens Schauder
  */
 @UtilityClass
-public class PropertyPathTestingUtils {
+public class PersistentPropertyPathTestUtils {
 
-	public static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
-																			  RelationalMappingContext context) {
+	public static PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class source,
+																			   RelationalMappingContext context) {
 
 		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
 				.findPersistentPropertyPaths(source, p -> true);
 
-		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
+		return persistentPropertyPaths
+				.filter(p -> p.toDotPath().equals(path))
+				.stream()
+				.findFirst()
+				.orElse(null);
 	}
 }

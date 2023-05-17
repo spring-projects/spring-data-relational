@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -35,12 +36,13 @@ import org.springframework.jdbc.core.RowMapper;
  */
 class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 
-	private final PersistentPropertyPathExtension path;
+	private final AggregatePath path;
 	private final JdbcConverter converter;
 	private final Identifier identifier;
 	private final SqlIdentifier keyColumn;
 
-	MapEntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier, SqlIdentifier keyColumn) {
+	MapEntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier, SqlIdentifier keyColumn) {
+
 		this.path = path;
 		this.converter = converter;
 		this.identifier = identifier;

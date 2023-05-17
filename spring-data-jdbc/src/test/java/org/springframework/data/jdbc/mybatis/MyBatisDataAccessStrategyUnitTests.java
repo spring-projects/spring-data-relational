@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
+import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -54,7 +54,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session, IdentifierProcessing.ANSI);
 
-	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two",
+	PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath("one.two",
 			DummyEntity.class, context);
 
 	@BeforeEach

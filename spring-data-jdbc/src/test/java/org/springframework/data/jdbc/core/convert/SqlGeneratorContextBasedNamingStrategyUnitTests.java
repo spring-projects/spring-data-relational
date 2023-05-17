@@ -26,8 +26,8 @@ import org.assertj.core.api.SoftAssertions;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -157,7 +157,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	}
 
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
-		return PersistentPropertyPathTestUtils.getPath(this.context, path, DummyEntity.class);
+		return PersistentPropertyPathTestUtils.getPath(path, DummyEntity.class, this.context);
 	}
 
 	/**

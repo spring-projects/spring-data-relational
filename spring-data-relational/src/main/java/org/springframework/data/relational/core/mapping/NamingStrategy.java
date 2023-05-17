@@ -88,8 +88,27 @@ public interface NamingStrategy {
 		return property.getOwner().getTableName().getReference();
 	}
 
+	/**
+	 *
+	 * @deprecated use {@link #getReverseColumnName(AggregatePath)} instead.
+	 */
+	@Deprecated(since = "3.2", forRemoval = true)
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
-		return getTableName(path.getIdDefiningParentPath().getRequiredLeafEntity().getType());
+		return getReverseColumnName(path.getAggregatePath());
+	}
+
+	/**
+	 * provides the name of the column referencing the parent entity.
+	 *
+	 * @param path the path for which the reverse column name should get determined. Must not be null.
+	 * @return a column name.
+	 *
+	 * @since 3.2
+	 */
+	default String getReverseColumnName(AggregatePath path){
+
+		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
+		return getTableName(idDefiningParentPath.getRequiredLeafEntity().getType());
 	}
 
 	/**
@@ -104,4 +123,5 @@ public interface NamingStrategy {
 
 		return getReverseColumnName(property) + "_key";
 	}
+
 }

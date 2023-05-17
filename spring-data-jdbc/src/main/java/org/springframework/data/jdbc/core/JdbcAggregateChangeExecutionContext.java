@@ -15,16 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -38,11 +29,12 @@ import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -65,7 +57,7 @@ class JdbcAggregateChangeExecutionContext {
 	private static final String UPDATE_FAILED = "Failed to update entity [%s]; Id [%s] not found in database";
 	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]; The entity was updated since it was rea or it isn't in the database at all";
 
-	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context;
+	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 	private final DataAccessStrategy accessStrategy;
 
@@ -184,12 +176,11 @@ class JdbcAggregateChangeExecutionContext {
 		Object id = getParentId(action);
 
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, new PersistentPropertyPathExtension(context, action.getPropertyPath()), id);
+				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()), id);
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
 				.entrySet()) {
-			identifier = identifier.withQualifier(new PersistentPropertyPathExtension(context, qualifier.getKey()),
-					qualifier.getValue());
+			identifier = identifier.withQualifier(context.getAggregatePath(qualifier.getKey()), qualifier.getValue());
 		}
 
 		return identifier.build();
@@ -197,20 +188,16 @@ class JdbcAggregateChangeExecutionContext {
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
 
-		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, action.getPropertyPath());
-		PersistentPropertyPathExtension idPath = path.getIdDefiningParentPath();
-
-		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, idPath);
+		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, context.getAggregatePath(action.getPropertyPath()).getIdDefiningParentPath());
 
 		return getPotentialGeneratedIdFrom(idOwningAction);
 	}
 
-	private DbAction.WithEntity<?> getIdOwningAction(DbAction.WithEntity<?> action,
-			PersistentPropertyPathExtension idPath) {
+	private DbAction.WithEntity<?> getIdOwningAction(DbAction.WithEntity<?> action, AggregatePath idPath) {
 
 		if (!(action instanceof DbAction.WithDependingOn<?> withDependingOn)) {
 
-			Assert.state(idPath.getLength() == 0,
+			Assert.state(idPath.isRoot(),
 					"When the id path is not empty the id providing action should be of type WithDependingOn");
 
 			return action;

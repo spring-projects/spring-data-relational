@@ -47,7 +47,8 @@ import org.springframework.data.mapping.model.SpELExpressionEvaluator;
 import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -86,14 +87,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
 	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
 	 * creation. Use
-	 * {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
+	 * {@link #BasicJdbcConverter(RelationalMappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
 	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 */
 	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			RelationalMappingContext context,
 			RelationResolver relationResolver) {
 
 		super(context, new JdbcCustomConversions());
@@ -116,7 +117,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @since 2.0
 	 */
 	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			RelationalMappingContext context,
 			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory,
 			IdentifierProcessing identifierProcessing) {
 
@@ -300,12 +301,13 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	@Override
 	public <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
-		return new ReadingContext<T>(new PersistentPropertyPathExtension(getMappingContext(), entity),
+		return new ReadingContext<T>(getMappingContext().getAggregatePath( entity),
 				new ResultSetAccessor(resultSet), Identifier.empty(), key).mapRow();
 	}
 
+
 	@Override
-	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
+	public <T> T mapRow(AggregatePath path, ResultSet resultSet, Identifier identifier, Object key) {
 		return new ReadingContext<T>(path, new ResultSetAccessor(resultSet), identifier, key).mapRow();
 	}
 
@@ -350,8 +352,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private final RelationalPersistentEntity<T> entity;
 
-		private final PersistentPropertyPathExtension rootPath;
-		private final PersistentPropertyPathExtension path;
+		private final AggregatePath rootPath;
+		private final AggregatePath path;
 		private final Identifier identifier;
 		private final Object key;
 
@@ -360,7 +362,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private final ResultSetAccessor accessor;
 
 		@SuppressWarnings("unchecked")
-		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSetAccessor accessor, Identifier identifier,
+		private ReadingContext(AggregatePath rootPath, ResultSetAccessor accessor, Identifier identifier,
 				Object key) {
 			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
 
@@ -368,7 +370,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			this.entity = entity;
 			this.rootPath = rootPath;
-			this.path = new PersistentPropertyPathExtension(getMappingContext(), this.entity);
+			this.path = getMappingContext().getAggregatePath( this.entity);
 			this.identifier = identifier;
 			this.key = key;
 			this.propertyValueProvider = new JdbcPropertyValueProvider(path, accessor);
@@ -376,10 +378,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.accessor = accessor;
 		}
 
-		private ReadingContext(RelationalPersistentEntity<T> entity, PersistentPropertyPathExtension rootPath,
-				PersistentPropertyPathExtension path, Identifier identifier, Object key,
+		private ReadingContext(RelationalPersistentEntity<T> entity, AggregatePath rootPath,
+				AggregatePath path, Identifier identifier, Object key,
 				JdbcPropertyValueProvider propertyValueProvider,
 				JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider, ResultSetAccessor accessor) {
+
 			this.entity = entity;
 			this.rootPath = rootPath;
 			this.path = path;

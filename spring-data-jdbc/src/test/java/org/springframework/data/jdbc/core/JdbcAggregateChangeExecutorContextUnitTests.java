@@ -36,7 +36,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.IdValueSource;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -250,8 +250,8 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), idValueSource);
 	}
 
-	PersistentPropertyPathExtension toPathExt(String path) {
-		return new PersistentPropertyPathExtension(context, getPersistentPropertyPath(path));
+	AggregatePath toAggregatePath(String path) {
+		return context.getAggregatePath(getPersistentPropertyPath(path));
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> getPersistentPropertyPath(String propertyName) {
@@ -259,7 +259,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	Identifier createBackRef(long value) {
-		return forBackReferences(converter, toPathExt("content"), value).build();
+		return forBackReferences(converter, toAggregatePath("content"), value).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

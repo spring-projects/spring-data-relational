@@ -21,8 +21,8 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -70,7 +70,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 	};
 
-	private RelationalMappingContext context = new JdbcMappingContext();
+	private RelationalMappingContext context;
 
 	@Test // DATAJDBC-107
 	void findOneWithOverriddenFixedTableName() {
@@ -122,7 +122,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"DUMMY_ENTITY\" = :rootId");
+				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -137,7 +137,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_SECONDLEVELREFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" IN "
 						+ "(SELECT \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_L1ID\" "
 						+ "FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"DUMMY_ENTITY\" = :rootId)");
+						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -158,7 +158,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"DUMMY_ENTITY\" IS NOT NULL");
+				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -173,7 +173,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_SECONDLEVELREFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" IN "
 						+ "(SELECT \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_L1ID\" "
 						+ "FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"DUMMY_ENTITY\" IS NOT NULL)");
+						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-113
@@ -188,7 +188,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 	}
 
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, DummyEntity.class);
+		return PersistentPropertyPathTestUtils.getPath(path, DummyEntity.class, context);
 	}
 
 	/**
@@ -196,7 +196,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+		context = new JdbcMappingContext(namingStrategy);
 		JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 			throw new UnsupportedOperationException();
 		});

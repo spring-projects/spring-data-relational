@@ -20,7 +20,6 @@ import java.util.Objects;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
@@ -35,7 +34,9 @@ import org.springframework.util.StringUtils;
  * @author Daniil Razorenov
  * @author Kurt Niemi
  * @since 1.1
+ * @deprecated use {@link AggregatePath} instead
  */
+@Deprecated(since = "3.2", forRemoval = true)
 public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
@@ -155,8 +156,8 @@ public class PersistentPropertyPathExtension {
 			if (this.path == null) {
 				throw new IllegalStateException("Couldn't resolve leaf PersistentEntity absent path");
 			}
-			throw new IllegalStateException(String.format("Couldn't resolve leaf PersistentEntity for type %s",
-					path.getLeafProperty().getActualType()));
+			throw new IllegalStateException(
+					String.format("Couldn't resolve leaf PersistentEntity for type %s", path.getLeafProperty().getActualType()));
 		}
 
 		return entity;
@@ -388,14 +389,6 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
-	 * @return whether the leaf end of the path is ordered, i.e. the data to populate must be ordered.
-	 * @see RelationalPersistentProperty#isOrdered()
-	 */
-	public boolean isOrdered() {
-		return path != null && path.getLeafProperty().isOrdered();
-	}
-
-	/**
 	 * @return {@literal true} if the leaf property of this path is a {@link java.util.Map}.
 	 * @see RelationalPersistentProperty#isMap()
 	 */
@@ -481,8 +474,7 @@ public class PersistentPropertyPathExtension {
 	private SqlIdentifier prefixWithTableAlias(SqlIdentifier columnName) {
 
 		SqlIdentifier tableAlias = getTableAlias();
-		return tableAlias == null ? columnName
-				: columnName.transform(name -> tableAlias.getReference() + "_" + name);
+		return tableAlias == null ? columnName : columnName.transform(name -> tableAlias.getReference() + "_" + name);
 	}
 
 	@Override
@@ -499,5 +491,14 @@ public class PersistentPropertyPathExtension {
 	@Override
 	public int hashCode() {
 		return Objects.hash(entity, path);
+	}
+
+	public AggregatePath getAggregatePath() {
+		if (path != null) {
+
+			return ((RelationalMappingContext) context).getAggregatePath(path);
+		} else {
+			return ((RelationalMappingContext) context).getAggregatePath(entity);
+		}
 	}
 }

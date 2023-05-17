@@ -26,6 +26,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -67,7 +68,7 @@ class SqlGenerator {
 	static final SqlIdentifier ROOT_ID_PARAMETER = SqlIdentifier.unquoted("rootId");
 
 	private final RelationalPersistentEntity<?> entity;
-	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final RelationalMappingContext mappingContext;
 	private final RenderContext renderContext;
 
 	private final SqlContext sqlContext;
@@ -121,10 +122,10 @@ class SqlGenerator {
 	 * @param filterColumn the column to apply the IN-condition to.
 	 * @return the IN condition
 	 */
-	private Condition getSubselectCondition(PersistentPropertyPathExtension path,
-			Function<Column, Condition> rootCondition, Column filterColumn) {
+	private Condition getSubselectCondition(AggregatePath path, Function<Column, Condition> rootCondition,
+			Column filterColumn) {
 
-		PersistentPropertyPathExtension parentPath = path.getParentPath();
+		AggregatePath parentPath = path.getParentPath();
 
 		if (!parentPath.hasIdProperty()) {
 			if (parentPath.getLength() > 1) {
@@ -216,7 +217,7 @@ class SqlGenerator {
 		Assert.notNull(parentIdentifier, "identifier must not be null");
 		Assert.notNull(propertyPath, "propertyPath must not be null");
 
-		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(mappingContext, propertyPath);
+		AggregatePath path = mappingContext.getAggregatePath(propertyPath);
 
 		return getFindAllByProperty(parentIdentifier, path.getQualifierColumn(), path.isOrdered());
 	}
@@ -399,7 +400,7 @@ class SqlGenerator {
 			return render(deleteAll.build());
 		}
 
-		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path), Column::isNotNull);
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), Column::isNotNull);
 	}
 
 	/**
@@ -410,7 +411,7 @@ class SqlGenerator {
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path),
 				filterColumn -> filterColumn.isEqualTo(getBindMarker(ROOT_ID_PARAMETER)));
 	}
 
@@ -423,7 +424,7 @@ class SqlGenerator {
 	 */
 	String createDeleteInByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path),
 				filterColumn -> filterColumn.in(getBindMarker(IDS_SQL_PARAMETER)));
 	}
 
@@ -480,7 +481,7 @@ class SqlGenerator {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+			AggregatePath extPath = mappingContext.getAggregatePath(path);
 
 			// add a join if necessary
 			Join join = getJoin(extPath);
@@ -537,13 +538,13 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Create a {@link Column} for {@link PersistentPropertyPathExtension}.
+	 * Create a {@link Column} for {@link AggregatePath}.
 	 *
 	 * @param path the path to the column in question.
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	@Nullable
-	Column getColumn(PersistentPropertyPathExtension path) {
+	Column getColumn(AggregatePath path) {
 
 		// an embedded itself doesn't give a column, its members will though.
 		// if there is a collection or map on the path it won't get selected at all, but it will get loaded with a separate
@@ -572,7 +573,7 @@ class SqlGenerator {
 	}
 
 	@Nullable
-	Join getJoin(PersistentPropertyPathExtension path) {
+	Join getJoin(AggregatePath path) {
 
 		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
 			return null;
@@ -580,7 +581,7 @@ class SqlGenerator {
 
 		Table currentTable = sqlContext.getTable(path);
 
-		PersistentPropertyPathExtension idDefiningParentPath = path.getIdDefiningParentPath();
+		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
 		return new Join( //
@@ -707,8 +708,7 @@ class SqlGenerator {
 				.where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER)));
 	}
 
-	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
-			Function<Column, Condition> rootCondition) {
+	private String createDeleteByPathAndCriteria(AggregatePath path, Function<Column, Condition> rootCondition) {
 
 		Table table = Table.create(path.getQualifiedTableName());
 
@@ -926,10 +926,10 @@ class SqlGenerator {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+			AggregatePath aggregatePath = mappingContext.getAggregatePath( path);
 
 			// add a join if necessary
-			Join join = getJoin(extPath);
+			Join join = getJoin(aggregatePath);
 			if (join != null) {
 				baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
 			}
@@ -960,7 +960,7 @@ class SqlGenerator {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+			AggregatePath extPath = mappingContext.getAggregatePath(path);
 
 			// add a join if necessary
 			Join join = getJoin(extPath);

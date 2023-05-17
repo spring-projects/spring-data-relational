@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.model.PropertyValueProvider;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -31,14 +32,14 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  */
 class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<RelationalPersistentProperty> {
 
-	private final PersistentPropertyPathExtension basePath;
+	private final AggregatePath basePath;
 	private final ResultSetAccessor resultSet;
 
 	/**
 	 * @param basePath path from the aggregate root relative to which all properties get resolved.
 	 * @param resultSet the {@link ResultSetAccessor} from which to obtain the actual values.
 	 */
-	JdbcBackReferencePropertyValueProvider(PersistentPropertyPathExtension basePath, ResultSetAccessor resultSet) {
+	JdbcBackReferencePropertyValueProvider(AggregatePath basePath, ResultSetAccessor resultSet) {
 
 		this.resultSet = resultSet;
 		this.basePath = basePath;

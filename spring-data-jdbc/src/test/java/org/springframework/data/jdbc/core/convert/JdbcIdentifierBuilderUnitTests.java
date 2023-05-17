@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.List;
@@ -25,8 +24,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 
 /**
  * Unit tests for the {@link JdbcIdentifierBuilder}.
@@ -55,7 +55,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	@Test // DATAJDBC-326
 	public void qualifiersForMaps() {
 
-		PersistentPropertyPathExtension path = getPath("children");
+		AggregatePath path = getPath("children");
 
 		Identifier identifier = JdbcIdentifierBuilder //
 				.forBackReferences(converter, path, "parent-eins") //
@@ -73,7 +73,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	@Test // DATAJDBC-326
 	public void qualifiersForLists() {
 
-		PersistentPropertyPathExtension path = getPath("moreChildren");
+		AggregatePath path = getPath("moreChildren");
 
 		Identifier identifier = JdbcIdentifierBuilder //
 				.forBackReferences(converter, path, "parent-eins") //
@@ -116,8 +116,8 @@ public class JdbcIdentifierBuilderUnitTests {
 				);
 	}
 
-	private PersistentPropertyPathExtension getPath(String dotPath) {
-		return new PersistentPropertyPathExtension(context, toPath(dotPath, DummyEntity.class, context));
+	private AggregatePath getPath(String dotPath) {
+		return context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(dotPath, DummyEntity.class, context));
 	}
 
 	@SuppressWarnings("unused")

@@ -15,8 +15,12 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
@@ -39,6 +43,8 @@ public class RelationalMappingContext
 		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
 	private final NamingStrategy namingStrategy;
+	private final Map<Object, AggregatePath> aggregatePathCache = new ConcurrentHashMap<>();
+
 	private boolean forceQuote = true;
 
 	private final ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
@@ -129,4 +135,18 @@ public class RelationalMappingContext
 		persistentProperty.setExpressionEvaluator(this.expressionEvaluator);
 	}
 
+	/**
+	 * Provides an {@link AggregatePath} for the provided {@link PersistentPropertyPath}.
+	 *
+	 * @param path the path to provide an {@link AggregatePath} for. Must not be null.
+	 * @return an {@link AggregatePath} on the provided path.
+	 * @since 3.2
+	 */
+	public AggregatePath getAggregatePath(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+		return aggregatePathCache.computeIfAbsent(path, key -> new AggregatePath(this, path));
+	}
+
+	public AggregatePath getAggregatePath(RelationalPersistentEntity<?> type) {
+		return aggregatePathCache.computeIfAbsent(type, key -> new AggregatePath(this, type));
+	}
 }

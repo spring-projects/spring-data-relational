@@ -28,12 +28,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
@@ -297,8 +297,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(identifier, "identifier must not be null");
 		Assert.notNull(propertyPath, "propertyPath must not be null");
 
-		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, propertyPath);
-		Class<?> actualType = path.getActualType();
+		AggregatePath path = context.getAggregatePath(propertyPath);
+		Class<?> actualType = path.getLeafEntity().getType();
 
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, propertyPath);
@@ -339,8 +339,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
 		try {
-			return Optional.ofNullable(
-					operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(domainType)));
+			return Optional.ofNullable(operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(domainType)));
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
@@ -394,11 +393,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), converter);
 	}
 
-	private EntityRowMapper<?> getEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
+	private EntityRowMapper<?> getEntityRowMapper(AggregatePath path, Identifier identifier) {
 		return new EntityRowMapper<>(path, converter, identifier);
 	}
 
-	private RowMapper<?> getMapEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
+	private RowMapper<?> getMapEntityRowMapper(AggregatePath path, Identifier identifier) {
 
 		SqlIdentifier keyColumn = path.getQualifierColumn();
 		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + path);

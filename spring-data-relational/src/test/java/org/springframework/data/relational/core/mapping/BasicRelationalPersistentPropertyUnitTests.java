@@ -64,7 +64,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.findPersistentPropertyPaths(DummyEntity.class, p -> p.getName().equals("someList")).getFirst()
 				.orElseThrow(() -> new AssertionFailedError("Couldn't find path for 'someList'"));
 
-		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path)))
+		assertThat(listProperty.getReverseColumnName(context.getAggregatePath(path)))
 				.isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
@@ -89,7 +89,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("someList");
 
 		assertThat(property.getKeyColumn()).isEqualTo(quoted("key_col"));
-		assertThat(property.getReverseColumnName(null)).isEqualTo(quoted("id_col"));
 	}
 
 	@Test // DATAJDBC-111

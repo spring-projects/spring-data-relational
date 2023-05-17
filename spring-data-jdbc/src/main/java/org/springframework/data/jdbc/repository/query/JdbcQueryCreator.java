@@ -25,10 +25,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -117,8 +116,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param tree the tree structure defining the predicate of the query.
 	 * @param parameters parameters for the predicate.
 	 */
-	static void validate(PartTree tree, Parameters<?, ?> parameters,
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+	static void validate(PartTree tree, Parameters<?, ?> parameters, RelationalMappingContext context) {
 
 		RelationalQueryCreator.validate(tree, parameters);
 
@@ -127,30 +125,28 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 				PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = context
 						.getPersistentPropertyPath(part.getProperty());
-				PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, propertyPath);
+				AggregatePath path = context.getAggregatePath(propertyPath);
 
-				for (PersistentPropertyPathExtension pathToValidate = path; path.getLength() > 0; path = path.getParentPath()) {
+				for (AggregatePath pathToValidate = path; path.getLength() > 0; path = path.getParentPath()) {
 					validateProperty(pathToValidate);
 				}
 			}
 		}
 	}
 
-	private static void validateProperty(PersistentPropertyPathExtension path) {
+	private static void validateProperty(AggregatePath path) {
 
 		if (!path.getParentPath().isEmbedded() && path.getLength() > 1) {
-			throw new IllegalArgumentException(
-					String.format("Cannot query by nested property: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
+			throw new IllegalArgumentException(String.format("Cannot query by nested property: %s", path.toDotPath()));
 		}
 
 		if (path.isMultiValued() || path.isMap()) {
-			throw new IllegalArgumentException(String.format("Cannot query by multi-valued property: %s",
-					path.getRequiredPersistentPropertyPath().getLeafProperty().getName()));
+			throw new IllegalArgumentException(
+					String.format("Cannot query by multi-valued property: %s", path.getRequiredLeafProperty().getName()));
 		}
 
 		if (!path.isEmbedded() && path.isEntity()) {
-			throw new IllegalArgumentException(
-					String.format("Cannot query by nested entity: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
+			throw new IllegalArgumentException(String.format("Cannot query by nested entity: %s", path.toDotPath()));
 		}
 	}
 
@@ -245,22 +241,21 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, path);
+			AggregatePath aggregatePath = context.getAggregatePath(path);
 
 			if (returnedType.needsCustomConstruction()) {
-				if (!returnedType.getInputProperties()
-						.contains(extPath.getRequiredPersistentPropertyPath().getBaseProperty().getName())) {
+				if (!returnedType.getInputProperties().contains(aggregatePath.getBaseProperty().getName())) {
 					continue;
 				}
 			}
 
 			// add a join if necessary
-			Join join = getJoin(sqlContext, extPath);
+			Join join = getJoin(sqlContext, aggregatePath);
 			if (join != null) {
 				joinTables.add(join);
 			}
 
-			Column column = getColumn(sqlContext, extPath);
+			Column column = getColumn(sqlContext, aggregatePath);
 			if (column != null) {
 				columnExpressions.add(column);
 			}
@@ -277,14 +272,14 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	}
 
 	/**
-	 * Create a {@link Column} for {@link PersistentPropertyPathExtension}.
+	 * Create a {@link Column} for {@link AggregatePath}.
 	 *
 	 * @param sqlContext
 	 * @param path the path to the column in question.
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	@Nullable
-	private Column getColumn(SqlContext sqlContext, PersistentPropertyPathExtension path) {
+	private Column getColumn(SqlContext sqlContext, AggregatePath path) {
 
 		// an embedded itself doesn't give an column, its members will though.
 		// if there is a collection or map on the path it won't get selected at all, but it will get loaded with a separate
@@ -313,7 +308,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	}
 
 	@Nullable
-	Join getJoin(SqlContext sqlContext, PersistentPropertyPathExtension path) {
+	Join getJoin(SqlContext sqlContext, AggregatePath path) {
 
 		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
 			return null;
@@ -321,7 +316,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		Table currentTable = sqlContext.getTable(path);
 
-		PersistentPropertyPathExtension idDefiningParentPath = path.getIdDefiningParentPath();
+		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
 		return new Join( //
