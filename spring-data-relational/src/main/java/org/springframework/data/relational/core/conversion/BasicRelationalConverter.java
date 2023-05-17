@@ -38,6 +38,7 @@ import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
@@ -61,7 +62,7 @@ import org.springframework.util.ClassUtils;
  */
 public class BasicRelationalConverter implements RelationalConverter {
 
-	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
+	private final RelationalMappingContext context;
 	private final ConfigurableConversionService conversionService;
 	private final EntityInstantiators entityInstantiators;
 	private final CustomConversions conversions;
@@ -71,8 +72,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 *
 	 * @param context must not be {@literal null}.
 	 */
-	public BasicRelationalConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+	public BasicRelationalConverter(RelationalMappingContext context) {
 		this(context, new CustomConversions(StoreConversions.NONE, Collections.emptyList()), new DefaultConversionService(),
 				new EntityInstantiators());
 	}
@@ -83,22 +83,18 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param context must not be {@literal null}.
 	 * @param conversions must not be {@literal null}.
 	 */
-	public BasicRelationalConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions) {
+	public BasicRelationalConverter(RelationalMappingContext context, CustomConversions conversions) {
 		this(context, conversions, new DefaultConversionService(), new EntityInstantiators());
 	}
 
 	@SuppressWarnings("unchecked")
-	private BasicRelationalConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions, ConfigurableConversionService conversionService,
-			EntityInstantiators entityInstantiators) {
+	private BasicRelationalConverter(RelationalMappingContext context, CustomConversions conversions,
+			ConfigurableConversionService conversionService, EntityInstantiators entityInstantiators) {
 
 		Assert.notNull(context, "MappingContext must not be null");
 		Assert.notNull(conversions, "CustomConversions must not be null");
 
-		this.context = (MappingContext) context;
+		this.context = context;
 		this.conversionService = conversionService;
 		this.entityInstantiators = entityInstantiators;
 		this.conversions = conversions;
@@ -116,7 +112,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	}
 
 	@Override
-	public MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
+	public RelationalMappingContext getMappingContext() {
 		return context;
 	}
 

@@ -73,6 +73,11 @@ class CachingNamingStrategy implements NamingStrategy {
 	}
 
 	@Override
+	public String getReverseColumnName(RelationalPersistentEntity<?> owner) {
+		return delegate.getReverseColumnName(owner);
+	}
+
+	@Override
 	public String getSchema() {
 		return schema.get();
 	}

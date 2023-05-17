@@ -15,17 +15,11 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
+
 import junit.framework.AssertionFailedError;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.MappedCollection;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -33,9 +27,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -63,9 +64,10 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		String propertyName = "someList";
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty(propertyName);
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(DummyEntity.class, propertyName);
+		AggregatePath path = getPersistentPropertyPath(DummyEntity.class, propertyName);
 
-		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("dummy_column_name"));
+		assertThat(listProperty.getReverseColumnName(path.getRequiredBaseProperty().getOwner()))
+				.isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
 
@@ -76,10 +78,11 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		RelationalPersistentProperty listProperty = context //
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty(propertyName);
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(DummyEntity.class, propertyName);
+		AggregatePath path = getPersistentPropertyPath(DummyEntity.class, propertyName);
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("WITH_COLLECTIONS_KEY"));
-		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("some_value"));
+		assertThat(listProperty.getReverseColumnName(path.getRequiredBaseProperty().getOwner()))
+				.isEqualTo(quoted("some_value"));
 	}
 
 	@Test // DATAJDBC-331
@@ -88,10 +91,11 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		RelationalPersistentProperty listProperty = context //
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty("overrideList");
-		PersistentPropertyPathExtension path = getPersistentPropertyPath(WithCollections.class, "overrideList");
+		AggregatePath path = getPersistentPropertyPath(WithCollections.class, "overrideList");
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
-		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
+		assertThat(listProperty.getReverseColumnName(path.getRequiredBaseProperty().getOwner()))
+				.isEqualTo(quoted("override_id"));
 	}
 
 	@Test // GH-938
@@ -126,12 +130,13 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		});
 	}
 
-	private PersistentPropertyPathExtension getPersistentPropertyPath(Class<?> type, String propertyName) {
+	private AggregatePath getPersistentPropertyPath(Class<?> type, String propertyName) {
+
 		PersistentPropertyPath<RelationalPersistentProperty> path = context
 				.findPersistentPropertyPaths(type, p -> p.getName().equals(propertyName)).getFirst()
 				.orElseThrow(() -> new AssertionFailedError(String.format("Couldn't find path for '%s'", propertyName)));
 
-		return new PersistentPropertyPathExtension(context, path);
+		return context.getAggregatePath(path);
 	}
 
 	@SuppressWarnings("unused")
@@ -142,8 +147,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
@@ -152,13 +156,13 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final UUID uuid;
 
 		@MappedCollection(idColumn = "dummy_column_name",
-				keyColumn = "dummy_key_column_name")
-		private List<Integer> someList;
+				keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
 
-		private DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime, AggregateReference<DummyEntity, Long> reference, List<String> listField, UUID uuid) {
+		private DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime,
+				AggregateReference<DummyEntity, Long> reference, List<String> listField, UUID uuid) {
 			this.id = id;
 			this.someEnum = someEnum;
 			this.localDateTime = localDateTime;
@@ -224,8 +228,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 	private static class WithCollections {
 
-		@Column(value = "some_value")
-		List<Integer> someList;
+		@Column(value = "some_value") List<Integer> someList;
 
 		@Column(value = "some_value") //
 		@MappedCollection(idColumn = "override_id", keyColumn = "override_key") //

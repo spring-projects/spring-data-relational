@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.util.Assert;
 
@@ -88,8 +87,16 @@ public interface NamingStrategy {
 		return property.getOwner().getTableName().getReference();
 	}
 
+	/**
+	 * @deprecated use {@link #getReverseColumnName(AggregatePath)} instead.
+	 */
+	@Deprecated(since = "3.2", forRemoval = true)
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
-		return getTableName(path.getIdDefiningParentPath().getRequiredLeafEntity().getType());
+		return getReverseColumnName(path.getRequiredLeafEntity());
+	}
+
+	default String getReverseColumnName(RelationalPersistentEntity<?> owner) {
+		return getTableName(owner.getType());
 	}
 
 	/**
@@ -104,4 +111,5 @@ public interface NamingStrategy {
 
 		return getReverseColumnName(property) + "_key";
 	}
+
 }

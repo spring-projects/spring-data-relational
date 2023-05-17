@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -52,18 +52,20 @@ class SqlContext {
 		return table;
 	}
 
-	Table getTable(PersistentPropertyPathExtension path) {
+	Table getTable(AggregatePath path) {
 
-		SqlIdentifier tableAlias = path.getTableAlias();
-		Table table = Table.create(path.getQualifiedTableName());
+		SqlIdentifier tableAlias = path.getTableInfo().tableAlias();
+		Table table = Table.create(path.getTableInfo().qualifiedTableName());
 		return tableAlias == null ? table : table.as(tableAlias);
 	}
 
-	Column getColumn(PersistentPropertyPathExtension path) {
-		return getTable(path).column(path.getColumnName()).as(path.getColumnAlias());
+	Column getColumn(AggregatePath path) {
+		AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
+		AggregatePath.ColumnInfo columnInfo1 = path.getColumnInfo();
+		return getTable(path).column(columnInfo1.name()).as(columnInfo.alias());
 	}
 
-	Column getReverseColumn(PersistentPropertyPathExtension path) {
-		return getTable(path).column(path.getReverseColumnName()).as(path.getReverseColumnNameAlias());
+	Column getReverseColumn(AggregatePath path) {
+		return getTable(path).column(path.getTableInfo().reverseColumnInfo().name()).as(path.getTableInfo().reverseColumnInfo().alias());
 	}
 }

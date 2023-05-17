@@ -15,12 +15,10 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
+
 import junit.framework.AssertionFailedError;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -28,8 +26,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -62,7 +63,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.findPersistentPropertyPaths(DummyEntity.class, p -> p.getName().equals("someList")).getFirst()
 				.orElseThrow(() -> new AssertionFailedError("Couldn't find path for 'someList'"));
 
-		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path)))
+		assertThat(listProperty.getReverseColumnName(path.getLeafProperty().getOwner()))
 				.isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
@@ -87,7 +88,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("someList");
 
 		assertThat(property.getKeyColumn()).isEqualTo(quoted("key_col"));
-		assertThat(property.getReverseColumnName(null)).isEqualTo(quoted("id_col"));
 	}
 
 	@Test // DATAJDBC-111

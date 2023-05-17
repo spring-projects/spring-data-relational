@@ -61,12 +61,17 @@ public class DefaultNamingStrategy implements NamingStrategy {
 		return getColumnNameReferencing(leafEntity);
 	}
 
-	private String getColumnNameReferencing(RelationalPersistentEntity<?> leafEntity) {
+	@Override
+	public String getReverseColumnName(RelationalPersistentEntity<?> parent) {
+		return getColumnNameReferencing(parent);
+	}
+
+	private String getColumnNameReferencing(RelationalPersistentEntity<?> entity) {
 
 		if (foreignKeyNaming == ForeignKeyNaming.IGNORE_RENAMING) {
-			return getTableName(leafEntity.getType());
+			return getTableName(entity.getType());
 		}
 
-		return leafEntity.getTableName().getReference();
+		return entity.getTableName().getReference();
 	}
 }

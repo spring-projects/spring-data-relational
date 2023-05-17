@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
 
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.jdbc.core.RowMapper;
@@ -35,12 +36,27 @@ import org.springframework.jdbc.core.RowMapper;
 public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final RelationalPersistentEntity<T> entity;
-	private final PersistentPropertyPathExtension path;
+	private final AggregatePath path;
 	private final JdbcConverter converter;
 	private final Identifier identifier;
 
+	/**
+	 *
+	 *
+	 * @deprecated use {@link EntityRowMapper#EntityRowMapper(AggregatePath, JdbcConverter, Identifier)} instead
+	 */
+	@Deprecated(since = "3.2", forRemoval = true)
 	@SuppressWarnings("unchecked")
 	public EntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier) {
+
+		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();
+		this.path = path.getAggregatePath();
+		this.converter = converter;
+		this.identifier = identifier;
+	}
+
+	@SuppressWarnings("unchecked")
+	public EntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier) {
 
 		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();
 		this.path = path;

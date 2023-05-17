@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
@@ -238,6 +239,14 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
+	@Test // GH-1525
+	void getAggregatePath() {
+		assertThat(extPath("withId").getAggregatePath()).isNotNull();
+	}
+	@Test // GH-1525
+	void getAggregatePathFromRoot() {
+		assertThat(extPath(entity).getAggregatePath()).isNotNull();
+	}
 	private PersistentPropertyPathExtension extPath(RelationalPersistentEntity<?> entity) {
 		return new PersistentPropertyPathExtension(context, entity);
 	}
@@ -247,7 +256,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> createSimplePath(String path) {
-		return PropertyPathTestingUtils.toPath(path, DummyEntity.class, context);
+		return PersistentPropertyPathTestUtils.getPath(path, DummyEntity.class, context);
 	}
 
 	@SuppressWarnings("unused")

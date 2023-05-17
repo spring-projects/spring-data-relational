@@ -226,6 +226,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
+	public SqlIdentifier getReverseColumnName(RelationalPersistentEntity<?> owner) {
+
+		return collectionIdColumnName.get()
+				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(owner)));
+	}
+
+	@Override
 	public SqlIdentifier getKeyColumn() {
 
 		if (!isQualified()) {

@@ -1,5 +1,3 @@
-package org.springframework.data.jdbc.core;
-
 /*
  * Copyright 2018-2023 the original author or authors.
  *
@@ -15,6 +13,7 @@ package org.springframework.data.jdbc.core;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -22,22 +21,25 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
- * Utility class for easy creation of {@link PersistentPropertyPath} instances for tests.
- *
  * @author Jens Schauder
  */
-public final class PropertyPathTestingUtils {
+public final class PersistentPropertyPathTestUtils {
 
-	private PropertyPathTestingUtils() {
+	private PersistentPropertyPathTestUtils() {
 		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
-	public static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
-																			  RelationalMappingContext context) {
+	public static PersistentPropertyPath<RelationalPersistentProperty> getPath(RelationalMappingContext context,
+																			   String path, Class<?> baseType) {
 
 		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
-				.findPersistentPropertyPaths(source, p -> true);
+				.findPersistentPropertyPaths(baseType, p -> true);
 
-		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
+		return persistentPropertyPaths
+				.filter(p -> p.toDotPath().equals(path))
+				.stream()
+				.findFirst()
+				.orElse(null);
+
 	}
 }
