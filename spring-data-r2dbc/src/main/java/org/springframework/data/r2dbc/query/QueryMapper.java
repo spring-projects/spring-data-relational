@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -50,8 +49,6 @@ import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import static org.springframework.data.relational.core.sql.Expressions.*;
 
 /**
  * Maps {@link CriteriaDefinition} and {@link Sort} objects considering mapping metadata and dialect-specific
@@ -151,7 +148,6 @@ public class QueryMapper {
 		}
 
 		return mappedOrder;
-
 	}
 
 
