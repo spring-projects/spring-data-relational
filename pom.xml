@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-relational-parent</artifactId>
-	<version>3.2.0-SNAPSHOT</version>
+	<version>3.2.0-refactor-path-extension-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Spring Data Relational Parent</name>

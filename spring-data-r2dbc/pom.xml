@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-data-r2dbc</artifactId>
-	<version>3.2.0-SNAPSHOT</version>
+	<version>3.2.0-refactor-path-extension-SNAPSHOT</version>
 
 	<name>Spring Data R2DBC</name>
 	<description>Spring Data module for R2DBC</description>
@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.springframework.data</groupId>
 		<artifactId>spring-data-relational-parent</artifactId>
-		<version>3.2.0-SNAPSHOT</version>
+		<version>3.2.0-refactor-path-extension-SNAPSHOT</version>
 	</parent>
 
 	<properties>
