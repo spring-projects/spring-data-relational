@@ -27,50 +27,74 @@ import java.util.Objects;
  * @author Kurt Niemi
  */
 public class TableModel {
-    private final String schema;
-    private final SqlIdentifier name;
+    private String schema;
+    private SqlIdentifier name;
     private final List<ColumnModel> columns = new ArrayList<ColumnModel>();
     private final List<ColumnModel> keyColumns = new ArrayList<ColumnModel>();
-    private final List<ForeignKeyColumnModel> foreignKeyColumns = new ArrayList<ForeignKeyColumnModel>();
 
     public TableModel(String schema, SqlIdentifier name) {
+
         this.schema = schema;
         this.name = name;
     }
     public TableModel(SqlIdentifier name) {
+
         this(null, name);
     }
 
     public String getSchema() {
+
         return schema;
     }
 
+    public void setSchema(String schema) {
+
+        this.schema = schema;
+    }
+
     public SqlIdentifier getName() {
+
         return name;
     }
 
+    public void setName(SqlIdentifier name) {
+
+        this.name = name;
+    }
+
     public List<ColumnModel> getColumns() {
+
         return columns;
-    }
-
-    public List<ColumnModel> getKeyColumns() {
-        return keyColumns;
-    }
-
-    public List<ForeignKeyColumnModel> getForeignKeyColumns() {
-        return foreignKeyColumns;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
         TableModel that = (TableModel) o;
-        return Objects.equals(schema, that.schema) && name.equals(that.name);
+
+        // If we are missing the schema for either TableModel we will not treat that as being different
+        if (schema != null && that.schema != null && !schema.isEmpty() && !that.schema.isEmpty()) {
+            if (!Objects.equals(schema, that.schema)) {
+                return false;
+            }
+        }
+        if (!name.getReference().toUpperCase().equals(that.name.getReference().toUpperCase())) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(schema, name);
+
+        return Objects.hash(name.getReference().toUpperCase());
     }
 }

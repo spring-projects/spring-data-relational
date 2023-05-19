@@ -17,6 +17,8 @@ package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
+import java.util.Objects;
+
 
 /**
  * Class that models a Column for generating SQL for Schema generation.
@@ -27,17 +29,20 @@ public class ColumnModel {
     private final SqlIdentifier name;
     private final String type;
     private final boolean nullable;
+    private final boolean identityColumn;
 
-    public ColumnModel(SqlIdentifier name, String type, boolean nullable) {
+    public ColumnModel(SqlIdentifier name, String type, boolean nullable, boolean identityColumn) {
         this.name = name;
         this.type = type;
         this.nullable = nullable;
+        this.identityColumn = identityColumn;
     }
 
     public ColumnModel(SqlIdentifier name, String type) {
         this.name = name;
         this.type = type;
         this.nullable = false;
+        this.identityColumn = false;
     }
 
     public SqlIdentifier getName() {
@@ -50,5 +55,22 @@ public class ColumnModel {
 
     public boolean isNullable() {
         return nullable;
+    }
+
+    public boolean isIdentityColumn() {
+        return identityColumn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ColumnModel that = (ColumnModel) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

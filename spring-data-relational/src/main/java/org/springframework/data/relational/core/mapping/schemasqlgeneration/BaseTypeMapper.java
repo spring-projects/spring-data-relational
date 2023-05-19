@@ -22,13 +22,16 @@ public class BaseTypeMapper {
     final HashMap<Class<?>,String> mapClassToDatabaseType = new HashMap<Class<?>,String>();
 
     public BaseTypeMapper() {
-        mapClassToDatabaseType.put(String.class, "VARCHAR(255)");
+
+        mapClassToDatabaseType.put(String.class, "VARCHAR(255 BYTE)");
         mapClassToDatabaseType.put(Boolean.class, "TINYINT");
         mapClassToDatabaseType.put(Double.class, "DOUBLE");
         mapClassToDatabaseType.put(Float.class, "FLOAT");
         mapClassToDatabaseType.put(Integer.class, "INT");
+        mapClassToDatabaseType.put(Long.class, "BIGINT");
     }
     public String databaseTypeFromClass(Class<?> type) {
+
         return mapClassToDatabaseType.get(type);
     }
 }

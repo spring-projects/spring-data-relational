@@ -16,39 +16,32 @@
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
 import liquibase.CatalogAndSchema;
+import liquibase.change.AddColumnConfig;
 import liquibase.change.ColumnConfig;
+import liquibase.change.ConstraintsConfig;
+import liquibase.change.core.AddColumnChange;
 import liquibase.change.core.CreateTableChange;
+import liquibase.change.core.DropColumnChange;
 import liquibase.change.core.DropTableChange;
 import liquibase.changelog.ChangeLogChild;
+import liquibase.changelog.ChangeLogParameters;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.database.Database;
-import liquibase.database.DatabaseConnection;
-import liquibase.database.MockDatabaseConnection;
-import liquibase.database.core.MySQLDatabase;
-import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.ChangeLogParseException;
 import liquibase.exception.DatabaseException;
-import liquibase.parser.ChangeLogParser;
 import liquibase.parser.core.yaml.YamlChangeLogParser;
+import liquibase.resource.DirectoryResourceAccessor;
 import liquibase.serializer.ChangeLogSerializer;
-import liquibase.serializer.ChangeLogSerializerFactory;
-import liquibase.serializer.SnapshotSerializer;
-import liquibase.serializer.SnapshotSerializerFactory;
-import liquibase.serializer.core.formattedsql.FormattedSqlChangeLogSerializer;
 import liquibase.serializer.core.yaml.YamlChangeLogSerializer;
 import liquibase.snapshot.*;
-import liquibase.structure.DatabaseObject;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.*;
-import org.springframework.data.relational.core.sql.DefaultSqlIdentifier;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.util.Assert;
 
 import java.io.*;
-import java.sql.Connection;
 import java.util.*;
-import java.util.function.UnaryOperator;
 
 /**
  * Model class that contains Table/Column information that can be used
@@ -56,14 +49,16 @@ import java.util.function.UnaryOperator;
  *
  * @author Kurt Niemi
  */
-public class SchemaSQLGenerationDataModel {
+public class SchemaSQLGenerationDataModel
+{
     private final List<TableModel> tableData = new ArrayList<TableModel>();
     public BaseTypeMapper typeMapper;
 
     /**
-     * Default constructor so that we can deserialize a model
+     * Create empty model
      */
     public SchemaSQLGenerationDataModel() {
+
     }
 
     /**
@@ -79,15 +74,24 @@ public class SchemaSQLGenerationDataModel {
             TableModel tableModel = new TableModel(entity.getTableName());
 
             Iterator<BasicRelationalPersistentProperty> iter =
+                    entity.getPersistentProperties(Id.class).iterator();
+            Set<BasicRelationalPersistentProperty> setIdentifierColumns = new HashSet<BasicRelationalPersistentProperty>();
+            while (iter.hasNext()) {
+                BasicRelationalPersistentProperty p = iter.next();
+                setIdentifierColumns.add(p);
+            }
+
+            iter =
                     entity.getPersistentProperties(Column.class).iterator();
 
             while (iter.hasNext()) {
                 BasicRelationalPersistentProperty p = iter.next();
                 ColumnModel columnModel = new ColumnModel(p.getColumnName(),
                         typeMapper.databaseTypeFromClass(p.getActualType()),
-                        true);
+                        true, setIdentifierColumns.contains(p));
                 tableModel.getColumns().add(columnModel);
             }
+
             tableData.add(tableModel);
         }
     }
@@ -122,7 +126,6 @@ public class SchemaSQLGenerationDataModel {
             TableDiff tableDiff = new TableDiff(table);
             diff.getTableDiff().add(tableDiff);
 
-            System.out.println("Table " + table.getName().getReference() + " modified");
             TableModel sourceTable = sourceTablesMap.get(table.getSchema() + "." + table.getName().getReference());
 
             Set<ColumnModel> sourceTableData = new HashSet<ColumnModel>(sourceTable.getColumns());
@@ -155,29 +158,14 @@ public class SchemaSQLGenerationDataModel {
         return tableData;
     }
 
-    public void persist(String fileName) throws IOException {
-        FileOutputStream file = new FileOutputStream(fileName);
-        ObjectOutputStream out = new ObjectOutputStream(file);
-        out.writeObject(this);
+    public void generateLiquibaseChangeset(Database database, String changeLogFilePath) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
-        out.close();
-        file.close();
-    }
-
-    public static SchemaSQLGenerationDataModel load(String fileName) throws IOException, ClassNotFoundException {
-        FileInputStream file = new FileInputStream(fileName);
-        ObjectInputStream in = new ObjectInputStream(file);
-
-        SchemaSQLGenerationDataModel model = (SchemaSQLGenerationDataModel) in.readObject();
-        return model;
-    }
-
-    public void generateLiquibaseChangeset(Database database, String changeLogFilePath) throws InvalidExampleException, DatabaseException, IOException {
         String changeSetId = Long.toString(System.currentTimeMillis());
         generateLiquibaseChangeset(database,changeLogFilePath, changeSetId, "Spring Data JDBC");
     }
 
-    public void generateLiquibaseChangeset(Database database, String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException {
+    public void generateLiquibaseChangeset(Database database, String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
+
         CatalogAndSchema[] schemas = new CatalogAndSchema[] { database.getDefaultSchema() };
         SnapshotControl snapshotControl = new SnapshotControl(database);
 
@@ -186,15 +174,30 @@ public class SchemaSQLGenerationDataModel {
 
         SchemaSQLGenerationDataModel liquibaseModel = new SchemaSQLGenerationDataModel();
 
+        for (TableModel t : tableData) {
+            if (t.getSchema() == null || t.getSchema().isEmpty()) {
+                t.setSchema(database.getDefaultSchema().getCatalogName());
+            }
+        }
+
         for (liquibase.structure.core.Table table : tables) {
 
-            SqlIdentifier tableName = new DefaultSqlIdentifier(table.getName(), false);
+            // Exclude internal Liquibase tables from comparison
+            if (table.getName().startsWith("DATABASECHANGELOG")) {
+                continue;
+            }
+
+            SqlIdentifier tableName = new DerivedSqlIdentifier(table.getName(), true);
             TableModel tableModel = new TableModel(table.getSchema().getCatalogName(), tableName);
             liquibaseModel.getTableData().add(tableModel);
-            //System.out.println(table.getName());
+
             List<liquibase.structure.core.Column> columns = table.getColumns();
             for (liquibase.structure.core.Column column : columns) {
-                //System.out.println("--- " + column.getName() + "," + column.getType());
+                SqlIdentifier columnName = new DerivedSqlIdentifier(column.getName(), true);
+                String type = column.getType().toString();
+                boolean nullable = column.isNullable();
+                ColumnModel columnModel = new ColumnModel(columnName, type, nullable, false);
+                tableModel.getColumns().add(columnModel);
             }
         }
 
@@ -202,31 +205,84 @@ public class SchemaSQLGenerationDataModel {
 
         File changeLogFile = new File(changeLogFilePath);
 
-        ChangeLogSerializerFactory factory = ChangeLogSerializerFactory.getInstance();
+        DatabaseChangeLog databaseChangeLog;
+
+        try {
+            YamlChangeLogParser parser = new YamlChangeLogParser();
+            DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(changeLogFile.getParentFile());
+            ChangeLogParameters parameters = new ChangeLogParameters();
+            databaseChangeLog = parser.parse(changeLogFilePath, parameters, resourceAccessor);
+        } catch (Exception ex) {
+            databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
+        }
+
         ChangeLogSerializer serializer = new YamlChangeLogSerializer();
-        DatabaseChangeLog databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
         ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "" , databaseChangeLog);
 
         for (TableModel t : difference.getTableAdditions()) {
-            System.out.println(t.getName().getReference() + " to be added.");
             CreateTableChange newTable = createAddTableChange(t);
             changeSet.addChange(newTable);
         }
 
         for (TableModel t : difference.getTableDeletions()) {
-            System.out.println(t.getName().getReference() + " to be removed.");
             DropTableChange dropTable = createDropTableChange(t);
             changeSet.addChange(dropTable);
         }
 
+        for (TableDiff t : difference.getTableDiff()) {
+
+            if (t.getAddedColumns().size() > 0) {
+                AddColumnChange addColumnChange = new AddColumnChange();
+                addColumnChange.setSchemaName(t.getTableModel().getSchema());
+                addColumnChange.setTableName(t.getTableModel().getName().getReference());
+
+                for (ColumnModel column : t.getAddedColumns()) {
+                    AddColumnConfig addColumn = createAddColumnChange(column);
+                    addColumnChange.addColumn(addColumn);
+                }
+
+                changeSet.addChange(addColumnChange);
+            }
+
+            if (t.getDeletedColumns().size() > 0) {
+                DropColumnChange dropColumnChange = new DropColumnChange();
+                dropColumnChange.setSchemaName(t.getTableModel().getSchema());
+                dropColumnChange.setTableName(t.getTableModel().getName().getReference());
+
+                List<ColumnConfig> dropColumns = new ArrayList<ColumnConfig>();
+                for (ColumnModel column : t.getDeletedColumns()) {
+                    ColumnConfig config = new ColumnConfig();
+                    config.setName(column.getName().getReference());
+                    dropColumns.add(config);
+                }
+                dropColumnChange.setColumns(dropColumns);
+                changeSet.addChange(dropColumnChange);
+            }
+        }
+
         List changes = new ArrayList<ChangeLogChild>();
+        for (ChangeSet change : databaseChangeLog.getChangeSets()) {
+            changes.add(change);
+        }
         changes.add(changeSet);
         FileOutputStream fos = new FileOutputStream(changeLogFile);
         serializer.write(changes, fos);
+    }
 
+    private AddColumnConfig createAddColumnChange(ColumnModel column) {
+
+        AddColumnConfig config = new AddColumnConfig();
+        config.setName(column.getName().getReference());
+        config.setType(column.getType());
+
+        if (column.isIdentityColumn()) {
+            config.setAutoIncrement(true);
+        }
+        return config;
     }
 
     CreateTableChange createAddTableChange(TableModel table) {
+
         CreateTableChange change = new CreateTableChange();
         change.setSchemaName(table.getSchema());
         change.setTableName(table.getName().getReference());
@@ -235,6 +291,13 @@ public class SchemaSQLGenerationDataModel {
             ColumnConfig columnConfig = new ColumnConfig();
             columnConfig.setName(column.getName().getReference());
             columnConfig.setType(column.getType());
+
+            if (column.isIdentityColumn()) {
+                columnConfig.setAutoIncrement(true);
+                ConstraintsConfig constraints =  new ConstraintsConfig();
+                constraints.setPrimaryKey(true);
+                columnConfig.setConstraints(constraints);
+            }
             change.addColumn(columnConfig);
         }
 
