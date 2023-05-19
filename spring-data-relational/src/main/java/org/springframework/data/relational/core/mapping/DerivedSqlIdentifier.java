@@ -32,12 +32,12 @@ import org.springframework.util.Assert;
  * @author Kurt Niemi
  * @since 2.0
  */
-class DerivedSqlIdentifier implements SqlIdentifier {
+public class DerivedSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
 
-	DerivedSqlIdentifier(String name, boolean quoted) {
+	public DerivedSqlIdentifier(String name, boolean quoted) {
 
 		Assert.hasText(name, "A database object must have at least on name part.");
 		this.name = name;
