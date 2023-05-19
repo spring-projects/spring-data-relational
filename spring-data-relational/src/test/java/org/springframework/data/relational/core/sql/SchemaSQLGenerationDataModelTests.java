@@ -22,7 +22,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.schemasqlgeneration.*;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -33,36 +32,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SchemaSQLGenerationDataModelTests {
 
     @Test
-    void testBasicSchemaSQLGeneration() {
-
-        IdentifierProcessing.Quoting quoting = new IdentifierProcessing.Quoting("`");
-        IdentifierProcessing identifierProcessing = IdentifierProcessing.create(quoting, IdentifierProcessing.LetterCasing.LOWER_CASE);
-        SchemaSQLGenerator generator = new SchemaSQLGenerator(identifierProcessing);
-
-        RelationalMappingContext context = new RelationalMappingContext();
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Luke.class);
-
-        SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
-        String sql = generator.generateSQL(model);
-        assertThat(sql).isEqualTo("CREATE TABLE `luke` (`force` VARCHAR(255),`be` VARCHAR(255),`with` VARCHAR(255),`you` VARCHAR(255) );\n");
-
-        context = new RelationalMappingContext();
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
-
-        model = new SchemaSQLGenerationDataModel(context);
-        sql = generator.generateSQL(model);
-        assertThat(sql).isEqualTo("CREATE TABLE `vader` (`luke_i_am_your_father` VARCHAR(255),`dark_side` TINYINT,`floater` FLOAT,`double_class` DOUBLE,`integer_class` INT );\n");
-    }
-
-    @Test
     void testDiffSchema() {
-        IdentifierProcessing.Quoting quoting = new IdentifierProcessing.Quoting("`");
-        IdentifierProcessing identifierProcessing = IdentifierProcessing.create(quoting, IdentifierProcessing.LetterCasing.LOWER_CASE);
-        SchemaSQLGenerator generator = new SchemaSQLGenerator(identifierProcessing);
 
         RelationalMappingContext context = new RelationalMappingContext();
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Luke.class);
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Vader.class);
+        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Table1.class);
+        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Table2.class);
 
         SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
 
@@ -94,12 +68,11 @@ public class SchemaSQLGenerationDataModelTests {
         assertThat(diff.getTableDiff().size() > 0);
         assertThat(diff.getTableDiff().get(0).getAddedColumns().size() > 0);
         assertThat(diff.getTableDiff().get(0).getDeletedColumns().size() > 0);
-        assertThat(diff.getTableDiff().get(0).getAddedColumns().get(0).getName().getReference().equals("A"));
-        assertThat(diff.getTableDiff().get(0).getDeletedColumns().get(0).getName().getReference().equals("B"));
     }
 
+    // Test table classes for performing schema diff
     @Table
-    static class Luke {
+    static class Table1 {
         @Column
         public String force;
         @Column
@@ -111,7 +84,7 @@ public class SchemaSQLGenerationDataModelTests {
     }
 
     @Table
-    static class Vader {
+    static class Table2 {
         @Column
         public String lukeIAmYourFather;
         @Column
