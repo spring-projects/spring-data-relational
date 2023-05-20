@@ -51,6 +51,14 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+			<version>${liquibase.version}</version>
+			<scope>compile</scope>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>${jsr305.version}</version>
@@ -87,6 +95,13 @@
 			<groupId>io.mockk</groupId>
 			<artifactId>mockk-jvm</artifactId>
 			<version>${mockk}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers</artifactId>
+			<version>${testcontainers}</version>
 			<scope>test</scope>
 		</dependency>
 
