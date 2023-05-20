@@ -22,8 +22,6 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
-import java.util.Iterator;
-
 /**
  * {@link MappingContext} implementation.
  *
@@ -103,4 +101,5 @@ public class RelationalMappingContext
 	public NamingStrategy getNamingStrategy() {
 		return this.namingStrategy;
 	}
+	
 }
