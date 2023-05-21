@@ -45,6 +45,7 @@ import org.springframework.data.relational.core.mapping.DerivedSqlIdentifier;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -70,13 +71,103 @@ public class LiquibaseChangeSetGenerator {
 
     public void generateLiquibaseChangeset(String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
+        SchemaSQLGenerationDataModel liquibaseModel = getLiquibaseModel();
+        SchemaDiff difference = sourceModel.diffModel(liquibaseModel);
+
+        DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogFilePath);
+
+        ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "" , databaseChangeLog);
+
+        generateTableAdditionsDeletions(changeSet, difference);
+        generateTableModifications(changeSet, difference);
+
+
+        File changeLogFile = new File(changeLogFilePath);
+        writeChangeSet(databaseChangeLog, changeSet, changeLogFile);
+    }
+
+    private void generateTableAdditionsDeletions(ChangeSet changeSet, SchemaDiff difference) {
+
+        for (TableModel table : difference.getTableAdditions()) {
+            CreateTableChange newTable = createAddTableChange(table);
+            changeSet.addChange(newTable);
+        }
+
+        for (TableModel table : difference.getTableDeletions()) {
+            DropTableChange dropTable = createDropTableChange(table);
+            changeSet.addChange(dropTable);
+        }
+    }
+
+    private void generateTableModifications(ChangeSet changeSet, SchemaDiff difference) {
+
+        for (TableDiff table : difference.getTableDiff()) {
+
+            if (table.getAddedColumns().size() > 0) {
+                AddColumnChange addColumnChange = new AddColumnChange();
+                addColumnChange.setSchemaName(table.getTableModel().getSchema());
+                addColumnChange.setTableName(table.getTableModel().getName().getReference());
+
+                for (ColumnModel column : table.getAddedColumns()) {
+                    AddColumnConfig addColumn = createAddColumnChange(column);
+                    addColumnChange.addColumn(addColumn);
+                }
+
+                changeSet.addChange(addColumnChange);
+            }
+
+            if (table.getDeletedColumns().size() > 0) {
+                DropColumnChange dropColumnChange = new DropColumnChange();
+                dropColumnChange.setSchemaName(table.getTableModel().getSchema());
+                dropColumnChange.setTableName(table.getTableModel().getName().getReference());
+
+                List<ColumnConfig> dropColumns = new ArrayList<ColumnConfig>();
+                for (ColumnModel column : table.getDeletedColumns()) {
+                    ColumnConfig config = new ColumnConfig();
+                    config.setName(column.getName().getReference());
+                    dropColumns.add(config);
+                }
+                dropColumnChange.setColumns(dropColumns);
+                changeSet.addChange(dropColumnChange);
+            }
+        }
+    }
+
+    private DatabaseChangeLog getDatabaseChangeLog(String changeLogFilePath) {
+
+        File changeLogFile = new File(changeLogFilePath);
+        DatabaseChangeLog databaseChangeLog = null;
+
+        try {
+            YamlChangeLogParser parser = new YamlChangeLogParser();
+            DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(changeLogFile.getParentFile());
+            ChangeLogParameters parameters = new ChangeLogParameters();
+            databaseChangeLog = parser.parse(changeLogFilePath, parameters, resourceAccessor);
+        } catch (Exception ex) {
+            databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
+        }
+        return databaseChangeLog;
+    }
+    private void writeChangeSet(DatabaseChangeLog databaseChangeLog, ChangeSet changeSet, File changeLogFile) throws FileNotFoundException, IOException {
+
+        ChangeLogSerializer serializer = new YamlChangeLogSerializer();
+        List changes = new ArrayList<ChangeLogChild>();
+        for (ChangeSet change : databaseChangeLog.getChangeSets()) {
+            changes.add(change);
+        }
+        changes.add(changeSet);
+        FileOutputStream fos = new FileOutputStream(changeLogFile);
+        serializer.write(changes, fos);
+    }
+
+    private SchemaSQLGenerationDataModel getLiquibaseModel() throws DatabaseException, InvalidExampleException {
+        SchemaSQLGenerationDataModel liquibaseModel = new SchemaSQLGenerationDataModel();
+
         CatalogAndSchema[] schemas = new CatalogAndSchema[] { targetDatabase.getDefaultSchema() };
         SnapshotControl snapshotControl = new SnapshotControl(targetDatabase);
 
         DatabaseSnapshot snapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(schemas, targetDatabase, snapshotControl);
         Set<Table> tables = snapshot.get(liquibase.structure.core.Table.class);
-
-        SchemaSQLGenerationDataModel liquibaseModel = new SchemaSQLGenerationDataModel();
 
         for (TableModel t : sourceModel.getTableData()) {
             if (t.getSchema() == null || t.getSchema().isEmpty()) {
@@ -105,72 +196,7 @@ public class LiquibaseChangeSetGenerator {
             }
         }
 
-        SchemaDiff difference = sourceModel.diffModel(liquibaseModel);
-
-        File changeLogFile = new File(changeLogFilePath);
-
-        DatabaseChangeLog databaseChangeLog;
-
-        try {
-            YamlChangeLogParser parser = new YamlChangeLogParser();
-            DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(changeLogFile.getParentFile());
-            ChangeLogParameters parameters = new ChangeLogParameters();
-            databaseChangeLog = parser.parse(changeLogFilePath, parameters, resourceAccessor);
-        } catch (Exception ex) {
-            databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
-        }
-
-        ChangeLogSerializer serializer = new YamlChangeLogSerializer();
-        ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "" , databaseChangeLog);
-
-        for (TableModel t : difference.getTableAdditions()) {
-            CreateTableChange newTable = createAddTableChange(t);
-            changeSet.addChange(newTable);
-        }
-
-        for (TableModel t : difference.getTableDeletions()) {
-            DropTableChange dropTable = createDropTableChange(t);
-            changeSet.addChange(dropTable);
-        }
-
-        for (TableDiff t : difference.getTableDiff()) {
-
-            if (t.getAddedColumns().size() > 0) {
-                AddColumnChange addColumnChange = new AddColumnChange();
-                addColumnChange.setSchemaName(t.getTableModel().getSchema());
-                addColumnChange.setTableName(t.getTableModel().getName().getReference());
-
-                for (ColumnModel column : t.getAddedColumns()) {
-                    AddColumnConfig addColumn = createAddColumnChange(column);
-                    addColumnChange.addColumn(addColumn);
-                }
-
-                changeSet.addChange(addColumnChange);
-            }
-
-            if (t.getDeletedColumns().size() > 0) {
-                DropColumnChange dropColumnChange = new DropColumnChange();
-                dropColumnChange.setSchemaName(t.getTableModel().getSchema());
-                dropColumnChange.setTableName(t.getTableModel().getName().getReference());
-
-                List<ColumnConfig> dropColumns = new ArrayList<ColumnConfig>();
-                for (ColumnModel column : t.getDeletedColumns()) {
-                    ColumnConfig config = new ColumnConfig();
-                    config.setName(column.getName().getReference());
-                    dropColumns.add(config);
-                }
-                dropColumnChange.setColumns(dropColumns);
-                changeSet.addChange(dropColumnChange);
-            }
-        }
-
-        List changes = new ArrayList<ChangeLogChild>();
-        for (ChangeSet change : databaseChangeLog.getChangeSets()) {
-            changes.add(change);
-        }
-        changes.add(changeSet);
-        FileOutputStream fos = new FileOutputStream(changeLogFile);
-        serializer.write(changes, fos);
+        return liquibaseModel;
     }
 
     private AddColumnConfig createAddColumnChange(ColumnModel column) {
