@@ -15,32 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import liquibase.CatalogAndSchema;
-import liquibase.change.AddColumnConfig;
-import liquibase.change.ColumnConfig;
-import liquibase.change.ConstraintsConfig;
-import liquibase.change.core.AddColumnChange;
-import liquibase.change.core.CreateTableChange;
-import liquibase.change.core.DropColumnChange;
-import liquibase.change.core.DropTableChange;
-import liquibase.changelog.ChangeLogChild;
-import liquibase.changelog.ChangeLogParameters;
-import liquibase.changelog.ChangeSet;
-import liquibase.changelog.DatabaseChangeLog;
-import liquibase.database.Database;
-import liquibase.exception.ChangeLogParseException;
-import liquibase.exception.DatabaseException;
-import liquibase.parser.core.yaml.YamlChangeLogParser;
-import liquibase.resource.DirectoryResourceAccessor;
-import liquibase.serializer.ChangeLogSerializer;
-import liquibase.serializer.core.yaml.YamlChangeLogSerializer;
-import liquibase.snapshot.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.*;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 
-import java.io.*;
 import java.util.*;
 
 /**
@@ -49,7 +26,7 @@ import java.util.*;
  *
  * @author Kurt Niemi
  */
-public class SchemaSQLGenerationDataModel
+public class SchemaModel
 {
     private final List<TableModel> tableData = new ArrayList<TableModel>();
     public BaseTypeMapper typeMapper;
@@ -57,14 +34,14 @@ public class SchemaSQLGenerationDataModel
     /**
      * Create empty model
      */
-    public SchemaSQLGenerationDataModel() {
+    public SchemaModel() {
 
     }
 
     /**
      * Create model from a RelationalMappingContext
      */
-    public SchemaSQLGenerationDataModel(RelationalMappingContext context) {
+    public SchemaModel(RelationalMappingContext context) {
 
         if (typeMapper == null) {
             typeMapper = new BaseTypeMapper();
@@ -96,7 +73,7 @@ public class SchemaSQLGenerationDataModel
         }
     }
 
-    void diffTableAdditionDeletion(SchemaSQLGenerationDataModel source, SchemaDiff diff) {
+    void diffTableAdditionDeletion(SchemaModel source, SchemaDiff diff) {
 
         Set<TableModel> sourceTableData = new HashSet<TableModel>(source.getTableData());
         Set<TableModel> targetTableData = new HashSet<TableModel>(getTableData());
@@ -112,7 +89,7 @@ public class SchemaSQLGenerationDataModel
         diff.getTableAdditions().addAll(addedTables);
     }
 
-    void diffTable(SchemaSQLGenerationDataModel source, SchemaDiff diff) {
+    void diffTable(SchemaModel source, SchemaDiff diff) {
 
         HashMap<String, TableModel> sourceTablesMap = new HashMap<String,TableModel>();
         for (TableModel table : source.getTableData()) {
@@ -144,7 +121,7 @@ public class SchemaSQLGenerationDataModel
         }
     }
 
-    public SchemaDiff diffModel(SchemaSQLGenerationDataModel source) {
+    public SchemaDiff diffModel(SchemaModel source) {
 
         SchemaDiff diff = new SchemaDiff();
 

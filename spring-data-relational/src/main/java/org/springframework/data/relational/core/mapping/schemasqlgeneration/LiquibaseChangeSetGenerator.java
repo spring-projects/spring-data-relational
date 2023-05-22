@@ -54,10 +54,10 @@ import java.util.Set;
 
 public class LiquibaseChangeSetGenerator {
 
-    private final SchemaSQLGenerationDataModel sourceModel;
+    private final SchemaModel sourceModel;
     private final Database targetDatabase;
 
-    public LiquibaseChangeSetGenerator(SchemaSQLGenerationDataModel sourceModel, Database targetDatabase) {
+    public LiquibaseChangeSetGenerator(SchemaModel sourceModel, Database targetDatabase) {
 
         this.sourceModel = sourceModel;
         this.targetDatabase = targetDatabase;
@@ -71,7 +71,7 @@ public class LiquibaseChangeSetGenerator {
 
     public void generateLiquibaseChangeset(String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
-        SchemaSQLGenerationDataModel liquibaseModel = getLiquibaseModel();
+        SchemaModel liquibaseModel = getLiquibaseModel();
         SchemaDiff difference = sourceModel.diffModel(liquibaseModel);
 
         DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogFilePath);
@@ -160,8 +160,8 @@ public class LiquibaseChangeSetGenerator {
         serializer.write(changes, fos);
     }
 
-    private SchemaSQLGenerationDataModel getLiquibaseModel() throws DatabaseException, InvalidExampleException {
-        SchemaSQLGenerationDataModel liquibaseModel = new SchemaSQLGenerationDataModel();
+    private SchemaModel getLiquibaseModel() throws DatabaseException, InvalidExampleException {
+        SchemaModel liquibaseModel = new SchemaModel();
 
         CatalogAndSchema[] schemas = new CatalogAndSchema[] { targetDatabase.getDefaultSchema() };
         SnapshotControl snapshotControl = new SnapshotControl(targetDatabase);

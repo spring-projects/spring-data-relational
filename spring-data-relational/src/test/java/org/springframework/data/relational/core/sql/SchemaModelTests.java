@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -25,22 +24,22 @@ import org.springframework.data.relational.core.mapping.schemasqlgeneration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for the {@link SchemaSQLGenerationDataModel}.
+ * Unit tests for the {@link SchemaModel}.
  *
  * @author Kurt Niemi
  */
-public class SchemaSQLGenerationDataModelTests {
+public class SchemaModelTests {
 
     @Test
     void testDiffSchema() {
 
         RelationalMappingContext context = new RelationalMappingContext();
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Table1.class);
-        context.getRequiredPersistentEntity(SchemaSQLGenerationDataModelTests.Table2.class);
+        context.getRequiredPersistentEntity(SchemaModelTests.Table1.class);
+        context.getRequiredPersistentEntity(SchemaModelTests.Table2.class);
 
-        SchemaSQLGenerationDataModel model = new SchemaSQLGenerationDataModel(context);
+        SchemaModel model = new SchemaModel(context);
 
-        SchemaSQLGenerationDataModel newModel = new SchemaSQLGenerationDataModel(context);
+        SchemaModel newModel = new SchemaModel(context);
 
         // Add column to table
         SqlIdentifier newIdentifier = new DefaultSqlIdentifier("newcol", false);
