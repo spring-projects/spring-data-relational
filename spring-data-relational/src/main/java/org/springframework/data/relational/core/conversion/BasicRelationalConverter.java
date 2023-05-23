@@ -175,7 +175,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		// TODO: We should add conversion support for arrays, however,
 		// these should consider multi-dimensional arrays as well.
-		if (value.getClass().isArray() && (TypeInformation.OBJECT.equals(type) || type.isCollectionLike())) {
+		if (value.getClass().isArray() && !value.getClass().getComponentType().isEnum() && (TypeInformation.OBJECT.equals(type) || type.isCollectionLike())) {
 			return value;
 		}
 

@@ -1045,6 +1045,16 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(template.findById(entity.id, WithInsertOnly.class).insertOnly).isEqualTo("first value");
 	}
 
+	@Test // GH-1460
+	void readEnumArray() {
+		EnumArrayOwner entity = new EnumArrayOwner();
+		entity.digits = new Color[]{Color.BLUE};
+
+		assertThat(template.save(entity)).isNotNull();
+
+		assertThat(template.findById(entity.id, EnumArrayOwner.class).digits).isEqualTo(new Color[]{Color.BLUE});
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1084,6 +1094,17 @@ class JdbcAggregateTemplateIntegrationTests {
 
 	private Long count(String tableName) {
 		return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, emptyMap(), Long.class);
+	}
+
+	enum Color {
+		BLUE
+	}
+
+	@Table("ARRAY_OWNER")
+	private static class EnumArrayOwner {
+		@Id Long id;
+
+		Color[] digits;
 	}
 
 	@Table("ARRAY_OWNER")
