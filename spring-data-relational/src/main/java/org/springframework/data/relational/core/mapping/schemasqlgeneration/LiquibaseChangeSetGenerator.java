@@ -52,27 +52,98 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Use this class to generate Liquibase change sets.
+ *
+ * First create a {@link SchemaModel} instance passing in a RelationalContext to have
+ * a model that represents the Table(s)/Column(s) that the code expects to exist.
+ *
+ * And then optionally create a Liquibase database object that points to an existing database
+ * if one desires to create a changeset that could be applied to that database.
+ *
+ * If a Liquibase database object is not used, then the change set created would be
+ * something that could be applied to an empty database to make it match the state of the code.
+ *
+ * Prior to applying the changeset one should review and make adjustments appropriately.
+ *
+ * @author Kurt Niemi
+ * @since 3.2
+ */
 public class LiquibaseChangeSetGenerator {
 
     private final SchemaModel sourceModel;
     private final Database targetDatabase;
 
+    /**
+     * Use this to generate a ChangeSet that can be used on an empty database
+     *
+     * @author Kurt Niemi
+     * @since 3.2
+     *
+     * @param sourceModel - Model representing table(s)/column(s) as existing in code
+     */
+    public LiquibaseChangeSetGenerator(SchemaModel sourceModel) {
+
+        this.sourceModel = sourceModel;
+    }
+
+    /**
+     * Use this to generate a ChangeSet against an existing database
+     *
+     * @author Kurt Niemi
+     * @since 3.2
+     *
+     * @param sourceModel - Model representing table(s)/column(s) as existing in code
+     * @param targetDatabase - Existing Liquibase database
+     */
     public LiquibaseChangeSetGenerator(SchemaModel sourceModel, Database targetDatabase) {
 
         this.sourceModel = sourceModel;
         this.targetDatabase = targetDatabase;
     }
 
+    /**
+     * Generates a Liquibase Changeset
+     *
+     * @author Kurt Niemi
+     * @since 3.2
+     *
+     * @param changeLogFilePath - File that changeset will be written to (or append to an existing ChangeSet file)
+     * @throws InvalidExampleException
+     * @throws DatabaseException
+     * @throws IOException
+     * @throws ChangeLogParseException
+     */
     public void generateLiquibaseChangeset(String changeLogFilePath) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
         String changeSetId = Long.toString(System.currentTimeMillis());
         generateLiquibaseChangeset(changeLogFilePath, changeSetId, "Spring Data JDBC");
     }
 
+    /**
+     * Generates a Liquibase Changeset
+     *
+     * @author Kurt Niemi
+     * @since 3.2
+     *
+     * @param changeLogFilePath - File that changeset will be written to (or append to an existing ChangeSet file)
+     * @param changeSetId - A unique value to identify the changeset
+     * @param changeSetAuthor - Author information to be written to changeset file.
+     * @throws InvalidExampleException
+     * @throws DatabaseException
+     * @throws IOException
+     * @throws ChangeLogParseException
+     */
     public void generateLiquibaseChangeset(String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
-        SchemaModel liquibaseModel = getLiquibaseModel();
-        SchemaDiff difference = sourceModel.diffModel(liquibaseModel);
+        SchemaDiff difference;
+
+        if (targetDatabase != null) {
+            SchemaModel liquibaseModel = getLiquibaseModel();
+            difference = sourceModel.diffModel(liquibaseModel);
+        } else {
+            difference = sourceModel.diffModel(new SchemaModel());
+        }
 
         DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogFilePath);
 
@@ -148,6 +219,7 @@ public class LiquibaseChangeSetGenerator {
         }
         return databaseChangeLog;
     }
+
     private void writeChangeSet(DatabaseChangeLog databaseChangeLog, ChangeSet changeSet, File changeLogFile) throws FileNotFoundException, IOException {
 
         ChangeLogSerializer serializer = new YamlChangeLogSerializer();
@@ -211,7 +283,7 @@ public class LiquibaseChangeSetGenerator {
         return config;
     }
 
-    CreateTableChange createAddTableChange(TableModel table) {
+    private CreateTableChange createAddTableChange(TableModel table) {
 
         CreateTableChange change = new CreateTableChange();
         change.setSchemaName(table.getSchema());
@@ -234,7 +306,7 @@ public class LiquibaseChangeSetGenerator {
         return change;
     }
 
-    DropTableChange createDropTableChange(TableModel table) {
+    private DropTableChange createDropTableChange(TableModel table) {
         DropTableChange change = new DropTableChange();
         change.setSchemaName(table.getSchema());
         change.setTableName(table.getName().getReference());
