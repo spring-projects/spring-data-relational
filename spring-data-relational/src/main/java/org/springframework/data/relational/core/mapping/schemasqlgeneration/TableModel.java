@@ -25,6 +25,7 @@ import java.util.Objects;
  * Class that models a Table for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
+ * @since 3.2
  */
 public class TableModel {
     private String schema;
