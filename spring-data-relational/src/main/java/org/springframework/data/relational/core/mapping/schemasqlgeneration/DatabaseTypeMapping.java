@@ -15,23 +15,15 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import java.util.HashMap;
-
-public class BaseTypeMapper {
-
-    final HashMap<Class<?>,String> mapClassToDatabaseType = new HashMap<Class<?>,String>();
-
-    public BaseTypeMapper() {
-
-        mapClassToDatabaseType.put(String.class, "VARCHAR(255 BYTE)");
-        mapClassToDatabaseType.put(Boolean.class, "TINYINT");
-        mapClassToDatabaseType.put(Double.class, "DOUBLE");
-        mapClassToDatabaseType.put(Float.class, "FLOAT");
-        mapClassToDatabaseType.put(Integer.class, "INT");
-        mapClassToDatabaseType.put(Long.class, "BIGINT");
-    }
-    public String databaseTypeFromClass(Class<?> type) {
-
-        return mapClassToDatabaseType.get(type);
-    }
+/**
+ * Interface for mapping a Java type to a Database type.
+ *
+ * To customize the mapping an instance of a class implementing {@link DatabaseTypeMapping} interface
+ * can be set on the {@link SchemaModel} class.
+ *
+ * @author Kurt Niemi
+ * @since 3.2
+ */
+public interface DatabaseTypeMapping {
+    public String databaseTypeFromClass(Class<?> type);
 }

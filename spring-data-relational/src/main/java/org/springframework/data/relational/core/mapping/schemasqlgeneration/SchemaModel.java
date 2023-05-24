@@ -25,11 +25,12 @@ import java.util.*;
  * to generate SQL for Schema generation.
  *
  * @author Kurt Niemi
+ * @since 3.2
  */
 public class SchemaModel
 {
     private final List<TableModel> tableData = new ArrayList<TableModel>();
-    public BaseTypeMapper typeMapper;
+    public DatabaseTypeMapping databaseTypeMapping;
 
     /**
      * Create empty model
@@ -43,8 +44,8 @@ public class SchemaModel
      */
     public SchemaModel(RelationalMappingContext context) {
 
-        if (typeMapper == null) {
-            typeMapper = new BaseTypeMapper();
+        if (databaseTypeMapping == null) {
+            databaseTypeMapping = new DefaultDatabaseTypeMapping();
         }
 
         for (RelationalPersistentEntity entity : context.getPersistentEntities()) {
@@ -64,7 +65,7 @@ public class SchemaModel
             while (iter.hasNext()) {
                 BasicRelationalPersistentProperty p = iter.next();
                 ColumnModel columnModel = new ColumnModel(p.getColumnName(),
-                        typeMapper.databaseTypeFromClass(p.getActualType()),
+                        databaseTypeMapping.databaseTypeFromClass(p.getActualType()),
                         true, setIdentifierColumns.contains(p));
                 tableModel.getColumns().add(columnModel);
             }
