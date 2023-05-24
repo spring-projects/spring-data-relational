@@ -55,7 +55,7 @@ public class SchemaModelTests {
         newTable.getColumns().add(newColumn);
         newModel.getTableData().add(newTable);
 
-        SchemaDiff diff = newModel.diffModel(model);
+        SchemaDiff diff = new SchemaDiff(model, newModel); //, model);
 
         // Verify that newtable is an added table in the diff
         assertThat(diff.getTableAdditions().size() > 0);

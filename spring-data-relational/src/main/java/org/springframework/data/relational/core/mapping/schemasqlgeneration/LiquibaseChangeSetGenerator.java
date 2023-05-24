@@ -85,6 +85,7 @@ public class LiquibaseChangeSetGenerator {
     public LiquibaseChangeSetGenerator(SchemaModel sourceModel) {
 
         this.sourceModel = sourceModel;
+        this.targetDatabase = null;
     }
 
     /**
@@ -140,9 +141,9 @@ public class LiquibaseChangeSetGenerator {
 
         if (targetDatabase != null) {
             SchemaModel liquibaseModel = getLiquibaseModel();
-            difference = sourceModel.diffModel(liquibaseModel);
+            difference = new SchemaDiff(sourceModel,liquibaseModel);
         } else {
-            difference = sourceModel.diffModel(new SchemaModel());
+            difference = new SchemaDiff(sourceModel, new SchemaModel());
         }
 
         DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogFilePath);
