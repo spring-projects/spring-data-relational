@@ -82,6 +82,17 @@ public class LiquibaseChangeSetGenerator {
     private final Predicate<String> liquibaseTables = table -> ( table.startsWith("DATABASECHANGELOG") );
 
     /**
+     * By default existing tables in the target database are never deleted
+     */
+    public Predicate<String> userApplicationTables = table -> ( true );
+
+    /**
+     * By default existing columns in the target database are never deleted.
+     * Columns will be passed into the predicate in the format TableName.ColumnName
+     */
+    public Predicate<String> userApplicationTableColumns = table -> ( true );
+
+    /**
      * Use this to generate a ChangeSet that can be used on an empty database
      *
      * @author Kurt Niemi
@@ -173,8 +184,11 @@ public class LiquibaseChangeSetGenerator {
         }
 
         for (TableModel table : difference.getTableDeletions()) {
-            DropTableChange dropTable = createDropTableChange(table);
-            changeSet.addChange(dropTable);
+            // Do not delete/drop table if it is an external application table
+            if (!userApplicationTables.test(table.name().getReference())) {
+                DropTableChange dropTable = createDropTableChange(table);
+                changeSet.addChange(dropTable);
+            }
         }
     }
 
@@ -195,7 +209,16 @@ public class LiquibaseChangeSetGenerator {
                 changeSet.addChange(addColumnChange);
             }
 
-            if (table.deletedColumns().size() > 0) {
+            ArrayList<ColumnModel> deletedColumns = new ArrayList<>();
+            for (ColumnModel columnModel : table.deletedColumns()) {
+                String fullName = table.tableModel().name().getReference() + "." + columnModel.name().getReference();
+
+                if (!userApplicationTableColumns.test(fullName)) {
+                    deletedColumns.add(columnModel);
+                }
+            }
+
+            if (deletedColumns.size() > 0) {
                 DropColumnChange dropColumnChange = new DropColumnChange();
                 dropColumnChange.setSchemaName(table.tableModel().schema());
                 dropColumnChange.setTableName(table.tableModel().name().getReference());
