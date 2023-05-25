@@ -22,50 +22,18 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Class that models a Table for generating SQL for Schema generation.
+ * Models a Table for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public class TableModel {
-    private String schema;
-    private SqlIdentifier name;
-    private final List<ColumnModel> columns = new ArrayList<ColumnModel>();
-    private final List<ColumnModel> keyColumns = new ArrayList<ColumnModel>();
-
+public record TableModel(String schema, SqlIdentifier name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
     public TableModel(String schema, SqlIdentifier name) {
-
-        this.schema = schema;
-        this.name = name;
+        this(schema, name, new ArrayList<>(), new ArrayList<>());
     }
+
     public TableModel(SqlIdentifier name) {
-
         this(null, name);
-    }
-
-    public String getSchema() {
-
-        return schema;
-    }
-
-    public void setSchema(String schema) {
-
-        this.schema = schema;
-    }
-
-    public SqlIdentifier getName() {
-
-        return name;
-    }
-
-    public void setName(SqlIdentifier name) {
-
-        this.name = name;
-    }
-
-    public List<ColumnModel> getColumns() {
-
-        return columns;
     }
 
     @Override

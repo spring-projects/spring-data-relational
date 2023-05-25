@@ -67,7 +67,7 @@ public class SchemaModel
                 ColumnModel columnModel = new ColumnModel(p.getColumnName(),
                         databaseTypeMapping.databaseTypeFromClass(p.getActualType()),
                         true, setIdentifierColumns.contains(p));
-                tableModel.getColumns().add(columnModel);
+                tableModel.columns().add(columnModel);
             }
 
             tableData.add(tableModel);

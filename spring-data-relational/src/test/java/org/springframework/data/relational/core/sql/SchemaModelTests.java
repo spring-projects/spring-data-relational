@@ -44,7 +44,7 @@ public class SchemaModelTests {
         // Add column to table
         SqlIdentifier newIdentifier = new DefaultSqlIdentifier("newcol", false);
         ColumnModel newColumn = new ColumnModel(newIdentifier, "VARCHAR(255)");
-        newModel.getTableData().get(0).getColumns().add(newColumn);
+        newModel.getTableData().get(0).columns().add(newColumn);
 
         // Remove table
         newModel.getTableData().remove(1);
@@ -52,21 +52,21 @@ public class SchemaModelTests {
         // Add new table
         SqlIdentifier tableIdenfifier = new DefaultSqlIdentifier("newtable", false);
         TableModel newTable = new TableModel(null, tableIdenfifier);
-        newTable.getColumns().add(newColumn);
+        newTable.columns().add(newColumn);
         newModel.getTableData().add(newTable);
 
         SchemaDiff diff = new SchemaDiff(model, newModel); //, model);
 
         // Verify that newtable is an added table in the diff
         assertThat(diff.getTableAdditions().size() > 0);
-        assertThat(diff.getTableAdditions().get(0).getName().getReference().equals("newtable"));
+        assertThat(diff.getTableAdditions().get(0).name().getReference().equals("newtable"));
 
         assertThat(diff.getTableDeletions().size() > 0);
-        assertThat(diff.getTableDeletions().get(0).getName().getReference().equals("vader"));
+        assertThat(diff.getTableDeletions().get(0).name().getReference().equals("vader"));
 
         assertThat(diff.getTableDiff().size() > 0);
-        assertThat(diff.getTableDiff().get(0).getAddedColumns().size() > 0);
-        assertThat(diff.getTableDiff().get(0).getDeletedColumns().size() > 0);
+        assertThat(diff.getTableDiff().get(0).addedColumns().size() > 0);
+        assertThat(diff.getTableDiff().get(0).deletedColumns().size() > 0);
     }
 
     // Test table classes for performing schema diff

@@ -69,7 +69,7 @@ public class SchemaDiff {
 
         HashMap<String, TableModel> sourceTablesMap = new HashMap<String,TableModel>();
         for (TableModel table : source.getTableData()) {
-            sourceTablesMap.put(table.getSchema() + "." + table.getName().getReference(), table);
+            sourceTablesMap.put(table.schema() + "." + table.name().getReference(), table);
         }
 
         Set<TableModel> existingTables = new HashSet<TableModel>(target.getTableData());
@@ -79,21 +79,21 @@ public class SchemaDiff {
             TableDiff tableDiff = new TableDiff(table);
             tableDiffs.add(tableDiff);
 
-            TableModel sourceTable = sourceTablesMap.get(table.getSchema() + "." + table.getName().getReference());
+            TableModel sourceTable = sourceTablesMap.get(table.schema() + "." + table.name().getReference());
 
-            Set<ColumnModel> sourceTableData = new HashSet<ColumnModel>(sourceTable.getColumns());
-            Set<ColumnModel> targetTableData = new HashSet<ColumnModel>(table.getColumns());
+            Set<ColumnModel> sourceTableData = new HashSet<ColumnModel>(sourceTable.columns());
+            Set<ColumnModel> targetTableData = new HashSet<ColumnModel>(table.columns());
 
             // Identify deleted columns
             Set<ColumnModel> deletedColumns = new HashSet<ColumnModel>(sourceTableData);
             deletedColumns.removeAll(targetTableData);
 
-            tableDiff.getDeletedColumns().addAll(deletedColumns);
+            tableDiff.deletedColumns().addAll(deletedColumns);
 
             // Identify added columns
             Set<ColumnModel> addedColumns = new HashSet<ColumnModel>(targetTableData);
             addedColumns.removeAll(sourceTableData);
-            tableDiff.getAddedColumns().addAll(addedColumns);
+            tableDiff.addedColumns().addAll(addedColumns);
         }
     }
 }

@@ -21,45 +21,15 @@ import java.util.Objects;
 
 
 /**
- * Class that models a Column for generating SQL for Schema generation.
+ * Models a Column for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public class ColumnModel {
-    private final SqlIdentifier name;
-    private final String type;
-    private final boolean nullable;
-    private final boolean identityColumn;
+public record ColumnModel(SqlIdentifier name, String type, boolean nullable, boolean identityColumn) {
 
-    public ColumnModel(SqlIdentifier name, String type, boolean nullable, boolean identityColumn) {
-        this.name = name;
-        this.type = type;
-        this.nullable = nullable;
-        this.identityColumn = identityColumn;
-    }
-
-    public ColumnModel(SqlIdentifier name, String type) {
-        this.name = name;
-        this.type = type;
-        this.nullable = false;
-        this.identityColumn = false;
-    }
-
-    public SqlIdentifier getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public boolean isNullable() {
-        return nullable;
-    }
-
-    public boolean isIdentityColumn() {
-        return identityColumn;
+    public ColumnModel(SqlIdentifier name, String type)  {
+        this(name, type, false, false);
     }
 
     @Override

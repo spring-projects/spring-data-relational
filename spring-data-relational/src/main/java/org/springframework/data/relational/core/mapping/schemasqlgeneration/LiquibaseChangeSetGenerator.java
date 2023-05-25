@@ -175,12 +175,12 @@ public class LiquibaseChangeSetGenerator {
 
         for (TableDiff table : difference.getTableDiff()) {
 
-            if (table.getAddedColumns().size() > 0) {
+            if (table.addedColumns().size() > 0) {
                 AddColumnChange addColumnChange = new AddColumnChange();
-                addColumnChange.setSchemaName(table.getTableModel().getSchema());
-                addColumnChange.setTableName(table.getTableModel().getName().getReference());
+                addColumnChange.setSchemaName(table.tableModel().schema());
+                addColumnChange.setTableName(table.tableModel().name().getReference());
 
-                for (ColumnModel column : table.getAddedColumns()) {
+                for (ColumnModel column : table.addedColumns()) {
                     AddColumnConfig addColumn = createAddColumnChange(column);
                     addColumnChange.addColumn(addColumn);
                 }
@@ -188,15 +188,15 @@ public class LiquibaseChangeSetGenerator {
                 changeSet.addChange(addColumnChange);
             }
 
-            if (table.getDeletedColumns().size() > 0) {
+            if (table.deletedColumns().size() > 0) {
                 DropColumnChange dropColumnChange = new DropColumnChange();
-                dropColumnChange.setSchemaName(table.getTableModel().getSchema());
-                dropColumnChange.setTableName(table.getTableModel().getName().getReference());
+                dropColumnChange.setSchemaName(table.tableModel().schema());
+                dropColumnChange.setTableName(table.tableModel().name().getReference());
 
                 List<ColumnConfig> dropColumns = new ArrayList<ColumnConfig>();
-                for (ColumnModel column : table.getDeletedColumns()) {
+                for (ColumnModel column : table.deletedColumns()) {
                     ColumnConfig config = new ColumnConfig();
-                    config.setName(column.getName().getReference());
+                    config.setName(column.name().getReference());
                     dropColumns.add(config);
                 }
                 dropColumnChange.setColumns(dropColumns);
@@ -242,9 +242,12 @@ public class LiquibaseChangeSetGenerator {
         DatabaseSnapshot snapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(schemas, targetDatabase, snapshotControl);
         Set<Table> tables = snapshot.get(liquibase.structure.core.Table.class);
 
-        for (TableModel t : sourceModel.getTableData()) {
-            if (t.getSchema() == null || t.getSchema().isEmpty()) {
-                t.setSchema(targetDatabase.getDefaultSchema().getCatalogName());
+        for (int i=0; i < sourceModel.getTableData().size(); i++) {
+            TableModel currentModel = sourceModel.getTableData().get(i);
+            if (currentModel.schema() == null || currentModel.schema().isEmpty()) {
+                TableModel newModel = new TableModel(targetDatabase.getDefaultSchema().getCatalogName(),
+                        currentModel.name(), currentModel.columns(), currentModel.keyColumns());
+                sourceModel.getTableData().set(i, newModel);
             }
         }
 
@@ -265,7 +268,7 @@ public class LiquibaseChangeSetGenerator {
                 String type = column.getType().toString();
                 boolean nullable = column.isNullable();
                 ColumnModel columnModel = new ColumnModel(columnName, type, nullable, false);
-                tableModel.getColumns().add(columnModel);
+                tableModel.columns().add(columnModel);
             }
         }
 
@@ -275,10 +278,10 @@ public class LiquibaseChangeSetGenerator {
     private AddColumnConfig createAddColumnChange(ColumnModel column) {
 
         AddColumnConfig config = new AddColumnConfig();
-        config.setName(column.getName().getReference());
-        config.setType(column.getType());
+        config.setName(column.name().getReference());
+        config.setType(column.type());
 
-        if (column.isIdentityColumn()) {
+        if (column.identityColumn()) {
             config.setAutoIncrement(true);
         }
         return config;
@@ -287,15 +290,15 @@ public class LiquibaseChangeSetGenerator {
     private CreateTableChange createAddTableChange(TableModel table) {
 
         CreateTableChange change = new CreateTableChange();
-        change.setSchemaName(table.getSchema());
-        change.setTableName(table.getName().getReference());
+        change.setSchemaName(table.schema());
+        change.setTableName(table.name().getReference());
 
-        for (ColumnModel column : table.getColumns()) {
+        for (ColumnModel column : table.columns()) {
             ColumnConfig columnConfig = new ColumnConfig();
-            columnConfig.setName(column.getName().getReference());
-            columnConfig.setType(column.getType());
+            columnConfig.setName(column.name().getReference());
+            columnConfig.setType(column.type());
 
-            if (column.isIdentityColumn()) {
+            if (column.identityColumn()) {
                 columnConfig.setAutoIncrement(true);
                 ConstraintsConfig constraints =  new ConstraintsConfig();
                 constraints.setPrimaryKey(true);
@@ -309,8 +312,8 @@ public class LiquibaseChangeSetGenerator {
 
     private DropTableChange createDropTableChange(TableModel table) {
         DropTableChange change = new DropTableChange();
-        change.setSchemaName(table.getSchema());
-        change.setTableName(table.getName().getReference());
+        change.setSchemaName(table.schema());
+        change.setTableName(table.name().getReference());
         change.setCascadeConstraints(true);
 
         return change;
