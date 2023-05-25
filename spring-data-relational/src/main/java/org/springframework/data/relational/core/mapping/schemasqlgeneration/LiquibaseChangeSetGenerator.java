@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Use this class to generate Liquibase change sets.
@@ -73,6 +74,12 @@ public class LiquibaseChangeSetGenerator {
 
     private final SchemaModel sourceModel;
     private final Database targetDatabase;
+
+    /**
+     * If there should ever be future Liquibase tables that should not be deleted (removed), this
+     * predicate should be modified
+     */
+    private final Predicate<String> liquibaseTables = table -> ( table.startsWith("DATABASECHANGELOG") );
 
     /**
      * Use this to generate a ChangeSet that can be used on an empty database
@@ -254,7 +261,7 @@ public class LiquibaseChangeSetGenerator {
         for (liquibase.structure.core.Table table : tables) {
 
             // Exclude internal Liquibase tables from comparison
-            if (table.getName().startsWith("DATABASECHANGELOG")) {
+            if (liquibaseTables.test(table.getName())) {
                 continue;
             }
 
