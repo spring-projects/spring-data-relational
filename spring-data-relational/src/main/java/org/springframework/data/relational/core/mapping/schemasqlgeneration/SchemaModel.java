@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.*;
 
 import java.util.*;
@@ -49,7 +50,7 @@ public class SchemaModel
         }
 
         for (RelationalPersistentEntity entity : context.getPersistentEntities()) {
-            TableModel tableModel = new TableModel(entity.getTableName());
+            TableModel tableModel = new TableModel(entity.getTableName().getReference());
 
             Iterator<BasicRelationalPersistentProperty> iter =
                     entity.getPersistentProperties(Id.class).iterator();
@@ -59,16 +60,18 @@ public class SchemaModel
                 setIdentifierColumns.add(p);
             }
 
-            iter =
-                    entity.getPersistentProperties(Column.class).iterator();
+            entity.doWithProperties((PropertyHandler) handler -> {
+                BasicRelationalPersistentProperty property = (BasicRelationalPersistentProperty)handler;
 
-            while (iter.hasNext()) {
-                BasicRelationalPersistentProperty p = iter.next();
-                ColumnModel columnModel = new ColumnModel(p.getColumnName(),
-                        databaseTypeMapping.databaseTypeFromClass(p.getActualType()),
-                        true, setIdentifierColumns.contains(p));
+                if (property.isEntity() && !property.isEmbedded()) {
+                    return;
+                }
+
+                ColumnModel columnModel = new ColumnModel(property.getColumnName().getReference(),
+                        databaseTypeMapping.databaseTypeFromClass(property.getActualType()),
+                        true, setIdentifierColumns.contains(property));
                 tableModel.columns().add(columnModel);
-            }
+            });
 
             tableData.add(tableModel);
         }
