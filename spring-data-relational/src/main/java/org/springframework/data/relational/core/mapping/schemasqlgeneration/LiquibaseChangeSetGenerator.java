@@ -41,6 +41,7 @@ import liquibase.snapshot.SnapshotControl;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.structure.core.Column;
 import liquibase.structure.core.Table;
+import org.springframework.core.io.Resource;
 import org.springframework.data.relational.core.mapping.DerivedSqlIdentifier;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -127,16 +128,16 @@ public class LiquibaseChangeSetGenerator {
      * @author Kurt Niemi
      * @since 3.2
      *
-     * @param changeLogFilePath - File that changeset will be written to (or append to an existing ChangeSet file)
+     * @param changeLogResource - Resource that changeset will be written to (or append to an existing ChangeSet file)
      * @throws InvalidExampleException
      * @throws DatabaseException
      * @throws IOException
      * @throws ChangeLogParseException
      */
-    public void generateLiquibaseChangeset(String changeLogFilePath) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
+    public void generateLiquibaseChangeset(Resource changeLogResource) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
         String changeSetId = Long.toString(System.currentTimeMillis());
-        generateLiquibaseChangeset(changeLogFilePath, changeSetId, "Spring Data JDBC");
+        generateLiquibaseChangeset(changeLogResource, changeSetId, "Spring Data JDBC");
     }
 
     /**
@@ -145,7 +146,7 @@ public class LiquibaseChangeSetGenerator {
      * @author Kurt Niemi
      * @since 3.2
      *
-     * @param changeLogFilePath - File that changeset will be written to (or append to an existing ChangeSet file)
+     * @param changeLogResource - Resource that changeset will be written to (or append to an existing ChangeSet file)
      * @param changeSetId - A unique value to identify the changeset
      * @param changeSetAuthor - Author information to be written to changeset file.
      * @throws InvalidExampleException
@@ -153,7 +154,7 @@ public class LiquibaseChangeSetGenerator {
      * @throws IOException
      * @throws ChangeLogParseException
      */
-    public void generateLiquibaseChangeset(String changeLogFilePath, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
+    public void generateLiquibaseChangeset(Resource changeLogResource, String changeSetId, String changeSetAuthor) throws InvalidExampleException, DatabaseException, IOException, ChangeLogParseException {
 
         SchemaDiff difference;
 
@@ -164,7 +165,7 @@ public class LiquibaseChangeSetGenerator {
             difference = new SchemaDiff(sourceModel, new SchemaModel());
         }
 
-        DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogFilePath);
+        DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogResource.getFile());
 
         ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "" , databaseChangeLog);
 
@@ -172,8 +173,8 @@ public class LiquibaseChangeSetGenerator {
         generateTableModifications(changeSet, difference);
 
 
-        File changeLogFile = new File(changeLogFilePath);
-        writeChangeSet(databaseChangeLog, changeSet, changeLogFile);
+//        File changeLogFile = new File(changeLogFilePath);
+        writeChangeSet(databaseChangeLog, changeSet, changeLogResource.getFile());
     }
 
     private void generateTableAdditionsDeletions(ChangeSet changeSet, SchemaDiff difference) {
@@ -235,18 +236,21 @@ public class LiquibaseChangeSetGenerator {
         }
     }
 
-    private DatabaseChangeLog getDatabaseChangeLog(String changeLogFilePath) {
+    private DatabaseChangeLog getDatabaseChangeLog(File changeLogFile) {
 
-        File changeLogFile = new File(changeLogFilePath);
         DatabaseChangeLog databaseChangeLog = null;
 
         try {
             YamlChangeLogParser parser = new YamlChangeLogParser();
-            DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(changeLogFile.getParentFile());
+            File parentDirectory = changeLogFile.getParentFile();
+            if (parentDirectory == null) {
+                parentDirectory = new File("./");
+            }
+            DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(parentDirectory);
             ChangeLogParameters parameters = new ChangeLogParameters();
-            databaseChangeLog = parser.parse(changeLogFilePath, parameters, resourceAccessor);
+            databaseChangeLog = parser.parse(changeLogFile.getName(), parameters, resourceAccessor);
         } catch (Exception ex) {
-            databaseChangeLog = new DatabaseChangeLog(changeLogFilePath);
+            databaseChangeLog = new DatabaseChangeLog(changeLogFile.getAbsolutePath());
         }
         return databaseChangeLog;
     }
