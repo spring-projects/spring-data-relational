@@ -26,9 +26,9 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-public record ColumnModel(SqlIdentifier name, String type, boolean nullable, boolean identityColumn) {
+public record ColumnModel(String name, String type, boolean nullable, boolean identityColumn) {
 
-    public ColumnModel(SqlIdentifier name, String type)  {
+    public ColumnModel(String name, String type)  {
         this(name, type, false, false);
     }
 

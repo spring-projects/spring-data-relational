@@ -27,12 +27,12 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-public record TableModel(String schema, SqlIdentifier name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
-    public TableModel(String schema, SqlIdentifier name) {
+public record TableModel(String schema, String name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
+    public TableModel(String schema, String name) {
         this(schema, name, new ArrayList<>(), new ArrayList<>());
     }
 
-    public TableModel(SqlIdentifier name) {
+    public TableModel(String name) {
         this(null, name);
     }
 
@@ -55,7 +55,7 @@ public record TableModel(String schema, SqlIdentifier name, List<ColumnModel> co
                 return false;
             }
         }
-        if (!name.getReference().toUpperCase().equals(that.name.getReference().toUpperCase())) {
+        if (!name.toUpperCase().equals(that.name.toUpperCase())) {
             return false;
         }
         return true;
@@ -64,6 +64,6 @@ public record TableModel(String schema, SqlIdentifier name, List<ColumnModel> co
     @Override
     public int hashCode() {
 
-        return Objects.hash(name.getReference().toUpperCase());
+        return Objects.hash(name.toUpperCase());
     }
 }
