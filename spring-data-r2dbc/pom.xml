@@ -39,31 +39,6 @@
 
 	<inceptionYear>2018</inceptionYear>
 
-	<developers>
-		<developer>
-			<id>mpaluch</id>
-			<name>Mark Paluch</name>
-			<email>mpaluch(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>ogierke</id>
-			<name>Oliver Gierke</name>
-			<email>ogierke(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

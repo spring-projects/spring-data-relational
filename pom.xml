@@ -93,6 +93,17 @@
 			<timezone>-6</timezone>
 		</developer>
 		<developer>
+			<id>ogierke</id>
+			<name>Oliver Gierke</name>
+			<email>ogierke(at)pivotal.io</email>
+			<organization>Pivotal Software, Inc.</organization>
+			<organizationUrl>https://pivotal.io</organizationUrl>
+			<roles>
+				<role>Project Contributor</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
 			<id>kurtn718</id>
 			<name>Kurt Niemi</name>
 			<email>kniemi(at)vmware.com</email>
