@@ -42,27 +42,25 @@ public class SchemaModelTests {
         SchemaModel newModel = new SchemaModel(context);
 
         // Add column to table
-        SqlIdentifier newIdentifier = new DefaultSqlIdentifier("newcol", false);
-        ColumnModel newColumn = new ColumnModel(newIdentifier, "VARCHAR(255)");
+        ColumnModel newColumn = new ColumnModel("newcol", "VARCHAR(255)");
         newModel.getTableData().get(0).columns().add(newColumn);
 
         // Remove table
         newModel.getTableData().remove(1);
 
         // Add new table
-        SqlIdentifier tableIdenfifier = new DefaultSqlIdentifier("newtable", false);
-        TableModel newTable = new TableModel(null, tableIdenfifier);
+        TableModel newTable = new TableModel(null, "newtable");
         newTable.columns().add(newColumn);
         newModel.getTableData().add(newTable);
 
-        SchemaDiff diff = new SchemaDiff(model, newModel); //, model);
+        SchemaDiff diff = new SchemaDiff(model, newModel);
 
         // Verify that newtable is an added table in the diff
         assertThat(diff.getTableAdditions().size() > 0);
-        assertThat(diff.getTableAdditions().get(0).name().getReference().equals("newtable"));
+        assertThat(diff.getTableAdditions().get(0).name().equals("table1"));
 
         assertThat(diff.getTableDeletions().size() > 0);
-        assertThat(diff.getTableDeletions().get(0).name().getReference().equals("vader"));
+        assertThat(diff.getTableDeletions().get(0).name().equals("vader"));
 
         assertThat(diff.getTableDiff().size() > 0);
         assertThat(diff.getTableDiff().get(0).addedColumns().size() > 0);
