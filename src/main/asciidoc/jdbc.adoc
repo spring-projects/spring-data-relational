@@ -733,7 +733,7 @@ Therefore also fields with auditing annotations do not get updated if they don't
 include::{spring-data-commons-docs}/query-by-example.adoc[leveloffset=+1]
 include::query-by-example.adoc[leveloffset=+1]
 
-include::{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
+include::{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+1]
 
 [[jdbc.mybatis]]
 == MyBatis Integration
