@@ -42,8 +42,6 @@ import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.structure.core.Column;
 import liquibase.structure.core.Table;
 import org.springframework.core.io.Resource;
-import org.springframework.data.relational.core.mapping.DerivedSqlIdentifier;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.io.File;
 import java.io.FileNotFoundException;
