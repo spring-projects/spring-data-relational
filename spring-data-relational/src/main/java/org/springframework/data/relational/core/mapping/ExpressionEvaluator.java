@@ -14,7 +14,7 @@ import org.springframework.util.Assert;
  *
  * @author Kurt Niemi
  * @see SqlIdentifierSanitizer
- * @since 3.1
+ * @since 3.2
  */
 class ExpressionEvaluator {
 

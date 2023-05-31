@@ -83,6 +83,13 @@ public class RelationalMappingContext
 		this.forceQuote = forceQuote;
 	}
 
+	/**
+	 * Set the {@link SqlIdentifierSanitizer} to sanitize
+	 * {@link org.springframework.data.relational.core.sql.SqlIdentifier identifiers} created from SpEL expressions.
+	 *
+	 * @param sanitizer must not be {@literal null}.
+	 * @since 3.2
+	 */
 	public void setSqlIdentifierSanitizer(SqlIdentifierSanitizer sanitizer) {
 		this.expressionEvaluator.setSanitizer(sanitizer);
 	}
@@ -119,7 +126,7 @@ public class RelationalMappingContext
 
 	protected void applyDefaults(BasicRelationalPersistentProperty persistentProperty) {
 		persistentProperty.setForceQuote(isForceQuote());
-		persistentProperty.setSpelExpressionProcessor(this.expressionEvaluator);
+		persistentProperty.setExpressionEvaluator(this.expressionEvaluator);
 	}
 
 }

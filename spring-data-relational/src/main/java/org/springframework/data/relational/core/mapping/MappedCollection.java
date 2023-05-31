@@ -37,8 +37,9 @@ import java.util.Set;
 public @interface MappedCollection {
 
 	/**
-	 * The column name for id column in the corresponding relationship table. Defaults to {@link NamingStrategy} usage if
-	 * the value is empty.
+	 * The column name for id column in the corresponding relationship table. The attribute supports SpEL expressions to
+	 * dynamically calculate the column name on a per-operation basis. Defaults to {@link NamingStrategy} usage if the
+	 * value is empty.
 	 *
 	 * @see NamingStrategy#getReverseColumnName(RelationalPersistentProperty)
 	 */
@@ -46,7 +47,8 @@ public @interface MappedCollection {
 
 	/**
 	 * The column name for key columns of {@link List} or {@link Map} collections in the corresponding relationship table.
-	 * Defaults to {@link NamingStrategy} usage if the value is empty.
+	 * The attribute supports SpEL expressions to dynamically calculate the column name on a per-operation basis. Defaults
+	 * to {@link NamingStrategy} usage if the value is empty.
 	 *
 	 * @see NamingStrategy#getKeyColumn(RelationalPersistentProperty)
 	 */

@@ -72,14 +72,24 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@Test // GH-1325
 	void testRelationalPersistentEntitySpelExpressions() {
 
-		assertThat(entity.getRequiredPersistentProperty("spelExpression1").getColumnName()).isEqualTo(quoted("THE_FORCE_IS_WITH_YOU"));
+		assertThat(entity.getRequiredPersistentProperty("spelExpression1").getColumnName())
+				.isEqualTo(quoted("THE_FORCE_IS_WITH_YOU"));
 		assertThat(entity.getRequiredPersistentProperty("littleBobbyTables").getColumnName())
 				.isEqualTo(quoted("DROPALLTABLES"));
 
 		// Test that sanitizer does affect non-spel expressions
-		assertThat(entity.getRequiredPersistentProperty(
-				"poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot").getColumnName())
-				.isEqualTo(quoted("--; DROP ALL TABLES;--"));
+		assertThat(entity.getRequiredPersistentProperty("poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot")
+				.getColumnName()).isEqualTo(quoted("--; DROP ALL TABLES;--"));
+	}
+
+	@Test // GH-1325
+	void shouldEvaluateMappedCollectionExpressions() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithMappedCollection.class);
+		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("someList");
+
+		assertThat(property.getKeyColumn()).isEqualTo(quoted("key_col"));
+		assertThat(property.getReverseColumnName(null)).isEqualTo(quoted("id_col"));
 	}
 
 	@Test // DATAJDBC-111
@@ -166,18 +176,16 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		public static String spelExpression1Value = "THE_FORCE_IS_WITH_YOU";
 
 		public static String littleBobbyTablesValue = "--; DROP ALL TABLES;--";
-		@Column(value="#{T(org.springframework.data.relational.core.mapping." +
-				"BasicRelationalPersistentPropertyUnitTests$DummyEntity" +
-				").spelExpression1Value}")
-		private String spelExpression1;
+		@Column(value = "#{T(org.springframework.data.relational.core.mapping."
+				+ "BasicRelationalPersistentPropertyUnitTests$DummyEntity"
+				+ ").spelExpression1Value}") private String spelExpression1;
 
-		@Column(value="#{T(org.springframework.data.relational.core.mapping." +
-				"BasicRelationalPersistentPropertyUnitTests$DummyEntity" +
-				").littleBobbyTablesValue}")
-		private String littleBobbyTables;
+		@Column(value = "#{T(org.springframework.data.relational.core.mapping."
+				+ "BasicRelationalPersistentPropertyUnitTests$DummyEntity"
+				+ ").littleBobbyTablesValue}") private String littleBobbyTables;
 
-		@Column(value="--; DROP ALL TABLES;--")
-		private String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
+		@Column(
+				value = "--; DROP ALL TABLES;--") private String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
 
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddableEntity embeddableEntity;
@@ -197,6 +205,11 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		public List<Date> getListGetter() {
 			return null;
 		}
+	}
+
+	static class WithMappedCollection {
+
+		@MappedCollection(idColumn = "#{'id_col'}", keyColumn = "#{'key_col'}") private List<Integer> someList;
 	}
 
 	@SuppressWarnings("unused")

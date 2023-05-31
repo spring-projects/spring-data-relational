@@ -27,7 +27,6 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.Optionals;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ParserContext;
 import org.springframework.expression.common.LiteralExpression;
@@ -53,12 +52,14 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<SqlIdentifier> columnName;
 	private final @Nullable Expression columnNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
+	private final @Nullable Expression collectionIdColumnNameExpression;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
+	private final @Nullable Expression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
 	private final String embeddedPrefix;
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
-	private ExpressionEvaluator spelExpressionProcessor = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+	private ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
 
 	/**
 	 * Creates a new {@link BasicRelationalPersistentProperty}.
@@ -99,38 +100,58 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(Embedded::prefix) //
 				.orElse("");
 
+		Lazy<Optional<SqlIdentifier>> collectionIdColumnName = null;
+		Lazy<SqlIdentifier> collectionKeyColumnName = Lazy
+				.of(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this)));
+
+		if (isAnnotationPresent(MappedCollection.class)) {
+
+			MappedCollection mappedCollection = getRequiredAnnotation(MappedCollection.class);
+
+			if (StringUtils.hasText(mappedCollection.idColumn())) {
+				collectionIdColumnName = Lazy.of(() -> Optional.of(createSqlIdentifier(mappedCollection.idColumn())));
+			}
+
+			this.collectionIdColumnNameExpression = detectExpression(mappedCollection.idColumn());
+
+			collectionKeyColumnName = Lazy.of(
+					() -> StringUtils.hasText(mappedCollection.keyColumn()) ? createSqlIdentifier(mappedCollection.keyColumn())
+							: createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this)));
+
+			this.collectionKeyColumnNameExpression = detectExpression(mappedCollection.keyColumn());
+		} else {
+
+			this.collectionIdColumnNameExpression = null;
+			this.collectionKeyColumnNameExpression = null;
+		}
+
 		if (isAnnotationPresent(Column.class)) {
 
 			Column column = getRequiredAnnotation(Column.class);
 
-			columnName = Lazy.of(() -> StringUtils.hasText(column.value()) ? createSqlIdentifier(column.value())
+			this.columnName = Lazy.of(() -> StringUtils.hasText(column.value()) ? createSqlIdentifier(column.value())
 					: createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
-			columnNameExpression = detectExpression(column.value());
+			this.columnNameExpression = detectExpression(column.value());
+
+			if (collectionIdColumnName == null && StringUtils.hasText(column.value())) {
+				collectionIdColumnName = Lazy.of(() -> Optional.of(createSqlIdentifier(column.value())));
+			}
 
 		} else {
-			columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
-			columnNameExpression = null;
+			this.columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
+			this.columnNameExpression = null;
 		}
 
-		// TODO: support expressions for MappedCollection
-		this.collectionIdColumnName = Lazy.of(() -> Optionals
-				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)) //
-						.map(MappedCollection::idColumn), //
-						Optional.ofNullable(findAnnotation(Column.class)) //
-								.map(Column::value)) //
-				.filter(StringUtils::hasText) //
-				.findFirst() //
-				.map(this::createSqlIdentifier)); //
+		if (collectionIdColumnName == null) {
+			collectionIdColumnName = Lazy.of(Optional.empty());
+		}
 
-		this.collectionKeyColumnName = Lazy.of(() -> Optionals //
-				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn)) //
-				.filter(StringUtils::hasText).findFirst() //
-				.map(this::createSqlIdentifier) //
-				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
+		this.collectionIdColumnName = collectionIdColumnName;
+		this.collectionKeyColumnName = collectionKeyColumnName;
 	}
 
-	void setSpelExpressionProcessor(ExpressionEvaluator spelExpressionProcessor) {
-		this.spelExpressionProcessor = spelExpressionProcessor;
+	void setExpressionEvaluator(ExpressionEvaluator expressionEvaluator) {
+		this.expressionEvaluator = expressionEvaluator;
 	}
 
 	/**
@@ -184,7 +205,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			return columnName.get();
 		}
 
-		return createSqlIdentifier(spelExpressionProcessor.evaluate(columnNameExpression));
+		return createSqlIdentifier(expressionEvaluator.evaluate(columnNameExpression));
 	}
 
 	@Override
@@ -195,13 +216,27 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
-		return collectionIdColumnName.get()
-				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
+		if (collectionIdColumnNameExpression == null) {
+
+			return collectionIdColumnName.get()
+					.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
+		}
+
+		return createSqlIdentifier(expressionEvaluator.evaluate(collectionIdColumnNameExpression));
 	}
 
 	@Override
 	public SqlIdentifier getKeyColumn() {
-		return isQualified() ? collectionKeyColumnName.get() : null;
+
+		if (!isQualified()) {
+			return null;
+		}
+
+		if (collectionKeyColumnNameExpression == null) {
+			return collectionKeyColumnName.get();
+		}
+
+		return createSqlIdentifier(expressionEvaluator.evaluate(collectionKeyColumnNameExpression));
 	}
 
 	@Override

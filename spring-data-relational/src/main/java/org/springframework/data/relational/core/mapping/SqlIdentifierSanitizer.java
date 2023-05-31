@@ -9,7 +9,7 @@ import org.springframework.util.Assert;
  *
  * @author Kurt Niemi
  * @author Mark Paluch
- * @since 3.1
+ * @since 3.2
  * @see RelationalMappingContext#setSqlIdentifierSanitizer(SqlIdentifierSanitizer)
  */
 @FunctionalInterface
