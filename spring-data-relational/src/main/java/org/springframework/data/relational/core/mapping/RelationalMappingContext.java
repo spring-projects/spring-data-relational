@@ -128,5 +128,5 @@ public class RelationalMappingContext
 		persistentProperty.setForceQuote(isForceQuote());
 		persistentProperty.setExpressionEvaluator(this.expressionEvaluator);
 	}
-	
+
 }

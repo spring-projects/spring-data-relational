@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.jdbc.core.mapping.schema;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Interface for mapping a Java type to a Database type.
- *
- * To customize the mapping an instance of a class implementing {@link DatabaseTypeMapping} interface
- * can be set on the {@link SchemaModel} class.
+ * Used to keep track of columns that should be added or deleted, when performing a difference between a source and
+ * target {@link Tables}.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public interface DatabaseTypeMapping {
-    public String databaseTypeFromClass(Class<?> type);
+record TableDiff(Table table, List<Column> columnsToAdd, List<Column> columnsToDrop) {
+
+	public TableDiff(Table table) {
+		this(table, new ArrayList<>(), new ArrayList<>());
+	}
+
 }

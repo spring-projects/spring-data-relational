@@ -226,7 +226,6 @@
 			<groupId>org.liquibase</groupId>
 			<artifactId>liquibase-core</artifactId>
 			<version>${liquibase.version}</version>
-			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
 

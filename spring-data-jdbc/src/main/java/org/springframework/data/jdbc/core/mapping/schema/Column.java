@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
-
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.Objects;
-
 
 /**
  * Models a Column for generating SQL for Schema generation.
@@ -26,17 +23,17 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-public record ColumnModel(String name, String type, boolean nullable, boolean identityColumn) {
+record Column(String name, String type, boolean nullable, boolean identity) {
 
-    public ColumnModel(String name, String type)  {
-        this(name, type, false, false);
-    }
+	public Column(String name, String type) {
+		this(name, type, false, false);
+	}
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ColumnModel that = (ColumnModel) o;
+				Column that = (Column) o;
         return Objects.equals(name, that.name);
     }
 
