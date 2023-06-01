@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,43 +25,43 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-public record TableModel(String schema, String name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
-    public TableModel(String schema, String name) {
-        this(schema, name, new ArrayList<>(), new ArrayList<>());
-    }
+record TableModel(String schema, String name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
 
-    public TableModel(String name) {
-        this(null, name);
-    }
+	public TableModel(String schema, String name) {
+		this(schema, name, new ArrayList<>(), new ArrayList<>());
+	}
 
-    @Override
-    public boolean equals(Object o) {
+	public TableModel(String name) {
+		this(null, name);
+	}
 
-        if (this == o) {
-            return true;
-        }
+	@Override
+	public boolean equals(Object o) {
 
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+		if (this == o) {
+			return true;
+		}
 
-        TableModel that = (TableModel) o;
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 
-        // If we are missing the schema for either TableModel we will not treat that as being different
-        if (schema != null && that.schema != null && !schema.isEmpty() && !that.schema.isEmpty()) {
-            if (!Objects.equals(schema, that.schema)) {
-                return false;
-            }
-        }
-        if (!name.toUpperCase().equals(that.name.toUpperCase())) {
-            return false;
-        }
-        return true;
-    }
+		TableModel that = (TableModel) o;
 
-    @Override
-    public int hashCode() {
+		// If we are missing the schema for either TableModel we will not treat that as being different
+		if (schema != null && that.schema != null && !schema.isEmpty() && !that.schema.isEmpty()) {
+			if (!Objects.equals(schema, that.schema)) {
+				return false;
+			}
+		}
+		if (!name.equalsIgnoreCase(that.name)) {
+			return false;
+		}
+		return true;
+	}
 
-        return Objects.hash(name.toUpperCase());
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(schema, name.toUpperCase());
+	}
 }

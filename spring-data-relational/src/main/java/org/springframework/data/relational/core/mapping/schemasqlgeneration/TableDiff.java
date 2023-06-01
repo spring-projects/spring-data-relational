@@ -4,18 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Used to keep track of columns that have been added or deleted,
- * when performing a difference between a source and target {@link SchemaModel}
+ * Used to keep track of columns that should be added or deleted, when performing a difference between a source and
+ * target {@link MappedTables}.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public record TableDiff(TableModel tableModel,
-                        ArrayList<ColumnModel> addedColumns,
-                        ArrayList<ColumnModel> deletedColumns) {
+record TableDiff(TableModel table, List<ColumnModel> columnsToAdd, List<ColumnModel> columnsToDrop) {
 
-    public TableDiff(TableModel tableModel) {
-        this(tableModel, new ArrayList<>(), new ArrayList<>());
-    }
+	public TableDiff(TableModel tableModel) {
+		this(tableModel, new ArrayList<>(), new ArrayList<>());
+	}
 
 }

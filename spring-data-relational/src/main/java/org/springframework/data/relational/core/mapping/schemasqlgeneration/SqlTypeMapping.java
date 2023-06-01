@@ -15,15 +15,21 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+
 /**
- * Interface for mapping a Java type to a Database type.
- *
- * To customize the mapping an instance of a class implementing {@link DatabaseTypeMapping} interface
- * can be set on the {@link SchemaModel} class.
+ * Interface for mapping a {@link RelationalPersistentProperty} to a Database type.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public interface DatabaseTypeMapping {
-    public String databaseTypeFromClass(Class<?> type);
+public interface SqlTypeMapping {
+
+	/**
+	 * Determine a column type for a persistent property.
+	 *
+	 * @param property the property for which the type should be determined.
+	 * @return the SQL type to use, such as {@code VARCHAR} or {@code NUMERIC}.
+	 */
+	String getColumnType(RelationalPersistentProperty property);
 }

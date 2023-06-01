@@ -1,99 +1,101 @@
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * This class is created to return the difference between a source and target {@link SchemaModel}
- *
- * The difference consists of Table Additions, Deletions, and Modified Tables (i.e. table
- * exists in both source and target - but has columns to add or delete)
+ * This class is created to return the difference between a source and target {@link MappedTables} The difference
+ * consists of Table Additions, Deletions, and Modified Tables (i.e. table exists in both source and target - but has
+ * columns to add or delete)
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public class SchemaDiff {
-    private final List<TableModel> tableAdditions = new ArrayList<TableModel>();
-    private final List<TableModel> tableDeletions = new ArrayList<TableModel>();
-    private final List<TableDiff> tableDiffs = new ArrayList<TableDiff>();
+class SchemaDiff {
 
-    private SchemaModel source;
-    private SchemaModel target;
+	private final MappedTables source;
+	private final MappedTables target;
 
-    /**
-     *
-     * Compare two {@link SchemaModel} to identify differences.
-     *
-     * @param target - Model reflecting current database state
-     * @param source - Model reflecting desired database state
-     */
-    public SchemaDiff(SchemaModel target, SchemaModel source) {
+	private final List<TableModel> tableAdditions = new ArrayList<>();
+	private final List<TableModel> tableDeletions = new ArrayList<>();
+	private final List<TableDiff> tableDiffs = new ArrayList<>();
 
-        this.source = source;
-        this.target = target;
+	/**
+	 * Compare two {@link MappedTables} to identify differences.
+	 *
+	 * @param target model reflecting current database state.
+	 * @param source model reflecting desired database state.
+	 */
+	public SchemaDiff(MappedTables target, MappedTables source) {
 
-        diffTableAdditionDeletion();
-        diffTable();
-    }
+		this.source = source;
+		this.target = target;
 
-    public List<TableModel> getTableAdditions() {
+		diffTableAdditionDeletion();
+		diffTable();
+	}
 
-        return tableAdditions;
-    }
+	public List<TableModel> getTableAdditions() {
+		return tableAdditions;
+	}
 
-    public List<TableModel> getTableDeletions() {
+	public List<TableModel> getTableDeletions() {
+		return tableDeletions;
+	}
 
-        return tableDeletions;
-    }
-    public List<TableDiff> getTableDiff() {
+	public List<TableDiff> getTableDiff() {
+		return tableDiffs;
+	}
 
-        return tableDiffs;
-    }
+	private void diffTableAdditionDeletion() {
 
-    private void diffTableAdditionDeletion() {
+		List<TableModel> sourceTableData = new ArrayList<>(source.getTableData());
+		List<TableModel> targetTableData = new ArrayList<>(target.getTableData());
 
-        Set<TableModel> sourceTableData = new HashSet<TableModel>(source.getTableData());
-        Set<TableModel> targetTableData = new HashSet<TableModel>(target.getTableData());
+		// Identify deleted tables
+		List<TableModel> deletedTables = new ArrayList<>(sourceTableData);
+		deletedTables.removeAll(targetTableData);
+		tableDeletions.addAll(deletedTables);
 
-        // Identify deleted tables
-        Set<TableModel> deletedTables = new HashSet<TableModel>(sourceTableData);
-        deletedTables.removeAll(targetTableData);
-        tableDeletions.addAll(deletedTables);
+		// Identify added tables
+		List<TableModel> addedTables = new ArrayList<>(targetTableData);
+		addedTables.removeAll(sourceTableData);
+		tableAdditions.addAll(addedTables);
+	}
 
-        // Identify added tables
-        Set<TableModel> addedTables = new HashSet<TableModel>(targetTableData);
-        addedTables.removeAll(sourceTableData);
-        tableAdditions.addAll(addedTables);
-    }
+	private void diffTable() {
 
-    private void diffTable() {
+		Map<String, TableModel> sourceTablesMap = new LinkedHashMap<>();
+		for (TableModel table : source.getTableData()) {
+			sourceTablesMap.put(table.schema() + "." + table.name(), table);
+		}
 
-        HashMap<String, TableModel> sourceTablesMap = new HashMap<String,TableModel>();
-        for (TableModel table : source.getTableData()) {
-            sourceTablesMap.put(table.schema() + "." + table.name(), table);
-        }
+		Set<TableModel> existingTables = new LinkedHashSet<>(target.getTableData());
+		getTableAdditions().forEach(existingTables::remove);
 
-        Set<TableModel> existingTables = new HashSet<TableModel>(target.getTableData());
-        existingTables.removeAll(getTableAdditions());
+		for (TableModel table : existingTables) {
+			TableDiff tableDiff = new TableDiff(table);
+			tableDiffs.add(tableDiff);
 
-        for (TableModel table : existingTables) {
-            TableDiff tableDiff = new TableDiff(table);
-            tableDiffs.add(tableDiff);
+			TableModel sourceTable = sourceTablesMap.get(table.schema() + "." + table.name());
 
-            TableModel sourceTable = sourceTablesMap.get(table.schema() + "." + table.name());
+			Set<ColumnModel> sourceTableData = new LinkedHashSet<>(sourceTable.columns());
+			Set<ColumnModel> targetTableData = new LinkedHashSet<>(table.columns());
 
-            Set<ColumnModel> sourceTableData = new HashSet<ColumnModel>(sourceTable.columns());
-            Set<ColumnModel> targetTableData = new HashSet<ColumnModel>(table.columns());
+			// Identify deleted columns
+			Set<ColumnModel> deletedColumns = new LinkedHashSet<>(sourceTableData);
+			deletedColumns.removeAll(targetTableData);
 
-            // Identify deleted columns
-            Set<ColumnModel> deletedColumns = new HashSet<ColumnModel>(sourceTableData);
-            deletedColumns.removeAll(targetTableData);
+			tableDiff.columnsToDrop().addAll(deletedColumns);
 
-            tableDiff.deletedColumns().addAll(deletedColumns);
-
-            // Identify added columns
-            Set<ColumnModel> addedColumns = new HashSet<ColumnModel>(targetTableData);
-            addedColumns.removeAll(sourceTableData);
-            tableDiff.addedColumns().addAll(addedColumns);
-        }
-    }
+			// Identify added columns
+			Set<ColumnModel> addedColumns = new LinkedHashSet<>(targetTableData);
+			addedColumns.removeAll(sourceTableData);
+			tableDiff.columnsToAdd().addAll(addedColumns);
+		}
+	}
 }

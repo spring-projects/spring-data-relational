@@ -101,5 +101,5 @@ public class RelationalMappingContext
 	public NamingStrategy getNamingStrategy() {
 		return this.namingStrategy;
 	}
-	
+
 }

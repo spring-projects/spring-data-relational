@@ -15,10 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping.schemasqlgeneration;
 
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-
 import java.util.Objects;
-
 
 /**
  * Models a Column for generating SQL for Schema generation.
@@ -26,11 +23,11 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-public record ColumnModel(String name, String type, boolean nullable, boolean identityColumn) {
+record ColumnModel(String name, String type, boolean nullable, boolean identityColumn) {
 
-    public ColumnModel(String name, String type)  {
-        this(name, type, false, false);
-    }
+	public ColumnModel(String name, String type) {
+		this(name, type, false, false);
+	}
 
     @Override
     public boolean equals(Object o) {
