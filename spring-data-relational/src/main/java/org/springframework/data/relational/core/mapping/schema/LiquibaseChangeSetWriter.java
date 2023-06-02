@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.relational.core.mapping.schema;
 
 import liquibase.CatalogAndSchema;
 import liquibase.change.AddColumnConfig;
@@ -38,8 +38,6 @@ import liquibase.serializer.core.yaml.YamlChangeLogSerializer;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.SnapshotControl;
 import liquibase.snapshot.SnapshotGeneratorFactory;
-import liquibase.structure.core.Column;
-import liquibase.structure.core.Table;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,12 +51,16 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import org.springframework.core.io.Resource;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Predicates;
 import org.springframework.util.Assert;
 
 /**
  * Use this class to write Liquibase change sets.
  * <p>
- * First create a {@link MappedTables} instance passing in a RelationalContext to have a model that represents the
+ * First create a {@link Tables} instance passing in a {@link MappingContext} to have a model that represents the
  * Table(s)/Column(s) that the code expects to exist. And then optionally create a Liquibase database object that points
  * to an existing database if one desires to create a changeset that could be applied to that database. If a database
  * object is not used, then the change set created would be something that could be applied to an empty database to make
@@ -69,8 +71,10 @@ import org.springframework.util.Assert;
  */
 public class LiquibaseChangeSetWriter {
 
-	private final MappedTables sourceModel;
-	private final Database targetDatabase;
+	public static final String DEFAULT_AUTHOR = "Spring Data Relational";
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+
+	private SqlTypeMapping sqlTypeMapping = new DefaultSqlTypeMapping();
 
 	private ChangeLogSerializer changeLogSerializer = new YamlChangeLogSerializer();
 
@@ -79,14 +83,19 @@ public class LiquibaseChangeSetWriter {
 	/**
 	 * Predicate to identify Liquibase system tables.
 	 */
-	private final Predicate<String> liquibaseTables = table -> table.toUpperCase(Locale.ROOT)
+	private final Predicate<String> isLiquibaseTable = table -> table.toUpperCase(Locale.ROOT)
 			.startsWith("DATABASECHANGELOG");
+
+	/**
+	 * Filter predicate to determine which persistent entities should be used for schema generation.
+	 */
+	public Predicate<RelationalPersistentEntity<?>> schemaFilter = Predicates.isTrue();
 
 	/**
 	 * Filter predicate used to determine whether an existing table should be removed. Defaults to {@code false} to keep
 	 * existing tables.
 	 */
-	public Predicate<String> dropTableFilter = table -> true;
+	public Predicate<String> dropTableFilter = Predicates.isTrue();
 
 	/**
 	 * Filter predicate used to determine whether an existing column should be removed. Defaults to {@code false} to keep
@@ -95,32 +104,34 @@ public class LiquibaseChangeSetWriter {
 	public BiPredicate<String, String> dropColumnFilter = (table, column) -> false;
 
 	/**
-	 * Use this to generate a ChangeSet that can be used on an empty database
+	 * Use this to generate a ChangeSet that can be used on an empty database.
 	 *
-	 * @param sourceModel - Model representing table(s)/column(s) as existing in code
+	 * @param mappingContext source to determine persistent entities, must not be {@literal null}.
 	 */
-	public LiquibaseChangeSetWriter(MappedTables sourceModel) {
+	public LiquibaseChangeSetWriter(
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
 
-		this.sourceModel = sourceModel;
-		this.targetDatabase = null;
+		Assert.notNull(mappingContext, "MappingContext must not be null");
+
+		this.mappingContext = mappingContext;
 	}
 
 	/**
-	 * Use this to generate a ChangeSet against an existing database
+	 * Configure SQL type mapping. Defaults to {@link DefaultSqlTypeMapping}.
 	 *
-	 * @param sourceModel model representing table(s)/column(s) as existing in code.
-	 * @param targetDatabase existing Liquibase database.
+	 * @param sqlTypeMapping must not be {@literal null}.
 	 */
-	public LiquibaseChangeSetWriter(MappedTables sourceModel, Database targetDatabase) {
+	public void setSqlTypeMapping(SqlTypeMapping sqlTypeMapping) {
 
-		this.sourceModel = sourceModel;
-		this.targetDatabase = targetDatabase;
+		Assert.notNull(sqlTypeMapping, "SqlTypeMapping must not be null");
+
+		this.sqlTypeMapping = sqlTypeMapping;
 	}
 
 	/**
 	 * Set the {@link ChangeLogSerializer}.
 	 *
-	 * @param changeLogSerializer
+	 * @param changeLogSerializer must not be {@literal null}.
 	 */
 	public void setChangeLogSerializer(ChangeLogSerializer changeLogSerializer) {
 
@@ -132,13 +143,27 @@ public class LiquibaseChangeSetWriter {
 	/**
 	 * Set the {@link ChangeLogParser}.
 	 *
-	 * @param changeLogParser
+	 * @param changeLogParser must not be {@literal null}.
 	 */
 	public void setChangeLogParser(ChangeLogParser changeLogParser) {
 
 		Assert.notNull(changeLogParser, "ChangeLogParser must not be null");
 
 		this.changeLogParser = changeLogParser;
+	}
+
+	/**
+	 * Set the filter predicate to identify for which tables to create schema definitions. Existing tables for excluded
+	 * entities will show up in {@link #setDropTableFilter(Predicate)}. Returning {@code true} includes the entity;
+	 * {@code false} excludes the entity from schema creation.
+	 *
+	 * @param schemaFilter must not be {@literal null}.
+	 */
+	public void setSchemaFilter(Predicate<RelationalPersistentEntity<?>> schemaFilter) {
+
+		Assert.notNull(schemaFilter, "Schema filter must not be null");
+
+		this.schemaFilter = schemaFilter;
 	}
 
 	/**
@@ -168,48 +193,100 @@ public class LiquibaseChangeSetWriter {
 	}
 
 	/**
-	 * Write a Liquibase changeset.
+	 * Write a Liquibase changeset containing all tables as initial changeset.
 	 *
 	 * @param changeLogResource resource that changeset will be written to (or append to an existing ChangeSet file). The
 	 *          resource must resolve to a valid {@link Resource#getFile()}.
-	 * @throws LiquibaseException
 	 * @throws IOException
 	 */
-	public void writeChangeSet(Resource changeLogResource) throws LiquibaseException, IOException {
-
-		String changeSetId = Long.toString(System.currentTimeMillis());
-		writeChangeSet(changeLogResource, changeSetId, "Spring Data Relational");
+	public void writeChangeSet(Resource changeLogResource) throws IOException {
+		writeChangeSet(changeLogResource, getChangeSetId(), DEFAULT_AUTHOR);
 	}
 
 	/**
-	 * Write a Liquibase changeset.
+	 * Write a Liquibase changeset using a {@link Database} to identify the differences between mapped entities and the
+	 * existing database.
+	 *
+	 * @param changeLogResource resource that changeset will be written to (or append to an existing ChangeSet file). The
+	 *          resource must resolve to a valid {@link Resource#getFile()}.
+	 * @param database database to identify the differences.
+	 * @throws LiquibaseException
+	 * @throws IOException
+	 */
+	public void writeChangeSet(Resource changeLogResource, Database database) throws IOException, LiquibaseException {
+		writeChangeSet(changeLogResource, getChangeSetId(), DEFAULT_AUTHOR, database);
+	}
+
+	/**
+	 * Write a Liquibase changeset containing all tables as initial changeset.
 	 *
 	 * @param changeLogResource resource that changeset will be written to (or append to an existing ChangeSet file).
 	 * @param changeSetId unique value to identify the changeset.
 	 * @param changeSetAuthor author information to be written to changeset file.
-	 * @throws LiquibaseException
 	 * @throws IOException
 	 */
 	public void writeChangeSet(Resource changeLogResource, String changeSetId, String changeSetAuthor)
-			throws LiquibaseException, IOException {
-
-		SchemaDiff difference;
-
-		if (targetDatabase != null) {
-			MappedTables liquibaseModel = getLiquibaseModel(targetDatabase);
-			difference = new SchemaDiff(sourceModel, liquibaseModel);
-		} else {
-			difference = new SchemaDiff(sourceModel, new MappedTables());
-		}
+			throws IOException {
 
 		DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogResource.getFile());
+		ChangeSet changeSet = createChangeSet(changeSetId, changeSetAuthor, databaseChangeLog);
+
+		writeChangeSet(databaseChangeLog, changeSet, changeLogResource.getFile());
+	}
+
+	/**
+	 * Write a Liquibase changeset using a {@link Database} to identify the differences between mapped entities and the
+	 * existing database.
+	 *
+	 * @param changeLogResource resource that changeset will be written to (or append to an existing ChangeSet file).
+	 * @param changeSetId unique value to identify the changeset.
+	 * @param changeSetAuthor author information to be written to changeset file.
+	 * @param database database to identify the differences.
+	 * @throws LiquibaseException
+	 * @throws IOException
+	 */
+	public void writeChangeSet(Resource changeLogResource, String changeSetId, String changeSetAuthor, Database database)
+			throws LiquibaseException, IOException {
+
+		DatabaseChangeLog databaseChangeLog = getDatabaseChangeLog(changeLogResource.getFile());
+		ChangeSet changeSet = createChangeSet(changeSetId, changeSetAuthor, database, databaseChangeLog);
+
+		writeChangeSet(databaseChangeLog, changeSet, changeLogResource.getFile());
+	}
+
+	protected ChangeSet createChangeSet(String changeSetId, String changeSetAuthor, DatabaseChangeLog databaseChangeLog) {
+		return createChangeSet(changeSetId, changeSetAuthor, createInitialDifference(), databaseChangeLog);
+	}
+
+	protected ChangeSet createChangeSet(String changeSetId, String changeSetAuthor, Database database,
+			DatabaseChangeLog databaseChangeLog) throws LiquibaseException {
+		return createChangeSet(changeSetId, changeSetAuthor, createSchemaDifference(database), databaseChangeLog);
+	}
+
+	private ChangeSet createChangeSet(String changeSetId, String changeSetAuthor, SchemaDiff difference,
+			DatabaseChangeLog databaseChangeLog) {
+
 		ChangeSet changeSet = new ChangeSet(changeSetId, changeSetAuthor, false, false, "", "", "", databaseChangeLog);
 
 		generateTableAdditionsDeletions(changeSet, difference);
 		generateTableModifications(changeSet, difference);
+		return changeSet;
+	}
 
-		// File changeLogFile = new File(changeLogFilePath);
-		writeChangeSet(databaseChangeLog, changeSet, changeLogResource.getFile());
+	private SchemaDiff createInitialDifference() {
+
+		Tables mappedEntities = Tables.from(mappingContext.getPersistentEntities().stream().filter(schemaFilter),
+				sqlTypeMapping, null);
+		return SchemaDiff.diff(mappedEntities, Tables.empty());
+	}
+
+	private SchemaDiff createSchemaDifference(Database database) throws LiquibaseException {
+
+		Tables existingTables = getLiquibaseModel(database);
+		Tables mappedEntities = Tables.from(mappingContext.getPersistentEntities().stream().filter(schemaFilter),
+				sqlTypeMapping, database.getDefaultCatalogName());
+
+		return SchemaDiff.diff(mappedEntities, existingTables);
 	}
 
 	private DatabaseChangeLog getDatabaseChangeLog(File changeLogFile) {
@@ -217,10 +294,12 @@ public class LiquibaseChangeSetWriter {
 		DatabaseChangeLog databaseChangeLog;
 
 		try {
+
 			File parentDirectory = changeLogFile.getParentFile();
 			if (parentDirectory == null) {
 				parentDirectory = new File("./");
 			}
+
 			DirectoryResourceAccessor resourceAccessor = new DirectoryResourceAccessor(parentDirectory);
 			ChangeLogParameters parameters = new ChangeLogParameters();
 			databaseChangeLog = changeLogParser.parse(changeLogFile.getName(), parameters, resourceAccessor);
@@ -233,12 +312,12 @@ public class LiquibaseChangeSetWriter {
 
 	private void generateTableAdditionsDeletions(ChangeSet changeSet, SchemaDiff difference) {
 
-		for (TableModel table : difference.getTableAdditions()) {
+		for (Table table : difference.tableAdditions()) {
 			CreateTableChange newTable = changeTable(table);
 			changeSet.addChange(newTable);
 		}
 
-		for (TableModel table : difference.getTableDeletions()) {
+		for (Table table : difference.tableDeletions()) {
 			// Do not delete/drop table if it is an external application table
 			if (dropTableFilter.test(table.name())) {
 				changeSet.addChange(dropTable(table));
@@ -248,13 +327,13 @@ public class LiquibaseChangeSetWriter {
 
 	private void generateTableModifications(ChangeSet changeSet, SchemaDiff difference) {
 
-		for (TableDiff table : difference.getTableDiff()) {
+		for (TableDiff table : difference.tableDiffs()) {
 
 			if (!table.columnsToAdd().isEmpty()) {
 				changeSet.addChange(addColumns(table));
 			}
 
-			List<ColumnModel> deletedColumns = getColumnsToDrop(table);
+			List<Column> deletedColumns = getColumnsToDrop(table);
 
 			if (deletedColumns.size() > 0) {
 				changeSet.addChange(dropColumns(table, deletedColumns));
@@ -262,13 +341,13 @@ public class LiquibaseChangeSetWriter {
 		}
 	}
 
-	private List<ColumnModel> getColumnsToDrop(TableDiff table) {
+	private List<Column> getColumnsToDrop(TableDiff table) {
 
-		List<ColumnModel> deletedColumns = new ArrayList<>();
-		for (ColumnModel columnModel : table.columnsToDrop()) {
+		List<Column> deletedColumns = new ArrayList<>();
+		for (Column column : table.columnsToDrop()) {
 
-			if (dropColumnFilter.test(table.table().name(), columnModel.name())) {
-				deletedColumns.add(columnModel);
+			if (dropColumnFilter.test(table.table().name(), column.name())) {
+				deletedColumns.add(column);
 			}
 		}
 		return deletedColumns;
@@ -285,63 +364,44 @@ public class LiquibaseChangeSetWriter {
 		}
 	}
 
-	private MappedTables getLiquibaseModel(Database targetDatabase) throws LiquibaseException {
-
-		MappedTables liquibaseModel = new MappedTables();
+	private Tables getLiquibaseModel(Database targetDatabase) throws LiquibaseException {
 
 		CatalogAndSchema[] schemas = new CatalogAndSchema[] { targetDatabase.getDefaultSchema() };
 		SnapshotControl snapshotControl = new SnapshotControl(targetDatabase);
 
 		DatabaseSnapshot snapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(schemas, targetDatabase,
 				snapshotControl);
-		Set<Table> tables = snapshot.get(liquibase.structure.core.Table.class);
-		List<TableModel> processed = associateTablesWithSchema(sourceModel.getTableData(), targetDatabase);
-
-		sourceModel.getTableData().clear();
-		sourceModel.getTableData().addAll(processed);
+		Set<liquibase.structure.core.Table> tables = snapshot.get(liquibase.structure.core.Table.class);
+		List<Table> existingTables = new ArrayList<>(tables.size());
 
 		for (liquibase.structure.core.Table table : tables) {
 
 			// Exclude internal Liquibase tables from comparison
-			if (liquibaseTables.test(table.getName())) {
+			if (isLiquibaseTable.test(table.getName())) {
 				continue;
 			}
 
-			TableModel tableModel = new TableModel(table.getSchema().getCatalogName(), table.getName());
+			Table tableModel = new Table(table.getSchema().getCatalogName(), table.getName());
 
-			List<Column> columns = table.getColumns();
+			List<liquibase.structure.core.Column> columns = table.getColumns();
 
 			for (liquibase.structure.core.Column column : columns) {
 
 				String type = column.getType().toString();
 				boolean nullable = column.isNullable();
-				ColumnModel columnModel = new ColumnModel(column.getName(), type, nullable, false);
+				Column columnModel = new Column(column.getName(), type, nullable, false);
 
 				tableModel.columns().add(columnModel);
 			}
 
-			liquibaseModel.getTableData().add(tableModel);
+			existingTables.add(tableModel);
 		}
 
-		return liquibaseModel;
+		return new Tables(existingTables);
 	}
 
-	private List<TableModel> associateTablesWithSchema(List<TableModel> tables, Database targetDatabase) {
-
-		List<TableModel> processed = new ArrayList<>(tables.size());
-
-		for (TableModel currentModel : tables) {
-
-			if (currentModel.schema() == null || currentModel.schema().isEmpty()) {
-				TableModel newModel = new TableModel(targetDatabase.getDefaultSchema().getCatalogName(), currentModel.name(),
-						currentModel.columns(), currentModel.keyColumns());
-				processed.add(newModel);
-			} else {
-				processed.add(currentModel);
-			}
-		}
-
-		return processed;
+	private static String getChangeSetId() {
+		return Long.toString(System.currentTimeMillis());
 	}
 
 	private static AddColumnChange addColumns(TableDiff table) {
@@ -350,27 +410,27 @@ public class LiquibaseChangeSetWriter {
 		addColumnChange.setSchemaName(table.table().schema());
 		addColumnChange.setTableName(table.table().name());
 
-		for (ColumnModel column : table.columnsToAdd()) {
+		for (Column column : table.columnsToAdd()) {
 			AddColumnConfig addColumn = createAddColumnChange(column);
 			addColumnChange.addColumn(addColumn);
 		}
 		return addColumnChange;
 	}
 
-	private static AddColumnConfig createAddColumnChange(ColumnModel column) {
+	private static AddColumnConfig createAddColumnChange(Column column) {
 
 		AddColumnConfig config = new AddColumnConfig();
 		config.setName(column.name());
 		config.setType(column.type());
 
-		if (column.identityColumn()) {
+		if (column.identity()) {
 			config.setAutoIncrement(true);
 		}
 
 		return config;
 	}
 
-	private static DropColumnChange dropColumns(TableDiff table, Collection<ColumnModel> deletedColumns) {
+	private static DropColumnChange dropColumns(TableDiff table, Collection<Column> deletedColumns) {
 
 		DropColumnChange dropColumnChange = new DropColumnChange();
 		dropColumnChange.setSchemaName(table.table().schema());
@@ -378,7 +438,7 @@ public class LiquibaseChangeSetWriter {
 
 		List<ColumnConfig> dropColumns = new ArrayList<>();
 
-		for (ColumnModel column : deletedColumns) {
+		for (Column column : deletedColumns) {
 			ColumnConfig config = new ColumnConfig();
 			config.setName(column.name());
 			dropColumns.add(config);
@@ -388,18 +448,18 @@ public class LiquibaseChangeSetWriter {
 		return dropColumnChange;
 	}
 
-	private static CreateTableChange changeTable(TableModel table) {
+	private static CreateTableChange changeTable(Table table) {
 
 		CreateTableChange change = new CreateTableChange();
 		change.setSchemaName(table.schema());
 		change.setTableName(table.name());
 
-		for (ColumnModel column : table.columns()) {
+		for (Column column : table.columns()) {
 			ColumnConfig columnConfig = new ColumnConfig();
 			columnConfig.setName(column.name());
 			columnConfig.setType(column.type());
 
-			if (column.identityColumn()) {
+			if (column.identity()) {
 				columnConfig.setAutoIncrement(true);
 				ConstraintsConfig constraints = new ConstraintsConfig();
 				constraints.setPrimaryKey(true);
@@ -411,7 +471,7 @@ public class LiquibaseChangeSetWriter {
 		return change;
 	}
 
-	private static DropTableChange dropTable(TableModel table) {
+	private static DropTableChange dropTable(Table table) {
 
 		DropTableChange change = new DropTableChange();
 		change.setSchemaName(table.schema());

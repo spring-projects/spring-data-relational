@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.relational.core.mapping.schema;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import org.springframework.util.ObjectUtils;
 
 /**
  * Models a Table for generating SQL for Schema generation.
@@ -25,13 +26,13 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-record TableModel(String schema, String name, List<ColumnModel> columns, List<ColumnModel> keyColumns) {
+record Table(String schema, String name, List<Column> keyColumns, List<Column> columns) {
 
-	public TableModel(String schema, String name) {
+	public Table(String schema, String name) {
 		this(schema, name, new ArrayList<>(), new ArrayList<>());
 	}
 
-	public TableModel(String name) {
+	public Table(String name) {
 		this(null, name);
 	}
 
@@ -46,22 +47,18 @@ record TableModel(String schema, String name, List<ColumnModel> columns, List<Co
 			return false;
 		}
 
-		TableModel that = (TableModel) o;
-
-		// If we are missing the schema for either TableModel we will not treat that as being different
-		if (schema != null && that.schema != null && !schema.isEmpty() && !that.schema.isEmpty()) {
-			if (!Objects.equals(schema, that.schema)) {
-				return false;
-			}
-		}
-		if (!name.equalsIgnoreCase(that.name)) {
-			return false;
-		}
-		return true;
+		Table table = (Table) o;
+		return ObjectUtils.nullSafeEquals(schema, table.schema) && ObjectUtils.nullSafeEquals(name, table.name);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(schema, name.toUpperCase());
+
+		int result = 17;
+
+		result += ObjectUtils.nullSafeHashCode(this.schema);
+		result += ObjectUtils.nullSafeHashCode(this.name);
+
+		return result;
 	}
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.relational.core.mapping.schema;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 

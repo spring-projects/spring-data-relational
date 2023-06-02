@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.relational.core.mapping.schema;
 
 import java.util.HashMap;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.util.ClassUtils;
 
 /**
  * Class that provides a default implementation of mapping Java type to a Database type. To customize the mapping an
- * instance of a class implementing {@link SqlTypeMapping} interface can be set on the {@link MappedTables} class
+ * instance of a class implementing {@link SqlTypeMapping} interface can be set on the {@link Tables} class
  *
  * @author Kurt Niemi
  * @since 3.2
@@ -42,6 +43,6 @@ public class DefaultSqlTypeMapping implements SqlTypeMapping {
 
 	@Override
 	public String getColumnType(RelationalPersistentProperty property) {
-		return mapClassToDatabaseType.get(property.getActualType());
+		return mapClassToDatabaseType.get(ClassUtils.resolvePrimitiveIfNecessary(property.getActualType()));
 	}
 }

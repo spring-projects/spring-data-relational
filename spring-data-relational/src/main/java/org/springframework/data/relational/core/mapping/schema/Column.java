@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schemasqlgeneration;
+package org.springframework.data.relational.core.mapping.schema;
 
 import java.util.Objects;
 
@@ -23,9 +23,9 @@ import java.util.Objects;
  * @author Kurt Niemi
  * @since 3.2
  */
-record ColumnModel(String name, String type, boolean nullable, boolean identityColumn) {
+record Column(String name, String type, boolean nullable, boolean identity) {
 
-	public ColumnModel(String name, String type) {
+	public Column(String name, String type) {
 		this(name, type, false, false);
 	}
 
@@ -33,7 +33,7 @@ record ColumnModel(String name, String type, boolean nullable, boolean identityC
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ColumnModel that = (ColumnModel) o;
+				Column that = (Column) o;
         return Objects.equals(name, that.name);
     }
 
