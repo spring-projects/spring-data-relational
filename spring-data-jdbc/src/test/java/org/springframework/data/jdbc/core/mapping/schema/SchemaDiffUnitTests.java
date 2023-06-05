@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schema;
+package org.springframework.data.jdbc.core.mapping.schema;
 
 import static org.assertj.core.api.Assertions.*;
+
+import java.text.Collator;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -51,7 +54,7 @@ class SchemaDiffUnitTests {
 		delete_me.columns().add(newColumn);
 		existingTables.tables().add(delete_me);
 
-		SchemaDiff diff = SchemaDiff.diff(mappedEntities, existingTables);
+		SchemaDiff diff = SchemaDiff.diff(mappedEntities, existingTables, Collator.getInstance(Locale.ROOT)::compare);
 
 		// Verify that newtable is an added table in the diff
 		assertThat(diff.tableAdditions()).isNotEmpty();

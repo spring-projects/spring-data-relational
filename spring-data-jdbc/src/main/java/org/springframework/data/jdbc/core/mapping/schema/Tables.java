@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schema;
+package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -26,6 +26,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.lang.Nullable;
 
 /**
  * Model class that contains Table/Column information that can be used to generate SQL for Schema generation.
@@ -43,7 +44,7 @@ record Tables(List<Table> tables) {
 	// references.
 
 	public static Tables from(Stream<? extends RelationalPersistentEntity<?>> persistentEntities,
-			SqlTypeMapping sqlTypeMapping, String defaultSchema) {
+			SqlTypeMapping sqlTypeMapping, @Nullable String defaultSchema) {
 
 		List<Table> tables = persistentEntities
 				.filter(it -> it.isAnnotationPresent(org.springframework.data.relational.core.mapping.Table.class)) //
@@ -60,8 +61,10 @@ record Tables(List<Table> tables) {
 							continue;
 						}
 
+						String columnType = sqlTypeMapping.getRequiredColumnType(property);
+
 						Column column = new Column(property.getColumnName().getReference(), sqlTypeMapping.getColumnType(property),
-								true, identifierColumns.contains(property));
+								sqlTypeMapping.isNullable(property), identifierColumns.contains(property));
 						table.columns().add(column);
 					}
 					return table;

@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schema;
+package org.springframework.data.jdbc.core.mapping.schema;
 
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Interface for mapping a {@link RelationalPersistentProperty} to a Database type.
+ * Used to keep track of columns that should be added or deleted, when performing a difference between a source and
+ * target {@link Tables}.
  *
  * @author Kurt Niemi
  * @since 3.2
  */
-public interface SqlTypeMapping {
+record TableDiff(Table table, List<Column> columnsToAdd, List<Column> columnsToDrop) {
 
-	/**
-	 * Determine a column type for a persistent property.
-	 *
-	 * @param property the property for which the type should be determined.
-	 * @return the SQL type to use, such as {@code VARCHAR} or {@code NUMERIC}.
-	 */
-	String getColumnType(RelationalPersistentProperty property);
+	public TableDiff(Table table) {
+		this(table, new ArrayList<>(), new ArrayList<>());
+	}
+
 }

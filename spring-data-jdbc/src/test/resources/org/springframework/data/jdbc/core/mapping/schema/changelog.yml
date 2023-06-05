@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: '123'
+      author: Someone
+      objectQuotingStrategy: LEGACY
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: INT
+            tableName: foo

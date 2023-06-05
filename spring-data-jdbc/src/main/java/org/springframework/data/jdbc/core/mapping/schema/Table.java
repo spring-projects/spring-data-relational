@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schema;
+package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
 /**
@@ -26,9 +27,9 @@ import org.springframework.util.ObjectUtils;
  * @author Kurt Niemi
  * @since 3.2
  */
-record Table(String schema, String name, List<Column> keyColumns, List<Column> columns) {
+record Table(@Nullable String schema, String name, List<Column> keyColumns, List<Column> columns) {
 
-	public Table(String schema, String name) {
+	public Table(@Nullable String schema, String name) {
 		this(schema, name, new ArrayList<>(), new ArrayList<>());
 	}
 

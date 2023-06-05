@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.schema;
+package org.springframework.data.jdbc.core.mapping.schema;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.ClassUtils;
@@ -29,20 +36,31 @@ import org.springframework.util.ClassUtils;
  */
 public class DefaultSqlTypeMapping implements SqlTypeMapping {
 
-	private final HashMap<Class<?>, String> mapClassToDatabaseType = new HashMap<>();
+	private final HashMap<Class<?>, String> typeMap = new HashMap<>();
 
 	public DefaultSqlTypeMapping() {
 
-		mapClassToDatabaseType.put(String.class, "VARCHAR(255 BYTE)");
-		mapClassToDatabaseType.put(Boolean.class, "TINYINT");
-		mapClassToDatabaseType.put(Double.class, "DOUBLE");
-		mapClassToDatabaseType.put(Float.class, "FLOAT");
-		mapClassToDatabaseType.put(Integer.class, "INT");
-		mapClassToDatabaseType.put(Long.class, "BIGINT");
+		typeMap.put(String.class, "VARCHAR(255 BYTE)");
+		typeMap.put(Boolean.class, "TINYINT");
+		typeMap.put(Double.class, "DOUBLE");
+		typeMap.put(Float.class, "FLOAT");
+		typeMap.put(Integer.class, "INT");
+		typeMap.put(Long.class, "BIGINT");
+
+		typeMap.put(BigInteger.class, "BIGINT");
+		typeMap.put(BigDecimal.class, "NUMERIC");
+
+		typeMap.put(UUID.class, "UUID");
+
+		typeMap.put(LocalDate.class, "DATE");
+		typeMap.put(LocalTime.class, "TIME");
+		typeMap.put(LocalDateTime.class, "TIMESTAMP");
+
+		typeMap.put(ZonedDateTime.class, "TIMESTAMPTZ");
 	}
 
 	@Override
 	public String getColumnType(RelationalPersistentProperty property) {
-		return mapClassToDatabaseType.get(ClassUtils.resolvePrimitiveIfNecessary(property.getActualType()));
+		return typeMap.get(ClassUtils.resolvePrimitiveIfNecessary(property.getActualType()));
 	}
 }
