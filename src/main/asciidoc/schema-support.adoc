@@ -1,0 +1,90 @@
+[[jdbc.schema]]
+= Schema Creation
+
+When working with SQL databases, the schema is an essential part.
+Spring Data JDBC supports a wide range of schema options yet when starting with a domain model it can be challenging to come up with an initial domain model.
+To assist you with a code-first approach, Spring Data JDBC ships with an integration to create database change sets using https://www.liquibase.org/[Liquibase].
+
+Consider the following domain entity:
+
+[source,java]
+----
+@Table
+class Person {
+  @Id long id;
+  String firstName;
+  String lastName;
+  LocalDate birthday;
+  boolean active;
+}
+----
+
+Rendering the initial ChangeSet through the following code:
+
+[source,java]
+----
+
+RelationalMappingContext context = … // The context contains the Person entity, ideally initialized through initialEntitySet
+LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+writer.writeChangeSet(new FileSystemResource(new File(…)));
+----
+
+yields the following change log:
+
+[source,yaml]
+----
+databaseChangeLog:
+- changeSet:
+    id: '1685969572426'
+    author: Spring Data Relational
+    objectQuotingStrategy: LEGACY
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: true
+            name: first_name
+            type: VARCHAR(255 BYTE)
+        - column:
+            constraints:
+              nullable: true
+            name: last_name
+            type: VARCHAR(255 BYTE)
+        - column:
+            constraints:
+              nullable: true
+            name: birthday
+            type: DATE
+        - column:
+            constraints:
+              nullable: false
+            name: active
+            type: TINYINT
+        tableName: person
+----
+
+Column types are computed from an object implementing the `SqlTypeMapping` strategy interface.
+Nullability is inferred from the type and set to `false` if a property type use primitive Java types.
+
+Schema support can assist you throughout the application development lifecycle.
+In differential mode, you provide an existing Liquibase `Database` to the schema writer instance and the schema writer compares existing tables to mapped entities and derives from the difference which tables and columns to create/to drop.
+By default, no tables and no columns are dropped unless you configure `dropTableFilter` and `dropColumnFilter`.
+Both filter predicate provide the table name respective column name so your code can computer which tables and columns can be dropped.
+
+[source,java]
+----
+writer.setDropTableFilter(tableName -> …);
+writer.setDropColumnFilter((tableName, columnName) -> …);
+----
+
+NOTE: Schema support can only identify additions and removals in the sense of removing tables/columns that are not mapped or adding columns that do not exist in the database.
+Columns cannot be renamed nor data cannot be migrated because entity mapping does not provide details of how the schema has evolved.
