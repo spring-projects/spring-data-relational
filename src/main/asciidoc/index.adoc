@@ -23,6 +23,7 @@ include::{spring-data-commons-docs}/repositories.adoc[leveloffset=+1]
 = Reference Documentation
 
 include::jdbc.adoc[leveloffset=+1]
+include::schema-support.adoc[leveloffset=+1]
 
 [[appendix]]
 = Appendix
