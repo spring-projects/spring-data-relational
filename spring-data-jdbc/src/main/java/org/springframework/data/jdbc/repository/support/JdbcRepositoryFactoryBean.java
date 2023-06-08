@@ -95,7 +95,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		return jdbcRepositoryFactory;
 	}
 
-	@Autowired
 	public void setMappingContext(RelationalMappingContext mappingContext) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null");
@@ -104,7 +103,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.mappingContext = mappingContext;
 	}
 
-	@Autowired
 	public void setDialect(Dialect dialect) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
@@ -141,7 +139,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.operations = operations;
 	}
 
-	@Autowired
 	public void setConverter(JdbcConverter converter) {
 
 		Assert.notNull(converter, "JdbcConverter must not be null");

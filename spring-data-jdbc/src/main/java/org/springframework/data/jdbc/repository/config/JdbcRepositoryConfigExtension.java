@@ -21,8 +21,12 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
@@ -74,6 +78,10 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager", transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
+
+		builder.addPropertyValue("mappingContext", new RuntimeBeanReference(JdbcMappingContext.class));
+		builder.addPropertyValue("dialect", new RuntimeBeanReference(Dialect.class));
+		builder.addPropertyValue("converter", new RuntimeBeanReference(JdbcConverter.class));
 	}
 
 	/**
