@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.springframework.util.Assert;
 
@@ -49,8 +50,24 @@ public class Functions {
 	}
 
 	public static SimpleFunction least(Expression... expressions) {
-
 		return SimpleFunction.create("LEAST", Arrays.asList(expressions));
+	}
+
+	/**
+	 * Creates a {@literal GREATEST} function with the given arguments.
+	 * @since 3.2
+	 */
+	public static SimpleFunction greatest(Expression... expressions) {
+		return greatest(Arrays.asList(expressions));
+	}
+
+
+	/**
+	 * Creates a {@literal GREATEST} function with the given arguments.
+	 * @since 3.2
+	 */
+	public static SimpleFunction greatest(List<Expression> list) {
+		return SimpleFunction.create("GREATEST", list);
 	}
 
 	/**
@@ -96,4 +113,8 @@ public class Functions {
 
 	// Utility constructor.
 	private Functions() {}
+
+	public static SimpleFunction coalesce(Expression... expressions) {
+		return SimpleFunction.create("COALESCE", Arrays.asList(expressions));
+	}
 }

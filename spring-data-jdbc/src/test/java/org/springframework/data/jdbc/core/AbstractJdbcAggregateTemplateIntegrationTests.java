@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,12 +91,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
 @ExtendWith(SpringExtension.class)
-class JdbcAggregateTemplateIntegrationTests {
+abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
+	@Autowired RelationalMappingContext mappingContext;
 
 	LegoSet legoSet = createLegoSet("Star Destroyer");
+
+	@BeforeEach
+	void beforeEach(){
+		mappingContext.setSingleQueryLoadingEnabled(useSingleQuery());
+	}
+
+	abstract boolean useSingleQuery();
 
 	/**
 	 * creates an instance of {@link NoIdListChain4} with the following properties:
@@ -191,6 +200,42 @@ class JdbcAggregateTemplateIntegrationTests {
 		entity.manual = (manual);
 
 		return entity;
+	}
+
+	@Test // GH-1446
+	void findById() {
+
+		WithInsertOnly entity = new WithInsertOnly();
+		entity.insertOnly = "entity";
+		entity = template.save(entity);
+
+		WithInsertOnly other = new WithInsertOnly();
+		other.insertOnly = "other";
+		other = template.save(other);
+
+		assertThat(template.findById(entity.id, WithInsertOnly.class).insertOnly).isEqualTo("entity");
+		assertThat(template.findById(other.id, WithInsertOnly.class).insertOnly).isEqualTo("other");
+	}
+
+	@Test // GH-1446
+	void findAllById() {
+
+		WithInsertOnly entity = new WithInsertOnly();
+		entity.insertOnly = "entity";
+		entity = template.save(entity);
+
+		WithInsertOnly other = new WithInsertOnly();
+		other.insertOnly = "other";
+		other = template.save(other);
+
+		WithInsertOnly yetAnother = new WithInsertOnly();
+		yetAnother.insertOnly = "yetAnother";
+		yetAnother = template.save(yetAnother);
+
+		Iterable<WithInsertOnly> reloadedById = template.findAllById(asList(entity.id, yetAnother.id),
+				WithInsertOnly.class);
+		assertThat(reloadedById).extracting(e -> e.id, e -> e.insertOnly)
+				.containsExactlyInAnyOrder(tuple(entity.id, "entity"), tuple(yetAnother.id, "yetAnother"));
 	}
 
 	@Test // DATAJDBC-112
@@ -1831,6 +1876,19 @@ class JdbcAggregateTemplateIntegrationTests {
 		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
 				DataAccessStrategy dataAccessStrategy, JdbcConverter converter) {
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		}
+	}
+
+	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
+		@Override
+		boolean useSingleQuery() {
+			return false;
+		}
+	}
+	static class JdbcAggregateTemplateSqlIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
+		@Override
+		boolean useSingleQuery() {
+			return true;
 		}
 	}
 }

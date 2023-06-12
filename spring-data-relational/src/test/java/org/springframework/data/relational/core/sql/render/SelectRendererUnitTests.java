@@ -620,6 +620,21 @@ class SelectRendererUnitTests {
 				.isEqualTo("SELECT * FROM tableA JOIN tableB ON tableA.id = tableB.id ORDER BY tableA.name, tableB.name");
 	}
 
+	@Test // GH-1446
+	void rendersAliasedExpression() {
+
+		Table table = SQL.table("table");
+		Column tableName = table.column("name");
+
+		Select select = StatementBuilder.select(new AliasedExpression(tableName, "alias")) //
+				.from(table) //
+				.build();
+
+		String rendered = SqlRenderer.toString(select);
+		assertThat(rendered)
+				.isEqualTo("SELECT table.name AS alias FROM table");
+	}
+
 	/**
 	 * Tests the rendering of analytic functions.
 	 */

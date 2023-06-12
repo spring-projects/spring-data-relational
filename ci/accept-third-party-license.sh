@@ -1,7 +1,7 @@
 #!/bin/sh
 
 {
-  echo "mcr.microsoft.com/mssql/server:2019-CU16-ubuntu-20.04"
+  echo "mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04"
   echo "ibmcom/db2:11.5.7.0a"
   echo "harbor-repo.vmware.com/mcr-proxy-cache/mssql/server:2019-CU16-ubuntu-20.04"
   echo "harbor-repo.vmware.com/dockerhub-proxy-cache/ibmcom/db2:11.5.7.0a"

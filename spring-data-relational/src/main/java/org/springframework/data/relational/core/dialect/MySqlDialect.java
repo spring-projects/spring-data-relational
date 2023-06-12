@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -131,7 +133,10 @@ public class MySqlDialect extends AbstractDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+		return Arrays.asList(
+				TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
+				NumberToBooleanConverter.INSTANCE
+		);
 	}
 
 	@Override

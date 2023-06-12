@@ -238,7 +238,7 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(Collection<? extends TableLike> tables);
 
 		@Override
-		SelectFromAndOrderBy orderBy(Column... columns);
+		SelectFromAndOrderBy orderBy(Expression... columns);
 
 		@Override
 		SelectFromAndOrderBy orderBy(OrderByField... orderByFields);
@@ -393,7 +393,7 @@ public interface SelectBuilder {
 		 * @param columns the columns to order by.
 		 * @return {@code this} builder.
 		 */
-		SelectOrdered orderBy(Column... columns);
+		SelectOrdered orderBy(Expression... columns);
 
 		/**
 		 * Add one or more {@link OrderByField order by fields}.

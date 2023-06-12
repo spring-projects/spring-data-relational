@@ -136,9 +136,9 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	}
 
 	@Override
-	public DefaultSelectBuilder orderBy(Column... columns) {
+	public DefaultSelectBuilder orderBy(Expression... columns) {
 
-		for (Column column : columns) {
+		for (Expression column : columns) {
 			this.orderBy.add(OrderByField.from(column));
 		}
 
@@ -299,7 +299,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		}
 
 		@Override
-		public SelectOrdered orderBy(Column... columns) {
+		public SelectOrdered orderBy(Expression... columns) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.orderBy(columns);
 		}

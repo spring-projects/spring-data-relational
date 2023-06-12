@@ -29,7 +29,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -69,6 +68,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final NamedParameterJdbcOperations operations;
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
+	private final ReadingDataAccessStrategy singleSelectDelegate;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy}
@@ -96,6 +96,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.operations = operations;
 		this.sqlParametersFactory = sqlParametersFactory;
 		this.insertStrategyFactory = insertStrategyFactory;
+		this.singleSelectDelegate = new SingleQueryDataAccessStrategy(context, sqlGeneratorSource.getDialect(), converter, operations);
 	}
 
 	@Override
@@ -260,6 +261,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
+		if (isSingleSelectQuerySupported(domainType)) {
+			return singleSelectDelegate.findById(id, domainType);
+		}
+
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
 
@@ -272,6 +277,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
+
+		if (isSingleSelectQuerySupported(domainType)){
+			return singleSelectDelegate.findAll(domainType);
+		}
+
 		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
 	}
 
@@ -282,10 +292,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return Collections.emptyList();
 		}
 
+		if (isSingleSelectQuerySupported(domainType)){
+			return singleSelectDelegate.findAllById(ids, domainType);
+		}
+
 		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
-
 		String findAllInListSql = sql(domainType).getFindAllInList();
-
 		return operations.query(findAllInListSql, parameterSource, getEntityRowMapper(domainType));
 	}
 
@@ -430,4 +442,40 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return baseProperty.getOwner().getType();
 	}
+
+	private boolean isSingleSelectQuerySupported(Class<?> entityType) {
+
+		return context.isSingleQueryLoadingEnabled() && sqlGeneratorSource.getDialect().supportsSingleQueryLoading()//
+				&& entityQualifiesForSingleSelectQuery(entityType);
+	}
+
+	private boolean entityQualifiesForSingleSelectQuery(Class<?> entityType) {
+
+		boolean referenceFound = false;
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : context.findPersistentPropertyPaths(entityType, __ -> true)) {
+			RelationalPersistentProperty property = path.getLeafProperty();
+			if (property.isEntity()) {
+
+				// embedded entities are currently not supported
+				if (property.isEmbedded()) {
+					return false;
+				}
+
+				// only a single reference is currently supported
+				if (referenceFound) {
+					return false;
+				}
+
+				referenceFound = true;
+			}
+
+			// AggregateReferences aren't supported yet
+			if (property.isAssociation()) {
+				return false;
+			}
+		}
+		return true;
+
+	}
+
 }
