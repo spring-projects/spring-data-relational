@@ -108,4 +108,9 @@ public class H2Dialect extends AbstractDialect {
 
 		return Collections.emptySet();
 	}
+
+	@Override
+	public boolean supportsSingleQueryLoading() {
+		return false;
+	}
 }

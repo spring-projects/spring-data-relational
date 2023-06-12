@@ -21,7 +21,7 @@ package org.springframework.data.relational.core.sql;
  * @author Jens Schauder
  * @since 1.1
  */
-class AliasedExpression extends AbstractSegment implements Aliased, Expression {
+public class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 
 	private final Expression expression;
 	private final SqlIdentifier alias;
@@ -49,6 +49,6 @@ class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 
 	@Override
 	public String toString() {
-		return expression + " AS " + alias;
+		return expression.toString();
 	}
 }

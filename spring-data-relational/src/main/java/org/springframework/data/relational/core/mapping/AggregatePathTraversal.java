@@ -21,7 +21,7 @@ import java.util.function.Predicate;
 /**
  * @author Mark Paluch
  */
-class AggregatePathTraversal {
+public class AggregatePathTraversal {
 
 	public static AggregatePath getIdDefiningPath(AggregatePath aggregatePath) {
 

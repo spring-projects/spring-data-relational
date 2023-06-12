@@ -19,12 +19,10 @@ import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-
 
 /**
  * {@link DataSource} setup for PostgreSQL.
@@ -36,14 +34,14 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration
-@Profile({"mssql"})
+@Profile({ "mssql" })
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
-	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2019-CU16-ubuntu-20.04";
+	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04";
 	private static MSSQLServerContainer<?> MSSQL_CONTAINER;
 
-    @Override
-    protected DataSource createDataSource() {
+	@Override
+	protected DataSource createDataSource() {
 
 		if (MSSQL_CONTAINER == null) {
 
@@ -54,14 +52,13 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 			MSSQL_CONTAINER = container;
 		}
 
-        SQLServerDataSource sqlServerDataSource = new SQLServerDataSource();
+		SQLServerDataSource sqlServerDataSource = new SQLServerDataSource();
 		sqlServerDataSource.setURL(MSSQL_CONTAINER.getJdbcUrl());
 		sqlServerDataSource.setUser(MSSQL_CONTAINER.getUsername());
 		sqlServerDataSource.setPassword(MSSQL_CONTAINER.getPassword());
 
-        return sqlServerDataSource;
-    }
-
+		return sqlServerDataSource;
+	}
 
 	@Override
 	protected void customizePopulator(ResourceDatabasePopulator populator) {

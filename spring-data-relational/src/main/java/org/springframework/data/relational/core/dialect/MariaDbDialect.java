@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -34,6 +35,8 @@ public class MariaDbDialect extends MySqlDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+		return Arrays.asList(
+				TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
+				NumberToBooleanConverter.INSTANCE);
 	}
 }

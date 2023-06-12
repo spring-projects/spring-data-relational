@@ -37,6 +37,11 @@ public class HsqlDbDialect extends AbstractDialect {
 		return AnsiDialect.LOCK_CLAUSE;
 	}
 
+	@Override
+	public boolean supportsSingleQueryLoading() {
+		return false;
+	}
+
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override

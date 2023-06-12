@@ -160,8 +160,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		repository.saveAll(asList(entityA, entityB, entityC));
 
 		assertThat(repository.findByEnumTypeIn(Set.of(Direction.LEFT, Direction.RIGHT)))
-				.extracting(entity -> entity.direction)
-				.containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
+				.extracting(entity -> entity.direction).containsExactlyInAnyOrder(Direction.LEFT, Direction.RIGHT);
 	}
 
 	@Test // GH-1212
@@ -175,8 +174,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		entityC.direction = Direction.RIGHT;
 		repository.saveAll(asList(entityA, entityB, entityC));
 
-		assertThat(repository.findByEnumTypeIn(Set.of(Direction.CENTER)))
-				.extracting(entity -> entity.direction)
+		assertThat(repository.findByEnumTypeIn(Set.of(Direction.CENTER))).extracting(entity -> entity.direction)
 				.containsExactly(Direction.CENTER);
 	}
 

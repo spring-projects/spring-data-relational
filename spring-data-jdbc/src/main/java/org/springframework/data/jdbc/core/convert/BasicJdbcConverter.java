@@ -394,6 +394,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
+
 			return new ReadingContext<>(
 					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
 					rootPath.append(property), path.append(property), identifier, key,

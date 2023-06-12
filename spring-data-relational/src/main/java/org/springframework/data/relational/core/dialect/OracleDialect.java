@@ -16,11 +16,9 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static java.util.Arrays.*;
 
@@ -56,15 +54,6 @@ public class OracleDialect extends AnsiDialect {
 		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
 	}
 
-	@ReadingConverter
-	enum NumberToBooleanConverter implements Converter<Number, Boolean> {
-		INSTANCE;
-
-		@Override
-		public Boolean convert(Number number) {
-			return number.intValue() != 0;
-		}
-	}
 	@WritingConverter
 	enum BooleanToIntegerConverter implements Converter<Boolean, Integer> {
 		INSTANCE;

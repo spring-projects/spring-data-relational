@@ -48,6 +48,7 @@ public class RelationalMappingContext
 	private boolean forceQuote = true;
 
 	private final ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+	private boolean singleQueryLoadingEnabled = false;
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
@@ -128,6 +129,27 @@ public class RelationalMappingContext
 		applyDefaults(persistentProperty);
 
 		return persistentProperty;
+	}
+
+	/**
+	 * @since 3.2
+	 * @return iff single query loading is enabled.
+	 * @see #setSingleQueryLoadingEnabled(boolean)
+	 */
+	public boolean isSingleQueryLoadingEnabled() {
+		return singleQueryLoadingEnabled;
+	}
+
+	/**
+	 * Set the {@literal singleQueryLoadingEnabled} flag. If it is set to true and the
+	 * {@link org.springframework.data.relational.core.dialect.Dialect} supports it, Spring Data JDBC will try to use
+	 * Single Query Loading if possible.
+	 *
+	 * @since 3.2
+	 * @param singleQueryLoadingEnabled
+	 */
+	public void setSingleQueryLoadingEnabled(boolean singleQueryLoadingEnabled) {
+		this.singleQueryLoadingEnabled = singleQueryLoadingEnabled;
 	}
 
 	protected void applyDefaults(BasicRelationalPersistentProperty persistentProperty) {
