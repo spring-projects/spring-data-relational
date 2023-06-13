@@ -436,7 +436,7 @@ When your database has an auto-increment column for the ID column, the generated
 One important constraint is that, after saving an entity, the entity must not be new any more.
 Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
-If you are not using auto-increment columns, you can use a `BeforeConvert` listener, which sets the ID of the entity (covered later in this document).
+If you are not using auto-increment columns, you can use a `BeforeConvertCallback` to set the ID of the entity (covered later in this document).
 
 [[jdbc.entity-persistence.read-only-properties]]
 === Read Only Properties
@@ -858,7 +858,9 @@ Note that the type used for prefixing the statement name is the name of the aggr
 [[jdbc.events]]
 == Lifecycle Events
 
-Spring Data JDBC triggers events that get published to any matching `ApplicationListener` beans in the application context.
+Spring Data JDBC publishes lifecycle events to `ApplicationListener` objects, typically beans in the application context.
+Events are notifications about a certain lifecycle phase.
+In contrast to entity callbacks, events are intended for notification. Transactional listeners will receive events when the transaction completes.
 Events and callbacks get only triggered for aggregate roots.
 If you want to process non-root entities, you need to do that through a listener for the containing aggregate root.
 
@@ -912,7 +914,6 @@ The following table describes the available events. For more details about the e
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertEvent.html[`BeforeConvertEvent`]
 | Before an aggregate root gets converted into a plan for executing SQL statements, but after the decision was made if the aggregate is new or not, i.e. if an update or an insert is in order.
- This is the correct event if you want to set an id programmatically.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets inserted or updated was made). Do not use this for creating Ids for new aggregates. Use `BeforeConvertEvent` or even better `BeforeConvertCallback` instead.
