@@ -25,6 +25,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.OracleContainer;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * {@link DataSource} setup for Oracle Database XE. Starts a docker container with an Oracle database.
@@ -50,7 +51,11 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		if (ORACLE_CONTAINER == null) {
 
 			LOG.info("Oracle starting...");
-			OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim").withReuse(true);
+			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23-slim")
+					.asCompatibleSubstituteFor("gvenzl/oracle-xe");
+			OracleContainer container = new OracleContainer(dockerImageName)
+					.withDatabaseName("freepdb2")
+					.withReuse(true);
 			container.start();
 			LOG.info("Oracle started");
 

@@ -33,7 +33,7 @@ public class ProxyImageNameSubstitutor extends ImageNameSubstitutor {
 	private static final Logger LOG = LoggerFactory.getLogger(ProxyImageNameSubstitutor.class);
 
 	private static final List<String> NAMES_TO_PROXY_PREFIX = List.of("ryuk", "arm64v8/mariadb", "ibmcom/db2",
-			"gvenzl/oracle-xe");
+			"gvenzl/oracle-free");
 
 	private static final List<String> NAMES_TO_LIBRARY_PROXY_PREFIX = List.of("mariadb", "mysql", "postgres");
 
