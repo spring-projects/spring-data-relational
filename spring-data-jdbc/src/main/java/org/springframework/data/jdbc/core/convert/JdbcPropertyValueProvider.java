@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
@@ -57,7 +58,7 @@ class JdbcPropertyValueProvider implements PropertyValueProvider<RelationalPersi
 	}
 
 	private String getColumnName(RelationalPersistentProperty property) {
-		return basePath.append(property).getColumnAlias().getReference();
+		return AggregatePathUtil.getColumnAlias(basePath.append(property)).getReference();
 	}
 
 	public JdbcPropertyValueProvider extendBy(RelationalPersistentProperty property) {

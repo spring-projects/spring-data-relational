@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
@@ -45,7 +46,7 @@ class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<Re
 
 	@Override
 	public <T> T getPropertyValue(RelationalPersistentProperty property) {
-		return (T) resultSet.getObject(basePath.append(property).getReverseColumnNameAlias().getReference());
+		return (T) resultSet.getObject(AggregatePathUtil.getReverseColumnNameAlias(basePath.append(property)).getReference());
 	}
 
 	public JdbcBackReferencePropertyValueProvider extendBy(RelationalPersistentProperty property) {

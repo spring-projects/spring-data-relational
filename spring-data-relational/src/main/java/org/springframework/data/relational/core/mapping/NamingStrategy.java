@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.util.Assert;
 
@@ -89,7 +88,6 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 *
 	 * @deprecated use {@link #getReverseColumnName(AggregatePath)} instead.
 	 */
 	@Deprecated(since = "3.2", forRemoval = true)
@@ -102,12 +100,11 @@ public interface NamingStrategy {
 	 *
 	 * @param path the path for which the reverse column name should get determined. Must not be null.
 	 * @return a column name.
-	 *
 	 * @since 3.2
 	 */
-	default String getReverseColumnName(AggregatePath path){
+	default String getReverseColumnName(AggregatePath path) {
 
-		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
+		AggregatePath idDefiningParentPath = AggregatePathUtil.getIdDefiningParentPath(path);
 		return getTableName(idDefiningParentPath.getRequiredLeafEntity().getType());
 	}
 

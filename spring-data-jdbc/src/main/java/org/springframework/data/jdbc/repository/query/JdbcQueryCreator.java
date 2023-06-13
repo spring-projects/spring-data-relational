@@ -28,6 +28,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -296,7 +297,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 			if (path.isQualified() //
 					|| path.isCollectionLike() //
-					|| path.hasIdProperty() //
+					|| AggregatePathUtil.hasIdProperty(path) //
 			) {
 				return null;
 			}
@@ -316,13 +317,13 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		Table currentTable = sqlContext.getTable(path);
 
-		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
+		AggregatePath idDefiningParentPath = AggregatePathUtil.getIdDefiningParentPath(path);
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName()), //
-				parentTable.column(idDefiningParentPath.getIdColumnName()) //
+				currentTable.column(AggregatePathUtil.getReverseColumnName(path)), //
+				parentTable.column(AggregatePathUtil.getIdColumnName(idDefiningParentPath)) //
 		);
 	}
 

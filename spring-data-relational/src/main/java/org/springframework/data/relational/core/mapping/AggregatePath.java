@@ -36,13 +36,6 @@ public interface AggregatePath {
 	boolean isRoot();
 
 	/**
-	 * The name of the column used to reference the id in the parent table.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	SqlIdentifier getReverseColumnName();
-
-	/**
 	 * Returns the path that has the same beginning but is one segment shorter than this path.
 	 *
 	 * @return the parent path. Guaranteed to be not {@literal null}.
@@ -67,37 +60,9 @@ public interface AggregatePath {
 	 */
 	RelationalPersistentEntity<?> getRequiredLeafEntity();
 
-	/**
-	 * @return {@literal true} if this path represents an entity which has an Id attribute.
-	 */
-	boolean hasIdProperty();
-
-	/**
-	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
-	 *
-	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}.
-	 */
-	AggregatePath getIdDefiningParentPath();
-
 	RelationalPersistentProperty getRequiredIdProperty();
 
 	int getLength();
-
-	/**
-	 * The column name used for the list index or map key of the leaf property of this path.
-	 *
-	 * @return May be {@literal null}.
-	 */
-	@Nullable
-	SqlIdentifier getQualifierColumn();
-
-	/**
-	 * The type of the qualifier column of the leaf property of this path or {@literal null} if this is not applicable.
-	 *
-	 * @return may be {@literal null}.
-	 */
-	@Nullable
-	Class<?> getQualifierColumnType();
 
 	/**
 	 * Returns {@literal true} exactly when the path is non empty and the leaf property an embedded one.
@@ -110,44 +75,6 @@ public interface AggregatePath {
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
 	boolean isEntity();
-
-	/**
-	 * The alias used for the table on which this path is based.
-	 *
-	 * @return a table alias, {@literal null} if the table owning path is the empty path.
-	 */
-	@Nullable
-	SqlIdentifier getTableAlias();
-
-	/**
-	 * The fully qualified name of the table this path is tied to or of the longest ancestor path that is actually tied to
-	 * a table.
-	 *
-	 * @return the name of the table. Guaranteed to be not {@literal null}.
-	 * @since 3.0
-	 */
-	SqlIdentifier getQualifiedTableName();
-
-	/**
-	 * The name of the column used to represent this property in the database.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	SqlIdentifier getColumnName();
-
-	/**
-	 * The alias for the column used to represent this property in the database.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	SqlIdentifier getColumnAlias();
-
-	/**
-	 * The alias used in select for the column used to reference the id in the parent table.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	SqlIdentifier getReverseColumnNameAlias();
 
 	String toDotPath();
 
@@ -175,11 +102,6 @@ public interface AggregatePath {
 	RelationalPersistentProperty getBaseProperty();
 
 	/**
-	 * The column name of the id column of the ancestor path that represents an actual table.
-	 */
-	SqlIdentifier getIdColumnName();
-
-	/**
 	 * @return {@literal true} when this is references a {@link java.util.Collection} or an array.
 	 */
 	boolean isCollectionLike();
@@ -200,25 +122,6 @@ public interface AggregatePath {
 
 	PersistentPropertyPath<? extends RelationalPersistentProperty> getRequiredPersistentPropertyPath();
 
-	/**
-	 * If the table owning ancestor has an id the column name of that id property is returned. Otherwise the reverse
-	 * column is returned.
-	 */
-	SqlIdentifier getEffectiveIdColumnName();
-
 	@Nullable
 	PersistentPropertyPathExtension getPathExtension();
-
-	/**
-	 * Finds and returns the longest path with ich identical or an ancestor to the current path and maps directly to a
-	 * table.
-	 *
-	 * @return a path. Guaranteed to be not {@literal null}.
-	 */
-	AggregatePath getTableOwningAncestor();
-
-	@Nullable
-	SqlIdentifier assembleTableAlias();
-
-	SqlIdentifier assembleColumnName(SqlIdentifier suffix);
 }

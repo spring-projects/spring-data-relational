@@ -64,7 +64,7 @@ public class DefaultNamingStrategy implements NamingStrategy {
 	@Override
 	public String getReverseColumnName(AggregatePath path) {
 
-		RelationalPersistentEntity<?> leafEntity = path.getIdDefiningParentPath().getRequiredLeafEntity();
+		RelationalPersistentEntity<?> leafEntity = AggregatePathUtil.getIdDefiningParentPath(path).getRequiredLeafEntity();
 
 		return getColumnNameReferencing(leafEntity);
 	}

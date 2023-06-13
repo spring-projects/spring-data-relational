@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -188,7 +189,7 @@ class JdbcAggregateChangeExecutionContext {
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
 
-		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, context.getAggregatePath(action.getPropertyPath()).getIdDefiningParentPath());
+		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, AggregatePathUtil.getIdDefiningParentPath(context.getAggregatePath(action.getPropertyPath())));
 
 		return getPotentialGeneratedIdFrom(idOwningAction);
 	}

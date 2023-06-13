@@ -27,7 +27,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -127,16 +127,16 @@ class SqlGenerator {
 
 		AggregatePath parentPath = path.getParentPath();
 
-		if (!parentPath.hasIdProperty()) {
+		if (!AggregatePathUtil.hasIdProperty(parentPath)) {
 			if (parentPath.getLength() > 1) {
 				return getSubselectCondition(parentPath, rootCondition, filterColumn);
 			}
 			return rootCondition.apply(filterColumn);
 		}
 
-		Table subSelectTable = Table.create(parentPath.getQualifiedTableName());
-		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
-		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
+		Table subSelectTable = Table.create(AggregatePathUtil.getQualifiedTableName(parentPath));
+		Column idColumn = subSelectTable.column(AggregatePathUtil.getIdColumnName(parentPath));
+		Column selectFilterColumn = subSelectTable.column(AggregatePathUtil.getEffectiveIdColumnName(parentPath));
 
 		Condition innerCondition;
 
@@ -219,7 +219,7 @@ class SqlGenerator {
 
 		AggregatePath path = mappingContext.getAggregatePath(propertyPath);
 
-		return getFindAllByProperty(parentIdentifier, path.getQualifierColumn(), path.isOrdered());
+		return getFindAllByProperty(parentIdentifier, AggregatePathUtil.getQualifierColumn(path), path.isOrdered());
 	}
 
 	/**
@@ -561,7 +561,7 @@ class SqlGenerator {
 
 			if (path.isQualified() //
 					|| path.isCollectionLike() //
-					|| path.hasIdProperty() //
+					|| AggregatePathUtil.hasIdProperty(path) //
 			) {
 				return null;
 			}
@@ -581,13 +581,13 @@ class SqlGenerator {
 
 		Table currentTable = sqlContext.getTable(path);
 
-		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
+		AggregatePath idDefiningParentPath = AggregatePathUtil.getIdDefiningParentPath(path);
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName()), //
-				parentTable.column(idDefiningParentPath.getIdColumnName()) //
+				currentTable.column(AggregatePathUtil.getReverseColumnName(path)), //
+				parentTable.column(AggregatePathUtil.getIdColumnName(idDefiningParentPath)) //
 		);
 	}
 
@@ -710,13 +710,13 @@ class SqlGenerator {
 
 	private String createDeleteByPathAndCriteria(AggregatePath path, Function<Column, Condition> rootCondition) {
 
-		Table table = Table.create(path.getQualifiedTableName());
+		Table table = Table.create(AggregatePathUtil.getQualifiedTableName(path));
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
 		Delete delete;
 
-		Column filterColumn = table.column(path.getReverseColumnName());
+		Column filterColumn = table.column(AggregatePathUtil.getReverseColumnName(path));
 
 		if (path.getLength() == 1) {
 
@@ -926,7 +926,7 @@ class SqlGenerator {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			AggregatePath aggregatePath = mappingContext.getAggregatePath( path);
+			AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
 
 			// add a join if necessary
 			Join join = getJoin(aggregatePath);

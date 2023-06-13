@@ -48,6 +48,7 @@ import org.springframework.data.mapping.model.SpELExpressionParameterValueProvid
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePathUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -456,8 +457,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private Iterable<Object> resolveRelation(@Nullable Object id, RelationalPersistentProperty property) {
 
 			Identifier identifier = id == null //
-					? this.identifier.withPart(rootPath.getQualifierColumn(), key, Object.class) //
-					: Identifier.of(rootPath.append(property).getReverseColumnName(), id, Object.class);
+					? this.identifier.withPart(AggregatePathUtil.getQualifierColumn(rootPath), key, Object.class) //
+					: Identifier.of(AggregatePathUtil.getReverseColumnName(rootPath.append(property)), id, Object.class);
 
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = path.append(property)
 					.getRequiredPersistentPropertyPath();
