@@ -143,10 +143,10 @@ public class RelationalMappingContext
 	 * @since 3.2
 	 */
 	public AggregatePath getAggregatePath(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
-		return aggregatePathCache.computeIfAbsent(path, key -> new AggregatePath(this, path));
+		return aggregatePathCache.computeIfAbsent(path, key -> new DefaultAggregatePath(this, path));
 	}
 
 	public AggregatePath getAggregatePath(RelationalPersistentEntity<?> type) {
-		return aggregatePathCache.computeIfAbsent(type, key -> new AggregatePath(this, type));
+		return aggregatePathCache.computeIfAbsent(type, key -> new DefaultAggregatePath(this, type));
 	}
 }
