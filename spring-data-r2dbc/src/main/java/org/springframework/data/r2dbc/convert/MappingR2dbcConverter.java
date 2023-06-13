@@ -50,6 +50,7 @@ import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
@@ -74,7 +75,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 */
 	public MappingR2dbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		super(context, new R2dbcCustomConversions(R2dbcCustomConversions.STORE_CONVERSIONS, Collections.emptyList()));
+		super((RelationalMappingContext) context, new R2dbcCustomConversions(R2dbcCustomConversions.STORE_CONVERSIONS, Collections.emptyList()));
 	}
 
 	/**
@@ -85,7 +86,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	public MappingR2dbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			CustomConversions conversions) {
-		super(context, conversions);
+		super((RelationalMappingContext) context, conversions);
 	}
 
 	// ----------------------------------
