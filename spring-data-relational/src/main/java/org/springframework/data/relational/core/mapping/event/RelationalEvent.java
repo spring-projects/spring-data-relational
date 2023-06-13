@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.core.ResolvableType;
+import org.springframework.core.ResolvableTypeProvider;
 import org.springframework.lang.Nullable;
 
 /**
@@ -25,7 +27,7 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public interface RelationalEvent<E> {
+public interface RelationalEvent<E> extends ResolvableTypeProvider {
 
 	/**
 	 * @return the entity to which this event refers. Might be {@literal null}.
@@ -38,4 +40,9 @@ public interface RelationalEvent<E> {
 	 * @since 2.0
 	 */
 	Class<E> getType();
+
+	@Override
+	default ResolvableType getResolvableType() {
+		return ResolvableType.forClassWithGenerics(getClass(), getType());
+	}
 }
