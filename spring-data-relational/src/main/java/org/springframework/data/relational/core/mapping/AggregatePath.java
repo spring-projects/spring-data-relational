@@ -23,6 +23,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+
 /**
  * Represents a path within an aggregate starting from the aggregate root.
  *
@@ -70,23 +72,13 @@ public class AggregatePath {
 	}
 
 	/**
-	 * Tests if {@code this} and the argument represent the same path.
-	 *
-	 * @param path to which this path gets compared. May be {@literal null}.
-	 * @return Whence the argument matches the path represented by this instance.
-	 */
-	public boolean matches(@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return this.path == null ? path == null || path.isEmpty() : this.path.equals(path);
-	}
-
-	/**
 	 * The name of the column used to reference the id in the parent table.
 	 *
 	 * @throws IllegalStateException when called on an empty path.
 	 */
 	public SqlIdentifier getReverseColumnName() {
 
-		Assert.state(path != null, "Empty paths don't have a reverse column name");
+		Assert.state(!isRoot(), "Empty paths don't have a reverse column name");
 
 		return path.getLeafProperty().getReverseColumnName(this);
 	}
@@ -99,7 +91,7 @@ public class AggregatePath {
 	 */
 	public AggregatePath getParentPath() {
 
-		if (path == null) {
+		if (isRoot()) {
 			throw new IllegalStateException("The parent path of a root path is not defined.");
 		}
 
@@ -117,36 +109,7 @@ public class AggregatePath {
 	 */
 	@Nullable
 	public RelationalPersistentEntity<?> getLeafEntity() {
-		return path == null ? rootType : context.getPersistentEntity(path.getLeafProperty().getActualType());
-	}
-
-	/**
-	 * @return {@literal true} if this path represents an entity which has an Id attribute.
-	 */
-	public boolean hasIdProperty() {
-
-		RelationalPersistentEntity<?> leafEntity = getLeafEntity();
-		return leafEntity != null && leafEntity.hasIdProperty();
-	}
-
-	/**
-	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
-	 *
-	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}.
-	 */
-	public AggregatePath getIdDefiningParentPath() {
-
-		AggregatePath parent = getParentPath();
-
-		if (parent.path == null) {
-			return parent;
-		}
-
-		if (!parent.hasIdProperty()) {
-			return parent.getIdDefiningParentPath();
-		}
-
-		return parent;
+		return isRoot() ? rootType : context.getPersistentEntity(path.getLeafProperty().getActualType());
 	}
 
 	/**
@@ -169,13 +132,42 @@ public class AggregatePath {
 		return entity;
 	}
 
+	/**
+	 * @return {@literal true} if this path represents an entity which has an Id attribute.
+	 */
+	public boolean hasIdProperty() {
+
+		RelationalPersistentEntity<?> leafEntity = getLeafEntity();
+		return leafEntity != null && leafEntity.hasIdProperty();
+	}
+
+	/**
+	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
+	 *
+	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}.
+	 */
+	public AggregatePath getIdDefiningParentPath() {
+
+		AggregatePath parent = getParentPath();
+
+		if (isRoot()) {
+			return parent;
+		}
+
+		if (!parent.hasIdProperty()) {
+			return parent.getIdDefiningParentPath();
+		}
+
+		return parent;
+	}
+
 	public RelationalPersistentProperty getRequiredIdProperty() {
-		return this.path == null ? rootType.getRequiredIdProperty() : getRequiredLeafEntity().getRequiredIdProperty();
+		return isRoot() ? rootType.getRequiredIdProperty() : getRequiredLeafEntity().getRequiredIdProperty();
 
 	}
 
 	public int getLength() {
-		return path == null ? 0 : path.getLength();
+		return isRoot() ? 0 : path.getLength();
 	}
 
 	/**
@@ -185,7 +177,7 @@ public class AggregatePath {
 	 */
 	@Nullable
 	public SqlIdentifier getQualifierColumn() {
-		return path == null ? null : path.getLeafProperty().getKeyColumn();
+		return isRoot() ? null : path.getLeafProperty().getKeyColumn();
 	}
 
 	/**
@@ -196,7 +188,7 @@ public class AggregatePath {
 	@Nullable
 	public Class<?> getQualifierColumnType() {
 
-		if (path == null) {
+		if (isRoot()) {
 			return null;
 		}
 		if (!path.getLeafProperty().isQualified()) {
@@ -211,14 +203,14 @@ public class AggregatePath {
 	 * @return if the leaf property is embedded.
 	 */
 	public boolean isEmbedded() {
-		return path != null && path.getLeafProperty().isEmbedded();
+		return !isRoot() && path.getLeafProperty().isEmbedded();
 	}
 
 	/**
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
 	public boolean isEntity() {
-		return path == null || path.getLeafProperty().isEntity();
+		return isRoot() || path.getLeafProperty().isEntity();
 	}
 
 	/**
@@ -235,7 +227,7 @@ public class AggregatePath {
 	@Nullable
 	private SqlIdentifier assembleTableAlias() {
 
-		Assert.state(path != null, "Path is null");
+		Assert.state(!isRoot(), "Path is null");
 
 		RelationalPersistentProperty leafProperty = path.getLeafProperty();
 		String prefix;
@@ -273,7 +265,7 @@ public class AggregatePath {
 
 		AggregatePath tableOwner = getTableOwningAncestor();
 
-		return tableOwner.path == null ? null : tableOwner.assembleTableAlias();
+		return tableOwner.isRoot() ? null : tableOwner.assembleTableAlias();
 
 	}
 
@@ -295,7 +287,7 @@ public class AggregatePath {
 	 */
 	public SqlIdentifier getColumnName() {
 
-		Assert.state(path != null, "Path is null");
+		Assert.state(!isRoot(), "Path is null");
 
 		return assembleColumnName(path.getLeafProperty().getColumnName());
 	}
@@ -323,12 +315,12 @@ public class AggregatePath {
 	public String toString() {
 		return "AggregatePath["
 				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
-				+ ((path == null) ? "/" : path.toDotPath());
+				+ ((isRoot()) ? "/" : path.toDotPath());
 	}
 
 	private SqlIdentifier assembleColumnName(SqlIdentifier suffix) {
 
-		Assert.state(path != null, "Path is null");
+		Assert.state(!isRoot(), "Path is null");
 
 		if (path.getLength() <= 1) {
 			return suffix;
@@ -353,7 +345,7 @@ public class AggregatePath {
 	}
 
 	public String toDotPath() {
-		return path == null ? "" : path.toDotPath();
+		return isRoot() ? "" : path.toDotPath();
 	}
 
 	/**
@@ -364,7 +356,7 @@ public class AggregatePath {
 	 */
 	public boolean isMultiValued() {
 
-		return path != null && //
+		return !isRoot() && //
 				(path.getLeafProperty().isCollectionLike() //
 						|| path.getLeafProperty().isQualified() //
 						|| getParentPath().isMultiValued() //
@@ -376,19 +368,19 @@ public class AggregatePath {
 	 * @see RelationalPersistentProperty#isMap()
 	 */
 	public boolean isMap() {
-		return path != null && path.getLeafProperty().isMap();
+		return !isRoot() && path.getLeafProperty().isMap();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.List} or {@link java.util.Map}.
 	 */
 	public boolean isQualified() {
-		return path != null && path.getLeafProperty().isQualified();
+		return !isRoot() && path.getLeafProperty().isQualified();
 	}
 
 	public RelationalPersistentProperty getRequiredLeafProperty() {
 
-		if (path == null) {
+		if (isRoot()) {
 			throw new IllegalStateException("root path does not have a leaf property");
 		}
 		return path.getLeafProperty();
@@ -396,7 +388,7 @@ public class AggregatePath {
 
 	public RelationalPersistentProperty getBaseProperty() {
 
-		if (path == null) {
+		if (isRoot()) {
 			throw new IllegalStateException("root path does not have a base property");
 		}
 		return path.getBaseProperty();
@@ -413,7 +405,7 @@ public class AggregatePath {
 	 * @return {@literal true} when this is references a {@link java.util.Collection} or an array.
 	 */
 	public boolean isCollectionLike() {
-		return path != null && path.getLeafProperty().isCollectionLike();
+		return !isRoot() && path.getLeafProperty().isCollectionLike();
 	}
 
 	/**
@@ -421,7 +413,7 @@ public class AggregatePath {
 	 * @see RelationalPersistentProperty#isOrdered()
 	 */
 	public boolean isOrdered() {
-		return path != null && path.getLeafProperty().isOrdered();
+		return !isRoot() && path.getLeafProperty().isOrdered();
 	}
 
 	/**
@@ -430,9 +422,9 @@ public class AggregatePath {
 	 * @param property must not be {@literal null}.
 	 * @return Guaranteed to be not {@literal null}.
 	 */
-	public AggregatePath extendBy(RelationalPersistentProperty property) {
+	public AggregatePath append(RelationalPersistentProperty property) {
 
-		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = path == null //
+		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
 				? context.getPersistentPropertyPath(property.getName(), rootType.getType()) //
 				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(),
 						path.getBaseProperty().getOwner().getType());
@@ -442,7 +434,7 @@ public class AggregatePath {
 
 	public PersistentPropertyPath<? extends RelationalPersistentProperty> getRequiredPersistentPropertyPath() {
 
-		Assert.state(path != null, "path must not be null");
+		Assert.state(!isRoot(), "path must not be null");
 		return path;
 	}
 
@@ -453,15 +445,30 @@ public class AggregatePath {
 	public SqlIdentifier getEffectiveIdColumnName() {
 
 		AggregatePath owner = getTableOwningAncestor();
-		return owner.path == null ? owner.getRequiredLeafEntity().getIdColumn() : owner.getReverseColumnName();
+		return owner.isRoot() ? owner.getRequiredLeafEntity().getIdColumn() : owner.getReverseColumnName();
 	}
 
 	@Nullable
 	public PersistentPropertyPathExtension getPathExtension() {
 
-		if (path == null) {
+		if (isRoot()) {
 			return new PersistentPropertyPathExtension(context, rootType);
 		}
 		return new PersistentPropertyPathExtension(context, path);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		AggregatePath that = (AggregatePath) o;
+		return Objects.equals(context, that.context) && Objects.equals(rootType, that.rootType) && Objects.equals(path, that.path);
+	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(context, rootType, path);
 	}
 }

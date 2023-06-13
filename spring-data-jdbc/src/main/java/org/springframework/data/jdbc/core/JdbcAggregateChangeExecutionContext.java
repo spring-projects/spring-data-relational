@@ -203,7 +203,7 @@ class JdbcAggregateChangeExecutionContext {
 			return action;
 		}
 
-		if (idPath.matches(withDependingOn.getPropertyPath())) {
+		if (idPath.equals(context.getAggregatePath(withDependingOn.getPropertyPath()))) {
 			return action;
 		}
 

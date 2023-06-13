@@ -162,8 +162,8 @@ class AggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path().extendBy(entity.getRequiredPersistentProperty("withId"))).isEqualTo(path("withId"));
-			softly.assertThat(path("withId").extendBy(path("withId").getRequiredIdProperty()))
+			softly.assertThat(path().append(entity.getRequiredPersistentProperty("withId"))).isEqualTo(path("withId"));
+			softly.assertThat(path("withId").append(path("withId").getRequiredIdProperty()))
 					.isEqualTo(path("withId.withIdId"));
 		});
 	}
@@ -438,18 +438,6 @@ class AggregatePathUnitTests {
 			softly.assertThat(path("second.third2").getLength()).isEqualTo(2);
 			softly.assertThat(path("withId.second.third").getLength()).isEqualTo(3);
 			softly.assertThat(path("withId.second.third2.value").getLength()).isEqualTo(4);
-		});
-	}
-
-	@Test // GH-1525
-	void matches() {
-
-		assertSoftly(softly -> {
-
-			softly.assertThat(path().matches(createSimplePath("second").getParentPath())).isTrue();
-			softly.assertThat(path().matches(createSimplePath("second"))).isFalse();
-			softly.assertThat(path("withId.second.third").matches(createSimplePath("withId.second.third"))).isTrue();
-			softly.assertThat(path("withId.second.third").matches(createSimplePath("withId.second.third2.value"))).isFalse();
 		});
 	}
 

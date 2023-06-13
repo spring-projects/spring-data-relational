@@ -396,7 +396,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
 			return new ReadingContext<>(
 					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
-					rootPath.extendBy(property), path.extendBy(property), identifier, key,
+					rootPath.append(property), path.append(property), identifier, key,
 					propertyValueProvider.extendBy(property), backReferencePropertyValueProvider.extendBy(property), accessor);
 		}
 
@@ -457,9 +457,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			Identifier identifier = id == null //
 					? this.identifier.withPart(rootPath.getQualifierColumn(), key, Object.class) //
-					: Identifier.of(rootPath.extendBy(property).getReverseColumnName(), id, Object.class);
+					: Identifier.of(rootPath.append(property).getReverseColumnName(), id, Object.class);
 
-			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = path.extendBy(property)
+			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = path.append(property)
 					.getRequiredPersistentPropertyPath();
 
 			return relationResolver.findAllByPath(identifier, propertyPath);

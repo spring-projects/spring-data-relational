@@ -17,9 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
  * {@link PropertyValueProvider} obtaining values from a {@link ResultSetAccessor}. For a given id property it provides
@@ -47,10 +45,10 @@ class JdbcBackReferencePropertyValueProvider implements PropertyValueProvider<Re
 
 	@Override
 	public <T> T getPropertyValue(RelationalPersistentProperty property) {
-		return (T) resultSet.getObject(basePath.extendBy(property).getReverseColumnNameAlias().getReference());
+		return (T) resultSet.getObject(basePath.append(property).getReverseColumnNameAlias().getReference());
 	}
 
 	public JdbcBackReferencePropertyValueProvider extendBy(RelationalPersistentProperty property) {
-		return new JdbcBackReferencePropertyValueProvider(basePath.extendBy(property), resultSet);
+		return new JdbcBackReferencePropertyValueProvider(basePath.append(property), resultSet);
 	}
 }
