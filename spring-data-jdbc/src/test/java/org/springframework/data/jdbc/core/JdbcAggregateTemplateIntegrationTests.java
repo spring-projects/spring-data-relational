@@ -87,6 +87,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Milan Milanov
  * @author Mikhail Polivakha
  * @author Chirag Tailor
+ * @author Vincent Galloy
  */
 @ContextConfiguration
 @Transactional
@@ -1046,11 +1047,13 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-1460
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	void readEnumArray() {
+
 		EnumArrayOwner entity = new EnumArrayOwner();
 		entity.digits = new Color[]{Color.BLUE};
 
-		assertThat(template.save(entity)).isNotNull();
+		template.save(entity);
 
 		assertThat(template.findById(entity.id, EnumArrayOwner.class).digits).isEqualTo(new Color[]{Color.BLUE});
 	}
