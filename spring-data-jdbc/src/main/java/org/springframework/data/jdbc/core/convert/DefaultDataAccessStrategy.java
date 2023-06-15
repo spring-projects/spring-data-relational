@@ -29,7 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.AggregatePathUtil;
+import org.springframework.data.relational.core.mapping.ForeignTableDetector;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -399,8 +399,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private RowMapper<?> getMapEntityRowMapper(AggregatePath path, Identifier identifier) {
 
-		SqlIdentifier keyColumn = AggregatePathUtil.getQualifierColumn(path);
-		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + path);
+		SqlIdentifier keyColumn = ForeignTableDetector.of(path).getQualifierColumn();
 
 		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn);
 	}

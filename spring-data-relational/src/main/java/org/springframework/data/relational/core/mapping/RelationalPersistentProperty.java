@@ -44,9 +44,14 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	@Deprecated(since = "3.2", forRemoval = true)
 	SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path);
 
-	default SqlIdentifier getReverseColumnName(AggregatePath path) {
-		return getReverseColumnName(path.getPathExtension());
-	}
+
+	// TODO: Remove this method as we have a cycle between path and property
+	/**
+	 * @param path
+	 * @return
+	 * @since 3.2
+	 */
+	SqlIdentifier getReverseColumnName(AggregatePath path);
 
 	@Nullable
 	SqlIdentifier getKeyColumn();
@@ -86,7 +91,7 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 
 	/**
 	 * Returns whether this property is only to be used during inserts and read.
-	 * 
+	 *
 	 * @since 3.0
 	 */
 	boolean isInsertOnly();

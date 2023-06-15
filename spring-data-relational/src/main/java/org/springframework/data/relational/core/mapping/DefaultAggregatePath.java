@@ -16,14 +16,12 @@
 
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Iterator;
 import java.util.Objects;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * Represents a path within an aggregate starting from the aggregate root.
@@ -31,16 +29,16 @@ import org.springframework.util.StringUtils;
  * @since 3.2
  * @author Jens Schauder
  */
-class DefaultAggregatePath  implements AggregatePath{
+class DefaultAggregatePath implements AggregatePath {
 
 	private final RelationalMappingContext context;
 
-	@Nullable private final RelationalPersistentEntity<?> rootType;
+	private final @Nullable RelationalPersistentEntity<?> rootType;
 
-	@Nullable private final PersistentPropertyPath<? extends RelationalPersistentProperty> path;
+	private final @Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path;
 
 	DefaultAggregatePath(RelationalMappingContext context,
-								PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		Assert.notNull(context, "context must not be null");
 		Assert.notNull(path, "path must not be null");
@@ -66,10 +64,10 @@ class DefaultAggregatePath  implements AggregatePath{
 		return path == null || path.getLeafProperty().isWritable() && isWritable(path.getParentPath());
 	}
 
+	@Override
 	public boolean isRoot() {
 		return path == null;
 	}
-
 
 	/**
 	 * Returns the path that has the same beginning but is one segment shorter than this path.
@@ -77,6 +75,7 @@ class DefaultAggregatePath  implements AggregatePath{
 	 * @return the parent path. Guaranteed to be not {@literal null}.
 	 * @throws IllegalStateException when called on an empty path.
 	 */
+	@Override
 	public AggregatePath getParentPath() {
 
 		if (isRoot()) {
@@ -95,9 +94,10 @@ class DefaultAggregatePath  implements AggregatePath{
 	 *
 	 * @return Might return {@literal null} when called on a path that does not represent an entity.
 	 */
+	@Override
 	@Nullable
 	public RelationalPersistentEntity<?> getLeafEntity() {
-		return isRoot() ? rootType : context.getPersistentEntity(path.getLeafProperty().getActualType());
+		return isRoot() ? rootType : context.getPersistentEntity(getRequiredLeafProperty().getActualType());
 	}
 
 	/**
@@ -107,6 +107,7 @@ class DefaultAggregatePath  implements AggregatePath{
 	 * @return the required {@link RelationalPersistentEntity} associated with the leaf of this path.
 	 * @throws IllegalStateException if the persistent entity cannot be resolved.
 	 */
+	@Override
 	public RelationalPersistentEntity<?> getRequiredLeafEntity() {
 
 		RelationalPersistentEntity<?> entity = getLeafEntity();
@@ -120,30 +121,60 @@ class DefaultAggregatePath  implements AggregatePath{
 		return entity;
 	}
 
-
+	@Override
 	public RelationalPersistentProperty getRequiredIdProperty() {
 		return isRoot() ? rootType.getRequiredIdProperty() : getRequiredLeafEntity().getRequiredIdProperty();
 
 	}
 
+	@Override
 	public int getLength() {
 		return isRoot() ? 0 : path.getLength();
 	}
 
+	@Override
+	public Iterator<AggregatePath> iterator() {
+
+		return new Iterator<>() {
+
+			AggregatePath current = DefaultAggregatePath.this;
+
+			@Override
+			public boolean hasNext() {
+				return current != null;
+			}
+
+			@Override
+			public AggregatePath next() {
+				AggregatePath current = this.current;
+
+				if (!current.isRoot()) {
+					this.current = current.getParentPath();
+				} else {
+					this.current = null;
+				}
+
+				return current;
+			}
+		};
+	}
+
 	/**
-	 * Returns {@literal true} exactly when the path is non empty and the leaf property an embedded one.
+	 * Returns {@literal true} exactly when the path is non-empty and the leaf property an embedded one.
 	 *
 	 * @return if the leaf property is embedded.
 	 */
+	@Override
 	public boolean isEmbedded() {
-		return !isRoot() && path.getLeafProperty().isEmbedded();
+		return !isRoot() && getRequiredLeafProperty().isEmbedded();
 	}
 
 	/**
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
+	@Override
 	public boolean isEntity() {
-		return isRoot() || path.getLeafProperty().isEntity();
+		return isRoot() || getRequiredLeafProperty().isEntity();
 	}
 
 	@Override
@@ -153,7 +184,7 @@ class DefaultAggregatePath  implements AggregatePath{
 				+ ((isRoot()) ? "/" : path.toDotPath());
 	}
 
-
+	@Override
 	public String toDotPath() {
 		return isRoot() ? "" : path.toDotPath();
 	}
@@ -164,59 +195,72 @@ class DefaultAggregatePath  implements AggregatePath{
 	 *
 	 * @return {@literal true} if the path contains a multivalued element.
 	 */
+	@Override
 	public boolean isMultiValued() {
 
-		return !isRoot() && //
-				(path.getLeafProperty().isCollectionLike() //
-						|| path.getLeafProperty().isQualified() //
-						|| getParentPath().isMultiValued() //
-				);
+		if (isRoot()) {
+			return false;
+		}
+
+		RelationalPersistentProperty property = getRequiredLeafProperty();
+
+		return property.isCollectionLike() //
+				|| property.isQualified() //
+				|| getParentPath().isMultiValued();
 	}
 
 	/**
 	 * @return {@literal true} if the leaf property of this path is a {@link java.util.Map}.
 	 * @see RelationalPersistentProperty#isMap()
 	 */
+	@Override
 	public boolean isMap() {
-		return !isRoot() && path.getLeafProperty().isMap();
+		return !isRoot() && getRequiredLeafProperty().isMap();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.List} or {@link java.util.Map}.
 	 */
+	@Override
 	public boolean isQualified() {
-		return !isRoot() && path.getLeafProperty().isQualified();
+		return !isRoot() && getRequiredLeafProperty().isQualified();
 	}
 
+	@Override
 	public RelationalPersistentProperty getRequiredLeafProperty() {
 
 		if (isRoot()) {
-			throw new IllegalStateException("root path does not have a leaf property");
+			throw new IllegalStateException("Root path does not have a leaf property");
 		}
+
 		return path.getLeafProperty();
 	}
 
+	@Override
 	public RelationalPersistentProperty getBaseProperty() {
 
 		if (isRoot()) {
-			throw new IllegalStateException("root path does not have a base property");
+			throw new IllegalStateException("Root path does not have a base property");
 		}
+
 		return path.getBaseProperty();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.Collection} or an array.
 	 */
+	@Override
 	public boolean isCollectionLike() {
-		return !isRoot() && path.getLeafProperty().isCollectionLike();
+		return !isRoot() && getRequiredLeafProperty().isCollectionLike();
 	}
 
 	/**
 	 * @return whether the leaf end of the path is ordered, i.e. the data to populate must be ordered.
 	 * @see RelationalPersistentProperty#isOrdered()
 	 */
+	@Override
 	public boolean isOrdered() {
-		return !isRoot() && path.getLeafProperty().isOrdered();
+		return !isRoot() && getRequiredLeafProperty().isOrdered();
 	}
 
 	/**
@@ -225,6 +269,7 @@ class DefaultAggregatePath  implements AggregatePath{
 	 * @param property must not be {@literal null}.
 	 * @return Guaranteed to be not {@literal null}.
 	 */
+	@Override
 	public AggregatePath append(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
@@ -235,28 +280,24 @@ class DefaultAggregatePath  implements AggregatePath{
 		return context.getAggregatePath(newPath);
 	}
 
+	@Override
 	public PersistentPropertyPath<? extends RelationalPersistentProperty> getRequiredPersistentPropertyPath() {
 
-		Assert.state(!isRoot(), "path must not be null");
+		Assert.state(!isRoot(), "Required path is not present");
+
 		return path;
-	}
-
-	@Nullable
-	public PersistentPropertyPathExtension getPathExtension() {
-
-		if (isRoot()) {
-			return new PersistentPropertyPathExtension(context, rootType);
-		}
-		return new PersistentPropertyPathExtension(context, path);
 	}
 
 	@Override
 	public boolean equals(Object o) {
 
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		DefaultAggregatePath that = (DefaultAggregatePath) o;
-		return Objects.equals(context, that.context) && Objects.equals(rootType, that.rootType) && Objects.equals(path, that.path);
+		return Objects.equals(context, that.context) && Objects.equals(rootType, that.rootType)
+				&& Objects.equals(path, that.path);
 	}
 
 	@Override

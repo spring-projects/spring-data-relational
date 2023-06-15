@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
 
 public final class AggregatePathUtil {
 
-	private AggregatePathUtil(){
+	private AggregatePathUtil() {
 		throw new IllegalStateException("This class should never get instantiated");
 	}
 
@@ -34,7 +34,6 @@ public final class AggregatePathUtil {
 		return leafEntity != null && leafEntity.hasIdProperty();
 	}
 
-
 	/**
 	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
 	 *
@@ -42,41 +41,9 @@ public final class AggregatePathUtil {
 	 */
 	public static AggregatePath getIdDefiningParentPath(AggregatePath path) {
 
-		AggregatePath parent = path.getParentPath();
-
-		if (path.isRoot()) {
-			return parent;
-		}
-
-		if (!AggregatePathUtil.hasIdProperty(parent)) {
-
-			return getIdDefiningParentPath(parent);
-		}
-
-		return parent;
+		// TODO: What if the path is a root and the filter method returns null?
+		return path.getParentPath().filter(AggregatePathUtil::hasIdProperty);
 	}
-
-
-	/**
-	 * The fully qualified name of the table this path is tied to or of the longest ancestor path that is actually tied to
-	 * a table.
-	 *
-	 * @return the name of the table. Guaranteed to be not {@literal null}.
-	 * @since 3.0
-	 */
-	public static SqlIdentifier getQualifiedTableName(AggregatePath path) {
-		return getTableOwningAncestor(path).getRequiredLeafEntity().getQualifiedTableName();
-	}
-
-
-
-	/**
-	 * The column name of the id column of the ancestor path that represents an actual table.
-	 */
-	public static SqlIdentifier getIdColumnName(AggregatePath path) {
-		return getTableOwningAncestor(path).getRequiredLeafEntity().getIdColumn();
-	}
-
 
 	/**
 	 * If the table owning ancestor has an id the column name of that id property is returned. Otherwise the reverse
@@ -88,58 +55,6 @@ public final class AggregatePathUtil {
 		return owner.isRoot() ? owner.getRequiredLeafEntity().getIdColumn() : getReverseColumnName(owner);
 	}
 
-
-
-	/**
-	 * The name of the column used to represent this property in the database.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	public static SqlIdentifier getColumnName(AggregatePath path) {
-
-		Assert.state(!path.isRoot(), "Path is null");
-
-		return assembleColumnName(path, path.getRequiredLeafProperty().getColumnName());
-	}
-
-
-	/**
-	 * The column name used for the list index or map key of the leaf property of this path.
-	 *
-	 * @return May be {@literal null}.
-	 */
-	@Nullable
-	public static SqlIdentifier getQualifierColumn(AggregatePath path) {
-		return path.isRoot() ? null : path.getRequiredLeafProperty().getKeyColumn();
-	}
-
-	/**
-	 * The type of the qualifier column of the leaf property of this path or {@literal null} if this is not applicable.
-	 *
-	 * @return may be {@literal null}.
-	 */
-	@Nullable
-	public static Class<?> getQualifierColumnType(AggregatePath path) {
-
-		if (path.isRoot()) {
-			return null;
-		}
-		if (!path.getRequiredLeafProperty().isQualified()) {
-			return null;
-		}
-		return path.getRequiredLeafProperty().getQualifierColumnType();
-	}
-
-
-	/**
-	 * The alias for the column used to represent this property in the database.
-	 *
-	 * @throws IllegalStateException when called on an empty path.
-	 */
-	public static SqlIdentifier getColumnAlias(AggregatePath path) {
-		return prefixWithTableAlias(path, getColumnName(path));
-	}
-
 	/**
 	 * The alias used in select for the column used to reference the id in the parent table.
 	 *
@@ -149,7 +64,6 @@ public final class AggregatePathUtil {
 
 		return prefixWithTableAlias(path, getReverseColumnName(path));
 	}
-
 
 	/**
 	 * The name of the column used to reference the id in the parent table.
@@ -170,7 +84,6 @@ public final class AggregatePathUtil {
 	 * @return a path. Guaranteed to be not {@literal null}.
 	 */
 	private static AggregatePath getTableOwningAncestor(AggregatePath path) {
-
 		return path.isEntity() && !path.isEmbedded() ? path : getTableOwningAncestor(path.getParentPath());
 	}
 
@@ -211,7 +124,7 @@ public final class AggregatePathUtil {
 	 * @return a table alias, {@literal null} if the table owning path is the empty path.
 	 */
 	@Nullable
-	public static SqlIdentifier getTableAlias(AggregatePath path) {
+	private static SqlIdentifier findTableAlias(AggregatePath path) {
 
 		AggregatePath tableOwner = getTableOwningAncestor(path);
 
@@ -219,8 +132,7 @@ public final class AggregatePathUtil {
 
 	}
 
-
-	public static SqlIdentifier assembleColumnName(AggregatePath path, SqlIdentifier suffix) {
+	private static SqlIdentifier assembleColumnName(AggregatePath path, SqlIdentifier suffix) {
 
 		Assert.state(!path.isRoot(), "Path is null");
 
@@ -228,7 +140,8 @@ public final class AggregatePathUtil {
 			return suffix;
 		}
 
-		PersistentPropertyPath<? extends RelationalPersistentProperty> parentPath = path.getParentPath().getRequiredPersistentPropertyPath();
+		PersistentPropertyPath<? extends RelationalPersistentProperty> parentPath = path.getParentPath()
+				.getRequiredPersistentPropertyPath();
 		RelationalPersistentProperty parentLeaf = parentPath.getLeafProperty();
 
 		if (!parentLeaf.isEmbedded()) {
@@ -237,12 +150,16 @@ public final class AggregatePathUtil {
 
 		String embeddedPrefix = parentLeaf.getEmbeddedPrefix();
 
-		return assembleColumnName(path.getParentPath(),suffix.transform(embeddedPrefix::concat));
+		return assembleColumnName(path.getParentPath(), suffix.transform(embeddedPrefix::concat));
 	}
 
 	private static SqlIdentifier prefixWithTableAlias(AggregatePath path, SqlIdentifier columnName) {
 
-		SqlIdentifier tableAlias = getTableAlias(path);
+		SqlIdentifier tableAlias = findTableAlias(path);
 		return tableAlias == null ? columnName : columnName.transform(name -> tableAlias.getReference() + "_" + name);
+	}
+
+	public static boolean isWritable(@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+		return path == null || path.getLeafProperty().isWritable() && isWritable(path.getParentPath());
 	}
 }

@@ -16,23 +16,29 @@
 
 package org.springframework.data.relational.core.mapping;
 
+import java.util.function.Predicate;
+
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Represents a path within an aggregate starting from the aggregate root.
+ * <p>
+ * The path implements {@link Iterable} to iterate over all path segments including the path root.
  *
  * @since 3.2
  * @author Jens Schauder
+ * @author Mark Paluch
  */
-public interface AggregatePath {
+public interface AggregatePath extends Iterable<AggregatePath> {
 
-	static boolean isWritable(@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
-		return path == null || path.getLeafProperty().isWritable() && isWritable(path.getParentPath());
-	}
-
+	/**
+	 * Returns {@code true} if the current path is a root path element (i.e. {@link #getLength()} equals zero) or
+	 * {@code false} if the path points to a leaf property.
+	 *
+	 * @return {@code true} if the current path is a root path element or {@code false} if the path points to a leaf
+	 *         property.
+	 */
 	boolean isRoot();
 
 	/**
@@ -65,7 +71,7 @@ public interface AggregatePath {
 	int getLength();
 
 	/**
-	 * Returns {@literal true} exactly when the path is non empty and the leaf property an embedded one.
+	 * Returns {@literal true} exactly when the path is non-empty and the leaf property an embedded one.
 	 *
 	 * @return if the leaf property is embedded.
 	 */
@@ -122,6 +128,28 @@ public interface AggregatePath {
 
 	PersistentPropertyPath<? extends RelationalPersistentProperty> getRequiredPersistentPropertyPath();
 
+	/**
+	 * Filter the {@link AggregatePath} hierarchy by walking all path segment from the leaf to {@link #isRoot() root}
+	 * applying the given filter {@link Predicate}. Returns a matching {@link AggregatePath} or {@literal null} if the
+	 * filter predicate does not match any path segment.
+	 *
+	 * @param predicate
+	 * @return the matched aggregate path element or {@code null} if the filter predicate does not match any path segment.
+	 */
 	@Nullable
-	PersistentPropertyPathExtension getPathExtension();
+	default AggregatePath filter(Predicate<AggregatePath> predicate) {
+
+		AggregatePath path = this;
+		while (!predicate.test(path)) {
+
+			if (path.isRoot()) {
+				path = null;
+				break;
+			}
+			path = path.getParentPath();
+		}
+
+		return path;
+	}
+
 }

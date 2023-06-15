@@ -29,6 +29,8 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.AggregatePathUtil;
+import org.springframework.data.relational.core.mapping.ColumnDetector;
+import org.springframework.data.relational.core.mapping.ForeignTableDetector;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -318,12 +320,13 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		Table currentTable = sqlContext.getTable(path);
 
 		AggregatePath idDefiningParentPath = AggregatePathUtil.getIdDefiningParentPath(path);
+		ColumnDetector parentDetector = ColumnDetector.of(path);
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(AggregatePathUtil.getReverseColumnName(path)), //
-				parentTable.column(AggregatePathUtil.getIdColumnName(idDefiningParentPath)) //
+				currentTable.column(ForeignTableDetector.of(path).getReverseColumnName()), //
+				parentTable.column(parentDetector.getIdColumnName()) //
 		);
 	}
 

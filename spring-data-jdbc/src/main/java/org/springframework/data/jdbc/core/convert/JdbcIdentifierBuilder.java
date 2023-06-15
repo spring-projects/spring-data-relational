@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.AggregatePathUtil;
+import org.springframework.data.relational.core.mapping.ForeignTableDetector;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -89,9 +90,12 @@ public class JdbcIdentifierBuilder {
 
 		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(value, "Value must not be null");
+		Assert.isTrue(path.isQualified(),
+				() -> String.format("AggregatePath %s must be be a Map or Collection-like property", path));
 
-		identifier = identifier.withPart(AggregatePathUtil.getQualifierColumn(path), value,
-				AggregatePathUtil.getQualifierColumnType(path));
+		// TODO: What if the path is a root?
+		ForeignTableDetector ft = ForeignTableDetector.of(path);
+		identifier = identifier.withPart(ft.getQualifierColumn(), value, ft.getQualifierColumnType());
 
 		return this;
 	}

@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -48,10 +47,11 @@ import org.springframework.data.mapping.model.SpELExpressionParameterValueProvid
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.AggregatePathUtil;
+import org.springframework.data.relational.core.mapping.ForeignTableDetector;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.SingleColumnAggregatePath;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -457,8 +457,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private Iterable<Object> resolveRelation(@Nullable Object id, RelationalPersistentProperty property) {
 
 			Identifier identifier = id == null //
-					? this.identifier.withPart(AggregatePathUtil.getQualifierColumn(rootPath), key, Object.class) //
-					: Identifier.of(AggregatePathUtil.getReverseColumnName(rootPath.append(property)), id, Object.class);
+					? this.identifier.withPart(ForeignTableDetector.of(rootPath).getQualifierColumn(), key, Object.class) //
+					: Identifier.of(SingleColumnAggregatePath.of(rootPath.append(property)).getReverseColumnName(), id, Object.class);
 
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = path.append(property)
 					.getRequiredPersistentPropertyPath();
