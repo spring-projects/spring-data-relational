@@ -164,6 +164,24 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(outboundRow).withColumn("enum_list").isEmpty().hasType(String[].class);
 	}
 
+	@Test // gh-1544
+	void shouldCorrectlyWriteConvertedEmptyEnumCollections() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+		withEnums.enumArray = new MyEnum[0];
+		withEnums.enumList = Collections.emptyList();
+		withEnums.enumSet = Collections.emptySet();
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsColumns("enum_set", "enum_array", "enum_list");
+		assertThat(outboundRow).withColumn("enum_set").hasValueInstanceOf(String[].class).hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_array").hasValueInstanceOf(String[].class).hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_list").hasValueInstanceOf(String[].class).hasType(String[].class);
+	}
+
 	@Test // gh-593
 	void shouldConvertCollectionOfEnumNatively() {
 
