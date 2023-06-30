@@ -38,9 +38,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
@@ -53,6 +54,7 @@ import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.Repository;
@@ -599,6 +601,21 @@ class PartTreeR2dbcQueryUnitTests {
 				.isThrownBy(() -> createQuery(r2dbcQuery, getAccessor(queryMethod, new Object[0])));
 	}
 
+	@Test // GH-1548
+	void allowsSortingByNonDomainProperties() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class, Sort.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, "foo", Sort.by("foobar"));
+		PreparedOperationAssert.assertThat(preparedOperation) //
+				.orderBy("users.foobar ASC");
+
+		preparedOperation = createQuery(queryMethod, r2dbcQuery, "foo", SqlSort.unsafe(Direction.ASC, "sum(foobar)"));
+		PreparedOperationAssert.assertThat(preparedOperation) //
+				.orderBy("sum(foobar) ASC");
+	}
+
 	@Test // GH-282
 	void throwsExceptionWhenInvalidNumberOfParameterIsGiven() throws Exception {
 
@@ -959,6 +976,8 @@ class PartTreeR2dbcQueryUnitTests {
 		Flux<User> findAllById(Collection<Long> ids);
 
 		Flux<User> findAllByIdIsEmpty();
+
+		Flux<User> findAllByFirstName(String firstName, Sort sort);
 
 		Flux<User> findTop3ByFirstName(String firstName);
 
