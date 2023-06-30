@@ -136,7 +136,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		}
 
 		if (sort.isSorted()) {
-			selectSpec = selectSpec.withSort(getSort(sort));
+			selectSpec = selectSpec.withSort(sort);
 		}
 
 		if (tree.isDistinct()) {
@@ -186,15 +186,4 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		return expressions.toArray(new Expression[0]);
 	}
 
-	private Sort getSort(Sort sort) {
-
-		RelationalPersistentEntity<?> tableEntity = entityMetadata.getTableEntity();
-
-		List<Sort.Order> orders = sort.get().map(order -> {
-			RelationalPersistentProperty property = tableEntity.getRequiredPersistentProperty(order.getProperty());
-			return order.isAscending() ? Sort.Order.asc(property.getName()) : Sort.Order.desc(property.getName());
-		}).collect(Collectors.toList());
-
-		return Sort.by(orders);
-	}
 }
