@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -78,6 +77,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
 		doReturn(ClassTypeInformation.from(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
+		doReturn(ClassTypeInformation.from(NumberFormat.class)).when(metadata).getDomainTypeInformation();
 	}
 
 	@Test // DATAJDBC-166

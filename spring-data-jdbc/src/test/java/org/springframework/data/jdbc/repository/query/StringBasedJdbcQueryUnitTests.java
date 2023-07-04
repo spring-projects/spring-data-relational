@@ -193,7 +193,7 @@ class StringBasedJdbcQueryUnitTests {
 		query.execute(new Object[] { asList(Direction.LEFT, Direction.RIGHT) });
 
 		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+		verify(operations).queryForObject(anyString(), captor.capture(), any(RowMapper.class));
 
 		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder("LEFT", "RIGHT");
@@ -209,7 +209,7 @@ class StringBasedJdbcQueryUnitTests {
 		query.execute(new Object[] { asList(Direction.LEFT, Direction.RIGHT) });
 
 		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+		verify(operations).queryForObject(anyString(), captor.capture(), any(RowMapper.class));
 
 		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder(-1, 1);
@@ -225,7 +225,7 @@ class StringBasedJdbcQueryUnitTests {
 		query.execute(new Object[] { 1 });
 
 		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-		verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+		verify(operations).queryForObject(anyString(), captor.capture(), any(RowMapper.class));
 
 		SqlParameterSource sqlParameterSource = captor.getValue();
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(1);
@@ -308,7 +308,7 @@ class StringBasedJdbcQueryUnitTests {
 	private enum Direction {
 		LEFT, CENTER, RIGHT
 	}
-	
+
 	@WritingConverter
 	enum DirectionToIntegerConverter implements Converter<Direction, JdbcValue> {
 
