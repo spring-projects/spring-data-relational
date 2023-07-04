@@ -80,6 +80,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
 		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
+		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getDomainTypeInformation();
 	}
 
 	@Test // DATAJDBC-166

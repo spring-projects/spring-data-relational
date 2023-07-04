@@ -269,7 +269,7 @@ class StringBasedJdbcQueryUnitTests {
 			query.execute(arguments);
 
 			ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
-			verify(operations).query(anyString(), captor.capture(), any(ResultSetExtractor.class));
+			verify(operations).queryForObject(anyString(), captor.capture(), any(RowMapper.class));
 
 			return captor.getValue();
 		}
