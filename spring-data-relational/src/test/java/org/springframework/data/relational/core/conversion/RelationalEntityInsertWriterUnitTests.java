@@ -17,8 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +42,7 @@ public class RelationalEntityInsertWriterUnitTests {
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
 
-		SingleReferenceEntity entity = new SingleReferenceEntity(null);
+		SingleReferenceEntity entity = new SingleReferenceEntity(null, null, null);
 		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		new RelationalEntityInsertWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
@@ -60,7 +58,7 @@ public class RelationalEntityInsertWriterUnitTests {
 	@Test // DATAJDBC-282
 	public void existingEntityGetsNotConvertedToDeletePlusUpdate() {
 
-		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
+		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID, null, null);
 
 		RootAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
@@ -81,17 +79,13 @@ public class RelationalEntityInsertWriterUnitTests {
 		return actions;
 	}
 
-	@RequiredArgsConstructor
-	static class SingleReferenceEntity {
+	record SingleReferenceEntity(
 
-		@Id final Long id;
-		Element other;
-		// should not trigger own Dbaction
-		String name;
+			@Id Long id, Element other,
+			// should not trigger own Dbaction
+			String name) {
 	}
 
-	@RequiredArgsConstructor
-	private static class Element {
-		@Id final Long id;
+	record Element(@Id Long id) {
 	}
 }

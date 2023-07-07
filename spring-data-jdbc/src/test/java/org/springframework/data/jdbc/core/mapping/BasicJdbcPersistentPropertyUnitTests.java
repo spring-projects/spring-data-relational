@@ -15,19 +15,7 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
-
 import junit.framework.AssertionFailedError;
-import lombok.Data;
-
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -38,6 +26,16 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -141,11 +139,11 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		ALPHA
 	}
 
-	@Data
 	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
-		@Id private final Long id;
+		@Id
+		private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
@@ -154,10 +152,21 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final UUID uuid;
 
 		@MappedCollection(idColumn = "dummy_column_name",
-				keyColumn = "dummy_key_column_name") private List<Integer> someList;
+				keyColumn = "dummy_key_column_name")
+		private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
+
+		private DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime, AggregateReference<DummyEntity, Long> reference, List<String> listField, UUID uuid) {
+			this.id = id;
+			this.someEnum = someEnum;
+			this.localDateTime = localDateTime;
+			this.zonedDateTime = zonedDateTime;
+			this.reference = reference;
+			this.listField = listField;
+			this.uuid = uuid;
+		}
 
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLocalDateTime() {
@@ -171,15 +180,71 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		public List<Date> getListGetter() {
 			return null;
 		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public SomeEnum getSomeEnum() {
+			return this.someEnum;
+		}
+
+		public ZonedDateTime getZonedDateTime() {
+			return this.zonedDateTime;
+		}
+
+		public AggregateReference<DummyEntity, Long> getReference() {
+			return this.reference;
+		}
+
+		public List<String> getListField() {
+			return this.listField;
+		}
+
+		public UUID getUuid() {
+			return this.uuid;
+		}
+
+		public List<Integer> getSomeList() {
+			return this.someList;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setSomeList(List<Integer> someList) {
+			this.someList = someList;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
 	}
 
-	@Data
 	private static class WithCollections {
 
-		@Column(value = "some_value") List<Integer> someList;
+		@Column(value = "some_value")
+		List<Integer> someList;
 
 		@Column(value = "some_value") //
 		@MappedCollection(idColumn = "override_id", keyColumn = "override_key") //
 		List<Integer> overrideList;
+
+		public List<Integer> getSomeList() {
+			return this.someList;
+		}
+
+		public List<Integer> getOverrideList() {
+			return this.overrideList;
+		}
+
+		public void setSomeList(List<Integer> someList) {
+			this.someList = someList;
+		}
+
+		public void setOverrideList(List<Integer> overrideList) {
+			this.overrideList = overrideList;
+		}
 	}
 }

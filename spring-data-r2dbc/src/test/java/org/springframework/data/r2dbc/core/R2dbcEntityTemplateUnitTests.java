@@ -15,28 +15,13 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.Value;
-import lombok.With;
-import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -55,6 +40,7 @@ import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.ReactiveAuditingEntityCallback;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
@@ -63,6 +49,16 @@ import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.CollectionUtils;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link R2dbcEntityTemplate}.
@@ -325,7 +321,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         entityTemplate.insert(new VersionedPerson("id", 0, "bar")).as(StepVerifier::create) //
                 .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
+                    assertThat(actual.version()).isEqualTo(1);
                 }) //
                 .verifyComplete();
 
@@ -366,7 +362,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         entityTemplate.insert(new VersionedPersonWithPrimitiveId(0, 0, "bar")).as(StepVerifier::create) //
                 .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
+                    assertThat(actual.version()).isEqualTo(1);
                 }) //
                 .verifyComplete();
 
@@ -396,8 +392,8 @@ public class R2dbcEntityTemplateUnitTests {
         entityTemplate.insert(new WithAuditingAndOptimisticLocking(null, 0, "Walter", null, null)) //
                 .as(StepVerifier::create) //
                 .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
-                    assertThat(actual.getCreatedDate()).isNotNull();
+                    assertThat(actual.version()).isEqualTo(1);
+                    assertThat(actual.createdDate()).isNotNull();
                 }) //
                 .verifyComplete();
 
@@ -425,9 +421,9 @@ public class R2dbcEntityTemplateUnitTests {
         entityTemplate.update(new WithAuditingAndOptimisticLocking(null, 2, "Walter", null, null)) //
                 .as(StepVerifier::create) //
                 .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(3);
-                    assertThat(actual.getCreatedDate()).isNull();
-                    assertThat(actual.getLastModifiedDate()).isNotNull();
+                    assertThat(actual.version()).isEqualTo(3);
+                    assertThat(actual.createdDate()).isNull();
+                    assertThat(actual.lastModifiedDate()).isNotNull();
                 }) //
                 .verifyComplete();
 
@@ -477,7 +473,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         entityTemplate.update(new VersionedPerson("id", 1, "bar")).as(StepVerifier::create) //
                 .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(2);
+                    assertThat(actual.version()).isEqualTo(2);
                 }) //
                 .verifyComplete();
 
@@ -565,92 +561,135 @@ public class R2dbcEntityTemplateUnitTests {
                 .containsEntry(1, Parameter.from(23L));
     }
 
-    @Value
-    static class WithoutId {
-
-        String name;
+    record WithoutId(String name){
     }
 
-    @Value
-    @With
-    static class Person {
-
+    record Person (
         @Id
-        String id;
+        String id,
 
         @Column("THE_NAME")
-        String name;
+        String name,
 
-        String description;
+        String description){
 
         public static Person empty() {
             return new Person(null, null, null);
         }
+
+        public Person withId(String id) {
+            return this.id == id ? this : new Person(id, this.name, this.description);
+        }
+
+        public Person withName(String name) {
+            return this.name == name ? this : new Person(this.id, name, this.description);
+        }
+
+        public Person withDescription(String description) {
+            return this.description == description ? this : new Person(this.id, this.name, description);
+        }
     }
 
-    @Value
-    @With
-    private static class VersionedPerson {
+    record VersionedPerson(
+        @Id
+        String id,
+        @Version
+        long version,
+         String name){
+
+        public VersionedPerson withId(String id) {
+            return this.id == id ? this : new VersionedPerson(id, this.version, this.name);
+        }
+
+        public VersionedPerson withVersion(long version) {
+            return this.version == version ? this : new VersionedPerson(this.id, version, this.name);
+        }
+
+        public VersionedPerson withName(String name) {
+            return this.name == name ? this : new VersionedPerson(this.id, this.version, name);
+        }
+    }
+
+    record PersonWithPrimitiveId (
+        @Id
+        int id,
+         String name
+    ){
+        public PersonWithPrimitiveId withId(int id) {
+            return this.id == id ? this : new PersonWithPrimitiveId(id, this.name);
+        }
+
+        public PersonWithPrimitiveId withName(String name) {
+            return this.name == name ? this : new PersonWithPrimitiveId(this.id, name);
+        }
+    }
+
+    record VersionedPersonWithPrimitiveId (
 
         @Id
-        String id;
+        int id,
 
         @Version
-        long version;
+        long version,
 
-        String name;
+        String name){
+
+        public VersionedPersonWithPrimitiveId withId(int id) {
+            return this.id == id ? this : new VersionedPersonWithPrimitiveId(id, this.version, this.name);
+        }
+
+        public VersionedPersonWithPrimitiveId withVersion(long version) {
+            return this.version == version ? this : new VersionedPersonWithPrimitiveId(this.id, version, this.name);
+        }
+
+        public VersionedPersonWithPrimitiveId withName(String name) {
+            return this.name == name ? this : new VersionedPersonWithPrimitiveId(this.id, this.version, name);
+        }
     }
 
-    @Value
-    @With
-    private static class PersonWithPrimitiveId {
+    record WithAuditingAndOptimisticLocking(
 
-        @Id
-        int id;
+            @Id
+            String id,
 
-        String name;
+            @Version
+            long version,
+
+            String name,
+
+            @CreatedDate
+            LocalDateTime createdDate,
+            @LastModifiedDate
+            LocalDateTime lastModifiedDate) {
+        public WithAuditingAndOptimisticLocking withId(String id) {
+            return this.id == id ? this : new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
+        }
+
+        public WithAuditingAndOptimisticLocking withVersion(long version) {
+            return this.version == version ? this : new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
+        }
+
+        public WithAuditingAndOptimisticLocking withName(String name) {
+            return this.name == name ? this : new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
+        }
+
+        public WithAuditingAndOptimisticLocking withCreatedDate(LocalDateTime createdDate) {
+            return this.createdDate == createdDate ? this : new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
+        }
+
+        public WithAuditingAndOptimisticLocking withLastModifiedDate(LocalDateTime lastModifiedDate) {
+            return this.lastModifiedDate == lastModifiedDate ? this : new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
+        }
     }
 
-    @Value
-    @With
-    private static class VersionedPersonWithPrimitiveId {
-
+    record WithInsertOnly (
         @Id
-        int id;
+        Long id,
 
-        @Version
-        long version;
-
-        String name;
-    }
-
-    @Value
-    @With
-    private static class WithAuditingAndOptimisticLocking {
-
-        @Id
-        String id;
-
-        @Version
-        long version;
-
-        String name;
-
-        @CreatedDate
-        LocalDateTime createdDate;
-        @LastModifiedDate
-        LocalDateTime lastModifiedDate;
-    }
-
-    @Value
-    private static class WithInsertOnly {
-        @Id
-        Long id;
-
-        String name;
+        String name,
 
         @InsertOnlyProperty
-        String insertOnly;
+        String insertOnly){
     }
 
     static class ValueCapturingEntityCallback<T> {
@@ -705,7 +744,7 @@ public class R2dbcEntityTemplateUnitTests {
 
             Person person = Person.empty() //
                     .withId("after-save") //
-                    .withName(entity.getName());
+                    .withName(entity.name());
 
             return Mono.just(person);
         }
@@ -720,7 +759,7 @@ public class R2dbcEntityTemplateUnitTests {
             capture(entity);
             Person person = Person.empty() //
                     .withId("after-convert") //
-                    .withName(entity.getName());
+                    .withName(entity.name());
 
             return Mono.just(person);
         }

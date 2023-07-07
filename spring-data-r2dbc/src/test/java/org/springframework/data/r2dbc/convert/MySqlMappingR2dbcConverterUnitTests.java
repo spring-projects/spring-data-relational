@@ -21,7 +21,6 @@ import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +28,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
@@ -101,19 +99,15 @@ class MySqlMappingR2dbcConverterUnitTests {
 		OutboundRowAssert.assertThat(row).containsColumnWithValue("state", (byte) 3);
 	}
 
-	@Value
-	private static class BooleanMapping {
+	record BooleanMapping(
 
-		Integer id;
-		boolean flag1;
-		boolean flag2;
+			Integer id, boolean flag1, boolean flag2) {
 	}
 
-	@Value
-	private static class WithByte {
+	record WithByte (
 
-		Integer id;
-		byte state;
+		Integer id,
+		byte state){
 	}
 
 }

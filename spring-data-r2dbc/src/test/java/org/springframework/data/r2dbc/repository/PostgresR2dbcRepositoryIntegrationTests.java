@@ -15,24 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.AllArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.util.Collections;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -51,6 +38,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.Collections;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against Postgres.
@@ -175,25 +171,35 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 		}).verifyComplete();
 	}
 
-	@AllArgsConstructor
 	static class WithJson {
 
-		@Id Long id;
+		@Id
+		Long id;
 
 		Json jsonValue;
+
+		public WithJson(Long id, Json jsonValue) {
+			this.id = id;
+			this.jsonValue = jsonValue;
+		}
 	}
 
 	interface WithJsonRepository extends ReactiveCrudRepository<WithJson, Long> {
 
 	}
 
-	@AllArgsConstructor
 	@Table("with_hstore")
 	static class WithHStore {
 
-		@Id Long id;
+		@Id
+		Long id;
 
 		Map<String, String> hstoreValue;
+
+		public WithHStore(Long id, Map<String, String> hstoreValue) {
+			this.id = id;
+			this.hstoreValue = hstoreValue;
+		}
 	}
 
 	interface WithHStoreRepository extends ReactiveCrudRepository<WithHStore, Long> {

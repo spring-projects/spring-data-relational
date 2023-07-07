@@ -15,17 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import reactor.test.StepVerifier;
-
-import java.util.Map;
-
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +33,12 @@ import org.springframework.data.relational.repository.query.RelationalEntityInfo
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository} against H2.
@@ -121,12 +117,21 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 				});
 	}
 
-	@Data
-	@AllArgsConstructor
 	static class AlwaysNew implements Persistable<Long> {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
+
+		public AlwaysNew(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		@Override
+		public Long getId() {
+			return id;
+		}
 
 		@Override
 		public boolean isNew() {

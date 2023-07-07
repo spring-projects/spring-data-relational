@@ -15,28 +15,13 @@
  */
 package org.springframework.data.r2dbc.convert;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -51,6 +36,15 @@ import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link MappingR2dbcConverter}.
@@ -266,43 +260,73 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(42L));
 	}
 
-	@AllArgsConstructor
 	static class Person {
-		@Id String id;
+		@Id
+		String id;
 		String firstname, lastname;
 		Instant instant;
 		LocalDateTime localDateTime;
+
+		public Person(String id, String firstname, String lastname, Instant instant, LocalDateTime localDateTime) {
+			this.id = id;
+			this.firstname = firstname;
+			this.lastname = lastname;
+			this.instant = instant;
+			this.localDateTime = localDateTime;
+		}
 	}
 
-	@Getter
-	@Setter
-	@RequiredArgsConstructor
 	static class ConstructorAndPropertyPopulation {
 		final String firstname;
 		String lastname;
+
+		public ConstructorAndPropertyPopulation(String firstname) {
+			this.firstname = firstname;
+		}
+
+		public String getFirstname() {
+			return this.firstname;
+		}
+
+		public String getLastname() {
+			return this.lastname;
+		}
+
+		public void setLastname(String lastname) {
+			this.lastname = lastname;
+		}
 	}
 
-	@AllArgsConstructor
 	static class WithEnum {
-		@Id String id;
+		@Id
+		String id;
 		Condition condition;
+
+		public WithEnum(String id, Condition condition) {
+			this.id = id;
+			this.condition = condition;
+		}
 	}
 
 	enum Condition {
 		Mint, Used
 	}
 
-	@AllArgsConstructor
 	static class PersonWithConversions {
-		@Id String id;
+		@Id
+		String id;
 		Map<String, String> nested;
 		NonMappableEntity unsupported;
+
+		public PersonWithConversions(String id, Map<String, String> nested, NonMappableEntity unsupported) {
+			this.id = id;
+			this.nested = nested;
+			this.unsupported = unsupported;
+		}
 	}
 
-	@RequiredArgsConstructor
-	static class WithPrimitiveId {
-
-		@Id final long id;
+	record WithPrimitiveId (
+		@Id long id){
 	}
 
 	static class CustomConversionPerson {

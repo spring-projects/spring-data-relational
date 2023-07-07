@@ -20,8 +20,6 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -210,16 +208,37 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		}
 	}
 
-	@Data
 	static class DummyEntity {
 
 		String name;
 		Set<Element> content = new HashSet<>();
 		@Id private Long id;
 
+		public String getName() {
+			return this.name;
+		}
+
+		public Set<Element> getContent() {
+			return this.content;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setContent(Set<Element> content) {
+			this.content = content;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class Element {
 
 		String content;

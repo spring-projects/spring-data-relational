@@ -17,10 +17,9 @@ package org.springframework.data.jdbc.repository.config;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -236,7 +235,6 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 	interface AuditingAnnotatedDummyEntityRepository extends CrudRepository<AuditingAnnotatedDummyEntity, Long> {}
 
-	@Data
 	static class AuditingAnnotatedDummyEntity {
 
 		@Id long id;
@@ -244,16 +242,84 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		@CreatedDate LocalDateTime createdDate;
 		@LastModifiedBy String lastModifiedBy;
 		@LastModifiedDate LocalDateTime lastModifiedDate;
+
+		public long getId() {
+			return this.id;
+		}
+
+		public String getCreatedBy() {
+			return this.createdBy;
+		}
+
+		public LocalDateTime getCreatedDate() {
+			return this.createdDate;
+		}
+
+		public String getLastModifiedBy() {
+			return this.lastModifiedBy;
+		}
+
+		public LocalDateTime getLastModifiedDate() {
+			return this.lastModifiedDate;
+		}
+
+		public void setId(long id) {
+			this.id = id;
+		}
+
+		public void setCreatedBy(String createdBy) {
+			this.createdBy = createdBy;
+		}
+
+		public void setCreatedDate(LocalDateTime createdDate) {
+			this.createdDate = createdDate;
+		}
+
+		public void setLastModifiedBy(String lastModifiedBy) {
+			this.lastModifiedBy = lastModifiedBy;
+		}
+
+		public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+			this.lastModifiedDate = lastModifiedDate;
+		}
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
 	static class DummyEntity {
 
 		@Id private Long id;
 		// not actually used, exists just to avoid empty value list during insert.
 		String name;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			DummyEntity that = (DummyEntity) o;
+			return Objects.equals(id, that.id) && Objects.equals(name, that.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id, name);
+		}
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")

@@ -18,9 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -28,7 +25,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -122,12 +118,31 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		}
 	}
 
-	@Data
-	@AllArgsConstructor
 	public static class Car {
 
 		@Id private Long id;
 		private String model;
+
+		public Car(Long id, String model) {
+			this.id = id;
+			this.model = model;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getModel() {
+			return this.model;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setModel(String model) {
+			this.model = model;
+		}
 	}
 
 	static class CarResultSetExtractor implements ResultSetExtractor<List<Car>> {
@@ -162,7 +177,6 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		@Query(value = "select model from car", rowMapperRef = "CustomRowMapperBean")
 		List<String> findByNameWithRowMapperBean();
-
 
 		@Query(value = "select * from car", resultSetExtractorClass = RowMapperResultSetExtractor.class)
 		RowMapper customFindAllWithRowMapper();

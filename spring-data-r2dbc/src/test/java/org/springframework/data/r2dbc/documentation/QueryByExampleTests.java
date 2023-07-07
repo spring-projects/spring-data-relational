@@ -15,21 +15,19 @@
  */
 package org.springframework.data.r2dbc.documentation;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.data.domain.ExampleMatcher.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.endsWith;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import java.util.Objects;
+
+import static org.mockito.Mockito.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.endsWith;
+import static org.springframework.data.domain.ExampleMatcher.*;
 
 /**
  * Code to demonstrate Query By Example in reference documentation.
@@ -52,7 +50,7 @@ public class QueryByExampleTests {
 
 		// tag::example[]
 		Employee employee = new Employee(); // <1>
-		employee.setName("Frodo");
+		employee.name= "Frodo";
 
 		Example<Employee> example = Example.of(employee); // <2>
 
@@ -79,8 +77,8 @@ public class QueryByExampleTests {
 
 		// tag::example-2[]
 		Employee employee = new Employee();
-		employee.setName("Baggins");
-		employee.setRole("ring bearer");
+		employee.name = "Baggins";
+		employee.role = "ring bearer";
 
 		ExampleMatcher matcher = matching() // <1>
 				.withMatcher("name", endsWith()) // <2>
@@ -100,14 +98,33 @@ public class QueryByExampleTests {
 				.verifyComplete();
 	}
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
 	public class Employee {
 
 		private @Id Integer id;
 		private String name;
 		private String role;
+
+		public Employee(Integer id, String name, String role) {
+			this.id = id;
+			this.name = name;
+			this.role = role;
+		}
+
+		public Employee() {
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Employee employee = (Employee) o;
+			return Objects.equals(id, employee.id) && Objects.equals(name, employee.name) && Objects.equals(role, employee.role);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id, name, role);
+		}
 	}
 
 	public interface EmployeeRepository extends R2dbcRepository<Employee, Integer> {}

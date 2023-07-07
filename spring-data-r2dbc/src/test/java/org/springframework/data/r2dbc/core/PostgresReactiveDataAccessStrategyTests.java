@@ -15,10 +15,15 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.springframework.data.r2dbc.testing.Assertions.*;
-
 import io.r2dbc.postgresql.codec.Interval;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.r2dbc.convert.EnumWriteSupport;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -28,14 +33,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.r2dbc.convert.EnumWriteSupport;
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import static org.springframework.data.r2dbc.testing.Assertions.*;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -217,16 +215,22 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(outboundRow).withColumn("enum_list").isEmpty().hasType(MyEnum[].class);
 	}
 
-	@RequiredArgsConstructor
 	static class WithMultidimensionalArray {
 
 		final int[][] myarray;
+
+		public WithMultidimensionalArray(int[][] myarray) {
+			this.myarray = myarray;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class WithIntegerCollection {
 
 		final List<Integer> myarray;
+
+		public WithIntegerCollection(List<Integer> myarray) {
+			this.myarray = myarray;
+		}
 	}
 
 	static class WithArray {

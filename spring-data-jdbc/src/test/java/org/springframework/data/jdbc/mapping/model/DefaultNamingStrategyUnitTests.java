@@ -15,20 +15,17 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Data;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the default {@link NamingStrategy}.
@@ -78,19 +75,59 @@ public class DefaultNamingStrategyUnitTests {
 		assertThat(target.getSchema()).isEqualTo("");
 	}
 
-	@Data
 	private static class DummyEntity {
 
-		@Id private int id;
+		@Id
+		private int id;
 		private LocalDateTime createdAt;
 		private List<DummySubEntity> dummySubEntities;
+
+		public int getId() {
+			return this.id;
+		}
+
+		public LocalDateTime getCreatedAt() {
+			return this.createdAt;
+		}
+
+		public List<DummySubEntity> getDummySubEntities() {
+			return this.dummySubEntities;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public void setCreatedAt(LocalDateTime createdAt) {
+			this.createdAt = createdAt;
+		}
+
+		public void setDummySubEntities(List<DummySubEntity> dummySubEntities) {
+			this.dummySubEntities = dummySubEntities;
+		}
 	}
 
-	@Data
 	private static class DummySubEntity {
 
-		@Id private int id;
+		@Id
+		private int id;
 		private LocalDateTime createdAt;
+
+		public int getId() {
+			return this.id;
+		}
+
+		public LocalDateTime getCreatedAt() {
+			return this.createdAt;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public void setCreatedAt(LocalDateTime createdAt) {
+			this.createdAt = createdAt;
+		}
 	}
 
 }

@@ -15,35 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.With;
-
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.naming.OperationNotSupportedException;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -66,6 +37,26 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
+import javax.naming.OperationNotSupportedException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 /**
  * Tests the extraction of entities from a {@link ResultSet} by the {@link EntityRowMapper}.
  *
@@ -82,12 +73,7 @@ public class EntityRowMapperUnitTests {
 	static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
 	static final long ID_FOR_ENTITY_REFERENCING_LIST = 4711L;
 	static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
-	static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
-		@Override
-		public String getColumnName(RelationalPersistentProperty property) {
-			return NamingStrategy.super.getColumnName(property).concat("x");
-		}
-	};
+	static final NamingStrategy X_APPENDING_NAMINGSTRATEGY=new NamingStrategy(){@Override public String getColumnName(RelationalPersistentProperty property){return NamingStrategy.super.getColumnName(property).concat("x");}};
 
 	@Test // DATAJDBC-113
 	void simpleEntitiesGetProperlyExtracted() throws SQLException {
@@ -647,55 +633,235 @@ public class EntityRowMapperUnitTests {
 
 	// Model classes to be used in tests
 
-	@With
-	@RequiredArgsConstructor
 	static class TrivialImmutable {
 
-		@Id private final Long id;
+		@Id
+		private final Long id;
 		private final String name;
+
+		public TrivialImmutable(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public TrivialImmutable withId(Long id) {
+			return this.id == id ? this : new TrivialImmutable(id, this.name);
+		}
+
+		public TrivialImmutable withName(String name) {
+			return this.name == name ? this : new TrivialImmutable(this.id, name);
+		}
 	}
 
-	@EqualsAndHashCode
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Getter
 	static class Trivial {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
+
+		public Trivial(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Trivial() {
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Trivial)) return false;
+			final Trivial other = (Trivial) o;
+			if (!other.canEqual((Object) this)) return false;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		protected boolean canEqual(final Object other) {
+			return other instanceof Trivial;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
 	}
 
-	@EqualsAndHashCode
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Getter
 	static class TrivialMapPropertiesToNullIfNotNeeded {
 
-		@Id Long id;
+		@Id
+		Long id;
 		int age;
 		String phone;
 		Boolean isSupreme;
 		long referenceToCustomer;
+
+		public TrivialMapPropertiesToNullIfNotNeeded(Long id, int age, String phone, Boolean isSupreme, long referenceToCustomer) {
+			this.id = id;
+			this.age = age;
+			this.phone = phone;
+			this.isSupreme = isSupreme;
+			this.referenceToCustomer = referenceToCustomer;
+		}
+
+		public TrivialMapPropertiesToNullIfNotNeeded() {
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public int getAge() {
+			return this.age;
+		}
+
+		public String getPhone() {
+			return this.phone;
+		}
+
+		public Boolean getIsSupreme() {
+			return this.isSupreme;
+		}
+
+		public long getReferenceToCustomer() {
+			return this.referenceToCustomer;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof TrivialMapPropertiesToNullIfNotNeeded)) return false;
+			final TrivialMapPropertiesToNullIfNotNeeded other = (TrivialMapPropertiesToNullIfNotNeeded) o;
+			if (!other.canEqual((Object) this)) return false;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (this.getAge() != other.getAge()) return false;
+			final Object this$phone = this.getPhone();
+			final Object other$phone = other.getPhone();
+			if (this$phone == null ? other$phone != null : !this$phone.equals(other$phone)) return false;
+			final Object this$isSupreme = this.getIsSupreme();
+			final Object other$isSupreme = other.getIsSupreme();
+			if (this$isSupreme == null ? other$isSupreme != null : !this$isSupreme.equals(other$isSupreme))
+				return false;
+			if (this.getReferenceToCustomer() != other.getReferenceToCustomer()) return false;
+			return true;
+		}
+
+		protected boolean canEqual(final Object other) {
+			return other instanceof TrivialMapPropertiesToNullIfNotNeeded;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			result = result * PRIME + this.getAge();
+			final Object $phone = this.getPhone();
+			result = result * PRIME + ($phone == null ? 43 : $phone.hashCode());
+			final Object $isSupreme = this.getIsSupreme();
+			result = result * PRIME + ($isSupreme == null ? 43 : $isSupreme.hashCode());
+			final long $referenceToCustomer = this.getReferenceToCustomer();
+			result = result * PRIME + (int) ($referenceToCustomer >>> 32 ^ $referenceToCustomer);
+			return result;
+		}
 	}
 
-	@EqualsAndHashCode
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Getter
 	static class WithReference {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
 		AggregateReference<Trivial, Long> trivialId;
+
+		public WithReference(Long id, String name, AggregateReference<Trivial, Long> trivialId) {
+			this.id = id;
+			this.name = name;
+			this.trivialId = trivialId;
+		}
+
+		public WithReference() {
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public AggregateReference<Trivial, Long> getTrivialId() {
+			return this.trivialId;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof WithReference)) return false;
+			final WithReference other = (WithReference) o;
+			if (!other.canEqual((Object) this)) return false;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			final Object this$trivialId = this.getTrivialId();
+			final Object other$trivialId = other.getTrivialId();
+			if (this$trivialId == null ? other$trivialId != null : !this$trivialId.equals(other$trivialId))
+				return false;
+			return true;
+		}
+
+		protected boolean canEqual(final Object other) {
+			return other instanceof WithReference;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $trivialId = this.getTrivialId();
+			result = result * PRIME + ($trivialId == null ? 43 : $trivialId.hashCode());
+			return result;
+		}
 	}
 
-	@With
-	@RequiredArgsConstructor
-	static class WithReferenceImmutable {
+	record WithReferenceImmutable(
+	@Id Long id, String name,
+	AggregateReference<TrivialImmutable, Long> trivialId){
 
-		@Id private final Long id;
-		private final String name;
-		private final AggregateReference<TrivialImmutable, Long> trivialId;
+		public WithReferenceImmutable withId(Long id) {
+			return this.id == id ? this : new WithReferenceImmutable(id, this.name, this.trivialId);
+		}
+
+		public WithReferenceImmutable withName(String name) {
+			return this.name == name ? this : new WithReferenceImmutable(this.id, name, this.trivialId);
+		}
+
+		public WithReferenceImmutable withTrivialId(AggregateReference<TrivialImmutable, Long> trivialId) {
+			return this.trivialId == trivialId ? this : new WithReferenceImmutable(this.id, this.name, trivialId);
+		}
 	}
 
 	static class OneToOne {
@@ -705,13 +871,25 @@ public class EntityRowMapperUnitTests {
 		Trivial child;
 	}
 
-	@With
-	@RequiredArgsConstructor
-	static class OneToOneImmutable {
+	record OneToOneImmutable(
 
-		private final @Id Long id;
-		private final String name;
-		private final TrivialImmutable child;
+			@Id Long id, String name, TrivialImmutable child) {
+
+		OneToOneImmutable() {
+			this(null, null, null);
+		}
+
+		public OneToOneImmutable withId(Long id) {
+			return this.id == id ? this : new OneToOneImmutable(id, name, child);
+		}
+
+		public OneToOneImmutable withName(String name) {
+			return this.name == name ? this : new OneToOneImmutable(id, name, child);
+		}
+
+		public OneToOneImmutable withChild(TrivialImmutable child) {
+			return this.child == child ? this : new OneToOneImmutable(id, name, child);
+		}
 	}
 
 	static class OneToSet {
@@ -817,15 +995,10 @@ public class EntityRowMapperUnitTests {
 		@Embedded.Nullable ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
 	}
 
-	@Value
-	static class ImmutableValue {
-		Object value;
-		String name;
+	record ImmutableValue(Object value, String name) {
 	}
 
-	@Value
-	static class ImmutablePrimitiveValue {
-		int value;
+	record ImmutablePrimitiveValue(int value) {
 	}
 
 	static class WithDeepNestedEmbeddable {
@@ -1190,11 +1363,15 @@ public class EntityRowMapperUnitTests {
 		}
 	}
 
-	@AllArgsConstructor
 	private static class Fixture<T> {
 
 		final ResultSet resultSet;
 		final List<Expectation<T>> expectations;
+
+		public Fixture(ResultSet resultSet, List<Expectation<T>> expectations) {
+			this.resultSet = resultSet;
+			this.expectations = expectations;
+		}
 
 		public void assertOn(T result) {
 
@@ -1209,15 +1386,19 @@ public class EntityRowMapperUnitTests {
 		}
 	}
 
-	@AllArgsConstructor
 	private static class Expectation<T> {
 
 		final Function<T, Object> extractor;
 		final Object expectedValue;
 		final String sourceColumn;
+
+		public Expectation(Function<T, Object> extractor, Object expectedValue, String sourceColumn) {
+			this.extractor = extractor;
+			this.expectedValue = expectedValue;
+			this.sourceColumn = sourceColumn;
+		}
 	}
 
-	@Getter
 	private static class WithAtValue {
 
 		@Id private final Long id;
@@ -1227,6 +1408,14 @@ public class EntityRowMapperUnitTests {
 				@org.springframework.beans.factory.annotation.Value("#root.first_name") String computed) {
 			this.id = id;
 			this.computed = computed;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getComputed() {
+			return this.computed;
 		}
 	}
 }

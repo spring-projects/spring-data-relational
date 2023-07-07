@@ -17,8 +17,6 @@ package org.springframework.data.jdbc.repository.config;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -52,9 +50,16 @@ public class EnableJdbcRepositoriesBrokenTransactionManagerRefIntegrationTests {
 
 	}
 
-	@Data
 	static class DummyEntity {
 		@Id private Long id;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")

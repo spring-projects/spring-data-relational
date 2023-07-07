@@ -21,9 +21,6 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -247,36 +244,121 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		}
 	}
 
-	@Data
 	static class DummyEntity {
 
 		String name;
 		List<Element> content = new ArrayList<>();
 		@Id private Long id;
 
+		public String getName() {
+			return this.name;
+		}
+
+		public List<Element> getContent() {
+			return this.content;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setContent(List<Element> content) {
+			this.content = content;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class Element {
 
 		String content;
 		@Id private Long id;
+
+		public Element() {}
 	}
 
-	@Data
 	static class Root {
 		@Id private Long id;
 		List<Intermediate> intermediates = new ArrayList<>();
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public List<Intermediate> getIntermediates() {
+			return this.intermediates;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setIntermediates(List<Intermediate> intermediates) {
+			this.intermediates = intermediates;
+		}
 	}
 
-	@Data
 	static class Intermediate {
 		@Id private Long id;
 		List<Leaf> leaves = new ArrayList<>();
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public List<Leaf> getLeaves() {
+			return this.leaves;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setLeaves(List<Leaf> leaves) {
+			this.leaves = leaves;
+		}
 	}
 
-	@Value
-	static class Leaf {
-		String name;
+	static final class Leaf {
+		private final String name;
+
+		public Leaf(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Leaf))
+				return false;
+			final Leaf other = (Leaf) o;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryWithListsIntegrationTests.Leaf(name=" + this.getName() + ")";
+		}
 	}
 }

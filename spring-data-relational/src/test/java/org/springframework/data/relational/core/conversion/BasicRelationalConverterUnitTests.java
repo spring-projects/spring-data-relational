@@ -17,9 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-import lombok.Value;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +46,7 @@ class BasicRelationalConverterUnitTests {
 	@BeforeEach
 	public void before() throws Exception {
 
-		Set<GenericConverter> converters = ConverterBuilder.writing(MyValue.class, String.class, MyValue::getFoo)
+		Set<GenericConverter> converters = ConverterBuilder.writing(MyValue.class, String.class, MyValue::foo)
 				.andReading(MyValue::new).getConverters();
 
 		CustomConversions conversions = new CustomConversions(CustomConversions.StoreConversions.NONE, converters);
@@ -71,7 +68,7 @@ class BasicRelationalConverterUnitTests {
 		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("flag");
 		accessor.setProperty(property, "1");
 
-		assertThat(instance.isFlag()).isTrue();
+		assertThat(instance.flag).isTrue();
 	}
 
 	@Test // DATAJDBC-235
@@ -93,8 +90,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // GH-1046
 	void shouldConvertArrayElementsToTargetElementType() throws NoSuchMethodException {
 
-		TypeInformation<?> typeInformation = TypeInformation
-				.fromReturnTypeOf(EntityWithArray.class.getMethod("getFloats"));
+		TypeInformation<?> typeInformation = TypeInformation.fromReturnTypeOf(EntityWithArray.class.getMethod("floats"));
 		Double[] value = { 1.2d, 1.3d, 1.4d };
 		Object result = converter.readValue(value, typeInformation);
 		assertThat(result).isEqualTo(Arrays.asList(1.2f, 1.3f, 1.4f));
@@ -109,7 +105,7 @@ class BasicRelationalConverterUnitTests {
 
 		WithConstructorCreation result = converter.createInstance(entity, it -> "bar");
 
-		assertThat(result.getFoo()).isEqualTo("bar");
+		assertThat(result.foo).isEqualTo("bar");
 	}
 
 	@Test // DATAJDBC-516
@@ -128,27 +124,19 @@ class BasicRelationalConverterUnitTests {
 		assertThat(result).isEqualTo(new MyValue("hello-world"));
 	}
 
-	@Data
-	static class EntityWithArray {
-		List<Float> floats;
+	record EntityWithArray(List<Float> floats) {
 	}
 
-	@Data
 	static class MyEntity {
 		boolean flag;
 	}
 
-	@Value
-	static class WithConstructorCreation {
-		String foo;
+	record WithConstructorCreation(String foo) {
 	}
 
-	@Value
-	static class MyValue {
-		String foo;
+	record MyValue(String foo) {
 	}
 
-	@Value
 	static class MyEntityWithConvertibleProperty {
 
 		MyValue myValue;

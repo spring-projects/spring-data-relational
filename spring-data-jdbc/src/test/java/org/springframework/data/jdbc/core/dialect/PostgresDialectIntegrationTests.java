@@ -2,11 +2,6 @@ package org.springframework.data.jdbc.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Value;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.util.PGobject;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -133,21 +127,98 @@ public class PostgresDialectIntegrationTests {
 		}
 	}
 
-	@Value
 	@Table("customers")
-	public static class Customer {
+	public static final class Customer {
 
-		@Id Long id;
-		String name;
-		JsonHolder personData;
-		PGobject sessionData;
+		@Id private final Long id;
+		private final String name;
+		private final JsonHolder personData;
+		private final PGobject sessionData;
+
+		public Customer(Long id, String name, JsonHolder personData, PGobject sessionData) {
+			this.id = id;
+			this.name = name;
+			this.personData = personData;
+			this.sessionData = sessionData;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public JsonHolder getPersonData() {
+			return this.personData;
+		}
+
+		public PGobject getSessionData() {
+			return this.sessionData;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Customer))
+				return false;
+			final Customer other = (Customer) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			final Object this$personData = this.getPersonData();
+			final Object other$personData = other.getPersonData();
+			if (this$personData == null ? other$personData != null : !this$personData.equals(other$personData))
+				return false;
+			final Object this$sessionData = this.getSessionData();
+			final Object other$sessionData = other.getSessionData();
+			if (this$sessionData == null ? other$sessionData != null : !this$sessionData.equals(other$sessionData))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $personData = this.getPersonData();
+			result = result * PRIME + ($personData == null ? 43 : $personData.hashCode());
+			final Object $sessionData = this.getSessionData();
+			result = result * PRIME + ($sessionData == null ? 43 : $sessionData.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "PostgresDialectIntegrationTests.Customer(id=" + this.getId() + ", name=" + this.getName()
+					+ ", personData=" + this.getPersonData() + ", sessionData=" + this.getSessionData() + ")";
+		}
 	}
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
 	public static class JsonHolder {
 		String content;
+
+		public JsonHolder(String content) {
+			this.content = content;
+		}
+
+		public JsonHolder() {}
+
+		public String getContent() {
+			return this.content;
+		}
+
+		public void setContent(String content) {
+			this.content = content;
+		}
 	}
 
 	interface CustomerRepository extends CrudRepository<Customer, Long> {}

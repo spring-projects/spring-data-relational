@@ -15,20 +15,6 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.groups.Tuple.tuple;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.With;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -61,6 +47,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
@@ -302,11 +298,43 @@ class SimpleJdbcRepositoryEventsUnitTests {
 	interface DummyEntityRepository
 			extends CrudRepository<DummyEntity, Long>, PagingAndSortingRepository<DummyEntity, Long> {}
 
-	@Value
-	@With
-	@RequiredArgsConstructor
-	static class DummyEntity {
-		@Id Long id;
+	static final class DummyEntity {
+		@Id
+		private final Long id;
+
+		public DummyEntity(Long id) {
+			this.id = id;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof DummyEntity)) return false;
+			final DummyEntity other = (DummyEntity) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "SimpleJdbcRepositoryEventsUnitTests.DummyEntity(id=" + this.getId() + ")";
+		}
+
+		public DummyEntity withId(Long id) {
+			return this.id == id ? this : new DummyEntity(id);
+		}
 	}
 
 	static class CollectingEventPublisher implements ApplicationEventPublisher {

@@ -18,12 +18,9 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import java.util.List;
 
-import lombok.NoArgsConstructor;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +30,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -48,8 +43,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
@@ -85,7 +78,9 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		}
 
 		@Bean
-		WithDotColumnRepo withDotColumnRepo() { return factory.getRepository(WithDotColumnRepo.class);}
+		WithDotColumnRepo withDotColumnRepo() {
+			return factory.getRepository(WithDotColumnRepo.class);
+		}
 
 	}
 
@@ -250,11 +245,12 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		Person second = new Person(null, "Alex", "LA", new PersonContacts("aaa@example.com", "+2 222 2222 22 22"));
 		Person third = new Person(null, "Sarah", "NY", new PersonContacts("ggg@example.com", "+3 333 3333 33 33"));
 
-		personRepository.saveAll(List.of(first, second, third));
+		List<Person> people = (List)personRepository.saveAll(List.of(first, second, third));
 
-		Iterable<Person> fetchedPersons = personRepository.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "personContacts.email")));
+		Iterable<Person> fetchedPersons = personRepository
+				.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "personContacts.email")));
 
-		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
+		Assertions.assertThat(fetchedPersons).containsExactly(people.get(1), people.get(0), people.get(2));
 	}
 
 	@Test // GH-1286
@@ -264,11 +260,12 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		WithDotColumn second = new WithDotColumn(null, "Istanbul");
 		WithDotColumn third = new WithDotColumn(null, "Tokyo");
 
-		withDotColumnRepo.saveAll(List.of(first, second, third));
+		List<WithDotColumn> saved = (List) withDotColumnRepo.saveAll(List.of(first, second, third));
 
-		Iterable<WithDotColumn> fetchedPersons = withDotColumnRepo.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "address")));
+		Iterable<WithDotColumn> fetchedPersons = withDotColumnRepo
+				.findAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "address")));
 
-		Assertions.assertThat(fetchedPersons).containsExactly(second, first, third);
+		Assertions.assertThat(fetchedPersons).containsExactly(saved.get(1), saved.get(0), saved.get(2));
 	}
 
 	private static DummyEntity createDummyEntity() {
@@ -299,42 +296,20 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 	interface PersonRepository extends PagingAndSortingRepository<Person, Long>, CrudRepository<Person, Long> {}
 
-	interface WithDotColumnRepo extends PagingAndSortingRepository<WithDotColumn, Integer>, CrudRepository<WithDotColumn, Integer> {}
+	interface WithDotColumnRepo
+			extends PagingAndSortingRepository<WithDotColumn, Integer>, CrudRepository<WithDotColumn, Integer> {}
 
-	@Data
-	@AllArgsConstructor
-	@NoArgsConstructor
-	static class WithDotColumn {
-
-		@Id
-		private Integer id;
-		@Column("address.city")
-		private String address;
+	record WithDotColumn(@Id Integer id, @Column("address.city") String address) {
 	}
 
-	@Data
-	@AllArgsConstructor
-	@NoArgsConstructor
 	@Table("SORT_EMBEDDED_ENTITY")
-	static class Person {
-		@Id
-		private Long id;
-		private String firstName;
-		private String address;
-
-		@Embedded.Nullable
-		private PersonContacts personContacts;
+	record Person(@Id Long id, String firstName, String address, @Embedded.Nullable PersonContacts personContacts) {
 	}
 
-	@Data
-	@AllArgsConstructor
-	@NoArgsConstructor
-	static class PersonContacts {
-		private String email;
-		private String phoneNumber;
-	}
+	record PersonContacts(String email, String phoneNumber) {
+		}
 
-	@Data
+
 	static class DummyEntity {
 
 		@Id Long id;
@@ -342,17 +317,63 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") CascadedEmbeddable prefixedEmbeddable;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL) CascadedEmbeddable embeddable;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public CascadedEmbeddable getPrefixedEmbeddable() {
+			return this.prefixedEmbeddable;
+		}
+
+		public CascadedEmbeddable getEmbeddable() {
+			return this.embeddable;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setPrefixedEmbeddable(CascadedEmbeddable prefixedEmbeddable) {
+			this.prefixedEmbeddable = prefixedEmbeddable;
+		}
+
+		public void setEmbeddable(CascadedEmbeddable embeddable) {
+			this.embeddable = embeddable;
+		}
 	}
 
-	@Data
 	static class CascadedEmbeddable {
 		String test;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX2_") Embeddable embeddable;
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public Embeddable getEmbeddable() {
+			return this.embeddable;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		public void setEmbeddable(Embeddable embeddable) {
+			this.embeddable = embeddable;
+		}
 	}
 
-	@Data
 	static class Embeddable {
 		Long attr;
+
+		public Long getAttr() {
+			return this.attr;
+		}
+
+		public void setAttr(Long attr) {
+			this.attr = attr;
+		}
 	}
 }

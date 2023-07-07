@@ -15,17 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import junit.framework.AssertionFailedError;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +33,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -229,20 +226,46 @@ public class JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTe
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
 	static class DummyEntity {
 
-		@Id private Long id;
+		@Id
+		private Long id;
 		String name;
 		Set<Element> content = new HashSet<>();
 
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Set<Element> getContent() {
+			return this.content;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setContent(Set<Element> content) {
+			this.content = content;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class Element {
 
-		@Id private Long id;
+		@Id
+		private Long id;
 		String content;
+
+		public Element() {
+		}
 	}
 
 }

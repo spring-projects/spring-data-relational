@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.testing;
 import io.asyncer.r2dbc.mysql.MySqlConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import lombok.SneakyThrows;
 
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -147,7 +146,6 @@ public class MySqlDbTestSupport {
 	/**
 	 * Creates a new {@link DataSource} configured from the {@link ExternalDatabase}.
 	 */
-	@SneakyThrows
 	public static DataSource createDataSource(ExternalDatabase database) {
 
 		MysqlDataSource dataSource = new MysqlDataSource();

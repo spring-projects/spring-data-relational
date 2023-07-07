@@ -15,28 +15,13 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import junit.framework.AssertionFailedError;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.With;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.UnaryOperator;
-
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.util.ExceptionUtils;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,9 +33,18 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.UnaryOperator;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests that highly concurrent update operations of an entity don't cause deadlocks.
@@ -65,7 +59,8 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
+		@Autowired
+		JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -78,9 +73,12 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		}
 	}
 
-	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired DummyEntityRepository repository;
-	@Autowired PlatformTransactionManager transactionManager;
+	@Autowired
+	NamedParameterJdbcTemplate template;
+	@Autowired
+	DummyEntityRepository repository;
+	@Autowired
+	PlatformTransactionManager transactionManager;
 
 	List<DummyEntity> concurrencyEntities;
 	DummyEntity entity;
@@ -155,7 +153,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 
 		CountDownLatch startLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for all threads to wait on.
 		CountDownLatch doneLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for main thread to wait on
-																																										// until all threads are done.
+		// until all threads are done.
 		UnaryOperator<DummyEntity> updateAction = e -> {
 			try {
 				return repository.save(e);
@@ -188,7 +186,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 
 		CountDownLatch startLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for all threads to wait on.
 		CountDownLatch doneLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for main thread to wait on
-																																										// until all threads are done.
+		// until all threads are done.
 
 		UnaryOperator<DummyEntity> updateAction = e -> {
 			try {
@@ -218,7 +216,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 	}
 
 	private void executeInParallel(CountDownLatch startLatch, CountDownLatch doneLatch,
-			UnaryOperator<DummyEntity> deleteAction, DummyEntity entity) {
+								   UnaryOperator<DummyEntity> deleteAction, DummyEntity entity) {
 		// delete
 		new Thread(() -> {
 			try {
@@ -255,22 +253,56 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		return new DummyEntity(null, "Entity Name", new ArrayList<>());
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
-
-	@Getter
-	@AllArgsConstructor
-	static class DummyEntity {
-
-		@Id private Long id;
-		@With String name;
-		@With final List<Element> content;
-
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 	}
 
-	@AllArgsConstructor
+	static class DummyEntity {
+
+		@Id
+		private Long id;
+		String name;
+		final List<Element> content;
+
+		public DummyEntity(Long id, String name, List<Element> content) {
+			this.id = id;
+			this.name = name;
+			this.content = content;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public List<Element> getContent() {
+			return this.content;
+		}
+
+		public DummyEntity withName(String name) {
+			return this.name == name ? this : new DummyEntity(this.id, name, this.content);
+		}
+
+		public DummyEntity withContent(List<Element> content) {
+			return this.content == content ? this : new DummyEntity(this.id, this.name, content);
+		}
+	}
+
 	static class Element {
 
-		@Id private Long id;
-		@With final Long content;
+		@Id
+		private Long id;
+		final Long content;
+
+		public Element(Long id, Long content) {
+			this.id = id;
+			this.content = content;
+		}
+
+		public Element withContent(Long content) {
+			return this.content == content ? this : new Element(this.id, content);
+		}
 	}
 }

@@ -19,8 +19,6 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import lombok.Data;
-
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -269,37 +267,107 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	}
 
-	@Data
 	private static class DummyEntity {
 
-		@Column("ID") @Id Long id;
+		@Column("ID")
+		@Id Long id;
 
 		String test;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") Embeddable embeddable;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL) Embeddable2 embeddable2;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public Embeddable getEmbeddable() {
+			return this.embeddable;
+		}
+
+		public Embeddable2 getEmbeddable2() {
+			return this.embeddable2;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		public void setEmbeddable(Embeddable embeddable) {
+			this.embeddable = embeddable;
+		}
+
+		public void setEmbeddable2(Embeddable2 embeddable2) {
+			this.embeddable2 = embeddable2;
+		}
 	}
 
-	@Data
 	private static class Embeddable {
 
 		@Column("ID") DummyEntity2 dummyEntity2;
 
 		String test;
+
+		public DummyEntity2 getDummyEntity2() {
+			return this.dummyEntity2;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setDummyEntity2(DummyEntity2 dummyEntity2) {
+			this.dummyEntity2 = dummyEntity2;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
 	}
 
-	@Data
 	private static class Embeddable2 {
 
 		@Column("ID") DummyEntity2 dummyEntity2;
+
+		public DummyEntity2 getDummyEntity2() {
+			return this.dummyEntity2;
+		}
+
+		public void setDummyEntity2(DummyEntity2 dummyEntity2) {
+			this.dummyEntity2 = dummyEntity2;
+		}
 	}
 
-	@Data
 	private static class DummyEntity2 {
 
-		@Column("ID") @Id Long id;
+		@Column("ID")
+		@Id Long id;
 
 		String test;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
 	}
 }

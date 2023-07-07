@@ -20,8 +20,6 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -213,20 +211,43 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
 	static class DummyEntity {
 
 		@Id private Long id;
 		String name;
 		Map<String, Element> content = new HashMap<>();
 
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Map<String, Element> getContent() {
+			return this.content;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setContent(Map<String, Element> content) {
+			this.content = content;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class Element {
 
 		@Id private Long id;
 		String content;
+
+		public Element() {}
 	}
 
 }

@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
-import lombok.Value;
-
 /**
  * Unit tests for {@link DeleteBatchingAggregateChange}.
  *
@@ -200,25 +198,16 @@ class DeleteBatchingAggregateChangeTest {
 				.map(dbAction -> (DbAction.BatchWithValue<T, DbAction<T>, Object>) dbAction).collect(Collectors.toList());
 	}
 
-	@Value
-	static class Root {
+	record Root(
 
-		@Id Long id;
-		Intermediate intermediate;
+			@Id Long id, Intermediate intermediate) {
 	}
 
-	@Value
-	static class Intermediate {
+	record Intermediate(
 
-		@Id Long id;
-		String name;
-		Leaf leaf;
+			@Id Long id, String name, Leaf leaf) {
 	}
 
-	@Value
-	static class Leaf {
-
-		@Id Long id;
-		String name;
+	record Leaf(@Id Long id, String name) {
 	}
 }

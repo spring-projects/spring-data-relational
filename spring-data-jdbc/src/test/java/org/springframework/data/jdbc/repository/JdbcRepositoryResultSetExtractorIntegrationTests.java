@@ -15,19 +15,6 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +33,17 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Very simple use cases for creation and usage of {@link ResultSetExtractor}s in JdbcRepository.
@@ -138,21 +133,70 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 		List<Person> findAllPeopleWithAddresses();
 	}
 
-	@Data
-	@AllArgsConstructor
 	static class Person {
 
-		@Id private Long id;
+		@Id
+		private Long id;
 		private String name;
 		private List<Address> addresses;
+
+		public Person(Long id, String name, List<Address> addresses) {
+			this.id = id;
+			this.name = name;
+			this.addresses = addresses;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public List<Address> getAddresses() {
+			return this.addresses;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setAddresses(List<Address> addresses) {
+			this.addresses = addresses;
+		}
 	}
 
-	@Data
-	@AllArgsConstructor
 	static class Address {
 
-		@Id private Long id;
+		@Id
+		private Long id;
 		private String street;
+
+		public Address(Long id, String street) {
+			this.id = id;
+			this.street = street;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getStreet() {
+			return this.street;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setStreet(String street) {
+			this.street = street;
+		}
 	}
 
 	static class PersonResultSetExtractor implements ResultSetExtractor<List<Person>> {

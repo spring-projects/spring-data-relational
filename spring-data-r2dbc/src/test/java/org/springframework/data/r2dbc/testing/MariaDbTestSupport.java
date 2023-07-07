@@ -17,8 +17,8 @@ package org.springframework.data.r2dbc.testing;
 
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import lombok.SneakyThrows;
 
+import java.sql.SQLException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -152,16 +152,19 @@ public class MariaDbTestSupport {
 	/**
 	 * Creates a new {@link DataSource} configured from the {@link ExternalDatabase}.
 	 */
-	@SneakyThrows
 	public static DataSource createDataSource(ExternalDatabase database) {
 
-		MariaDbDataSource dataSource = new MariaDbDataSource();
+		try {
+			MariaDbDataSource dataSource = new MariaDbDataSource();
 
-		dataSource.setUser(database.getUsername());
-		dataSource.setPassword(database.getPassword());
-		dataSource.setUrl(
-				String.format("jdbc:mariadb://%s:%d/%s?", database.getHostname(), database.getPort(), database.getDatabase()));
+			dataSource.setUser(database.getUsername());
+			dataSource.setUrl(String.format("jdbc:mariadb://%s:%d/%s?", database.getHostname(), database.getPort(),
+					database.getDatabase()));
+			dataSource.setPassword(database.getPassword());
 
-		return dataSource;
+			return dataSource;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

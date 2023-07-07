@@ -15,14 +15,6 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
-
-import lombok.Data;
-
-import java.sql.SQLException;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +38,12 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.SQLException;
+
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
@@ -245,26 +243,85 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	}
 
-	@Data
 	static class DummyEntity {
-		@Column("ID") @Id Long id;
+		@Column("ID")
+		@Id
+		Long id;
 
 		String test;
 
-		@Column("ID") DummyEntity2 dummyEntity2;
+		@Column("ID")
+		DummyEntity2 dummyEntity2;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public DummyEntity2 getDummyEntity2() {
+			return this.dummyEntity2;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		public void setDummyEntity2(DummyEntity2 dummyEntity2) {
+			this.dummyEntity2 = dummyEntity2;
+		}
 	}
 
-	@Data
 	static class DummyEntity2 {
-		@Column("ID") @Id Long id;
+		@Column("ID")
+		@Id
+		Long id;
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Embeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		Embeddable embeddable;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public Embeddable getEmbeddable() {
+			return this.embeddable;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		public void setEmbeddable(Embeddable embeddable) {
+			this.embeddable = embeddable;
+		}
 	}
 
-	@Data
 	static class Embeddable {
 		Long attr;
+
+		public Long getAttr() {
+			return this.attr;
+		}
+
+		public void setAttr(Long attr) {
+			this.attr = attr;
+		}
 	}
 }

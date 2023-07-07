@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
-import lombok.AllArgsConstructor;
-
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
@@ -795,15 +793,10 @@ public class PartTreeJdbcQueryUnitTests {
 		AggregateReference<Hobby, String> hobbyReference;
 	}
 
-	@AllArgsConstructor
-	static class Address {
-		String street;
-		String city;
+	record Address(String street, String city) {
 	}
 
-	@AllArgsConstructor
-	static class AnotherEmbedded {
-		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<Hobby> list;
+	record AnotherEmbedded(@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<Hobby> list) {
 	}
 
 	static class Hobby {

@@ -15,14 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +28,11 @@ import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the {@link org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter}
@@ -152,37 +149,54 @@ public class RelationalEntityDeleteWriterUnitTests {
 		return actions;
 	}
 
-	@Data
 	private static class SomeEntity {
 
 		@Id final Long id;
 		OtherEntity other;
 		// should not trigger own Dbaction
 		String name;
+
+		private SomeEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@Data
 	private class OtherEntity {
 
 		@Id final Long id;
 		YetAnother yetAnother;
+
+		private OtherEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@Data
 	private class YetAnother {
 		@Id final Long id;
+
+		private YetAnother(Long id) {
+			this.id = id;
+		}
 	}
 
-	@Data
 	private class SingleEntity {
 		@Id final Long id;
 		String name;
+
+		private SingleEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class WithReadOnlyReference {
 
-		@Id final Long id;
-		@ReadOnlyProperty OtherEntity other;
+		@Id
+		final Long id;
+		@ReadOnlyProperty
+		OtherEntity other;
+
+		public WithReadOnlyReference(Long id) {
+			this.id = id;
+		}
 	}
 }

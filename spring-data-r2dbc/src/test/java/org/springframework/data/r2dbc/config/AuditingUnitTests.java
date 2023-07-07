@@ -15,15 +15,7 @@
  */
 package org.springframework.data.r2dbc.config;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Data;
-import reactor.core.publisher.Mono;
-
-import java.time.LocalDateTime;
-
 import org.junit.jupiter.api.Test;
-
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.annotation.CreatedDate;
@@ -35,6 +27,11 @@ import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for {@link EnableR2dbcAuditing}
@@ -84,13 +81,47 @@ class AuditingUnitTests {
 		context.close();
 	}
 
-	@Data
 	class Entity {
 
-		@Id Long id;
-		@CreatedDate LocalDateTime created;
-		@LastModifiedDate LocalDateTime modified;
-		@LastModifiedBy String modifiedBy;
+		@Id
+		Long id;
+		@CreatedDate
+		LocalDateTime created;
+		@LastModifiedDate
+		LocalDateTime modified;
+		@LastModifiedBy
+		String modifiedBy;
 
+		public Long getId() {
+			return this.id;
+		}
+
+		public LocalDateTime getCreated() {
+			return this.created;
+		}
+
+		public LocalDateTime getModified() {
+			return this.modified;
+		}
+
+		public String getModifiedBy() {
+			return this.modifiedBy;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setCreated(LocalDateTime created) {
+			this.created = created;
+		}
+
+		public void setModified(LocalDateTime modified) {
+			this.modified = modified;
+		}
+
+		public void setModifiedBy(String modifiedBy) {
+			this.modifiedBy = modifiedBy;
+		}
 	}
 }

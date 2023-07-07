@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import lombok.experimental.UtilityClass;
-
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -24,11 +22,14 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 /**
  * @author Jens Schauder
  */
-@UtilityClass
-public class PersistentPropertyPathTestUtils {
+public final class PersistentPropertyPathTestUtils {
+
+	private PersistentPropertyPathTestUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+	}
 
 	public static PersistentPropertyPath<RelationalPersistentProperty> getPath(RelationalMappingContext context,
-			String path, Class<?> baseType) {
+																			   String path, Class<?> baseType) {
 
 		return context.findPersistentPropertyPaths(baseType, p -> p.isEntity()) //
 				.filter(p -> p.toDotPath().equals(path)) //

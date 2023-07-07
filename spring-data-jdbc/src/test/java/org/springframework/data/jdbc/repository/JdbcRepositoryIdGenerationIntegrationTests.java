@@ -15,18 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Data;
-import lombok.Value;
-import lombok.With;
-import lombok.experimental.FieldDefaults;
-
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -43,6 +33,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
@@ -119,26 +113,128 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	private interface ImmutableWithManualIdEntityRepository extends CrudRepository<ImmutableWithManualIdEntity, Long> {}
 
-	@Value
-	@FieldDefaults(makeFinal = false)
-	static class ReadOnlyIdEntity {
+	static final class ReadOnlyIdEntity {
 
-		@Id Long id;
-		String name;
+		@Id
+		private final Long id;
+		private final String name;
+
+		public ReadOnlyIdEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof ReadOnlyIdEntity)) return false;
+			final ReadOnlyIdEntity other = (ReadOnlyIdEntity) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIdGenerationIntegrationTests.ReadOnlyIdEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
 	}
 
-	@Data
 	static class PrimitiveIdEntity {
 
-		@Id private long id;
+		@Id
+		private long id;
 		String name;
+
+		public long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setId(long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
 	}
 
-	@Value
-	@With
-	static class ImmutableWithManualIdEntity {
-		@Id Long id;
-		String name;
+	static final class ImmutableWithManualIdEntity {
+		@Id
+		private final Long id;
+		private final String name;
+
+		public ImmutableWithManualIdEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof ImmutableWithManualIdEntity)) return false;
+			final ImmutableWithManualIdEntity other = (ImmutableWithManualIdEntity) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIdGenerationIntegrationTests.ImmutableWithManualIdEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
+
+		public ImmutableWithManualIdEntity withId(Long id) {
+			return this.id == id ? this : new ImmutableWithManualIdEntity(id, this.name);
+		}
+
+		public ImmutableWithManualIdEntity withName(String name) {
+			return this.name == name ? this : new ImmutableWithManualIdEntity(this.id, name);
+		}
 	}
 
 	@Configuration

@@ -15,25 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.ExampleMatcher.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
-import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +37,21 @@ import org.springframework.data.relational.repository.support.MappingRelationalE
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
+import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
 
 /**
  * Abstract integration tests for {@link SimpleR2dbcRepository} to be ran against various databases.
@@ -982,55 +978,159 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.verifyComplete();
 	}
 
-	@Data
 	@Table("legoset")
-	@AllArgsConstructor
-	@NoArgsConstructor
 	static class LegoSet {
 
-		@Id int id;
+		@Id
+		int id;
 		String name;
 		Integer manual;
+
+		public LegoSet(int id, String name, Integer manual) {
+			this.id = id;
+			this.name = name;
+			this.manual = manual;
+		}
+
+		public LegoSet() {
+		}
+
+		public int getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Integer getManual() {
+			return this.manual;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setManual(Integer manual) {
+			this.manual = manual;
+		}
 	}
 
 	interface LegoSetProjection {
 		String getName();
 	}
 
-	@Data
 	@Table("legoset")
-	@AllArgsConstructor
-	@NoArgsConstructor
 	static class LegoSetWithNonScalarId {
 
-		@Id Integer id;
+		@Id
+		Integer id;
 		String name;
 		Integer manual;
 		String extra;
+
+		public LegoSetWithNonScalarId(Integer id, String name, Integer manual, String extra) {
+			this.id = id;
+			this.name = name;
+			this.manual = manual;
+			this.extra = extra;
+		}
+
+		public LegoSetWithNonScalarId() {
+		}
+
+		public Integer getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Integer getManual() {
+			return this.manual;
+		}
+
+		public String getExtra() {
+			return this.extra;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setManual(Integer manual) {
+			this.manual = manual;
+		}
+
+		public void setExtra(String extra) {
+			this.extra = extra;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			LegoSetWithNonScalarId that = (LegoSetWithNonScalarId) o;
+			return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(manual, that.manual) && Objects.equals(extra, that.extra);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id, name, manual, extra);
+		}
 	}
 
-	@Data
 	@Table("legoset")
-	@NoArgsConstructor
 	static class LegoSetVersionable extends LegoSet {
 
-		@Version Integer version;
+		@Version
+		Integer version;
 
 		LegoSetVersionable(int id, String name, Integer manual, Integer version) {
 			super(id, name, manual);
 			this.version = version;
 		}
+
+		public LegoSetVersionable() {
+		}
+
+		public Integer getVersion() {
+			return this.version;
+		}
+
+		public void setVersion(Integer version) {
+			this.version = version;
+		}
 	}
 
-	@Data
 	@Table("legoset")
-	@NoArgsConstructor
 	static class LegoSetPrimitiveVersionable extends LegoSet {
 
-		@Version int version;
+		@Version
+		int version;
 
 		LegoSetPrimitiveVersionable(int id, String name, Integer manual, int version) {
 			super(id, name, manual);
+			this.version = version;
+		}
+
+		public LegoSetPrimitiveVersionable() {
+		}
+
+		public int getVersion() {
+			return this.version;
+		}
+
+		public void setVersion(int version) {
 			this.version = version;
 		}
 	}

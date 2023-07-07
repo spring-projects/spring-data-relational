@@ -15,18 +15,19 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.experimental.UtilityClass;
-
 import org.springframework.lang.Nullable;
 
 /**
  * Utility class for analyzing DbActions in tests.
- * 
+ *
  * @author Jens Schauder
  * @author Chirag Tailor
  */
-@UtilityClass
-class DbActionTestSupport {
+final class DbActionTestSupport {
+
+	private DbActionTestSupport() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+	}
 
 	static String extractPath(DbAction<?> action) {
 

@@ -11,7 +11,6 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
-import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
@@ -61,10 +60,7 @@ public class DialectResolverUnitTests {
 				.isEqualTo(ExternalDialect.INSTANCE);
 	}
 
-	@RequiredArgsConstructor
-	static class ExternalConnectionFactory implements ConnectionFactory {
-
-		private final String name;
+	record ExternalConnectionFactory(String name) implements ConnectionFactory {
 
 		@Override
 		public Publisher<? extends Connection> create() {

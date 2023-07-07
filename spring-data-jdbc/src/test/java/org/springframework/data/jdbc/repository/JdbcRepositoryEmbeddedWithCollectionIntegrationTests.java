@@ -18,8 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +34,8 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -254,24 +252,70 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
 	private static class DummyEntity {
-		@Column("ID") @Id Long id;
+		@Column("ID")
+		@Id Long id;
 
 		String test;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") Embeddable embeddable;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public Embeddable getEmbeddable() {
+			return this.embeddable;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		public void setEmbeddable(Embeddable embeddable) {
+			this.embeddable = embeddable;
+		}
 	}
 
-	@Data
 	private static class Embeddable {
 		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
+
+		public List<DummyEntity2> getList() {
+			return this.list;
+		}
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setList(List<DummyEntity2> list) {
+			this.list = list;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
 	}
 
-	@Data
 	private static class DummyEntity2 {
 		String test;
+
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
 	}
 }

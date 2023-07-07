@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
@@ -188,7 +186,6 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		}
 	}
 
-	@Data
 	static class EntityWithColumnsRequiringConversions {
 
 		boolean bool;
@@ -201,11 +198,82 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		@Id private LocalDateTime idTimestamp;
 
 		@MappedCollection(idColumn = "ID_TIMESTAMP") Set<EntityWithColumnsRequiringConversionsRelation> relation;
+
+		public boolean isBool() {
+			return this.bool;
+		}
+
+		public SomeEnum getSomeEnum() {
+			return this.someEnum;
+		}
+
+		public BigDecimal getBigDecimal() {
+			return this.bigDecimal;
+		}
+
+		public BigInteger getBigInteger() {
+			return this.bigInteger;
+		}
+
+		public Date getDate() {
+			return this.date;
+		}
+
+		public LocalDateTime getLocalDateTime() {
+			return this.localDateTime;
+		}
+
+		public LocalDateTime getIdTimestamp() {
+			return this.idTimestamp;
+		}
+
+		public Set<EntityWithColumnsRequiringConversionsRelation> getRelation() {
+			return this.relation;
+		}
+
+		public void setBool(boolean bool) {
+			this.bool = bool;
+		}
+
+		public void setSomeEnum(SomeEnum someEnum) {
+			this.someEnum = someEnum;
+		}
+
+		public void setBigDecimal(BigDecimal bigDecimal) {
+			this.bigDecimal = bigDecimal;
+		}
+
+		public void setBigInteger(BigInteger bigInteger) {
+			this.bigInteger = bigInteger;
+		}
+
+		public void setDate(Date date) {
+			this.date = date;
+		}
+
+		public void setLocalDateTime(LocalDateTime localDateTime) {
+			this.localDateTime = localDateTime;
+		}
+
+		public void setIdTimestamp(LocalDateTime idTimestamp) {
+			this.idTimestamp = idTimestamp;
+		}
+
+		public void setRelation(Set<EntityWithColumnsRequiringConversionsRelation> relation) {
+			this.relation = relation;
+		}
 	}
 
 	// DATAJDBC-349
-	@Data
 	static class EntityWithColumnsRequiringConversionsRelation {
 		String data;
+
+		public String getData() {
+			return this.data;
+		}
+
+		public void setData(String data) {
+			this.data = data;
+		}
 	}
 }

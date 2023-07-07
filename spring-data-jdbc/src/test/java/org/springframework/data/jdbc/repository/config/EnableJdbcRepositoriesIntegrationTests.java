@@ -18,8 +18,6 @@ package org.springframework.data.jdbc.repository.config;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import lombok.Data;
-
 import java.lang.reflect.Field;
 import java.util.Optional;
 
@@ -133,9 +131,16 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	}
 
-	@Data
 	static class DummyEntity {
 		@Id private Long id;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")

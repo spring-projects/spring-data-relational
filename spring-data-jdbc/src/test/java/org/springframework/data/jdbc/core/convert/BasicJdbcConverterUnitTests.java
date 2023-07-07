@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
-import lombok.Data;
-
 import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -161,7 +159,6 @@ public class BasicJdbcConverterUnitTests {
 		softly.assertThat(converter.getColumnType(property)).describedAs(propertyName).isEqualTo(expected);
 	}
 
-	@Data
 	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
@@ -184,6 +181,91 @@ public class BasicJdbcConverterUnitTests {
 		private final List<OtherEntity> listOfEntity;
 		private final OtherEntity[] arrayOfEntity;
 
+		private DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, LocalDate localDate,
+				LocalTime localTime, ZonedDateTime zonedDateTime, OffsetDateTime offsetDateTime, Instant instant, Date date,
+				Timestamp timestamp, AggregateReference<DummyEntity, Long> reference, UUID uuid, List<String> listOfString,
+				String[] arrayOfString, List<OtherEntity> listOfEntity, OtherEntity[] arrayOfEntity) {
+			this.id = id;
+			this.someEnum = someEnum;
+			this.localDateTime = localDateTime;
+			this.localDate = localDate;
+			this.localTime = localTime;
+			this.zonedDateTime = zonedDateTime;
+			this.offsetDateTime = offsetDateTime;
+			this.instant = instant;
+			this.date = date;
+			this.timestamp = timestamp;
+			this.reference = reference;
+			this.uuid = uuid;
+			this.listOfString = listOfString;
+			this.arrayOfString = arrayOfString;
+			this.listOfEntity = listOfEntity;
+			this.arrayOfEntity = arrayOfEntity;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public SomeEnum getSomeEnum() {
+			return this.someEnum;
+		}
+
+		public LocalDateTime getLocalDateTime() {
+			return this.localDateTime;
+		}
+
+		public LocalDate getLocalDate() {
+			return this.localDate;
+		}
+
+		public LocalTime getLocalTime() {
+			return this.localTime;
+		}
+
+		public ZonedDateTime getZonedDateTime() {
+			return this.zonedDateTime;
+		}
+
+		public OffsetDateTime getOffsetDateTime() {
+			return this.offsetDateTime;
+		}
+
+		public Instant getInstant() {
+			return this.instant;
+		}
+
+		public Date getDate() {
+			return this.date;
+		}
+
+		public Timestamp getTimestamp() {
+			return this.timestamp;
+		}
+
+		public AggregateReference<DummyEntity, Long> getReference() {
+			return this.reference;
+		}
+
+		public UUID getUuid() {
+			return this.uuid;
+		}
+
+		public List<String> getListOfString() {
+			return this.listOfString;
+		}
+
+		public String[] getArrayOfString() {
+			return this.arrayOfString;
+		}
+
+		public List<OtherEntity> getListOfEntity() {
+			return this.listOfEntity;
+		}
+
+		public OtherEntity[] getArrayOfEntity() {
+			return this.arrayOfEntity;
+		}
 	}
 
 	@SuppressWarnings("unused")

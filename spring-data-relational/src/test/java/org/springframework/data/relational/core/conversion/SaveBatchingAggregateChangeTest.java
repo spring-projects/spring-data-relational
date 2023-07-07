@@ -15,20 +15,18 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Value;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for {@link SaveBatchingAggregateChange}.
@@ -515,33 +513,214 @@ class SaveBatchingAggregateChangeTest {
 				.map(dbAction -> (DbAction.BatchWithValue<T, DbAction<T>, Object>) dbAction).collect(Collectors.toList());
 	}
 
-	@Value
-	static class RootWithSameLengthReferences {
+	static final class RootWithSameLengthReferences {
 
-		@Id Long id;
-		Intermediate one;
-		Intermediate two;
+		@Id
+		private final Long id;
+		private final Intermediate one;
+		private final Intermediate two;
+
+		public RootWithSameLengthReferences(Long id, Intermediate one, Intermediate two) {
+			this.id = id;
+			this.one = one;
+			this.two = two;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public Intermediate getOne() {
+			return this.one;
+		}
+
+		public Intermediate getTwo() {
+			return this.two;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof RootWithSameLengthReferences)) return false;
+			final RootWithSameLengthReferences other = (RootWithSameLengthReferences) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$one = this.getOne();
+			final Object other$one = other.getOne();
+			if (this$one == null ? other$one != null : !this$one.equals(other$one)) return false;
+			final Object this$two = this.getTwo();
+			final Object other$two = other.getTwo();
+			if (this$two == null ? other$two != null : !this$two.equals(other$two)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $one = this.getOne();
+			result = result * PRIME + ($one == null ? 43 : $one.hashCode());
+			final Object $two = this.getTwo();
+			result = result * PRIME + ($two == null ? 43 : $two.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "SaveBatchingAggregateChangeTest.RootWithSameLengthReferences(id=" + this.getId() + ", one=" + this.getOne() + ", two=" + this.getTwo() + ")";
+		}
 	}
 
-	@Value
-	static class Root {
+	static final class Root {
 
-		@Id Long id;
-		Intermediate intermediate;
+		@Id
+		private final Long id;
+		private final Intermediate intermediate;
+
+		public Root(Long id, Intermediate intermediate) {
+			this.id = id;
+			this.intermediate = intermediate;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public Intermediate getIntermediate() {
+			return this.intermediate;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Root)) return false;
+			final Root other = (Root) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$intermediate = this.getIntermediate();
+			final Object other$intermediate = other.getIntermediate();
+			if (this$intermediate == null ? other$intermediate != null : !this$intermediate.equals(other$intermediate))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $intermediate = this.getIntermediate();
+			result = result * PRIME + ($intermediate == null ? 43 : $intermediate.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "SaveBatchingAggregateChangeTest.Root(id=" + this.getId() + ", intermediate=" + this.getIntermediate() + ")";
+		}
 	}
 
-	@Value
-	static class Intermediate {
+	static final class Intermediate {
 
-		@Id Long id;
-		String name;
-		Leaf leaf;
+		@Id
+		private final Long id;
+		private final String name;
+		private final Leaf leaf;
+
+		public Intermediate(Long id, String name, Leaf leaf) {
+			this.id = id;
+			this.name = name;
+			this.leaf = leaf;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Leaf getLeaf() {
+			return this.leaf;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Intermediate)) return false;
+			final Intermediate other = (Intermediate) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			final Object this$leaf = this.getLeaf();
+			final Object other$leaf = other.getLeaf();
+			if (this$leaf == null ? other$leaf != null : !this$leaf.equals(other$leaf)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $leaf = this.getLeaf();
+			result = result * PRIME + ($leaf == null ? 43 : $leaf.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "SaveBatchingAggregateChangeTest.Intermediate(id=" + this.getId() + ", name=" + this.getName() + ", leaf=" + this.getLeaf() + ")";
+		}
 	}
 
-	@Value
-	static class Leaf {
+	static final class Leaf {
 
-		@Id Long id;
-		String name;
+		@Id
+		private final Long id;
+		private final String name;
+
+		public Leaf(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Leaf)) return false;
+			final Leaf other = (Leaf) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "SaveBatchingAggregateChangeTest.Leaf(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
 	}
 }

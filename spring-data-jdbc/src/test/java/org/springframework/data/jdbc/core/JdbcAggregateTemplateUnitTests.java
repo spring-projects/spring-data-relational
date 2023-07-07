@@ -15,15 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +41,11 @@ import org.springframework.data.relational.core.mapping.event.BeforeConvertCallb
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
 
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
  *
@@ -63,10 +59,14 @@ public class JdbcAggregateTemplateUnitTests {
 
 	JdbcAggregateTemplate template;
 
-	@Mock DataAccessStrategy dataAccessStrategy;
-	@Mock ApplicationEventPublisher eventPublisher;
-	@Mock RelationResolver relationResolver;
-	@Mock EntityCallbacks callbacks;
+	@Mock
+	DataAccessStrategy dataAccessStrategy;
+	@Mock
+	ApplicationEventPublisher eventPublisher;
+	@Mock
+	RelationResolver relationResolver;
+	@Mock
+	EntityCallbacks callbacks;
 
 	@BeforeEach
 	public void setUp() {
@@ -129,7 +129,8 @@ public class JdbcAggregateTemplateUnitTests {
 		verifyNoInteractions(eventPublisher);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert() {
 
 		EntityWithVersion entity = new EntityWithVersion(1L);
@@ -144,7 +145,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(0L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsImmutable() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, null);
@@ -159,7 +161,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(0L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsPrimitiveType() {
 
 		EntityWithPrimitiveVersion entity = new EntityWithPrimitiveVersion(1L);
@@ -174,7 +177,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(1L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert__whenVersionPropertyIsImmutableAndPrimitiveType() {
 
 		EntityWithImmutablePrimitiveVersion entity = new EntityWithImmutablePrimitiveVersion(1L, 0L);
@@ -190,7 +194,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(1L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesChangeWithPreviousVersion_onUpdate() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -207,7 +212,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(aggregateChange.getPreviousVersion()).isEqualTo(1L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithNextVersion_onUpdate() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -224,7 +230,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(2L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void savePreparesInstanceWithNextVersion_onUpdate_whenVersionPropertyIsImmutable() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -239,7 +246,8 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(2L);
 	}
 
-	@Test // GH-1137
+	@Test
+		// GH-1137
 	void deletePreparesChangeWithPreviousVersion_onDeleteByInstance() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
@@ -337,48 +345,131 @@ public class JdbcAggregateTemplateUnitTests {
 		template.deleteAllById(emptyList(), SampleEntity.class);
 	}
 
-	@Data
-	@AllArgsConstructor
 	private static class SampleEntity {
 
-		@Column("id1") @Id private Long id;
+		@Column("id1")
+		@Id
+		private Long id;
 
 		private String name;
+
+		public SampleEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
 	}
 
-	@Data
-	@RequiredArgsConstructor
 	private static class EntityWithVersion {
 
-		@Column("id1") @Id private final Long id;
+		@Column("id1")
+		@Id
+		private final Long id;
 
-		@Version private Long version;
+		@Version
+		private Long version;
+
+		public EntityWithVersion(Long id) {
+			this.id = id;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public Long getVersion() {
+			return this.version;
+		}
+
+		public void setVersion(Long version) {
+			this.version = version;
+		}
 	}
 
-	@Data
-	@RequiredArgsConstructor
 	private static class EntityWithImmutableVersion {
 
-		@Column("id1") @Id private final Long id;
+		@Column("id1")
+		@Id
+		private final Long id;
 
-		@Version private final Long version;
+		@Version
+		private final Long version;
+
+		public EntityWithImmutableVersion(Long id, Long version) {
+			this.id = id;
+			this.version = version;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public Long getVersion() {
+			return this.version;
+		}
 	}
 
-	@Data
-	@RequiredArgsConstructor
 	private static class EntityWithPrimitiveVersion {
 
-		@Column("id1") @Id private final Long id;
+		@Column("id1")
+		@Id
+		private final Long id;
 
-		@Version private long version;
+		@Version
+		private long version;
+
+		public EntityWithPrimitiveVersion(Long id) {
+			this.id = id;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public long getVersion() {
+			return this.version;
+		}
+
+		public void setVersion(long version) {
+			this.version = version;
+		}
 	}
 
-	@Data
-	@RequiredArgsConstructor
 	private static class EntityWithImmutablePrimitiveVersion {
 
-		@Column("id1") @Id private final Long id;
+		@Column("id1")
+		@Id
+		private final Long id;
 
-		@Version private final long version;
+		@Version
+		private final long version;
+
+		public EntityWithImmutablePrimitiveVersion(Long id, long version) {
+			this.id = id;
+			this.version = version;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public long getVersion() {
+			return this.version;
+		}
 	}
 }

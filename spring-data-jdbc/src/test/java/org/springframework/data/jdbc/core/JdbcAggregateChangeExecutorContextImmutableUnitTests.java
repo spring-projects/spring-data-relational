@@ -15,16 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.With;
-
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -41,6 +31,12 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
+
+import java.util.List;
+
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test for the {@link JdbcAggregateChangeExecutionContext} when operating on immutable classes.
@@ -181,17 +177,16 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
-	@Value
-	@AllArgsConstructor
-	@With
-	private static class DummyEntity {
+	private static final class DummyEntity {
 
-		@Id Long id;
-		@Version long version;
+		@Id
+		private final Long id;
+		@Version
+		private final long version;
 
-		Content content;
+		private final Content content;
 
-		List<Content> list;
+		private final List<Content> list;
 
 		DummyEntity() {
 
@@ -200,16 +195,122 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 			content = null;
 			list = null;
 		}
+
+		public DummyEntity(Long id, long version, Content content, List<Content> list) {
+			this.id = id;
+			this.version = version;
+			this.content = content;
+			this.list = list;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public long getVersion() {
+			return this.version;
+		}
+
+		public Content getContent() {
+			return this.content;
+		}
+
+		public List<Content> getList() {
+			return this.list;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof DummyEntity)) return false;
+			final DummyEntity other = (DummyEntity) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (this.getVersion() != other.getVersion()) return false;
+			final Object this$content = this.getContent();
+			final Object other$content = other.getContent();
+			if (this$content == null ? other$content != null : !this$content.equals(other$content)) return false;
+			final Object this$list = this.getList();
+			final Object other$list = other.getList();
+			if (this$list == null ? other$list != null : !this$list.equals(other$list)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final long $version = this.getVersion();
+			result = result * PRIME + (int) ($version >>> 32 ^ $version);
+			final Object $content = this.getContent();
+			result = result * PRIME + ($content == null ? 43 : $content.hashCode());
+			final Object $list = this.getList();
+			result = result * PRIME + ($list == null ? 43 : $list.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcAggregateChangeExecutorContextImmutableUnitTests.DummyEntity(id=" + this.getId() + ", version=" + this.getVersion() + ", content=" + this.getContent() + ", list=" + this.getList() + ")";
+		}
+
+		public DummyEntity withId(Long id) {
+			return this.id == id ? this : new DummyEntity(id, this.version, this.content, this.list);
+		}
+
+		public DummyEntity withVersion(long version) {
+			return this.version == version ? this : new DummyEntity(this.id, version, this.content, this.list);
+		}
+
+		public DummyEntity withContent(Content content) {
+			return this.content == content ? this : new DummyEntity(this.id, this.version, content, this.list);
+		}
+
+		public DummyEntity withList(List<Content> list) {
+			return this.list == list ? this : new DummyEntity(this.id, this.version, this.content, list);
+		}
 	}
 
-	@Value
-	@AllArgsConstructor
-	@With
-	private static class Content {
-		@Id Long id;
+	private static final class Content {
+		@Id
+		private final Long id;
 
 		Content() {
 			id = null;
+		}
+
+		public Content(Long id) {
+			this.id = id;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Content)) return false;
+			final Content other = (Content) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcAggregateChangeExecutorContextImmutableUnitTests.Content(id=" + this.getId() + ")";
+		}
+
+		public Content withId(Long id) {
+			return this.id == id ? this : new Content(id);
 		}
 	}
 

@@ -1,25 +1,22 @@
 package org.springframework.data.r2dbc.convert;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link EntityRowMapper}.
@@ -135,14 +132,20 @@ class EntityRowMapperUnitTests {
 		String id;
 	}
 
-	@RequiredArgsConstructor
 	static class SimpleEntityConstructorCreation {
 		final String id;
+
+		public SimpleEntityConstructorCreation(String id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class ConversionWithConstructorCreation {
 		final long id;
+
+		public ConversionWithConstructorCreation(long id) {
+			this.id = id;
+		}
 	}
 
 	static class EntityWithCollection {

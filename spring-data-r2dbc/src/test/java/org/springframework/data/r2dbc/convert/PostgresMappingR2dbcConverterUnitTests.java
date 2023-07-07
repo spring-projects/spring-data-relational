@@ -22,7 +22,6 @@ import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +31,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.ConditionalConverter;
 import org.springframework.core.convert.converter.GenericConverter;
@@ -134,28 +132,19 @@ class PostgresMappingR2dbcConverterUnitTests {
 		assertThat(parameter.getValue()).isInstanceOf(Json.class);
 	}
 
-	@AllArgsConstructor
-	static class JsonPerson {
-
-		@Id Long id;
-
-		Json jsonValue;
+	record JsonPerson(
+			@Id Long id,
+			Json jsonValue) {
 	}
 
-	@AllArgsConstructor
-	static class ConvertedJson {
-
-		@Id Long id;
-
-		String jsonString;
-
-		byte[] jsonBytes;
+	record ConvertedJson(
+			@Id Long id,
+			String jsonString,
+			byte[] jsonBytes) {
 	}
 
-	@AllArgsConstructor
-	static class WithJsonHolder {
-
-		JsonHolder holder;
+	record WithJsonHolder(
+			JsonHolder holder) {
 	}
 
 	@ReadingConverter
@@ -200,10 +189,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		}
 	}
 
-	@AllArgsConstructor
-	private static class JsonHolder {
-
-		private final Json json;
+	record JsonHolder(Json json) {
 
 	}
 

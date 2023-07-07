@@ -18,8 +18,6 @@ package org.springframework.data.jdbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 
-import lombok.Value;
-
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -347,11 +345,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Query("SELECT 'one' one, 'two' two, 3 three FROM (VALUES (0)) as tableName")
 		ImmutableTuple immutableTuple();
 
-		@Value
-		class ImmutableTuple {
-			String one;
-			String two;
-			int three;
+		record ImmutableTuple(String one, String two, int three) {
 		}
 	}
 }

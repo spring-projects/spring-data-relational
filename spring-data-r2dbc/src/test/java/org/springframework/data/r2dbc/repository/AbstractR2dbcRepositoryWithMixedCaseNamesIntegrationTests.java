@@ -15,21 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import reactor.test.StepVerifier;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +28,15 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.Nullable;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link LegoSetRepository} with table and column names that contain
@@ -120,25 +115,28 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {}
 
-	@Getter
-	@Setter
 	@Table("LegoSet")
-	@NoArgsConstructor
 	public static class LegoSet {
 
 		@Nullable
 		@Column("Id")
-		@Id Integer id;
+		@Id
+		Integer id;
 
-		@Column("Name") String name;
+		@Column("Name")
+		String name;
 
-		@Column("Manual") Integer manual;
+		@Column("Manual")
+		Integer manual;
 
 		@PersistenceCreator
 		LegoSet(@Nullable Integer id, String name, Integer manual) {
 			this.id = id;
 			this.name = name;
 			this.manual = manual;
+		}
+
+		public LegoSet() {
 		}
 
 		@Override
@@ -155,6 +153,31 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 		@Override
 		public int hashCode() {
 			return Objects.hash(id, name, manual);
+		}
+
+		@Nullable
+		public Integer getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Integer getManual() {
+			return this.manual;
+		}
+
+		public void setId(@Nullable Integer id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setManual(Integer manual) {
+			this.manual = manual;
 		}
 	}
 }

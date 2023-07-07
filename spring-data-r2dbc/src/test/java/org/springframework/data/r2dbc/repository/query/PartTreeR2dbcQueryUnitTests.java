@@ -19,7 +19,6 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
-import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -1005,7 +1004,6 @@ class PartTreeR2dbcQueryUnitTests {
 	}
 
 	@Table("users")
-	@Data
 	private static class User {
 
 		private @Id Long id;
@@ -1017,7 +1015,6 @@ class PartTreeR2dbcQueryUnitTests {
 	}
 
 	@Table("users")
-	@Data
 	private static class WithoutId {
 
 		private String firstName;

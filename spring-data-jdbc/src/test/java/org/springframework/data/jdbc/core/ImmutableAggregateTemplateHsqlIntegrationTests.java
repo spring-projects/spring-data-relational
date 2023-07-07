@@ -18,11 +18,6 @@ package org.springframework.data.jdbc.core;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Value;
-import lombok.With;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -300,45 +295,307 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 				"Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
 	}
 
-	@Value
-	@With
-	static class LegoSet {
+	static final class LegoSet {
 
-		@Id Long id;
-		String name;
-		Manual manual;
-		Author author;
+		@Id private final Long id;
+		private final String name;
+		private final Manual manual;
+		private final Author author;
+
+		public LegoSet(Long id, String name, Manual manual, Author author) {
+			this.id = id;
+			this.name = name;
+			this.manual = manual;
+			this.author = author;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Manual getManual() {
+			return this.manual;
+		}
+
+		public Author getAuthor() {
+			return this.author;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof LegoSet))
+				return false;
+			final LegoSet other = (LegoSet) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			final Object this$manual = this.getManual();
+			final Object other$manual = other.getManual();
+			if (this$manual == null ? other$manual != null : !this$manual.equals(other$manual))
+				return false;
+			final Object this$author = this.getAuthor();
+			final Object other$author = other.getAuthor();
+			if (this$author == null ? other$author != null : !this$author.equals(other$author))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $manual = this.getManual();
+			result = result * PRIME + ($manual == null ? 43 : $manual.hashCode());
+			final Object $author = this.getAuthor();
+			result = result * PRIME + ($author == null ? 43 : $author.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "ImmutableAggregateTemplateHsqlIntegrationTests.LegoSet(id=" + this.getId() + ", name=" + this.getName()
+					+ ", manual=" + this.getManual() + ", author=" + this.getAuthor() + ")";
+		}
+
+		public LegoSet withId(Long id) {
+			return this.id == id ? this : new LegoSet(id, this.name, this.manual, this.author);
+		}
+
+		public LegoSet withName(String name) {
+			return this.name == name ? this : new LegoSet(this.id, name, this.manual, this.author);
+		}
+
+		public LegoSet withManual(Manual manual) {
+			return this.manual == manual ? this : new LegoSet(this.id, this.name, manual, this.author);
+		}
+
+		public LegoSet withAuthor(Author author) {
+			return this.author == author ? this : new LegoSet(this.id, this.name, this.manual, author);
+		}
 	}
 
-	@Value
-	@With
-	static class Manual {
+	static final class Manual {
 
-		@Id Long id;
-		String content;
+		@Id private final Long id;
+		private final String content;
+
+		public Manual(Long id, String content) {
+			this.id = id;
+			this.content = content;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getContent() {
+			return this.content;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Manual))
+				return false;
+			final Manual other = (Manual) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$content = this.getContent();
+			final Object other$content = other.getContent();
+			if (this$content == null ? other$content != null : !this$content.equals(other$content))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $content = this.getContent();
+			result = result * PRIME + ($content == null ? 43 : $content.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "ImmutableAggregateTemplateHsqlIntegrationTests.Manual(id=" + this.getId() + ", content="
+					+ this.getContent() + ")";
+		}
+
+		public Manual withId(Long id) {
+			return this.id == id ? this : new Manual(id, this.content);
+		}
+
+		public Manual withContent(String content) {
+			return this.content == content ? this : new Manual(this.id, content);
+		}
 	}
 
-	@Value
-	@With
-	static class Author {
+	static final class Author {
 
-		@Id Long id;
-		String name;
+		@Id private final Long id;
+		private final String name;
+
+		public Author(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Author))
+				return false;
+			final Author other = (Author) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "ImmutableAggregateTemplateHsqlIntegrationTests.Author(id=" + this.getId() + ", name=" + this.getName()
+					+ ")";
+		}
+
+		public Author withId(Long id) {
+			return this.id == id ? this : new Author(id, this.name);
+		}
+
+		public Author withName(String name) {
+			return this.name == name ? this : new Author(this.id, name);
+		}
 	}
 
-	@Data
-	@AllArgsConstructor
 	static class Root {
 		@Id private Long id;
 		private String name;
 		private NonRoot reference;
+
+		public Root(Long id, String name, NonRoot reference) {
+			this.id = id;
+			this.name = name;
+			this.reference = reference;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public NonRoot getReference() {
+			return this.reference;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setReference(NonRoot reference) {
+			this.reference = reference;
+		}
 	}
 
-	@Value
-	@With
-	static class NonRoot {
-		@Id Long id;
-		String name;
+	static final class NonRoot {
+		@Id private final Long id;
+		private final String name;
+
+		public NonRoot(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof NonRoot))
+				return false;
+			final NonRoot other = (NonRoot) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "ImmutableAggregateTemplateHsqlIntegrationTests.NonRoot(id=" + this.getId() + ", name=" + this.getName()
+					+ ")";
+		}
+
+		public NonRoot withId(Long id) {
+			return this.id == id ? this : new NonRoot(id, this.name);
+		}
+
+		public NonRoot withName(String name) {
+			return this.name == name ? this : new NonRoot(this.id, name);
+		}
 	}
 
 	static class WithCopyConstructor {

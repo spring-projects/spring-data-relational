@@ -15,18 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,6 +31,15 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the {@link RelationalEntityWriter}
@@ -780,142 +777,207 @@ public class RelationalEntityWriterUnitTests {
 		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
 	}
 
-	@RequiredArgsConstructor
-	@Data
 	static class EntityWithReferencesToPrimitiveIdEntity {
 		@Id final Long id;
 		PrimitiveLongIdEntity primitiveLongIdEntity;
 		List<PrimitiveLongIdEntity> primitiveLongIdEntities = new ArrayList<>();
 		PrimitiveIntIdEntity primitiveIntIdEntity;
 		List<PrimitiveIntIdEntity> primitiveIntIdEntities = new ArrayList<>();
+
+		EntityWithReferencesToPrimitiveIdEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@Data
 	static class PrimitiveLongIdEntity {
 		@Id long id;
 	}
 
-	@Data
 	static class PrimitiveIntIdEntity {
 		@Id int id;
 	}
 
-	@RequiredArgsConstructor
 	static class SingleReferenceEntity {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		Element other;
 		// should not trigger own DbAction
 		String name;
+
+		public SingleReferenceEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class EmbeddedReferenceEntity {
 
-		@Id final Long id;
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Element other;
+		@Id
+		final Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		Element other;
+
+		public EmbeddedReferenceEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class EmbeddedReferenceChainEntity {
 
-		@Id final Long id;
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") ElementReference other;
+		@Id
+		final Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		ElementReference other;
+
+		public EmbeddedReferenceChainEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class RootWithEmbeddedReferenceChainEntity {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		EmbeddedReferenceChainEntity other;
+
+		public RootWithEmbeddedReferenceChainEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	static class ReferenceWoIdEntity {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		NoIdElement other;
 		// should not trigger own DbAction
 		String name;
+
+		public ReferenceWoIdEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class CascadingReferenceMiddleElement {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		final Set<Element> element = new HashSet<>();
+
+		public CascadingReferenceMiddleElement(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class CascadingReferenceEntity {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		final Set<CascadingReferenceMiddleElement> other = new HashSet<>();
+
+		public CascadingReferenceEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class SetContainer {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		Set<Element> elements = new HashSet<>();
+
+		public SetContainer(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class ListMapContainer {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		List<MapContainer> maps = new ArrayList<>();
+
+		public ListMapContainer(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class MapContainer {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		Map<String, Element> elements = new HashMap<>();
+
+		public MapContainer(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class ListContainer {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		List<Element> elements = new ArrayList<>();
+
+		public ListContainer(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class Element {
-		@Id final Long id;
+		@Id
+		final Long id;
+
+		public Element(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class ElementReference {
 		final Element element;
+
+		public ElementReference(Element element) {
+			this.element = element;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class NoIdListMapContainer {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		List<NoIdMapContainer> maps = new ArrayList<>();
+
+		public NoIdListMapContainer(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class NoIdMapContainer {
 
 		Map<String, NoIdElement> elements = new HashMap<>();
+
+		public NoIdMapContainer() {
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class NoIdElement {
 		// empty classes feel weird.
 		String name;
+
+		public NoIdElement() {
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class WithReadOnlyReference {
 
-		@Id final Long id;
+		@Id
+		final Long id;
 		@ReadOnlyProperty
 		Element readOnly;
+
+		public WithReadOnlyReference(Long id) {
+			this.id = id;
+		}
 	}
 
 }

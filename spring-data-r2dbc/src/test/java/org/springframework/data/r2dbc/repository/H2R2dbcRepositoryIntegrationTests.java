@@ -15,27 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.sql.DataSource;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.reactivestreams.Publisher;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -52,6 +36,16 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against H2.
@@ -218,12 +212,21 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnlyEntity, Integer> {}
 
-	@Getter
-	@Setter
 	@Table("id_only")
-	@NoArgsConstructor
 	static class IdOnlyEntity {
-		@Id Integer id;
+		@Id
+		Integer id;
+
+		public IdOnlyEntity() {
+		}
+
+		public Integer getId() {
+			return this.id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
 	}
 
 	static class AfterConvertCallbackRecorder implements AfterConvertCallback<LegoSet> {

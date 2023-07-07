@@ -16,8 +16,6 @@ package org.springframework.data.jdbc.core;
  * limitations under the License.
  */
 
-import lombok.experimental.UtilityClass;
-
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -28,8 +26,11 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  *
  * @author Jens Schauder
  */
-@UtilityClass
-public class PropertyPathTestingUtils {
+public final class PropertyPathTestingUtils {
+
+	private PropertyPathTestingUtils() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+	}
 
 	public static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
 																			  RelationalMappingContext context) {

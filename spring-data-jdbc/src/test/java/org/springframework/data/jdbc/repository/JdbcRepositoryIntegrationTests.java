@@ -21,10 +21,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Value;
-
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
@@ -36,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -83,8 +80,8 @@ import org.springframework.data.repository.core.support.PropertiesBasedNamedQuer
 import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -93,8 +90,6 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.Data;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -1387,12 +1382,11 @@ public class JdbcRepositoryIntegrationTests {
 		List<Root> findAllByOrderByIdAsc();
 	}
 
-	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> { }
+	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
-
 
 		@Autowired JdbcRepositoryFactory factory;
 
@@ -1412,7 +1406,9 @@ public class JdbcRepositoryIntegrationTests {
 		}
 
 		@Bean
-		WithDelimitedColumnRepository withDelimitedColumnRepository() { return factory.getRepository(WithDelimitedColumnRepository.class); }
+		WithDelimitedColumnRepository withDelimitedColumnRepository() {
+			return factory.getRepository(WithDelimitedColumnRepository.class);
+		}
 
 		@Bean
 		NamedQueries namedQueries() throws IOException {
@@ -1430,12 +1426,14 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Bean
 		public ExtensionAwareQueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
-			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(
+					exts);
 
 			factory.setEvaluationContextProvider(extensionAwareQueryMethodEvaluationContextProvider);
 
 			return extensionAwareQueryMethodEvaluationContextProvider;
 		}
+
 		@Bean
 		public EvaluationContextExtension evaluationContextExtension() {
 			return new MyIdContextProvider();
@@ -1443,37 +1441,235 @@ public class JdbcRepositoryIntegrationTests {
 
 	}
 
-	@Value
-	static class Root {
+	static final class Root {
 
-		@Id Long id;
-		String name;
-		Intermediate intermediate;
-		@MappedCollection(idColumn = "ROOT_ID", keyColumn = "ROOT_KEY") List<Intermediate> intermediates;
+		@Id private final Long id;
+		private final String name;
+		private final Intermediate intermediate;
+		@MappedCollection(idColumn = "ROOT_ID", keyColumn = "ROOT_KEY") private final List<Intermediate> intermediates;
+
+		public Root(Long id, String name, Intermediate intermediate, List<Intermediate> intermediates) {
+			this.id = id;
+			this.name = name;
+			this.intermediate = intermediate;
+			this.intermediates = intermediates;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Intermediate getIntermediate() {
+			return this.intermediate;
+		}
+
+		public List<Intermediate> getIntermediates() {
+			return this.intermediates;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Root))
+				return false;
+			final Root other = (Root) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			final Object this$intermediate = this.getIntermediate();
+			final Object other$intermediate = other.getIntermediate();
+			if (this$intermediate == null ? other$intermediate != null : !this$intermediate.equals(other$intermediate))
+				return false;
+			final Object this$intermediates = this.getIntermediates();
+			final Object other$intermediates = other.getIntermediates();
+			if (this$intermediates == null ? other$intermediates != null : !this$intermediates.equals(other$intermediates))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $intermediate = this.getIntermediate();
+			result = result * PRIME + ($intermediate == null ? 43 : $intermediate.hashCode());
+			final Object $intermediates = this.getIntermediates();
+			result = result * PRIME + ($intermediates == null ? 43 : $intermediates.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Root(id=" + this.getId() + ", name=" + this.getName() + ", intermediate="
+					+ this.getIntermediate() + ", intermediates=" + this.getIntermediates() + ")";
+		}
 	}
 
-	@Data
 	@Table("WITH_DELIMITED_COLUMN")
 	static class WithDelimitedColumn {
 		@Id Long id;
 		@Column("ORG.XTUNIT.IDENTIFIER") String identifier;
-		@Column ("STYPE") String type;
+		@Column("STYPE") String type;
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getIdentifier() {
+			return this.identifier;
+		}
+
+		public String getType() {
+			return this.type;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setIdentifier(String identifier) {
+			this.identifier = identifier;
+		}
+
+		public void setType(String type) {
+			this.type = type;
+		}
 	}
 
-	@Value
-	static class Intermediate {
+	static final class Intermediate {
 
-		@Id Long id;
-		String name;
-		Leaf leaf;
-		@MappedCollection(idColumn = "INTERMEDIATE_ID", keyColumn = "INTERMEDIATE_KEY") List<Leaf> leaves;
+		@Id private final Long id;
+		private final String name;
+		private final Leaf leaf;
+		@MappedCollection(idColumn = "INTERMEDIATE_ID", keyColumn = "INTERMEDIATE_KEY") private final List<Leaf> leaves;
+
+		public Intermediate(Long id, String name, Leaf leaf, List<Leaf> leaves) {
+			this.id = id;
+			this.name = name;
+			this.leaf = leaf;
+			this.leaves = leaves;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Leaf getLeaf() {
+			return this.leaf;
+		}
+
+		public List<Leaf> getLeaves() {
+			return this.leaves;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Intermediate))
+				return false;
+			final Intermediate other = (Intermediate) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			final Object this$leaf = this.getLeaf();
+			final Object other$leaf = other.getLeaf();
+			if (this$leaf == null ? other$leaf != null : !this$leaf.equals(other$leaf))
+				return false;
+			final Object this$leaves = this.getLeaves();
+			final Object other$leaves = other.getLeaves();
+			if (this$leaves == null ? other$leaves != null : !this$leaves.equals(other$leaves))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $leaf = this.getLeaf();
+			result = result * PRIME + ($leaf == null ? 43 : $leaf.hashCode());
+			final Object $leaves = this.getLeaves();
+			result = result * PRIME + ($leaves == null ? 43 : $leaves.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Intermediate(id=" + this.getId() + ", name=" + this.getName() + ", leaf="
+					+ this.getLeaf() + ", leaves=" + this.getLeaves() + ")";
+		}
 	}
 
-	@Value
-	static class Leaf {
+	static final class Leaf {
 
-		@Id Long id;
-		String name;
+		@Id private final Long id;
+		private final String name;
+
+		public Leaf(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof Leaf))
+				return false;
+			final Leaf other = (Leaf) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Leaf(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
 	}
 
 	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
@@ -1507,8 +1703,6 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	@Data
-	@NoArgsConstructor
 	static class DummyEntity {
 
 		String name;
@@ -1522,6 +1716,77 @@ public class JdbcRepositoryIntegrationTests {
 		public DummyEntity(String name) {
 			this.name = name;
 		}
+
+		public DummyEntity() {}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Instant getPointInTime() {
+			return this.pointInTime;
+		}
+
+		public OffsetDateTime getOffsetDateTime() {
+			return this.offsetDateTime;
+		}
+
+		public Long getIdProp() {
+			return this.idProp;
+		}
+
+		public boolean isFlag() {
+			return this.flag;
+		}
+
+		public AggregateReference<DummyEntity, Long> getRef() {
+			return this.ref;
+		}
+
+		public Direction getDirection() {
+			return this.direction;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setPointInTime(Instant pointInTime) {
+			this.pointInTime = pointInTime;
+		}
+
+		public void setOffsetDateTime(OffsetDateTime offsetDateTime) {
+			this.offsetDateTime = offsetDateTime;
+		}
+
+		public void setIdProp(Long idProp) {
+			this.idProp = idProp;
+		}
+
+		public void setFlag(boolean flag) {
+			this.flag = flag;
+		}
+
+		public void setRef(AggregateReference<DummyEntity, Long> ref) {
+			this.ref = ref;
+		}
+
+		public void setDirection(Direction direction) {
+			this.direction = direction;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			DummyEntity that = (DummyEntity) o;
+			return flag == that.flag && Objects.equals(name, that.name) && Objects.equals(pointInTime, that.pointInTime) && Objects.equals(offsetDateTime, that.offsetDateTime) && Objects.equals(idProp, that.idProp) && Objects.equals(ref, that.ref) && direction == that.direction;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(name, pointInTime, offsetDateTime, idProp, flag, ref, direction);
+		}
 	}
 
 	enum Direction {
@@ -1532,9 +1797,41 @@ public class JdbcRepositoryIntegrationTests {
 		String getName();
 	}
 
-	@Value
-	static class DtoProjection {
-		String name;
+	static final class DtoProjection {
+		private final String name;
+
+		public DtoProjection(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof DtoProjection))
+				return false;
+			final DtoProjection other = (DtoProjection) o;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.DtoProjection(name=" + this.getName() + ")";
+		}
 	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {

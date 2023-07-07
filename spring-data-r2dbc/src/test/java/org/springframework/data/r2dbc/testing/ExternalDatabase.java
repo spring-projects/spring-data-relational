@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.testing;
 
-import lombok.Builder;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -111,7 +109,6 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 	/**
 	 * Provided (unmanaged resource) database connection coordinates.
 	 */
-	@Builder
 	public static class ProvidedDatabase extends ExternalDatabase {
 
 		private final String hostname;
@@ -120,6 +117,16 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 		private final String password;
 		private final String database;
 		private final String jdbcUrl;
+
+		public ProvidedDatabase(String hostname, int port, String username, String password, String database,
+				String jdbcUrl) {
+			this.hostname = hostname;
+			this.port = port;
+			this.username = username;
+			this.password = password;
+			this.database = database;
+			this.jdbcUrl = jdbcUrl;
+		}
 
 		public static ProvidedDatabaseBuilder builder() {
 			return new ProvidedDatabaseBuilder();
@@ -262,6 +269,48 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 		@Override
 		public String getJdbcUrl() {
 			throw new UnsupportedOperationException(getClass().getSimpleName());
+		}
+	}
+
+	static class ProvidedDatabaseBuilder {
+		private String hostname;
+		private int port;
+		private String username;
+		private String password;
+		private String database;
+		private String jdbcUrl;
+
+		public ProvidedDatabaseBuilder hostname(String hostname) {
+			this.hostname = hostname;
+			return this;
+		}
+
+		public ProvidedDatabaseBuilder port(Integer port) {
+			this.port = port;
+			return this;
+		}
+
+		public ProvidedDatabaseBuilder username(String username) {
+			this.username = username;
+			return this;
+		}
+
+		public ProvidedDatabaseBuilder password(String password) {
+			this.password = password;
+			return this;
+		}
+
+		public ProvidedDatabaseBuilder database(String database) {
+			this.database = database;
+			return this;
+		}
+		public ProvidedDatabaseBuilder jdbcUrl(String jdbcUrl) {
+			this.jdbcUrl = jdbcUrl;
+			return this;
+		}
+
+		public ProvidedDatabase build() {
+			return new ProvidedDatabase(hostname, port, username, password, database, jdbcUrl);
 		}
 	}
 }

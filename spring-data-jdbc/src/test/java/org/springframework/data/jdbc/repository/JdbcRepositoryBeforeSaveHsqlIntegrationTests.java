@@ -15,15 +15,6 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Value;
-import lombok.With;
-
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +34,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+
 /**
  * Integration tests for the {@link BeforeSaveCallback}.
  *
@@ -57,7 +52,8 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
+		@Autowired
+		JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -65,11 +61,16 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		}
 	}
 
-	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired ImmutableEntityRepository immutableWithManualIdEntityRepository;
-	@Autowired MutableEntityRepository mutableEntityRepository;
-	@Autowired MutableWithImmutableIdEntityRepository mutableWithImmutableIdEntityRepository;
-	@Autowired ImmutableWithMutableIdEntityRepository immutableWithMutableIdEntityRepository;
+	@Autowired
+	NamedParameterJdbcTemplate template;
+	@Autowired
+	ImmutableEntityRepository immutableWithManualIdEntityRepository;
+	@Autowired
+	MutableEntityRepository mutableEntityRepository;
+	@Autowired
+	MutableWithImmutableIdEntityRepository mutableWithImmutableIdEntityRepository;
+	@Autowired
+	ImmutableWithMutableIdEntityRepository immutableWithMutableIdEntityRepository;
 
 	@Test // GH-1199
 	public void immutableEntity() {
@@ -135,42 +136,150 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		assertThat(reloaded.getName()).isEqualTo("fromBeforeSaveCallback");
 	}
 
-	private interface ImmutableEntityRepository extends ListCrudRepository<ImmutableEntity, Long> {}
-
-	@Value
-	@With
-	static class ImmutableEntity {
-		@Id Long id;
-		String name;
+	private interface ImmutableEntityRepository extends ListCrudRepository<ImmutableEntity, Long> {
 	}
 
-	private interface MutableEntityRepository extends ListCrudRepository<MutableEntity, Long> {}
+	static final class ImmutableEntity {
+		@Id
+		private final
+		Long id;
+		private final String name;
 
-	@Data
-	@AllArgsConstructor
+		public ImmutableEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof ImmutableEntity)) return false;
+			final ImmutableEntity other = (ImmutableEntity) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryBeforeSaveHsqlIntegrationTests.ImmutableEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
+
+		public ImmutableEntity withId(Long id) {
+			return this.id == id ? this : new ImmutableEntity(id, this.name);
+		}
+
+		public ImmutableEntity withName(String name) {
+			return this.name == name ? this : new ImmutableEntity(this.id, name);
+		}
+	}
+
+	private interface MutableEntityRepository extends ListCrudRepository<MutableEntity, Long> {
+	}
+
 	static class MutableEntity {
-		@Id private Long id;
+		@Id
+		private Long id;
 		private String name;
+
+		public MutableEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
 	}
 
 	private interface MutableWithImmutableIdEntityRepository
-			extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {}
+			extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {
+	}
 
-	@Data
-	@AllArgsConstructor
 	static class MutableWithImmutableIdEntity {
-		@Id private final Long id;
+		@Id
+		private final Long id;
 		private String name;
+
+		public MutableWithImmutableIdEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
 	}
 
 	private interface ImmutableWithMutableIdEntityRepository
-			extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {}
+			extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {
+	}
 
-	@Data
-	@AllArgsConstructor
 	static class ImmutableWithMutableIdEntity {
-		@Id private Long id;
-		@With private final String name;
+		@Id
+		private Long id;
+		private final String name;
+
+		public ImmutableWithMutableIdEntity(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Long getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public ImmutableWithMutableIdEntity withName(String name) {
+			return this.name == name ? this : new ImmutableWithMutableIdEntity(this.id, name);
+		}
 	}
 
 	@Configuration

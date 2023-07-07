@@ -19,8 +19,6 @@ import static java.util.Collections.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import lombok.RequiredArgsConstructor;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
@@ -114,15 +112,21 @@ class DefaultDataAccessStrategyUnitTests {
 		verify(insertStrategyFactory).batchInsertStrategy(IdValueSource.GENERATED, null);
 	}
 
-	@RequiredArgsConstructor
 	private static class DummyEntity {
 
 		@Id private final Long id;
+
+		public DummyEntity(Long id) {
+			this.id = id;
+		}
 	}
 
-	@RequiredArgsConstructor
 	private static class DummyEntityWithoutIdAnnotation {
 
 		private final Long id;
+
+		public DummyEntityWithoutIdAnnotation(Long id) {
+			this.id = id;
+		}
 	}
 }

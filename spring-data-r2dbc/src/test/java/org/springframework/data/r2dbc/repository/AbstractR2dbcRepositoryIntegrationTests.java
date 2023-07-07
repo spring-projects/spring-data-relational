@@ -15,25 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.Value;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.IntStream;
-
-import javax.sql.DataSource;
-
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +35,17 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
@@ -469,10 +462,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		String getName();
 	}
 
-	@Getter
-	@Setter
 	@Table("legoset")
-	@NoArgsConstructor
 	public static class LegoSet extends Lego implements Buildable {
 		String name;
 		Integer manual;
@@ -489,24 +479,97 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 			this(id, name, manual);
 			this.flag = flag;
 		}
+
+		public LegoSet() {
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Integer getManual() {
+			return this.manual;
+		}
+
+		public boolean isFlag() {
+			return this.flag;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setManual(Integer manual) {
+			this.manual = manual;
+		}
+
+		public void setFlag(boolean flag) {
+			this.flag = flag;
+		}
 	}
 
-	@AllArgsConstructor
-	@NoArgsConstructor
-	@Getter
-	@Setter
 	static class Lego {
-		@Id Integer id;
+		@Id
+		Integer id;
+
+		public Lego(Integer id) {
+			this.id = id;
+		}
+
+		public Lego() {
+		}
+
+		public Integer getId() {
+			return this.id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
 	}
 
-	@Value
-	static class LegoDto {
-		String name;
-		String unknown;
+	static final class LegoDto {
+		private final String name;
+		private final String unknown;
 
 		public LegoDto(String name, String unknown) {
 			this.name = name;
 			this.unknown = unknown;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public String getUnknown() {
+			return this.unknown;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof LegoDto)) return false;
+			final LegoDto other = (LegoDto) o;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			final Object this$unknown = this.getUnknown();
+			final Object other$unknown = other.getUnknown();
+			if (this$unknown == null ? other$unknown != null : !this$unknown.equals(other$unknown)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $unknown = this.getUnknown();
+			result = result * PRIME + ($unknown == null ? 43 : $unknown.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "AbstractR2dbcRepositoryIntegrationTests.LegoDto(name=" + this.getName() + ", unknown=" + this.getUnknown() + ")";
 		}
 	}
 

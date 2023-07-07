@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder.*;
 
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -287,9 +285,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		@Id Long id;
 	}
 
-	@Value
-	private static class ContentImmutableId {
-		@Id Long id;
+	record ContentImmutableId(@Id Long id) {
 	}
 
 }

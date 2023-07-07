@@ -15,15 +15,22 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.mockito.Mockito.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.With;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
+import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,22 +39,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.conversion.RootAggregateChange;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.IdValueSource;
-import org.springframework.data.relational.core.conversion.MutableAggregateChange;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link MutableAggregateChange} testing the setting of generated ids in aggregates consisting of
@@ -220,7 +216,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 					.extracting(c -> c.id) //
 					.containsExactly(2); //
 			softly.assertThat(entity.contentSet.stream() //
-					.flatMap(c -> c.tagSet.stream())) //
+							.flatMap(c -> c.tagSet.stream())) //
 					.extracting(t -> t.id) //
 					.containsExactlyInAnyOrder(3, 4); //
 		});
@@ -288,8 +284,8 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 					.extracting(c -> c.id) //
 					.containsExactly(2, 3); //
 			softly.assertThat(entity.contentList.stream() //
-					.flatMap(c -> c.tagList.stream()) //
-			).extracting(t -> t.id) //
+							.flatMap(c -> c.tagList.stream()) //
+					).extracting(t -> t.id) //
 					.containsExactly(4, 5, 6); //
 		});
 	}
@@ -324,13 +320,13 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 					.extracting(Map.Entry::getKey, e -> e.getValue().id) //
 					.containsExactly(tuple("one", 2), tuple("two", 3)); //
 			softly.assertThat(entity.contentMap.values().stream() //
-					.flatMap(c -> c.tagMap.entrySet().stream())) //
+							.flatMap(c -> c.tagMap.entrySet().stream())) //
 					.extracting(Map.Entry::getKey, e -> e.getValue().id) //
 					.containsExactly( //
 							tuple("111", 4), //
 							tuple("222", 5), //
 							tuple("333", 6) //
-			); //
+					); //
 		});
 	}
 
@@ -412,7 +408,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
-			@Nullable DbAction.Insert<?> parentInsert) {
+										@Nullable DbAction.Insert<?> parentInsert) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
 				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
@@ -430,18 +426,19 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
-	@Value
-	@With
-	@AllArgsConstructor
-	private static class DummyEntity {
+	private static final class DummyEntity {
 
-		@Id Integer rootId;
-		Content single;
-		Set<Content> contentSet;
-		List<Content> contentList;
-		Map<String, Content> contentMap;
-		List<ContentNoId> contentNoIdList;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "fooBar") ContentNoId embedded;
+		@Id
+		private final
+		Integer rootId;
+		private final Content single;
+		private final Set<Content> contentSet;
+		private final List<Content> contentList;
+		private final Map<String, Content> contentMap;
+		private final List<ContentNoId> contentNoIdList;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "fooBar")
+		private final
+		ContentNoId embedded;
 
 		DummyEntity() {
 
@@ -453,18 +450,139 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 			contentNoIdList = emptyList();
 			embedded = new ContentNoId();
 		}
+
+		public DummyEntity(Integer rootId, Content single, Set<Content> contentSet, List<Content> contentList, Map<String, Content> contentMap, List<ContentNoId> contentNoIdList, ContentNoId embedded) {
+			this.rootId = rootId;
+			this.single = single;
+			this.contentSet = contentSet;
+			this.contentList = contentList;
+			this.contentMap = contentMap;
+			this.contentNoIdList = contentNoIdList;
+			this.embedded = embedded;
+		}
+
+		public Integer getRootId() {
+			return this.rootId;
+		}
+
+		public Content getSingle() {
+			return this.single;
+		}
+
+		public Set<Content> getContentSet() {
+			return this.contentSet;
+		}
+
+		public List<Content> getContentList() {
+			return this.contentList;
+		}
+
+		public Map<String, Content> getContentMap() {
+			return this.contentMap;
+		}
+
+		public List<ContentNoId> getContentNoIdList() {
+			return this.contentNoIdList;
+		}
+
+		public ContentNoId getEmbedded() {
+			return this.embedded;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof DummyEntity)) return false;
+			final DummyEntity other = (DummyEntity) o;
+			final Object this$rootId = this.getRootId();
+			final Object other$rootId = other.getRootId();
+			if (this$rootId == null ? other$rootId != null : !this$rootId.equals(other$rootId)) return false;
+			final Object this$single = this.getSingle();
+			final Object other$single = other.getSingle();
+			if (this$single == null ? other$single != null : !this$single.equals(other$single)) return false;
+			final Object this$contentSet = this.getContentSet();
+			final Object other$contentSet = other.getContentSet();
+			if (this$contentSet == null ? other$contentSet != null : !this$contentSet.equals(other$contentSet))
+				return false;
+			final Object this$contentList = this.getContentList();
+			final Object other$contentList = other.getContentList();
+			if (this$contentList == null ? other$contentList != null : !this$contentList.equals(other$contentList))
+				return false;
+			final Object this$contentMap = this.getContentMap();
+			final Object other$contentMap = other.getContentMap();
+			if (this$contentMap == null ? other$contentMap != null : !this$contentMap.equals(other$contentMap))
+				return false;
+			final Object this$contentNoIdList = this.getContentNoIdList();
+			final Object other$contentNoIdList = other.getContentNoIdList();
+			if (this$contentNoIdList == null ? other$contentNoIdList != null : !this$contentNoIdList.equals(other$contentNoIdList))
+				return false;
+			final Object this$embedded = this.getEmbedded();
+			final Object other$embedded = other.getEmbedded();
+			if (this$embedded == null ? other$embedded != null : !this$embedded.equals(other$embedded)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $rootId = this.getRootId();
+			result = result * PRIME + ($rootId == null ? 43 : $rootId.hashCode());
+			final Object $single = this.getSingle();
+			result = result * PRIME + ($single == null ? 43 : $single.hashCode());
+			final Object $contentSet = this.getContentSet();
+			result = result * PRIME + ($contentSet == null ? 43 : $contentSet.hashCode());
+			final Object $contentList = this.getContentList();
+			result = result * PRIME + ($contentList == null ? 43 : $contentList.hashCode());
+			final Object $contentMap = this.getContentMap();
+			result = result * PRIME + ($contentMap == null ? 43 : $contentMap.hashCode());
+			final Object $contentNoIdList = this.getContentNoIdList();
+			result = result * PRIME + ($contentNoIdList == null ? 43 : $contentNoIdList.hashCode());
+			final Object $embedded = this.getEmbedded();
+			result = result * PRIME + ($embedded == null ? 43 : $embedded.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "AggregateChangeIdGenerationImmutableUnitTests.DummyEntity(rootId=" + this.getRootId() + ", single=" + this.getSingle() + ", contentSet=" + this.getContentSet() + ", contentList=" + this.getContentList() + ", contentMap=" + this.getContentMap() + ", contentNoIdList=" + this.getContentNoIdList() + ", embedded=" + this.getEmbedded() + ")";
+		}
+
+		public DummyEntity withRootId(Integer rootId) {
+			return this.rootId == rootId ? this : new DummyEntity(rootId, this.single, this.contentSet, this.contentList, this.contentMap, this.contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withSingle(Content single) {
+			return this.single == single ? this : new DummyEntity(this.rootId, single, this.contentSet, this.contentList, this.contentMap, this.contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withContentSet(Set<Content> contentSet) {
+			return this.contentSet == contentSet ? this : new DummyEntity(this.rootId, this.single, contentSet, this.contentList, this.contentMap, this.contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withContentList(List<Content> contentList) {
+			return this.contentList == contentList ? this : new DummyEntity(this.rootId, this.single, this.contentSet, contentList, this.contentMap, this.contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withContentMap(Map<String, Content> contentMap) {
+			return this.contentMap == contentMap ? this : new DummyEntity(this.rootId, this.single, this.contentSet, this.contentList, contentMap, this.contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withContentNoIdList(List<ContentNoId> contentNoIdList) {
+			return this.contentNoIdList == contentNoIdList ? this : new DummyEntity(this.rootId, this.single, this.contentSet, this.contentList, this.contentMap, contentNoIdList, this.embedded);
+		}
+
+		public DummyEntity withEmbedded(ContentNoId embedded) {
+			return this.embedded == embedded ? this : new DummyEntity(this.rootId, this.single, this.contentSet, this.contentList, this.contentMap, this.contentNoIdList, embedded);
+		}
 	}
 
-	@Value
-	@With
-	@AllArgsConstructor
-	private static class Content {
+	private static final class Content {
 
-		@Id Integer id;
-		Tag single;
-		Set<Tag> tagSet;
-		List<Tag> tagList;
-		Map<String, Tag> tagMap;
+		@Id
+		private final
+		Integer id;
+		private final Tag single;
+		private final Set<Tag> tagSet;
+		private final List<Tag> tagList;
+		private final Map<String, Tag> tagMap;
 
 		Content() {
 
@@ -474,16 +592,105 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 			tagList = emptyList();
 			tagMap = emptyMap();
 		}
+
+		public Content(Integer id, Tag single, Set<Tag> tagSet, List<Tag> tagList, Map<String, Tag> tagMap) {
+			this.id = id;
+			this.single = single;
+			this.tagSet = tagSet;
+			this.tagList = tagList;
+			this.tagMap = tagMap;
+		}
+
+		public Integer getId() {
+			return this.id;
+		}
+
+		public Tag getSingle() {
+			return this.single;
+		}
+
+		public Set<Tag> getTagSet() {
+			return this.tagSet;
+		}
+
+		public List<Tag> getTagList() {
+			return this.tagList;
+		}
+
+		public Map<String, Tag> getTagMap() {
+			return this.tagMap;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Content)) return false;
+			final Content other = (Content) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$single = this.getSingle();
+			final Object other$single = other.getSingle();
+			if (this$single == null ? other$single != null : !this$single.equals(other$single)) return false;
+			final Object this$tagSet = this.getTagSet();
+			final Object other$tagSet = other.getTagSet();
+			if (this$tagSet == null ? other$tagSet != null : !this$tagSet.equals(other$tagSet)) return false;
+			final Object this$tagList = this.getTagList();
+			final Object other$tagList = other.getTagList();
+			if (this$tagList == null ? other$tagList != null : !this$tagList.equals(other$tagList)) return false;
+			final Object this$tagMap = this.getTagMap();
+			final Object other$tagMap = other.getTagMap();
+			if (this$tagMap == null ? other$tagMap != null : !this$tagMap.equals(other$tagMap)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $single = this.getSingle();
+			result = result * PRIME + ($single == null ? 43 : $single.hashCode());
+			final Object $tagSet = this.getTagSet();
+			result = result * PRIME + ($tagSet == null ? 43 : $tagSet.hashCode());
+			final Object $tagList = this.getTagList();
+			result = result * PRIME + ($tagList == null ? 43 : $tagList.hashCode());
+			final Object $tagMap = this.getTagMap();
+			result = result * PRIME + ($tagMap == null ? 43 : $tagMap.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "AggregateChangeIdGenerationImmutableUnitTests.Content(id=" + this.getId() + ", single=" + this.getSingle() + ", tagSet=" + this.getTagSet() + ", tagList=" + this.getTagList() + ", tagMap=" + this.getTagMap() + ")";
+		}
+
+		public Content withId(Integer id) {
+			return this.id == id ? this : new Content(id, this.single, this.tagSet, this.tagList, this.tagMap);
+		}
+
+		public Content withSingle(Tag single) {
+			return this.single == single ? this : new Content(this.id, single, this.tagSet, this.tagList, this.tagMap);
+		}
+
+		public Content withTagSet(Set<Tag> tagSet) {
+			return this.tagSet == tagSet ? this : new Content(this.id, this.single, tagSet, this.tagList, this.tagMap);
+		}
+
+		public Content withTagList(List<Tag> tagList) {
+			return this.tagList == tagList ? this : new Content(this.id, this.single, this.tagSet, tagList, this.tagMap);
+		}
+
+		public Content withTagMap(Map<String, Tag> tagMap) {
+			return this.tagMap == tagMap ? this : new Content(this.id, this.single, this.tagSet, this.tagList, tagMap);
+		}
 	}
 
-	@Value
-	@With
-	@AllArgsConstructor
-	private static class ContentNoId {
-		@Column("single") Tag single;
-		Set<Tag> tagSet;
-		List<Tag> tagList;
-		Map<String, Tag> tagMap;
+	private static final class ContentNoId {
+		@Column("single")
+		private final
+		Tag single;
+		private final Set<Tag> tagSet;
+		private final List<Tag> tagList;
+		private final Map<String, Tag> tagMap;
 
 		ContentNoId() {
 
@@ -492,20 +699,143 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 			tagList = emptyList();
 			tagMap = emptyMap();
 		}
+
+		public ContentNoId(Tag single, Set<Tag> tagSet, List<Tag> tagList, Map<String, Tag> tagMap) {
+			this.single = single;
+			this.tagSet = tagSet;
+			this.tagList = tagList;
+			this.tagMap = tagMap;
+		}
+
+		public Tag getSingle() {
+			return this.single;
+		}
+
+		public Set<Tag> getTagSet() {
+			return this.tagSet;
+		}
+
+		public List<Tag> getTagList() {
+			return this.tagList;
+		}
+
+		public Map<String, Tag> getTagMap() {
+			return this.tagMap;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof ContentNoId)) return false;
+			final ContentNoId other = (ContentNoId) o;
+			final Object this$single = this.getSingle();
+			final Object other$single = other.getSingle();
+			if (this$single == null ? other$single != null : !this$single.equals(other$single)) return false;
+			final Object this$tagSet = this.getTagSet();
+			final Object other$tagSet = other.getTagSet();
+			if (this$tagSet == null ? other$tagSet != null : !this$tagSet.equals(other$tagSet)) return false;
+			final Object this$tagList = this.getTagList();
+			final Object other$tagList = other.getTagList();
+			if (this$tagList == null ? other$tagList != null : !this$tagList.equals(other$tagList)) return false;
+			final Object this$tagMap = this.getTagMap();
+			final Object other$tagMap = other.getTagMap();
+			if (this$tagMap == null ? other$tagMap != null : !this$tagMap.equals(other$tagMap)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $single = this.getSingle();
+			result = result * PRIME + ($single == null ? 43 : $single.hashCode());
+			final Object $tagSet = this.getTagSet();
+			result = result * PRIME + ($tagSet == null ? 43 : $tagSet.hashCode());
+			final Object $tagList = this.getTagList();
+			result = result * PRIME + ($tagList == null ? 43 : $tagList.hashCode());
+			final Object $tagMap = this.getTagMap();
+			result = result * PRIME + ($tagMap == null ? 43 : $tagMap.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "AggregateChangeIdGenerationImmutableUnitTests.ContentNoId(single=" + this.getSingle() + ", tagSet=" + this.getTagSet() + ", tagList=" + this.getTagList() + ", tagMap=" + this.getTagMap() + ")";
+		}
+
+		public ContentNoId withSingle(Tag single) {
+			return this.single == single ? this : new ContentNoId(single, this.tagSet, this.tagList, this.tagMap);
+		}
+
+		public ContentNoId withTagSet(Set<Tag> tagSet) {
+			return this.tagSet == tagSet ? this : new ContentNoId(this.single, tagSet, this.tagList, this.tagMap);
+		}
+
+		public ContentNoId withTagList(List<Tag> tagList) {
+			return this.tagList == tagList ? this : new ContentNoId(this.single, this.tagSet, tagList, this.tagMap);
+		}
+
+		public ContentNoId withTagMap(Map<String, Tag> tagMap) {
+			return this.tagMap == tagMap ? this : new ContentNoId(this.single, this.tagSet, this.tagList, tagMap);
+		}
 	}
 
-	@Value
-	@With
-	@AllArgsConstructor
-	private static class Tag {
+	private static final class Tag {
 
-		@Id Integer id;
+		@Id
+		private final
+		Integer id;
 
-		String name;
+		private final String name;
 
 		Tag(String name) {
 			id = null;
 			this.name = name;
+		}
+
+		public Tag(Integer id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public Integer getId() {
+			return this.id;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public boolean equals(final Object o) {
+			if (o == this) return true;
+			if (!(o instanceof Tag)) return false;
+			final Tag other = (Tag) o;
+			final Object this$id = this.getId();
+			final Object other$id = other.getId();
+			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			final Object this$name = this.getName();
+			final Object other$name = other.getName();
+			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.getId();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.getName();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "AggregateChangeIdGenerationImmutableUnitTests.Tag(id=" + this.getId() + ", name=" + this.getName() + ")";
+		}
+
+		public Tag withId(Integer id) {
+			return this.id == id ? this : new Tag(id, this.name);
+		}
+
+		public Tag withName(String name) {
+			return this.name == name ? this : new Tag(this.id, name);
 		}
 	}
 }

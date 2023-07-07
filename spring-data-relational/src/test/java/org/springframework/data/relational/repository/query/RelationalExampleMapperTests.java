@@ -16,17 +16,6 @@
 
 package org.springframework.data.relational.repository.query;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.ExampleMatcher.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
-import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Objects;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
@@ -34,6 +23,13 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.query.Query;
+
+import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
+import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
 
 /**
  * Verify that the {@link RelationalExampleMapper} properly turns {@link Example}s into {@link Query}'s.
@@ -422,19 +418,55 @@ public class RelationalExampleMapperTests {
 						"(secret = 'I have the ring!')");
 	}
 
-	@Data
-	@AllArgsConstructor
-	@NoArgsConstructor
 	static class Person {
 
-		@Id String id;
+		@Id
+		String id;
 		String firstname;
 		String lastname;
 		String secret;
 
+		public Person(String id, String firstname, String lastname, String secret) {
+			this.id = id;
+			this.firstname = firstname;
+			this.lastname = lastname;
+			this.secret = secret;
+		}
+
+		public Person() {
+		}
+
 		// Override default visibility of getting the secret.
 		private String getSecret() {
 			return this.secret;
+		}
+
+		public String getId() {
+			return this.id;
+		}
+
+		public String getFirstname() {
+			return this.firstname;
+		}
+
+		public String getLastname() {
+			return this.lastname;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public void setFirstname(String firstname) {
+			this.firstname = firstname;
+		}
+
+		public void setLastname(String lastname) {
+			this.lastname = lastname;
+		}
+
+		public void setSecret(String secret) {
+			this.secret = secret;
 		}
 	}
 }

@@ -35,8 +35,6 @@ import io.r2dbc.postgresql.codec.Polygon;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.ConnectionFactory;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -46,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import javax.sql.DataSource;
@@ -224,7 +223,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
 
-					assertThat(actual.getInterval()).isEqualTo(entityWithInterval.interval);
+					assertThat(actual.interval).isEqualTo(entityWithInterval.interval);
 				}).verifyComplete();
 	}
 
@@ -257,8 +256,8 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 					CompletableFuture<byte[]> cf = Mono.from(actual.byteBlob.stream()).map(Unpooled::wrappedBuffer)
 							.map(ByteBufUtil::getBytes).toFuture();
-					assertThat(actual.getByteArray()).isEqualTo(content);
-					assertThat(getBytes(Unpooled.wrappedBuffer(actual.getByteBuffer()))).isEqualTo(content);
+					assertThat(actual.byteArray).isEqualTo(content);
+					assertThat(getBytes(Unpooled.wrappedBuffer(actual.byteBuffer))).isEqualTo(content);
 					assertThat(cf.join()).isEqualTo(content);
 				}).verifyComplete();
 
@@ -278,21 +277,23 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 					CompletableFuture<byte[]> cf = Mono.from(actual.byteBlob.stream()).map(Unpooled::wrappedBuffer)
 							.map(ByteBufUtil::getBytes).toFuture();
-					assertThat(actual.getByteArray()).isEqualTo("foo".getBytes(StandardCharsets.UTF_8));
-					assertThat(getBytes(Unpooled.wrappedBuffer(actual.getByteBuffer()))).isEqualTo(content);
+					assertThat(actual.byteArray).isEqualTo("foo".getBytes(StandardCharsets.UTF_8));
+					assertThat(getBytes(Unpooled.wrappedBuffer(actual.byteBuffer))).isEqualTo(content);
 					assertThat(cf.join()).isEqualTo(content);
 				}).verifyComplete();
 	}
 
-	@Data
-	@AllArgsConstructor
 	static class EntityWithEnum {
 		@Id long id;
 		State myState;
+
+		public EntityWithEnum(long id, State myState) {
+			this.id = id;
+			this.myState = myState;
+		}
 	}
 
 	@Table("with_arrays")
-	@AllArgsConstructor
 	static class EntityWithArrays {
 
 		@Id Integer id;
@@ -300,9 +301,17 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		int[] primitiveArray;
 		int[][] multidimensionalArray;
 		List<Integer> collectionArray;
+
+		public EntityWithArrays(Integer id, Integer[] boxedArray, int[] primitiveArray, int[][] multidimensionalArray,
+				List<Integer> collectionArray) {
+			this.id = id;
+			this.boxedArray = boxedArray;
+			this.primitiveArray = primitiveArray;
+			this.multidimensionalArray = multidimensionalArray;
+			this.collectionArray = collectionArray;
+		}
 	}
 
-	@Data
 	static class GeoType {
 
 		@Id Integer id;
@@ -319,9 +328,21 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		org.springframework.data.geo.Circle springDataCircle;
 		org.springframework.data.geo.Point springDataPoint;
 		org.springframework.data.geo.Polygon springDataPolygon;
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			GeoType geoType = (GeoType) o;
+			return Objects.equals(id, geoType.id) && Objects.equals(thePoint, geoType.thePoint) && Objects.equals(theBox, geoType.theBox) && Objects.equals(theCircle, geoType.theCircle) && Objects.equals(theLine, geoType.theLine) && Objects.equals(theLseg, geoType.theLseg) && Objects.equals(thePath, geoType.thePath) && Objects.equals(thePolygon, geoType.thePolygon) && Objects.equals(springDataBox, geoType.springDataBox) && Objects.equals(springDataCircle, geoType.springDataCircle) && Objects.equals(springDataPoint, geoType.springDataPoint) && Objects.equals(springDataPolygon, geoType.springDataPolygon);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id, thePoint, theBox, theCircle, theLine, theLseg, thePath, thePolygon, springDataBox, springDataCircle, springDataPoint, springDataPolygon);
+		}
 	}
 
-	@Data
 	@Table("with_interval")
 	static class EntityWithInterval {
 
@@ -331,7 +352,6 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	}
 
-	@Data
 	@Table("with_blobs")
 	static class WithBlobs {
 
@@ -342,5 +362,4 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		Blob byteBlob;
 
 	}
-
 }
