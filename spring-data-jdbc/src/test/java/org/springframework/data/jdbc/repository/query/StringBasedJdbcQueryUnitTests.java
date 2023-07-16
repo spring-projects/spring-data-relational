@@ -17,12 +17,19 @@ package org.springframework.data.jdbc.repository.query;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -50,11 +57,14 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.ReflectionUtils;
+
+import lombok.Getter;
 
 /**
  * Unit tests for {@link StringBasedJdbcQuery}.
@@ -231,6 +241,33 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(1);
 	}
 
+	@Test
+	void convertMapAndJavaBeanParameter() {
+		JdbcQueryMethod queryMethod = createMethod("queryMethodWithQueryParameters", Map.class, PageInfo.class);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class));
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+
+		Map<String, Object> queryParams = new HashMap<>(1);
+		queryParams.put("status", "BLOCKED");
+
+		PageInfo pageInfo = new PageInfo(5L, 15);
+
+		query.execute(new Object[] { queryParams, pageInfo });
+
+		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+		verify(operations).queryForObject(anyString(), captor.capture(), any(RowMapper.class));
+
+		SqlParameterSource sqlParameterSource = captor.getValue();
+		assertTrue(sqlParameterSource.hasValue("queryParams.status"));
+		assertEquals(queryParams.get("status"), sqlParameterSource.getValue("queryParams.status"));
+		assertTrue(sqlParameterSource.hasValue("page.size"));
+		assertEquals(pageInfo.getSize(), sqlParameterSource.getValue("page.size"));
+		assertTrue(sqlParameterSource.hasValue("page.pageNumber"));
+		assertEquals(pageInfo.getPageNumber(), sqlParameterSource.getValue("page.pageNumber"));
+		assertTrue(sqlParameterSource.hasValue("page.offset"));
+		assertEquals(pageInfo.getOffset(), sqlParameterSource.getValue("page.offset"));
+	}
+
 	private JdbcQueryMethod createMethod(String methodName, Class<?>... paramTypes) {
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, methodName, paramTypes);
@@ -276,6 +313,11 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query(value = "some sql statement")
 		List<Object> findBySimpleValue(Integer value);
+
+		@Query("SELECT something FROM table_name WHERE status = queryParams.status LIMIT page.size OFFSET page.offset")
+		List<Object> queryMethodWithQueryParameters(
+				@Multiparameter Map<String, ?> queryParams,
+				@Param("page") @Multiparameter PageInfo pageInfo);
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
@@ -362,6 +404,18 @@ class StringBasedJdbcQueryUnitTests {
 
 		Long getId() {
 			return id;
+		}
+	}
+
+	@Getter
+	private static class PageInfo {
+		private final long pageNumber;
+		private final int size;
+		private final long offset;
+		public PageInfo(long pageNumber, int size) {
+			this.pageNumber = pageNumber;
+			this.size = size;
+			this.offset = (pageNumber - 1) * size;
 		}
 	}
 }

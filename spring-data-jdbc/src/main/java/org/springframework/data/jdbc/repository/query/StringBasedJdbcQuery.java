@@ -18,12 +18,15 @@ package org.springframework.data.jdbc.repository.query;
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
@@ -39,12 +42,14 @@ import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -58,6 +63,7 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Chirag Tailor
+ * @author Zhou Xingyii
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -162,43 +168,67 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
-		RelationalParameters.RelationalParameter parameter = queryMethod.getParameters().getParameter(p.getIndex());
-		ResolvableType resolvableType = parameter.getResolvableType();
-		Class<?> type = resolvableType.resolve();
-		Assert.notNull(type, "@Query parameter type could not be resolved!");
+		final Field methodParameterField = ReflectionUtils.findField(Parameter.class, "parameter", MethodParameter.class);
+		Assert.state(methodParameterField != null, "MethodParameter must not be null");
+		ReflectionUtils.makeAccessible(methodParameterField);
+		final MethodParameter methodParameter = (MethodParameter) ReflectionUtils.getField(methodParameterField, p);
+		if (methodParameter != null && methodParameter.hasParameterAnnotation(Multiparameter.class)) {
+			if (value instanceof Map<?, ?>) {
+				final Map<?, ?> m = (Map<?, ?>) value;
+				m.forEach((propertyName, v) -> parameters.addValue(parameterName + '.' + propertyName, v));
+			} else {
+				final BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(value);
+				for (String propertyName : parameterSource.getParameterNames()) {
+					final String newParameterName = parameterName + '.' + propertyName;
+					final Object parameterValue = parameterSource.getValue(propertyName);
+					final int sqlType = parameterSource.getSqlType(propertyName);
+					final String typeName = parameterSource.getTypeName(propertyName);
+					if (typeName == null) {
+						parameters.addValue(newParameterName, parameterValue, sqlType);
+					} else {
+						parameters.addValue(newParameterName, parameterValue, sqlType, typeName);
+					}
+				}
+			}
+		} else {
+			RelationalParameters.RelationalParameter parameter = queryMethod.getParameters().getParameter(p.getIndex());
+			ResolvableType resolvableType = parameter.getResolvableType();
+			Class<?> type = resolvableType.resolve();
+			Assert.notNull(type, "@Query parameter type could not be resolved!");
 
-		JdbcValue jdbcValue;
-		if (value instanceof Iterable) {
+			JdbcValue jdbcValue;
+			if (value instanceof Iterable) {
 
-			List<Object> mapped = new ArrayList<>();
-			SQLType jdbcType = null;
+				List<Object> mapped = new ArrayList<>();
+				SQLType jdbcType = null;
 
-			Class<?> elementType = resolvableType.getGeneric(0).resolve();
+				Class<?> elementType = resolvableType.getGeneric(0).resolve();
 
-			Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved!");
+				Assert.notNull(elementType, "@Query Iterable parameter generic type could not be resolved!");
 
-			for (Object o : (Iterable<?>) value) {
-				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,
-						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
-				if (jdbcType == null) {
-					jdbcType = elementJdbcValue.getJdbcType();
+				for (Object o : (Iterable<?>) value) {
+					JdbcValue elementJdbcValue = converter.writeJdbcValue(o, elementType,
+							JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(elementType)));
+					if (jdbcType == null) {
+						jdbcType = elementJdbcValue.getJdbcType();
+					}
+
+					mapped.add(elementJdbcValue.getValue());
 				}
 
-				mapped.add(elementJdbcValue.getValue());
+				jdbcValue = JdbcValue.of(mapped, jdbcType);
+			} else {
+				jdbcValue = converter.writeJdbcValue(value, type,
+						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(type)));
 			}
 
-			jdbcValue = JdbcValue.of(mapped, jdbcType);
-		} else {
-			jdbcValue = converter.writeJdbcValue(value, type,
-					JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(type)));
-		}
+			SQLType jdbcType = jdbcValue.getJdbcType();
+			if (jdbcType == null) {
 
-		SQLType jdbcType = jdbcValue.getJdbcType();
-		if (jdbcType == null) {
-
-			parameters.addValue(parameterName, jdbcValue.getValue());
-		} else {
-			parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
+				parameters.addValue(parameterName, jdbcValue.getValue());
+			} else {
+				parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
+			}
 		}
 	}
 
