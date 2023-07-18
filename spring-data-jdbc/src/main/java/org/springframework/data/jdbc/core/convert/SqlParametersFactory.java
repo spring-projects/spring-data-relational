@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
-import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -86,7 +85,6 @@ public class SqlParametersFactory {
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
 		if (IdValueSource.PROVIDED.equals(idValueSource)) {
-
 			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 			Object idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
@@ -165,41 +163,25 @@ public class SqlParametersFactory {
 		return parameterSource;
 	}
 
-	/**
-	 * Utility to create {@link Predicate}s.
-	 */
-	static class Predicates {
-
-		/**
-		 * Include all {@link Predicate} returning {@literal false} to never skip a property.
-		 *
-		 * @return the include all {@link Predicate}.
-		 */
-		static Predicate<RelationalPersistentProperty> includeAll() {
-			return it -> false;
-		}
-	}
-
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, converter.getColumnType(property),
-				converter.getTargetSqlType(property));
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
 			Class<?> javaType) {
 
-		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.targetSqlTypeFor(javaType));
+		addConvertedValue(parameterSource, value, name, javaType);
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
-			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
+			SqlIdentifier paramName, Class<?> javaType) {
 
-		JdbcValue jdbcValue = converter.writeJdbcValue( //
-				value, //
-				javaType, //
-				sqlType //
+		JdbcValue jdbcValue = converter.createJdbcValue(
+				value,
+				javaType.isArray() ? javaType.getComponentType() : null,
+				javaType
 		);
 
 		parameterSource.addValue( //
@@ -241,7 +223,8 @@ public class SqlParametersFactory {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
-		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
+		PersistentPropertyAccessor<S> propertyAccessor = instance != null
+				? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
 		persistentEntity.doWithAll(property -> {
@@ -249,6 +232,7 @@ public class SqlParametersFactory {
 			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
 			}
+
 			if (property.isEntity() && !property.isEmbedded()) {
 				return;
 			}

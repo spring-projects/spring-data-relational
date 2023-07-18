@@ -48,6 +48,7 @@ import org.springframework.data.util.TypeInformation;
  * Unit tests for {@link BasicJdbcConverter}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class BasicJdbcConverterUnitTests {
 
@@ -283,6 +284,11 @@ public class BasicJdbcConverterUnitTests {
 		public Array createArray(Object[] value) {
 			arraySource = value;
 			return mock(Array.class);
+		}
+
+		@Override
+		public Array createArray(Object[] value, Class<?> componentsGenericType) {
+			return this.createArray(value);
 		}
 	}
 }

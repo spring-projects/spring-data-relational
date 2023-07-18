@@ -62,7 +62,7 @@ import org.springframework.util.ClassUtils;
 public class BasicRelationalConverter implements RelationalConverter {
 
 	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
-	private final ConfigurableConversionService conversionService;
+	protected final ConfigurableConversionService conversionService;
 	private final EntityInstantiators entityInstantiators;
 	private final CustomConversions conversions;
 
@@ -111,7 +111,15 @@ public class BasicRelationalConverter implements RelationalConverter {
 		return conversionService;
 	}
 
+	/**
+	 * @deprecated user {@link #getUserDefinedConversions()} instead
+	 */
+	@Deprecated(forRemoval = true, since = "3.1")
 	public CustomConversions getConversions() {
+		return getUserDefinedConversions();
+	}
+
+	public CustomConversions getUserDefinedConversions() {
 		return conversions;
 	}
 
@@ -163,7 +171,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return null;
 		}
 
-		if (getConversions().isSimpleType(value.getClass())) {
+		if (getUserDefinedConversions().isSimpleType(value.getClass())) {
 
 			if (TypeInformation.OBJECT != type) {
 
@@ -229,7 +237,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
 	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(Object value) {
+	protected Object getPotentiallyConvertedSimpleWrite(Object value) {
 
 		Optional<Class<?>> customTarget = conversions.getCustomWriteTarget(value.getClass());
 

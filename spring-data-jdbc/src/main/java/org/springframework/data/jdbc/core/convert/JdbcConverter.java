@@ -23,7 +23,7 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -31,6 +31,8 @@ import org.springframework.lang.Nullable;
  * versa.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public interface JdbcConverter extends RelationalConverter {
@@ -46,6 +48,23 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @since 2.4
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, SQLType sqlType);
+
+	/**
+	 * Determine the {@link SQLType} of the particular {@code value}. Implements the algorithm:
+	 * <p>
+	 * 1. Get the raw class of the column - value.getClass()
+	 * 2. If custom converter present, apply custom converter to convert to another java type
+	 * 3. Then mapping of java type to {@link SQLType}
+	 *
+	 * @param value - the value for which the {@link SQLType} should be determined
+	 * @param javaType - generic type of the provided value, if value is parametrized. If value is not
+	 *                 parametrized, then {@code null}
+	 * @param originalValueType - class of provided {@code value}
+	 * @throws IllegalArgumentException if the passed value is collection-like, or embedded, or association, or an entity.
+	 *                                  The point is - this method will accept <b>only</b> single column values by design.
+	 * @return the determined {@link SQLType} of column value
+	 */
+	JdbcValue createJdbcValue(@Nullable Object value, @Nullable Class<?> javaType, @NonNull Class<?> originalValueType) throws IllegalArgumentException;
 
 	/**
 	 * Read the current row from {@link ResultSet} to an {@link RelationalPersistentEntity#getType() entity}.

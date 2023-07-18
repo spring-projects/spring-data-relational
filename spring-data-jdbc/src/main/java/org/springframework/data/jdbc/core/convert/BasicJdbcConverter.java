@@ -20,12 +20,12 @@ import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLType;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -52,6 +52,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -66,6 +67,8 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
+ *
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -77,7 +80,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcTypeFactory typeFactory;
-	private final IdentifierProcessing identifierProcessing;
 
 	private final RelationResolver relationResolver;
 	private SpELContext spELContext;
@@ -101,7 +103,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
 
 		this.typeFactory = JdbcTypeFactory.unsupported();
-		this.identifierProcessing = IdentifierProcessing.ANSI;
 		this.relationResolver = relationResolver;
 		this.spELContext = new SpELContext(ResultSetAccessorPropertyAccessor.INSTANCE);
 	}
@@ -127,7 +128,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
 
 		this.typeFactory = typeFactory;
-		this.identifierProcessing = identifierProcessing;
 		this.relationResolver = relationResolver;
 		this.spELContext = new SpELContext(ResultSetAccessorPropertyAccessor.INSTANCE);
 	}
@@ -251,14 +251,109 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return true;
 		}
 
-		Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(value.getClass());
+		Optional<Class<?>> customWriteTarget = getUserDefinedConversions().getCustomWriteTarget(value.getClass());
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
+	}
+
+	@Override
+	@NonNull
+	public JdbcValue createJdbcValue(@Nullable Object value, @Nullable Class<?> genericValueType, @NonNull Class<?> originalValueType) throws IllegalArgumentException {
+
+		if (value == null) {
+			return JdbcValue.of(null, JdbcUtil.targetSqlTypeFor(originalValueType));
+		}
+
+		Object potentiallyConvertedValue = getPotentiallyConvertedSimpleWrite(value);
+
+		if (potentiallyConvertedValue == null) {
+			return JdbcValue.of(null, JdbcUtil.targetSqlTypeFor(originalValueType));
+		}
+
+		if (potentiallyConvertedValue instanceof JdbcValue finalResultNoNeedAnyFurtherConversions) {
+			return finalResultNoNeedAnyFurtherConversions;
+		}
+
+		if (potentiallyConvertedValue instanceof AggregateReference aggregateReference) {
+			return createJdbcValue(
+					aggregateReference.getId(),
+			null,
+					aggregateReference.getId() == null ? Object.class : aggregateReference.getId().getClass()
+			);
+		}
+
+		if (potentiallyConvertedValue != value) {
+			return extractJdbcValueAfterConversionApplied(potentiallyConvertedValue);
+		} else {
+			return extractJdbcValueWithoutConversion(genericValueType, potentiallyConvertedValue);
+		}
+	}
+
+	private JdbcValue extractJdbcValueWithoutConversion(@Nullable Class<?> genericValueType, Object originalValue) {
+
+		if (originalValue instanceof Collection<?> valueAsCollection) {
+
+			Assert.notNull(genericValueType, "Generic value type cannot be null is value is a collection");
+
+			Object[] array = (Object[]) java.lang.reflect.Array.newInstance(genericValueType, valueAsCollection.size());
+
+			int index = 0;
+
+			for (Object o : valueAsCollection) {
+				array[index++] = o;
+			}
+
+			originalValue = array;
+		}
+
+		if (originalValue.getClass().isArray()) {
+
+			Assert.notNull(genericValueType, "Generic value type cannot be null if value is an array");
+
+			Object[] objectArray = requireObjectArray(originalValue);
+
+			return createSqlArrayJdbcValue(objectArray, genericValueType);
+		}
+
+		return JdbcValue.of(originalValue, JdbcUtil.targetSqlTypeFor(originalValue.getClass()));
+	}
+
+	private JdbcValue extractJdbcValueAfterConversionApplied(Object convertedValue) {
+
+		if (convertedValue instanceof Collection<?> valueAsCollection) {
+			convertedValue = valueAsCollection.toArray();
+		}
+
+		if (convertedValue.getClass().isArray()) {
+			Object[] valueAsArray = requireObjectArray(convertedValue);
+			return createSqlArrayJdbcValue(valueAsArray, valueAsArray.getClass().getComponentType());
+		}
+
+		return JdbcValue.of(convertedValue, JdbcUtil.targetSqlTypeFor(convertedValue.getClass()));
+	}
+
+	private JdbcValue createSqlArrayJdbcValue(Object[] valueAsArray, Class<?> genericValueType) {
+		if (genericValueType != byte.class && genericValueType != Byte.class) {
+			return JdbcValue.of(typeFactory.createArray(valueAsArray, genericValueType), JDBCType.ARRAY);
+		}
+
+		if (genericValueType == Byte.class) {
+			byte[] finalValue = new byte[valueAsArray.length];
+
+			for (int i = 0; i < valueAsArray.length; i++) {
+				finalValue[i] = (byte) valueAsArray[i];
+			}
+
+			return JdbcValue.of(finalValue, JDBCType.BINARY);
+		}
+
+		return JdbcValue.of(valueAsArray, JDBCType.BINARY);
 	}
 
 	@Override
 	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
+
 		if (jdbcValue != null) {
 			return jdbcValue;
 		}
