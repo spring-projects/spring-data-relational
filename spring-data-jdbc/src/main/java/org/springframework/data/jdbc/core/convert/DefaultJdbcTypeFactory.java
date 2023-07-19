@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.Array;
 import java.sql.SQLType;
 
-import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.Assert;
@@ -66,9 +65,9 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 		Assert.notNull(value, "Value must not be null");
 
 		Class<?> componentType = arrayColumns.getArrayType(value.getClass());
+		SQLType jdbcType = arrayColumns.getSqlType(componentType);
 
-		SQLType jdbcType = JdbcUtil.targetSqlTypeFor(componentType);
-		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
+		Assert.notNull(jdbcType, () -> String.format("Couldn't determine SQLType for %s", componentType));
 		String typeName = arrayColumns.getArrayTypeName(jdbcType);
 
 		return operations.execute((ConnectionCallback<Array>) c -> c.createArrayOf(typeName, value));
