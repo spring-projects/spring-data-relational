@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.aot;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
@@ -63,7 +62,5 @@ class JdbcRuntimeHints implements RuntimeHintsRegistrar {
 		for (Class<?> simpleType : JdbcPostgresDialect.INSTANCE.simpleTypes()) {
 			hints.reflection().registerType(TypeReference.of(simpleType), MemberCategory.PUBLIC_CLASSES);
 		}
-
-		hints.reflection().registerType(TypeReference.of(UUID.class.getName()), MemberCategory.PUBLIC_CLASSES);
 	}
 }
