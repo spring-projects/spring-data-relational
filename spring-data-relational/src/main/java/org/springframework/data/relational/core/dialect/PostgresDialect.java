@@ -15,13 +15,15 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import java.util.Arrays;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.rmi.server.UID;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -32,7 +34,6 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
-import org.springframework.util.ClassUtils;
 
 /**
  * An SQL dialect for Postgres.
@@ -49,6 +50,9 @@ public class PostgresDialect extends AbstractDialect {
 	 * Singleton instance.
 	 */
 	public static final PostgresDialect INSTANCE = new PostgresDialect();
+
+	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UID.class, URL.class, URI.class, InetAddress.class,
+			Map.class);
 
 	protected PostgresDialect() {}
 
@@ -152,32 +156,7 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public Set<Class<?>> simpleTypes() {
-
-		Set<Class<?>> simpleTypes = new HashSet<>();
-		List<String> simpleTypeNames = Arrays.asList( //
-				"org.postgresql.util.PGobject", //
-				"org.postgresql.geometric.PGpoint", //
-				"org.postgresql.geometric.PGbox", //
-				"org.postgresql.geometric.PGcircle", //
-				"org.postgresql.geometric.PGline", //
-				"org.postgresql.geometric.PGpath", //
-				"org.postgresql.geometric.PGpolygon", //
-				"org.postgresql.geometric.PGlseg" //
-		);
-		simpleTypeNames.forEach(name -> ifClassPresent(name, simpleTypes::add));
-		return Collections.unmodifiableSet(simpleTypes);
-	}
-
-	/**
-	 * If the class is present on the class path, invoke the specified consumer {@code action} with the class object,
-	 * otherwise do nothing.
-	 *
-	 * @param action block to be executed if a value is present.
-	 */
-	private static void ifClassPresent(String className, Consumer<Class<?>> action) {
-		if (ClassUtils.isPresent(className, PostgresDialect.class.getClassLoader())) {
-			action.accept(ClassUtils.resolveClassName(className, PostgresDialect.class.getClassLoader()));
-		}
+		return POSTGRES_SIMPLE_TYPES;
 	}
 
 	@Override
