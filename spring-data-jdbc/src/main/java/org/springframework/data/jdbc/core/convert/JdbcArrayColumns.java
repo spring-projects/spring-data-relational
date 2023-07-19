@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.SQLType;
 
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 
 /**
@@ -31,6 +32,17 @@ public interface JdbcArrayColumns extends ArrayColumns {
 	@Override
 	default Class<?> getArrayType(Class<?> userType) {
 		return ArrayColumns.unwrapComponentType(userType);
+	}
+
+	/**
+	 * Determine the {@link SQLType} for a given {@link Class array component type}.
+	 *
+	 * @param componentType component type of the array.
+	 * @return the dialect-supported array type.
+	 * @since 3.1.3
+	 */
+	default SQLType getSqlType(Class<?> componentType) {
+		return JdbcUtil.targetSqlTypeFor(getArrayType(componentType));
 	}
 
 	/**
