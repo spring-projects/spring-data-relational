@@ -23,9 +23,13 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.postgresql.core.Oid;
 import org.postgresql.jdbc.TypeInfoCache;
@@ -46,9 +50,45 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 
 	private static final JdbcPostgresArrayColumns ARRAY_COLUMNS = new JdbcPostgresArrayColumns();
 
+	private static final Set<Class<?>> SIMPLE_TYPES;
+
+	static {
+
+		Set<Class<?>> simpleTypes = new HashSet<>(PostgresDialect.INSTANCE.simpleTypes());
+		List<String> simpleTypeNames = Arrays.asList( //
+				"org.postgresql.util.PGobject", //
+				"org.postgresql.geometric.PGpoint", //
+				"org.postgresql.geometric.PGbox", //
+				"org.postgresql.geometric.PGcircle", //
+				"org.postgresql.geometric.PGline", //
+				"org.postgresql.geometric.PGpath", //
+				"org.postgresql.geometric.PGpolygon", //
+				"org.postgresql.geometric.PGlseg" //
+		);
+		simpleTypeNames.forEach(name -> ifClassPresent(name, simpleTypes::add));
+		SIMPLE_TYPES = Collections.unmodifiableSet(simpleTypes);
+	}
+
+	@Override
+	public Set<Class<?>> simpleTypes() {
+		return SIMPLE_TYPES;
+	}
+
 	@Override
 	public JdbcArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
+	}
+
+	/**
+	 * If the class is present on the class path, invoke the specified consumer {@code action} with the class object,
+	 * otherwise do nothing.
+	 *
+	 * @param action block to be executed if a value is present.
+	 */
+	private static void ifClassPresent(String className, Consumer<Class<?>> action) {
+		if (ClassUtils.isPresent(className, PostgresDialect.class.getClassLoader())) {
+			action.accept(ClassUtils.resolveClassName(className, PostgresDialect.class.getClassLoader()));
+		}
 	}
 
 	static class JdbcPostgresArrayColumns implements JdbcArrayColumns {

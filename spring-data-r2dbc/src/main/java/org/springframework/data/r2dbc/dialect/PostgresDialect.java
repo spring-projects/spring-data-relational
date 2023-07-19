@@ -2,18 +2,13 @@ package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.postgresql.codec.Json;
 
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -51,7 +46,7 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 	static {
 
 		Set<Class<?>> simpleTypes = new HashSet<>(
-				Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class, Map.class));
+				org.springframework.data.relational.core.dialect.PostgresDialect.INSTANCE.simpleTypes());
 
 		// conditional Postgres Geo support.
 		Stream.of("io.r2dbc.postgresql.codec.Box", //
