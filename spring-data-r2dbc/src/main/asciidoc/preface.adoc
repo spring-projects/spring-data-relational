@@ -28,7 +28,7 @@ To use all the features of Spring Data R2DBC, such as the repository support, yo
 
 To learn more about Spring, refer to the comprehensive documentation that explains the Spring Framework in detail.
 There are a lot of articles, blog entries, and books on the subject.
-See the Spring framework https://spring.io/docs[home page] for more information.
+See the Spring framework https://spring.io[home page] for more information.
 
 [[get-started:first-steps:what]]
 == What is R2DBC?
@@ -82,7 +82,7 @@ Whenever feasible, Spring Data adapts transparently to the use of RxJava or anot
 The Spring Data R2DBC 3.x binaries require:
 
 * JDK level 17 and above
-* https://spring.io/docs[Spring Framework] {springVersion} and above
+* {spring-framework-ref}[Spring Framework] {springVersion} and above
 * https://r2dbc.io[R2DBC] {r2dbcVersion} and above
 
 [[get-started:help]]
