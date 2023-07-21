@@ -30,12 +30,12 @@ To leverage all the features of Spring Data JDBC, such as the repository support
 
 To learn more about Spring, you can refer to the comprehensive documentation that explains the Spring Framework in detail.
 There are a lot of articles, blog entries, and books on the subject.
-See the Spring framework https://spring.io/docs[home page] for more information.
+See the Spring framework https://spring.io[home page] for more information.
 
 [[requirements]]
 == Requirements
 
-The Spring Data JDBC binaries require JDK level 8.0 and above and https://spring.io/docs[Spring Framework] {springVersion} and above.
+The Spring Data JDBC binaries require JDK level 8.0 and above and {spring-framework-docs}[Spring Framework] {springVersion} and above.
 
 In terms of databases, Spring Data JDBC requires a <<jdbc.dialects,dialect>> to abstract common SQL functionality over vendor-specific flavours.
 Spring Data JDBC includes direct support for the following databases:
