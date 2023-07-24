@@ -30,10 +30,6 @@ import java.util.UUID;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterFactory;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToOffsetDateTimeConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToStringConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToUuidConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToZonedDateTimeConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.NumberUtils;
 
@@ -42,6 +38,7 @@ import org.springframework.util.NumberUtils;
  *
  * @author Hebert Coelho
  * @author Mark Paluch
+ * @author Valeriy Vyrva
  */
 abstract class R2dbcConverters {
 
@@ -169,66 +166,66 @@ abstract class R2dbcConverters {
 				return (object != null ? NumberUtils.convertNumberToTargetClass((Number) object, this.targetType) : null);
 			}
 		}
-
-		/**
-		 * Simple singleton to convert {@link Row}s to their {@link OffsetDateTime} representation.
-		 *
-		 * @author Hebert Coelho
-		 */
-		public enum RowToOffsetDateTimeConverter implements Converter<Row, OffsetDateTime> {
-
-			INSTANCE;
-
-			@Override
-			public OffsetDateTime convert(Row row) {
-				return row.get(0, OffsetDateTime.class);
-			}
-		}
-
-		/**
-		 * Simple singleton to convert {@link Row}s to their {@link String} representation.
-		 *
-		 * @author Hebert Coelho
-		 */
-		public enum RowToStringConverter implements Converter<Row, String> {
-
-			INSTANCE;
-
-			@Override
-			public String convert(Row row) {
-				return row.get(0, String.class);
-			}
-		}
-
-		/**
-		 * Simple singleton to convert {@link Row}s to their {@link UUID} representation.
-		 *
-		 * @author Hebert Coelho
-		 */
-		public enum RowToUuidConverter implements Converter<Row, UUID> {
-
-			INSTANCE;
-
-			@Override
-			public UUID convert(Row row) {
-				return row.get(0, UUID.class);
-			}
-		}
-
-		/**
-		 * Simple singleton to convert {@link Row}s to their {@link ZonedDateTime} representation.
-		 *
-		 * @author Hebert Coelho
-		 */
-		public enum RowToZonedDateTimeConverter implements Converter<Row, ZonedDateTime> {
-
-			INSTANCE;
-
-			@Override
-			public ZonedDateTime convert(Row row) {
-				return row.get(0, ZonedDateTime.class);
-			}
-		}
-
 	}
+
+	/**
+	 * Simple singleton to convert {@link Row}s to their {@link OffsetDateTime} representation.
+	 *
+	 * @author Hebert Coelho
+	 */
+	public enum RowToOffsetDateTimeConverter implements Converter<Row, OffsetDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public OffsetDateTime convert(Row row) {
+			return row.get(0, OffsetDateTime.class);
+		}
+	}
+
+	/**
+	 * Simple singleton to convert {@link Row}s to their {@link String} representation.
+	 *
+	 * @author Hebert Coelho
+	 */
+	public enum RowToStringConverter implements Converter<Row, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(Row row) {
+			return row.get(0, String.class);
+		}
+	}
+
+	/**
+	 * Simple singleton to convert {@link Row}s to their {@link UUID} representation.
+	 *
+	 * @author Hebert Coelho
+	 */
+	public enum RowToUuidConverter implements Converter<Row, UUID> {
+
+		INSTANCE;
+
+		@Override
+		public UUID convert(Row row) {
+			return row.get(0, UUID.class);
+		}
+	}
+
+	/**
+	 * Simple singleton to convert {@link Row}s to their {@link ZonedDateTime} representation.
+	 *
+	 * @author Hebert Coelho
+	 */
+	public enum RowToZonedDateTimeConverter implements Converter<Row, ZonedDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public ZonedDateTime convert(Row row) {
+			return row.get(0, ZonedDateTime.class);
+		}
+	}
+
 }
