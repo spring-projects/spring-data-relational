@@ -35,16 +35,17 @@ import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToLocalDateConv
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToLocalDateTimeConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToLocalTimeConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToOffsetDateTimeConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToStringConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToUuidConverter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToNumberConverterFactory.RowToZonedDateTimeConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToOffsetDateTimeConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToStringConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToUuidConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToZonedDateTimeConverter;
 
 /**
  * Unit tests for {@link R2dbcConverters}.
  *
  * @author Hebert Coelho
  * @author Mark Paluch
+ * @author Valeriy Vyrva
  */
 public class R2dbcConvertersUnitTests {
 
