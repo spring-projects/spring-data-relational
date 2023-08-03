@@ -224,7 +224,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 	/**
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
-	 * {@link CustomConversions} will be registered with the {@link BasicRelationalConverter} and
+	 * {@link CustomConversions} will be registered with the {@link MappingR2dbcConverter} and
 	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)}. Returns an empty
 	 * {@link R2dbcCustomConversions} instance by default. Override {@link #getCustomConverters()} to supply custom
 	 * converters.

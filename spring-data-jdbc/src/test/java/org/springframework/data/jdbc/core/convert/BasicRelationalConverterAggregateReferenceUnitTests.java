@@ -29,7 +29,7 @@ import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for the handling of {@link AggregateReference}s in the
- * {@link org.springframework.data.relational.core.conversion.BasicRelationalConverter}.
+ * {@link org.springframework.data.jdbc.core.convert.BasicJdbcConverter}.
  *
  * @author Jens Schauder
  */

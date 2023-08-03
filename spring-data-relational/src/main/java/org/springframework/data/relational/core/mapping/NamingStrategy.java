@@ -88,7 +88,7 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * @deprecated use {@link #getReverseColumnName(AggregatePath)} instead.
+	 * @deprecated use {@link #getReverseColumnName(RelationalPersistentEntity)} instead.
 	 */
 	@Deprecated(since = "3.2", forRemoval = true)
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
