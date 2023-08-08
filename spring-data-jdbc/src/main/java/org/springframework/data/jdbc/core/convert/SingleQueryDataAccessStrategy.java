@@ -27,12 +27,12 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
- * A {@link FindingDataAccessStrategy} that uses an {@link AggregateReader} to load entities with a single query.
+ * A {@link ReadingDataAccessStrategy} that uses an {@link AggregateReader} to load entities with a single query.
  * 
  * @since 3.2
  * @author Jens Schauder
  */
-public class SingleQueryDataAccessStrategy implements FindingDataAccessStrategy {
+public class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	private final AggregateReaderFactory readerFactory;
 	private final RelationalMappingContext mappingContext;
 

@@ -33,7 +33,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
-import org.springframework.util.Assert;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.
@@ -98,12 +97,10 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 */
 	private String createSelect(Condition condition) {
 
-		List<Expression> columns = new ArrayList<>();
-
 		AggregatePath rootPath = context.getAggregatePath(aggregate);
 		QueryMeta queryMeta = createInlineQuery(rootPath, condition);
 		InlineQuery rootQuery = queryMeta.inlineQuery;
-		columns.addAll(queryMeta.selectableExpressions);
+		List<Expression> columns = new ArrayList<>(queryMeta.selectableExpressions);
 
 		List<Expression> rownumbers = new ArrayList<>();
 		rownumbers.add(queryMeta.rowNumber);
@@ -147,7 +144,9 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	}
 
 	@NotNull
-	private InlineQuery createMainSelect(List<Expression> columns, AggregatePath rootPath, InlineQuery rootQuery, List<QueryMeta> inlineQueries) {
+	private InlineQuery createMainSelect(List<Expression> columns, AggregatePath rootPath, InlineQuery rootQuery,
+			List<QueryMeta> inlineQueries) {
+
 		SelectBuilder.SelectJoin select = StatementBuilder.select(columns).from(rootQuery);
 
 		select = applyJoins(rootPath, inlineQueries, select);
@@ -155,8 +154,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		SelectBuilder.BuildSelect buildSelect = applyWhereCondition(rootPath, inlineQueries, select);
 		Select mainSelect = buildSelect.build();
 
-		InlineQuery inlineQuery = InlineQuery.create(mainSelect, "main");
-		return inlineQuery;
+		return InlineQuery.create(mainSelect, "main");
 	}
 
 	/**
@@ -171,6 +169,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		List<QueryMeta> inlineQueries = new ArrayList<>();
 
 		for (PersistentPropertyPath ppp : paths) {
+
 			QueryMeta queryMeta = createInlineQuery(context.getAggregatePath(ppp), null);
 			inlineQueries.add(queryMeta);
 		}
@@ -218,12 +217,16 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		String backReferenceAlias = null;
 		String keyAlias = null;
 		if (!basePath.isRoot()) {
+
 			backReferenceAlias = aliases.getBackReferenceAlias(basePath);
 			columns.add(table.column(basePath.getTableInfo().reverseColumnInfo().name()).as(backReferenceAlias));
+
 			if (basePath.isQualified()) {
+
 				keyAlias = aliases.getKeyAlias(basePath);
 				columns.add(table.column(basePath.getTableInfo().qualifierColumnInfo().name()).as(keyAlias));
 			} else {
+
 				String alias = aliases.getColumnAlias(basePath);
 				columns.add(new AliasedExpression(just("1"), alias));
 				columnAliases.add(just(alias));
@@ -320,17 +323,6 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		return selectWhere == null ? (SelectBuilder.SelectOrdered) select : selectWhere;
 	}
 
-	/**
-	 * creates an {@link Expression} referencing the rownumber column for the given {@link AggregatePath}.
-	 * 
-	 * @param path the path for which to return the rownumber column.
-	 * @return the rownumber column.
-	 */
-	private Expression createRowNumberAliasExpression(AggregatePath path) {
-
-		return just(aliases.getRowNumberAlias(path));
-	}
-
 	@Override
 	public AliasFactory getAliasFactory() {
 		return aliases;
@@ -424,9 +416,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		static QueryMeta of(AggregatePath basePath, InlineQuery inlineQuery, Collection<Expression> simpleColumns,
 				Expression id, Expression backReference, Expression key, Expression rowNumber, Expression rowCount) {
 
-			List<Expression> selectableExpressions = new ArrayList<>();
-
-			selectableExpressions.addAll(simpleColumns);
+			List<Expression> selectableExpressions = new ArrayList<>(simpleColumns);
 			selectableExpressions.add(rowNumber);
 
 			if (id != null) {

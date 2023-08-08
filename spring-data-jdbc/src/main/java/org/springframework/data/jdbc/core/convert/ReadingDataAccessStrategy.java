@@ -29,7 +29,7 @@ import org.springframework.lang.Nullable;
  * @since 3.2
  * @author Jens Schauder
  */
-interface FindingDataAccessStrategy {
+interface ReadingDataAccessStrategy {
 	/**
 	 * Loads a single entity identified by type and id.
 	 *

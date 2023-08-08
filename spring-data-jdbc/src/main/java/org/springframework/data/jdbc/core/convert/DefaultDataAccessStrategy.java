@@ -29,7 +29,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -69,7 +68,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final NamedParameterJdbcOperations operations;
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
-	private final FindingDataAccessStrategy singleSelectDelegate;
+	private final ReadingDataAccessStrategy singleSelectDelegate;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy}
