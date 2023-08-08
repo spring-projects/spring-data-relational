@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -52,7 +53,7 @@ import org.springframework.util.Assert;
  * @since 3.2
  * @author Jens Schauder
  */
-class AggregateResultSetExtractor<T> implements org.springframework.jdbc.core.ResultSetExtractor<Iterable<T>> {
+class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> {
 
 	private final RelationalMappingContext context;
 	private final RelationalPersistentEntity<T> rootEntity;
