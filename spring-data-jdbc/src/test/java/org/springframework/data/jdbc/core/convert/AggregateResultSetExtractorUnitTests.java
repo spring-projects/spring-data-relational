@@ -49,7 +49,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 public class AggregateResultSetExtractorUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
-	private final JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+	JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
 
 	private final PathToColumnMapping column = new PathToColumnMapping() {
 		@Override
@@ -136,7 +136,7 @@ public class AggregateResultSetExtractorUnitTests {
 
 	@NotNull
 	private <T> AggregateResultSetExtractor<T> getExtractor(Class<T> type) {
-		return (AggregateResultSetExtractor<T>) new AggregateResultSetExtractor<>(context,
+		return (AggregateResultSetExtractor<T>) new AggregateResultSetExtractor<>(
 				(RelationalPersistentEntity<DummyRecord>) context.getPersistentEntity(type), converter, column);
 	}
 

@@ -35,11 +35,25 @@ import org.springframework.util.Assert;
  */
 public class Functions {
 
+	// Utility constructor.
+	private Functions() {}
+
+	/**
+	 * Creates a new {@code COALESCE} function.
+	 *
+	 * @param expressions expressions to apply {@code COALESCE}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction COALESCE function} for {@code expression}.
+	 * @since 3.2
+	 */
+	public static SimpleFunction coalesce(Expression... expressions) {
+		return SimpleFunction.create("COALESCE", Arrays.asList(expressions));
+	}
+
 	/**
 	 * Creates a new {@code COUNT} function.
 	 *
-	 * @param columns columns to apply count, must not be {@literal null}.
-	 * @return the new {@link SimpleFunction count function} for {@code columns}.
+	 * @param columns columns to apply {@code COUNT}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction COUNT function} for {@code columns}.
 	 */
 	public static SimpleFunction count(Expression... columns) {
 
@@ -49,32 +63,11 @@ public class Functions {
 		return SimpleFunction.create("COUNT", Arrays.asList(columns));
 	}
 
-	public static SimpleFunction least(Expression... expressions) {
-		return SimpleFunction.create("LEAST", Arrays.asList(expressions));
-	}
-
-	/**
-	 * Creates a {@literal GREATEST} function with the given arguments.
-	 * @since 3.2
-	 */
-	public static SimpleFunction greatest(Expression... expressions) {
-		return greatest(Arrays.asList(expressions));
-	}
-
-
-	/**
-	 * Creates a {@literal GREATEST} function with the given arguments.
-	 * @since 3.2
-	 */
-	public static SimpleFunction greatest(List<Expression> list) {
-		return SimpleFunction.create("GREATEST", list);
-	}
-
 	/**
 	 * Creates a new {@code COUNT} function.
 	 *
-	 * @param columns columns to apply count, must not be {@literal null}.
-	 * @return the new {@link SimpleFunction count function} for {@code columns}.
+	 * @param columns columns to apply {@code COUNT}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction COUNT function} for {@code columns}.
 	 */
 	public static SimpleFunction count(Collection<? extends Expression> columns) {
 
@@ -84,24 +77,43 @@ public class Functions {
 	}
 
 	/**
-	 * Creates a new {@code UPPER} function.
+	 * Creates a new {@code GREATEST} function.
 	 *
-	 * @param expression expression to apply count, must not be {@literal null}.
-	 * @return the new {@link SimpleFunction upper function} for {@code expression}.
-	 * @since 2.0
+	 * @param expressions expressions to apply {@code GREATEST}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction GREATEST function} for {@code expression}.
+	 * @since 3.2
 	 */
-	public static SimpleFunction upper(Expression expression) {
+	public static SimpleFunction greatest(Expression... expressions) {
+		return greatest(Arrays.asList(expressions));
+	}
 
-		Assert.notNull(expression, "Expression must not be null");
+	/**
+	 * Creates a new {@code GREATEST} function.
+	 *
+	 * @param expressions expressions to apply {@code GREATEST}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction GREATEST function} for {@code expression}.
+	 * @since 3.2
+	 */
+	public static SimpleFunction greatest(List<? extends Expression> expressions) {
+		return SimpleFunction.create("GREATEST", expressions);
+	}
 
-		return SimpleFunction.create("UPPER", Collections.singletonList(expression));
+	/**
+	 * Creates a new {@code LEAST} function.
+	 *
+	 * @param expressions expressions to apply {@code LEAST}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction LEAST function} for {@code expression}.
+	 * @since 3.2
+	 */
+	public static SimpleFunction least(Expression... expressions) {
+		return SimpleFunction.create("LEAST", Arrays.asList(expressions));
 	}
 
 	/**
 	 * Creates a new {@code LOWER} function.
 	 *
-	 * @param expression expression to apply lower, must not be {@literal null}.
-	 * @return the new {@link SimpleFunction lower function} for {@code expression}.
+	 * @param expression expression to apply {@code LOWER}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction LOWER function} for {@code expression}.
 	 * @since 2.0
 	 */
 	public static SimpleFunction lower(Expression expression) {
@@ -111,10 +123,18 @@ public class Functions {
 		return SimpleFunction.create("LOWER", Collections.singletonList(expression));
 	}
 
-	// Utility constructor.
-	private Functions() {}
+	/**
+	 * Creates a new {@code UPPER} function.
+	 *
+	 * @param expression expression to apply {@code UPPER}, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction UPPER function} for {@code expression}.
+	 * @since 2.0
+	 */
+	public static SimpleFunction upper(Expression expression) {
 
-	public static SimpleFunction coalesce(Expression... expressions) {
-		return SimpleFunction.create("COALESCE", Arrays.asList(expressions));
+		Assert.notNull(expression, "Expression must not be null");
+
+		return SimpleFunction.create("UPPER", Collections.singletonList(expression));
 	}
+
 }

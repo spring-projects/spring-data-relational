@@ -91,28 +91,24 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
 				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
-		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
+
+		DataAccessStrategy defaultDataAccessStrategy = new DataAccessStrategyFactory( //
 				sqlGeneratorSource, //
-				context, //
 				converter, //
 				operations, //
 				sqlParametersFactory, //
 				insertStrategyFactory //
-		);
+		).create();
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
-		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy(
-				defaultDataAccessStrategy);
 		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession,
 				dialect.getIdentifierProcessing());
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
-		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
-				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
-
-		return cascadingDataAccessStrategy;
+		return new CascadingDataAccessStrategy(
+				asList(myBatisDataAccessStrategy, new DelegatingDataAccessStrategy(defaultDataAccessStrategy)));
 	}
 
 	/**

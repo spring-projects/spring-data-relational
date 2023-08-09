@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.relational.core.sqlgeneration;
 
 import java.util.ArrayList;
@@ -36,23 +35,23 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.
- * 
- * @since 3.2
+ *
  * @author Jens Schauder
+ * @since 3.2
  */
 public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	private final RelationalMappingContext context;
 	private final Dialect dialect;
-	private final AliasFactory aliases = new AliasFactory();
-
+	private final AliasFactory aliases;
 	private final RelationalPersistentEntity<?> aggregate;
 	private final Table table;
 
-	public SingleQuerySqlGenerator(RelationalMappingContext context, Dialect dialect,
+	public SingleQuerySqlGenerator(RelationalMappingContext context, AliasFactory aliasFactory, Dialect dialect,
 			RelationalPersistentEntity<?> aggregate) {
 
 		this.context = context;
+		this.aliases = aliasFactory;
 		this.dialect = dialect;
 		this.aggregate = aggregate;
 
@@ -91,7 +90,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	/**
 	 * Creates a SQL suitable of loading all the data required for constructing complete aggregates.
-	 * 
+	 *
 	 * @param condition a constraint for limiting the aggregates to be loaded.
 	 * @return a {@literal  String} containing the generated SQL statement
 	 */
@@ -266,7 +265,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	/**
 	 * Adds joins to a select.
-	 * 
+	 *
 	 * @param rootPath the AggregatePath that gets selected by the select in question.
 	 * @param inlineQueries all the inline queries to added as joins as returned by
 	 *          {@link #createInlineQueries(PersistentPropertyPaths)}
@@ -298,7 +297,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 * <li>if for a given rownumber no matching element is present for a given child the columns for that child are either
 	 * null (when there is no child elements at all) or the values for rownumber 1 are used for that child</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param rootPath path to the root entity that gets selected.
 	 * @param inlineQueries all in the inline queries for all the children, as returned by
 	 *          {@link #createInlineQueries(PersistentPropertyPaths)}
@@ -329,26 +328,9 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	}
 
 	/**
-	 * Constructs a SQL function of the following form
-	 * {@code GREATEST(Coalesce(x1, 1), Coalesce(x2, 1), ..., Coalesce(xN, 1)}. this is used for cobining rownumbers from
-	 * different child tables. The {@code coalesce} is used because the values {@code x1 ... xN} might be {@code null} and
-	 * we want {@code null} to be equivalent with the first entry.
-	 *
-	 * @param expressions the different values to combined.
-	 */
-	private static SimpleFunction greatest(List<Expression> expressions) {
-
-		List<Expression> guarded = new ArrayList<>();
-		for (Expression expression : expressions) {
-			guarded.add(Functions.coalesce(expression, SQL.literalOf(1)));
-		}
-		return Functions.greatest(guarded);
-	}
-
-	/**
 	 * Constructs SQL of the form {@code CASE WHEN x = rn THEN alias ELSE NULL END AS ALIAS}. This expression is used to
 	 * replace values that would appear multiple times in the result with {@code null} values in all but the first
-	 * occurrence. With out this the result for an aggregate root with a single collection item would look like this:
+	 * occurrence. Without this the result for an aggregate root with a single collection item would look like this:
 	 * <table>
 	 * <th>
 	 * <td>root value</td>
@@ -395,11 +377,11 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 *
 	 * @param rowNumberAlias the alias of the rownumber column of the subselect under consideration. This determines if
 	 *          the other value is replaced by null or not.
-	 * @param alias the column potentially to be replace by null
+	 * @param alias the column potentially to be replaced by null
 	 * @return a SQL expression.
 	 */
 	private static Expression filteredColumnExpression(String rowNumberAlias, String alias) {
-		return just("case when " + rowNumberAlias + " = rn THEN " + alias + " else null end as " + alias);
+		return just(String.format("case when %s = rn THEN %s else null end as %s", rowNumberAlias, alias, alias));
 	}
 
 	private static Expression just(String alias) {
@@ -407,6 +389,23 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 			return null;
 		}
 		return Expressions.just(alias);
+	}
+
+	/**
+	 * Constructs a SQL function of the following form
+	 * {@code GREATEST(Coalesce(x1, 1), Coalesce(x2, 1), ..., Coalesce(xN, 1)}. this is used for cobining rownumbers from
+	 * different child tables. The {@code coalesce} is used because the values {@code x1 ... xN} might be {@code null} and
+	 * we want {@code null} to be equivalent with the first entry.
+	 *
+	 * @param expressions the different values to combined.
+	 */
+	private static SimpleFunction greatest(List<Expression> expressions) {
+
+		List<Expression> guarded = new ArrayList<>();
+		for (Expression expression : expressions) {
+			guarded.add(Functions.coalesce(expression, SQL.literalOf(1)));
+		}
+		return Functions.greatest(guarded);
 	}
 
 	record QueryMeta(AggregatePath basePath, InlineQuery inlineQuery, Collection<Expression> simpleColumns,

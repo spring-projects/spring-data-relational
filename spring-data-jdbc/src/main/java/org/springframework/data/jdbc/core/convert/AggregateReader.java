@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.ArrayList;
@@ -24,71 +23,59 @@ import java.util.Map;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
-import org.springframework.data.relational.core.sqlgeneration.CachingSqlGenerator;
 import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGenerator;
+import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
  * and a matching {@link AggregateResultSetExtractor} and invoking a
  * {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}
- * 
+ *
  * @param <T> the type of aggregate produced by this reader.
- * @since 3.2
  * @author Jens Schauder
+ * @since 3.2
  */
 class AggregateReader<T> {
 
-	private final RelationalMappingContext mappingContext;
 	private final RelationalPersistentEntity<T> aggregate;
-	private final AliasFactory aliasFactory;
 	private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
+	private final AggregateResultSetExtractor<T> extractor;
 
-	AggregateReader(RelationalMappingContext mappingContext, Dialect dialect, JdbcConverter converter,
+	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
 			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> aggregate) {
 
-		this.mappingContext = mappingContext;
-
-		this.aggregate = aggregate;
 		this.converter = converter;
+		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
 
-		this.sqlGenerator = new CachingSqlGenerator(new SingleQuerySqlGenerator(mappingContext, dialect, aggregate));
-		this.aliasFactory = sqlGenerator.getAliasFactory();
+		this.sqlGenerator = new CachingSqlGenerator(
+				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate));
+
+		this.extractor = new AggregateResultSetExtractor<>(aggregate, converter, createPathToColumnMapping(aliasFactory));
 	}
 
 	public List<T> findAll() {
 
-		String sql = sqlGenerator.findAll();
-
-		PathToColumnMapping pathToColumn = createPathToColumnMapping(aliasFactory);
-		AggregateResultSetExtractor<T> extractor = new AggregateResultSetExtractor<>(mappingContext, aggregate, converter,
-				pathToColumn);
-
-		Iterable<T> result = jdbcTemplate.query(sql, extractor);
+		Iterable<T> result = jdbcTemplate.query(sqlGenerator.findAll(), extractor);
 
 		Assert.state(result != null, "result is null");
 
 		return (List<T>) result;
 	}
 
+	@Nullable
 	public T findById(Object id) {
-
-		PathToColumnMapping pathToColumn = createPathToColumnMapping(aliasFactory);
-		AggregateResultSetExtractor<T> extractor = new AggregateResultSetExtractor<>(mappingContext, aggregate, converter,
-				pathToColumn);
-
-		String sql = sqlGenerator.findById();
 
 		id = converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation());
 
-		Iterator<T> result = jdbcTemplate.query(sql, Map.of("id", id), extractor).iterator();
+		Iterator<T> result = jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), extractor).iterator();
 
 		T returnValue = result.hasNext() ? result.next() : null;
 
@@ -101,18 +88,12 @@ class AggregateReader<T> {
 
 	public Iterable<T> findAllById(Iterable<?> ids) {
 
-		PathToColumnMapping pathToColumn = createPathToColumnMapping(aliasFactory);
-		AggregateResultSetExtractor<T> extractor = new AggregateResultSetExtractor<>(mappingContext, aggregate, converter,
-				pathToColumn);
-
-		String sql = sqlGenerator.findAllById();
-
 		List<Object> convertedIds = new ArrayList<>();
 		for (Object id : ids) {
 			convertedIds.add(converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation()));
 		}
 
-		return jdbcTemplate.query(sql, Map.of("ids", convertedIds), extractor);
+		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), extractor);
 	}
 
 	private PathToColumnMapping createPathToColumnMapping(AliasFactory aliasFactory) {
@@ -121,7 +102,7 @@ class AggregateReader<T> {
 			public String column(AggregatePath path) {
 
 				String alias = aliasFactory.getColumnAlias(path);
-				Assert.notNull(alias, () -> "alias for >" + path + "<must not be null");
+				Assert.notNull(alias, () -> "alias for >" + path + "< must not be null");
 				return alias;
 			}
 
@@ -130,5 +111,50 @@ class AggregateReader<T> {
 				return aliasFactory.getKeyAlias(path);
 			}
 		};
+	}
+
+	/**
+	 * A wrapper for the {@link org.springframework.data.relational.core.sqlgeneration.SqlGenerator} that caches the
+	 * generated statements.
+	 *
+	 * @since 3.2
+	 * @author Jens Schauder
+	 */
+	static class CachingSqlGenerator implements org.springframework.data.relational.core.sqlgeneration.SqlGenerator {
+
+		private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator delegate;
+
+		private final String findAll;
+		private final String findById;
+		private final String findAllById;
+
+		public CachingSqlGenerator(SqlGenerator delegate) {
+
+			this.delegate = delegate;
+
+			findAll = delegate.findAll();
+			findById = delegate.findById();
+			findAllById = delegate.findAllById();
+		}
+
+		@Override
+		public String findAll() {
+			return findAll;
+		}
+
+		@Override
+		public String findById() {
+			return findById;
+		}
+
+		@Override
+		public String findAllById() {
+			return findAllById;
+		}
+
+		@Override
+		public AliasFactory getAliasFactory() {
+			return delegate.getAliasFactory();
+		}
 	}
 }

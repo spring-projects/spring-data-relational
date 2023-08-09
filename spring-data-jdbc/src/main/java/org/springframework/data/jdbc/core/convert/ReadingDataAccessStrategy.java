@@ -26,10 +26,11 @@ import org.springframework.lang.Nullable;
 /**
  * The finding methods of a {@link DataAccessStrategy}.
  *
- * @since 3.2
  * @author Jens Schauder
+ * @since 3.2
  */
 interface ReadingDataAccessStrategy {
+
 	/**
 	 * Loads a single entity identified by type and id.
 	 *

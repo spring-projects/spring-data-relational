@@ -30,9 +30,9 @@ import org.springframework.util.StringUtils;
 public class SimpleFunction extends AbstractSegment implements Expression {
 
 	private final String functionName;
-	private final List<Expression> expressions;
+	private final List<? extends Expression> expressions;
 
-	private SimpleFunction(String functionName, List<Expression> expressions) {
+	private SimpleFunction(String functionName, List<? extends Expression> expressions) {
 
 		super(expressions.toArray(new Expression[0]));
 
@@ -47,7 +47,7 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 	 * @param expressions zero or many {@link Expression}s, must not be {@literal null}.
 	 * @return
 	 */
-	public static SimpleFunction create(String functionName, List<Expression> expressions) {
+	public static SimpleFunction create(String functionName, List<? extends Expression> expressions) {
 
 		Assert.hasText(functionName, "Function name must not be null or empty");
 		Assert.notNull(expressions, "Expressions name must not be null");
@@ -109,7 +109,7 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 
 		private final SqlIdentifier alias;
 
-		AliasedFunction(String functionName, List<Expression> expressions, SqlIdentifier alias) {
+		AliasedFunction(String functionName, List<? extends Expression> expressions, SqlIdentifier alias) {
 			super(functionName, expressions);
 			this.alias = alias;
 		}

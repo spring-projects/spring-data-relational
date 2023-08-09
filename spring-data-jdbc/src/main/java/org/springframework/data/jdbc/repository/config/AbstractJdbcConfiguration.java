@@ -101,7 +101,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	/**
 	 * Register a {@link JdbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
-	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link org.springframework.data.relational.core.mapping.DefaultNamingStrategy#INSTANCE} as fallback.
+	 * @param namingStrategy optional {@link NamingStrategy}. Use
+	 *          {@link org.springframework.data.relational.core.mapping.DefaultNamingStrategy#INSTANCE} as fallback.
 	 * @param customConversions see {@link #jdbcCustomConversions()}.
 	 * @param jdbcManagedTypes JDBC managed types, typically discovered through {@link #jdbcManagedTypes() an entity
 	 *          scan}.
@@ -204,9 +205,13 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
 			JdbcMappingContext context, Dialect dialect) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
-				jdbcConverter, operations, new SqlParametersFactory(context, jdbcConverter),
+
+		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
+		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
+				new SqlParametersFactory(context, jdbcConverter),
 				new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect));
+
+		return factory.create();
 	}
 
 	/**
