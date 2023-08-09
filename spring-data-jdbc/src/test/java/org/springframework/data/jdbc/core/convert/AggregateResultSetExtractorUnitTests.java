@@ -40,11 +40,13 @@ import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 
 /**
  * Unit tests for the {@link AggregateResultSetExtractor}.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class AggregateResultSetExtractorUnitTests {
 
@@ -73,12 +75,18 @@ public class AggregateResultSetExtractorUnitTests {
 	}
 
 	@Test // GH-1446
-	void singleSimpleEntityGetsExtractedFromSingleRow() {
+	void singleSimpleEntityGetsExtractedFromSingleRow() throws SQLException {
 
 		ResultSet resultSet = ResultSetTestUtil.mockResultSet(asList(column("id1"), column("name")), //
 				1, "Alfred");
 		assertThat(extractor.extractData(resultSet)).extracting(e -> e.id1, e -> e.name)
 				.containsExactly(tuple(1L, "Alfred"));
+
+		resultSet.close();
+
+		RowDocument document = extractor.extractNextDocument(resultSet);
+
+		assertThat(document).containsEntry("id1", 1).containsEntry("name", "Alfred");
 	}
 
 	@Test // GH-1446
@@ -143,13 +151,18 @@ public class AggregateResultSetExtractorUnitTests {
 	@Nested
 	class EmbeddedReference {
 		@Test // GH-1446
-		void embeddedGetsExtractedFromSingleRow() {
+		void embeddedGetsExtractedFromSingleRow() throws SQLException {
 
 			ResultSet resultSet = ResultSetTestUtil.mockResultSet(asList(column("id1"), column("embeddedNullable.dummyName")), //
 					1, "Imani");
 
 			assertThat(extractor.extractData(resultSet)).extracting(e -> e.id1, e -> e.embeddedNullable.dummyName)
 					.containsExactly(tuple(1L, "Imani"));
+
+			resultSet.close();
+
+			RowDocument document = extractor.extractNextDocument(resultSet);
+			assertThat(document).containsEntry("id1", 1).containsEntry("dummy_name", "Imani");
 		}
 
 		@Test // GH-1446

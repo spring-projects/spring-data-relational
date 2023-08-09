@@ -16,6 +16,8 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -38,10 +41,14 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
  * Extracts complete aggregates from a {@link ResultSet}. The {@literal ResultSet} must have a very special structure
@@ -68,8 +75,8 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	 *          column of the {@link ResultSet} that holds the data for that
 	 *          {@link org.springframework.data.relational.core.mapping.AggregatePath}.
 	 */
-	AggregateResultSetExtractor(RelationalPersistentEntity<T> rootEntity,
-			JdbcConverter converter, PathToColumnMapping pathToColumn) {
+	AggregateResultSetExtractor(RelationalPersistentEntity<T> rootEntity, JdbcConverter converter,
+			PathToColumnMapping pathToColumn) {
 
 		Assert.notNull(rootEntity, "rootEntity must not be null");
 		Assert.notNull(converter, "converter must not be null");
@@ -124,6 +131,109 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 			});
 		}
 		return instance;
+	}
+
+	/**
+	 * Reads the next {@link RowDocument} from the {@link ResultSet}. The result set can be pristine (i.e.
+	 * {@link ResultSet#isBeforeFirst()}) or pointing already at a row.
+	 *
+	 * @param resultSet the result set to consume.
+	 * @return a {@link RowDocument}.
+	 * @throws SQLException
+	 * @throws IllegalStateException if the {@link ResultSet#isAfterLast() fully consumed}.
+	 */
+	public RowDocument extractNextDocument(ResultSet resultSet) throws SQLException {
+
+		RowDocument document = new RowDocument();
+		AggregatePath root = context.getAggregatePath(rootEntity);
+
+		if (resultSet.isBeforeFirst()) {
+			resultSet.next();
+		}
+
+		if (resultSet.isAfterLast()) {
+			throw new IllegalStateException("ResultSet is fully consumed");
+		}
+
+		String idColumn = propertyToColumn.column(root.append(rootEntity.getRequiredIdProperty()));
+		int identifierIndex = resultSet.findColumn(idColumn);
+
+		boolean first = true;
+
+		Map<String, Integer> columns = getColumnsInResultSet(resultSet);
+
+		// assignment to a collecting reader that receives a feed of row data and that associates its result into the
+		// corresponding nesting level of a map or list so that the readers are append-only while the result is already in
+		// the right place
+		Map<RelationalPersistentProperty, Reader> readerState = new LinkedHashMap<>();
+
+		do {
+
+			for (RelationalPersistentProperty property : rootEntity) {
+
+				AggregatePath path = root.append(property);
+				if (property.isCollectionLike() || property.isQualified()) {
+					// read segment blocks of the result set
+					// store result under the property name
+				}
+
+				// first row contains the root aggregate
+				if (first) {
+
+					if (property.isEmbedded()) {
+						// read properties of embedded from the result set and store them under their column names
+
+						RelationalPersistentEntity<?> embeddedHolder = context.getRequiredPersistentEntity(property);
+						for (RelationalPersistentProperty embeddedProperty : embeddedHolder) {
+
+							if (embeddedProperty.isQualified() || embeddedProperty.isCollectionLike()
+									|| embeddedProperty.isEntity()) {
+								// hell, no!
+								continue;
+							}
+
+							AggregatePath nested = path.append(embeddedProperty);
+							collectValue(columns, resultSet, nested, document, nested.getColumnInfo().name());
+						}
+					}
+
+					collectValue(columns, resultSet, path, document, property.getColumnName());
+				}
+			}
+
+			first = false;
+		} while (resultSet.next() && resultSet.getObject(identifierIndex) == null);
+
+		return document;
+	}
+
+	private static Map<String, Integer> getColumnsInResultSet(ResultSet resultSet) throws SQLException {
+
+		ResultSetMetaData metaData = resultSet.getMetaData();
+		Map<String, Integer> columns = new LinkedCaseInsensitiveMap<>(metaData.getColumnCount());
+
+		for (int i = 0; i < metaData.getColumnCount(); i++) {
+			columns.put(metaData.getColumnLabel(i + 1), i + 1);
+		}
+		return columns;
+	}
+
+	private void collectValue(Map<String, Integer> columnMap, ResultSet resultSet, AggregatePath source,
+			RowDocument document, SqlIdentifier targetName) throws SQLException {
+
+		String columnLabel = propertyToColumn.column(source);
+		Integer index = columnMap.get(columnLabel);
+
+		if (index == null) {
+			return;
+		}
+
+		Object resultSetValue = JdbcUtils.getResultSetValue(resultSet, index);
+		if (resultSetValue == null) {
+			return;
+		}
+
+		document.put(targetName.getReference(), resultSetValue);
 	}
 
 	/**

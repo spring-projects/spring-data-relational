@@ -15,21 +15,21 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.springframework.util.Assert;
-import org.springframework.util.LinkedCaseInsensitiveMap;
+import static org.mockito.Mockito.*;
 
-import javax.naming.OperationNotSupportedException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import static org.mockito.Mockito.*;
+import javax.naming.OperationNotSupportedException;
+
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.springframework.util.Assert;
+import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
  * Utility for mocking ResultSets for tests.
@@ -54,7 +54,6 @@ class ResultSetTestUtil {
 
 		return mock(ResultSet.class, new ResultSetAnswer(columns, result));
 	}
-
 
 	private static List<Map<String, Object>> convertValues(List<String> columns, Object[] values) {
 
@@ -90,6 +89,10 @@ class ResultSetTestUtil {
 		public Object answer(InvocationOnMock invocation) throws Throwable {
 
 			switch (invocation.getMethod().getName()) {
+				case "close" -> {
+					close();
+					return null;
+				}
 				case "next" -> {
 					return next();
 				}
@@ -111,7 +114,7 @@ class ResultSetTestUtil {
 					return this.toString();
 				}
 				case "findColumn" -> {
-					return isThereAColumnNamed(invocation.getArgument(0));
+					return findColumn(invocation.getArgument(0));
 				}
 				case "getMetaData" -> {
 					return new MockedMetaData();
@@ -120,10 +123,12 @@ class ResultSetTestUtil {
 			}
 		}
 
-		private int isThereAColumnNamed(String name) {
-			throw new UnsupportedOperationException("duh");
-//			Optional<Map<String, Object>> first = values.stream().filter(s -> s.equals(name)).findFirst();
-//			return (first.isPresent()) ? 1 : 0;
+		private int findColumn(String name) {
+			if (names.contains(name)) {
+				return names.indexOf(name) + 1;
+			}
+
+			return -1;
 		}
 
 		private boolean isAfterLast() {
@@ -143,6 +148,12 @@ class ResultSetTestUtil {
 			}
 
 			return rowMap.get(column);
+		}
+
+		private boolean close() {
+
+			index = -1;
+			return index < values.size();
 		}
 
 		private boolean next() {
