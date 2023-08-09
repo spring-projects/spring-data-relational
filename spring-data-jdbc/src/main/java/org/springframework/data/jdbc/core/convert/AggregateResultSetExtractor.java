@@ -68,8 +68,8 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	 *          column of the {@link ResultSet} that holds the data for that
 	 *          {@link org.springframework.data.relational.core.mapping.AggregatePath}.
 	 */
-	AggregateResultSetExtractor(RelationalPersistentEntity<T> rootEntity,
-			JdbcConverter converter, PathToColumnMapping pathToColumn) {
+	AggregateResultSetExtractor(RelationalPersistentEntity<T> rootEntity, JdbcConverter converter,
+			PathToColumnMapping pathToColumn) {
 
 		Assert.notNull(rootEntity, "rootEntity must not be null");
 		Assert.notNull(converter, "converter must not be null");
@@ -125,6 +125,8 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 		}
 		return instance;
 	}
+
+
 
 	/**
 	 * A {@link Reader} is responsible for reading a single entity or collection of entities from a set of columns
