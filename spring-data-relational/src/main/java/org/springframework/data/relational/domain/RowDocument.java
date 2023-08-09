@@ -54,11 +54,11 @@ public class RowDocument implements Map<String, Object> {
 	 * @throws ClassCastException if {@code key} holds a value that is not a {@link List}.
 	 */
 	@Nullable
-	public List<Object> getList(String key) {
+	public List getList(String key) {
 
 		Object item = get(key);
 		if (item instanceof List<?> || item == null) {
-			return (List<Object>) item;
+			return (List) item;
 		}
 
 		throw new ClassCastException(String.format("Cannot cast element %s be cast to List", item));
@@ -128,6 +128,19 @@ public class RowDocument implements Map<String, Object> {
 	@Override
 	public Object put(String key, Object value) {
 		return delegate.put(key, value);
+	}
+
+	/**
+	 * Appends a new entry (or overwrites an existing value at {@code key}).
+	 *
+	 * @param key
+	 * @param value
+	 * @return
+	 */
+	public RowDocument append(String key, Object value) {
+
+		put(key, value);
+		return this;
 	}
 
 	@Override
@@ -238,4 +251,5 @@ public class RowDocument implements Map<String, Object> {
 	public String toString() {
 		return getClass().getSimpleName() + delegate.toString();
 	}
+
 }

@@ -18,16 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 import org.springframework.dao.DataAccessException;
@@ -144,7 +135,6 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	 */
 	public RowDocument extractNextDocument(ResultSet resultSet) throws SQLException {
 
-		RowDocument document = new RowDocument();
 		AggregatePath root = context.getAggregatePath(rootEntity);
 
 		if (resultSet.isBeforeFirst()) {
@@ -158,53 +148,21 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 		String idColumn = propertyToColumn.column(root.append(rootEntity.getRequiredIdProperty()));
 		int identifierIndex = resultSet.findColumn(idColumn);
 
-		boolean first = true;
-
 		Map<String, Integer> columns = getColumnsInResultSet(resultSet);
-
-		// assignment to a collecting reader that receives a feed of row data and that associates its result into the
-		// corresponding nesting level of a map or list so that the readers are append-only while the result is already in
-		// the right place
-		Map<RelationalPersistentProperty, Reader> readerState = new LinkedHashMap<>();
+		RowDocumentReader reader = new RowDocumentReader(columns, rootEntity, root);
+		Object key = resultSet.getObject(identifierIndex);
 
 		do {
+			Object nextKey = resultSet.getObject(identifierIndex);
 
-			for (RelationalPersistentProperty property : rootEntity) {
-
-				AggregatePath path = root.append(property);
-				if (property.isCollectionLike() || property.isQualified()) {
-					// read segment blocks of the result set
-					// store result under the property name
-				}
-
-				// first row contains the root aggregate
-				if (first) {
-
-					if (property.isEmbedded()) {
-						// read properties of embedded from the result set and store them under their column names
-
-						RelationalPersistentEntity<?> embeddedHolder = context.getRequiredPersistentEntity(property);
-						for (RelationalPersistentProperty embeddedProperty : embeddedHolder) {
-
-							if (embeddedProperty.isQualified() || embeddedProperty.isCollectionLike()
-									|| embeddedProperty.isEntity()) {
-								// hell, no!
-								continue;
-							}
-
-							AggregatePath nested = path.append(embeddedProperty);
-							collectValue(columns, resultSet, nested, document, nested.getColumnInfo().name());
-						}
-					}
-
-					collectValue(columns, resultSet, path, document, property.getColumnName());
-				}
+			if (nextKey != null && !nextKey.equals(key)) {
+				break;
 			}
 
-			first = false;
-		} while (resultSet.next() && resultSet.getObject(identifierIndex) == null);
+			reader.read(resultSet);
+		} while (resultSet.next());
 
-		return document;
+		return reader.getResult();
 	}
 
 	private static Map<String, Integer> getColumnsInResultSet(ResultSet resultSet) throws SQLException {
@@ -234,6 +192,306 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 		}
 
 		document.put(targetName.getReference(), resultSetValue);
+	}
+
+	abstract class TabularReader {
+
+		abstract void read(ResultSet row) throws SQLException;
+
+		abstract boolean hasResult();
+
+		abstract Object getResult();
+
+		abstract void reset();
+	}
+
+	interface CollectionContainer {
+
+		void add(Object key, Object value);
+
+		Object get();
+	}
+
+	static class ListContainer implements CollectionContainer {
+
+		private final Map<Number, Object> list = new TreeMap<>(Comparator.comparing(Number::longValue));
+
+		@Override
+		public void add(Object key, Object value) {
+			list.put(((Number) key).intValue() - 1, value);
+		}
+
+		@Override
+		public List<Object> get() {
+
+			List<Object> result = new ArrayList<>(list.size());
+
+			list.forEach((index, o) -> {
+
+				while (result.size() < index.intValue()) {
+					result.add(null);
+				}
+
+				result.add(o);
+			});
+
+			return result;
+		}
+	}
+
+	class RowDocumentReader extends TabularReader {
+
+		private final Map<String, Integer> columnMap;
+
+		private final RelationalPersistentEntity<?> entity;
+		private final AggregatePath basePath;
+		private RowDocument result;
+
+		private final Map<RelationalPersistentProperty, TabularReader> readerState = new LinkedHashMap<>();
+
+		public RowDocumentReader(Map<String, Integer> columnMap, RelationalPersistentEntity<?> entity,
+				AggregatePath basePath) {
+			this.columnMap = columnMap;
+			this.entity = entity;
+			this.basePath = basePath;
+		}
+
+		@Override
+		void read(ResultSet row) throws SQLException {
+
+			boolean first = result == null;
+
+			if (first) {
+				result = new RowDocument();
+			}
+
+			for (RelationalPersistentProperty property : entity) {
+
+				if (first) {
+					AggregatePath path = basePath.append(property);
+
+					if (property.isQualified()) {
+						if (!property.getName().equals("dummyList")) {
+							continue;
+						}
+
+						readerState.put(property, new TabularContainerReader(columnMap, property, path));
+						continue;
+					} else if (property.isEntity() && !property.isEmbedded()) {
+						readerState.put(property,
+								new RowDocumentReader(columnMap, context.getRequiredPersistentEntity(property), path));
+						continue;
+					}
+				}
+
+				// first row contains the root aggregate
+				if (first) {
+
+					AggregatePath path = this.basePath.append(property);
+					if (property.isEmbedded()) {
+						// read properties of embedded from the result set and store them under their column names
+
+						RelationalPersistentEntity<?> embeddedHolder = context.getRequiredPersistentEntity(property);
+						for (RelationalPersistentProperty embeddedProperty : embeddedHolder) {
+
+							if (embeddedProperty.isQualified() || embeddedProperty.isCollectionLike()
+									|| embeddedProperty.isEntity()) {
+								// hell, no!
+								continue;
+							}
+
+							AggregatePath nested = path.append(embeddedProperty);
+							collectValue(columnMap, row, nested, result, nested.getColumnInfo().name());
+						}
+					}
+
+					collectValue(columnMap, row, path, result, property.getColumnName());
+				}
+			}
+
+			for (TabularReader reader : readerState.values()) {
+				reader.read(row);
+			}
+		}
+
+		@Override
+		boolean hasResult() {
+
+			if (result == null) {
+				return false;
+			}
+
+			for (TabularReader value : readerState.values()) {
+				if (value.hasResult()) {
+					return true;
+				}
+			}
+
+			return !result.isEmpty();
+		}
+
+		@Override
+		RowDocument getResult() {
+
+			readerState.forEach((property, reader) -> {
+
+				if (reader.hasResult()) {
+					result.put(property.getColumnName().getReference(), reader.getResult());
+				}
+			});
+
+			return result;
+		}
+
+		@Override
+		void reset() {
+			result = null;
+			readerState.clear();
+		}
+	}
+
+	static class MapContainer implements CollectionContainer {
+
+		private final Map<Object, Object> map = new LinkedHashMap<>();
+
+		@Override
+		public void add(Object key, Object value) {
+			map.put(key, value);
+		}
+
+		@Override
+		public Map<Object, Object> get() {
+			return new LinkedHashMap<>(map);
+		}
+	}
+
+	private class TabularContainerReader extends TabularReader {
+
+		private final Map<String, Integer> columnMap;
+		private final RelationalPersistentProperty property;
+		private final AggregatePath path;
+
+		private final String keyColumn;
+
+		private Object key;
+		private boolean hasResult = false;
+
+		private final CollectionContainer container;
+
+		private final TabularReader componentReader;
+
+		public TabularContainerReader(Map<String, Integer> columnMap, RelationalPersistentProperty property,
+				AggregatePath path) {
+
+			this.columnMap = columnMap;
+			this.property = property;
+			this.path = path;
+			this.keyColumn = propertyToColumn.keyColumn(path);
+			this.componentReader = property.isEntity()
+					? new RowDocumentReader(columnMap, context.getRequiredPersistentEntity(property), path)
+					: new SingleColumnReader(columnMap, propertyToColumn.column(path));
+
+			this.container = property.isMap() ? new MapContainer() : new ListContainer();
+		}
+
+		@Override
+		void read(ResultSet row) throws SQLException {
+
+			if (!columnMap.containsKey(keyColumn)) {
+				return;
+			}
+
+			boolean initial = false;
+			Object key = JdbcUtils.getResultSetValue(row, columnMap.get(keyColumn));
+			if (key == null && !hasResult) {
+				return;
+			}
+
+			boolean keyChange = false;
+
+			if (key != null && !key.equals(this.key)) {
+				keyChange = true;
+			}
+
+			if (!hasResult) {
+				hasResult = true;
+			}
+
+			if (keyChange) {
+				if (componentReader.hasResult()) {
+					container.add(this.key, componentReader.getResult());
+					componentReader.reset();
+				}
+			}
+
+			if (key != null) {
+				this.key = key;
+			}
+
+			this.componentReader.read(row);
+		}
+
+		public boolean hasResult() {
+			return hasResult;
+		}
+
+		public Object getResult() {
+
+			if (componentReader.hasResult()) {
+				container.add(this.key, componentReader.getResult());
+				componentReader.reset();
+			}
+
+			return container.get();
+		}
+
+		@Override
+		void reset() {
+			hasResult = false;
+		}
+	}
+
+	class SingleColumnReader extends TabularReader {
+
+		private final Map<String, Integer> columnMap;
+		private final String columnName;
+
+		private @Nullable Object value;
+
+		public SingleColumnReader(Map<String, Integer> columnMap, String columnName) {
+			this.columnMap = columnMap;
+			this.columnName = columnName;
+		}
+
+		@Override
+		void read(ResultSet row) throws SQLException {
+
+			if (!columnMap.containsKey(columnName)) {
+				return;
+			}
+
+			value = JdbcUtils.getResultSetValue(row, columnMap.get(columnName));
+		}
+
+		@Override
+		boolean hasResult() {
+			return value != null;
+		}
+
+		@Override
+		Object getResult() {
+			return getValue();
+		}
+
+		@Nullable
+		public Object getValue() {
+			return value;
+		}
+
+		@Override
+		void reset() {
+			value = null;
+		}
 	}
 
 	/**

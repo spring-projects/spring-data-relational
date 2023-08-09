@@ -190,7 +190,7 @@ public class AggregateResultSetExtractorUnitTests {
 	@Nested
 	class ToOneRelationships {
 		@Test // GH-1446
-		void entityReferenceGetsExtractedFromSingleRow() {
+		void entityReferenceGetsExtractedFromSingleRow() throws SQLException {
 
 			ResultSet resultSet = ResultSetTestUtil.mockResultSet(
 					asList(column("id1"), column("dummy"), column("dummy.dummyName")), //
@@ -199,6 +199,13 @@ public class AggregateResultSetExtractorUnitTests {
 			assertThat(extractor.extractData(resultSet)) //
 					.extracting(e -> e.id1, e -> e.dummy.dummyName) //
 					.containsExactly(tuple(1L, "Dummy Alfred"));
+
+			resultSet.close();
+
+			RowDocument document = extractor.extractNextDocument(resultSet);
+
+			assertThat(document).containsKey("dummy").containsEntry("dummy",
+					new RowDocument().append("dummy_name", "Dummy Alfred"));
 		}
 
 		@Test // GH-1446
@@ -334,7 +341,7 @@ public class AggregateResultSetExtractorUnitTests {
 	class Lists {
 
 		@Test // GH-1446
-		void extractSingleListReference() {
+		void extractSingleListReference() throws SQLException {
 
 			ResultSet resultSet = ResultSetTestUtil.mockResultSet(
 					asList(column("id1"), column("dummyList", KEY), column("dummyList.dummyName")), //
@@ -347,6 +354,16 @@ public class AggregateResultSetExtractorUnitTests {
 			assertThat(result).extracting(e -> e.id1).containsExactly(1L);
 			assertThat(result.iterator().next().dummyList).extracting(d -> d.dummyName) //
 					.containsExactly("Dummy Alfred", "Dummy Berta", "Dummy Carl");
+
+			resultSet.close();
+
+			RowDocument document = extractor.extractNextDocument(resultSet);
+
+			assertThat(document).containsKey("dummy_list");
+			List<RowDocument> dummy_list = document.getList("dummy_list");
+			assertThat(dummy_list).hasSize(3).contains(new RowDocument().append("dummy_name", "Dummy Alfred"))
+					.contains(new RowDocument().append("dummy_name", "Dummy Berta"))
+					.contains(new RowDocument().append("dummy_name", "Dummy Carl"));
 		}
 
 		@Test // GH-1446
