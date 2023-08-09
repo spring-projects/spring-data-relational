@@ -32,7 +32,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 
 /**
  * Tests for {@link SingleQuerySqlGenerator}.
- * 
+ *
  * @author Jens Schauder
  */
 class SingleQuerySqlGeneratorUnitTests {
@@ -152,7 +152,8 @@ class SingleQuerySqlGeneratorUnitTests {
 							col(trivialsRowNumber), //
 							col(alias("trivials.id")), //
 							col(alias("trivials.name")), //
-							func("greatest", func("coalesce",col(rootRowNumber), lit(1)), func("coalesce",col(trivialsRowNumber), lit(1))), //
+							func("greatest", func("coalesce", col(rootRowNumber), lit(1)),
+									func("coalesce", col(trivialsRowNumber), lit(1))), //
 							col(backref), //
 							col(keyAlias) //
 					).extractWhereClause() //
@@ -210,10 +211,9 @@ class SingleQuerySqlGeneratorUnitTests {
 		private AbstractTestFixture(Class<?> aggregateRootType) {
 
 			this.aggregateRootType = aggregateRootType;
-			this.sqlGenerator = new SingleQuerySqlGenerator(context, dialect,
+			this.sqlGenerator = new SingleQuerySqlGenerator(context, new AliasFactory(), dialect,
 					context.getRequiredPersistentEntity(aggregateRootType));
 			this.aliases = sqlGenerator.getAliasFactory();
-
 		}
 
 		AggregatePath path() {

@@ -27,8 +27,9 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
-import org.springframework.data.relational.core.sqlgeneration.CachingSqlGenerator;
 import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGenerator;
+import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -36,7 +37,7 @@ import org.springframework.util.Assert;
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
  * and a matching {@link AggregateResultSetExtractor} and invoking a
  * {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}
- * 
+ *
  * @param <T> the type of aggregate produced by this reader.
  * @since 3.2
  * @author Jens Schauder
@@ -50,17 +51,17 @@ class AggregateReader<T> {
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
 
-	AggregateReader(RelationalMappingContext mappingContext, Dialect dialect, JdbcConverter converter,
+	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
 			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> aggregate) {
 
-		this.mappingContext = mappingContext;
-
-		this.aggregate = aggregate;
 		this.converter = converter;
+		this.aliasFactory = aliasFactory;
+		this.mappingContext = converter.getMappingContext();
+		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
 
-		this.sqlGenerator = new CachingSqlGenerator(new SingleQuerySqlGenerator(mappingContext, dialect, aggregate));
-		this.aliasFactory = sqlGenerator.getAliasFactory();
+		this.sqlGenerator = new CachingSqlGenerator(
+				new SingleQuerySqlGenerator(mappingContext, aliasFactory, dialect, aggregate));
 	}
 
 	public List<T> findAll() {
@@ -130,5 +131,50 @@ class AggregateReader<T> {
 				return aliasFactory.getKeyAlias(path);
 			}
 		};
+	}
+
+	/**
+	 * A wrapper for the {@link org.springframework.data.relational.core.sqlgeneration.SqlGenerator} that caches the
+	 * generated statements.
+	 *
+	 * @since 3.2
+	 * @author Jens Schauder
+	 */
+	static class CachingSqlGenerator implements org.springframework.data.relational.core.sqlgeneration.SqlGenerator {
+
+		private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator delegate;
+
+		private final Lazy<String> findAll;
+		private final Lazy<String> findById;
+		private final Lazy<String> findAllById;
+
+		public CachingSqlGenerator(SqlGenerator delegate) {
+
+			this.delegate = delegate;
+
+			findAll = Lazy.of(delegate.findAll());
+			findById = Lazy.of(delegate.findById());
+			findAllById = Lazy.of(delegate.findAllById());
+		}
+
+		@Override
+		public String findAll() {
+			return findAll.get();
+		}
+
+		@Override
+		public String findById() {
+			return findById.get();
+		}
+
+		@Override
+		public String findAllById() {
+			return findAllById.get();
+		}
+
+		@Override
+		public AliasFactory getAliasFactory() {
+			return delegate.getAliasFactory();
+		}
 	}
 }

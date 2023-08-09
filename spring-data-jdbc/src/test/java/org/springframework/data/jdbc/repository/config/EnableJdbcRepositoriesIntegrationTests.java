@@ -35,7 +35,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
 import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
@@ -172,9 +172,9 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		DataAccessStrategy defaultDataAccessStrategy(
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
+			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
 					template, new SqlParametersFactory(context, converter),
-					new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
+					new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
 		}
 
 		@Bean

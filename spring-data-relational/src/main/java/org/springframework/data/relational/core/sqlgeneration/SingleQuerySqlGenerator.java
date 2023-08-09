@@ -36,23 +36,23 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.
- * 
- * @since 3.2
+ *
  * @author Jens Schauder
+ * @since 3.2
  */
 public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	private final RelationalMappingContext context;
 	private final Dialect dialect;
-	private final AliasFactory aliases = new AliasFactory();
-
+	private final AliasFactory aliases;
 	private final RelationalPersistentEntity<?> aggregate;
 	private final Table table;
 
-	public SingleQuerySqlGenerator(RelationalMappingContext context, Dialect dialect,
+	public SingleQuerySqlGenerator(RelationalMappingContext context, AliasFactory aliasFactory, Dialect dialect,
 			RelationalPersistentEntity<?> aggregate) {
 
 		this.context = context;
+		this.aliases = aliasFactory;
 		this.dialect = dialect;
 		this.aggregate = aggregate;
 
@@ -91,7 +91,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	/**
 	 * Creates a SQL suitable of loading all the data required for constructing complete aggregates.
-	 * 
+	 *
 	 * @param condition a constraint for limiting the aggregates to be loaded.
 	 * @return a {@literal  String} containing the generated SQL statement
 	 */
@@ -266,7 +266,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	/**
 	 * Adds joins to a select.
-	 * 
+	 *
 	 * @param rootPath the AggregatePath that gets selected by the select in question.
 	 * @param inlineQueries all the inline queries to added as joins as returned by
 	 *          {@link #createInlineQueries(PersistentPropertyPaths)}
@@ -298,7 +298,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 * <li>if for a given rownumber no matching element is present for a given child the columns for that child are either
 	 * null (when there is no child elements at all) or the values for rownumber 1 are used for that child</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param rootPath path to the root entity that gets selected.
 	 * @param inlineQueries all in the inline queries for all the children, as returned by
 	 *          {@link #createInlineQueries(PersistentPropertyPaths)}

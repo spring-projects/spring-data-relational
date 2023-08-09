@@ -24,24 +24,30 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.ConcurrentLruCache;
 
 /**
  * A {@link ReadingDataAccessStrategy} that uses an {@link AggregateReader} to load entities with a single query.
- * 
- * @since 3.2
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 3.2
  */
-public class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
-	private final AggregateReaderFactory readerFactory;
+class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
+
 	private final RelationalMappingContext mappingContext;
+	private final AliasFactory aliasFactory;
+	private final ConcurrentLruCache<RelationalPersistentEntity<?>, AggregateReader<?>> readerCache;
 
-	public SingleQueryDataAccessStrategy(RelationalMappingContext mappingContext, Dialect dialect,
-			JdbcConverter converter, NamedParameterJdbcOperations jdbcTemplate) {
+	public SingleQueryDataAccessStrategy(Dialect dialect, JdbcConverter converter,
+			NamedParameterJdbcOperations jdbcTemplate) {
 
-		this.mappingContext = mappingContext;
-		this.readerFactory = new AggregateReaderFactory(mappingContext, dialect, converter, jdbcTemplate);
-		;
+		this.mappingContext = converter.getMappingContext();
+		this.aliasFactory = new AliasFactory();
+		this.readerCache = new ConcurrentLruCache<>(256,
+				entity -> new AggregateReader<>(dialect, converter, aliasFactory, jdbcTemplate, entity));
 	}
 
 	@Override
@@ -84,10 +90,12 @@ public class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy 
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> AggregateReader<T> getReader(Class<T> domainType) {
 
 		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) mappingContext
 				.getRequiredPersistentEntity(domainType);
-		return readerFactory.createAggregateReaderFor(persistentEntity);
+
+		return (AggregateReader<T>) readerCache.get(persistentEntity);
 	}
 }

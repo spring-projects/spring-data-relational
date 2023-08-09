@@ -52,7 +52,7 @@ class DefaultDataAccessStrategyUnitTests {
 	private InsertStrategyFactory insertStrategyFactory = mock(InsertStrategyFactory.class);
 
 	private JdbcConverter converter;
-	private DefaultDataAccessStrategy accessStrategy;
+	private DataAccessStrategy accessStrategy;
 
 	@BeforeEach
 	void before() {
@@ -61,13 +61,12 @@ class DefaultDataAccessStrategyUnitTests {
 		Dialect dialect = HsqlDbDialect.INSTANCE;
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
-		accessStrategy = new DefaultDataAccessStrategy( //
+		accessStrategy = new DataAccessStrategyFactory( //
 				new SqlGeneratorSource(context, converter, dialect), //
-				context, //
 				converter, //
 				namedJdbcOperations, //
 				sqlParametersFactory, //
-				insertStrategyFactory);
+				insertStrategyFactory).create();
 
 		relationResolver.setDelegate(accessStrategy);
 

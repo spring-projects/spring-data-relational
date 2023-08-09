@@ -102,9 +102,9 @@ public class TestConfiguration {
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect) {
 
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
+		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
 				template, new SqlParametersFactory(context, converter),
-				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
+				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
 	}
 
 	@Bean

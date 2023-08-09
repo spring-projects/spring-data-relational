@@ -42,7 +42,7 @@ import org.springframework.lang.Nullable;
  * @author Chirag Tailor
  * @author Diego Krupitza
  */
-public interface DataAccessStrategy extends RelationResolver {
+public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationResolver {
 
 	/**
 	 * Inserts the data of a single entity. Referenced entities don't get handled.
@@ -238,6 +238,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param <T> the type of the entity.
 	 * @return Might return {@code null}.
 	 */
+	@Override
 	@Nullable
 	<T> T findById(Object id, Class<T> domainType);
 
@@ -248,6 +249,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param <T> the type of entities to load.
 	 * @return Guaranteed to be not {@code null}.
 	 */
+	@Override
 	<T> Iterable<T> findAll(Class<T> domainType);
 
 	/**
@@ -259,6 +261,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param <T> type of entities to load.
 	 * @return the loaded entities. Guaranteed to be not {@code null}.
 	 */
+	@Override
 	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
 	@Override
@@ -274,6 +277,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @return Guaranteed to be not {@code null}.
 	 * @since 2.0
 	 */
+	@Override
 	<T> Iterable<T> findAll(Class<T> domainType, Sort sort);
 
 	/**
@@ -285,6 +289,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @return Guaranteed to be not {@code null}.
 	 * @since 2.0
 	 */
+	@Override
 	<T> Iterable<T> findAll(Class<T> domainType, Pageable pageable);
 
 	/**
@@ -296,6 +301,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
+	@Override
 	<T> Optional<T> findOne(Query query, Class<T> domainType);
 
 	/**
@@ -307,6 +313,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
+	@Override
 	<T> Iterable<T> findAll(Query query, Class<T> domainType);
 
 	/**
@@ -320,6 +327,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @since 3.0
 	 */
+	@Override
 	<T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable);
 
 }

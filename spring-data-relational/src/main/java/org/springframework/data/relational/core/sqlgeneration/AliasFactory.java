@@ -18,13 +18,14 @@ package org.springframework.data.relational.core.sqlgeneration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.AggregatePathTraversal;
 
 /**
  * Creates aliases to be used in SQL generation
- * 
+ *
  * @since 3.2
  * @author Jens Schauder
  */
@@ -35,7 +36,7 @@ public class AliasFactory {
 	private final SingleAliasFactory rowCountAliases = new SingleAliasFactory("rc");
 	private final SingleAliasFactory backReferenceAliases = new SingleAliasFactory("br");
 	private final SingleAliasFactory keyAliases = new SingleAliasFactory("key");
-	private int counter = 0;
+	private final AtomicInteger counter = new AtomicInteger();
 
 	private static String sanitize(String name) {
 		return name.replaceAll("\\W", "");
@@ -78,7 +79,7 @@ public class AliasFactory {
 		}
 
 		private String createName(AggregatePath path) {
-			return prefix + getName(path) + "_" + ++counter;
+			return prefix + getName(path) + "_" + (counter.incrementAndGet());
 		}
 	}
 
