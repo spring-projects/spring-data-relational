@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.relational.core.sqlgeneration;
 
 import java.util.Map;
@@ -26,8 +25,8 @@ import org.springframework.data.relational.core.mapping.AggregatePathTraversal;
 /**
  * Creates aliases to be used in SQL generation
  *
- * @since 3.2
  * @author Jens Schauder
+ * @since 3.2
  */
 public class AliasFactory {
 	private final SingleAliasFactory columnAliases = new SingleAliasFactory("c");

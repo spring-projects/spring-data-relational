@@ -26,8 +26,8 @@ import org.springframework.lang.Nullable;
  * Despite its name not really a {@link ResultSet}, but it offers the part of the {@literal ResultSet} API that is used
  * by {@link AggregateReader}. It allows peeking in the next row of a ResultSet by caching one row of the ResultSet.
  *
- * @since 3.2
  * @author Jens Schauder
+ * @since 3.2
  */
 class CachingResultSet {
 

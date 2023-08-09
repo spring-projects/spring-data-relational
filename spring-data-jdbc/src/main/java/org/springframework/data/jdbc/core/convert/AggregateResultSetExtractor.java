@@ -48,10 +48,10 @@ import org.springframework.util.Assert;
  * which looks somewhat how one would represent an aggregate in a single excel table. The first row contains data of the
  * aggregate root, any single valued reference and the first element of any collection. Following rows do NOT repeat the
  * aggregate root data but contain data of second elements of any collections. For details see accompanying unit tests.
- * 
+ *
  * @param <T> the type of aggregates to extract
- * @since 3.2
  * @author Jens Schauder
+ * @since 3.2
  */
 class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> {
 
@@ -61,8 +61,6 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	private final PathToColumnMapping propertyToColumn;
 
 	/**
-	 * @param context the {@link org.springframework.data.mapping.context.MappingContext} providing the metadata for the
-	 *          aggregate and its entity. Must not be {@literal null}.
 	 * @param rootEntity the aggregate root. Must not be {@literal null}.
 	 * @param converter Used for converting objects from the database to whatever is required by the aggregate. Must not
 	 *          be {@literal null}.
@@ -70,17 +68,16 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	 *          column of the {@link ResultSet} that holds the data for that
 	 *          {@link org.springframework.data.relational.core.mapping.AggregatePath}.
 	 */
-	AggregateResultSetExtractor(RelationalMappingContext context, RelationalPersistentEntity<T> rootEntity,
+	AggregateResultSetExtractor(RelationalPersistentEntity<T> rootEntity,
 			JdbcConverter converter, PathToColumnMapping pathToColumn) {
 
-		Assert.notNull(context, "context must not be null");
 		Assert.notNull(rootEntity, "rootEntity must not be null");
 		Assert.notNull(converter, "converter must not be null");
 		Assert.notNull(pathToColumn, "propertyToColumn must not be null");
 
-		this.context = context;
 		this.rootEntity = rootEntity;
 		this.converter = converter;
+		this.context = converter.getMappingContext();
 		this.propertyToColumn = pathToColumn;
 	}
 
@@ -131,7 +128,7 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 
 	/**
 	 * A {@link Reader} is responsible for reading a single entity or collection of entities from a set of columns
-	 * 
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
@@ -145,14 +142,14 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 		/**
 		 * Checks if this {@literal Reader} has all the data needed for a complete result, or if it needs to read further
 		 * rows.
-		 * 
+		 *
 		 * @return the result of the check.
 		 */
 		boolean hasResult();
 
 		/**
 		 * Constructs the result, returns it and resets the state of the reader to read the next instance.
-		 * 
+		 *
 		 * @return an instance of whatever this {@literal Reader} is supposed to read.
 		 */
 		@Nullable
@@ -161,7 +158,7 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 
 	/**
 	 * Adapts a {@link Map} to the interface of a {@literal Collection<Map.Entry<Object, Object>>}.
-	 * 
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
@@ -221,7 +218,7 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 
 	/**
 	 * A {@link Reader} for reading entities.
-	 * 
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
@@ -315,7 +312,7 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 
 	/**
 	 * A {@link Reader} for reading collections of entities.
-	 * 
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
@@ -413,7 +410,7 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	/**
 	 * A {@link Reader} for reading collection entries. Most of the work is done by an {@link EntityReader}, but a
 	 * additional key column might get read. The result is
-	 * 
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
@@ -459,8 +456,9 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 	}
 
 	/**
-	 * A {@link ParameterValueProvider} that provided the values for an entity from a continues set of rows in a {@link ResultSet}. These might be referenced entities or collections of such entities. {@link ResultSet}.
-	 * 
+	 * A {@link ParameterValueProvider} that provided the values for an entity from a continues set of rows in a
+	 * {@link ResultSet}. These might be referenced entities or collections of such entities. {@link ResultSet}.
+	 *
 	 * @since 3.2
 	 * @author Jens Schauder
 	 */
