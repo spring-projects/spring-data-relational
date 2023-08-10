@@ -146,9 +146,14 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 		}
 
 		String idColumn = propertyToColumn.column(root.append(rootEntity.getRequiredIdProperty()));
-		int identifierIndex = resultSet.findColumn(idColumn);
-
 		Map<String, Integer> columns = getColumnsInResultSet(resultSet);
+		Integer identifierIndex = columns.get(idColumn);
+
+		if (identifierIndex == null) {
+			throw new IllegalStateException(
+					String.format("Cannot find identifier column %s in columns %s", idColumn, columns));
+		}
+
 		RowDocumentReader reader = new RowDocumentReader(columns, rootEntity, root);
 		Object key = resultSet.getObject(identifierIndex);
 
@@ -271,10 +276,6 @@ class AggregateResultSetExtractor<T> implements ResultSetExtractor<Iterable<T>> 
 					AggregatePath path = basePath.append(property);
 
 					if (property.isQualified()) {
-						if (!property.getName().equals("dummyList")) {
-							continue;
-						}
-
 						readerState.put(property, new TabularContainerReader(columnMap, property, path));
 						continue;
 					} else if (property.isEntity() && !property.isEmbedded()) {

@@ -38,7 +38,6 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 
@@ -144,8 +143,8 @@ public class AggregateResultSetExtractorUnitTests {
 
 	@NotNull
 	private <T> AggregateResultSetExtractor<T> getExtractor(Class<T> type) {
-		return (AggregateResultSetExtractor<T>) new AggregateResultSetExtractor<>(
-				(RelationalPersistentEntity<DummyRecord>) context.getPersistentEntity(type), converter, column);
+		return (AggregateResultSetExtractor<T>) new AggregateResultSetExtractor<>(context.getPersistentEntity(type),
+				converter, column);
 	}
 
 	@Nested
@@ -343,43 +342,58 @@ public class AggregateResultSetExtractorUnitTests {
 		@Test // GH-1446
 		void extractSingleListReference() throws SQLException {
 
+			AggregateResultSetExtractor<WithList> extractor = getExtractor(WithList.class);
 			ResultSet resultSet = ResultSetTestUtil.mockResultSet(
-					asList(column("id1"), column("dummyList", KEY), column("dummyList.dummyName")), //
+					asList(column("id", WithList.class), column("people", KEY, WithList.class),
+							column("people.name", WithList.class)), //
 					1, 0, "Dummy Alfred", //
 					1, 1, "Dummy Berta", //
 					1, 2, "Dummy Carl");
 
-			Iterable<SimpleEntity> result = extractor.extractData(resultSet);
+			Iterable<WithList> result = extractor.extractData(resultSet);
 
-			assertThat(result).extracting(e -> e.id1).containsExactly(1L);
-			assertThat(result.iterator().next().dummyList).extracting(d -> d.dummyName) //
+			assertThat(result).extracting(e -> e.id).containsExactly(1L);
+			assertThat(result).flatExtracting(e -> e.people).extracting(e -> e.name) //
 					.containsExactly("Dummy Alfred", "Dummy Berta", "Dummy Carl");
 
 			resultSet.close();
 
 			RowDocument document = extractor.extractNextDocument(resultSet);
 
-			assertThat(document).containsKey("dummy_list");
-			List<RowDocument> dummy_list = document.getList("dummy_list");
-			assertThat(dummy_list).hasSize(3).contains(new RowDocument().append("dummy_name", "Dummy Alfred"))
-					.contains(new RowDocument().append("dummy_name", "Dummy Berta"))
-					.contains(new RowDocument().append("dummy_name", "Dummy Carl"));
+			assertThat(document).containsKey("people");
+			List<RowDocument> dummy_list = document.getList("people");
+			assertThat(dummy_list).hasSize(3).contains(new RowDocument().append("name", "Dummy Alfred"))
+					.contains(new RowDocument().append("name", "Dummy Berta"))
+					.contains(new RowDocument().append("name", "Dummy Carl"));
 		}
 
 		@Test // GH-1446
-		void extractSingleUnorderedListReference() {
+		void extractSingleUnorderedListReference() throws SQLException {
 
+			AggregateResultSetExtractor<WithList> extractor = getExtractor(WithList.class);
 			ResultSet resultSet = ResultSetTestUtil.mockResultSet(
-					asList(column("id1"), column("dummyList", KEY), column("dummyList.dummyName")), //
+					asList(column("id", WithList.class), column("people", KEY, WithList.class),
+							column("people.name", WithList.class)), //
 					1, 0, "Dummy Alfred", //
-					1, 2, "Dummy Carl", 1, 1, "Dummy Berta" //
+					1, 2, "Dummy Carl", //
+					1, 1, "Dummy Berta" //
 			);
 
-			Iterable<SimpleEntity> result = extractor.extractData(resultSet);
+			Iterable<WithList> result = extractor.extractData(resultSet);
 
-			assertThat(result).extracting(e -> e.id1).containsExactly(1L);
-			assertThat(result.iterator().next().dummyList).extracting(d -> d.dummyName) //
+			assertThat(result).extracting(e -> e.id).containsExactly(1L);
+			assertThat(result).flatExtracting(e -> e.people).extracting(e -> e.name) //
 					.containsExactly("Dummy Alfred", "Dummy Berta", "Dummy Carl");
+
+			resultSet.close();
+
+			RowDocument document = extractor.extractNextDocument(resultSet);
+
+			assertThat(document).containsKey("people");
+			List<RowDocument> dummy_list = document.getList("people");
+			assertThat(dummy_list).hasSize(3).contains(new RowDocument().append("name", "Dummy Alfred"))
+					.contains(new RowDocument().append("name", "Dummy Berta"))
+					.contains(new RowDocument().append("name", "Dummy Carl"));
 		}
 
 		@Test // GH-1446
@@ -651,10 +665,18 @@ public class AggregateResultSetExtractorUnitTests {
 		return column(path, NORMAL);
 	}
 
+	private String column(String path, Class<?> entityType) {
+		return column(path, NORMAL, entityType);
+	}
+
 	private String column(String path, ColumnType columnType) {
+		return column(path, columnType, SimpleEntity.class);
+	}
+
+	private String column(String path, ColumnType columnType, Class<?> entityType) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = context.getPersistentPropertyPath(path,
-				SimpleEntity.class);
+				entityType);
 
 		return column(context.getAggregatePath(propertyPath)) + (columnType == KEY ? "_key" : "");
 	}
@@ -665,6 +687,25 @@ public class AggregateResultSetExtractorUnitTests {
 
 	enum ColumnType {
 		NORMAL, KEY
+	}
+
+	private static class Person {
+
+		String name;
+	}
+
+	private static class PersonWithId {
+
+		@Id Long id;
+		String name;
+	}
+
+	private static class WithList {
+
+		@Id long id;
+
+		List<Person> people;
+		List<PersonWithId> peopleWithIds;
 	}
 
 	private static class SimpleEntity {
