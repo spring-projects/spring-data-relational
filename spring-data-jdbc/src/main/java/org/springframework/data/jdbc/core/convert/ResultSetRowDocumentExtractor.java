@@ -1,0 +1,201 @@
+/*
+ * Copyright 2023 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.springframework.data.jdbc.core.convert;
+
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.AggregateContext;
+import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.RowDocumentSink;
+import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.TabularResultAdapter;
+import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.util.LinkedCaseInsensitiveMap;
+
+/**
+ * {@link ResultSet}-driven extractor to extract {@link RowDocument documents}.
+ *
+ * @author Mark Paluch
+ * @since 3.2
+ */
+class ResultSetRowDocumentExtractor {
+
+	private final RelationalMappingContext context;
+	private final PathToColumnMapping propertyToColumn;
+
+	ResultSetRowDocumentExtractor(RelationalMappingContext context, PathToColumnMapping propertyToColumn) {
+		this.context = context;
+		this.propertyToColumn = propertyToColumn;
+	}
+
+	/**
+	 * Adapter to extract values and column metadata from a {@link ResultSet}.
+	 */
+	enum ResultSetAdapter implements TabularResultAdapter<ResultSet> {
+		INSTANCE;
+
+		@Override
+		public Object getObject(ResultSet row, int index) {
+			try {
+				return JdbcUtils.getResultSetValue(row, index);
+			} catch (SQLException e) {
+				throw new DataRetrievalFailureException("Cannot retrieve column " + index + " from ResultSet", e);
+			}
+		}
+
+		@Override
+		public Map<String, Integer> getColumnMap(ResultSet result) {
+
+			try {
+				ResultSetMetaData metaData = result.getMetaData();
+				Map<String, Integer> columns = new LinkedCaseInsensitiveMap<>(metaData.getColumnCount());
+
+				for (int i = 0; i < metaData.getColumnCount(); i++) {
+					columns.put(metaData.getColumnLabel(i + 1), i + 1);
+				}
+				return columns;
+			} catch (SQLException e) {
+				throw new DataRetrievalFailureException("Cannot retrieve ColumnMap from ResultSet", e);
+			}
+		}
+	}
+
+	/**
+	 * Reads the next {@link RowDocument} from the {@link ResultSet}. The result set can be pristine (i.e.
+	 * {@link ResultSet#isBeforeFirst()}) or pointing already at a row.
+	 *
+	 * @param entity entity defining the document structure.
+	 * @param resultSet the result set to consume.
+	 * @return a {@link RowDocument}.
+	 * @throws SQLException
+	 * @throws IllegalStateException if the {@link ResultSet#isAfterLast() fully consumed}.
+	 */
+	public RowDocument extractNextDocument(Class<?> entity, ResultSet resultSet) throws SQLException {
+		return extractNextDocument(context.getRequiredPersistentEntity(entity), resultSet);
+	}
+
+	/**
+	 * Reads the next {@link RowDocument} from the {@link ResultSet}. The result set can be pristine (i.e.
+	 * {@link ResultSet#isBeforeFirst()}) or pointing already at a row.
+	 *
+	 * @param entity entity defining the document structure.
+	 * @param resultSet the result set to consume.
+	 * @return a {@link RowDocument}.
+	 * @throws SQLException
+	 * @throws IllegalStateException if the {@link ResultSet#isAfterLast() fully consumed}.
+	 */
+	public RowDocument extractNextDocument(RelationalPersistentEntity<?> entity, ResultSet resultSet)
+			throws SQLException {
+
+		Iterator<RowDocument> iterator = iterate(entity, resultSet);
+
+		if (!iterator.hasNext()) {
+			throw new IllegalStateException("ResultSet is fully consumed");
+		}
+
+		return iterator.next();
+	}
+
+	/**
+	 * Obtain a {@link Iterator} to retrieve {@link RowDocument documents} from a {@link ResultSet}.
+	 *
+	 * @param entity the entity to determine the document structure.
+	 * @param rs the input result set.
+	 * @return an iterator to consume the {@link ResultSet} as RowDocuments.
+	 * @throws SQLException
+	 */
+	public Iterator<RowDocument> iterate(RelationalPersistentEntity<?> entity, ResultSet rs) throws SQLException {
+		return new RowDocumentIterator(entity, rs);
+	}
+
+	/**
+	 * Iterator implementation that advances through the {@link ResultSet} and feeds its input into a
+	 * {@link org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.RowDocumentSink}.
+	 */
+	private class RowDocumentIterator implements Iterator<RowDocument> {
+
+		private final ResultSet resultSet;
+		private final AggregatePath rootPath;
+		private final RelationalPersistentEntity<?> rootEntity;
+		private final Integer identifierIndex;
+		private final AggregateContext<ResultSet> aggregateContext;
+
+		private final boolean initiallyConsumed;
+		private boolean hasNext;
+
+		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
+
+			ResultSetAdapter adapter = ResultSetAdapter.INSTANCE;
+
+			if (resultSet.isBeforeFirst()) {
+				hasNext = resultSet.next();
+			}
+
+			this.initiallyConsumed = resultSet.isAfterLast();
+			this.rootPath = context.getAggregatePath(entity);
+			this.rootEntity = entity;
+
+			String idColumn = propertyToColumn.column(rootPath.append(entity.getRequiredIdProperty()));
+			Map<String, Integer> columns = adapter.getColumnMap(resultSet);
+			this.aggregateContext = new AggregateContext<>(adapter, context, propertyToColumn, columns);
+
+			this.resultSet = resultSet;
+			this.identifierIndex = columns.get(idColumn);
+		}
+
+		@Override
+		public boolean hasNext() {
+
+			if (initiallyConsumed) {
+				return false;
+			}
+
+			return hasNext;
+		}
+
+		@Override
+		public RowDocument next() {
+
+			RowDocumentSink<ResultSet> reader = new RowDocumentSink<>(aggregateContext, rootEntity, rootPath);
+			Object key = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
+
+			try {
+				do {
+					Object nextKey = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
+
+					if (nextKey != null && !nextKey.equals(key)) {
+						break;
+					}
+
+					reader.accept(resultSet);
+					hasNext = resultSet.next();
+				} while (hasNext);
+			} catch (SQLException e) {
+				throw new DataRetrievalFailureException("Cannot advance ResultSet", e);
+			}
+
+			return reader.getResult();
+		}
+	}
+
+}

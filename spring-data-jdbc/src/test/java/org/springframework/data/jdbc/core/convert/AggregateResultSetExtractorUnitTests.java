@@ -65,6 +65,7 @@ public class AggregateResultSetExtractorUnitTests {
 	};
 
 	AggregateResultSetExtractor<SimpleEntity> extractor = getExtractor(SimpleEntity.class);
+	ResultSetRowDocumentExtractor documentExtractor = new ResultSetRowDocumentExtractor(context, column);
 
 	@Test // GH-1446
 	void emptyResultSetYieldsEmptyResult() throws SQLException {
@@ -83,7 +84,7 @@ public class AggregateResultSetExtractorUnitTests {
 
 		resultSet.close();
 
-		RowDocument document = extractor.extractNextDocument(resultSet);
+		RowDocument document = documentExtractor.extractNextDocument(SimpleEntity.class, resultSet);
 
 		assertThat(document).containsEntry("id1", 1).containsEntry("name", "Alfred");
 	}
@@ -160,7 +161,7 @@ public class AggregateResultSetExtractorUnitTests {
 
 			resultSet.close();
 
-			RowDocument document = extractor.extractNextDocument(resultSet);
+			RowDocument document = documentExtractor.extractNextDocument(SimpleEntity.class, resultSet);
 			assertThat(document).containsEntry("id1", 1).containsEntry("dummy_name", "Imani");
 		}
 
@@ -201,7 +202,7 @@ public class AggregateResultSetExtractorUnitTests {
 
 			resultSet.close();
 
-			RowDocument document = extractor.extractNextDocument(resultSet);
+			RowDocument document = documentExtractor.extractNextDocument(SimpleEntity.class, resultSet);
 
 			assertThat(document).containsKey("dummy").containsEntry("dummy",
 					new RowDocument().append("dummy_name", "Dummy Alfred"));
@@ -357,8 +358,7 @@ public class AggregateResultSetExtractorUnitTests {
 					.containsExactly("Dummy Alfred", "Dummy Berta", "Dummy Carl");
 
 			resultSet.close();
-
-			RowDocument document = extractor.extractNextDocument(resultSet);
+			RowDocument document = documentExtractor.extractNextDocument(WithList.class, resultSet);
 
 			assertThat(document).containsKey("people");
 			List<RowDocument> dummy_list = document.getList("people");
@@ -387,7 +387,7 @@ public class AggregateResultSetExtractorUnitTests {
 
 			resultSet.close();
 
-			RowDocument document = extractor.extractNextDocument(resultSet);
+			RowDocument document = documentExtractor.extractNextDocument(WithList.class, resultSet);
 
 			assertThat(document).containsKey("people");
 			List<RowDocument> dummy_list = document.getList("people");
