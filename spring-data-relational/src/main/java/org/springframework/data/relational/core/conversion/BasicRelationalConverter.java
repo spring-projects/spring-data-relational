@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -165,44 +166,19 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		if (getConversions().isSimpleType(value.getClass())) {
 
-			if (TypeInformation.OBJECT != type) {
-
-				if (conversionService.canConvert(value.getClass(), type.getType())) {
-					value = conversionService.convert(value, type.getType());
-				}
+			if (TypeInformation.OBJECT != type && conversionService.canConvert(value.getClass(), type.getType())) {
+				value = conversionService.convert(value, type.getType());
 			}
 
 			return getPotentiallyConvertedSimpleWrite(value);
 		}
 
-		// TODO: We should add conversion support for arrays, however,
-		// these should consider multi-dimensional arrays as well.
-		if (value.getClass().isArray() //
-				&& !value.getClass().getComponentType().isEnum() //
-				&& (TypeInformation.OBJECT.equals(type) //
-						|| type.isCollectionLike()) //
-		) {
-			return value;
+		if (value.getClass().isArray()) {
+			return writeArray(value, type);
 		}
 
 		if (value instanceof Collection<?>) {
-
-			List<Object> mapped = new ArrayList<>();
-
-			TypeInformation<?> component = TypeInformation.OBJECT;
-			if (type.isCollectionLike() && type.getActualType() != null) {
-				component = type.getRequiredComponentType();
-			}
-
-			for (Object o : (Iterable<?>) value) {
-				mapped.add(writeValue(o, component));
-			}
-
-			if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
-				return mapped;
-			}
-
-			return conversionService.convert(mapped, type.getType());
+			return writeCollection((Iterable<?>) value, type);
 		}
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(value.getClass());
@@ -214,6 +190,57 @@ public class BasicRelationalConverter implements RelationalConverter {
 		}
 
 		return conversionService.convert(value, type.getType());
+	}
+
+	private Object writeArray(Object value, TypeInformation<?> type) {
+
+		Class<?> componentType = value.getClass().getComponentType();
+		Optional<Class<?>> optionalWriteTarget = getConversions().getCustomWriteTarget(componentType);
+
+		if (optionalWriteTarget.isEmpty() && !componentType.isEnum()) {
+			return value;
+		}
+
+		Class<?> customWriteTarget = optionalWriteTarget
+				.orElseGet(() -> componentType.isEnum() ? String.class : componentType);
+
+		// optimization: bypass identity conversion
+		if (customWriteTarget.equals(componentType)) {
+			return value;
+		}
+
+		TypeInformation<?> component = TypeInformation.OBJECT;
+		if (type.isCollectionLike() && type.getActualType() != null) {
+			component = type.getRequiredComponentType();
+		}
+
+		int length = Array.getLength(value);
+		Object target = Array.newInstance(customWriteTarget, length);
+		for (int i = 0; i < length; i++) {
+			Array.set(target, i, writeValue(Array.get(value, i), component));
+		}
+
+		return target;
+	}
+
+	private Object writeCollection(Iterable<?> value, TypeInformation<?> type) {
+
+		List<Object> mapped = new ArrayList<>();
+
+		TypeInformation<?> component = TypeInformation.OBJECT;
+		if (type.isCollectionLike() && type.getActualType() != null) {
+			component = type.getRequiredComponentType();
+		}
+
+		for (Object o : value) {
+			mapped.add(writeValue(o, component));
+		}
+
+		if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
+			return mapped;
+		}
+
+		return conversionService.convert(mapped, type.getType());
 	}
 
 	@Override
