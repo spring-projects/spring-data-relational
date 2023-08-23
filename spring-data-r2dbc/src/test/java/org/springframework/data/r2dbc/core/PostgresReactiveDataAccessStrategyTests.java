@@ -15,15 +15,10 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.data.r2dbc.testing.Assertions.*;
+
 import io.r2dbc.postgresql.codec.Interval;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.r2dbc.convert.EnumWriteSupport;
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,7 +28,18 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.springframework.data.r2dbc.testing.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.r2dbc.convert.EnumWriteSupport;
+import org.springframework.data.r2dbc.core.StatementMapper.InsertSpec;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -56,6 +62,20 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(new int[][] { { 1, 2, 3 }, { 4, 5 } }));
 
 		assertThat(row).withColumn("myarray").hasValueInstanceOf(Integer[][].class);
+	}
+
+	@Test // GH-1593
+	void shouldConvertEnumsCorrectly() {
+
+		StatementMapper mapper = strategy.getStatementMapper();
+		MyEnum[] value = { MyEnum.ONE };
+		InsertSpec insert = mapper.createInsert("table").withColumn("my_col", Parameter.from(value));
+		PreparedOperation<?> mappedObject = mapper.getMappedObject(insert);
+
+		BindTarget bindTarget = mock(BindTarget.class);
+		mappedObject.bindTo(bindTarget);
+
+		verify(bindTarget).bind(0, new String[] { "ONE" });
 	}
 
 	@Test // gh-161

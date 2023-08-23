@@ -17,14 +17,15 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.convert.ConverterBuilder;
+import org.springframework.data.convert.ConverterBuilder.ConverterAware;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -46,8 +47,13 @@ class BasicRelationalConverterUnitTests {
 	@BeforeEach
 	public void before() throws Exception {
 
-		Set<GenericConverter> converters = ConverterBuilder.writing(MyValue.class, String.class, MyValue::foo)
-				.andReading(MyValue::new).getConverters();
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(
+				ConverterBuilder.writing(MyValue.class, String.class, MyValue::foo).andReading(MyValue::new).getConverters());
+
+		ConverterAware converterAware = ConverterBuilder
+				.writing(MySimpleEnum.class, MySimpleEnum.class, Function.identity()).andReading(mySimpleEnum -> mySimpleEnum);
+		converters.addAll(converterAware.getConverters());
 
 		CustomConversions conversions = new CustomConversions(CustomConversions.StoreConversions.NONE, converters);
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
@@ -79,7 +85,23 @@ class BasicRelationalConverterUnitTests {
 		assertThat(result).isEqualTo("ON");
 	}
 
-	@Test // DATAJDBC-235
+	@Test
+	void shouldConvertEnumArrayToStringArray() {
+
+		Object result = converter.writeValue(new MyEnum[] { MyEnum.ON }, TypeInformation.OBJECT);
+
+		assertThat(result).isEqualTo(new String[] { "ON" });
+	}
+
+	@Test // GH-1593
+	void shouldRetainEnumArray() {
+
+		Object result = converter.writeValue(new MySimpleEnum[] { MySimpleEnum.ON }, TypeInformation.OBJECT);
+
+		assertThat(result).isEqualTo(new MySimpleEnum[] { MySimpleEnum.ON });
+	}
+
+	@Test // GH-1593
 	void shouldConvertStringToEnum() {
 
 		Object result = converter.readValue("OFF", TypeInformation.of(MyEnum.class));
@@ -143,6 +165,10 @@ class BasicRelationalConverterUnitTests {
 	}
 
 	enum MyEnum {
+		ON, OFF;
+	}
+
+	enum MySimpleEnum {
 		ON, OFF;
 	}
 }
