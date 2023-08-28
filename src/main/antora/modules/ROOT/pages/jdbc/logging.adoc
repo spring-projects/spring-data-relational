@@ -1,0 +1,8 @@
+[[jdbc.logging]]
+= Logging
+:page-section-summary-toc: 1
+
+Spring Data JDBC does little to no logging on its own.
+Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
+Thus, if you want to inspect what SQL statements are run, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+

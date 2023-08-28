@@ -1,0 +1,273 @@
+[[mapping]]
+= Mapping
+
+Rich mapping support is provided by the `BasicJdbcConverter`. `BasicJdbcConverter` has a rich metadata model that allows mapping domain objects to a data row.
+The mapping metadata model is populated by using annotations on your domain objects.
+However, the infrastructure is not limited to using annotations as the only source of metadata information.
+The `BasicJdbcConverter` also lets you map objects to rows without providing any additional metadata, by following a set of conventions.
+
+This section describes the features of the `BasicJdbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
+
+Read on the basics about xref:object-mapping.adoc[] before continuing with this chapter.
+
+[[mapping.conventions]]
+== Convention-based Mapping
+
+`BasicJdbcConverter` has a few conventions for mapping objects to rows when no additional mapping metadata is provided.
+The conventions are:
+
+* The short Java class name is mapped to the table name in the following manner.
+The `com.bigbank.SavingsAccount` class maps to the `SAVINGS_ACCOUNT` table name.
+The same name mapping is applied for mapping fields to column names.
+For example, the `firstName` field maps to the `FIRST_NAME` column.
+You can control this mapping by providing a custom `NamingStrategy`.
+Table and column names that are derived from property or class names are used in SQL statements without quotes by default.
+You can control this behavior by setting `JdbcMappingContext.setForceQuote(true)`.
+
+* Nested objects are not supported.
+
+* The converter uses any Spring Converters registered with it to override the default mapping of object properties to row columns and values.
+
+* The fields of an object are used to convert to and from columns in the row.
+Public `JavaBean` properties are not used.
+
+* If you have a single non-zero-argument constructor whose constructor argument names match top-level column names of the row, that constructor is used.
+Otherwise, the zero-argument constructor is used.
+If there is more than one non-zero-argument constructor, an exception is thrown.
+
+[[jdbc.entity-persistence.types]]
+== Supported Types in Your Entity
+
+The properties of the following types are currently supported:
+
+* All primitive types and their boxed types (`int`, `float`, `Integer`, `Float`, and so on)
+
+* Enums get mapped to their name.
+
+* `String`
+
+* `java.util.Date`, `java.time.LocalDate`, `java.time.LocalDateTime`, and `java.time.LocalTime`
+
+* Arrays and Collections of the types mentioned above can be mapped to columns of array type if your database supports that.
+
+* Anything your database driver accepts.
+
+* References to other entities.
+They are considered a one-to-one relationship, or an embedded type.
+It is optional for one-to-one relationship entities to have an `id` attribute.
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References].
+Embedded entities do not need an `id`.
+If one is present it gets ignored.
+
+* `Set<some entity>` is considered a one-to-many relationship.
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References].
+
+* `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
+The table of the referenced entity is expected to have two additional columns: One named based on the referencing entity for the foreign key (see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References]) and one with the same name and an additional `_key` suffix for the map key.
+You can change this behavior by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`
+
+* `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
+
+[[jdbc.entity-persistence.types.referenced-entities]]
+=== Referenced Entities
+
+The handling of referenced entities is limited.
+This is based on the idea of aggregate roots as described above.
+If you reference another entity, that entity is, by definition, part of your aggregate.
+So, if you remove the reference, the previously referenced entity gets deleted.
+This also means references are 1-1 or 1-n, but not n-1 or n-m.
+
+If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
+References between those may be encoded as simple `id` values, which map properly with Spring Data JDBC.
+A better way to encode these, is to make them instances of `AggregateReference`.
+An `AggregateReference` is a wrapper around an id value which marks that value as a reference to a different aggregate.
+Also, the type of that aggregate is encoded in a type parameter.
+
+[[jdbc.entity-persistence.types.backrefs]]
+=== Back References
+
+All references in an aggregate result in a foreign key relationship in the opposite direction in the database.
+By default, the name of the foreign key column is the table name of the referencing entity.
+
+Alternatively you may choose to have them named by the entity name of the referencing entity ignoreing `@Table` annotations.
+You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `RelationalMappingContext`.
+
+For `List` and `Map` references an additional column is required for holding the list index or map key.
+It is based on the foreign key column with an additional `_KEY` suffix.
+
+If you want a completely different way of naming these back references you may implement `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` in a way that fits your needs.
+
+.Declaring and setting an `AggregateReference`
+[source,java]
+----
+class Person {
+	@Id long id;
+	AggregateReference<Person, Long> bestFriend;
+}
+
+// ...
+
+Person p1, p2 = // some initialization
+
+p1.bestFriend = AggregateReference.to(p2.id);
+
+----
+
+* Types for which you registered suitable [[jdbc.custom-converters, custom conversions]].
+
+[[jdbc.entity-persistence.naming-strategy]]
+== `NamingStrategy`
+
+When you use the standard implementations of `CrudRepository` that Spring Data JDBC provides, they expect a certain table structure.
+You can tweak that by providing a {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/NamingStrategy.html[`NamingStrategy`] in your application context.
+
+[[jdbc.entity-persistence.custom-table-name]]
+== `Custom table names`
+
+When the NamingStrategy does not matching on your database table names, you can customize the names with the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/Table.html[`@Table`] annotation.
+The element `value` of this annotation provides the custom table name.
+The following example maps the `MyEntity` class to the `CUSTOM_TABLE_NAME` table in the database:
+
+[source,java]
+----
+@Table("CUSTOM_TABLE_NAME")
+class MyEntity {
+    @Id
+    Integer id;
+
+    String name;
+}
+----
+
+[[jdbc.entity-persistence.custom-column-name]]
+== `Custom column names`
+
+When the NamingStrategy does not matching on your database column names, you can customize the names with the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation.
+The element `value` of this annotation provides the custom column name.
+The following example maps the `name` property of the `MyEntity` class to the `CUSTOM_COLUMN_NAME` column in the database:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @Column("CUSTOM_COLUMN_NAME")
+    String name;
+}
+----
+
+The {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`]
+annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship).
+`idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
+In the following example the corresponding table for the `MySubEntity` class has a `NAME` column, and the `CUSTOM_MY_ENTITY_ID_COLUMN_NAME` column of the `MyEntity` id for relationship reasons:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @MappedCollection(idColumn = "CUSTOM_MY_ENTITY_ID_COLUMN_NAME")
+    Set<MySubEntity> subEntities;
+}
+
+class MySubEntity {
+    String name;
+}
+----
+
+When using `List` and `Map` you must have an additional column for the position of a dataset in the `List` or the key value of the entity in the `Map`.
+This additional column name may be customized with the `keyColumn` Element of the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @MappedCollection(idColumn = "CUSTOM_COLUMN_NAME", keyColumn = "CUSTOM_KEY_COLUMN_NAME")
+    List<MySubEntity> name;
+}
+
+class MySubEntity {
+    String name;
+}
+----
+
+[[jdbc.entity-persistence.embedded-entities]]
+== Embedded entities
+
+Embedded entities are used to have value objects in your java data model, even if there is only one table in your database.
+In the following example you see, that `MyEntity` is mapped with the `@Embedded` annotation.
+The consequence of this is, that in the database a table `my_entity` with the two columns `id` and `name` (from the `EmbeddedEntity` class) is expected.
+
+However, if the `name` column is actually `null` within the result set, the entire property `embeddedEntity` will be set to null according to the `onEmpty` of `@Embedded`, which ``null``s objects when all nested properties are `null`. +
+Opposite to this behavior `USE_EMPTY` tries to create a new instance using either a default constructor or one that accepts nullable parameter values from the result set.
+
+.Sample Code of embedding objects
+====
+[source,java]
+----
+class MyEntity {
+
+    @Id
+    Integer id;
+
+    @Embedded(onEmpty = USE_NULL) <1>
+    EmbeddedEntity embeddedEntity;
+}
+
+class EmbeddedEntity {
+    String name;
+}
+----
+
+<1> ``Null``s `embeddedEntity` if `name` in `null`.
+Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value for the `name` property.
+====
+
+If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
+This element represents a prefix and is prepend for each column name in the embedded object.
+
+[TIP]
+====
+Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbosity and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
+
+[source,java]
+----
+class MyEntity {
+
+    @Id
+    Integer id;
+
+    @Embedded.Nullable <1>
+    EmbeddedEntity embeddedEntity;
+}
+----
+
+<1> Shortcut for `@Embedded(onEmpty = USE_NULL)`.
+====
+
+Embedded entities containing a `Collection` or a `Map` will always be considered non empty since they will at least contain the empty collection or map.
+Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
+
+[[jdbc.entity-persistence.read-only-properties]]
+== Read Only Properties
+
+Attributes annotated with `@ReadOnlyProperty` will not be written to the database by Spring Data JDBC, but they will be read when an entity gets loaded.
+
+Spring Data JDBC will not automatically reload an entity after writing it.
+Therefore, you have to reload it explicitly if you want to see data that was generated in the database for such columns.
+
+If the annotated attribute is an entity or collection of entities, it is represented by one or more separate rows in separate tables.
+Spring Data JDBC will not perform any insert, delete or update for these rows.
+
+[[jdbc.entity-persistence.insert-only-properties]]
+== Insert Only Properties
+
+Attributes annotated with `@InsertOnlyProperty` will only be written to the database by Spring Data JDBC during insert operations.
+For updates these properties will be ignored.
+
+`@InsertOnlyProperty` is only supported for the aggregate root.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package org.springframework.data.r2dbc.documentation;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-
-import static org.springframework.data.domain.Sort.*;
+import static org.springframework.data.domain.Sort.by;
 import static org.springframework.data.domain.Sort.Order.*;
 import static org.springframework.data.relational.core.query.Criteria.*;
 import static org.springframework.data.relational.core.query.Query.*;
 import static org.springframework.data.relational.core.query.Update.*;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 
 /**
  * @author Mark Paluch

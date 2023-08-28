@@ -1,0 +1,28 @@
+[[jdbc.locking]]
+= JDBC Locking
+
+Spring Data JDBC supports locking on derived query methods.
+To enable locking on a given derived query method inside a repository, you annotate it with `@Lock`.
+The required value of type `LockMode` offers two values: `PESSIMISTIC_READ` which guarantees that the data you are reading doesn't get modified and `PESSIMISTIC_WRITE` which obtains a lock to modify the data.
+Some databases do not make this distinction.
+In that cases both modes are equivalent of `PESSIMISTIC_WRITE`.
+
+.Using @Lock on derived query method
+[source,java]
+----
+interface UserRepository extends CrudRepository<User, Long> {
+
+  @Lock(LockMode.PESSIMISTIC_READ)
+  List<User> findByLastname(String lastname);
+}
+----
+
+As you can see above, the method `findByLastname(String lastname)` will be executed with a pessimistic read lock. If you are using a databse with the MySQL Dialect this will result for example in the following query:
+
+.Resulting Sql query for MySQL dialect
+[source,sql]
+----
+Select * from user u where u.lastname = lastname LOCK IN SHARE MODE
+----
+
+Alternative to `LockMode.PESSIMISTIC_READ` you can use `LockMode.PESSIMISTIC_WRITE`.

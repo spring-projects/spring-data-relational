@@ -1,0 +1,15 @@
+[[r2dbc.core]]
+= R2DBC Core Support
+:page-section-summary-toc: 1
+
+R2DBC contains a wide range of features:
+
+* Spring configuration support with Java-based `@Configuration` classes for an R2DBC driver instance.
+* `R2dbcEntityTemplate` as central class for entity-bound operations that increases productivity when performing common R2DBC operations with integrated object mapping between rows and POJOs.
+* Feature-rich object mapping integrated with Spring's Conversion Service.
+* Annotation-based mapping metadata that is extensible to support other metadata formats.
+* Automatic implementation of Repository interfaces, including support for custom query methods.
+
+For most tasks, you should use `R2dbcEntityTemplate` or the repository support, which both use the rich mapping functionality.
+`R2dbcEntityTemplate` is the place to look for accessing functionality such as ad-hoc CRUD operations.
+

@@ -1,0 +1,92 @@
+[[jdbc.transactions]]
+= Transactionality
+
+The methods of `CrudRepository` instances are transactional by default.
+For reading operations, the transaction configuration `readOnly` flag is set to `true`.
+All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
+For details, see the Javadoc of link:{spring-data-jdbc-javadoc}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`].
+If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
+
+.Custom transaction configuration for CRUD
+[source,java]
+----
+interface UserRepository extends CrudRepository<User, Long> {
+
+  @Override
+  @Transactional(timeout = 10)
+  List<User> findAll();
+
+  // Further query method declarations
+}
+----
+
+The preceding causes the `findAll()` method to be run with a timeout of 10 seconds and without the `readOnly` flag.
+
+Another way to alter transactional behavior is by using a facade or service implementation that typically covers more than one repository.
+Its purpose is to define transactional boundaries for non-CRUD operations.
+The following example shows how to create such a facade:
+
+.Using a facade to define transactions for multiple repository calls
+[source,java]
+----
+@Service
+public class UserManagementImpl implements UserManagement {
+
+  private final UserRepository userRepository;
+  private final RoleRepository roleRepository;
+
+  UserManagementImpl(UserRepository userRepository,
+    RoleRepository roleRepository) {
+    this.userRepository = userRepository;
+    this.roleRepository = roleRepository;
+  }
+
+  @Transactional
+  public void addRoleToAllUsers(String roleName) {
+
+    Role role = roleRepository.findByName(roleName);
+
+    for (User user : userRepository.findAll()) {
+      user.addRole(role);
+      userRepository.save(user);
+    }
+}
+----
+
+The preceding example causes calls to `addRoleToAllUsers(…)` to run inside a transaction (participating in an existing one or creating a new one if none are already running).
+The transaction configuration for the repositories is neglected, as the outer transaction configuration determines the actual repository to be used.
+Note that you have to explicitly activate `<tx:annotation-driven />` or use `@EnableTransactionManagement` to get annotation-based configuration for facades working.
+Note that the preceding example assumes you use component scanning.
+
+[[jdbc.transaction.query-methods]]
+== Transactional Query Methods
+
+To let your query methods be transactional, use `@Transactional` at the repository interface you define, as the following example shows:
+
+.Using @Transactional at query methods
+[source,java]
+----
+@Transactional(readOnly = true)
+interface UserRepository extends CrudRepository<User, Long> {
+
+  List<User> findByLastname(String lastname);
+
+  @Modifying
+  @Transactional
+  @Query("delete from User u where u.active = false")
+  void deleteInactiveUsers();
+}
+----
+
+Typically, you want the `readOnly` flag to be set to true, because most of the query methods only read data.
+In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation and overrides the transaction configuration.
+Thus, the method is with the `readOnly` flag set to `false`.
+
+NOTE: It is highly recommended to make query methods transactional. These methods might execute more then one query in order to populate an entity.
+Without a common transaction Spring Data JDBC executes the queries in different connections.
+This may put excessive strain on the connection pool and might even lead to dead locks when multiple methods request a fresh connection while holding on to one.
+
+NOTE: It is definitely reasonable to mark read-only queries as such by setting the `readOnly` flag.
+This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction).
+Instead, the `readOnly` flag is propagated as a hint to the underlying JDBC driver for performance optimizations.
+

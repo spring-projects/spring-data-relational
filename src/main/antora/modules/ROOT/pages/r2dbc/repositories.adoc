@@ -1,0 +1,178 @@
+[[r2dbc.repositories]]
+= R2DBC Repositories
+
+[[r2dbc.repositories.intro]]
+This chapter points out the specialties for repository support for R2DBC.
+This builds on the core repository support explained in xref:repositories/introduction.adoc[Working with Spring Data Repositories].
+Before reading this chapter, you should have a sound understanding of the basic concepts explained there.
+
+[[r2dbc.repositories.usage]]
+== Usage
+
+To access domain entities stored in a relational database, you can use our sophisticated repository support that eases implementation quite significantly.
+To do so, create an interface for your repository.
+Consider the following `Person` class:
+
+.Sample Person entity
+[source,java]
+----
+public class Person {
+
+  @Id
+  private Long id;
+  private String firstname;
+  private String lastname;
+
+  // … getters and setters omitted
+}
+----
+
+The following example shows a repository interface for the preceding `Person` class:
+
+.Basic repository interface to persist Person entities
+[source,java]
+----
+public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
+
+  // additional custom query methods go here
+}
+----
+
+To configure R2DBC repositories, you can use the `@EnableR2dbcRepositories` annotation.
+If no base package is configured, the infrastructure scans the package of the annotated configuration class.
+The following example shows how to use Java configuration for a repository:
+
+.Java configuration for repositories
+[source,java]
+----
+@Configuration
+@EnableR2dbcRepositories
+class ApplicationConfig extends AbstractR2dbcConfiguration {
+
+  @Override
+  public ConnectionFactory connectionFactory() {
+    return …
+  }
+}
+----
+
+Because our domain repository extends `ReactiveCrudRepository`, it provides you with reactive CRUD operations to access the entities.
+On top of `ReactiveCrudRepository`, there is also `ReactiveSortingRepository`, which adds additional sorting functionality similar to that of `PagingAndSortingRepository`.
+Working with the repository instance is merely a matter of dependency injecting it into a client.
+Consequently, you can retrieve all `Person` objects with the following code:
+
+.Paging access to Person entities
+[source,java,indent=0]
+----
+include::example$r2dbc/PersonRepositoryTests.java[tags=class]
+----
+
+The preceding example creates an application context with Spring's unit test support, which performs annotation-based dependency injection into test cases.
+Inside the test method, we use the repository to query the database.
+We use `StepVerifier` as a test aid to verify our expectations against the results.
+
+[[r2dbc.entity-persistence.state-detection-strategies]]
+include::{commons}@data-commons::page$is-new-state-detection.adoc[leveloffset=+1]
+
+[[r2dbc.entity-persistence.id-generation]]
+=== ID Generation
+
+Spring Data R2DBC uses the ID to identify entities.
+The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+
+When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
+
+Spring Data R2DBC does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
+That is `0` for primitive types and `null` if the identifier property uses a numeric wrapper type such as `Long`.
+
+One important constraint is that, after saving an entity, the entity must not be new anymore.
+Note that whether an entity is new is part of the entity's state.
+With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
+
+[[r2dbc.optimistic-locking]]
+=== Optimistic Locking
+
+The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to rows with a matching version.
+Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the row in the meantime.
+In that case, an `OptimisticLockingFailureException` is thrown.
+The following example shows these features:
+
+[source,java]
+----
+@Table
+class Person {
+
+  @Id Long id;
+  String firstname;
+  String lastname;
+  @Version Long version;
+}
+
+R2dbcEntityTemplate template = …;
+
+Mono<Person> daenerys = template.insert(new Person("Daenerys"));                      <1>
+
+Person other = template.select(Person.class)
+                 .matching(query(where("id").is(daenerys.getId())))
+                 .first().block();                                                    <2>
+
+daenerys.setLastname("Targaryen");
+template.update(daenerys);                                                            <3>
+
+template.update(other).subscribe(); // emits OptimisticLockingFailureException        <4>
+----
+<1> Initially insert row. `version` is set to `0`.
+<2> Load the just inserted row. `version` is still `0`.
+<3> Update the row with `version = 0`.Set the `lastname` and bump `version` to `1`.
+<4> Try to update the previously loaded row that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
+
+[[projections.resultmapping]]
+==== Result Mapping
+
+A query method returning an Interface- or DTO projection is backed by results produced by the actual query.
+Interface projections generally rely on mapping results onto the domain type first to consider potential `@Column` type mappings and the actual projection proxy uses a potentially partially materialized entity to expose projection data.
+
+Result mapping for DTO projections depends on the actual query type.
+Derived queries use the domain type to map results, and Spring Data creates DTO instances solely from properties available on the domain type.
+Declaring properties in your DTO that are not available on the domain type is not supported.
+
+String-based queries use a different approach since the actual query, specifically the field projection, and result type declaration are close together.
+DTO projections used with query methods annotated with `@Query` map query results directly into the DTO type.
+Field mappings on the domain type are not considered.
+Using the DTO type directly, your query method can benefit from a more dynamic projection that isn't restricted to the domain model.
+
+[[r2dbc.multiple-databases]]
+== Working with multiple Databases
+
+When working with multiple, potentially different databases, your application will require a different approach to configuration.
+The provided `AbstractR2dbcConfiguration` support class assumes a single `ConnectionFactory` from which the `Dialect` gets derived.
+That being said, you need to define a few beans yourself to configure Spring Data R2DBC to work with multiple databases.
+
+R2DBC repositories require `R2dbcEntityOperations` to implement repositories.
+A simple configuration to scan for repositories without using `AbstractR2dbcConfiguration` looks like:
+
+[source,java]
+----
+@Configuration
+@EnableR2dbcRepositories(basePackages = "com.acme.mysql", entityOperationsRef = "mysqlR2dbcEntityOperations")
+static class MySQLConfiguration {
+
+    @Bean
+    @Qualifier("mysql")
+    public ConnectionFactory mysqlConnectionFactory() {
+        return …
+    }
+
+    @Bean
+    public R2dbcEntityOperations mysqlR2dbcEntityOperations(@Qualifier("mysql") ConnectionFactory connectionFactory) {
+
+        DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+        return new R2dbcEntityTemplate(databaseClient, MySqlDialect.INSTANCE);
+    }
+}
+----
+
+Note that `@EnableR2dbcRepositories` allows configuration either through `databaseClientRef` or `entityOperationsRef`.
+Using various `DatabaseClient` beans is useful when connecting to multiple databases of the same type.
+When using different database systems that differ in their dialect, use `@EnableR2dbcRepositories`(entityOperationsRef = …)` instead.

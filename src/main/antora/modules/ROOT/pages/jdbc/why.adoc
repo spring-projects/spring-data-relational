@@ -1,0 +1,31 @@
+[[jdbc.why]]
+= Why Spring Data JDBC?
+
+The main persistence API for relational databases in the Java world is certainly JPA, which has its own Spring Data module.
+Why is there another one?
+
+JPA does a lot of things in order to help the developer.
+Among other things, it tracks changes to entities.
+It does lazy loading for you.
+It lets you map a wide array of object constructs to an equally wide array of database designs.
+
+This is great and makes a lot of things really easy.
+Just take a look at a basic JPA tutorial.
+But it often gets really confusing as to why JPA does a certain thing.
+Also, things that are really simple conceptually get rather difficult with JPA.
+
+Spring Data JDBC aims to be much simpler conceptually, by embracing the following design decisions:
+
+* If you load an entity, SQL statements get run.
+Once this is done, you have a completely loaded entity.
+No lazy loading or caching is done.
+
+* If you save an entity, it gets saved.
+If you do not, it does not.
+There is no dirty tracking and no session.
+
+* There is a simple model of how to map entities to tables.
+It probably only works for rather simple cases.
+If you do not like that, you should code your own strategy.
+Spring Data JDBC offers only very limited support for customizing the strategy with annotations.
+

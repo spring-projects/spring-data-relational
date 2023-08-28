@@ -1,0 +1,120 @@
+[[jdbc.mybatis]]
+= MyBatis Integration
+
+The CRUD operations and query methods can be delegated to MyBatis.
+This section describes how to configure Spring Data JDBC to integrate with MyBatis and which conventions to follow to hand over the running of the queries as well as the mapping to the library.
+
+[[jdbc.mybatis.configuration]]
+== Configuration
+
+The easiest way to properly plug MyBatis into Spring Data JDBC is by importing `MyBatisJdbcConfiguration` into you application configuration:
+
+[source,java]
+----
+@Configuration
+@EnableJdbcRepositories
+@Import(MyBatisJdbcConfiguration.class)
+class Application {
+
+  @Bean
+  SqlSessionFactoryBean sqlSessionFactoryBean() {
+    // Configure MyBatis here
+  }
+}
+----
+
+As you can see, all you need to declare is a `SqlSessionFactoryBean` as `MyBatisJdbcConfiguration` relies on a `SqlSession` bean to be available in the `ApplicationContext` eventually.
+
+[[jdbc.mybatis.conventions]]
+== Usage conventions
+
+For each operation in `CrudRepository`, Spring Data JDBC runs multiple statements.
+If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, Spring Data checks, for each step, whether the `SessionFactory` offers a statement.
+If one is found, that statement (including its configured mapping to an entity) is used.
+
+The name of the statement is constructed by concatenating the fully qualified name of the entity type with `Mapper.` and a `String` determining the kind of statement.
+For example, if an instance of `org.example.User` is to be inserted, Spring Data JDBC looks for a statement named `org.example.UserMapper.insert`.
+
+When the statement is run, an instance of [`MyBatisContext`] gets passed as an argument, which makes various arguments available to the statement.
+
+The following table describes the available MyBatis statements:
+
+[cols="default,default,default,asciidoc"]
+|===
+| Name | Purpose | CrudRepository methods that might trigger this statement | Attributes available in the `MyBatisContext`
+
+| `insert` | Inserts a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`. |
+`getInstance`: the instance to be saved
+
+`getDomainType`: The type of the entity to be saved.
+
+`get(<key>)`: ID of the referencing entity, where `<key>` is the name of the back reference column provided by the `NamingStrategy`.
+
+
+| `update` | Updates a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`.|
+`getInstance`: The instance to be saved
+
+`getDomainType`: The type of the entity to be saved.
+
+| `delete` | Deletes a single entity. | `delete`, `deleteById`.|
+`getId`: The ID of the instance to be deleted
+
+`getDomainType`: The type of the entity to be deleted.
+
+| `deleteAll-<propertyPath>` | Deletes all entities referenced by any aggregate root of the type used as prefix with the given property path.
+Note that the type used for prefixing the statement name is the name of the aggregate root, not the one of the entity to be deleted. | `deleteAll`.|
+
+`getDomainType`: The types of the entities to be deleted.
+
+| `deleteAll` | Deletes all aggregate roots of the type used as the prefix | `deleteAll`.|
+
+`getDomainType`: The type of the entities to be deleted.
+
+| `delete-<propertyPath>` | Deletes all entities referenced by an aggregate root with the given propertyPath | `deleteById`.|
+
+`getId`: The ID of the aggregate root for which referenced entities are to be deleted.
+
+`getDomainType`: The type of the entities to be deleted.
+
+| `findById` | Selects an aggregate root by ID | `findById`.|
+
+`getId`: The ID of the entity to load.
+
+`getDomainType`: The type of the entity to load.
+
+| `findAll` | Select all aggregate roots | `findAll`.|
+
+`getDomainType`: The type of the entity to load.
+
+| `findAllById` | Select a set of aggregate roots by ID values | `findAllById`.|
+
+`getId`: A list of ID values of the entities to load.
+
+`getDomainType`: The type of the entity to load.
+
+| `findAllByProperty-<propertyName>` | Select a set of entities that is referenced by another entity. The type of the referencing entity is used for the prefix. The referenced entities type is used as the suffix. _This method is deprecated. Use `findAllByPath` instead_ | All `find*` methods. If no query is defined for `findAllByPath`|
+
+`getId`: The ID of the entity referencing the entities to be loaded.
+
+`getDomainType`: The type of the entity to load.
+
+
+| `findAllByPath-<propertyPath>` | Select a set of entities that is referenced by another entity via a property path. | All `find*` methods.|
+
+`getIdentifier`: The `Identifier` holding the id of the aggregate root plus the keys and list indexes of all path elements.
+
+`getDomainType`: The type of the entity to load.
+
+| `findAllSorted` | Select all aggregate roots, sorted | `findAll(Sort)`.|
+
+`getSort`: The sorting specification.
+
+| `findAllPaged` | Select a page of aggregate roots, optionally sorted | `findAll(Page)`.|
+
+`getPageable`: The paging specification.
+
+| `count` | Count the number of aggregate root of the type used as prefix | `count` |
+
+`getDomainType`: The type of aggregate roots to count.
+|===
+

@@ -1,6 +1,0 @@
-[[r2dbc.core]]
-= R2DBC support
-
-include::r2dbc-core.adoc[]
-
-include::r2dbc-template.adoc[leveloffset=+1]

@@ -1,0 +1,16 @@
+[[r2dbc.repositories]]
+= R2DBC
+:page-section-summary-toc: 1
+
+The Spring Data R2DBC module applies core Spring concepts to the development of solutions that use R2DBC database drivers aligned with xref:jdbc/domain-driven-design.adoc[Domain-driven design principles].
+We provide a "`template`" as a high-level abstraction for storing and querying aggregates.
+
+This document is the reference guide for Spring Data R2DBC support.
+It explains the concepts and semantics and syntax.
+
+This chapter points out the specialties for repository support for JDBC.
+This builds on the core repository support explained in xref:repositories/introduction.adoc[Working with Spring Data Repositories].
+You should have a sound understanding of the basic concepts explained there.
+
+
+

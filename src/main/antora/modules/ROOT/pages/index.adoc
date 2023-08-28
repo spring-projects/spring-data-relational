@@ -1,0 +1,21 @@
+[[spring-data-jpa-reference-documentation]]
+= Spring Data JDBC and R2DBC
+:revnumber: {version}
+:revdate: {localdate}
+:feature-scroll: true
+
+_Spring Data JDBC and R2DBC provide repository support for the Java Database Connectivity (JDBC) respective Reactive Relational Database Connectivity (R2DBC) APIs.
+It eases development of applications with a consistent programming model that need to access SQL data sources._
+
+[horizontal]
+xref:repositories/introduction.adoc[Introduction] :: Introduction to Repositories
+xref:jdbc.adoc[JDBC] :: JDBC Object Mapping and Repositories
+xref:r2dbc.adoc[R2DBC] :: R2DBC Object Mapping and Repositories
+xref:kotlin.adoc[Kotlin] :: Kotlin-specific Support
+https://github.com/spring-projects/spring-data-commons/wiki[Wiki] :: What's New, Upgrade Notes, Supported Versions, additional cross-version information.
+
+Jens Schauder, Jay Bryant, Mark Paluch, Bastian Wilhelm
+
+(C) 2008-2023 VMware, Inc.
+
+Copies of this document may be made for your own use and for distribution to others, provided that you do not charge any fee for such copies and further provided that each copy contains this Copyright Notice, whether distributed in print or electronically.

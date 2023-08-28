@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package org.springframework.data.r2dbc.documentation;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import static org.mockito.Mockito.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.endsWith;
+
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.util.Objects;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.endsWith;
-import static org.springframework.data.domain.ExampleMatcher.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 
 /**
  * Code to demonstrate Query By Example in reference documentation.

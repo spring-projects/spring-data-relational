@@ -11,6 +11,10 @@ target/
 *.graphml
 *.json
 
+build/
+node_modules
+node
+
 #prevent license accepting file to get accidentially commited to git
 container-license-acceptance.txt
 spring-data-jdbc/src/test/java/org/springframework/data/ProxyImageNameSubstitutor.java

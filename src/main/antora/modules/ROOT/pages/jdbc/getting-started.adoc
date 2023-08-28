@@ -1,0 +1,68 @@
+[[jdbc.getting-started]]
+= Getting Started
+
+An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools[Spring Tools] or from https://start.spring.io[Spring Initializr].
+
+First, you need to set up a running database server. Refer to your vendor documentation on how to configure your database for JDBC access.
+
+[[requirements]]
+== Requirements
+
+Spring Data JDBC requires https://spring.io/docs[Spring Framework] {springVersion} and above.
+
+In terms of databases, Spring Data JDBC requires a xref:jdbc/configuration.adoc#jdbc.dialects[dialect] to abstract common SQL functionality over vendor-specific flavours.
+Spring Data JDBC includes direct support for the following databases:
+
+* DB2
+* H2
+* HSQLDB
+* MariaDB
+* Microsoft SQL Server
+* MySQL
+* Oracle
+* Postgres
+
+If you use a different database then your application won’t startup.
+The xref:jdbc/configuration.adoc#jdbc.dialects[dialect] section contains further detail on how to proceed in such case.
+
+To create a Spring project in STS:
+
+. Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted.
+Then enter a project and a package name, such as `org.spring.jdbc.example`.
+. Add the following to the `pom.xml` files `dependencies` element:
++
+[source,xml,subs="+attributes"]
+----
+<dependencies>
+
+  <!-- other dependency elements omitted -->
+
+  <dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>{version}</version>
+  </dependency>
+
+</dependencies>
+----
+. Change the version of Spring in the pom.xml to be
++
+[source,xml,subs="+attributes"]
+----
+<spring.framework.version>{springVersion}</spring.framework.version>
+----
+. Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level of your `<dependencies/>` element:
++
+[source,xml]
+----
+<repositories>
+  <repository>
+    <id>spring-milestone</id>
+    <name>Spring Maven MILESTONE Repository</name>
+    <url>https://repo.spring.io/milestone</url>
+  </repository>
+</repositories>
+----
+
+The repository is also https://repo.spring.io/milestone/org/springframework/data/[browseable here].
+
