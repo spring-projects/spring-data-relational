@@ -1,0 +1,190 @@
+[[entity-persistence.naming-strategy]]
+== Naming Strategy
+
+By convention, Spring Data applies a `NamingStrategy` to determine table, column, and schema names defaulting to https://en.wikipedia.org/wiki/Snake_case[snake case].
+An object property named `firstName` becomes `first_name`.
+You can tweak that by providing a {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/NamingStrategy.html[`NamingStrategy`] in your application context.
+
+[[entity-persistence.custom-table-name]]
+== Override table names
+
+When the table naming strategy does not match your database table names, you can override the table name with the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/Table.html[`@Table`] annotation.
+The element `value` of this annotation provides the custom table name.
+The following example maps the `MyEntity` class to the `CUSTOM_TABLE_NAME` table in the database:
+
+[source,java]
+----
+@Table("CUSTOM_TABLE_NAME")
+class MyEntity {
+    @Id
+    Integer id;
+
+    String name;
+}
+----
+
+[[entity-persistence.custom-column-name]]
+== Override column names
+
+When the column naming strategy does not match your database table names, you can override the table name with the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation.
+The element `value` of this annotation provides the custom column name.
+The following example maps the `name` property of the `MyEntity` class to the `CUSTOM_COLUMN_NAME` column in the database:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @Column("CUSTOM_COLUMN_NAME")
+    String name;
+}
+----
+
+ifdef::mapped-collection[]
+
+The {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`]
+annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship).
+`idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
+In the following example the corresponding table for the `MySubEntity` class has a `NAME` column, and the `CUSTOM_MY_ENTITY_ID_COLUMN_NAME` column of the `MyEntity` id for relationship reasons:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @MappedCollection(idColumn = "CUSTOM_MY_ENTITY_ID_COLUMN_NAME")
+    Set<MySubEntity> subEntities;
+}
+
+class MySubEntity {
+    String name;
+}
+----
+
+When using `List` and `Map` you must have an additional column for the position of a dataset in the `List` or the key value of the entity in the `Map`.
+This additional column name may be customized with the `keyColumn` Element of the {spring-data-jdbc-javadoc}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
+
+[source,java]
+----
+class MyEntity {
+    @Id
+    Integer id;
+
+    @MappedCollection(idColumn = "CUSTOM_COLUMN_NAME", keyColumn = "CUSTOM_KEY_COLUMN_NAME")
+    List<MySubEntity> name;
+}
+
+class MySubEntity {
+    String name;
+}
+----
+endif::[]
+
+ifdef::embedded-entities[]
+
+[[entity-persistence.embedded-entities]]
+== Embedded entities
+
+Embedded entities are used to have value objects in your java data model, even if there is only one table in your database.
+In the following example you see, that `MyEntity` is mapped with the `@Embedded` annotation.
+The consequence of this is, that in the database a table `my_entity` with the two columns `id` and `name` (from the `EmbeddedEntity` class) is expected.
+
+However, if the `name` column is actually `null` within the result set, the entire property `embeddedEntity` will be set to null according to the `onEmpty` of `@Embedded`, which ``null``s objects when all nested properties are `null`. +
+Opposite to this behavior `USE_EMPTY` tries to create a new instance using either a default constructor or one that accepts nullable parameter values from the result set.
+
+.Sample Code of embedding objects
+====
+[source,java]
+----
+class MyEntity {
+
+    @Id
+    Integer id;
+
+    @Embedded(onEmpty = USE_NULL) <1>
+    EmbeddedEntity embeddedEntity;
+}
+
+class EmbeddedEntity {
+    String name;
+}
+----
+
+<1> ``Null``s `embeddedEntity` if `name` in `null`.
+Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value for the `name` property.
+====
+
+If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
+This element represents a prefix and is prepend for each column name in the embedded object.
+
+[TIP]
+====
+Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbosity and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
+
+[source,java]
+----
+class MyEntity {
+
+    @Id
+    Integer id;
+
+    @Embedded.Nullable <1>
+    EmbeddedEntity embeddedEntity;
+}
+----
+
+<1> Shortcut for `@Embedded(onEmpty = USE_NULL)`.
+====
+
+Embedded entities containing a `Collection` or a `Map` will always be considered non-empty since they will at least contain the empty collection or map.
+Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
+endif::[]
+
+[[entity-persistence.read-only-properties]]
+== Read Only Properties
+
+Attributes annotated with `@ReadOnlyProperty` will not be written to the database by Spring Data, but they will be read when an entity gets loaded.
+
+Spring Data will not automatically reload an entity after writing it.
+Therefore, you have to reload it explicitly if you want to see data that was generated in the database for such columns.
+
+If the annotated attribute is an entity or collection of entities, it is represented by one or more separate rows in separate tables.
+Spring Data will not perform any insert, delete or update for these rows.
+
+[[entity-persistence.insert-only-properties]]
+== Insert Only Properties
+
+Attributes annotated with `@InsertOnlyProperty` will only be written to the database by Spring Data during insert operations.
+For updates these properties will be ignored.
+
+`@InsertOnlyProperty` is only supported for the aggregate root.
+
+[[mapping.custom.object.construction]]
+== Customized Object Construction
+
+The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation.The values to be used for the constructor parameters are resolved in the following way:
+
+* If a parameter is annotated with the `@Value` annotation, the given expression is evaluated, and the result is used as the parameter value.
+* If the Java type has a property whose name matches the given field of the input row, then its property information is used to select the appropriate constructor parameter to which to pass the input field value.
+This works only if the parameter name information is present in the Java `.class` files, which you can achieve by compiling the source with debug information or using the `-parameters` command-line switch for `javac` in Java 8.
+* Otherwise, a `MappingException` is thrown to indicate that the given constructor parameter could not be bound.
+
+[source,java]
+----
+class OrderItem {
+
+  private @Id final String id;
+  private final int quantity;
+  private final double unitPrice;
+
+  OrderItem(String id, int quantity, double unitPrice) {
+    this.id = id;
+    this.quantity = quantity;
+    this.unitPrice = unitPrice;
+  }
+
+  // getters/setters omitted
+}
+----

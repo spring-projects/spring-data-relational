@@ -1,0 +1,12 @@
+Spring Data supports optimistic locking by means of a numeric attribute that is annotated with
+https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Version.html[`@Version`] on the aggregate root.
+Whenever Spring Data saves an aggregate with such a version attribute two things happen:
+
+* The update statement for the aggregate root will contain a where clause checking that the version stored in the database is actually unchanged.
+* If this isn't the case an `OptimisticLockingFailureException` will be thrown.
+
+Also, the version attribute gets increased both in the entity and in the database so a concurrent action will notice the change and throw an `OptimisticLockingFailureException` if applicable as described above.
+
+This process also applies to inserting new aggregates, where a `null` or `0` version indicates a new instance and the increased instance afterwards marks the instance as not new anymore, making this work rather nicely with cases where the id is generated during object construction for example when UUIDs are used.
+
+During deletes the version check also applies but no version is increased.

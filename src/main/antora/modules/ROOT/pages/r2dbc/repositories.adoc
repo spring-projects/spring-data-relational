@@ -71,63 +71,8 @@ The preceding example creates an application context with Spring's unit test sup
 Inside the test method, we use the repository to query the database.
 We use `StepVerifier` as a test aid to verify our expectations against the results.
 
-[[r2dbc.entity-persistence.state-detection-strategies]]
-include::{commons}@data-commons::page$is-new-state-detection.adoc[leveloffset=+1]
-
-[[r2dbc.entity-persistence.id-generation]]
-=== ID Generation
-
-Spring Data R2DBC uses the ID to identify entities.
-The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
-
-When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
-
-Spring Data R2DBC does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
-That is `0` for primitive types and `null` if the identifier property uses a numeric wrapper type such as `Long`.
-
-One important constraint is that, after saving an entity, the entity must not be new anymore.
-Note that whether an entity is new is part of the entity's state.
-With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
-
-[[r2dbc.optimistic-locking]]
-=== Optimistic Locking
-
-The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to rows with a matching version.
-Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the row in the meantime.
-In that case, an `OptimisticLockingFailureException` is thrown.
-The following example shows these features:
-
-[source,java]
-----
-@Table
-class Person {
-
-  @Id Long id;
-  String firstname;
-  String lastname;
-  @Version Long version;
-}
-
-R2dbcEntityTemplate template = …;
-
-Mono<Person> daenerys = template.insert(new Person("Daenerys"));                      <1>
-
-Person other = template.select(Person.class)
-                 .matching(query(where("id").is(daenerys.getId())))
-                 .first().block();                                                    <2>
-
-daenerys.setLastname("Targaryen");
-template.update(daenerys);                                                            <3>
-
-template.update(other).subscribe(); // emits OptimisticLockingFailureException        <4>
-----
-<1> Initially insert row. `version` is set to `0`.
-<2> Load the just inserted row. `version` is still `0`.
-<3> Update the row with `version = 0`.Set the `lastname` and bump `version` to `1`.
-<4> Try to update the previously loaded row that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
-
 [[projections.resultmapping]]
-==== Result Mapping
+=== Result Mapping
 
 A query method returning an Interface- or DTO projection is backed by results produced by the actual query.
 Interface projections generally rely on mapping results onto the domain type first to consider potential `@Column` type mappings and the actual projection proxy uses a potentially partially materialized entity to expose projection data.

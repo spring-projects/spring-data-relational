@@ -1,1 +1,3 @@
 include::{commons}@data-commons::page$repositories/core-concepts.adoc[]
+
+include::{commons}@data-commons::page$is-new-state-detection.adoc[leveloffset=+1]

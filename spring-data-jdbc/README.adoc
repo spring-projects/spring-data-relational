@@ -1,6 +1,3 @@
-image:https://spring.io/badges/spring-data-jdbc/ga.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
-image:https://spring.io/badges/spring-data-jdbc/snapshot.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
-
 = Spring Data JDBC
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data JDBC* offers the popular Repository abstraction based on JDBC.

@@ -21,13 +21,13 @@ The `com.bigbank.SavingsAccount` class maps to the `SAVINGS_ACCOUNT` table name.
 The same name mapping is applied for mapping fields to column names.
 For example, the `firstName` field maps to the `FIRST_NAME` column.
 You can control this mapping by providing a custom `NamingStrategy`.
-See xref:r2dbc/mapping.adoc#mapping.configuration[Mapping Configuration] for more detail.
+See <<mapping.configuration,Mapping Configuration>> for more detail.
 Table and column names that are derived from property or class names are used in SQL statements without quotes by default.
-You can control this behavior by setting `R2dbcMappingContext.setForceQuote(true)`.
+You can control this behavior by setting `RelationalMappingContext.setForceQuote(true)`.
 
 * Nested objects are not supported.
 
-* The converter uses any Spring Converters registered with it to override the default mapping of object properties to row columns and values.
+* The converter uses any Spring Converters registered with `CustomConversions` to override the default mapping of object properties to row columns and values.
 
 * The fields of an object are used to convert to and from columns in the row.
 Public `JavaBean` properties are not used.
@@ -35,11 +35,12 @@ Public `JavaBean` properties are not used.
 * If you have a single non-zero-argument constructor whose constructor argument names match top-level column names of the row, that constructor is used.
 Otherwise, the zero-argument constructor is used.
 If there is more than one non-zero-argument constructor, an exception is thrown.
+Refer to xref:object-mapping.adoc#mapping.object-creation[Object Creation] for further details.
 
 [[mapping.configuration]]
 == Mapping Configuration
 
-By default (unless explicitly configured) an instance of `MappingR2dbcConverter` is created when you create a `DatabaseClient`.
+By default, (unless explicitly configured) an instance of `MappingR2dbcConverter` is created when you create a `DatabaseClient`.
 You can create your own instance of the `MappingR2dbcConverter`.
 By creating your own instance, you can register Spring converters to map specific classes to and from the database.
 
@@ -53,7 +54,7 @@ Spring Data converts the letter casing of such a name to that form which is also
 Therefore, you can use unquoted names when creating tables, as long as you do not use keywords or special characters in your names.
 For databases that adhere to the SQL standard, this means that names are converted to upper case.
 The quoting character and the way names get capitalized is controlled by the used `Dialect`.
-See xref:r2dbc/core.adoc#r2dbc.drivers[R2DBC Drivers] for how to configure custom dialects.
+See xref:r2dbc/getting-started.adoc#r2dbc.dialects[R2DBC Drivers] for how to configure custom dialects.
 
 .@Configuration class to configure R2DBC mapping support
 [source,java]
@@ -147,11 +148,11 @@ The following table explains how property types of an entity affect mapping:
 
 |`Collection<T>`
 |Array of `T`
-|Conversion to Array type if supported by the configured xref:r2dbc/core.adoc#r2dbc.drivers[driver], not supported otherwise.
+|Conversion to Array type if supported by the configured xref:r2dbc/getting-started.adoc#requirements[driver], not supported otherwise.
 
 |Arrays of primitive types, wrapper types and `String`
 |Array of wrapper type (e.g. `int[]` -> `Integer[]`)
-|Conversion to Array type if supported by the configured xref:r2dbc/core.adoc#r2dbc.drivers[driver], not supported otherwise.
+|Conversion to Array type if supported by the configured xref:r2dbc/getting-started.adoc#requirements[driver], not supported otherwise.
 
 |Driver-specific types
 |Passthru
@@ -169,66 +170,17 @@ Drivers can contribute additional simple types such as Geometry types.
 [[mapping.usage.annotations]]
 === Mapping Annotation Overview
 
-The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows.
-The following annotations are available:
-
-* `@Id`: Applied at the field level to mark the primary key.
-* `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
-You can specify the name of the table where the database is stored.
-* `@Transient`: By default, all fields are mapped to the row.
-This annotation excludes the field where it is applied from being stored in the database.
-Transient properties cannot be used within a persistence constructor as the converter cannot materialize a value for the constructor argument.
-* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database.
-Constructor arguments are mapped by name to the values in the retrieved row.
-* `@Value`: This annotation is part of the Spring Framework.
-Within the mapping framework it can be applied to constructor arguments.
-This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
-In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
-* `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, letting the name be different from the field name of the class.
-Names specified with a `@Column` annotation are always quoted when used in SQL statements.
-For most databases, this means that these names are case-sensitive.
-It also means that you can use special characters in these names.
-However, this is not recommended, since it may cause problems with other tools.
-* `@Version`: Applied at field level is used for optimistic locking and checked for modification on save operations.
-The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
-The initially stored value is `zero` (`one` for primitive types).
-The version gets incremented automatically on every update.
-See xref:r2dbc/repositories.adoc#r2dbc.optimistic-locking[Optimistic Locking] for further reference.
+include::partial$mapping-annotations.adoc[]
+See xref:r2dbc/entity-persistence.adoc#r2dbc.entity-persistence.optimistic-locking[Optimistic Locking] for further reference.
 
 The mapping metadata infrastructure is defined in the separate `spring-data-commons` project that is technology-agnostic.
 Specific subclasses are used in the R2DBC support to support annotation based metadata.
 Other strategies can also be put in place (if there is demand).
 
-[[mapping.custom.object.construction]]
-=== Customized Object Construction
-
-The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation.The values to be used for the constructor parameters are resolved in the following way:
-
-* If a parameter is annotated with the `@Value` annotation, the given expression is evaluated, and the result is used as the parameter value.
-* If the Java type has a property whose name matches the given field of the input row, then its property information is used to select the appropriate constructor parameter to which to pass the input field value.
-This works only if the parameter name information is present in the Java `.class` files, which you can achieve by compiling the source with debug information or using the `-parameters` command-line switch for `javac` in Java 8.
-* Otherwise, a `MappingException` is thrown to indicate that the given constructor parameter could not be bound.
-
-[source,java]
-----
-class OrderItem {
-
-  private @Id final String id;
-  private final int quantity;
-  private final double unitPrice;
-
-  OrderItem(String id, int quantity, double unitPrice) {
-    this.id = id;
-    this.quantity = quantity;
-    this.unitPrice = unitPrice;
-  }
-
-  // getters/setters omitted
-}
-----
+include::partial$mapping.adoc[]
 
 [[mapping.explicit.converters]]
-=== Overriding Mapping with Explicit Converters
+== Overriding Mapping with Explicit Converters
 
 When storing and querying your objects, it is often convenient to have a `R2dbcConverter` instance to handle the mapping of all Java types to `OutboundRow` instances.
 However, you may sometimes want the `R2dbcConverter` instances to do most of the work but let you selectively handle the conversion for a particular type -- perhaps to optimize performance.
@@ -281,7 +233,7 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
 ----
 
 [[mapping.explicit.enum.converters]]
-==== Overriding Enum Mapping with Explicit Converters
+=== Overriding Enum Mapping with Explicit Converters
 
 Some databases, such as https://github.com/pgjdbc/r2dbc-postgresql#postgres-enum-types[Postgres], can natively write enum values using their database-specific enumerated column type.
 Spring Data converts `Enum` values by default to `String` values for maximum portability.

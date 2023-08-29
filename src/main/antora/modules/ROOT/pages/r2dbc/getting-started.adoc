@@ -1,8 +1,39 @@
 [[r2dbc.getting-started]]
 = Getting Started
 
-An easy way to set up a working environment is to create a Spring-based project through https://start.spring.io[start.spring.io].
-To do so:
+An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools[Spring Tools] or from https://start.spring.io[Spring Initializr].
+
+First, you need to set up a running database server.
+Refer to your vendor documentation on how to configure your database for R2DBC access.
+
+[[requirements]]
+== Requirements
+
+Spring Data R2DBC requires https://spring.io/docs[Spring Framework] {springVersion} and above.
+
+In terms of databases, Spring Data R2DBC requires a <<r2dbc.drivers,driver>> to abstract common SQL functionality over vendor-specific flavours.
+Spring Data R2DBC includes direct support for the following databases:
+
+* https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
+* https://github.com/mariadb-corporation/mariadb-connector-r2dbc[MariaDB] (`org.mariadb:r2dbc-mariadb`)
+* https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
+* https://github.com/asyncer-io/r2dbc-mysql[MySQL] (`io.asyncer:r2dbc-mysql`)
+* https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
+* https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
+* https://github.com/oracle/oracle-r2dbc[Oracle] (`com.oracle.database.r2dbc:oracle-r2dbc`)
+
+If you use a different database then your application won’t start up.
+The <<r2dbc.dialects,dialect>> section contains further detail on how to proceed in such case.
+
+[[r2dbc.hello-world]]
+== Hello World
+
+To create a Spring project in STS:
+
+. Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted.
+Then enter a project and a package name, such as `org.spring.r2dbc.example`.
+. Add the following to the `pom.xml` files `dependencies` element:
++
 
 . Add the following to the pom.xml files `dependencies` element:
 +
@@ -32,7 +63,7 @@ To do so:
 +
 [source,xml,subs="+attributes"]
 ----
-<spring-framework.version>{springVersion}</spring-framework.version>
+<spring.version>{springVersion}</spring-framework.version>
 ----
 
 . Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level as your `<dependencies/>` element:
@@ -110,14 +141,15 @@ There is a https://github.com/spring-projects/spring-data-examples[GitHub reposi
 [[r2dbc.connecting]]
 == Connecting to a Relational Database with Spring
 
-One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container.Make sure to use a xref:r2dbc/getting-started.adoc#r2dbc.drivers[supported database and driver].
+One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container.
+Make sure to use a <<requirements,supported database and driver>>.
 
 [[r2dbc.connectionfactory]]
-== Registering a `ConnectionFactory` Instance using Java-based Metadata
+== Registering a `ConnectionFactory` Instance using Java Configuration
 
 The following example shows an example of using Java-based bean metadata to register an instance of `io.r2dbc.spi.ConnectionFactory`:
 
-.Registering a `io.r2dbc.spi.ConnectionFactory` object using Java-based bean metadata
+.Registering a `io.r2dbc.spi.ConnectionFactory` object using Java Configuration
 [source,java]
 ----
 @Configuration
@@ -135,24 +167,24 @@ This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instanc
 
 `AbstractR2dbcConfiguration` also registers `DatabaseClient`, which is required for database interaction and for Repository implementation.
 
-[[r2dbc.drivers]]
-== R2DBC Drivers
+[[r2dbc.dialects]]
+== Dialects
 
-Spring Data R2DBC supports drivers through R2DBC's pluggable SPI mechanism.
-You can use any driver that implements the R2DBC spec with Spring Data R2DBC.
-Since Spring Data R2DBC reacts to specific features of each database, it requires a `Dialect` implementation otherwise your application won't start up.
-Spring Data R2DBC ships with dialect implementations for the following drivers:
-
-* https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
-* https://github.com/mariadb-corporation/mariadb-connector-r2dbc[MariaDB] (`org.mariadb:r2dbc-mariadb`)
-* https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
-* https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
-* https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
-* https://github.com/oracle/oracle-r2dbc[Oracle] (`com.oracle.database.r2dbc:oracle-r2dbc`)
-
+Spring Data R2DBC uses a `Dialect` to encapsulate behavior that is specific to a database or its driver.
 Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
-You need to configure your own {spring-data-r2dbc-javadoc}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the driver you use is not yet known to Spring Data R2DBC.
+If you use a database for which no dialect is available, then your application won’t start up.
+In that case, you’ll have to ask your vendor to provide a `Dialect` implementation.
+Alternatively, you can implement your own `Dialect`.
 
-TIP: Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
+[TIP]
+====
+Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
 + You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
+To do so:
+
+. Implement your own `Dialect`.
+. Implement a `R2dbcDialectProvider` returning the `Dialect`.
+. Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
+`org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider=<fully qualified name of your R2dbcDialectProvider>`
+====

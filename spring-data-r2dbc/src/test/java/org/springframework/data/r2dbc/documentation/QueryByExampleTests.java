@@ -55,9 +55,9 @@ public class QueryByExampleTests {
 
 		Example<Employee> example = Example.of(employee); // <2>
 
-		Flux<Employee> employees = repository.findAll(example); // <3>
+		repository.findAll(example); // <3>
 
-		// do whatever with the flux
+		// do whatever with the result
 		// end::example[]
 
 		employees //
@@ -87,9 +87,9 @@ public class QueryByExampleTests {
 				.withIgnorePaths("role"); // <4>
 		Example<Employee> example = Example.of(employee, matcher); // <5>
 
-		Flux<Employee> employees = repository.findAll(example);
+		repository.findAll(example);
 
-		// do whatever with the flux
+		// do whatever with the result
 		// end::example-2[]
 
 		employees //

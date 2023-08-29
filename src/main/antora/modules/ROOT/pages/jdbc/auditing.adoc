@@ -1,5 +1,5 @@
 [[jdbc.auditing]]
-= JDBC Auditing
+= Auditing
 :page-section-summary-toc: 1
 
 In order to activate auditing, add `@EnableJdbcAuditing` to your configuration, as the following example shows:
