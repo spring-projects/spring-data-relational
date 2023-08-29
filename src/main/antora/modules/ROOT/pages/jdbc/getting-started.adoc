@@ -3,14 +3,15 @@
 
 An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools[Spring Tools] or from https://start.spring.io[Spring Initializr].
 
-First, you need to set up a running database server. Refer to your vendor documentation on how to configure your database for JDBC access.
+First, you need to set up a running database server.
+Refer to your vendor documentation on how to configure your database for JDBC access.
 
 [[requirements]]
 == Requirements
 
 Spring Data JDBC requires https://spring.io/docs[Spring Framework] {springVersion} and above.
 
-In terms of databases, Spring Data JDBC requires a xref:jdbc/configuration.adoc#jdbc.dialects[dialect] to abstract common SQL functionality over vendor-specific flavours.
+In terms of databases, Spring Data JDBC requires a <<jdbc.dialects,dialect>> to abstract common SQL functionality over vendor-specific flavours.
 Spring Data JDBC includes direct support for the following databases:
 
 * DB2
@@ -22,14 +23,20 @@ Spring Data JDBC includes direct support for the following databases:
 * Oracle
 * Postgres
 
-If you use a different database then your application won’t startup.
-The xref:jdbc/configuration.adoc#jdbc.dialects[dialect] section contains further detail on how to proceed in such case.
+If you use a different database then your application won’t start up.
+The <<jdbc.dialects,dialect>> section contains further detail on how to proceed in such case.
+
+[[jdbc.hello-world]]
+== Hello World
 
 To create a Spring project in STS:
 
 . Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted.
 Then enter a project and a package name, such as `org.spring.jdbc.example`.
 . Add the following to the `pom.xml` files `dependencies` element:
++
+
+. Add the following to the pom.xml files `dependencies` element:
 +
 [source,xml,subs="+attributes"]
 ----
@@ -45,13 +52,15 @@ Then enter a project and a package name, such as `org.spring.jdbc.example`.
 
 </dependencies>
 ----
+
 . Change the version of Spring in the pom.xml to be
 +
 [source,xml,subs="+attributes"]
 ----
-<spring.framework.version>{springVersion}</spring.framework.version>
+<spring.version>{springVersion}</spring-framework.version>
 ----
-. Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level of your `<dependencies/>` element:
+
+. Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level as your `<dependencies/>` element:
 +
 [source,xml]
 ----
@@ -66,3 +75,99 @@ Then enter a project and a package name, such as `org.spring.jdbc.example`.
 
 The repository is also https://repo.spring.io/milestone/org/springframework/data/[browseable here].
 
+[[jdbc.logging]]
+=== Logging
+
+Spring Data JDBC does little to no logging on its own.
+Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
+Thus, if you want to inspect what SQL statements are run, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+
+You may also want to set the logging level to `DEBUG` to see some additional information.
+To do so, edit the `application.properties` file to have the following content:
+
+[source]
+----
+logging.level.org.springframework.jdbc=DEBUG
+----
+
+// TODO: Add example similar to
+
+[[jdbc.examples-repo]]
+== Examples Repository
+
+There is a https://github.com/spring-projects/spring-data-examples[GitHub repository with several examples] that you can download and play around with to get a feel for how the library works.
+
+[[jdbc.java-config]]
+== Configuration
+
+The Spring Data JDBC repositories support can be activated by an annotation through Java configuration, as the following example shows:
+
+.Spring Data JDBC repositories using Java configuration
+[source,java]
+----
+@Configuration
+@EnableJdbcRepositories                                                                // <1>
+class ApplicationConfig extends AbstractJdbcConfiguration {                            // <2>
+
+    @Bean
+    DataSource dataSource() {                                                         // <3>
+
+        EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
+        return builder.setType(EmbeddedDatabaseType.HSQL).build();
+    }
+
+    @Bean
+    NamedParameterJdbcOperations namedParameterJdbcOperations(DataSource dataSource) { // <4>
+        return new NamedParameterJdbcTemplate(dataSource);
+    }
+
+    @Bean
+    TransactionManager transactionManager(DataSource dataSource) {                     // <5>
+        return new DataSourceTransactionManager(dataSource);
+    }
+}
+----
+
+<1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`
+<2> `AbstractJdbcConfiguration` provides various default beans required by Spring Data JDBC
+<3> Creates a `DataSource` connecting to a database.
+This is required by the following two bean methods.
+<4> Creates the `NamedParameterJdbcOperations` used by Spring Data JDBC to access the database.
+<5> Spring Data JDBC utilizes the transaction management provided by Spring JDBC.
+
+The configuration class in the preceding example sets up an embedded HSQL database by using the `EmbeddedDatabaseBuilder` API of `spring-jdbc`.
+The `DataSource` is then used to set up `NamedParameterJdbcOperations` and a `TransactionManager`.
+We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
+If no base package is configured, it uses the package in which the configuration class resides.
+Extending `AbstractJdbcConfiguration` ensures various beans get registered.
+Overwriting its methods can be used to customize the setup (see below).
+
+This configuration can be further simplified by using Spring Boot.
+With Spring Boot a `DataSource` is sufficient once the starter `spring-boot-starter-data-jdbc` is included in the dependencies.
+Everything else is done by Spring Boot.
+
+There are a couple of things one might want to customize in this setup.
+
+[[jdbc.dialects]]
+== Dialects
+
+Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
+By default, the `AbstractJdbcConfiguration` attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `Dialect`.
+You override `AbstractJdbcConfiguration.jdbcDialect(NamedParameterJdbcOperations)` to customize dialect selection.
+
+If you use a database for which no dialect is available, then your application won’t start up.
+In that case, you’ll have to ask your vendor to provide a `Dialect` implementation.
+Alternatively, you can implement your own `Dialect`.
+
+[TIP]
+====
+Dialects are resolved by {spring-data-jdbc-javadoc}/org/springframework/data/jdbc/repository/config/DialectResolver.html[`DialectResolver`] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
++ You can let Spring auto-discover your `JdbcDialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+`DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
+To do so:
+
+. Implement your own `Dialect`.
+. Implement a `JdbcDialectProvider` returning the `Dialect`.
+. Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
+`org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider=<fully qualified name of your JdbcDialectProvider>`
+====

@@ -1,5 +1,5 @@
-[[r2dbc.entityoperations]]
-= Data Access API
+[[r2dbc.entity-persistence]]
+= Persisting Entities
 
 `R2dbcEntityTemplate` is the central entrypoint for Spring Data R2DBC.
 It provides direct entity-oriented methods and a more narrow, fluent interface for typical ad-hoc use-cases, such as querying, inserting, updating, and deleting data.
@@ -17,7 +17,8 @@ The actual statements are sent to the database upon subscription.
 There are several convenient methods on `R2dbcEntityTemplate` for saving and inserting your objects.
 To have more fine-grained control over the conversion process, you can register Spring converters with `R2dbcCustomConversions` -- for example  `Converter<Person, OutboundRow>` and `Converter<Row, Person>`.
 
-The simple case of using the save operation is to save a POJO. In this case, the table name is determined by name (not fully qualified) of the class.
+The simple case of using the save operation is to save a POJO.
+In this case, the table name is determined by name (not fully qualified) of the class.
 You may also call the save operation with a specific collection name.
 You can use mapping metadata to override the collection in which to store the object.
 
@@ -45,9 +46,9 @@ Table names can be customized by using the fluent API.
 == Selecting Data
 
 The `select(…)` and `selectOne(…)` methods on `R2dbcEntityTemplate` are used to select data from a table.
-Both methods take a xref:r2dbc/template.adoc#r2dbc.datbaseclient.fluent-api.criteria[`Query`] object that defines the field projection, the `WHERE` clause, the `ORDER BY` clause and limit/offset pagination.
+Both methods take a <<r2dbc.datbaseclient.fluent-api.criteria,`Query`>> object that defines the field projection, the `WHERE` clause, the `ORDER BY` clause and limit/offset pagination.
 Limit/offset functionality is transparent to the application regardless of the underlying database.
-This functionality is supported by the xref:r2dbc/core.adoc#r2dbc.drivers[`R2dbcDialect` abstraction] to cater for differences between the individual SQL flavors.
+This functionality is supported by the xref:r2dbc/getting-started.adoc#r2dbc.dialects[`R2dbcDialect` abstraction] to cater for differences between the individual SQL flavors.
 
 .Selecting entities using the `R2dbcEntityTemplate`
 [source,java,indent=0]
@@ -65,6 +66,7 @@ Consider the following simple query:
 ----
 include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=simpleSelect]
 ----
+
 <1> Using `Person` with the `select(…)` method maps tabular results on `Person` result objects.
 <2> Fetching `all()` rows returns a `Flux<Person>` without limiting results.
 
@@ -134,6 +136,7 @@ Consider the following simple typed insert operation:
 ----
 include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=insert]
 ----
+
 <1> Using `Person` with the `into(…)` method sets the `INTO` table, based on mapping metadata.
 It also prepares the insert statement to accept `Person` objects for inserting.
 <2> Provide a scalar `Person` object.
@@ -155,6 +158,7 @@ Person modified = …
 
 include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=update]
 ----
+
 <1> Update `Person` objects and apply mapping based on mapping metadata.
 <2> Set a different table name by calling the `inTable(…)` method.
 <3> Specify a query that translates into a `WHERE` clause.
@@ -173,7 +177,58 @@ Consider the following simple insert operation:
 ----
 include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=delete]
 ----
+
 <1> Delete `Person` objects and apply mapping based on mapping metadata.
 <2> Set a different table name by calling the `from(…)` method.
 <3> Specify a query that translates into a `WHERE` clause.
 <4> Apply the delete operation and return the number of affected rows.
+
+[[r2dbc.entity-persistence.saving]]
+Using Repositories, saving an entity can be performed with the `ReactiveCrudRepository.save(…)` method.
+If the entity is new, this results in an insert for the entity.
+
+If the entity is not new, it gets updated.
+Note that whether an instance is new is part of the instance's state.
+
+NOTE: This approach has some obvious downsides.
+If only few of the referenced entities have been actually changed, the deletion and insertion is wasteful.
+While this process could and probably will be improved, there are certain limitations to what Spring Data R2DBC can offer.
+It does not know the previous state of an aggregate.
+So any update process always has to take whatever it finds in the database and make sure it converts it to whatever is the state of the entity passed to the save method.
+
+include::partial$id-generation.adoc[]
+
+[[r2dbc.entity-persistence.optimistic-locking]]
+== Optimistic Locking
+
+include::partial$optimistic-locking.adoc[]
+
+[source,java]
+----
+@Table
+class Person {
+
+  @Id Long id;
+  String firstname;
+  String lastname;
+  @Version Long version;
+}
+
+R2dbcEntityTemplate template = …;
+
+Mono<Person> daenerys = template.insert(new Person("Daenerys"));                      <1>
+
+Person other = template.select(Person.class)
+                 .matching(query(where("id").is(daenerys.getId())))
+                 .first().block();                                                    <2>
+
+daenerys.setLastname("Targaryen");
+template.update(daenerys);                                                            <3>
+
+template.update(other).subscribe(); // emits OptimisticLockingFailureException        <4>
+----
+
+<1> Initially insert row. `version` is set to `0`.
+<2> Load the just inserted row. `version` is still `0`.
+<3> Update the row with `version = 0`.Set the `lastname` and bump `version` to `1`.
+<4> Try to update the previously loaded row that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.

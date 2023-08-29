@@ -82,7 +82,8 @@ Typically, you want the `readOnly` flag to be set to true, because most of the q
 In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation and overrides the transaction configuration.
 Thus, the method is with the `readOnly` flag set to `false`.
 
-NOTE: It is highly recommended to make query methods transactional. These methods might execute more then one query in order to populate an entity.
+NOTE: It is highly recommended to make query methods transactional.
+These methods might execute more then one query in order to populate an entity.
 Without a common transaction Spring Data JDBC executes the queries in different connections.
 This may put excessive strain on the connection pool and might even lead to dead locks when multiple methods request a fresh connection while holding on to one.
 
@@ -90,3 +91,32 @@ NOTE: It is definitely reasonable to mark read-only queries as such by setting t
 This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction).
 Instead, the `readOnly` flag is propagated as a hint to the underlying JDBC driver for performance optimizations.
 
+[[jdbc.locking]]
+== JDBC Locking
+
+Spring Data JDBC supports locking on derived query methods.
+To enable locking on a given derived query method inside a repository, you annotate it with `@Lock`.
+The required value of type `LockMode` offers two values: `PESSIMISTIC_READ` which guarantees that the data you are reading doesn't get modified and `PESSIMISTIC_WRITE` which obtains a lock to modify the data.
+Some databases do not make this distinction.
+In that cases both modes are equivalent of `PESSIMISTIC_WRITE`.
+
+.Using @Lock on derived query method
+[source,java]
+----
+interface UserRepository extends CrudRepository<User, Long> {
+
+  @Lock(LockMode.PESSIMISTIC_READ)
+  List<User> findByLastname(String lastname);
+}
+----
+
+As you can see above, the method `findByLastname(String lastname)` will be executed with a pessimistic read lock.
+If you are using a databse with the MySQL Dialect this will result for example in the following query:
+
+.Resulting Sql query for MySQL dialect
+[source,sql]
+----
+Select * from user u where u.lastname = lastname LOCK IN SHARE MODE
+----
+
+Alternative to `LockMode.PESSIMISTIC_READ` you can use `LockMode.PESSIMISTIC_WRITE`.

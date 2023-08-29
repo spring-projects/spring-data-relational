@@ -1,0 +1,24 @@
+The `RelationalConverter` can use metadata to drive the mapping of objects to rows.
+The following annotations are available:
+
+* `@Id`: Applied at the field level to mark the primary key.
+* `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
+You can specify the name of the table where the database is stored.
+* `@Transient`: By default, all fields are mapped to the row.
+This annotation excludes the field where it is applied from being stored in the database.
+Transient properties cannot be used within a persistence constructor as the converter cannot materialize a value for the constructor argument.
+* `@PersistenceCreator`: Marks a given constructor or static factory method -- even a package protected one -- to use when instantiating the object from the database.
+Constructor arguments are mapped by name to the values in the retrieved row.
+* `@Value`: This annotation is part of the Spring Framework.
+Within the mapping framework it can be applied to constructor arguments.
+This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
+In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
+* `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, letting the name be different from the field name of the class.
+Names specified with a `@Column` annotation are always quoted when used in SQL statements.
+For most databases, this means that these names are case-sensitive.
+It also means that you can use special characters in these names.
+However, this is not recommended, since it may cause problems with other tools.
+* `@Version`: Applied at field level is used for optimistic locking and checked for modification on save operations.
+The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
+The initially stored value is `zero` (`one` for primitive types).
+The version gets incremented automatically on every update.

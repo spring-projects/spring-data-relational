@@ -2,7 +2,7 @@
 = Kotlin
 
 This part of the reference documentation explains the specific Kotlin functionality offered by Spring Data R2DBC.
-See xref:kotlin.adoc for the general functionality provided by Spring Data.
+See xref:kotlin.adoc[] for the general functionality provided by Spring Data.
 
 To retrieve a list of `SWCharacter` objects in Java, you would normally write the following:
 
