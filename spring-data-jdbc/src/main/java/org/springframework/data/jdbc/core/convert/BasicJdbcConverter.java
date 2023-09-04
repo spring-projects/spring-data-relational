@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -45,7 +44,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mapping.model.SpELContext;
 import org.springframework.data.mapping.model.SpELExpressionEvaluator;
 import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -72,7 +71,7 @@ import org.springframework.util.Assert;
  * @see CustomConversions
  * @since 1.1
  */
-public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter, ApplicationContextAware {
+public class BasicJdbcConverter extends MappingRelationalConverter implements JdbcConverter, ApplicationContextAware {
 
 	private static final Log LOG = LogFactory.getLog(BasicJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();

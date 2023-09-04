@@ -41,9 +41,13 @@ public class RowDocument implements Map<String, Object> {
 		this.delegate = new LinkedCaseInsensitiveMap<>();
 	}
 
-	public RowDocument(Map<String, Object> map) {
+	public RowDocument(Map<String, ? extends Object> map) {
 		this.delegate = new LinkedCaseInsensitiveMap<>();
 		this.delegate.putAll(delegate);
+	}
+
+	public static Object of(String field, Object value) {
+		return new RowDocument().append(field, value);
 	}
 
 	/**

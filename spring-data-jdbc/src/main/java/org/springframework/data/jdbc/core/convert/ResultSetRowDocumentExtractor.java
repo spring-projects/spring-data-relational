@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -58,7 +59,13 @@ class ResultSetRowDocumentExtractor {
 		@Override
 		public Object getObject(ResultSet row, int index) {
 			try {
-				return JdbcUtils.getResultSetValue(row, index);
+				Object resultSetValue = JdbcUtils.getResultSetValue(row, index);
+
+				if (resultSetValue instanceof Array a) {
+					return a.getArray();
+				}
+
+				return resultSetValue;
 			} catch (SQLException e) {
 				throw new DataRetrievalFailureException("Cannot retrieve column " + index + " from ResultSet", e);
 			}
@@ -140,8 +147,6 @@ class ResultSetRowDocumentExtractor {
 		private final RelationalPersistentEntity<?> rootEntity;
 		private final Integer identifierIndex;
 		private final AggregateContext<ResultSet> aggregateContext;
-
-		private final boolean initiallyConsumed;
 		private boolean hasNext;
 
 		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
@@ -150,9 +155,10 @@ class ResultSetRowDocumentExtractor {
 
 			if (resultSet.isBeforeFirst()) {
 				hasNext = resultSet.next();
+			} else {
+				hasNext = !resultSet.isAfterLast();
 			}
 
-			this.initiallyConsumed = resultSet.isAfterLast();
 			this.rootPath = context.getAggregatePath(entity);
 			this.rootEntity = entity;
 
@@ -166,11 +172,6 @@ class ResultSetRowDocumentExtractor {
 
 		@Override
 		public boolean hasNext() {
-
-			if (initiallyConsumed) {
-				return false;
-			}
-
 			return hasNext;
 		}
 
@@ -182,6 +183,7 @@ class ResultSetRowDocumentExtractor {
 			Object key = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
 
 			try {
+
 				do {
 					Object nextKey = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
 

@@ -42,6 +42,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -123,6 +124,11 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		PersistentPropertyPathAccessor<T> accessor = persistentEntity.getPropertyPathAccessor(instance);
 		return new ConvertingPropertyAccessor<>(accessor, conversionService);
+	}
+
+	@Override
+	public <R> R read(Class<R> type, RowDocument source) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -271,9 +277,8 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
 	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
-	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
+	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
 
 		Class<?> target = type.getType();
 		if (ClassUtils.isAssignableValue(target, value)) {
