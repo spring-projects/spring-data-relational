@@ -77,12 +77,13 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 
 	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
-		return Optional.empty();
+		return getReader(domainType).findOneByQuery(query);
 	}
 
 	@Override
 	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
-		throw new UnsupportedOperationException();
+
+		return getReader(domainType).findAllBy(query);
 	}
 
 	@Override

@@ -21,15 +21,22 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
 import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGenerator;
 import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -89,6 +96,35 @@ class AggregateReader<T> {
 		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), this::extractAll);
 	}
 
+	public Iterable<T> findAllBy(Query query) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		BiFunction<Table, RelationalPersistentEntity, Condition> condition = createConditionSource(query, parameterSource);
+		return jdbcTemplate.query(sqlGenerator.findAllByCondition(condition), parameterSource, this::extractAll);
+	}
+
+	public Optional<T> findOneByQuery(Query query) {
+		
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		BiFunction<Table, RelationalPersistentEntity, Condition> condition = createConditionSource(query, parameterSource);
+
+		return Optional.ofNullable(
+				jdbcTemplate.query(sqlGenerator.findAllByCondition(condition), parameterSource, this::extractZeroOrOne));
+	}
+
+	private BiFunction<Table, RelationalPersistentEntity, Condition> createConditionSource(Query query, MapSqlParameterSource parameterSource) {
+
+		QueryMapper queryMapper = new QueryMapper(converter);
+
+		BiFunction<Table, RelationalPersistentEntity, Condition> condition = (table, aggregate) -> {
+			Optional<CriteriaDefinition> criteria = query.getCriteria();
+			return criteria
+					.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition, table, aggregate))
+					.orElse(null);
+		};
+		return condition;
+	}
+
 	/**
 	 * Extracts a list of aggregates from the given {@link ResultSet} by utilizing the
 	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
@@ -115,7 +151,8 @@ class AggregateReader<T> {
 	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
 	 *
 	 * @param @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
-	 * @return The single instance when the conversion results in exactly one instance. If the {@literal ResultSet} is empty, null is returned.
+	 * @return The single instance when the conversion results in exactly one instance. If the {@literal ResultSet} is
+	 *         empty, null is returned.
 	 * @throws SQLException
 	 * @throws IncorrectResultSizeDataAccessException when the conversion yields more than one instance.
 	 */
@@ -191,8 +228,14 @@ class AggregateReader<T> {
 		}
 
 		@Override
+		public String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource) {
+			return delegate.findAllByCondition(conditionSource);
+		}
+
+		@Override
 		public AliasFactory getAliasFactory() {
 			return delegate.getAliasFactory();
 		}
+
 	}
 }

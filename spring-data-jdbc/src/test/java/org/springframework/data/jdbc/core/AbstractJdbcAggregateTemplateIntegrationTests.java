@@ -23,15 +23,8 @@ import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -42,6 +35,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
@@ -64,6 +58,9 @@ import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -221,6 +218,62 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 				WithInsertOnly.class);
 		assertThat(reloadedById).extracting(e -> e.id, e -> e.insertOnly)
 				.containsExactlyInAnyOrder(tuple(entity.id, "entity"), tuple(yetAnother.id, "yetAnother"));
+	}
+
+	@Test // GH-1601
+	void findAllByQuery() {
+
+		template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.from(Criteria.where("id").is(two.id));
+		Query query = Query.query(criteria);
+		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
+
+		assertThat(reloadedById).extracting(e -> e.id, e -> e.content.size()).containsExactly(tuple(two.id, 2));
+	}
+
+	@Test // GH-1601
+	void findOneByQuery() {
+
+		template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.from(Criteria.where("id").is(two.id));
+		Query query = Query.query(criteria);
+		Optional<SimpleListParent> reloadedById = template.findOne(query, SimpleListParent.class);
+
+		assertThat(reloadedById).get().extracting(e -> e.id, e -> e.content.size()).containsExactly(two.id, 2);
+	}
+
+	@Test // GH-1601
+	void findOneByQueryNothingFound() {
+
+		template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.from(Criteria.where("id").is(4711));
+		Query query = Query.query(criteria);
+		Optional<SimpleListParent> reloadedById = template.findOne(query, SimpleListParent.class);
+
+		assertThat(reloadedById).isEmpty();
+	}
+
+	@Test // GH-1601
+	void findOneByQueryToManyResults() {
+
+		template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.from(Criteria.where("id").not(two.id));
+		Query query = Query.query(criteria);
+
+		assertThatExceptionOfType(IncorrectResultSizeDataAccessException.class)
+				.isThrownBy(() -> template.findOne(query, SimpleListParent.class));
 	}
 
 	@Test // DATAJDBC-112
@@ -1264,6 +1317,29 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	static class ChildNoId {
 		private String content;
+	}
+
+	@SuppressWarnings("unused")
+	static class SimpleListParent {
+
+		@Id private Long id;
+		String name;
+		List<ElementNoId> content = new ArrayList<>();
+
+		static SimpleListParent of(String name, String... contents) {
+
+			SimpleListParent parent = new SimpleListParent();
+			parent.name = name;
+
+			for (String content : contents) {
+
+				ElementNoId element = new ElementNoId();
+				element.content = content;
+				parent.content.add(element);
+			}
+
+			return parent;
+		}
 	}
 
 	@Table("LIST_PARENT")
