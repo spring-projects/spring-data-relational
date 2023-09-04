@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mapping.PersistentProperty;
@@ -81,6 +82,12 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		return createSelect(condition);
 	}
 
+	@Override
+	public String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource) {
+		Condition condition = conditionSource.apply(table, aggregate);
+		return createSelect(condition);
+	}
+
 	/**
 	 * @return The {@link AggregatePath} to the id property of the aggregate root.
 	 */
@@ -88,13 +95,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		return context.getAggregatePath(aggregate).append(aggregate.getRequiredIdProperty());
 	}
 
-	/**
-	 * Creates a SQL suitable of loading all the data required for constructing complete aggregates.
-	 *
-	 * @param condition a constraint for limiting the aggregates to be loaded.
-	 * @return a {@literal  String} containing the generated SQL statement
-	 */
-	private String createSelect(Condition condition) {
+	String createSelect(Condition condition) {
 
 		AggregatePath rootPath = context.getAggregatePath(aggregate);
 		QueryMeta queryMeta = createInlineQuery(rootPath, condition);

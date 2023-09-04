@@ -56,4 +56,16 @@ public interface ValueFunction<T> extends Function<Escaper, T> {
 
 		return () -> apply(escaper);
 	}
+
+	/**
+	 * Transforms the inner value of the ValueFunction using the profided transformation.
+	 *
+	 * The default implementation just return the current {@literal ValueFunction}.
+	 * This is not a valid implementation and serves just to maintain backward compatibility.
+	 *
+	 * @param transformation to be applied to the underlying value.
+	 * @return a new {@literal ValueFunction}.
+	 * @since 3.2
+	 */
+	default ValueFunction<T> transform(Function<Object, Object> transformation) {return  this;};
 }

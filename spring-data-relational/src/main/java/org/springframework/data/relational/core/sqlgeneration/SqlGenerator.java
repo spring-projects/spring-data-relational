@@ -15,6 +15,12 @@
  */
 package org.springframework.data.relational.core.sqlgeneration;
 
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Table;
+
+import java.util.function.BiFunction;
+
 /**
  * Generates SQL statements for loading aggregates.
  *
@@ -27,6 +33,8 @@ public interface SqlGenerator {
 	String findById();
 
 	String findAllById();
+
+	String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource);
 
 	AliasFactory getAliasFactory();
 }

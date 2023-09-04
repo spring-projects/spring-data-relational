@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.data.relational.core.dialect.Escaper;
-import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.parser.Part;
@@ -139,12 +138,12 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 		switch (partType) {
 			case STARTING_WITH:
-				return (ValueFunction<String>) escaper -> escaper.escape(value.toString()) + "%";
+				return ModifyingValueFunction.of(value, s -> s + "%");
 			case ENDING_WITH:
-				return (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString());
+				return ModifyingValueFunction.of(value, s -> "%" + s);
 			case CONTAINING:
 			case NOT_CONTAINING:
-				return (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString()) + "%";
+				return ModifyingValueFunction.of(value, s -> "%" + s + "%");
 			default:
 				return value;
 		}
