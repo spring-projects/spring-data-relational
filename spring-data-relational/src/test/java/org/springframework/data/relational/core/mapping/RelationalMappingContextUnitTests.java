@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for {@link RelationalMappingContext}.
@@ -87,8 +88,37 @@ public class RelationalMappingContextUnitTests {
 		assertThat(one).isSameAs(two);
 	}
 
+	@Test // GH-1586
+	void correctlyCascadesPrefix() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithEmbedded.class);
+
+		RelationalPersistentProperty parent = entity.getRequiredPersistentProperty("parent");
+		RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parent);
+		RelationalPersistentProperty child = parentEntity.getRequiredPersistentProperty("child");
+		RelationalPersistentEntity<?> childEntity = context.getRequiredPersistentEntity(child);
+		RelationalPersistentProperty name = childEntity.getRequiredPersistentProperty("name");
+
+		assertThat(parent.getEmbeddedPrefix()).isEqualTo("prnt_");
+		assertThat(child.getEmbeddedPrefix()).isEqualTo("prnt_chld_");
+		assertThat(name.getColumnName()).isEqualTo(SqlIdentifier.quoted("PRNT_CHLD_NAME"));
+	}
+
 	static class EntityWithUuid {
 		@Id UUID uuid;
+	}
+
+	static class WithEmbedded {
+		@Embedded.Empty(prefix = "prnt_") Parent parent;
+	}
+
+	static class Parent {
+
+		@Embedded.Empty(prefix = "chld_") Child child;
+	}
+
+	static class Child {
+		String name;
 	}
 
 }

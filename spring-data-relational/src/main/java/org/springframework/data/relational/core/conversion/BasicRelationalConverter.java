@@ -271,9 +271,8 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
 	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
-	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
+	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
 
 		Class<?> target = type.getType();
 		if (ClassUtils.isAssignableValue(target, value)) {

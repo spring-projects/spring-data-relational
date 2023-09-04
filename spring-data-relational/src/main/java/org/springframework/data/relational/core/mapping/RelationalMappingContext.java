@@ -28,6 +28,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -108,6 +109,24 @@ public class RelationalMappingContext
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.expressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
+	}
+
+	@Nullable
+	@Override
+	public RelationalPersistentEntity<?> getPersistentEntity(RelationalPersistentProperty persistentProperty) {
+
+		boolean embeddedDelegation = false;
+		if (persistentProperty instanceof EmbeddedRelationalPersistentProperty) {
+			embeddedDelegation = true;
+		}
+
+		RelationalPersistentEntity<?> entity = super.getPersistentEntity(persistentProperty);
+
+		if (entity != null && (persistentProperty.isEmbedded() || embeddedDelegation)) {
+			return new EmbeddedRelationalPersistentEntity<>(entity, new EmbeddedContext(persistentProperty));
+		}
+
+		return entity;
 	}
 
 	@Override
