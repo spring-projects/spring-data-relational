@@ -27,6 +27,7 @@ import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 
@@ -52,6 +53,17 @@ public interface RelationalConverter {
 	 * @return never {@literal null}.
 	 */
 	ConversionService getConversionService();
+
+	/**
+	 * Read a {@link RowDocument} into the requested {@link Class aggregate type}.
+	 *
+	 * @param type target aggregate type.
+	 * @param source source {@link RowDocument}.
+	 * @return the converted object.
+	 * @param <R> aggregate type.
+	 * @since 3.2
+	 */
+	<R> R read(Class<R> type, RowDocument source);
 
 	/**
 	 * Create a new instance of {@link PersistentEntity} given {@link ParameterValueProvider} to obtain constructor

@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +29,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
 import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGenerator;
 import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -38,62 +41,74 @@ import org.springframework.util.Assert;
  *
  * @param <T> the type of aggregate produced by this reader.
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 3.2
  */
 class AggregateReader<T> {
 
-	private final RelationalPersistentEntity<T> aggregate;
+	private final RelationalPersistentEntity<T> entity;
 	private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
-	private final AggregateResultSetExtractor<T> extractor;
+	private final ResultSetRowDocumentExtractor extractor;
 
 	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
-			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> aggregate) {
+			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> entity) {
 
 		this.converter = converter;
-		this.aggregate = aggregate;
+		this.entity = entity;
 		this.jdbcTemplate = jdbcTemplate;
 
 		this.sqlGenerator = new CachingSqlGenerator(
-				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate));
+				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, entity));
 
-		this.extractor = new AggregateResultSetExtractor<>(aggregate, converter, createPathToColumnMapping(aliasFactory));
+		this.extractor = new ResultSetRowDocumentExtractor(converter.getMappingContext(),
+				createPathToColumnMapping(aliasFactory));
 	}
 
 	public List<T> findAll() {
-
-		Iterable<T> result = jdbcTemplate.query(sqlGenerator.findAll(), extractor);
-
-		Assert.state(result != null, "result is null");
-
-		return (List<T>) result;
+		return jdbcTemplate.query(sqlGenerator.findAll(), this::extractAll);
 	}
 
 	@Nullable
 	public T findById(Object id) {
 
-		id = converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation());
+		id = converter.writeValue(id, entity.getRequiredIdProperty().getTypeInformation());
 
-		Iterator<T> result = jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), extractor).iterator();
+		return jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), rs -> {
 
-		T returnValue = result.hasNext() ? result.next() : null;
+			Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
+			if (iterate.hasNext()) {
 
-		if (result.hasNext()) {
-			throw new IncorrectResultSizeDataAccessException(1);
-		}
-
-		return returnValue;
+				RowDocument object = iterate.next();
+				if (iterate.hasNext()) {
+					throw new IncorrectResultSizeDataAccessException(1);
+				}
+				return converter.read(entity.getType(), object);
+			}
+			return null;
+		});
 	}
 
 	public Iterable<T> findAllById(Iterable<?> ids) {
 
 		List<Object> convertedIds = new ArrayList<>();
 		for (Object id : ids) {
-			convertedIds.add(converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation()));
+			convertedIds.add(converter.writeValue(id, entity.getRequiredIdProperty().getTypeInformation()));
 		}
 
-		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), extractor);
+		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), this::extractAll);
+	}
+
+	private List<T> extractAll(ResultSet rs) throws SQLException {
+
+		Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
+		List<T> resultList = new ArrayList<>();
+		while (iterate.hasNext()) {
+			resultList.add(converter.read(entity.getType(), iterate.next()));
+		}
+
+		return resultList;
 	}
 
 	private PathToColumnMapping createPathToColumnMapping(AliasFactory aliasFactory) {

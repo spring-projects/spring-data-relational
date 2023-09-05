@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -58,7 +59,13 @@ class ResultSetRowDocumentExtractor {
 		@Override
 		public Object getObject(ResultSet row, int index) {
 			try {
-				return JdbcUtils.getResultSetValue(row, index);
+				Object resultSetValue = JdbcUtils.getResultSetValue(row, index);
+
+				if (resultSetValue instanceof Array a) {
+					return a.getArray();
+				}
+
+				return resultSetValue;
 			} catch (SQLException e) {
 				throw new DataRetrievalFailureException("Cannot retrieve column " + index + " from ResultSet", e);
 			}
@@ -182,6 +189,7 @@ class ResultSetRowDocumentExtractor {
 			Object key = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
 
 			try {
+
 				do {
 					Object nextKey = ResultSetAdapter.INSTANCE.getObject(resultSet, identifierIndex);
 

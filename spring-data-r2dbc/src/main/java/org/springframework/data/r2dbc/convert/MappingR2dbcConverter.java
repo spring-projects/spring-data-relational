@@ -47,7 +47,7 @@ import org.springframework.data.mapping.model.SpELExpressionEvaluator;
 import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.support.ArrayUtils;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -66,7 +66,7 @@ import org.springframework.util.CollectionUtils;
  * @author Mark Paluch
  * @author Oliver Drotbohm
  */
-public class MappingR2dbcConverter extends BasicRelationalConverter implements R2dbcConverter {
+public class MappingR2dbcConverter extends MappingRelationalConverter implements R2dbcConverter {
 
 	/**
 	 * Creates a new {@link MappingR2dbcConverter} given {@link MappingContext}.

@@ -104,6 +104,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 	 * @return the converted object.
 	 * @param <R> aggregate type.
 	 */
+	@Override
 	public <R> R read(Class<R> type, RowDocument source) {
 		return read(TypeInformation.of(type), source);
 	}
