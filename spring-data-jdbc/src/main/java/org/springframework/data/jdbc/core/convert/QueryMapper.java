@@ -413,7 +413,7 @@ public class QueryMapper {
 		Condition condition = null;
 		for (RelationalPersistentProperty nestedProperty : persistentEntity) {
 
-			SqlIdentifier sqlIdentifier = nestedProperty.getColumnName().transform(prefix::concat);
+			SqlIdentifier sqlIdentifier = nestedProperty.getColumnName();
 			Object mappedNestedValue = convertValue(embeddedAccessor.getProperty(nestedProperty),
 					nestedProperty.getTypeInformation());
 			SQLType sqlType = converter.getTargetSqlType(nestedProperty);
@@ -766,16 +766,6 @@ public class QueryMapper {
 
 			if (isEmbedded()) {
 				throw new IllegalStateException("Cannot obtain a single column name for embedded property");
-			}
-
-			if (this.property != null && this.path != null && this.path.getParentPath() != null) {
-
-				RelationalPersistentProperty owner = this.path.getParentPath().getLeafProperty();
-
-				if (owner != null && owner.isEmbedded()) {
-					return this.property.getColumnName()
-							.transform(it -> Objects.requireNonNull(owner.getEmbeddedPrefix()).concat(it));
-				}
 			}
 
 			return this.path == null || this.path.getLeafProperty() == null ? super.getMappedColumnName()

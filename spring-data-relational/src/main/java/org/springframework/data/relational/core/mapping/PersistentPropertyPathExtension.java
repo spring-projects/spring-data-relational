@@ -214,7 +214,7 @@ public class PersistentPropertyPathExtension {
 
 		Assert.state(path != null, "Path is null");
 
-		return assembleColumnName(path.getLeafProperty().getColumnName());
+		return path.getLeafProperty().getColumnName();
 	}
 
 	/**
@@ -449,26 +449,6 @@ public class PersistentPropertyPathExtension {
 		}
 		return SqlIdentifier.quoted(prefix);
 
-	}
-
-	private SqlIdentifier assembleColumnName(SqlIdentifier suffix) {
-
-		Assert.state(path != null, "Path is null");
-
-		if (path.getLength() <= 1) {
-			return suffix;
-		}
-
-		PersistentPropertyPath<? extends RelationalPersistentProperty> parentPath = path.getParentPath();
-		RelationalPersistentProperty parentLeaf = parentPath.getLeafProperty();
-
-		if (!parentLeaf.isEmbedded()) {
-			return suffix;
-		}
-
-		String embeddedPrefix = parentLeaf.getEmbeddedPrefix();
-
-		return getParentPath().assembleColumnName(suffix.transform(embeddedPrefix::concat));
 	}
 
 	private SqlIdentifier prefixWithTableAlias(SqlIdentifier columnName) {

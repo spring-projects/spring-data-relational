@@ -37,9 +37,9 @@ public class AggregatePathTraversal {
 
 	public static AggregatePath getTableOwningPath(AggregatePath aggregatePath) {
 
-		Predicate<AggregatePath> idDefiningPathFilter = ap -> ap.isEntity() && !ap.isEmbedded();
+		Predicate<AggregatePath> tableOwningPathFilter = ap -> ap.isEntity() && !ap.isEmbedded();
 
-		AggregatePath result = aggregatePath.filter(idDefiningPathFilter);
+		AggregatePath result = aggregatePath.filter(tableOwningPathFilter);
 		if (result == null) {
 			throw new NoSuchElementException();
 		}

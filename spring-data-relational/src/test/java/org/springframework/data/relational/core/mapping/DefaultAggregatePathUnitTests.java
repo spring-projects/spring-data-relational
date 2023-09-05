@@ -200,6 +200,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path().isEmbedded()).isFalse();
 			softly.assertThat(path("withId").isEmbedded()).isFalse();
 			softly.assertThat(path("second2.third").isEmbedded()).isFalse();
+			softly.assertThat(path("second2.third2").isEmbedded()).isTrue();
 			softly.assertThat(path("second2").isEmbedded()).isTrue();
 
 		});
@@ -390,8 +391,9 @@ class DefaultAggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path("second.third2.value").getRequiredLeafProperty())
-					.isEqualTo(context.getRequiredPersistentEntity(Third.class).getPersistentProperty("value"));
+			RelationalPersistentProperty prop = path("second.third2.value").getRequiredLeafProperty();
+			softly.assertThat(prop.getName()).isEqualTo("value");
+			softly.assertThat(prop.getOwner().getType()).isEqualTo(Third.class);
 			softly.assertThat(path("second.third").getRequiredLeafProperty())
 					.isEqualTo(context.getRequiredPersistentEntity(Second.class).getPersistentProperty("third"));
 			softly.assertThat(path("secondList").getRequiredLeafProperty())
