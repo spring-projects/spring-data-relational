@@ -56,6 +56,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
+import org.springframework.data.jdbc.testing.CombiningActiveProfileResolver;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
@@ -918,7 +919,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		assertThat(
 				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class))
-						.isEqualTo("from-db");
+				.isEqualTo("from-db");
 	}
 
 	@Test
@@ -1873,10 +1874,11 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		}
 	}
 
-	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {	}
+	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {}
 
-	@ActiveProfiles(PROFILE_SINGLE_QUERY_LOADING)
-	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
+	@ActiveProfiles(value = PROFILE_SINGLE_QUERY_LOADING, resolver = CombiningActiveProfileResolver.class)
+	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests
+			extends AbstractJdbcAggregateTemplateIntegrationTests {
 
 	}
 }

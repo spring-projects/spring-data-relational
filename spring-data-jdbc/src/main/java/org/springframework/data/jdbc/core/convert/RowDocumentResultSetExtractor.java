@@ -38,6 +38,7 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * {@link ResultSet}-driven extractor to extract {@link RowDocument documents}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 3.2
  */
 class RowDocumentResultSetExtractor {
@@ -152,17 +153,17 @@ class RowDocumentResultSetExtractor {
 		private final RelationalPersistentEntity<?> rootEntity;
 		private final Integer identifierIndex;
 		private final AggregateContext<ResultSet> aggregateContext;
-		private boolean hasNext;
+
+		/**
+		 * Answers the question if the internal {@link ResultSet} points at an actual row. Since when not currently
+		 * extracting a document the {@link ResultSet} points at the next row to be read (or behind all rows), this is
+		 * equivalent to {@literal hasNext()} from the outside.
+		 */
+		private boolean pointsAtRow;
 
 		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
 
 			ResultSetAdapter adapter = ResultSetAdapter.INSTANCE;
-
-			if (resultSet.isBeforeFirst()) {
-				hasNext = resultSet.next();
-			} else {
-				hasNext = !resultSet.isAfterLast();
-			}
 
 			this.rootPath = context.getAggregatePath(entity);
 			this.rootEntity = entity;
@@ -173,11 +174,70 @@ class RowDocumentResultSetExtractor {
 
 			this.resultSet = resultSet;
 			this.identifierIndex = columns.get(idColumn);
+
+			pointsAtRow = pointAtInitialRow();
+		}
+
+		private boolean pointAtInitialRow() throws SQLException {
+
+			// If we are before the first row we need to advance to the first row.
+			try {
+				if (resultSet.isBeforeFirst()) {
+					return resultSet.next();
+				}
+			} catch (SQLException e) {
+				// seems that isBeforeFirst is not implemented
+			}
+
+			// if we are after the last row we are done and not pointing a valid row and also can't advance to one.
+			try {
+				if (resultSet.isAfterLast()) {
+					return false;
+				}
+			} catch (SQLException e) {
+				// seems that isAfterLast is not implemented
+			}
+
+			// if we arrived here we know almost nothing.
+			// maybe isBeforeFirst or isBeforeLast aren't implemented
+			// or the ResultSet is empty.
+
+
+			boolean peek = peek(resultSet);
+			if (peek) {
+				// we can see actual data, so we are looking at a current row.
+				return true;
+			}
+
+
+			try {
+				return resultSet.next();
+			} catch (SQLException e) {
+				// we aren't looking at a row, but we can't advance either.
+				// so it seems we are facing an empty ResultSet
+				return false;
+			}
+		}
+
+		/**
+		 * Tries ot access values of the passed in {@link ResultSet} in order to check if it is pointing at an actual row.
+		 *
+		 * @param resultSet to check.
+		 * @return true if values of the {@literal ResultSet} can be accessed and it therefore points to an actual row.
+		 */
+		private boolean peek(ResultSet resultSet) {
+
+			try {
+				resultSet.getObject(1);
+				return true;
+			} catch (SQLException e) {
+				return false;
+			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			return hasNext;
+			return pointsAtRow;
 		}
 
 		@Override
@@ -197,8 +257,8 @@ class RowDocumentResultSetExtractor {
 					}
 
 					reader.accept(resultSet);
-					hasNext = resultSet.next();
-				} while (hasNext);
+					pointsAtRow = resultSet.next();
+				} while (pointsAtRow);
 			} catch (SQLException e) {
 				throw new DataRetrievalFailureException("Cannot advance ResultSet", e);
 			}

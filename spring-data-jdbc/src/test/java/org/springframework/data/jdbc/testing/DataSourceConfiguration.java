@@ -18,6 +18,9 @@ package org.springframework.data.jdbc.testing;
 import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 
 import java.sql.Connection;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
@@ -64,7 +67,7 @@ abstract class DataSourceConfiguration {
 		initializer.setDataSource(dataSource());
 
 		String[] activeProfiles = environment.getActiveProfiles();
-		String profile = activeProfiles.length == 0 ? "" : activeProfiles[0];
+		String profile = getDatabaseProfile(activeProfiles);
 
 		ClassPathResource script = new ClassPathResource(TestUtils.createScriptName(testClass, profile));
 		ResourceDatabasePopulator populator = new ResourceDatabasePopulator(script);
@@ -72,6 +75,18 @@ abstract class DataSourceConfiguration {
 		initializer.setDatabasePopulator(populator);
 
 		return initializer;
+	}
+
+	private static String getDatabaseProfile(String[] activeProfiles) {
+
+		List<String> validDbs = Arrays.asList("hsql", "h2", "mysql", "mariadb", "postgres", "db2", "oracle", "mssql");
+		for (String profile : activeProfiles) {
+			if (validDbs.contains(profile)) {
+				return profile;
+			}
+		}
+
+		return "";
 	}
 
 	/**

@@ -136,7 +136,7 @@ class ResultSetTestUtil {
 		}
 
 		private boolean isBeforeFirst() {
-			return index < 0;
+			return index < 0 && !values.isEmpty();
 		}
 
 		private Object getObject(String column) throws SQLException {
