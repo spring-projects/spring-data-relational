@@ -33,18 +33,6 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 class AggregatePathTableUtils {
 
-	public static SqlIdentifier assembleColumnName(AggregatePath path, SqlIdentifier suffix) {
-		return suffix.transform(constructEmbeddedPrefix(path)::concat);
-	}
-
-	private static String constructEmbeddedPrefix(AggregatePath path) {
-
-		return path.stream() //
-				.filter(p -> p != path) //
-				.takeWhile(AggregatePath::isEmbedded).map(p -> p.getRequiredLeafProperty().getEmbeddedPrefix()) //
-				.collect(new ReverseJoinCollector());
-	}
-
 	public static SqlIdentifier prefixWithTableAlias(AggregatePath path, SqlIdentifier columnName) {
 
 		AggregatePath tableOwner = AggregatePathTraversal.getTableOwningPath(path);

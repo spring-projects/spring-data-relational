@@ -32,8 +32,12 @@ record EmbeddedContext(RelationalPersistentProperty ownerProperty) {
 
 	public String withEmbeddedPrefix(String name) {
 
-		if (ownerProperty.getEmbeddedPrefix() != null) {
-			return ownerProperty.getEmbeddedPrefix() + name;
+		if (!ownerProperty.isEmbedded()) {
+			return name;
+		}
+		String embeddedPrefix = ownerProperty.getEmbeddedPrefix();
+		if (embeddedPrefix != null) {
+			return embeddedPrefix + name;
 		}
 
 		return name;

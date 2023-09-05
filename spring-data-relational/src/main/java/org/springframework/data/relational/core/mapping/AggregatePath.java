@@ -334,9 +334,8 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 			// TODO: Multi-valued paths cannot be represented with a single column
 			// Assert.isTrue(!path.isMultiValued(), () -> "Cannot obtain ColumnInfo for multi-valued path");
 
-			SqlIdentifier name = AggregatePathTableUtils.assembleColumnName(path,
-					path.getRequiredLeafProperty().getColumnName());
-			return new ColumnInfo(name, AggregatePathTableUtils.prefixWithTableAlias(path, name));
+			SqlIdentifier columnName = path.getRequiredLeafProperty().getColumnName();
+			return new ColumnInfo(columnName, AggregatePathTableUtils.prefixWithTableAlias(path, columnName));
 		}
 	}
 }

@@ -42,6 +42,11 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 		this.context = context;
 	}
 
+	@Override
+	public boolean isEmbedded() {
+		return delegate.isEmbedded();
+	}
+
 	@Nullable
 	@Override
 	public String getEmbeddedPrefix() {
