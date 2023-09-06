@@ -147,8 +147,6 @@ class ResultSetRowDocumentExtractor {
 		private final RelationalPersistentEntity<?> rootEntity;
 		private final Integer identifierIndex;
 		private final AggregateContext<ResultSet> aggregateContext;
-
-		private final boolean initiallyConsumed;
 		private boolean hasNext;
 
 		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
@@ -157,9 +155,10 @@ class ResultSetRowDocumentExtractor {
 
 			if (resultSet.isBeforeFirst()) {
 				hasNext = resultSet.next();
+			} else {
+				hasNext = !resultSet.isAfterLast();
 			}
 
-			this.initiallyConsumed = resultSet.isAfterLast();
 			this.rootPath = context.getAggregatePath(entity);
 			this.rootEntity = entity;
 
@@ -173,11 +172,6 @@ class ResultSetRowDocumentExtractor {
 
 		@Override
 		public boolean hasNext() {
-
-			if (initiallyConsumed) {
-				return false;
-			}
-
 			return hasNext;
 		}
 

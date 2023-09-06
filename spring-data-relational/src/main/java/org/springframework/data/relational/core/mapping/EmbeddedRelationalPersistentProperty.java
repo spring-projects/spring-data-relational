@@ -23,6 +23,7 @@ import org.springframework.data.mapping.Association;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Embedded property extension to a {@link RelationalPersistentProperty}
@@ -280,6 +281,28 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 	@Nullable
 	public TypeInformation<?> getAssociationTargetTypeInformation() {
 		return delegate.getAssociationTargetTypeInformation();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+
+		EmbeddedRelationalPersistentProperty that = (EmbeddedRelationalPersistentProperty) o;
+
+		if (!ObjectUtils.nullSafeEquals(delegate, that.delegate)) {
+			return false;
+		}
+		return ObjectUtils.nullSafeEquals(context, that.context);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = ObjectUtils.nullSafeHashCode(delegate);
+		result = 31 * result + ObjectUtils.nullSafeHashCode(context);
+		return result;
 	}
 
 	@Override

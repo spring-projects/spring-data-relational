@@ -136,10 +136,14 @@ class ResultSetTestUtil {
 		}
 
 		private boolean isBeforeFirst() {
-			return index < 0 && !values.isEmpty();
+			return index < 0;
 		}
 
 		private Object getObject(String column) throws SQLException {
+
+			if (index == -1) {
+				throw new SQLException("ResultSet.isBeforeFirst. Make sure to call next() before calling this method");
+			}
 
 			Map<String, Object> rowMap = values.get(index);
 

@@ -233,7 +233,7 @@ abstract class RowDocumentExtractorSupport {
 
 				AggregatePath path = basePath.append(property);
 
-				if (property.isEntity() && !property.isEmbedded() && property.isQualified()) {
+				if (property.isEntity() && !property.isEmbedded() && (property.isCollectionLike() || property.isQualified())) {
 					readerState.put(property, new ContainerSink<>(aggregateContext, property, path));
 					continue;
 				}

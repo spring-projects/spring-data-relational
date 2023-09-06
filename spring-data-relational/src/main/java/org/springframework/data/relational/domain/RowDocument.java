@@ -46,6 +46,10 @@ public class RowDocument implements Map<String, Object> {
 		this.delegate.putAll(delegate);
 	}
 
+	public static Object of(String field, Object value) {
+		return new RowDocument().append(field, value);
+	}
+
 	/**
 	 * Retrieve the value at {@code key} as {@link List}.
 	 *
