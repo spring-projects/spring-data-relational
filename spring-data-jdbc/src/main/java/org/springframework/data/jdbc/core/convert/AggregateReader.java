@@ -36,8 +36,9 @@ import org.springframework.util.Assert;
 
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
- * and a matching {@link AggregateResultSetExtractor} and invoking a
- * {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}
+ * through {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Results are converterd into an
+ * intermediate {@link ResultSetRowDocumentExtractor RowDocument} and mapped via
+ * {@link org.springframework.data.relational.core.conversion.RelationalConverter#read(Class, RowDocument)}.
  *
  * @param <T> the type of aggregate produced by this reader.
  * @author Jens Schauder
@@ -132,8 +133,8 @@ class AggregateReader<T> {
 	 * A wrapper for the {@link org.springframework.data.relational.core.sqlgeneration.SqlGenerator} that caches the
 	 * generated statements.
 	 *
-	 * @since 3.2
 	 * @author Jens Schauder
+	 * @since 3.2
 	 */
 	static class CachingSqlGenerator implements org.springframework.data.relational.core.sqlgeneration.SqlGenerator {
 
