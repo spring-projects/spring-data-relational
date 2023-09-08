@@ -31,7 +31,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  * @author Oliver Gierke
  */
 @Configuration
-@Profile({ "hsql", "default" })
+@Profile({ "hsql", "!h2 && !mysql && !mariadb && !postgres && !oracle && !db2 && !mssql" })
 class HsqlDataSourceConfiguration {
 
 	@Autowired Class<?> context;

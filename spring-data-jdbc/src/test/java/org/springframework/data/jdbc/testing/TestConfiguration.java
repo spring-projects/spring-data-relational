@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
@@ -66,6 +67,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
 public class TestConfiguration {
+
+	public static final String PROFILE_SINGLE_QUERY_LOADING = "singleQueryLoading";
+	public static final String PROFILE_NO_SINGLE_QUERY_LOADING = "!" + PROFILE_SINGLE_QUERY_LOADING;
 
 	@Autowired DataSource dataSource;
 	@Autowired BeanFactory beanFactory;
@@ -107,11 +111,21 @@ public class TestConfiguration {
 				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
 	}
 
-	@Bean
-	JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+	@Bean("jdbcMappingContext")
+	@Profile(PROFILE_NO_SINGLE_QUERY_LOADING)
+	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		return mappingContext;
+	}
+	@Bean("jdbcMappingContext")
+	@Profile(PROFILE_SINGLE_QUERY_LOADING)
+	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+
+		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
+		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		mappingContext.setSingleQueryLoadingEnabled(true);
 		return mappingContext;
 	}
 

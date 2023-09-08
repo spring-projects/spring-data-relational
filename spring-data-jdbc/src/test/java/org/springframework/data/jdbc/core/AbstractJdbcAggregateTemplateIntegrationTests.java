@@ -19,6 +19,7 @@ import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
@@ -36,7 +37,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +67,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -98,13 +99,6 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Autowired RelationalMappingContext mappingContext;
 
 	LegoSet legoSet = createLegoSet("Star Destroyer");
-
-	@BeforeEach
-	void beforeEach(){
-		mappingContext.setSingleQueryLoadingEnabled(useSingleQuery());
-	}
-
-	abstract boolean useSingleQuery();
 
 	/**
 	 * creates an instance of {@link NoIdListChain4} with the following properties:
@@ -1879,16 +1873,10 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		}
 	}
 
-	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
-		@Override
-		boolean useSingleQuery() {
-			return false;
-		}
-	}
-	static class JdbcAggregateTemplateSqlIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
-		@Override
-		boolean useSingleQuery() {
-			return true;
-		}
+	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {	}
+
+	@ActiveProfiles(PROFILE_SINGLE_QUERY_LOADING)
+	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {
+
 	}
 }
