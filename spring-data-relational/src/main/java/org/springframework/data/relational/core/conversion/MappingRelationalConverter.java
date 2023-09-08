@@ -67,7 +67,9 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 	 * @param context must not be {@literal null}.
 	 */
 	public MappingRelationalConverter(RelationalMappingContext context) {
+
 		super(context);
+
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
 	}
 
@@ -79,7 +81,9 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 	 * @param conversions must not be {@literal null}.
 	 */
 	public MappingRelationalConverter(RelationalMappingContext context, CustomConversions conversions) {
+
 		super(context, conversions);
+
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
 	}
 

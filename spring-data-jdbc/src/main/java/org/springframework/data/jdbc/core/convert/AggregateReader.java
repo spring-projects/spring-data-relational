@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
  * through {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Results are converterd into an
- * intermediate {@link ResultSetRowDocumentExtractor RowDocument} and mapped via
+ * intermediate {@link RowDocumentResultSetExtractor RowDocument} and mapped via
  * {@link org.springframework.data.relational.core.conversion.RelationalConverter#read(Class, RowDocument)}.
  *
  * @param <T> the type of aggregate produced by this reader.
@@ -47,23 +47,23 @@ import org.springframework.util.Assert;
  */
 class AggregateReader<T> {
 
-	private final RelationalPersistentEntity<T> entity;
+	private final RelationalPersistentEntity<T> aggregate;
 	private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
-	private final ResultSetRowDocumentExtractor extractor;
+	private final RowDocumentResultSetExtractor extractor;
 
 	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
-			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> entity) {
+			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> aggregate) {
 
 		this.converter = converter;
-		this.entity = entity;
+		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
 
 		this.sqlGenerator = new CachingSqlGenerator(
-				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, entity));
+				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate));
 
-		this.extractor = new ResultSetRowDocumentExtractor(converter.getMappingContext(),
+		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(),
 				createPathToColumnMapping(aliasFactory));
 	}
 
@@ -74,42 +74,64 @@ class AggregateReader<T> {
 	@Nullable
 	public T findById(Object id) {
 
-		id = converter.writeValue(id, entity.getRequiredIdProperty().getTypeInformation());
+		id = converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation());
 
-		return jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), rs -> {
-
-			Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
-			if (iterate.hasNext()) {
-
-				RowDocument object = iterate.next();
-				if (iterate.hasNext()) {
-					throw new IncorrectResultSizeDataAccessException(1);
-				}
-				return converter.read(entity.getType(), object);
-			}
-			return null;
-		});
+		return jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), this::extractZeroOrOne);
 	}
 
 	public Iterable<T> findAllById(Iterable<?> ids) {
 
 		List<Object> convertedIds = new ArrayList<>();
 		for (Object id : ids) {
-			convertedIds.add(converter.writeValue(id, entity.getRequiredIdProperty().getTypeInformation()));
+			convertedIds.add(converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation()));
 		}
 
 		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), this::extractAll);
 	}
 
+	/**
+	 * Extracts a list of aggregates from the given {@link ResultSet} by utilizing the
+	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
+	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
+	 * 
+	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
+	 * @return a {@code List} of aggregates, fully converted.
+	 * @throws SQLException
+	 */
 	private List<T> extractAll(ResultSet rs) throws SQLException {
 
-		Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
+		Iterator<RowDocument> iterate = extractor.iterate(aggregate, rs);
 		List<T> resultList = new ArrayList<>();
 		while (iterate.hasNext()) {
-			resultList.add(converter.read(entity.getType(), iterate.next()));
+			resultList.add(converter.read(aggregate.getType(), iterate.next()));
 		}
 
 		return resultList;
+	}
+
+	/**
+	 * Extracts a single aggregate or {@literal null} from the given {@link ResultSet} by utilizing the
+	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
+	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
+	 *
+	 * @param @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
+	 * @return The single instance when the conversion results in exactly one instance. If the {@literal ResultSet} is empty, null is returned.
+	 * @throws SQLException
+	 * @throws IncorrectResultSizeDataAccessException when the conversion yields more than one instance.
+	 */
+	@Nullable
+	private T extractZeroOrOne(ResultSet rs) throws SQLException {
+
+		Iterator<RowDocument> iterate = extractor.iterate(aggregate, rs);
+		if (iterate.hasNext()) {
+
+			RowDocument object = iterate.next();
+			if (iterate.hasNext()) {
+				throw new IncorrectResultSizeDataAccessException(1);
+			}
+			return converter.read(aggregate.getType(), object);
+		}
+		return null;
 	}
 
 	private PathToColumnMapping createPathToColumnMapping(AliasFactory aliasFactory) {

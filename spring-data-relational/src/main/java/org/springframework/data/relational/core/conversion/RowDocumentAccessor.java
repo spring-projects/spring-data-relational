@@ -94,7 +94,6 @@ record RowDocumentAccessor(RowDocument document) {
 	 * @param property must not be {@literal null}.
 	 * @return {@literal true} if no non {@literal null} value present.
 	 */
-	@SuppressWarnings("unchecked")
 	public boolean hasValue(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null");

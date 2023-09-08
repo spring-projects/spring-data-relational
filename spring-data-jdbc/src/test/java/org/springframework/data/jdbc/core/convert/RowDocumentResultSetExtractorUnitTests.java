@@ -41,19 +41,19 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.domain.RowDocument;
 
 /**
- * Unit tests for the {@link ResultSetRowDocumentExtractor}.
+ * Unit tests for the {@link RowDocumentResultSetExtractor}.
  *
  * @author Jens Schauder
  * @author Mark Paluch
  */
-public class ResultSetRowDocumentExtractorUnitTests {
+public class RowDocumentResultSetExtractorUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
 
 	private final PathToColumnMapping column = new PathToColumnMapping() {
 		@Override
 		public String column(AggregatePath path) {
-			return ResultSetRowDocumentExtractorUnitTests.this.column(path);
+			return RowDocumentResultSetExtractorUnitTests.this.column(path);
 		}
 
 		@Override
@@ -62,7 +62,7 @@ public class ResultSetRowDocumentExtractorUnitTests {
 		}
 	};
 
-	ResultSetRowDocumentExtractor documentExtractor = new ResultSetRowDocumentExtractor(context, column);
+	RowDocumentResultSetExtractor documentExtractor = new RowDocumentResultSetExtractor(context, column);
 
 	@Test // GH-1446
 	void emptyResultSetYieldsEmptyResult() {
@@ -272,8 +272,7 @@ public class ResultSetRowDocumentExtractorUnitTests {
 	@Nested
 	class Maps {
 
-		@Test
-		// GH-1446
+		@Test // GH-1446
 		void extractSingleMapReference() {
 
 			testerFor(WithMaps.class).resultSet(rsc -> {
@@ -288,8 +287,7 @@ public class ResultSetRowDocumentExtractorUnitTests {
 			});
 		}
 
-		@Test
-		// GH-1446
+		@Test // GH-1446
 		void extractMultipleCollectionReference() {
 
 			testerFor(WithMapsAndList.class).resultSet(rsc -> {
@@ -307,8 +305,7 @@ public class ResultSetRowDocumentExtractorUnitTests {
 			});
 		}
 
-		@Test
-		// GH-1446
+		@Test // GH-1446
 		void extractNestedMapsWithId() {
 
 			testerFor(WithMaps.class).resultSet(rsc -> {
@@ -529,16 +526,19 @@ public class ResultSetRowDocumentExtractorUnitTests {
 	private static class DocumentTester extends AbstractTester {
 
 		private final Class<?> entityType;
-		private final ResultSetRowDocumentExtractor extractor;
+		private final RowDocumentResultSetExtractor extractor;
 
-		DocumentTester(Class<?> entityType, RelationalMappingContext context, ResultSetRowDocumentExtractor extractor) {
+		DocumentTester(Class<?> entityType, RelationalMappingContext context, RowDocumentResultSetExtractor extractor) {
+
 			super(entityType, context);
+
 			this.entityType = entityType;
 			this.extractor = extractor;
 		}
 
 		@Override
 		DocumentTester resultSet(Consumer<ResultSetConfigurer> configuration) {
+
 			super.resultSet(configuration);
 			return this;
 		}
@@ -561,7 +561,9 @@ public class ResultSetRowDocumentExtractorUnitTests {
 
 		@Override
 		ResultSetTester resultSet(Consumer<ResultSetConfigurer> configuration) {
+
 			super.resultSet(configuration);
+
 			return this;
 		}
 

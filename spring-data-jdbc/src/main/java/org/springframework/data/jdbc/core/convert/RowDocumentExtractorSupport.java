@@ -79,6 +79,7 @@ abstract class RowDocumentExtractorSupport {
 
 		protected AggregateContext(TabularResultAdapter<RS> adapter, RelationalMappingContext context,
 				PathToColumnMapping propertyToColumn, Map<String, Integer> columnMap) {
+
 			this.adapter = adapter;
 			this.context = context;
 			this.propertyToColumn = propertyToColumn;
@@ -183,6 +184,7 @@ abstract class RowDocumentExtractorSupport {
 
 		public RowDocumentSink(AggregateContext<RS> aggregateContext, RelationalPersistentEntity<?> entity,
 				AggregatePath basePath) {
+
 			this.aggregateContext = aggregateContext;
 			this.entity = entity;
 			this.basePath = basePath;
@@ -234,11 +236,13 @@ abstract class RowDocumentExtractorSupport {
 				AggregatePath path = basePath.append(property);
 
 				if (property.isEntity() && !property.isEmbedded() && (property.isCollectionLike() || property.isQualified())) {
+
 					readerState.put(property, new ContainerSink<>(aggregateContext, property, path));
 					continue;
 				}
 
 				if (property.isEmbedded()) {
+
 					RelationalPersistentEntity<?> embeddedEntity = aggregateContext.getRequiredPersistentEntity(property);
 					readEntity(row, document, path, embeddedEntity);
 					continue;
@@ -286,11 +290,7 @@ abstract class RowDocumentExtractorSupport {
 				}
 			}
 
-			if (result.isEmpty() && key == null) {
-				return false;
-			}
-
-			return true;
+			return !(result.isEmpty() && key == null);
 		}
 
 		@Override
@@ -308,6 +308,7 @@ abstract class RowDocumentExtractorSupport {
 
 		@Override
 		void reset() {
+
 			result = null;
 			readerState.clear();
 		}
@@ -326,6 +327,7 @@ abstract class RowDocumentExtractorSupport {
 		private @Nullable Object value;
 
 		public SingleColumnSink(AggregateContext<RS> aggregateContext, AggregatePath path) {
+
 			this.aggregateContext = aggregateContext;
 			this.columnName = path.getColumnInfo().name().getReference();
 		}
@@ -431,6 +433,7 @@ abstract class RowDocumentExtractorSupport {
 		public Object getResult() {
 
 			if (componentReader.hasResult()) {
+
 				container.add(this.key, componentReader.getResult());
 				componentReader.reset();
 			}

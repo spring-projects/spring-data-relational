@@ -27,8 +27,7 @@ import org.springframework.lang.Nullable;
  * {@link org.springframework.expression.PropertyAccessor} to allow entity based field access to
  * {@link org.springframework.data.relational.domain.RowDocument}s.
  *
- * @author Oliver Gierke
- * @author Christoph Strobl
+ * @author Mark Paluch
  */
 class DocumentPropertyAccessor extends MapAccessor {
 

@@ -42,6 +42,7 @@ public class RowDocument implements Map<String, Object> {
 	}
 
 	public RowDocument(Map<String, ? extends Object> map) {
+
 		this.delegate = new LinkedCaseInsensitiveMap<>();
 		this.delegate.putAll(delegate);
 	}

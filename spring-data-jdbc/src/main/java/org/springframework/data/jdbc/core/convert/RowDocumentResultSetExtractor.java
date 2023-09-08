@@ -40,12 +40,13 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * @author Mark Paluch
  * @since 3.2
  */
-class ResultSetRowDocumentExtractor {
+class RowDocumentResultSetExtractor {
 
 	private final RelationalMappingContext context;
 	private final PathToColumnMapping propertyToColumn;
 
-	ResultSetRowDocumentExtractor(RelationalMappingContext context, PathToColumnMapping propertyToColumn) {
+	RowDocumentResultSetExtractor(RelationalMappingContext context, PathToColumnMapping propertyToColumn) {
+
 		this.context = context;
 		this.propertyToColumn = propertyToColumn;
 	}
@@ -54,11 +55,14 @@ class ResultSetRowDocumentExtractor {
 	 * Adapter to extract values and column metadata from a {@link ResultSet}.
 	 */
 	enum ResultSetAdapter implements TabularResultAdapter<ResultSet> {
+
 		INSTANCE;
 
 		@Override
 		public Object getObject(ResultSet row, int index) {
+
 			try {
+
 				Object resultSetValue = JdbcUtils.getResultSetValue(row, index);
 
 				if (resultSetValue instanceof Array a) {
@@ -75,6 +79,7 @@ class ResultSetRowDocumentExtractor {
 		public Map<String, Integer> getColumnMap(ResultSet result) {
 
 			try {
+
 				ResultSetMetaData metaData = result.getMetaData();
 				Map<String, Integer> columns = new LinkedCaseInsensitiveMap<>(metaData.getColumnCount());
 
@@ -201,5 +206,4 @@ class ResultSetRowDocumentExtractor {
 			return reader.getResult();
 		}
 	}
-
 }
