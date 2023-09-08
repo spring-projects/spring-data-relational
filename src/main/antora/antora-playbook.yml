@@ -8,7 +8,7 @@ antora:
       root_component_name: 'data-relational'
 site:
   title: Spring Data Relational
-  url: https://docs.spring.io/spring-data-relational/reference/
+  url: https://docs.spring.io/spring-data/relational/reference/
 content:
   sources:
     - url: ./../../..
@@ -38,5 +38,5 @@ runtime:
     format: pretty
 ui:
   bundle:
-    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.3.3/ui-bundle.zip
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.3.5/ui-bundle.zip
     snapshot: true

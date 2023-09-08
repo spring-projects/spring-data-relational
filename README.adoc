@@ -102,7 +102,7 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 </dependency>
 
 <repository>
-  <id>spring-libs-snapshot</id>
+  <id>spring-snapshot</id>
   <name>Spring Snapshot Repository</name>
   <url>https://repo.spring.io/snapshot</url>
 </repository>
@@ -197,7 +197,7 @@ We’d love to help!
 
 * If you are new to Spring Data JDBC read the following two articles https://spring.io/blog/2018/09/17/introducing-spring-data-jdbc["Introducing Spring Data JDBC"] and https://spring.io/blog/2018/09/24/spring-data-jdbc-references-and-aggregates["Spring Data JDBC, References, and Aggregates"].
 * Check the
-https://docs.spring.io/spring-data/jdbc/docs/current/reference/html/[reference documentation], and https://docs.spring.io/spring-data/jdbc/docs/current/api/[Javadocs].
+https://docs.spring.io/spring-data/relational/reference/[reference documentation], and https://docs.spring.io/spring-data/jdbc/docs/current/api/[Javadocs].
 * Learn the Spring basics – Spring Data builds on Spring Framework, check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
 If you are just starting out with Spring, try one of the https://spring.io/guides[guides].
 * If you are upgrading, check out the https://docs.spring.io/spring-data/jdbc/docs/current/changelog.txt[changelog] for "`new and noteworthy`" features.
@@ -228,7 +228,7 @@ You also need JDK 17.
  $ ./mvnw clean install
 ----
 
-If you want to build with the regular `mvn` command, you will need https://maven.apache.org/run-maven/index.html[Maven v3.5.0 or above].
+If you want to build with the regular `mvn` command, you will need https://maven.apache.org/run-maven/index.html[Maven v3.8.0 or above].
 
 _Also see link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] if you wish to submit pull requests, and in particular please sign the https://cla.pivotal.io/sign/spring[Contributor’s Agreement] before your first non-trivial change._
 
