@@ -126,7 +126,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		ParametrizedQuery query = createQuery(accessor, processor.getReturnedType());
 		JdbcQueryExecution<?> execution = getQueryExecution(processor, accessor);
 
-		return execution.execute(query.getQuery(), query.getParameterSource());
+		return execution.execute(query.getQuery(), query.getParameterSource(dialect.getLikeEscaper()));
 	}
 
 	private JdbcQueryExecution<?> getQueryExecution(ResultProcessor processor,
@@ -164,7 +164,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
 						Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuery.getQuery(),
-								countQuery.getParameterSource());
+								countQuery.getParameterSource(dialect.getLikeEscaper()));
 
 						return converter.getConversionService().convert(count, Long.class);
 					});

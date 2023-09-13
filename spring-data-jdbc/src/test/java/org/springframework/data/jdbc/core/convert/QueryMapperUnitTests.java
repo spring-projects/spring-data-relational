@@ -50,7 +50,7 @@ public class QueryMapperUnitTests {
 	JdbcMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
 
-	QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
+	QueryMapper mapper = new QueryMapper(converter);
 	MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
 	@Test // DATAJDBC-318

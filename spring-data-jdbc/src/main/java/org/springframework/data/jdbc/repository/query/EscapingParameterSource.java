@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.data.jdbc.repository.query;
 
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
- * Value object encapsulating a query containing named parameters and a{@link SqlParameterSource} to bind the parameters.
- *
- * @author Mark Paluch
+ * This {@link SqlParameterSource} will apply escaping to it's values.
+ * 
  * @author Jens Schauder
- * @since 2.0
+ * @since 3.2
  */
-class ParametrizedQuery {
-
-	private final String query;
+public class EscapingParameterSource implements SqlParameterSource {
 	private final SqlParameterSource parameterSource;
+	private final Escaper escaper;
 
-	ParametrizedQuery(String query, SqlParameterSource parameterSource) {
+	public EscapingParameterSource(SqlParameterSource parameterSource, Escaper escaper) {
 
-		this.query = query;
 		this.parameterSource = parameterSource;
-	}
-
-	String getQuery() {
-		return query;
+		this.escaper = escaper;
 	}
 
 	@Override
-	public String toString() {
-		return this.query;
+	public boolean hasValue(String paramName) {
+		return parameterSource.hasValue(paramName);
 	}
 
-	public SqlParameterSource getParameterSource(Escaper escaper) {
+	@Override
+	public Object getValue(String paramName) throws IllegalArgumentException {
 
-		return new EscapingParameterSource(parameterSource, escaper);
+		Object value = parameterSource.getValue(paramName);
+		if (value instanceof ValueFunction<?>) {
+			return ((ValueFunction<?>) value).apply(escaper);
+		}
+		return value;
 	}
 }

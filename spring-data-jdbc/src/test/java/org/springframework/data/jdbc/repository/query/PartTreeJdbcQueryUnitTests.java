@@ -36,6 +36,7 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -93,7 +94,7 @@ public class PartTreeJdbcQueryUnitTests {
 			softly.assertThat(query.getQuery())
 					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
 
-			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
 		});
 	}
 
@@ -112,8 +113,8 @@ public class PartTreeJdbcQueryUnitTests {
 
 			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
 
-			softly.assertThat(query.getParameterSource().getValue("first_name")).isEqualTo(firstname);
-			softly.assertThat(query.getParameterSource().getValue("last_name")).isEqualTo(lastname);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo(firstname);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("last_name")).isEqualTo(lastname);
 		});
 	}
 
@@ -133,8 +134,8 @@ public class PartTreeJdbcQueryUnitTests {
 			// this is also for update since h2 dialect does not distinguish between lockmodes
 			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
 
-			softly.assertThat(query.getParameterSource().getValue("first_name")).isEqualTo(firstname);
-			softly.assertThat(query.getParameterSource().getValue("age")).isEqualTo(age);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo(firstname);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("age")).isEqualTo(age);
 		});
 	}
 
@@ -165,7 +166,7 @@ public class PartTreeJdbcQueryUnitTests {
 			softly.assertThat(query.getQuery())
 					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
 
-			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
 		});
 	}
 
@@ -182,7 +183,7 @@ public class PartTreeJdbcQueryUnitTests {
 			softly.assertThat(query.getQuery())
 					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
 
-			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
 		});
 	}
 
@@ -270,8 +271,8 @@ public class PartTreeJdbcQueryUnitTests {
 			softly.assertThat(query.getQuery())
 					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" BETWEEN :date_of_birth AND :date_of_birth1");
 
-			softly.assertThat(query.getParameterSource().getValue("date_of_birth")).isEqualTo(from);
-			softly.assertThat(query.getParameterSource().getValue("date_of_birth1")).isEqualTo(to);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("date_of_birth")).isEqualTo(from);
+			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("date_of_birth1")).isEqualTo(to);
 		});
 	}
 
@@ -405,7 +406,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource().getValue("first_name")).isEqualTo("Jo%");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("Jo%");
 	}
 
 	@Test // DATAJDBC-318
@@ -428,7 +429,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource().getValue("first_name")).isEqualTo("%hn");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%hn");
 	}
 
 	@Test // DATAJDBC-318
@@ -451,7 +452,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource().getValue("first_name")).isEqualTo("%oh%");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%oh%");
 	}
 
 	@Test // DATAJDBC-318
@@ -474,7 +475,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
-		assertThat(query.getParameterSource().getValue("first_name")).isEqualTo("%oh%");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%oh%");
 	}
 
 	@Test // DATAJDBC-318
@@ -638,8 +639,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(TABLE + ".\"USER_STREET\" = :user_street", //
 						" AND ", //
 						TABLE + ".\"USER_CITY\" = :user_city");
-		assertThat(query.getParameterSource().getValue("user_street")).isEqualTo("Hello");
-		assertThat(query.getParameterSource().getValue("user_city")).isEqualTo("World");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_street")).isEqualTo("Hello");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_city")).isEqualTo("World");
 	}
 
 	@Test // DATAJDBC-318
@@ -653,7 +654,7 @@ public class PartTreeJdbcQueryUnitTests {
 		String expectedSql = BASE_SELECT + " WHERE " + TABLE + ".\"USER_STREET\" = :user_street";
 
 		assertThat(query.getQuery()).isEqualTo(expectedSql);
-		assertThat(query.getParameterSource().getValue("user_street")).isEqualTo("Hello");
+		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_street")).isEqualTo("Hello");
 	}
 
 	@Test // DATAJDBC-534
