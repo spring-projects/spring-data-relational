@@ -102,7 +102,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.accessor = accessor;
 
 		this.entityMetadata = entityMetadata;
-		this.queryMapper = new QueryMapper(dialect, converter);
+		this.queryMapper = new QueryMapper(converter);
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.isSliceQuery = isSliceQuery;
 		this.returnedType = returnedType;
