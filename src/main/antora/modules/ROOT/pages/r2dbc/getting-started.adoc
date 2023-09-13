@@ -9,7 +9,7 @@ Refer to your vendor documentation on how to configure your database for R2DBC a
 [[requirements]]
 == Requirements
 
-Spring Data R2DBC requires https://spring.io/docs[Spring Framework] {springVersion} and above.
+Spring Data R2DBC requires {springdocsurl}[Spring Framework] {springVersion} and above.
 
 In terms of databases, Spring Data R2DBC requires a <<r2dbc.drivers,driver>> to abstract common SQL functionality over vendor-specific flavours.
 Spring Data R2DBC includes direct support for the following databases:

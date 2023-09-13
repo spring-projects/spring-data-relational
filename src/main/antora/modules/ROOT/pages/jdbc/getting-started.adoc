@@ -9,7 +9,7 @@ Refer to your vendor documentation on how to configure your database for JDBC ac
 [[requirements]]
 == Requirements
 
-Spring Data JDBC requires https://spring.io/docs[Spring Framework] {springVersion} and above.
+Spring Data JDBC requires {springdocsurl}[Spring Framework] {springVersion} and above.
 
 In terms of databases, Spring Data JDBC requires a <<jdbc.dialects,dialect>> to abstract common SQL functionality over vendor-specific flavours.
 Spring Data JDBC includes direct support for the following databases:
