@@ -15,6 +15,23 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
+import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +42,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -37,21 +55,6 @@ import org.springframework.data.relational.repository.support.MappingRelationalE
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
-import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
-import static org.springframework.data.domain.ExampleMatcher.*;
 
 /**
  * Abstract integration tests for {@link SimpleR2dbcRepository} to be ran against various databases.
@@ -832,6 +835,36 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.verifyComplete();
 	}
 
+	@Test // GH-1609
+	void findByScrollPosition() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset())) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(window -> {
+
+					assertThat(window.map(it -> it.name)).containsOnly("FORSCHUNGSSCHIFF", "SCHAUFELRADBAGGER");
+				}).verifyComplete();
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset(2))) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(window -> {
+
+					assertThat(window.map(it -> it.name)).containsOnly("VOLTRON");
+				}).verifyComplete();
+	}
+
 	@Test // GH-663
 	void findByShouldApplySortAll() {
 
@@ -981,8 +1014,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	static class LegoSet {
 
-		@Id
-		int id;
+		@Id int id;
 		String name;
 		Integer manual;
 
@@ -992,8 +1024,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 			this.manual = manual;
 		}
 
-		public LegoSet() {
-		}
+		public LegoSet() {}
 
 		public int getId() {
 			return this.id;
@@ -1027,8 +1058,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	static class LegoSetWithNonScalarId {
 
-		@Id
-		Integer id;
+		@Id Integer id;
 		String name;
 		Integer manual;
 		String extra;
@@ -1040,8 +1070,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 			this.extra = extra;
 		}
 
-		public LegoSetWithNonScalarId() {
-		}
+		public LegoSetWithNonScalarId() {}
 
 		public Integer getId() {
 			return this.id;
@@ -1077,10 +1106,13 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 		@Override
 		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
 			LegoSetWithNonScalarId that = (LegoSetWithNonScalarId) o;
-			return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(manual, that.manual) && Objects.equals(extra, that.extra);
+			return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(manual, that.manual)
+					&& Objects.equals(extra, that.extra);
 		}
 
 		@Override
@@ -1092,16 +1124,14 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	static class LegoSetVersionable extends LegoSet {
 
-		@Version
-		Integer version;
+		@Version Integer version;
 
 		LegoSetVersionable(int id, String name, Integer manual, Integer version) {
 			super(id, name, manual);
 			this.version = version;
 		}
 
-		public LegoSetVersionable() {
-		}
+		public LegoSetVersionable() {}
 
 		public Integer getVersion() {
 			return this.version;
@@ -1115,16 +1145,14 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	static class LegoSetPrimitiveVersionable extends LegoSet {
 
-		@Version
-		int version;
+		@Version int version;
 
 		LegoSetPrimitiveVersionable(int id, String name, Integer manual, int version) {
 			super(id, name, manual);
 			this.version = version;
 		}
 
-		public LegoSetPrimitiveVersionable() {
-		}
+		public LegoSetPrimitiveVersionable() {}
 
 		public int getVersion() {
 			return this.version;

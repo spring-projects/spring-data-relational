@@ -15,6 +15,11 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
+
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
@@ -22,30 +27,28 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
-
 /**
  * Support class for {@link FluentQuery.FetchableFluentQuery} implementations.
  *
  * @author Diego Krupitza
+ * @author Mark Paluch
  * @since 3.0
  */
 abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQuery<R> {
 
 	private final Example<S> example;
 	private final Sort sort;
+	private final int limit;
 	private final Class<R> resultType;
 	private final List<String> fieldsToInclude;
 
 	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
 
-	FluentQuerySupport(Example<S> example, Sort sort, Class<R> resultType, List<String> fieldsToInclude) {
+	FluentQuerySupport(Example<S> example, Sort sort, int limit, Class<R> resultType, List<String> fieldsToInclude) {
 
 		this.example = example;
 		this.sort = sort;
+		this.limit = limit;
 		this.resultType = resultType;
 		this.fieldsToInclude = fieldsToInclude;
 	}
@@ -55,7 +58,15 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 
 		Assert.notNull(sort, "Sort must not be null!");
 
-		return create(example, sort, resultType, fieldsToInclude);
+		return create(example, sort, limit, resultType, fieldsToInclude);
+	}
+
+	@Override
+	public FetchableFluentQuery<R> limit(int limit) {
+
+		Assert.isTrue(limit >= 0, "Limit must not be negative");
+
+		return create(example, sort, limit, resultType, fieldsToInclude);
 	}
 
 	@Override
@@ -63,7 +74,7 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 
 		Assert.notNull(projection, "Projection target type must not be null!");
 
-		return create(example, sort, projection, fieldsToInclude);
+		return create(example, sort, limit, projection, fieldsToInclude);
 	}
 
 	@Override
@@ -71,10 +82,10 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 
 		Assert.notNull(properties, "Projection properties must not be null!");
 
-		return create(example, sort, resultType, new ArrayList<>(properties));
+		return create(example, sort, limit, resultType, new ArrayList<>(properties));
 	}
 
-	protected abstract <R> FluentQuerySupport<S, R> create(Example<S> example, Sort sort, Class<R> resultType,
+	protected abstract <R> FluentQuerySupport<S, R> create(Example<S> example, Sort sort, int limit, Class<R> resultType,
 			List<String> fieldsToInclude);
 
 	Class<S> getExampleType() {
@@ -87,6 +98,10 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 
 	Sort getSort() {
 		return sort;
+	}
+
+	int getLimit() {
+		return limit;
 	}
 
 	Class<R> getResultType() {

@@ -25,9 +25,12 @@ import java.util.function.UnaryOperator;
 
 import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.OffsetScrollPosition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -367,17 +370,18 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	class ReactiveFluentQueryByExample<S, T> extends ReactiveFluentQuerySupport<Example<S>, T> {
 
 		ReactiveFluentQueryByExample(Example<S> example, Class<T> resultType) {
-			this(example, Sort.unsorted(), resultType, Collections.emptyList());
+			this(example, Sort.unsorted(), 0, resultType, Collections.emptyList());
 		}
 
-		ReactiveFluentQueryByExample(Example<S> example, Sort sort, Class<T> resultType, List<String> fieldsToInclude) {
-			super(example, sort, resultType, fieldsToInclude);
+		ReactiveFluentQueryByExample(Example<S> example, Sort sort, int limit, Class<T> resultType,
+				List<String> fieldsToInclude) {
+			super(example, sort, limit, resultType, fieldsToInclude);
 		}
 
 		@Override
-		protected <R> ReactiveFluentQueryByExample<S, R> create(Example<S> predicate, Sort sort, Class<R> resultType,
-				List<String> fieldsToInclude) {
-			return new ReactiveFluentQueryByExample<>(predicate, sort, resultType, fieldsToInclude);
+		protected <R> ReactiveFluentQueryByExample<S, R> create(Example<S> predicate, Sort sort, int limit,
+				Class<R> resultType, List<String> fieldsToInclude) {
+			return new ReactiveFluentQueryByExample<>(predicate, sort, limit, resultType, fieldsToInclude);
 		}
 
 		@Override
@@ -393,6 +397,34 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		@Override
 		public Flux<T> all() {
 			return createQuery().all();
+		}
+
+		@Override
+		public Mono<Window<T>> scroll(ScrollPosition scrollPosition) {
+
+			Assert.notNull(scrollPosition, "ScrollPosition must not be null");
+
+			if (scrollPosition instanceof OffsetScrollPosition osp) {
+
+				int limit = getLimit();
+				return createQuery(q -> {
+
+					Query queryToUse = q.offset(osp.getOffset());
+
+					if (limit > 0) {
+						queryToUse = queryToUse.limit(limit + 1);
+					}
+
+					return queryToUse;
+				}).all() //
+						.collectList() //
+						.map(content -> {
+							return ScrollDelegate.createWindow(content, limit,
+									OffsetScrollPosition.positionFunction(osp.getOffset()));
+						});
+			}
+
+			return super.scroll(scrollPosition);
 		}
 
 		@Override
