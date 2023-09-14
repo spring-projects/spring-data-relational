@@ -22,7 +22,6 @@ import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 
 import java.io.IOException;
@@ -56,11 +55,14 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -83,8 +85,10 @@ import org.springframework.data.repository.core.support.PropertiesBasedNamedQuer
 import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
+import org.springframework.data.support.WindowIterator;
+import org.springframework.data.util.Streamable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -93,8 +97,6 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.Data;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -1078,8 +1080,6 @@ public class JdbcRepositoryIntegrationTests {
 		String searchName = "Diego";
 		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-		final DummyEntity one = repository.save(createDummyEntity());
-
 		DummyEntity two = createDummyEntity();
 
 		two.setName(searchName);
@@ -1104,6 +1104,42 @@ public class JdbcRepositoryIntegrationTests {
 
 		List<DummyEntity> matches = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).all());
 		assertThat(matches).containsExactly(two, third);
+	}
+
+	@Test // GH-1609
+	void findByScrollPosition() {
+
+		DummyEntity one = new DummyEntity("one");
+		one.setFlag(true);
+
+		DummyEntity two = new DummyEntity("two");
+		two.setFlag(true);
+
+		DummyEntity three = new DummyEntity("three");
+		three.setFlag(true);
+
+		DummyEntity four = new DummyEntity("four");
+		four.setFlag(false);
+
+		repository.saveAll(Arrays.asList(one, two, three, four));
+
+		Example<DummyEntity> example = Example.of(one, ExampleMatcher.matching().withIgnorePaths("name", "idProp"));
+
+		Window<DummyEntity> first = repository.findBy(example, q -> q.limit(2).sortBy(Sort.by("name")))
+				.scroll(ScrollPosition.offset());
+		assertThat(first.map(DummyEntity::getName)).containsExactly("one", "three");
+
+		Window<DummyEntity> second = repository.findBy(example, q -> q.limit(2).sortBy(Sort.by("name")))
+				.scroll(ScrollPosition.offset(2));
+		assertThat(second.map(DummyEntity::getName)).containsExactly("two");
+
+		WindowIterator<DummyEntity> iterator = WindowIterator.of(
+				scrollPosition -> repository.findBy(example, q -> q.limit(2).sortBy(Sort.by("name")).scroll(scrollPosition)))
+				.startingAt(ScrollPosition.offset());
+
+		List<String> result = Streamable.of(() -> iterator).stream().map(DummyEntity::getName).toList();
+
+		assertThat(result).hasSize(3).containsExactly("one", "three", "two");
 	}
 
 	@Test // GH-1192
@@ -1387,12 +1423,11 @@ public class JdbcRepositoryIntegrationTests {
 		List<Root> findAllByOrderByIdAsc();
 	}
 
-	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> { }
+	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
-
 
 		@Autowired JdbcRepositoryFactory factory;
 
@@ -1412,7 +1447,9 @@ public class JdbcRepositoryIntegrationTests {
 		}
 
 		@Bean
-		WithDelimitedColumnRepository withDelimitedColumnRepository() { return factory.getRepository(WithDelimitedColumnRepository.class); }
+		WithDelimitedColumnRepository withDelimitedColumnRepository() {
+			return factory.getRepository(WithDelimitedColumnRepository.class);
+		}
 
 		@Bean
 		NamedQueries namedQueries() throws IOException {
@@ -1430,12 +1467,14 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Bean
 		public ExtensionAwareQueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
-			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(
+					exts);
 
 			factory.setEvaluationContextProvider(extensionAwareQueryMethodEvaluationContextProvider);
 
 			return extensionAwareQueryMethodEvaluationContextProvider;
 		}
+
 		@Bean
 		public EvaluationContextExtension evaluationContextExtension() {
 			return new MyIdContextProvider();
@@ -1457,7 +1496,7 @@ public class JdbcRepositoryIntegrationTests {
 	static class WithDelimitedColumn {
 		@Id Long id;
 		@Column("ORG.XTUNIT.IDENTIFIER") String identifier;
-		@Column ("STYPE") String type;
+		@Column("STYPE") String type;
 	}
 
 	@Value
@@ -1508,7 +1547,6 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Data
-	@NoArgsConstructor
 	static class DummyEntity {
 
 		String name;
@@ -1522,6 +1560,9 @@ public class JdbcRepositoryIntegrationTests {
 		public DummyEntity(String name) {
 			this.name = name;
 		}
+
+		public DummyEntity() {}
+
 	}
 
 	enum Direction {

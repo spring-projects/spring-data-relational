@@ -44,6 +44,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -834,6 +835,36 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.as(StepVerifier::create) //
 				.expectNextCount(3) //
 				.verifyComplete();
+	}
+
+	@Test // GH-1609
+	void findByScrollPosition() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset())) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(window -> {
+
+					assertThat(window.map(it -> it.name)).containsOnly("FORSCHUNGSSCHIFF", "SCHAUFELRADBAGGER");
+				}).verifyComplete();
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset(2))) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(window -> {
+
+					assertThat(window.map(it -> it.name)).containsOnly("VOLTRON");
+				}).verifyComplete();
 	}
 
 	@Test // GH-663
