@@ -15,6 +15,16 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -23,7 +33,15 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -47,16 +65,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.groups.Tuple.tuple;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
@@ -90,8 +98,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
-		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
-				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
+		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations,
 				sqlParametersFactory, insertStrategyFactory));
@@ -299,8 +306,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 			extends CrudRepository<DummyEntity, Long>, PagingAndSortingRepository<DummyEntity, Long> {}
 
 	static final class DummyEntity {
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
 		public DummyEntity(Long id) {
 			this.id = id;
@@ -311,12 +317,15 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
-			if (!(o instanceof DummyEntity)) return false;
+			if (o == this)
+				return true;
+			if (!(o instanceof DummyEntity))
+				return false;
 			final DummyEntity other = (DummyEntity) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
 			return true;
 		}
 

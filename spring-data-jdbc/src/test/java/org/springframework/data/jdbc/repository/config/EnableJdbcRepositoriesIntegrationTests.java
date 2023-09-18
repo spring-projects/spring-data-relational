@@ -33,7 +33,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
 import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
@@ -174,7 +173,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
 					template, new SqlParametersFactory(context, converter),
-					new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
+					new InsertStrategyFactory(template, dialect)).create();
 		}
 
 		@Bean
