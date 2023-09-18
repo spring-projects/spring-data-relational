@@ -28,7 +28,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -101,6 +100,30 @@ public class ReactiveSelectOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT person.THE_NAME FROM person WHERE person.THE_NAME = $1");
+	}
+
+	@Test // gh-220
+	void shouldSelectAsWithColumnName() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("a_different_name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified("id", Object.class, "Walter")
+				.identified("a_different_name", Object.class, "Werner").metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(Person.class) //
+				.as(PersonProjectionWithColumnName.class) //
+				.matching(query(where("name").is("Walter"))) //
+				.all() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual.getName()).isEqualTo("Werner")) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+
+		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1");
 	}
 
 	@Test // gh-220
@@ -224,6 +247,21 @@ public class ReactiveSelectOperationUnitTests {
 		@Id String id;
 
 		@Column("THE_NAME") String name;
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	static class PersonProjectionWithColumnName {
+
+		@Id String id;
+
+		@Column("a_different_name") String name;
 
 		public String getName() {
 			return name;

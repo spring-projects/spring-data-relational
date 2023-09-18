@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Readable;
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
@@ -43,6 +45,7 @@ import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -239,8 +242,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			return Parameter.empty(targetArrayType);
 		}
 
-		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()),
-				actualType);
+		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()), actualType);
 	}
 
 	@Override
@@ -251,6 +253,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
 		return new EntityRowMapper<>(typeToRead, this.converter);
+	}
+
+	@Override
+	public RowDocument toRowDocument(Class<?> type, Readable row, Iterable<? extends ReadableMetadata> metadata) {
+		return this.converter.toRowDocument(type, row, metadata);
 	}
 
 	@Override
@@ -289,6 +296,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return this.statementMapper;
 	}
 
+	@Override
 	public R2dbcConverter getConverter() {
 		return this.converter;
 	}

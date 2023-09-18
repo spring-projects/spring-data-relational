@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Readable;
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
@@ -25,6 +27,7 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -81,6 +84,17 @@ public interface ReactiveDataAccessStrategy {
 	 * @return
 	 */
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);
+
+	/**
+	 * Create a flat {@link RowDocument} from a single {@link Readable Row or Stored Procedure output}.
+	 *
+	 * @param type the underlying entity type.
+	 * @param row the row or stored procedure output to retrieve data from.
+	 * @param metadata readable metadata.
+	 * @return the {@link RowDocument} containing the data.
+	 * @since 3.2
+	 */
+	RowDocument toRowDocument(Class<?> type, Readable row, Iterable<? extends ReadableMetadata> metadata);
 
 	/**
 	 * @param type
