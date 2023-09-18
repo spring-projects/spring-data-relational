@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.Objects;
+
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
@@ -28,16 +30,19 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 3.2
  */
-record RowDocumentAccessor(RowDocument document) {
+class RowDocumentAccessor {
+
+	private final RowDocument document;
 
 	/**
 	 * Creates a new {@link RowDocumentAccessor} for the given {@link RowDocument}.
 	 *
 	 * @param document must be a {@link RowDocument} effectively, must not be {@literal null}.
 	 */
-	RowDocumentAccessor {
+	RowDocumentAccessor(RowDocument document) {
 
 		Assert.notNull(document, "Document must not be null");
+		this.document = document;
 	}
 
 	/**
@@ -105,4 +110,27 @@ record RowDocumentAccessor(RowDocument document) {
 		return prop.getColumnName().getReference();
 	}
 
+	public RowDocument document() {
+		return document;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null || obj.getClass() != this.getClass())
+			return false;
+		var that = (RowDocumentAccessor) obj;
+		return Objects.equals(this.document, that.document);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(document);
+	}
+
+	@Override
+	public String toString() {
+		return "RowDocumentAccessor[" + "document=" + document + ']';
+	}
 }

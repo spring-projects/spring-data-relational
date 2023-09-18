@@ -60,6 +60,11 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 	}
 
 	@Override
+	public boolean hasExplicitColumnName() {
+		return delegate.hasExplicitColumnName();
+	}
+
+	@Override
 	public RelationalPersistentEntity<?> getOwner() {
 		return delegate.getOwner();
 	}
