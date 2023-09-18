@@ -45,6 +45,7 @@ import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -66,6 +67,7 @@ import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.ProxyUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -95,6 +97,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
+	private final R2dbcConverter converter;
+
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 
 	private final SpelAwareProxyProjectionFactory projectionFactory;
@@ -116,7 +120,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
 				.bindMarkers(dialect.getBindMarkersFactory()).build();
 		this.dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
-		this.mappingContext = dataAccessStrategy.getConverter().getMappingContext();
+		this.converter = dataAccessStrategy.getConverter();
+		this.mappingContext = converter.getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
 	}
 
@@ -157,6 +162,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		this.databaseClient = databaseClient;
 		this.dataAccessStrategy = strategy;
+		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = strategy.getConverter().getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
 	}
@@ -173,7 +179,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	@Override
 	public R2dbcConverter getConverter() {
-		return this.dataAccessStrategy.getConverter();
+		return this.converter;
 	}
 
 	@Override
@@ -334,10 +340,10 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return (P) ((Flux<?>) result).concatMap(it -> maybeCallAfterConvert(it, tableName));
 	}
 
-	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
+	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName,
 			Class<T> returnType) {
 
-		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
+		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
 
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
@@ -362,7 +368,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
-		return getRowsFetchSpec(databaseClient.sql(operation), entityClass, returnType);
+		return getRowsFetchSpec(databaseClient.sql(operation), entityType, returnType);
 	}
 
 	@Override
@@ -783,19 +789,26 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return query.getColumns().stream().map(table::column).collect(Collectors.toList());
 	}
 
-	private <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityClass,
-			Class<T> returnType) {
+	private <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityType,
+			Class<T> resultType) {
 
-		boolean simpleType;
+		boolean simpleType = getConverter().isSimpleType(resultType);
 
 		BiFunction<Row, RowMetadata, T> rowMapper;
-		if (returnType.isInterface()) {
-			simpleType = getConverter().isSimpleType(entityClass);
-			rowMapper = dataAccessStrategy.getRowMapper(entityClass)
-					.andThen(o -> projectionFactory.createProjection(returnType, o));
+
+		if (simpleType) {
+			rowMapper = dataAccessStrategy.getRowMapper(resultType);
 		} else {
-			simpleType = getConverter().isSimpleType(returnType);
-			rowMapper = dataAccessStrategy.getRowMapper(returnType);
+
+			EntityProjection<T, ?> projection = converter.introspectProjection(resultType, entityType);
+
+			rowMapper = (row, rowMetadata) -> {
+
+				RowDocument document = dataAccessStrategy.toRowDocument(resultType, row, rowMetadata.getColumnMetadatas());
+
+				return projection.isProjection() ? converter.project(projection, document)
+						: converter.read(resultType, document);
+			};
 		}
 
 		// avoid top-level null values if the read type is a simple one (e.g. SELECT MAX(age) via Integer.class)

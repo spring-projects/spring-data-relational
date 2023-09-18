@@ -18,6 +18,8 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Readable;
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
@@ -53,6 +55,7 @@ import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
@@ -75,7 +78,8 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 	 */
 	public MappingR2dbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		super((RelationalMappingContext) context, new R2dbcCustomConversions(R2dbcCustomConversions.STORE_CONVERSIONS, Collections.emptyList()));
+		super((RelationalMappingContext) context,
+				new R2dbcCustomConversions(R2dbcCustomConversions.STORE_CONVERSIONS, Collections.emptyList()));
 	}
 
 	/**
@@ -139,6 +143,54 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		}
 
 		return result;
+	}
+
+	@Override
+	public RowDocument toRowDocument(Class<?> type, Readable row, Iterable<? extends ReadableMetadata> metadata) {
+
+		RowDocument document = new RowDocument();
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(type);
+
+		if (persistentEntity != null) {
+			captureRowValues(row, metadata, document, persistentEntity);
+		}
+
+		for (ReadableMetadata m : metadata) {
+
+			if (document.containsKey(m.getName())) {
+				continue;
+			}
+
+			document.put(m.getName(), row.get(m.getName()));
+		}
+
+		return document;
+	}
+
+	private static void captureRowValues(Readable row, Iterable<? extends ReadableMetadata> metadata,
+			RowDocument document, RelationalPersistentEntity<?> persistentEntity) {
+
+		for (RelationalPersistentProperty property : persistentEntity) {
+
+			String identifier = property.getColumnName().getReference();
+
+			if (property.isEntity() || !RowMetadataUtils.containsColumn(metadata, identifier)) {
+				continue;
+			}
+
+			Object value;
+			Class<?> propertyType = property.getType();
+
+			if (propertyType.equals(Clob.class)) {
+				value = row.get(identifier, Clob.class);
+			} else if (propertyType.equals(Blob.class)) {
+				value = row.get(identifier, Blob.class);
+			} else {
+				value = row.get(identifier);
+			}
+
+			document.put(identifier, value);
+		}
 	}
 
 	/**

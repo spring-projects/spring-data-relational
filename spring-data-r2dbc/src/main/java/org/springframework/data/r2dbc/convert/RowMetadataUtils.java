@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.convert;
 
 import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.RowMetadata;
 
 /**
@@ -34,10 +35,19 @@ class RowMetadataUtils {
 	 * @return {@code true} if the metadata contains the column {@code name}.
 	 */
 	public static boolean containsColumn(RowMetadata metadata, String name) {
+		return containsColumn(getColumnMetadata(metadata), name);
+	}
 
-		Iterable<? extends ColumnMetadata> columns = getColumnMetadata(metadata);
+	/**
+	 * Check whether the column {@code name} is contained in {@link RowMetadata}. The check happens case-insensitive.
+	 *
+	 * @param columns the metadata to inspect.
+	 * @param name column name.
+	 * @return {@code true} if the metadata contains the column {@code name}.
+	 */
+	public static boolean containsColumn(Iterable<? extends ReadableMetadata> columns, String name) {
 
-		for (ColumnMetadata columnMetadata : columns) {
+		for (ReadableMetadata columnMetadata : columns) {
 			if (name.equalsIgnoreCase(columnMetadata.getName())) {
 				return true;
 			}
