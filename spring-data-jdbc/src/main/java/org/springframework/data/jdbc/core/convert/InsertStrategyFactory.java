@@ -27,20 +27,30 @@ import org.springframework.lang.Nullable;
  * whether the insert is expected to generate ids.
  *
  * @author Chirag Tailor
+ * @author Jens Schauder
  * @since 2.4
  */
 public class InsertStrategyFactory {
 
-	private final NamedParameterJdbcOperations namedParameterJdbcOperations;
-	private final BatchJdbcOperations batchJdbcOperations;
+	private final NamedParameterJdbcOperations jdbcOperations;
 	private final Dialect dialect;
 
+	public InsertStrategyFactory(NamedParameterJdbcOperations jdbcOperations, Dialect dialect) {
+
+		this.jdbcOperations = jdbcOperations;
+		this.dialect = dialect;
+	}
+
+	/**
+	 * Constructor with additional {@link BatchJdbcOperations} constructor.
+	 * 
+	 * @deprecated Use the {@link InsertStrategyFactory#InsertStrategyFactory(NamedParameterJdbcOperations, Dialect)}
+	 *             instead.
+	 */
+	@Deprecated(since = "3.2")
 	public InsertStrategyFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,
 			BatchJdbcOperations batchJdbcOperations, Dialect dialect) {
-
-		this.namedParameterJdbcOperations = namedParameterJdbcOperations;
-		this.batchJdbcOperations = batchJdbcOperations;
-		this.dialect = dialect;
+		this(namedParameterJdbcOperations, dialect);
 	}
 
 	/**
@@ -52,9 +62,9 @@ public class InsertStrategyFactory {
 	InsertStrategy insertStrategy(IdValueSource idValueSource, @Nullable SqlIdentifier idColumn) {
 
 		if (IdValueSource.GENERATED.equals(idValueSource)) {
-			return new IdGeneratingInsertStrategy(dialect, namedParameterJdbcOperations, idColumn);
+			return new IdGeneratingInsertStrategy(dialect, jdbcOperations, idColumn);
 		}
-		return new DefaultInsertStrategy(namedParameterJdbcOperations);
+		return new DefaultInsertStrategy(jdbcOperations);
 	}
 
 	/**
@@ -66,11 +76,10 @@ public class InsertStrategyFactory {
 	BatchInsertStrategy batchInsertStrategy(IdValueSource idValueSource, @Nullable SqlIdentifier idColumn) {
 
 		if (IdValueSource.GENERATED.equals(idValueSource)) {
-			return new IdGeneratingBatchInsertStrategy(
-					new IdGeneratingInsertStrategy(dialect, namedParameterJdbcOperations, idColumn), dialect, batchJdbcOperations,
-					idColumn);
+			return new IdGeneratingBatchInsertStrategy(new IdGeneratingInsertStrategy(dialect, jdbcOperations, idColumn),
+					dialect, jdbcOperations, idColumn);
 		}
-		return new DefaultBatchInsertStrategy(namedParameterJdbcOperations);
+		return new DefaultBatchInsertStrategy(jdbcOperations);
 	}
 
 	private static class DefaultInsertStrategy implements InsertStrategy {

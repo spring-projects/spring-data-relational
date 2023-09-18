@@ -21,7 +21,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
 import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
@@ -179,8 +178,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext, this.converter,
 								this.dialect);
 						SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(this.mappingContext, this.converter);
-						InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(this.operations,
-								new BatchJdbcOperations(this.operations.getJdbcOperations()), this.dialect);
+						InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(this.operations, this.dialect);
 
 						DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, this.converter,
 								this.operations, sqlParametersFactory, insertStrategyFactory);

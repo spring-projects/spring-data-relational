@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
@@ -41,7 +42,7 @@ class IdGeneratingBatchInsertStrategyTest {
 
 	SqlIdentifier idColumn = SqlIdentifier.quoted("id");
 	IdentifierProcessing identifierProcessing = IdentifierProcessing.ANSI;
-	BatchJdbcOperations batchJdbcOperations = mock(BatchJdbcOperations.class);
+	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
 	InsertStrategy insertStrategy = mock(InsertStrategy.class);
 	String sql = "some sql";
 	SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] { new SqlIdentifierParameterSource() };
@@ -50,7 +51,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsSequentially_whenIdGenerationForBatchOperationsNotSupported() {
 
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, true, false), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, true, false), jdbcOperations, idColumn);
 
 		SqlIdentifierParameterSource sqlParameterSource1 = new SqlIdentifierParameterSource();
 		sqlParameterSource1.addValue(SqlIdentifier.quoted("property1"), "value1");
@@ -72,11 +73,11 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsWithKeyHolderAndKeyColumnNames_whenDriverRequiresKeyColumnNames() {
 
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, true, true), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, true, true), jdbcOperations, idColumn);
 
 		batchInsertStrategy.execute(sql, sqlParameterSources);
 
-		verify(batchJdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class),
+		verify(jdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class),
 				eq(new String[] { idColumn.getReference() }));
 	}
 
@@ -84,29 +85,29 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsWithKeyHolder_whenDriverRequiresKeyColumnNames_butIdColumnIsNull() {
 
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, true, true), batchJdbcOperations, null);
+				createDialect(identifierProcessing, true, true), jdbcOperations, null);
 
 		batchInsertStrategy.execute(sql, sqlParameterSources);
 
-		verify(batchJdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class));
+		verify(jdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class));
 	}
 
 	@Test
 	void insertsWithKeyHolder_whenDriverDoesNotRequireKeyColumnNames() {
 
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, false, true), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, false, true), jdbcOperations, idColumn);
 
 		batchInsertStrategy.execute(sql, sqlParameterSources);
 
-		verify(batchJdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class));
+		verify(jdbcOperations).batchUpdate(eq(sql), eq(sqlParameterSources), any(KeyHolder.class));
 	}
 
 	@Test
 	void insertsWithKeyHolder_returningKey_whenThereIsOnlyOne() {
 
 		Long idValue = 123L;
-		when(batchJdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
+		when(jdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
 
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
@@ -115,7 +116,7 @@ class IdGeneratingBatchInsertStrategyTest {
 			return null;
 		});
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, false, true), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, false, true), jdbcOperations, idColumn);
 
 		Object[] ids = batchInsertStrategy.execute(sql, sqlParameterSources);
 
@@ -126,7 +127,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsWithKeyHolder_returningKeyMatchingIdColumn_whenKeyHolderContainsMultipleKeysPerRecord() {
 
 		Long idValue = 123L;
-		when(batchJdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
+		when(jdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
 
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
@@ -136,7 +137,7 @@ class IdGeneratingBatchInsertStrategyTest {
 			return null;
 		});
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, false, true), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, false, true), jdbcOperations, idColumn);
 
 		Object[] ids = batchInsertStrategy.execute(sql, sqlParameterSources);
 
@@ -147,7 +148,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsWithKeyHolder_returningNull__whenKeyHolderContainsMultipleKeysPerRecord_butIdColumnIsNull() {
 
 		Long idValue = 123L;
-		when(batchJdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
+		when(jdbcOperations.batchUpdate(any(), any(), any())).thenAnswer(invocationOnMock -> {
 
 			KeyHolder keyHolder = invocationOnMock.getArgument(2);
 			HashMap<String, Object> keys = new HashMap<>();
@@ -157,7 +158,7 @@ class IdGeneratingBatchInsertStrategyTest {
 			return null;
 		});
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, false, true), batchJdbcOperations, null);
+				createDialect(identifierProcessing, false, true), jdbcOperations, null);
 
 		Object[] ids = batchInsertStrategy.execute(sql, sqlParameterSources);
 
@@ -169,7 +170,7 @@ class IdGeneratingBatchInsertStrategyTest {
 	void insertsWithKeyHolder_returningNull_whenKeyHolderHasNoKeys() {
 
 		BatchInsertStrategy batchInsertStrategy = new IdGeneratingBatchInsertStrategy(insertStrategy,
-				createDialect(identifierProcessing, false, true), batchJdbcOperations, idColumn);
+				createDialect(identifierProcessing, false, true), jdbcOperations, idColumn);
 
 		Object[] ids = batchInsertStrategy.execute(sql, sqlParameterSources);
 

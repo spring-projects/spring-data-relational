@@ -89,8 +89,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
-		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations,
-				new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
+		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		DataAccessStrategy defaultDataAccessStrategy = new DataAccessStrategyFactory( //
 				sqlGeneratorSource, //

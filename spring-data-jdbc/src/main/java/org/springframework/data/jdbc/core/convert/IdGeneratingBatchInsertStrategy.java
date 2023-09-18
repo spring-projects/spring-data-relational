@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.lang.Nullable;
@@ -33,21 +34,23 @@ import org.springframework.lang.Nullable;
  *
  * @author Chirag Tailor
  * @author Kurt Niemi
+ * @author Jens Schauder
  * @since 2.4
  */
 class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 
 	private final InsertStrategy insertStrategy;
 	private final Dialect dialect;
-	private final BatchJdbcOperations batchJdbcOperations;
+	private final NamedParameterJdbcOperations jdbcOperations;
 	private final SqlIdentifier idColumn;
 
 	IdGeneratingBatchInsertStrategy(InsertStrategy insertStrategy, Dialect dialect,
-			BatchJdbcOperations batchJdbcOperations, @Nullable SqlIdentifier idColumn) {
+			NamedParameterJdbcOperations jdbcOperations, @Nullable SqlIdentifier idColumn) {
 
 		this.insertStrategy = insertStrategy;
 		this.dialect = dialect;
-		this.batchJdbcOperations = batchJdbcOperations;
+		this.jdbcOperations = jdbcOperations;
+
 		this.idColumn = idColumn;
 	}
 
@@ -66,12 +69,12 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 
 			String[] keyColumnNames = getKeyColumnNames();
 			if (keyColumnNames.length == 0) {
-				batchJdbcOperations.batchUpdate(sql, sqlParameterSources, holder);
+				jdbcOperations.batchUpdate(sql, sqlParameterSources, holder);
 			} else {
-				batchJdbcOperations.batchUpdate(sql, sqlParameterSources, holder, keyColumnNames);
+				jdbcOperations.batchUpdate(sql, sqlParameterSources, holder, keyColumnNames);
 			}
 		} else {
-			batchJdbcOperations.batchUpdate(sql, sqlParameterSources, holder);
+			jdbcOperations.batchUpdate(sql, sqlParameterSources, holder);
 		}
 		Object[] ids = new Object[sqlParameterSources.length];
 		List<Map<String, Object>> keyList = holder.getKeyList();

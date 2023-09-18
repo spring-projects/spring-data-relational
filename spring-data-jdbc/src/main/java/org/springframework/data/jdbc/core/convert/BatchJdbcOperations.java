@@ -44,7 +44,9 @@ import org.springframework.util.Assert;
  *
  * @author Chirag Tailor
  * @since 2.4
+ * @deprecated Use the standard {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} instead.
  */
+@Deprecated(since = "3.2")
 public class BatchJdbcOperations {
 
 	private final JdbcOperations jdbcOperations;

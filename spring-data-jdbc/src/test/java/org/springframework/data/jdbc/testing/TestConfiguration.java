@@ -110,7 +110,7 @@ public class TestConfiguration {
 
 		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
 				template, new SqlParametersFactory(context, converter),
-				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
+				new InsertStrategyFactory(template, dialect)).create();
 	}
 
 	@Bean("jdbcMappingContext")
