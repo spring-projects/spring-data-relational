@@ -35,6 +35,14 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 */
 	SqlIdentifier getColumnName();
 
+	/**
+	 * Returns whether the property uses an annotated field name through {@link Column}.
+	 *
+	 * @return
+	 * @since 3.2
+	 */
+	boolean hasExplicitColumnName();
+
 	@Override
 	RelationalPersistentEntity<?> getOwner();
 

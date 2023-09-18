@@ -17,18 +17,25 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.convert.ConverterBuilder;
 import org.springframework.data.convert.ConverterBuilder.ConverterAware;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.projection.EntityProjection;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.domain.RowDocument;
@@ -161,6 +168,30 @@ class MappingRelationalConverterUnitTests {
 		assertThat(result.money.currency).isEqualTo("USD");
 	}
 
+	@Test // GH-1554
+	void projectShouldReadNestedProjection() {
+
+		RowDocument source = RowDocument.of("addresses", Collections.singletonList(RowDocument.of("s", "hwy")));
+
+		EntityProjection<WithNestedProjection, Person> projection = converter
+				.introspectProjection(WithNestedProjection.class, Person.class);
+		WithNestedProjection person = converter.project(projection, source);
+
+		assertThat(person.getAddresses()).extracting(AddressProjection::getStreet).hasSize(1).containsOnly("hwy");
+	}
+
+	@Test // GH-1554
+	void projectShouldReadProjectionWithNestedEntity() {
+
+		RowDocument source = RowDocument.of("addresses", Collections.singletonList(RowDocument.of("s", "hwy")));
+
+		EntityProjection<ProjectionWithNestedEntity, Person> projection = converter
+				.introspectProjection(ProjectionWithNestedEntity.class, Person.class);
+		ProjectionWithNestedEntity person = converter.project(projection, source);
+
+		assertThat(person.getAddresses()).extracting(Address::getStreet).hasSize(1).containsOnly("hwy");
+	}
+
 	static class SimpleType {
 
 		@Id String id;
@@ -228,6 +259,73 @@ class MappingRelationalConverterUnitTests {
 	static class WithEmbedded {
 
 		@Embedded.Nullable(prefix = "simple_") SimpleType simple;
+	}
+
+	static class Person {
+
+		@Id String id;
+
+		Date birthDate;
+
+		@Column("foo") String firstname;
+		String lastname;
+
+		Set<Address> addresses;
+
+		Person() {
+
+		}
+
+		@PersistenceCreator
+		public Person(Set<Address> addresses) {
+			this.addresses = addresses;
+		}
+	}
+
+	static class Address {
+
+		@Column("s") String street;
+		String city;
+
+		public String getStreet() {
+			return street;
+		}
+
+		public String getCity() {
+			return city;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o == this) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Address address = (Address) o;
+			return Objects.equals(street, address.street) && Objects.equals(city, address.city);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(street, city);
+		}
+	}
+
+	interface WithNestedProjection {
+
+		Set<AddressProjection> getAddresses();
+	}
+
+	interface ProjectionWithNestedEntity {
+
+		Set<Address> getAddresses();
+	}
+
+	interface AddressProjection {
+
+		String getStreet();
 	}
 
 }

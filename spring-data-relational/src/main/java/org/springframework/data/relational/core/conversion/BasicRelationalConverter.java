@@ -39,6 +39,8 @@ import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.projection.EntityProjection;
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -124,6 +126,21 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		PersistentPropertyPathAccessor<T> accessor = persistentEntity.getPropertyPathAccessor(instance);
 		return new ConvertingPropertyAccessor<>(accessor, conversionService);
+	}
+
+	@Override
+	public <M, D> EntityProjection<M, D> introspectProjection(Class<M> resultType, Class<D> entityType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public ProjectionFactory getProjectionFactory() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <R> R project(EntityProjection<R, ?> descriptor, RowDocument document) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

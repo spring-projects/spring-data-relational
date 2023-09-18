@@ -24,6 +24,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.ObjectUtils;
 
@@ -47,7 +48,14 @@ public class RowDocument implements Map<String, Object> {
 		this.delegate.putAll(delegate);
 	}
 
-	public static Object of(String field, Object value) {
+	/**
+	 * Factory method to create a RowDocument from a field and value.
+	 *
+	 * @param field the file name to use.
+	 * @param value the value to use, can be {@literal null}.
+	 * @return
+	 */
+	public static RowDocument of(String field, @Nullable Object value) {
 		return new RowDocument().append(field, value);
 	}
 
@@ -131,7 +139,10 @@ public class RowDocument implements Map<String, Object> {
 
 	@Nullable
 	@Override
-	public Object put(String key, Object value) {
+	public Object put(String key, @Nullable Object value) {
+
+		Assert.notNull(key, "Key must not be null!");
+
 		return delegate.put(key, value);
 	}
 
@@ -142,7 +153,7 @@ public class RowDocument implements Map<String, Object> {
 	 * @param value
 	 * @return
 	 */
-	public RowDocument append(String key, Object value) {
+	public RowDocument append(String key, @Nullable Object value) {
 
 		put(key, value);
 		return this;

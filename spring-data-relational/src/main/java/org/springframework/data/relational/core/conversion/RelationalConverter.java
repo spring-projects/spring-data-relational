@@ -25,6 +25,9 @@ import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.projection.EntityProjection;
+import org.springframework.data.projection.EntityProjectionIntrospector;
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
@@ -53,6 +56,39 @@ public interface RelationalConverter {
 	 * @return never {@literal null}.
 	 */
 	ConversionService getConversionService();
+
+	/**
+	 * Returns the {@link ProjectionFactory} for this converter.
+	 *
+	 * @return will never be {@literal null}.
+	 * @since 3.2
+	 */
+	ProjectionFactory getProjectionFactory();
+
+	/**
+	 * Introspect the given {@link Class result type} in the context of the {@link Class entity type} whether the returned
+	 * type is a projection and what property paths are participating in the projection.
+	 *
+	 * @param resultType the type to project on. Must not be {@literal null}.
+	 * @param entityType the source domain type. Must not be {@literal null}.
+	 * @return the introspection result.
+	 * @since 3.2
+	 * @see EntityProjectionIntrospector#introspect(Class, Class)
+	 */
+	<M, D> EntityProjection<M, D> introspectProjection(Class<M> resultType, Class<D> entityType);
+
+	/**
+	 * Apply a projection to {@link RowDocument} and return the projection return type {@code R}.
+	 * {@link EntityProjection#isProjection() Non-projecting} descriptors fall back to {@link #read(Class, RowDocument)
+	 * regular object materialization}.
+	 *
+	 * @param descriptor the projection descriptor, must not be {@literal null}.
+	 * @param document must not be {@literal null}.
+	 * @param <R>
+	 * @return a new instance of the projection return type {@code R}.
+	 * @since 3.2
+	 */
+	<R> R project(EntityProjection<R, ?> descriptor, RowDocument document);
 
 	/**
 	 * Read a {@link RowDocument} into the requested {@link Class aggregate type}.

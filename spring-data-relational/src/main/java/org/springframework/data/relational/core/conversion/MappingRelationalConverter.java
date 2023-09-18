@@ -17,10 +17,14 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.convert.CustomConversions;
@@ -28,6 +32,7 @@ import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
@@ -39,12 +44,19 @@ import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.mapping.model.SpELContext;
 import org.springframework.data.mapping.model.SpELExpressionEvaluator;
 import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
+import org.springframework.data.projection.EntityProjection;
+import org.springframework.data.projection.EntityProjectionIntrospector;
+import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.Predicates;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -57,9 +69,13 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @since 3.2
  */
-public class MappingRelationalConverter extends BasicRelationalConverter {
+public class MappingRelationalConverter extends BasicRelationalConverter implements ApplicationContextAware {
 
 	private SpELContext spELContext;
+
+	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+
+	private final EntityProjectionIntrospector introspector;
 
 	/**
 	 * Creates a new {@link MappingRelationalConverter} given the new {@link RelationalMappingContext}.
@@ -71,6 +87,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 		super(context);
 
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
+		this.introspector = createIntrospector(projectionFactory, getConversions(), getMappingContext());
 	}
 
 	/**
@@ -85,6 +102,29 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 		super(context, conversions);
 
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
+		this.introspector = createIntrospector(projectionFactory, getConversions(), getMappingContext());
+
+	}
+
+	private static EntityProjectionIntrospector createIntrospector(ProjectionFactory projectionFactory,
+			CustomConversions conversions, MappingContext<?, ?> mappingContext) {
+
+		return EntityProjectionIntrospector.create(projectionFactory,
+				ProjectionPredicate.typeHierarchy().and((target, underlyingType) -> !conversions.isSimpleType(target)),
+				mappingContext);
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+
+		this.spELContext = new SpELContext(this.spELContext, applicationContext);
+		this.projectionFactory.setBeanFactory(applicationContext);
+		this.projectionFactory.setBeanClassLoader(applicationContext.getClassLoader());
+	}
+
+	@Override
+	public ProjectionFactory getProjectionFactory() {
+		return this.projectionFactory;
 	}
 
 	/**
@@ -98,6 +138,128 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 
 		return new DefaultConversionContext(this, getConversions(), path, this::readAggregate, this::readCollectionOrArray,
 				this::readMap, this::getPotentiallyConvertedSimpleRead);
+	}
+
+	@Override
+	public <M, D> EntityProjection<M, D> introspectProjection(Class<M> resultType, Class<D> entityType) {
+
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(entityType);
+		if (persistentEntity == null && !resultType.isInterface()
+				|| ClassUtils.isAssignable(RowDocument.class, resultType)) {
+			return (EntityProjection) EntityProjection.nonProjecting(resultType);
+		}
+		return introspector.introspect(resultType, entityType);
+	}
+
+	@Override
+	public <R> R project(EntityProjection<R, ?> projection, RowDocument document) {
+
+		if (!projection.isProjection()) { // backed by real object
+
+			TypeInformation<?> typeToRead = projection.getMappedType().getType().isInterface() ? projection.getDomainType()
+					: projection.getMappedType();
+			return (R) read(typeToRead, document);
+		}
+
+		ProjectingConversionContext context = new ProjectingConversionContext(this, getConversions(), ObjectPath.ROOT,
+				this::readCollectionOrArray, this::readMap, this::getPotentiallyConvertedSimpleRead, projection);
+
+		return doReadProjection(context, document, projection);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <R> R doReadProjection(ConversionContext context, RowDocument document, EntityProjection<R, ?> projection) {
+
+		RelationalPersistentEntity<?> entity = getMappingContext()
+				.getRequiredPersistentEntity(projection.getActualDomainType());
+		TypeInformation<?> mappedType = projection.getActualMappedType();
+		RelationalPersistentEntity<R> mappedEntity = (RelationalPersistentEntity<R>) getMappingContext()
+				.getPersistentEntity(mappedType);
+		SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(document, spELContext);
+
+		boolean isInterfaceProjection = mappedType.getType().isInterface();
+		if (isInterfaceProjection) {
+
+			PersistentPropertyTranslator propertyTranslator = PersistentPropertyTranslator.create(mappedEntity);
+			RowDocumentAccessor documentAccessor = new RowDocumentAccessor(document);
+			PersistentPropertyAccessor<?> accessor = new MapPersistentPropertyAccessor();
+
+			PersistentPropertyAccessor<?> convertingAccessor = PropertyTranslatingPropertyAccessor
+					.create(new ConvertingPropertyAccessor<>(accessor, getConversionService()), propertyTranslator);
+			RelationalPropertyValueProvider valueProvider = new RelationalPropertyValueProvider(context, documentAccessor,
+					evaluator, spELContext);
+
+			readProperties(context, entity, convertingAccessor, documentAccessor, valueProvider, Predicates.isTrue());
+			return (R) projectionFactory.createProjection(mappedType.getType(), accessor.getBean());
+		}
+
+		// DTO projection
+		if (mappedEntity == null) {
+			throw new MappingException(String.format("No mapping metadata found for %s", mappedType.getType().getName()));
+		}
+
+		// create target instance, merge metadata from underlying DTO type
+		PersistentPropertyTranslator propertyTranslator = PersistentPropertyTranslator.create(entity,
+				Predicates.negate(RelationalPersistentProperty::hasExplicitColumnName));
+		RowDocumentAccessor documentAccessor = new RowDocumentAccessor(document) {
+
+			@Override
+			String getColumnName(RelationalPersistentProperty prop) {
+				return propertyTranslator.translate(prop).getColumnName().getReference();
+			}
+		};
+
+		InstanceCreatorMetadata<RelationalPersistentProperty> instanceCreatorMetadata = mappedEntity
+				.getInstanceCreatorMetadata();
+		ParameterValueProvider<RelationalPersistentProperty> provider = instanceCreatorMetadata != null
+				&& instanceCreatorMetadata.hasParameters()
+						? getParameterProvider(context, mappedEntity, documentAccessor, evaluator)
+						: NoOpParameterValueProvider.INSTANCE;
+
+		EntityInstantiator instantiator = getEntityInstantiators().getInstantiatorFor(mappedEntity);
+		R instance = instantiator.createInstance(mappedEntity, provider);
+		PersistentPropertyAccessor<R> accessor = mappedEntity.getPropertyAccessor(instance);
+
+		populateProperties(context, mappedEntity, documentAccessor, evaluator, instance);
+
+		PersistentPropertyAccessor<?> convertingAccessor = new ConvertingPropertyAccessor<>(accessor,
+				getConversionService());
+		RelationalPropertyValueProvider valueProvider = new RelationalPropertyValueProvider(context, documentAccessor,
+				evaluator, spELContext);
+
+		readProperties(context, mappedEntity, convertingAccessor, documentAccessor, valueProvider, Predicates.isTrue());
+
+		return accessor.getBean();
+	}
+
+	private Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
+			EntityProjection<?, ?> typeDescriptor) {
+
+		if (typeDescriptor.isProjection()) {
+			return doReadProjection(context, source, typeDescriptor);
+		}
+
+		return readAggregate(context, source, typeHint);
+	}
+
+	static class MapPersistentPropertyAccessor implements PersistentPropertyAccessor<Map<String, Object>> {
+
+		Map<String, Object> map = new LinkedHashMap<>();
+
+		@Override
+		public void setProperty(PersistentProperty<?> persistentProperty, Object o) {
+			map.put(persistentProperty.getName(), o);
+		}
+
+		@Override
+		public Object getProperty(PersistentProperty<?> persistentProperty) {
+			return map.get(persistentProperty.getName());
+		}
+
+		@Override
+		public Map<String, Object> getBean() {
+			return map;
+		}
 	}
 
 	/**
@@ -295,15 +457,14 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 				evaluator, spELContext);
 
 		Predicate<RelationalPersistentProperty> propertyFilter = isConstructorArgument(entity).negate();
-		readProperties(contextToUse, entity, accessor, documentAccessor, valueProvider, evaluator, propertyFilter);
+		readProperties(contextToUse, entity, accessor, documentAccessor, valueProvider, propertyFilter);
 
 		return accessor.getBean();
 	}
 
 	private void readProperties(ConversionContext context, RelationalPersistentEntity<?> entity,
 			PersistentPropertyAccessor<?> accessor, RowDocumentAccessor documentAccessor,
-			RelationalPropertyValueProvider valueProvider, SpELExpressionEvaluator evaluator,
-			Predicate<RelationalPersistentProperty> propertyFilter) {
+			RelationalPropertyValueProvider valueProvider, Predicate<RelationalPersistentProperty> propertyFilter) {
 
 		for (RelationalPersistentProperty prop : entity) {
 
@@ -476,6 +637,44 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 	}
 
 	/**
+	 * @since 3.4.3
+	 */
+	class ProjectingConversionContext extends DefaultConversionContext {
+
+		private final EntityProjection<?, ?> returnedTypeDescriptor;
+
+		ProjectingConversionContext(RelationalConverter sourceConverter, CustomConversions customConversions,
+				ObjectPath path, ContainerValueConverter<Collection<?>> collectionConverter,
+				ContainerValueConverter<Map<?, ?>> mapConverter, ValueConverter<Object> elementConverter,
+				EntityProjection<?, ?> projection) {
+			super(sourceConverter, customConversions, path,
+					(context, source, typeHint) -> doReadOrProject(context, source, typeHint, projection),
+
+					collectionConverter, mapConverter, elementConverter);
+			this.returnedTypeDescriptor = projection;
+		}
+
+		@Override
+		public ConversionContext forProperty(String name) {
+
+			EntityProjection<?, ?> property = returnedTypeDescriptor.findProperty(name);
+			if (property == null) {
+				return new DefaultConversionContext(sourceConverter, conversions, objectPath,
+						MappingRelationalConverter.this::readAggregate, collectionConverter, mapConverter, elementConverter);
+			}
+
+			return new ProjectingConversionContext(sourceConverter, conversions, objectPath, collectionConverter,
+					mapConverter, elementConverter, property);
+		}
+
+		@Override
+		public ConversionContext withPath(ObjectPath currentPath) {
+			return new ProjectingConversionContext(sourceConverter, conversions, currentPath, collectionConverter,
+					mapConverter, elementConverter, returnedTypeDescriptor);
+		}
+	}
+
+	/**
 	 * Conversion context defining an interface for graph-traversal-based conversion of row documents. Entrypoint for
 	 * recursive conversion of {@link RowDocument} and other types.
 	 *
@@ -630,6 +829,34 @@ public class MappingRelationalConverter extends BasicRelationalConverter {
 		@Override
 		protected <T> T potentiallyConvertSpelValue(Object object, Parameter<T, RelationalPersistentProperty> parameter) {
 			return context.convert(object, parameter.getType());
+		}
+	}
+
+	private record PropertyTranslatingPropertyAccessor<T> (PersistentPropertyAccessor<T> delegate,
+			PersistentPropertyTranslator propertyTranslator) implements PersistentPropertyAccessor<T> {
+
+		static <T> PersistentPropertyAccessor<T> create(PersistentPropertyAccessor<T> delegate,
+				PersistentPropertyTranslator propertyTranslator) {
+			return new PropertyTranslatingPropertyAccessor<>(delegate, propertyTranslator);
+		}
+
+		@Override
+		public void setProperty(PersistentProperty<?> property, @Nullable Object value) {
+			delegate.setProperty(translate(property), value);
+		}
+
+		@Override
+		public Object getProperty(PersistentProperty<?> property) {
+			return delegate.getProperty(translate(property));
+		}
+
+		@Override
+		public T getBean() {
+			return delegate.getBean();
+		}
+
+		private RelationalPersistentProperty translate(PersistentProperty<?> property) {
+			return propertyTranslator.translate((RelationalPersistentProperty) property);
 		}
 	}
 

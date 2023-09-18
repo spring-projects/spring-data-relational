@@ -50,12 +50,14 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
 	private final Lazy<SqlIdentifier> columnName;
+	private final boolean hasExplicitColumnName;
 	private final @Nullable Expression columnNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final @Nullable Expression collectionIdColumnNameExpression;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final @Nullable Expression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
+
 	private final String embeddedPrefix;
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
@@ -128,6 +130,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		if (isAnnotationPresent(Column.class)) {
 
 			Column column = getRequiredAnnotation(Column.class);
+			this.hasExplicitColumnName = StringUtils.hasText(column.value());
 
 			this.columnName = Lazy.of(() -> StringUtils.hasText(column.value()) ? createSqlIdentifier(column.value())
 					: createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
@@ -138,6 +141,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			}
 
 		} else {
+			this.hasExplicitColumnName = false;
 			this.columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
 			this.columnNameExpression = null;
 		}
@@ -206,6 +210,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		}
 
 		return createSqlIdentifier(expressionEvaluator.evaluate(columnNameExpression));
+	}
+
+	@Override
+	public boolean hasExplicitColumnName() {
+		return hasExplicitColumnName;
 	}
 
 	@Override
