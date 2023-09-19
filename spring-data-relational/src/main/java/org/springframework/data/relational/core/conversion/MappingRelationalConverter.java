@@ -49,12 +49,14 @@ import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.Predicates;
 import org.springframework.data.util.TypeInformation;
@@ -161,14 +163,17 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 			return (R) read(typeToRead, document);
 		}
 
-		ProjectingConversionContext context = new ProjectingConversionContext(this, getConversions(), ObjectPath.ROOT,
-				this::readCollectionOrArray, this::readMap, this::getPotentiallyConvertedSimpleRead, projection);
-
+		ProjectingConversionContext context = newProjectingConversionContext(projection);
 		return doReadProjection(context, document, projection);
 	}
 
+	protected <R> ProjectingConversionContext newProjectingConversionContext(EntityProjection<R, ?> projection) {
+		return new ProjectingConversionContext(this, getConversions(), ObjectPath.ROOT, this::readCollectionOrArray,
+				this::readMap, this::getPotentiallyConvertedSimpleRead, projection);
+	}
+
 	@SuppressWarnings("unchecked")
-	private <R> R doReadProjection(ConversionContext context, RowDocument document, EntityProjection<R, ?> projection) {
+	protected <R> R doReadProjection(ConversionContext context, RowDocument document, EntityProjection<R, ?> projection) {
 
 		RelationalPersistentEntity<?> entity = getMappingContext()
 				.getRequiredPersistentEntity(projection.getActualDomainType());
@@ -186,8 +191,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 
 			PersistentPropertyAccessor<?> convertingAccessor = PropertyTranslatingPropertyAccessor
 					.create(new ConvertingPropertyAccessor<>(accessor, getConversionService()), propertyTranslator);
-			RelationalPropertyValueProvider valueProvider = new RelationalPropertyValueProvider(context, documentAccessor,
-					evaluator, spELContext);
+			RelationalPropertyValueProvider valueProvider = newValueProvider(documentAccessor, evaluator, context);
 
 			readProperties(context, entity, convertingAccessor, documentAccessor, valueProvider, Predicates.isTrue());
 			return (R) projectionFactory.createProjection(mappedType.getType(), accessor.getBean());
@@ -224,8 +228,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 
 		PersistentPropertyAccessor<?> convertingAccessor = new ConvertingPropertyAccessor<>(accessor,
 				getConversionService());
-		RelationalPropertyValueProvider valueProvider = new RelationalPropertyValueProvider(context, documentAccessor,
-				evaluator, spELContext);
+		RelationalPropertyValueProvider valueProvider = newValueProvider(documentAccessor, evaluator, context);
 
 		readProperties(context, mappedEntity, convertingAccessor, documentAccessor, valueProvider, Predicates.isTrue());
 
@@ -290,19 +293,33 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 	@SuppressWarnings("unchecked")
 	protected <S extends Object> S readAggregate(ConversionContext context, RowDocument document,
 			TypeInformation<? extends S> typeHint) {
+		return readAggregate(context, new RowDocumentAccessor(document), typeHint);
+	}
+
+	/**
+	 * Conversion method to materialize an object from a {@link RowDocument document}. Can be overridden by subclasses.
+	 *
+	 * @param context must not be {@literal null}
+	 * @param documentAccessor must not be {@literal null}
+	 * @param typeHint the {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
+	 * @return the converted object, will never be {@literal null}.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <S extends Object> S readAggregate(ConversionContext context, RowDocumentAccessor documentAccessor,
+			TypeInformation<? extends S> typeHint) {
 
 		Class<? extends S> rawType = typeHint.getType();
 
-		if (getConversions().hasCustomReadTarget(document.getClass(), rawType)) {
-			return doConvert(document, rawType, typeHint.getType());
+		if (getConversions().hasCustomReadTarget(documentAccessor.getClass(), rawType)) {
+			return doConvert(documentAccessor, rawType, typeHint.getType());
 		}
 
 		if (RowDocument.class.isAssignableFrom(rawType)) {
-			return (S) document;
+			return (S) documentAccessor;
 		}
 
 		if (typeHint.isMap()) {
-			return context.convert(document, typeHint);
+			return context.convert(documentAccessor, typeHint);
 		}
 
 		RelationalPersistentEntity<?> entity = getMappingContext().getPersistentEntity(rawType);
@@ -310,10 +327,10 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		if (entity == null) {
 			throw new MappingException(
 					String.format("Expected to read Document %s into type %s but didn't find a PersistentEntity for the latter",
-							document, rawType));
+							documentAccessor, rawType));
 		}
 
-		return read(context, (RelationalPersistentEntity<S>) entity, document);
+		return read(context, (RelationalPersistentEntity<S>) entity, documentAccessor);
 	}
 
 	/**
@@ -364,7 +381,6 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 	 * @param targetType the {@link Map} {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
 	 * @return the converted {@link Collection} or array, will never be {@literal null}.
 	 */
-	@SuppressWarnings("unchecked")
 	protected Object readCollectionOrArray(ConversionContext context, Collection<?> source,
 			TypeInformation<?> targetType) {
 
@@ -408,10 +424,10 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		return getConversionService().convert(value, fallback);
 	}
 
-	private <S> S read(ConversionContext context, RelationalPersistentEntity<S> entity, RowDocument document) {
+	private <S> S read(ConversionContext context, RelationalPersistentEntity<S> entity,
+			RowDocumentAccessor documentAccessor) {
 
-		SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(document, spELContext);
-		RowDocumentAccessor documentAccessor = new RowDocumentAccessor(document);
+		SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(documentAccessor.getDocument(), spELContext);
 
 		InstanceCreatorMetadata<RelationalPersistentProperty> instanceCreatorMetadata = entity.getInstanceCreatorMetadata();
 
@@ -432,12 +448,37 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 	private ParameterValueProvider<RelationalPersistentProperty> getParameterProvider(ConversionContext context,
 			RelationalPersistentEntity<?> entity, RowDocumentAccessor source, SpELExpressionEvaluator evaluator) {
 
-		RelationalPropertyValueProvider provider = new RelationalPropertyValueProvider(context, source, evaluator,
-				spELContext);
+		// Ensure that ConversionContext is contextualized to the current property.
+		RelationalPropertyValueProvider contextualizing = new RelationalPropertyValueProvider() {
+			@Override
+			public boolean hasValue(RelationalPersistentProperty property) {
+				return withContext(context.forProperty(property)).hasValue(property);
+			}
 
-		// TODO: Add support for enclosing object (non-static inner classes)
+			@SuppressWarnings("unchecked")
+			@Nullable
+			@Override
+			public <T> T getPropertyValue(RelationalPersistentProperty property) {
+
+				ConversionContext propertyContext = context.forProperty(property);
+				RelationalPropertyValueProvider provider = withContext(propertyContext);
+
+				if (property.isEmbedded()) {
+					return (T) readEmbedded(propertyContext, provider, source, property,
+							getMappingContext().getRequiredPersistentEntity(property));
+				}
+
+				return provider.getPropertyValue(property);
+			}
+
+			@Override
+			public RelationalPropertyValueProvider withContext(ConversionContext context) {
+				return newValueProvider(source, evaluator, context);
+			}
+		};
+
 		PersistentEntityParameterValueProvider<RelationalPersistentProperty> parameterProvider = new PersistentEntityParameterValueProvider<>(
-				entity, provider, context.getPath().getCurrentObject());
+				entity, contextualizing, context.getPath().getCurrentObject());
 
 		return new ConverterAwareSpELExpressionParameterValueProvider(context, evaluator, getConversionService(),
 				parameterProvider);
@@ -453,8 +494,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		ObjectPath currentPath = context.getPath().push(accessor.getBean(), entity);
 		ConversionContext contextToUse = context.withPath(currentPath);
 
-		RelationalPropertyValueProvider valueProvider = new RelationalPropertyValueProvider(contextToUse, documentAccessor,
-				evaluator, spELContext);
+		RelationalPropertyValueProvider valueProvider = newValueProvider(documentAccessor, evaluator, contextToUse);
 
 		Predicate<RelationalPersistentProperty> propertyFilter = isConstructorArgument(entity).negate();
 		readProperties(contextToUse, entity, accessor, documentAccessor, valueProvider, propertyFilter);
@@ -462,54 +502,70 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		return accessor.getBean();
 	}
 
+	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
+			SpELExpressionEvaluator evaluator, ConversionContext context) {
+		return new DocumentValueProvider(context, documentAccessor, evaluator, spELContext);
+	}
+
 	private void readProperties(ConversionContext context, RelationalPersistentEntity<?> entity,
 			PersistentPropertyAccessor<?> accessor, RowDocumentAccessor documentAccessor,
 			RelationalPropertyValueProvider valueProvider, Predicate<RelationalPersistentProperty> propertyFilter) {
 
-		for (RelationalPersistentProperty prop : entity) {
+		for (RelationalPersistentProperty property : entity) {
 
-			if (!propertyFilter.test(prop)) {
+			if (!propertyFilter.test(property)) {
 				continue;
 			}
 
-			ConversionContext propertyContext = context.forProperty(prop);
+			ConversionContext propertyContext = context.forProperty(property);
 			RelationalPropertyValueProvider valueProviderToUse = valueProvider.withContext(propertyContext);
 
-			if (prop.isAssociation()) {
-
-				// TODO: Read AggregateReference
+			if (property.isEmbedded()) {
+				accessor.setProperty(property, readEmbedded(propertyContext, valueProviderToUse, documentAccessor, property,
+						getMappingContext().getRequiredPersistentEntity(property)));
 				continue;
 			}
 
-			if (prop.isEmbedded()) {
-				accessor.setProperty(prop, readEmbedded(propertyContext, documentAccessor, prop,
-						getMappingContext().getRequiredPersistentEntity(prop)));
+			if (!valueProviderToUse.hasValue(property)) {
 				continue;
 			}
 
-			if (!documentAccessor.hasValue(prop)) {
-				continue;
-			}
-
-			accessor.setProperty(prop, valueProviderToUse.getPropertyValue(prop));
+			accessor.setProperty(property, valueProviderToUse.getPropertyValue(property));
 		}
 	}
 
 	@Nullable
-	private Object readEmbedded(ConversionContext context, RowDocumentAccessor documentAccessor,
-			RelationalPersistentProperty prop, RelationalPersistentEntity<?> unwrappedEntity) {
+	private Object readEmbedded(ConversionContext conversionContext, RelationalPropertyValueProvider provider,
+			RowDocumentAccessor source, RelationalPersistentProperty property,
+			RelationalPersistentEntity<?> persistentEntity) {
 
-		if (prop.findAnnotation(Embedded.class).onEmpty().equals(OnEmpty.USE_EMPTY)) {
-			return read(context, unwrappedEntity, documentAccessor.getDocument());
-		}
-
-		for (RelationalPersistentProperty persistentProperty : unwrappedEntity) {
-			if (documentAccessor.hasValue(persistentProperty)) {
-				return read(context, unwrappedEntity, documentAccessor.getDocument());
-			}
+		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider)) {
+			return read(conversionContext, persistentEntity, source);
 		}
 
 		return null;
+	}
+
+	private boolean shouldReadEmbeddable(ConversionContext context, RelationalPersistentProperty property,
+			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider) {
+
+		OnEmpty onEmpty = property.getRequiredAnnotation(Embedded.class).onEmpty();
+
+		if (onEmpty.equals(OnEmpty.USE_EMPTY)) {
+			return true;
+		}
+
+		for (RelationalPersistentProperty persistentProperty : unwrappedEntity) {
+
+			RelationalPropertyValueProvider contextual = propertyValueProvider
+					.withContext(context.forProperty(persistentProperty));
+
+			if (contextual.hasValue(persistentProperty)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	static Predicate<RelationalPersistentProperty> isConstructorArgument(PersistentEntity<?, ?> entity) {
@@ -532,7 +588,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		final ContainerValueConverter<Map<?, ?>> mapConverter;
 		final ValueConverter<Object> elementConverter;
 
-		DefaultConversionContext(RelationalConverter sourceConverter,
+		protected DefaultConversionContext(RelationalConverter sourceConverter,
 				org.springframework.data.convert.CustomConversions customConversions, ObjectPath objectPath,
 				ContainerValueConverter<RowDocument> documentConverter,
 				ContainerValueConverter<Collection<?>> collectionConverter, ContainerValueConverter<Map<?, ?>> mapConverter,
@@ -616,7 +672,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		 *
 		 * @param <T>
 		 */
-		interface ValueConverter<T> {
+		public interface ValueConverter<T> {
 
 			Object convert(T source, TypeInformation<?> typeHint);
 
@@ -628,7 +684,7 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		 *
 		 * @param <T>
 		 */
-		interface ContainerValueConverter<T> {
+		public interface ContainerValueConverter<T> {
 
 			Object convert(ConversionContext context, T source, TypeInformation<?> typeHint);
 
@@ -639,11 +695,11 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 	/**
 	 * @since 3.4.3
 	 */
-	class ProjectingConversionContext extends DefaultConversionContext {
+	protected class ProjectingConversionContext extends DefaultConversionContext {
 
 		private final EntityProjection<?, ?> returnedTypeDescriptor;
 
-		ProjectingConversionContext(RelationalConverter sourceConverter, CustomConversions customConversions,
+		protected ProjectingConversionContext(RelationalConverter sourceConverter, CustomConversions customConversions,
 				ObjectPath path, ContainerValueConverter<Collection<?>> collectionConverter,
 				ContainerValueConverter<Map<?, ?>> mapConverter, ValueConverter<Object> elementConverter,
 				EntityProjection<?, ?> projection) {
@@ -749,6 +805,61 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		}
 	}
 
+	// TODO: Docs
+	protected interface RelationalPropertyValueProvider extends PropertyValueProvider<RelationalPersistentProperty> {
+
+		/**
+		 * Determine whether there is a value for the given {@link RelationalPersistentProperty}.
+		 *
+		 * @param property
+		 * @return
+		 */
+		boolean hasValue(RelationalPersistentProperty property);
+
+		/**
+		 * Contextualize this property value provider.
+		 *
+		 * @param context
+		 * @return
+		 */
+		RelationalPropertyValueProvider withContext(ConversionContext context);
+
+	}
+
+	/**
+	 * {@link RelationalPropertyValueProvider} extension to obtain values for {@link AggregatePath}s.
+	 */
+	protected interface AggregatePathValueProvider extends RelationalPropertyValueProvider {
+
+		/**
+		 * Determine whether there is a value for the given {@link AggregatePath}.
+		 *
+		 * @param path
+		 * @return
+		 */
+		boolean hasValue(AggregatePath path);
+
+		boolean hasValue(SqlIdentifier identifier);
+
+		/**
+		 * Returns a value for the given {@link AggregatePath}.
+		 *
+		 * @param path will never be {@literal null}.
+		 * @return
+		 */
+		@Nullable
+		Object getValue(AggregatePath path);
+
+		/**
+		 * Contextualize this property value provider.
+		 *
+		 * @param context
+		 * @return
+		 */
+		@Override
+		AggregatePathValueProvider withContext(ConversionContext context);
+	}
+
 	/**
 	 * {@link PropertyValueProvider} to evaluate a SpEL expression if present on the property or simply accesses the field
 	 * of the configured source {@link RowDocument}.
@@ -757,9 +868,9 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 	 * @author Mark Paluch
 	 * @author Christoph Strobl
 	 */
-	record RelationalPropertyValueProvider(ConversionContext context, RowDocumentAccessor accessor,
+	protected record DocumentValueProvider(ConversionContext context, RowDocumentAccessor accessor,
 			SpELExpressionEvaluator evaluator,
-			SpELContext spELContext) implements PropertyValueProvider<RelationalPersistentProperty> {
+			SpELContext spELContext) implements RelationalPropertyValueProvider, AggregatePathValueProvider {
 
 		/**
 		 * Creates a new {@link RelationalPropertyValueProvider} for the given source and {@link SpELExpressionEvaluator}.
@@ -768,13 +879,14 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 		 * @param accessor must not be {@literal null}.
 		 * @param evaluator must not be {@literal null}.
 		 */
-		RelationalPropertyValueProvider {
+		protected DocumentValueProvider {
 
 			Assert.notNull(context, "ConversionContext must no be null");
 			Assert.notNull(accessor, "DocumentAccessor must no be null");
 			Assert.notNull(evaluator, "SpELExpressionEvaluator must not be null");
 		}
 
+		@Override
 		@Nullable
 		@SuppressWarnings("unchecked")
 		public <T> T getPropertyValue(RelationalPersistentProperty property) {
@@ -791,11 +903,39 @@ public class MappingRelationalConverter extends BasicRelationalConverter impleme
 			return (T) contextToUse.convert(value, property.getTypeInformation());
 		}
 
-		public RelationalPropertyValueProvider withContext(ConversionContext context) {
-
-			return context == this.context ? this
-					: new RelationalPropertyValueProvider(context, accessor, evaluator, spELContext);
+		@Override
+		public boolean hasValue(RelationalPersistentProperty property) {
+			return accessor.hasValue(property);
 		}
+
+		@Nullable
+		@Override
+		public Object getValue(AggregatePath path) {
+
+			Object value = accessor.document().get(path.getColumnInfo().alias().getReference());
+
+			if (value == null) {
+				return null;
+			}
+
+			return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
+		}
+
+		@Override
+		public boolean hasValue(AggregatePath path) {
+			return accessor.document().get(path.getColumnInfo().alias().getReference()) != null;
+		}
+
+		@Override
+		public boolean hasValue(SqlIdentifier identifier) {
+			return accessor().document().get(identifier.getReference()) != null;
+		}
+
+		@Override
+		public DocumentValueProvider withContext(ConversionContext context) {
+			return context == this.context ? this : new DocumentValueProvider(context, accessor, evaluator, spELContext);
+		}
+
 	}
 
 	/**

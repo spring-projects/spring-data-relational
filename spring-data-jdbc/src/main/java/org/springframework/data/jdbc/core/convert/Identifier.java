@@ -69,6 +69,8 @@ public final class Identifier {
 		Assert.notNull(name, "Name must not be empty");
 		Assert.notNull(targetType, "Target type must not be null");
 
+		// TODO: Is value allowed to be null? SingleIdentifierValue says so, but this type doesn't allows it and
+		// SqlParametersFactory.lambda$forQueryByIdentifier$1 fails with a NPE.
 		return new Identifier(Collections.singletonList(new SingleIdentifierValue(name, value, targetType)));
 	}
 
@@ -173,6 +175,18 @@ public final class Identifier {
 		return this.parts.size();
 	}
 
+	@Nullable
+	public Object get(SqlIdentifier columnName) {
+
+		for (SingleIdentifierValue part : parts) {
+			if (part.getName().equals(columnName)) {
+				return part.getValue();
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * A single value of an Identifier consisting of the column name, the value and the target type which is to be used to
 	 * store the element in the database.
@@ -274,8 +288,10 @@ public final class Identifier {
 	@Override
 	public boolean equals(@Nullable Object o) {
 
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
 		Identifier that = (Identifier) o;
 		return Objects.equals(parts, that.parts);
 	}

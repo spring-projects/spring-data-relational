@@ -1,32 +1,32 @@
-	/*
- * Copyright 2019-2023 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/*
+* Copyright 2019-2023 the original author or authors.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      https://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
 import java.sql.SQLType;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
-import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
 
 /**
@@ -73,7 +73,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @deprecated use {@link #mapRow(AggregatePath, ResultSet, Identifier, Object)} instead.
 	 */
 	@Deprecated(since = "3.2", forRemoval = true)
-	default <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key){
+	default <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
 		return mapRow(path.getAggregatePath(), resultSet, identifier, key);
 	};
 
@@ -88,6 +88,49 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @return
 	 */
 	<T> T mapRow(AggregatePath path, ResultSet resultSet, Identifier identifier, Object key);
+
+	/**
+	 * Apply a projection to {@link RowDocument} and return the projection return type {@code R}.
+	 * {@link EntityProjection#isProjection() Non-projecting} descriptors fall back to {@link #read(Class, RowDocument)
+	 * regular object materialization}.
+	 *
+	 * @param descriptor the projection descriptor, must not be {@literal null}.
+	 * @param document must not be {@literal null}.
+	 * @param <R>
+	 * @return a new instance of the projection return type {@code R}.
+	 * @since 3.2
+	 * @see #project(EntityProjection, RowDocument)
+	 */
+	<R> R projectAndResolve(EntityProjection<R, ?> descriptor, RowDocument document);
+
+	/**
+	 * Read a {@link RowDocument} into the requested {@link Class aggregate type} and resolve references by looking these
+	 * up from {@link RelationResolver}.
+	 *
+	 * @param type target aggregate type.
+	 * @param source source {@link RowDocument}.
+	 * @return the converted object.
+	 * @param <R> aggregate type.
+	 * @since 3.2
+	 * @see #read(Class, RowDocument)
+	 */
+	default <R> R readAndResolve(Class<R> type, RowDocument source) {
+		return readAndResolve(type, source, Identifier.empty());
+	}
+
+	/**
+	 * Read a {@link RowDocument} into the requested {@link Class aggregate type} and resolve references by looking these
+	 * up from {@link RelationResolver}.
+	 *
+	 * @param type target aggregate type.
+	 * @param source source {@link RowDocument}.
+	 * @param identifier identifier chain.
+	 * @return the converted object.
+	 * @param <R> aggregate type.
+	 * @since 3.2
+	 * @see #read(Class, RowDocument)
+	 */
+	<R> R readAndResolve(Class<R> type, RowDocument source, Identifier identifier);
 
 	/**
 	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a
@@ -110,4 +153,5 @@ public interface JdbcConverter extends RelationalConverter {
 
 	@Override
 	RelationalMappingContext getMappingContext();
+
 }
