@@ -161,11 +161,9 @@ class SingleQuerySqlGeneratorUnitTests {
 									func("coalesce", col(trivialsRowNumber), lit(1))), //
 							col(backref), //
 							col(keyAlias) //
-					).extractWhereClause() //
-					.doesNotContainIgnoringCase("and") //
-					.containsIgnoringCase(trivialsRowNumber + " is null") //
-					.containsIgnoringCase(trivialsRowNumber + " = " + rootRowNumber) //
-					.containsIgnoringCase(trivialsRowNumber + " > " + rootCount);
+					)
+					.extractWhereClause() //
+					.isEqualTo("");
 			baseSelect.hasInlineViewSelectingFrom("\"single_reference_aggregate\"") //
 					.hasExactlyColumns( //
 							lit(1).as(rnAlias()), lit(1).as(rootCount), //

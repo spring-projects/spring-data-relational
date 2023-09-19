@@ -187,16 +187,12 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 			backReferenceAlias = aliases.getBackReferenceAlias(basePath);
 			columns.add(table.column(basePath.getTableInfo().reverseColumnInfo().name()).as(backReferenceAlias));
 
-			if (basePath.isQualified()) {
+			keyAlias = aliases.getKeyAlias(basePath);
+			Expression keyExpression = basePath.isQualified()
+					? table.column(basePath.getTableInfo().qualifierColumnInfo().name()).as(keyAlias)
+					: createRowNumberExpression(basePath, table, keyAlias);
+			columns.add(keyExpression);
 
-				keyAlias = aliases.getKeyAlias(basePath);
-				columns.add(table.column(basePath.getTableInfo().qualifierColumnInfo().name()).as(keyAlias));
-			} else {
-
-				String alias = aliases.getColumnAlias(basePath);
-				columns.add(new AliasedExpression(just("1"), alias));
-				columnAliases.add(just(alias));
-			}
 		}
 		String id = null;
 
@@ -215,8 +211,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 		SelectBuilder.BuildSelect buildSelect = condition != null ? select.where(condition) : select;
 
-		InlineQuery inlineQuery = InlineQuery.create(buildSelect.build(false),
-				aliases.getTableAlias(context.getAggregatePath(entity)));
+		InlineQuery inlineQuery = InlineQuery.create(buildSelect.build(false), aliases.getTableAlias(basePath));
 		return QueryMeta.of(basePath, inlineQuery, columnAliases, just(id), just(backReferenceAlias), just(keyAlias),
 				just(rowNumberAlias), just(rowCountAlias));
 	}
@@ -252,6 +247,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 					Expressions.just(backReferenceAlias));
 			select = select.leftOuterJoin(queryMeta.inlineQuery).on(joinCondition);
 		}
+
 		return select;
 	}
 
@@ -274,17 +270,53 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	private SelectBuilder.SelectOrdered applyWhereCondition(AggregatePath rootPath, List<QueryMeta> inlineQueries,
 			SelectBuilder.SelectJoin select) {
 
-		SelectBuilder.SelectWhereAndOr selectWhere = null;
-		for (QueryMeta queryMeta : inlineQueries) {
+		SelectBuilder.SelectWhere selectWhere = (SelectBuilder.SelectWhere) select;
 
-			AggregatePath path = queryMeta.basePath;
-			Expression childRowNumber = just(aliases.getRowNumberAlias(path));
-			Condition pseudoJoinCondition = Conditions.isNull(childRowNumber)
-					.or(Conditions.isEqual(childRowNumber, Expressions.just(aliases.getRowNumberAlias(rootPath))))
-					.or(Conditions.isGreater(childRowNumber, Expressions.just(aliases.getRowCountAlias(rootPath))));
+		Condition joins = null;
 
-			selectWhere = ((SelectBuilder.SelectWhere) select).where(pseudoJoinCondition);
+		for (int left = 0; left < inlineQueries.size(); left++) {
+
+			QueryMeta leftQueryMeta = inlineQueries.get(left);
+			AggregatePath leftPath = leftQueryMeta.basePath;
+			Expression leftRowNumber = just(aliases.getRowNumberAlias(leftPath));
+			Expression leftRowCount = just(aliases.getRowCountAlias(leftPath));
+
+			for (int right = left + 1; right < inlineQueries.size(); right++) {
+
+				QueryMeta rightQueryMeta = inlineQueries.get(right);
+				AggregatePath rightPath = rightQueryMeta.basePath;
+				Expression rightRowNumber = just(aliases.getRowNumberAlias(rightPath));
+				Expression rightRowCount = just(aliases.getRowCountAlias(rightPath));
+
+				System.out.println("joining: " + leftPath + " and " + rightPath);
+
+				Condition mutualJoin = Conditions.isEqual(leftRowNumber, rightRowNumber).or(Conditions.isNull(leftRowNumber))
+						.or(Conditions.isNull(rightRowNumber))
+						.or(Conditions.nest(Conditions.isGreater(leftRowNumber, rightRowCount)
+								.and(Conditions.isEqual(rightRowNumber, SQL.literalOf(1)))))
+						.or(Conditions.nest(Conditions.isGreater(rightRowNumber, leftRowCount)
+								.and(Conditions.isEqual(leftRowNumber, SQL.literalOf(1)))));
+
+				mutualJoin = Conditions.nest(mutualJoin);
+
+				if (joins == null) {
+					joins = mutualJoin;
+				} else {
+					joins = joins.and(mutualJoin);
+				}
+			}
 		}
+
+		// for (QueryMeta queryMeta : inlineQueries) {
+		//
+		// AggregatePath path = queryMeta.basePath;
+		// Expression childRowNumber = just(aliases.getRowNumberAlias(path));
+		// Condition pseudoJoinCondition = Conditions.isNull(childRowNumber)
+		// .or(Conditions.isEqual(childRowNumber, Expressions.just(aliases.getRowNumberAlias(rootPath))))
+		// .or(Conditions.isGreater(childRowNumber, Expressions.just(aliases.getRowCountAlias(rootPath))));
+		//
+		selectWhere = (SelectBuilder.SelectWhere) selectWhere.where(joins);
+		// }
 
 		return selectWhere == null ? (SelectBuilder.SelectOrdered) select : selectWhere;
 	}
