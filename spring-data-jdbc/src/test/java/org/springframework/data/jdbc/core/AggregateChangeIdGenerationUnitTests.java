@@ -31,15 +31,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
@@ -61,7 +61,7 @@ public class AggregateChangeIdGenerationUnitTests {
 	Tag tag3 = new Tag();
 
 	RelationalMappingContext context = new RelationalMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 	DbAction.WithRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(entity, IdValueSource.GENERATED);

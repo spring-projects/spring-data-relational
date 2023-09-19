@@ -15,14 +15,21 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Objects;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -31,12 +38,6 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
-
-import java.util.List;
-
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Test for the {@link JdbcAggregateChangeExecutionContext} when operating on immutable classes.
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.*;
 public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
@@ -221,19 +222,20 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof DummyEntity)) return false;
-			final DummyEntity other = (DummyEntity) o;
+			if (!(o instanceof final DummyEntity other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			if (this.getVersion() != other.getVersion()) return false;
 			final Object this$content = this.getContent();
 			final Object other$content = other.getContent();
-			if (this$content == null ? other$content != null : !this$content.equals(other$content)) return false;
+			if (!Objects.equals(this$content, other$content))
+				return false;
 			final Object this$list = this.getList();
 			final Object other$list = other.getList();
-			if (this$list == null ? other$list != null : !this$list.equals(other$list)) return false;
-			return true;
+			return Objects.equals(this$list, other$list);
 		}
 
 		public int hashCode() {
@@ -289,12 +291,11 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof Content)) return false;
-			final Content other = (Content) o;
+			if (!(o instanceof final Content other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
-			return true;
+			return Objects.equals(this$id, other$id);
 		}
 
 		public int hashCode() {

@@ -33,8 +33,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.DatabaseType;
@@ -116,7 +116,7 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
 
 			RelationalMappingContext context = new JdbcMappingContext();
-			JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
+			JdbcConverter converter = new MappingJdbcConverter(context, (Identifier, path) -> null);
 
 			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession,
 					HsqlDbDialect.INSTANCE.getIdentifierProcessing());

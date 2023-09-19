@@ -15,9 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.sql.Array;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
@@ -25,7 +23,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.lang.Nullable;
 
 /**
  * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced. This {@link RowMapper} might
@@ -43,7 +41,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final RelationalPersistentEntity<T> entity;
 	private final AggregatePath path;
 	private final JdbcConverter converter;
-	private final Identifier identifier;
+	private final @Nullable Identifier identifier;
 
 	/**
 	 * @deprecated use {@link EntityRowMapper#EntityRowMapper(AggregatePath, JdbcConverter, Identifier)} instead
@@ -78,39 +76,11 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
 
-		RowDocument document = toRowDocument(resultSet);
+		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(resultSet);
 
-		// TODO: Remove mapRow methods.
-		if (true) {
-			return path == null //
-					? converter.readAndResolve(entity.getType(), document) //
-					: converter.readAndResolve(entity.getType(), document, identifier);
-		}
-
-		return path == null //
-				? converter.mapRow(entity, resultSet, rowNumber) //
-				: converter.mapRow(path, resultSet, identifier, rowNumber);
+		return identifier == null //
+				? converter.readAndResolve(entity.getType(), document) //
+				: converter.readAndResolve(entity.getType(), document, identifier);
 	}
 
-	/**
-	 * Create a {@link RowDocument} from the current {@link ResultSet} row.
-	 *
-	 * @param resultSet must not be {@literal null}.
-	 * @return
-	 * @throws SQLException
-	 */
-	static RowDocument toRowDocument(ResultSet resultSet) throws SQLException {
-
-		ResultSetMetaData md = resultSet.getMetaData();
-		int columnCount = md.getColumnCount();
-		RowDocument document = new RowDocument(columnCount);
-
-		for (int i = 0; i < columnCount; i++) {
-			Object rsv = JdbcUtils.getResultSetValue(resultSet, i + 1);
-			String columnName = md.getColumnLabel(i + 1);
-			document.put(columnName, rsv instanceof Array a ? a.getArray() : rsv);
-		}
-
-		return document;
-	}
 }

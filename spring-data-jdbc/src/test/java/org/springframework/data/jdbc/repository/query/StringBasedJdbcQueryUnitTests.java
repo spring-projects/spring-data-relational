@@ -39,15 +39,14 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -86,7 +85,7 @@ class StringBasedJdbcQueryUnitTests {
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
-		this.converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+		this.converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 		this.evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 	}
 
@@ -242,7 +241,7 @@ class StringBasedJdbcQueryUnitTests {
 
 		private final JdbcQueryMethod method;
 		private Object[] arguments;
-		private BasicJdbcConverter converter;
+		private MappingJdbcConverter converter;
 
 		public QueryFixture(JdbcQueryMethod method) {
 			this.method = method;
@@ -257,8 +256,8 @@ class StringBasedJdbcQueryUnitTests {
 
 		public SqlParameterSource extractParameterSource() {
 
-			BasicJdbcConverter converter = this.converter == null //
-					? new BasicJdbcConverter(mock(RelationalMappingContext.class), //
+			MappingJdbcConverter converter = this.converter == null //
+					? new MappingJdbcConverter(mock(RelationalMappingContext.class), //
 							mock(RelationResolver.class))
 					: this.converter;
 
@@ -273,7 +272,7 @@ class StringBasedJdbcQueryUnitTests {
 			return captor.getValue();
 		}
 
-		public QueryFixture withConverter(BasicJdbcConverter converter) {
+		public QueryFixture withConverter(MappingJdbcConverter converter) {
 
 			this.converter = converter;
 
@@ -282,8 +281,8 @@ class StringBasedJdbcQueryUnitTests {
 
 		public QueryFixture withCustomConverters(Object... converters) {
 
-			return withConverter(new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class),
-					new JdbcCustomConversions(List.of(converters)), JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI));
+			return withConverter(new MappingJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class),
+					new JdbcCustomConversions(List.of(converters)), JdbcTypeFactory.unsupported()));
 		}
 	}
 

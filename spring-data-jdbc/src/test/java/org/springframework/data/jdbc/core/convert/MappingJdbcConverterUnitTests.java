@@ -45,15 +45,15 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.TypeInformation;
 
 /**
- * Unit tests for {@link BasicJdbcConverter}.
+ * Unit tests for {@link MappingJdbcConverter}.
  *
  * @author Mark Paluch
  */
-public class BasicJdbcConverterUnitTests {
+public class MappingJdbcConverterUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
 	StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
-	BasicJdbcConverter converter = new BasicJdbcConverter( //
+	MappingJdbcConverter converter = new MappingJdbcConverter( //
 			context, //
 			(identifier, path) -> {
 				throw new UnsupportedOperationException();

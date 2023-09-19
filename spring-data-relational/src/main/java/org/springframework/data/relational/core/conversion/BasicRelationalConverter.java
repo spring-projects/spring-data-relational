@@ -15,40 +15,10 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-
-import org.springframework.core.ResolvableType;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.core.convert.support.ConfigurableConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.convert.CustomConversions.StoreConversions;
-import org.springframework.data.mapping.Parameter;
-import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.EntityInstantiators;
-import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.projection.EntityProjection;
-import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -63,13 +33,11 @@ import org.springframework.util.ClassUtils;
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
+ * @deprecated since 3.2, use {@link MappingRelationalConverter} instead as the naming suggests a limited scope of
+ *             functionality.
  */
-public class BasicRelationalConverter implements RelationalConverter {
-
-	private final RelationalMappingContext context;
-	private final ConfigurableConversionService conversionService;
-	private final EntityInstantiators entityInstantiators;
-	private final CustomConversions conversions;
+@Deprecated(since = "3.2")
+public class BasicRelationalConverter extends MappingRelationalConverter {
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
@@ -77,8 +45,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param context must not be {@literal null}.
 	 */
 	public BasicRelationalConverter(RelationalMappingContext context) {
-		this(context, new CustomConversions(StoreConversions.NONE, Collections.emptyList()), new DefaultConversionService(),
-				new EntityInstantiators());
+		super(context);
 	}
 
 	/**
@@ -88,259 +55,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param conversions must not be {@literal null}.
 	 */
 	public BasicRelationalConverter(RelationalMappingContext context, CustomConversions conversions) {
-		this(context, conversions, new DefaultConversionService(), new EntityInstantiators());
+		super(context, conversions);
 	}
 
-	@SuppressWarnings("unchecked")
-	private BasicRelationalConverter(RelationalMappingContext context, CustomConversions conversions,
-			ConfigurableConversionService conversionService, EntityInstantiators entityInstantiators) {
-
-		Assert.notNull(context, "MappingContext must not be null");
-		Assert.notNull(conversions, "CustomConversions must not be null");
-
-		this.context = context;
-		this.conversionService = conversionService;
-		this.entityInstantiators = entityInstantiators;
-		this.conversions = conversions;
-
-		conversions.registerConvertersIn(this.conversionService);
-	}
-
-	@Override
-	public ConversionService getConversionService() {
-		return conversionService;
-	}
-
-	public CustomConversions getConversions() {
-		return conversions;
-	}
-
-	@Override
-	public RelationalMappingContext getMappingContext() {
-		return context;
-	}
-
-	@Override
-	public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity,
-			T instance) {
-
-		PersistentPropertyPathAccessor<T> accessor = persistentEntity.getPropertyPathAccessor(instance);
-		return new ConvertingPropertyAccessor<>(accessor, conversionService);
-	}
-
-	@Override
-	public <M, D> EntityProjection<M, D> introspectProjection(Class<M> resultType, Class<D> entityType) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public ProjectionFactory getProjectionFactory() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <R> R project(EntityProjection<R, ?> descriptor, RowDocument document) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <R> R read(Class<R> type, RowDocument source) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <T> T createInstance(PersistentEntity<T, RelationalPersistentProperty> entity,
-			Function<Parameter<?, RelationalPersistentProperty>, Object> parameterValueProvider) {
-
-		return entityInstantiators.getInstantiatorFor(entity) //
-				.createInstance(entity, new ConvertingParameterValueProvider<>(parameterValueProvider));
-	}
-
-	@Override
-	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (null == value) {
-			return null;
-		}
-
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
-		}
-
-		return getPotentiallyConvertedSimpleRead(value, type);
-	}
-
-	@Override
-	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (value == null) {
-			return null;
-		}
-
-		if (getConversions().isSimpleType(value.getClass())) {
-
-			if (TypeInformation.OBJECT != type && conversionService.canConvert(value.getClass(), type.getType())) {
-				value = conversionService.convert(value, type.getType());
-			}
-
-			return getPotentiallyConvertedSimpleWrite(value);
-		}
-
-		if (value.getClass().isArray()) {
-			return writeArray(value, type);
-		}
-
-		if (value instanceof Collection<?>) {
-			return writeCollection((Iterable<?>) value, type);
-		}
-
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(value.getClass());
-
-		if (persistentEntity != null) {
-
-			Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
-			return writeValue(id, type);
-		}
-
-		return conversionService.convert(value, type.getType());
-	}
-
-	private Object writeArray(Object value, TypeInformation<?> type) {
-
-		Class<?> componentType = value.getClass().getComponentType();
-		Optional<Class<?>> optionalWriteTarget = getConversions().getCustomWriteTarget(componentType);
-
-		if (optionalWriteTarget.isEmpty() && !componentType.isEnum()) {
-			return value;
-		}
-
-		Class<?> customWriteTarget = optionalWriteTarget
-				.orElseGet(() -> componentType.isEnum() ? String.class : componentType);
-
-		// optimization: bypass identity conversion
-		if (customWriteTarget.equals(componentType)) {
-			return value;
-		}
-
-		TypeInformation<?> component = TypeInformation.OBJECT;
-		if (type.isCollectionLike() && type.getActualType() != null) {
-			component = type.getRequiredComponentType();
-		}
-
-		int length = Array.getLength(value);
-		Object target = Array.newInstance(customWriteTarget, length);
-		for (int i = 0; i < length; i++) {
-			Array.set(target, i, writeValue(Array.get(value, i), component));
-		}
-
-		return target;
-	}
-
-	private Object writeCollection(Iterable<?> value, TypeInformation<?> type) {
-
-		List<Object> mapped = new ArrayList<>();
-
-		TypeInformation<?> component = TypeInformation.OBJECT;
-		if (type.isCollectionLike() && type.getActualType() != null) {
-			component = type.getRequiredComponentType();
-		}
-
-		for (Object o : value) {
-			mapped.add(writeValue(o, component));
-		}
-
-		if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
-			return mapped;
-		}
-
-		return conversionService.convert(mapped, type.getType());
-	}
-
-	@Override
-	public EntityInstantiators getEntityInstantiators() {
-		return this.entityInstantiators;
-	}
-
-	/**
-	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
-	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
-	 *
-	 * @param value to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
-	 */
-	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(Object value) {
-
-		Optional<Class<?>> customTarget = conversions.getCustomWriteTarget(value.getClass());
-
-		if (customTarget.isPresent()) {
-			return conversionService.convert(value, customTarget.get());
-		}
-
-		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
-	}
-
-	/**
-	 * Checks whether we have a custom conversion for the given simple object. Converts the given value if so, applies
-	 * {@link Enum} handling or returns the value as is.
-	 *
-	 * @param value to be converted. May be {@code null}..
-	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
-
-		Class<?> target = type.getType();
-		if (ClassUtils.isAssignableValue(target, value)) {
-			return value;
-		}
-
-		if (Enum.class.isAssignableFrom(target) && value instanceof CharSequence) {
-			return Enum.valueOf((Class<Enum>) target, value.toString());
-		}
-
-		return conversionService.convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
-	}
-
-	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
-
-		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
-		Class<?>[] generics = new Class[typeArguments.size()];
-		for (int i = 0; i < typeArguments.size(); i++) {
-			generics[i] = typeArguments.get(i).getType();
-		}
-
-		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), type.getType(), null);
-	}
-
-	/**
-	 * Converter-aware {@link ParameterValueProvider}.
-	 *
-	 * @param <P>
-	 * @author Mark Paluch
-	 */
-	class ConvertingParameterValueProvider<P extends PersistentProperty<P>> implements ParameterValueProvider<P> {
-
-		private final Function<Parameter<?, P>, Object> delegate;
-
-		ConvertingParameterValueProvider(Function<Parameter<?, P>, Object> delegate) {
-
-			Assert.notNull(delegate, "Delegate must not be null");
-
-			this.delegate = delegate;
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public <T> T getParameterValue(Parameter<T, P> parameter) {
-			return (T) readValue(delegate.apply(parameter), parameter.getType());
-		}
-	}
 }

@@ -28,7 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Condition;
@@ -48,7 +47,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 public class QueryMapperUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+	JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 
 	QueryMapper mapper = new QueryMapper(converter);
 	MapSqlParameterSource parameterSource = new MapSqlParameterSource();

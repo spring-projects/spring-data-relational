@@ -28,15 +28,14 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.util.TypeInformation;
 
 /**
- * Unit tests for the handling of {@link AggregateReference}s in the
- * {@link org.springframework.data.jdbc.core.convert.BasicJdbcConverter}.
+ * Unit tests for the handling of {@link AggregateReference}s in the {@link MappingJdbcConverter}.
  *
  * @author Jens Schauder
  */
 public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+	JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 

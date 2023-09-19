@@ -15,6 +15,28 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.naming.OperationNotSupportedException;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -36,26 +58,6 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
-
-import javax.naming.OperationNotSupportedException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests the extraction of entities from a {@link ResultSet} by the {@link EntityRowMapper}.
@@ -490,7 +492,7 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-341
 	void immutableEmbeddedWithAllColumnsMissingShouldBeNull() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("ID"), //
+		ResultSet rs = mockResultSet(List.of("ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
 		rs.next();
 
@@ -564,7 +566,7 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-341
 	void primitiveEmbeddedShouldBeNullWhenAllColumnsAreMissing() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("ID"), //
+		ResultSet rs = mockResultSet(List.of("ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
 		rs.next();
 
@@ -677,16 +679,17 @@ public class EntityRowMapperUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof Trivial)) return false;
-			final Trivial other = (Trivial) o;
-			if (!other.canEqual((Object) this)) return false;
+			if (!(o instanceof final Trivial other))
+				return false;
+			if (!other.canEqual(this))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		protected boolean canEqual(final Object other) {
@@ -746,22 +749,24 @@ public class EntityRowMapperUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof TrivialMapPropertiesToNullIfNotNeeded)) return false;
-			final TrivialMapPropertiesToNullIfNotNeeded other = (TrivialMapPropertiesToNullIfNotNeeded) o;
-			if (!other.canEqual((Object) this)) return false;
+			if (!(o instanceof final TrivialMapPropertiesToNullIfNotNeeded other))
+				return false;
+			if (!other.canEqual(this))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			if (this.getAge() != other.getAge()) return false;
 			final Object this$phone = this.getPhone();
 			final Object other$phone = other.getPhone();
-			if (this$phone == null ? other$phone != null : !this$phone.equals(other$phone)) return false;
+			if (!Objects.equals(this$phone, other$phone))
+				return false;
 			final Object this$isSupreme = this.getIsSupreme();
 			final Object other$isSupreme = other.getIsSupreme();
-			if (this$isSupreme == null ? other$isSupreme != null : !this$isSupreme.equals(other$isSupreme))
+			if (!Objects.equals(this$isSupreme, other$isSupreme))
 				return false;
-			if (this.getReferenceToCustomer() != other.getReferenceToCustomer()) return false;
-			return true;
+			return this.getReferenceToCustomer() == other.getReferenceToCustomer();
 		}
 
 		protected boolean canEqual(final Object other) {
@@ -814,20 +819,21 @@ public class EntityRowMapperUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof WithReference)) return false;
-			final WithReference other = (WithReference) o;
-			if (!other.canEqual((Object) this)) return false;
+			if (!(o instanceof final WithReference other))
+				return false;
+			if (!other.canEqual(this))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			if (!Objects.equals(this$name, other$name))
+				return false;
 			final Object this$trivialId = this.getTrivialId();
 			final Object other$trivialId = other.getTrivialId();
-			if (this$trivialId == null ? other$trivialId != null : !this$trivialId.equals(other$trivialId))
-				return false;
-			return true;
+			return Objects.equals(this$trivialId, other$trivialId);
 		}
 
 		protected boolean canEqual(final Object other) {
@@ -1059,7 +1065,7 @@ public class EntityRowMapperUnitTests {
 		doReturn(simpleEntriesWithInts).when(accessStrategy)
 				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_LIST), any(PersistentPropertyPath.class));
 
-		BasicJdbcConverter converter = new BasicJdbcConverter(context, accessStrategy, new JdbcCustomConversions(),
+		MappingJdbcConverter converter = new MappingJdbcConverter(context, accessStrategy, new JdbcCustomConversions(),
 				JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
 
 		return new EntityRowMapper<>( //
@@ -1109,7 +1115,7 @@ public class EntityRowMapperUnitTests {
 
 	private static class ResultSetAnswer implements Answer<Object> {
 
-		private List<String> names;
+		private final List<String> names;
 		private final List<Map<String, Object>> values;
 		private int index = -1;
 
@@ -1314,10 +1320,10 @@ public class EntityRowMapperUnitTests {
 
 	private static class FixtureBuilder<T> implements SetValue<T>, SetColumns<T>, SetExpectation<T> {
 
-		private List<Object> values = new ArrayList<>();
-		private List<String> columns = new ArrayList<>();
+		private final List<Object> values = new ArrayList<>();
+		private final List<String> columns = new ArrayList<>();
 		private String explainingColumn;
-		private List<Expectation<T>> expectations = new ArrayList<>();
+		private final List<Expectation<T>> expectations = new ArrayList<>();
 
 		@Override
 		public SetColumns<T> value(Object value) {

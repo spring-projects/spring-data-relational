@@ -79,7 +79,7 @@ class SqlGeneratorUnitTests {
 
 	private final PrefixingNamingStrategy namingStrategy = new PrefixingNamingStrategy();
 	private RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
-	private final JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	private final JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 	private SqlGenerator sqlGenerator;
