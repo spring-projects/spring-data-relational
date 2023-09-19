@@ -22,6 +22,8 @@ import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +39,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,6 +47,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
@@ -70,6 +74,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -95,6 +100,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 	@Autowired RelationalMappingContext mappingContext;
+	@Autowired NamedParameterJdbcOperations jdbc;
 
 	LegoSet legoSet = createLegoSet("Star Destroyer");
 
@@ -1202,6 +1208,115 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(template.findById(entity.id, EnumArrayOwner.class).digits).isEqualTo(new Color[] { Color.BLUE });
 	}
 
+	@Test // GH-1448
+	void multipleCollections() {
+
+		MultipleCollections aggregate = new MultipleCollections();
+		aggregate.name = "aggregate";
+
+		aggregate.listElements.add(new ListElement("one"));
+		aggregate.listElements.add(new ListElement("two"));
+		aggregate.listElements.add(new ListElement("three"));
+
+		aggregate.setElements.add(new SetElement("one"));
+		aggregate.setElements.add(new SetElement("two"));
+
+		aggregate.mapElements.put("alpha", new MapElement("one"));
+		aggregate.mapElements.put("beta", new MapElement("two"));
+		aggregate.mapElements.put("gamma", new MapElement("three"));
+		aggregate.mapElements.put("delta", new MapElement("four"));
+
+		template.save(aggregate);
+
+		MultipleCollections reloaded = template.findById(aggregate.id, MultipleCollections.class);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(reloaded.name).isEqualTo(aggregate.name);
+
+			softly.assertThat(reloaded.listElements).containsExactly(aggregate.listElements.get(0),
+					aggregate.listElements.get(1), aggregate.listElements.get(2));
+
+			softly.assertThat(reloaded.setElements)
+					.containsExactlyInAnyOrder(aggregate.setElements.toArray(new SetElement[0]));
+
+			softly.assertThat(reloaded.mapElements.get("alpha")).isEqualTo(new MapElement("one"));
+			softly.assertThat(reloaded.mapElements.get("beta")).isEqualTo(new MapElement("two"));
+			softly.assertThat(reloaded.mapElements.get("gamma")).isEqualTo(new MapElement("three"));
+			softly.assertThat(reloaded.mapElements.get("delta")).isEqualTo(new MapElement("four"));
+		});
+	}
+
+	@Test // GH-1448
+	void multipleCollectionsWithEmptySet() {
+
+		MultipleCollections aggregate = new MultipleCollections();
+		aggregate.name = "aggregate";
+
+		aggregate.listElements.add(new ListElement("one"));
+		aggregate.listElements.add(new ListElement("two"));
+		aggregate.listElements.add(new ListElement("three"));
+
+		aggregate.mapElements.put("alpha", new MapElement("one"));
+		aggregate.mapElements.put("beta", new MapElement("two"));
+		aggregate.mapElements.put("gamma", new MapElement("three"));
+		aggregate.mapElements.put("delta", new MapElement("four"));
+
+		template.save(aggregate);
+
+		MultipleCollections reloaded = template.findById(aggregate.id, MultipleCollections.class);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(reloaded.name).isEqualTo(aggregate.name);
+
+			softly.assertThat(reloaded.listElements).containsExactly(aggregate.listElements.get(0),
+					aggregate.listElements.get(1), aggregate.listElements.get(2));
+
+			softly.assertThat(reloaded.setElements)
+					.containsExactlyInAnyOrder(aggregate.setElements.toArray(new SetElement[0]));
+
+			softly.assertThat(reloaded.mapElements.get("alpha")).isEqualTo(new MapElement("one"));
+			softly.assertThat(reloaded.mapElements.get("beta")).isEqualTo(new MapElement("two"));
+			softly.assertThat(reloaded.mapElements.get("gamma")).isEqualTo(new MapElement("three"));
+			softly.assertThat(reloaded.mapElements.get("delta")).isEqualTo(new MapElement("four"));
+		});
+	}
+
+	@Test // GH-1448
+	void multipleCollectionsWithEmptyList() {
+
+		MultipleCollections aggregate = new MultipleCollections();
+		aggregate.name = "aggregate";
+
+		aggregate.setElements.add(new SetElement("one"));
+		aggregate.setElements.add(new SetElement("two"));
+
+		aggregate.mapElements.put("alpha", new MapElement("one"));
+		aggregate.mapElements.put("beta", new MapElement("two"));
+		aggregate.mapElements.put("gamma", new MapElement("three"));
+		aggregate.mapElements.put("delta", new MapElement("four"));
+
+		template.save(aggregate);
+
+		MultipleCollections reloaded = template.findById(aggregate.id, MultipleCollections.class);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(reloaded.name).isEqualTo(aggregate.name);
+
+			softly.assertThat(reloaded.listElements).containsExactly();
+
+			softly.assertThat(reloaded.setElements)
+					.containsExactlyInAnyOrder(aggregate.setElements.toArray(new SetElement[0]));
+
+			softly.assertThat(reloaded.mapElements.get("alpha")).isEqualTo(new MapElement("one"));
+			softly.assertThat(reloaded.mapElements.get("beta")).isEqualTo(new MapElement("two"));
+			softly.assertThat(reloaded.mapElements.get("gamma")).isEqualTo(new MapElement("three"));
+			softly.assertThat(reloaded.mapElements.get("delta")).isEqualTo(new MapElement("four"));
+		});
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1930,6 +2045,24 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	static class WithInsertOnly {
 		@Id Long id;
 		@InsertOnlyProperty String insertOnly;
+	}
+
+	@Table
+	static class MultipleCollections {
+		@Id Long id;
+		String name;
+		List<ListElement> listElements = new ArrayList<>();
+		Set<SetElement> setElements = new HashSet<>();
+		Map<String, MapElement> mapElements = new HashMap<>();
+	}
+
+	record ListElement(String name) {
+	}
+
+	record SetElement(String name) {
+	}
+
+	record MapElement(String name) {
 	}
 
 	@Configuration

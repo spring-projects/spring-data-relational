@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
  * Query Loading.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 3.2
  */
 class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy {
@@ -120,23 +121,25 @@ class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy
 
 	private boolean entityQualifiesForSingleQueryLoading(Class<?> entityType) {
 
-		boolean referenceFound = false;
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : converter.getMappingContext()
 				.findPersistentPropertyPaths(entityType, __ -> true)) {
 			RelationalPersistentProperty property = path.getLeafProperty();
 			if (property.isEntity()) {
+
+				// single references are currently not supported
+				if (!(property.isMap() || property.isCollectionLike())) {
+					return false;
+				}
 
 				// embedded entities are currently not supported
 				if (property.isEmbedded()) {
 					return false;
 				}
 
-				// only a single reference is currently supported
-				if (referenceFound) {
+				// nested references are currently not supported
+				if (path.getLength() > 1) {
 					return false;
 				}
-
-				referenceFound = true;
 			}
 		}
 		return true;

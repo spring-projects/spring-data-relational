@@ -53,7 +53,7 @@ class AliasFactoryUnitTests {
 		}
 
 		@Test
-		void nameGetsSanatized() {
+		void nameGetsSanitized() {
 
 			String alias = aliasFactory.getColumnAlias(
 					context.getAggregatePath( context.getPersistentPropertyPath("evil", DummyEntity.class)));
@@ -136,6 +136,21 @@ class AliasFactoryUnitTests {
 		}
 	}
 
+	@Nested
+	class TableAlias {
+		@Test // GH-1448
+		void tableAliasIsDifferentForDifferentPathsToSameEntity() {
+
+			String alias = aliasFactory.getTableAlias(
+					context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
+
+			String alias2 = aliasFactory.getTableAlias(
+					context.getAggregatePath(context.getPersistentPropertyPath("dummy2", Reference.class)));
+
+			assertThat(alias).isNotEqualTo(alias2);
+		}
+	}
+
 	static class DummyEntity {
 		String name;
 
@@ -144,5 +159,6 @@ class AliasFactoryUnitTests {
 
 	static class Reference {
 		DummyEntity dummy;
+		DummyEntity dummy2;
 	}
 }
