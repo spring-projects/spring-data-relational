@@ -1534,6 +1534,15 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(zeroValue);
 		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [zeroValue='").append(zeroValue).append('\'');
+			sb.append(']');
+			return sb.toString();
+		}
 	}
 
 	static class NoIdListChain1 {
@@ -1553,6 +1562,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(oneValue, chain0);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [oneValue='").append(oneValue).append('\'');
+			sb.append(", chain0=").append(chain0);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 
@@ -1574,6 +1593,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(twoValue, chain1);
 		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [twoValue='").append(twoValue).append('\'');
+			sb.append(", chain1=").append(chain1);
+			sb.append(']');
+			return sb.toString();
+		}
 	}
 
 	static class NoIdListChain3 {
@@ -1593,6 +1622,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(threeValue, chain2);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [threeValue='").append(threeValue).append('\'');
+			sb.append(", chain2=").append(chain2);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 
@@ -1616,6 +1655,18 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(four, fourValue, chain3);
 		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [four=").append(four);
+			sb.append(", fourValue='").append(fourValue).append('\'');
+			sb.append(", chain3=").append(chain3);
+			sb.append(']');
+			return sb.toString();
+		}
+
 	}
 
 	/**
@@ -1638,6 +1689,15 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(zeroValue);
 		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [zeroValue='").append(zeroValue).append('\'');
+			sb.append(']');
+			return sb.toString();
+		}
 	}
 
 	static class NoIdMapChain1 {
@@ -1657,6 +1717,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(oneValue, chain0);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [oneValue='").append(oneValue).append('\'');
+			sb.append(", chain0=").append(chain0);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 
@@ -1678,6 +1748,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(twoValue, chain1);
 		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [twoValue='").append(twoValue).append('\'');
+			sb.append(", chain1=").append(chain1);
+			sb.append(']');
+			return sb.toString();
+		}
 	}
 
 	static class NoIdMapChain3 {
@@ -1697,6 +1777,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(threeValue, chain2);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [threeValue='").append(threeValue).append('\'');
+			sb.append(", chain2=").append(chain2);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 
@@ -1719,6 +1809,17 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(four, fourValue, chain3);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [four=").append(four);
+			sb.append(", fourValue='").append(fourValue).append('\'');
+			sb.append(", chain3=").append(chain3);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 

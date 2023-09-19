@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 3.2
  */
-class RowDocumentAccessor {
+public class RowDocumentAccessor {
 
 	private final RowDocument document;
 
@@ -103,7 +103,7 @@ class RowDocumentAccessor {
 
 		Assert.notNull(property, "Property must not be null");
 
-		return document.containsKey(getColumnName(property));
+		return document.get(getColumnName(property)) != null;
 	}
 
 	String getColumnName(RelationalPersistentProperty prop) {

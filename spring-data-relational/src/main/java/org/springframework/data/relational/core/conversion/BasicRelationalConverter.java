@@ -302,7 +302,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return value;
 		}
 
-		if (Enum.class.isAssignableFrom(target)) {
+		if (Enum.class.isAssignableFrom(target) && value instanceof CharSequence) {
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
 

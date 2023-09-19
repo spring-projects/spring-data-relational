@@ -42,10 +42,14 @@ public class RowDocument implements Map<String, Object> {
 		this.delegate = new LinkedCaseInsensitiveMap<>();
 	}
 
+	public RowDocument(int expectedSize) {
+		this.delegate = new LinkedCaseInsensitiveMap<>(expectedSize);
+	}
+
 	public RowDocument(Map<String, ? extends Object> map) {
 
 		this.delegate = new LinkedCaseInsensitiveMap<>();
-		this.delegate.putAll(delegate);
+		this.delegate.putAll(map);
 	}
 
 	/**
