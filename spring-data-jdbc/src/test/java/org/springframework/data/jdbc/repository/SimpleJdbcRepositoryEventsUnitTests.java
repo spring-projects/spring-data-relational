@@ -33,15 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
-import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
-import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
-import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
+import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -66,6 +58,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
+
 
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
@@ -95,8 +88,8 @@ class SimpleJdbcRepositoryEventsUnitTests {
 
 		Dialect dialect = HsqlDbDialect.INSTANCE;
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
-		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
-				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
+		JdbcConverter converter = new MappingJdbcConverter(context, delegatingDataAccessStrategy,
+				new JdbcCustomConversions(), new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
 		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);

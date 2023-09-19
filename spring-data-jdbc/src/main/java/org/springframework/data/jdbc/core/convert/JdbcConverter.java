@@ -16,12 +16,11 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.SQLType;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
-import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -58,8 +57,16 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @param key primary key.
 	 * @param <T>
 	 * @return
+	 * @deprecated since 3.2, use {@link #readAndResolve(Class, RowDocument, Identifier)} instead.
 	 */
-	<T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key);
+	@Deprecated(since = "3.2")
+	default <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
+		try {
+			return readAndResolve(entity.getType(), RowDocumentResultSetExtractor.toRowDocument(resultSet));
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * Read the current row from {@link ResultSet} to an {@link PersistentPropertyPathExtension#getActualType() entity}.
@@ -70,38 +77,18 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @param key primary key.
 	 * @param <T>
 	 * @return
-	 * @deprecated use {@link #mapRow(AggregatePath, ResultSet, Identifier, Object)} instead.
+	 * @deprecated use {@link #readAndResolve(Class, RowDocument, Identifier)} instead.
 	 */
+	@SuppressWarnings("unchecked")
 	@Deprecated(since = "3.2", forRemoval = true)
 	default <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
-		return mapRow(path.getAggregatePath(), resultSet, identifier, key);
+		try {
+			return (T) readAndResolve(path.getRequiredLeafEntity().getType(),
+					RowDocumentResultSetExtractor.toRowDocument(resultSet), identifier);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	};
-
-	/**
-	 * Read the current row from {@link ResultSet} to an {@link AggregatePath#getLeafEntity()} entity}.
-	 *
-	 * @param path path to the owning property.
-	 * @param resultSet the {@link ResultSet} to read from.
-	 * @param identifier entity identifier.
-	 * @param key primary key.
-	 * @param <T>
-	 * @return
-	 */
-	<T> T mapRow(AggregatePath path, ResultSet resultSet, Identifier identifier, Object key);
-
-	/**
-	 * Apply a projection to {@link RowDocument} and return the projection return type {@code R}.
-	 * {@link EntityProjection#isProjection() Non-projecting} descriptors fall back to {@link #read(Class, RowDocument)
-	 * regular object materialization}.
-	 *
-	 * @param descriptor the projection descriptor, must not be {@literal null}.
-	 * @param document must not be {@literal null}.
-	 * @param <R>
-	 * @return a new instance of the projection return type {@code R}.
-	 * @since 3.2
-	 * @see #project(EntityProjection, RowDocument)
-	 */
-	<R> R projectAndResolve(EntityProjection<R, ?> descriptor, RowDocument document);
 
 	/**
 	 * Read a {@link RowDocument} into the requested {@link Class aggregate type} and resolve references by looking these

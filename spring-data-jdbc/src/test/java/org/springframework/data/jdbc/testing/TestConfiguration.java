@@ -157,12 +157,11 @@ public class TestConfiguration {
 		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;
 
-		return new BasicJdbcConverter( //
+		return new MappingJdbcConverter( //
 				mappingContext, //
 				relationResolver, //
 				conversions, //
-				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns), //
-				dialect.getIdentifierProcessing());
+				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns));
 	}
 
 	@Bean

@@ -25,11 +25,9 @@ import java.util.function.BiFunction;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.convert.EntityReader;
 import org.springframework.data.convert.EntityWriter;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 
@@ -41,13 +39,6 @@ import org.springframework.data.relational.domain.RowDocument;
  */
 public interface R2dbcConverter
 		extends EntityReader<Object, Row>, EntityWriter<Object, OutboundRow>, RelationalConverter {
-
-	/**
-	 * Returns the underlying {@link MappingContext} used by the converter.
-	 *
-	 * @return never {@literal null}
-	 */
-	MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext();
 
 	/**
 	 * Returns the underlying {@link ConversionService} used by the converter.

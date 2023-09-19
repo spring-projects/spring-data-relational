@@ -24,6 +24,7 @@ import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrate
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
@@ -47,7 +48,7 @@ class SqlParametersFactoryTest {
 
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
-	BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver);
+	MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver);
 	AnsiDialect dialect = AnsiDialect.INSTANCE;
 	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
@@ -210,14 +211,11 @@ class SqlParametersFactoryTest {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof IdValue))
+			if (!(o instanceof final IdValue other))
 				return false;
-			final IdValue other = (IdValue) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
-				return false;
-			return true;
+			return Objects.equals(this$id, other$id);
 		}
 
 		public int hashCode() {
@@ -301,7 +299,7 @@ class SqlParametersFactoryTest {
 
 	private SqlParametersFactory createSqlParametersFactoryWithConverters(List<?> converters) {
 
-		BasicJdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
+		MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)),
 				dialect.getIdentifierProcessing());
 		return new SqlParametersFactory(context, converter);

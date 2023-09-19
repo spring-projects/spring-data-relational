@@ -30,8 +30,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -70,7 +70,7 @@ public class PartTreeJdbcQueryUnitTests {
 	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
 
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(mappingContext, mock(RelationResolver.class));
+	JdbcConverter converter = new MappingJdbcConverter(mappingContext, mock(RelationResolver.class));
 	ReturnedType returnedType = mock(ReturnedType.class);
 
 	@Test // DATAJDBC-318

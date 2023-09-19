@@ -42,7 +42,7 @@ import org.springframework.lang.Nullable;
 public class SqlGeneratorEmbeddedUnitTests {
 
 	private final RelationalMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 	private SqlGenerator sqlGenerator;

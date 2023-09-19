@@ -31,26 +31,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.IdentifierAccessor;
-import org.springframework.data.mapping.InstanceCreatorMetadata;
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
-import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -117,36 +106,13 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			return getConversionService().convert(row, rawType);
 		}
 
-		return read(getRequiredPersistentEntity(type), row, metadata);
-	}
-
-	private <R> R read(RelationalPersistentEntity<R> entity, Row row, @Nullable RowMetadata metadata) {
-
-		R result = createInstance(row, metadata, "", entity);
-
-		if (entity.requiresPropertyPopulation()) {
-			ConvertingPropertyAccessor<R> propertyAccessor = new ConvertingPropertyAccessor<>(
-					entity.getPropertyAccessor(result), getConversionService());
-
-			for (RelationalPersistentProperty property : entity) {
-
-				if (entity.isCreatorArgument(property)) {
-					continue;
-				}
-
-				Object value = readFrom(row, metadata, property, "");
-
-				if (value != null) {
-					propertyAccessor.setProperty(property, value);
-				}
-			}
-		}
-
-		return result;
+		RowDocument document = toRowDocument(type, row, metadata != null ? metadata.getColumnMetadatas() : null);
+		return read(type, document);
 	}
 
 	@Override
-	public RowDocument toRowDocument(Class<?> type, Readable row, Iterable<? extends ReadableMetadata> metadata) {
+	public RowDocument toRowDocument(Class<?> type, Readable row,
+			@Nullable Iterable<? extends ReadableMetadata> metadata) {
 
 		RowDocument document = new RowDocument();
 		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(type);
@@ -155,26 +121,28 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			captureRowValues(row, metadata, document, persistentEntity);
 		}
 
-		for (ReadableMetadata m : metadata) {
+		if (metadata != null) {
+			for (ReadableMetadata m : metadata) {
 
-			if (document.containsKey(m.getName())) {
-				continue;
+				if (document.containsKey(m.getName())) {
+					continue;
+				}
+
+				document.put(m.getName(), row.get(m.getName()));
 			}
-
-			document.put(m.getName(), row.get(m.getName()));
 		}
 
 		return document;
 	}
 
-	private static void captureRowValues(Readable row, Iterable<? extends ReadableMetadata> metadata,
+	private static void captureRowValues(Readable row, @Nullable Iterable<? extends ReadableMetadata> metadata,
 			RowDocument document, RelationalPersistentEntity<?> persistentEntity) {
 
 		for (RelationalPersistentProperty property : persistentEntity) {
 
 			String identifier = property.getColumnName().getReference();
 
-			if (property.isEntity() || !RowMetadataUtils.containsColumn(metadata, identifier)) {
+			if (property.isEntity() || (metadata != null && !RowMetadataUtils.containsColumn(metadata, identifier))) {
 				continue;
 			}
 
@@ -191,194 +159,6 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 			document.put(identifier, value);
 		}
-	}
-
-	/**
-	 * Read a single value or a complete Entity from the {@link Row} passed as an argument.
-	 *
-	 * @param row the {@link Row} to extract the value from. Must not be {@literal null}.
-	 * @param metadata the {@link RowMetadata}. Can be {@literal null}.
-	 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be
-	 *          {@literal null}.
-	 * @param prefix to be used for all column names accessed by this method. Must not be {@literal null}.
-	 * @return the value read from the {@link Row}. May be {@literal null}.
-	 */
-	@Nullable
-	private Object readFrom(Row row, @Nullable RowMetadata metadata, RelationalPersistentProperty property,
-			String prefix) {
-
-		String identifier = prefix + property.getColumnName().getReference();
-
-		try {
-
-			Object value = null;
-			if (metadata == null || RowMetadataUtils.containsColumn(metadata, identifier)) {
-
-				if (property.getType().equals(Clob.class)) {
-					value = row.get(identifier, Clob.class);
-				} else if (property.getType().equals(Blob.class)) {
-					value = row.get(identifier, Blob.class);
-				} else {
-					value = row.get(identifier);
-				}
-			}
-
-			if (value == null) {
-				return null;
-			}
-
-			if (getConversions().hasCustomReadTarget(value.getClass(), property.getType())) {
-				return readValue(value, property.getTypeInformation());
-			}
-
-			if (property.isEntity()) {
-				return readEntityFrom(row, metadata, property);
-			}
-
-			return readValue(value, property.getTypeInformation());
-
-		} catch (Exception o_O) {
-			throw new MappingException(String.format("Could not read property %s from column %s", property, identifier), o_O);
-		}
-	}
-
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (null == value) {
-			return null;
-		}
-
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-			return getConversionService().convert(value, type.getType());
-		} else if (value instanceof Collection || value.getClass().isArray()) {
-			return readCollectionOrArray(asCollection(value), type);
-		} else {
-			return getPotentiallyConvertedSimpleRead(value, type.getType());
-		}
-	}
-
-	/**
-	 * Reads the given value into a collection of the given {@link TypeInformation}.
-	 *
-	 * @param source must not be {@literal null}.
-	 * @param targetType must not be {@literal null}.
-	 * @return the converted {@link Collection} or array, will never be {@literal null}.
-	 */
-	@SuppressWarnings("unchecked")
-	private Object readCollectionOrArray(Collection<?> source, TypeInformation<?> targetType) {
-
-		Assert.notNull(targetType, "Target type must not be null");
-
-		Class<?> collectionType = targetType.isSubTypeOf(Collection.class) //
-				? targetType.getType() //
-				: List.class;
-
-		TypeInformation<?> componentType = targetType.getComponentType() != null //
-				? targetType.getComponentType() //
-				: TypeInformation.OBJECT;
-		Class<?> rawComponentType = componentType.getType();
-
-		Collection<Object> items = targetType.getType().isArray() //
-				? new ArrayList<>(source.size()) //
-				: CollectionFactory.createCollection(collectionType, rawComponentType, source.size());
-
-		if (source.isEmpty()) {
-			return getPotentiallyConvertedSimpleRead(items, targetType.getType());
-		}
-
-		for (Object element : source) {
-
-			if (!Object.class.equals(rawComponentType) && element instanceof Collection) {
-				if (!rawComponentType.isArray() && !ClassUtils.isAssignable(Iterable.class, rawComponentType)) {
-					throw new MappingException(String.format(
-							"Cannot convert %1$s of type %2$s into an instance of %3$s; Implement a custom Converter<%2$s, %3$s> and register it with the CustomConversions",
-							element, element.getClass(), rawComponentType));
-				}
-			}
-			if (element instanceof List) {
-				items.add(readCollectionOrArray((Collection<Object>) element, componentType));
-			} else {
-				items.add(getPotentiallyConvertedSimpleRead(element, rawComponentType));
-			}
-		}
-
-		return getPotentiallyConvertedSimpleRead(items, targetType.getType());
-	}
-
-	/**
-	 * Checks whether we have a custom conversion for the given simple object. Converts the given value if so, applies
-	 * {@link Enum} handling or returns the value as is.
-	 *
-	 * @param value
-	 * @param target must not be {@literal null}.
-	 * @return
-	 */
-	@Nullable
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Object getPotentiallyConvertedSimpleRead(@Nullable Object value, @Nullable Class<?> target) {
-
-		if (value == null || target == null || ClassUtils.isAssignableValue(target, value)) {
-			return value;
-		}
-
-		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
-			return getConversionService().convert(value, target);
-		}
-
-		if (Enum.class.isAssignableFrom(target)) {
-			return Enum.valueOf((Class<Enum>) target, value.toString());
-		}
-
-		return getConversionService().convert(value, target);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <S> S readEntityFrom(Row row, @Nullable RowMetadata metadata, PersistentProperty<?> property) {
-
-		String prefix = property.getName() + "_";
-
-		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
-
-		if (entity.hasIdProperty()) {
-			if (readFrom(row, metadata, entity.getRequiredIdProperty(), prefix) == null) {
-				return null;
-			}
-		}
-
-		Object instance = createInstance(row, metadata, prefix, entity);
-
-		if (entity.requiresPropertyPopulation()) {
-			PersistentPropertyAccessor<?> accessor = entity.getPropertyAccessor(instance);
-			ConvertingPropertyAccessor<?> propertyAccessor = new ConvertingPropertyAccessor<>(accessor,
-					getConversionService());
-
-			for (RelationalPersistentProperty p : entity) {
-				if (!entity.isCreatorArgument(property)) {
-					propertyAccessor.setProperty(p, readFrom(row, metadata, p, prefix));
-				}
-			}
-		}
-
-		return (S) instance;
-	}
-
-	private <S> S createInstance(Row row, @Nullable RowMetadata rowMetadata, String prefix,
-			RelationalPersistentEntity<S> entity) {
-
-		InstanceCreatorMetadata<RelationalPersistentProperty> persistenceConstructor = entity.getInstanceCreatorMetadata();
-		ParameterValueProvider<RelationalPersistentProperty> provider;
-
-		if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
-
-			SpELContext spELContext = new SpELContext(new RowPropertyAccessor(rowMetadata));
-			SpELExpressionEvaluator expressionEvaluator = new DefaultSpELExpressionEvaluator(row, spELContext);
-			provider = new SpELExpressionParameterValueProvider<>(expressionEvaluator, getConversionService(),
-					new RowParameterValueProvider(row, rowMetadata, entity, this, prefix));
-		} else {
-			provider = NoOpParameterValueProvider.INSTANCE;
-		}
-
-		return createInstance(entity, provider::getParameterValue);
 	}
 
 	// ----------------------------------
@@ -732,57 +512,4 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		return source.getClass().isArray() ? CollectionUtils.arrayToList(source) : Collections.singleton(source);
 	}
 
-	enum NoOpParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
-
-		INSTANCE;
-
-		@Override
-		public <T> T getParameterValue(
-				org.springframework.data.mapping.Parameter<T, RelationalPersistentProperty> parameter) {
-			return null;
-		}
-	}
-
-	private class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
-
-		private final Row resultSet;
-		private final RowMetadata metadata;
-		private final RelationalPersistentEntity<?> entity;
-		private final RelationalConverter converter;
-		private final String prefix;
-
-		public RowParameterValueProvider(Row resultSet, RowMetadata metadata, RelationalPersistentEntity<?> entity,
-				RelationalConverter converter, String prefix) {
-			this.resultSet = resultSet;
-			this.metadata = metadata;
-			this.entity = entity;
-			this.converter = converter;
-			this.prefix = prefix;
-		}
-
-		@Override
-		@Nullable
-		public <T> T getParameterValue(
-				org.springframework.data.mapping.Parameter<T, RelationalPersistentProperty> parameter) {
-
-			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
-			Object value = readFrom(this.resultSet, this.metadata, property, this.prefix);
-
-			if (value == null) {
-				return null;
-			}
-
-			Class<T> type = parameter.getType().getType();
-
-			if (type.isInstance(value)) {
-				return type.cast(value);
-			}
-
-			try {
-				return this.converter.getConversionService().convert(value, type);
-			} catch (Exception o_O) {
-				throw new MappingException(String.format("Couldn't read parameter %s", parameter.getName()), o_O);
-			}
-		}
-	}
 }

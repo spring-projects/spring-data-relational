@@ -36,7 +36,7 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 public class JdbcIdentifierBuilderUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 

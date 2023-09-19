@@ -55,14 +55,11 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
 	}
 
+	@SuppressWarnings("unchecked")
 	private T mapEntity(ResultSet resultSet, Object key) throws SQLException {
 
-		if (true) {
-			RowDocument document = EntityRowMapper.toRowDocument(resultSet);
-			return (T) converter.readAndResolve(path.getLeafEntity().getType(), document,
-					identifier.withPart(keyColumn, key, Object.class));
-		}
-
-		return converter.mapRow(path, resultSet, identifier, key);
+		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(resultSet);
+		return (T) converter.readAndResolve(path.getLeafEntity().getType(), document,
+				identifier.withPart(keyColumn, key, Object.class));
 	}
 }

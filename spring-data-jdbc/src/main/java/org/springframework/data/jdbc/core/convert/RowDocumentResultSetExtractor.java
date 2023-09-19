@@ -53,6 +53,28 @@ class RowDocumentResultSetExtractor {
 	}
 
 	/**
+	 * Create a {@link RowDocument} from the current {@link ResultSet} row.
+	 *
+	 * @param resultSet must not be {@literal null}.
+	 * @return
+	 * @throws SQLException
+	 */
+	static RowDocument toRowDocument(ResultSet resultSet) throws SQLException {
+
+		ResultSetMetaData md = resultSet.getMetaData();
+		int columnCount = md.getColumnCount();
+		RowDocument document = new RowDocument(columnCount);
+
+		for (int i = 0; i < columnCount; i++) {
+			Object rsv = JdbcUtils.getResultSetValue(resultSet, i + 1);
+			String columnName = md.getColumnLabel(i + 1);
+			document.put(columnName, rsv instanceof Array a ? a.getArray() : rsv);
+		}
+
+		return document;
+	}
+
+	/**
 	 * Adapter to extract values and column metadata from a {@link ResultSet}.
 	 */
 	enum ResultSetAdapter implements TabularResultAdapter<ResultSet> {

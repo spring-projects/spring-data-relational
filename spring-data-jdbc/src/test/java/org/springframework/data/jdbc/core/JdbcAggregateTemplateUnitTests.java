@@ -15,6 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +31,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
@@ -40,11 +45,6 @@ import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
-
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -72,10 +72,10 @@ public class JdbcAggregateTemplateUnitTests {
 	public void setUp() {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
-		JdbcConverter converter = new BasicJdbcConverter(mappingContext, relationResolver);
+		JdbcConverter converter = new MappingJdbcConverter(mappingContext, relationResolver);
 
 		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
-		((JdbcAggregateTemplate) template).setEntityCallbacks(callbacks);
+		template.setEntityCallbacks(callbacks);
 
 	}
 
