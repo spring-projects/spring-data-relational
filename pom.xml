@@ -168,6 +168,28 @@
 							<includes>
 								<include>**/*Tests.java</include>
 							</includes>
+							<excludes>
+								<exclude>**/*IntegrationTests.java</exclude>
+							</excludes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>integration-test</goal>
+						</goals>
+						<configuration>
+							<includes>
+								<include>**/*IntegrationTests.java</include>
+							</includes>
 						</configuration>
 					</execution>
 				</executions>
