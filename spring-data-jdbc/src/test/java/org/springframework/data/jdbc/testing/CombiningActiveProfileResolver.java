@@ -16,9 +16,10 @@
 
 package org.springframework.data.jdbc.testing;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.test.context.ActiveProfilesResolver;
 import org.springframework.test.context.support.DefaultActiveProfilesResolver;
 
@@ -28,7 +29,7 @@ import org.springframework.test.context.support.DefaultActiveProfilesResolver;
  *
  * @author Jens Schauder
  */
-public class CombiningActiveProfileResolver implements ActiveProfilesResolver {
+class CombiningActiveProfileResolver implements ActiveProfilesResolver {
 
 	private static final String SPRING_PROFILES_ACTIVE = "spring.profiles.active";
 	private final DefaultActiveProfilesResolver defaultActiveProfilesResolver = new DefaultActiveProfilesResolver();
@@ -36,29 +37,23 @@ public class CombiningActiveProfileResolver implements ActiveProfilesResolver {
 	@Override
 	public String[] resolve(Class<?> testClass) {
 
-		ArrayList<Object> combinedProfiles = new ArrayList<>();
+		Set<String> combinedProfiles = new LinkedHashSet<>();
 
-		for (String profile : defaultActiveProfilesResolver.resolve(testClass)) {
-			combinedProfiles.add(profile);
-		}
-		for (String profile : getSystemProfiles()) {
-			combinedProfiles.add(profile);
-		}
-		for (String profile : getEnvironmentProfiles()) {
-			combinedProfiles.add(profile);
-		}
+		combinedProfiles.addAll(Arrays.asList(defaultActiveProfilesResolver.resolve(testClass)));
+		combinedProfiles.addAll(Arrays.asList(getSystemProfiles()));
+		combinedProfiles.addAll(Arrays.asList(getEnvironmentProfiles()));
 
 		return combinedProfiles.toArray(new String[0]);
 	}
 
-	@NotNull
 	private static String[] getSystemProfiles() {
 
 		if (System.getProperties().containsKey(SPRING_PROFILES_ACTIVE)) {
 
-			final String profiles = System.getProperty(SPRING_PROFILES_ACTIVE);
+			String profiles = System.getProperty(SPRING_PROFILES_ACTIVE);
 			return profiles.split("\\s*,\\s*");
 		}
+
 		return new String[0];
 	}
 
@@ -69,6 +64,7 @@ public class CombiningActiveProfileResolver implements ActiveProfilesResolver {
 			String profiles = System.getenv().get(SPRING_PROFILES_ACTIVE);
 			return profiles.split("\\s*,\\s*");
 		}
+
 		return new String[0];
 
 	}

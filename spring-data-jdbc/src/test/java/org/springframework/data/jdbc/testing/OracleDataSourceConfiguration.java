@@ -20,7 +20,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -38,7 +37,7 @@ import org.testcontainers.utility.DockerImageName;
  * @author Jens Schauder
  */
 @Configuration
-@Profile("oracle")
+@ConditionalOnDatabase(DatabaseType.ORACLE)
 public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 	private static final Log LOG = LogFactory.getLog(OracleDataSourceConfiguration.class);

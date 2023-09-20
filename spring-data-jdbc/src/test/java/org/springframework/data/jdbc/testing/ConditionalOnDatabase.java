@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,34 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import org.springframework.test.annotation.IfProfileValue;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.context.annotation.Conditional;
+
 /**
- * Run the annotated test only against a HsqlDb database.
+ * Indicates that a component is eligible for registration/evaluation when a profile for a {@link DatabaseType} is
+ * activated.
+ * <p>
+ * This annotation can be used on Spring components and on tests to indicate that a test should be only run when the
+ * appropriate profile is activated.
  *
- * Requires the use of {@code @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)} on the test.
- *
- * @author Jens Schauder
+ * @author Mark Paluch
+ * @see Conditional
+ * @see DatabaseTypeCondition
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Inherited
-@IfProfileValue(name = "current.database.is.not.hsqldb", value = "false")
-public @interface HsqlDbOnly {
+@Conditional(DatabaseTypeCondition.class)
+public @interface ConditionalOnDatabase {
+
+	/**
+	 * Database type on which the annotated class should be enabled.
+	 */
+	DatabaseType value();
+
 }

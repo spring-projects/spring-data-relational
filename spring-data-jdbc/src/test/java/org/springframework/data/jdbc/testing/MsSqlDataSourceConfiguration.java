@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.testing;
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MSSQLServerContainer;
 
@@ -34,7 +33,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration
-@Profile({ "mssql" })
+@ConditionalOnDatabase(DatabaseType.MARIADB)
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04";

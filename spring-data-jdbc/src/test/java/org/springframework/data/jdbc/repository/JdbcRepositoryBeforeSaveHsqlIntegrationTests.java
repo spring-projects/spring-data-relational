@@ -15,8 +15,12 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.List;
+import java.util.Objects;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -26,26 +30,21 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for the {@link BeforeSaveCallback}.
  *
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@ExtendWith(SpringExtension.class)
-@ActiveProfiles("hsql")
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 
 	@Configuration
@@ -160,15 +159,15 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof ImmutableEntity)) return false;
-			final ImmutableEntity other = (ImmutableEntity) o;
+			if (!(o instanceof final ImmutableEntity other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {

@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,16 +28,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -47,10 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Salim Achouche
  * @author Salim Achouche
  */
-@ContextConfiguration
-@Transactional
-@ActiveProfiles("hsql")
-@ExtendWith(SpringExtension.class)
+
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	private static final long TWO_ID = 23L;
@@ -101,7 +97,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		assertThat( //
 				JdbcTestUtils.countRowsInTableWhere( //
-						(JdbcTemplate) template.getJdbcOperations(), //
+						template.getJdbcOperations(), //
 						"aggregate_one", //
 						"two = " + TWO_ID) //
 		).isEqualTo(1);

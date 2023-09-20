@@ -19,12 +19,9 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-
 import org.testcontainers.containers.Db2Container;
 
 /**
@@ -34,7 +31,7 @@ import org.testcontainers.containers.Db2Container;
  * @author Mark Paluch
  */
 @Configuration
-@Profile("db2")
+@ConditionalOnDatabase(DatabaseType.DB2)
 class Db2DataSourceConfiguration extends DataSourceConfiguration {
 
 	public static final String DOCKER_IMAGE_NAME = "ibmcom/db2:11.5.7.0a";

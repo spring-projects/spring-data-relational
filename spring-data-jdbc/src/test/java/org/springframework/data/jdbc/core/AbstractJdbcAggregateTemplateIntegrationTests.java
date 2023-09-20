@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -55,9 +53,8 @@ import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
-import org.springframework.data.jdbc.testing.CombiningActiveProfileResolver;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
@@ -69,10 +66,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -89,10 +82,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Chirag Tailor
  * @author Vincent Galloy
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
@@ -1611,6 +1601,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			return getId() == null;
 		}
 
+		@Override
 		public Long getId() {
 			return this.id;
 		}
@@ -1658,18 +1649,15 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof AggregateWithImmutableVersion))
+			if (!(o instanceof final AggregateWithImmutableVersion other))
 				return false;
-			final AggregateWithImmutableVersion other = (AggregateWithImmutableVersion) o;
 			final Object this$id = this.id;
 			final Object other$id = other.id;
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$version = this.getVersion();
 			final Object other$version = other.getVersion();
-			if (this$version == null ? other$version != null : !this$version.equals(other$version))
-				return false;
-			return true;
+			return Objects.equals(this$version, other$version);
 		}
 
 		public int hashCode() {
@@ -1722,18 +1710,15 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof ConstructorInvocation))
+			if (!(o instanceof final ConstructorInvocation other))
 				return false;
-			final ConstructorInvocation other = (ConstructorInvocation) o;
 			final Object this$id = this.id;
 			final Object other$id = other.id;
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$version = this.getVersion();
 			final Object other$version = other.getVersion();
-			if (this$version == null ? other$version != null : !this$version.equals(other$version))
-				return false;
-			return true;
+			return Objects.equals(this$version, other$version);
 		}
 
 		public int hashCode() {
@@ -1757,6 +1742,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			this.version = (Long) newVersion;
 		}
 
+		@Override
 		public Long getVersion() {
 			return this.version;
 		}
@@ -1788,6 +1774,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			this.version = (Integer) newVersion;
 		}
 
+		@Override
 		public Integer getVersion() {
 			return this.version;
 		}
@@ -1819,6 +1806,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			this.version = (Short) newVersion;
 		}
 
+		@Override
 		public Short getVersion() {
 			return this.version;
 		}
@@ -1876,7 +1864,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {}
 
-	@ActiveProfiles(value = PROFILE_SINGLE_QUERY_LOADING, resolver = CombiningActiveProfileResolver.class)
+	@ActiveProfiles(value = PROFILE_SINGLE_QUERY_LOADING)
 	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests
 			extends AbstractJdbcAggregateTemplateIntegrationTests {
 

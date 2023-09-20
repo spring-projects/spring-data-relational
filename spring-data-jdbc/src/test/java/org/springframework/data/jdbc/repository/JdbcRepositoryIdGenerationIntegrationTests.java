@@ -15,8 +15,12 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -27,16 +31,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
@@ -44,8 +43,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author Jens Schauder
  * @author Greg Turnquist
  */
-@ContextConfiguration
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
@@ -134,15 +132,15 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof ReadOnlyIdEntity)) return false;
-			final ReadOnlyIdEntity other = (ReadOnlyIdEntity) o;
+			if (!(o instanceof final ReadOnlyIdEntity other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {
@@ -203,15 +201,15 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof ImmutableWithManualIdEntity)) return false;
-			final ImmutableWithManualIdEntity other = (ImmutableWithManualIdEntity) o;
+			if (!(o instanceof final ImmutableWithManualIdEntity other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {

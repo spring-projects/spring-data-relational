@@ -20,7 +20,6 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
@@ -30,7 +29,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  * @author Mark Paluch
  */
 @Configuration
-@Profile({ "h2" })
+@ConditionalOnDatabase(DatabaseType.H2)
 class H2DataSourceConfiguration {
 
 	@Autowired Class<?> context;

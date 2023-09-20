@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -25,11 +24,9 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test to verify that
@@ -39,9 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Diego Krupitza
  * @author Jens Schauder
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests
 		extends AbstractJdbcRepositoryLookUpStrategyTests {
 

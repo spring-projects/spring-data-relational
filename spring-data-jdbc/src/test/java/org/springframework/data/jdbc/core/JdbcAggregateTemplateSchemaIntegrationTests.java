@@ -17,10 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -29,26 +27,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} using an entity mapped with an explicit schema.
  *
  * @author Jens Schauder
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcAggregateTemplateSchemaIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;

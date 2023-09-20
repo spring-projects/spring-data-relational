@@ -18,9 +18,10 @@ package org.springframework.data.jdbc.core;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Objects;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -29,12 +30,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
@@ -43,10 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Salim Achouche
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@Transactional
-@ActiveProfiles("hsql")
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
@@ -328,26 +326,23 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof LegoSet))
+			if (!(o instanceof final LegoSet other))
 				return false;
-			final LegoSet other = (LegoSet) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+			if (!Objects.equals(this$name, other$name))
 				return false;
 			final Object this$manual = this.getManual();
 			final Object other$manual = other.getManual();
-			if (this$manual == null ? other$manual != null : !this$manual.equals(other$manual))
+			if (!Objects.equals(this$manual, other$manual))
 				return false;
 			final Object this$author = this.getAuthor();
 			final Object other$author = other.getAuthor();
-			if (this$author == null ? other$author != null : !this$author.equals(other$author))
-				return false;
-			return true;
+			return Objects.equals(this$author, other$author);
 		}
 
 		public int hashCode() {
@@ -407,18 +402,15 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof Manual))
+			if (!(o instanceof final Manual other))
 				return false;
-			final Manual other = (Manual) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$content = this.getContent();
 			final Object other$content = other.getContent();
-			if (this$content == null ? other$content != null : !this$content.equals(other$content))
-				return false;
-			return true;
+			return Objects.equals(this$content, other$content);
 		}
 
 		public int hashCode() {
@@ -466,18 +458,15 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof Author))
+			if (!(o instanceof final Author other))
 				return false;
-			final Author other = (Author) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name))
-				return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {
@@ -560,18 +549,15 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof NonRoot))
+			if (!(o instanceof final NonRoot other))
 				return false;
-			final NonRoot other = (NonRoot) o;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name))
-				return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {

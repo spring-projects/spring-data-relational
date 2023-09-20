@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,35 +17,41 @@ package org.springframework.data.jdbc.testing;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.core.env.Environment;
+import org.springframework.data.jdbc.testing.EnabledOnDatabaseCustomizer.EnabledOnDatabaseCustomizerFactory;
+import org.springframework.data.jdbc.testing.TestClassCustomizer.TestClassCustomizerFactory;
+import org.springframework.test.context.ContextCustomizerFactories;
+
 /**
- * {@code @RequiredFeature} is used to express that the annotated test class or test method is only <em>enabled</em> on
- * one or more specified Spring Data JDBC {@link org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
- * features} are supported by the underlying database.
+ * Selects a database configuration on which the test class is enabled.
  * <p>
- * When applied at the class level, all test methods within that class will be enabled if they support all database
- * features.
+ * Using this annotation will enable the test configuration if no test environment is given. If a test environment is
+ * configured through {@link Environment#getActiveProfiles()}, then the test class will be skipped if the environment
+ * doesn't match the specified {@link DatabaseType}.
  * <p>
  * If a test method is disabled via this annotation, that does not prevent the test class from being instantiated.
  * Rather, it prevents the execution of the test method and method-level lifecycle callbacks such as {@code @BeforeEach}
  * methods, {@code @AfterEach} methods, and corresponding extension APIs. When annotated on method and class level, all
  * annotated features must match to run a test.
  *
- * @author Jens Schauder
  * @author Mark Paluch
+ * @see DatabaseTypeCondition
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.METHOD, ElementType.TYPE })
+@Target(ElementType.TYPE)
+// required twice as the annotation lookup doesn't merge multiple occurences of the same annotation
+@ContextCustomizerFactories(value = { TestClassCustomizerFactory.class, EnabledOnDatabaseCustomizerFactory.class })
 @Documented
-public @interface EnabledOnFeature {
+@Inherited
+public @interface EnabledOnDatabase {
 
 	/**
-	 * Databases features on which the annotated class or method should be enabled.
-	 *
-	 * @see TestDatabaseFeatures.Feature
+	 * Database type on which the annotated class should be enabled.
 	 */
-	TestDatabaseFeatures.Feature[] value();
+	DatabaseType value();
 }
