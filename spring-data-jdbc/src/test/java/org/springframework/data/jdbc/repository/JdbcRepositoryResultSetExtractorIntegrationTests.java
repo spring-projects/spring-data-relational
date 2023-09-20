@@ -54,15 +54,8 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryResultSetExtractorIntegrationTests.class;
-		}
-
-		@Bean
-		PersonRepository personEntityRepository() {
+		PersonRepository personEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(PersonRepository.class);
 		}
 

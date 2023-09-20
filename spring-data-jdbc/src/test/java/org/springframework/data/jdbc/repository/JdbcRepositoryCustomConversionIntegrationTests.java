@@ -56,15 +56,8 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryCustomConversionIntegrationTests.class;
-		}
-
-		@Bean
-		EntityWithStringyBigDecimalRepository repository() {
+		EntityWithStringyBigDecimalRepository repository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(EntityWithStringyBigDecimalRepository.class);
 		}
 

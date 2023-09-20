@@ -218,20 +218,13 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryWithListsIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 
 		@Bean
-		RootRepository rootRepository() {
+		RootRepository rootRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(RootRepository.class);
 		}
 	}

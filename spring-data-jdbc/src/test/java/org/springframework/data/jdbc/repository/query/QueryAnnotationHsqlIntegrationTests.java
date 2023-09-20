@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -60,10 +59,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 			includeFilters = @ComponentScan.Filter(value = DummyEntityRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
-		@Bean
-		Class<?> testClass() {
-			return QueryAnnotationHsqlIntegrationTests.class;
-		}
 	}
 
 	@Autowired DummyEntityRepository repository;

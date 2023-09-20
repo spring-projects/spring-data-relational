@@ -19,17 +19,14 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 
 import java.sql.Connection;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import org.awaitility.Awaitility;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import org.awaitility.Awaitility;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,13 +42,18 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
  * @author Jens Schauder
  * @author Oliver Gierke
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 abstract class DataSourceConfiguration {
 
 	private static final Log LOG = LogFactory.getLog(DataSourceConfiguration.class);
 
-	@Autowired Class<?> testClass;
-	@Autowired Environment environment;
+	private final TestClass testClass;
+	private final Environment environment;
+
+	public DataSourceConfiguration(TestClass testClass, Environment environment) {
+		this.testClass = testClass;
+		this.environment = environment;
+	}
 
 	@Bean
 	DataSource dataSource() {
@@ -61,15 +63,15 @@ abstract class DataSourceConfiguration {
 	}
 
 	@Bean
-	DataSourceInitializer initializer() {
+	DataSourceInitializer initializer(DataSource dataSource) {
 
 		DataSourceInitializer initializer = new DataSourceInitializer();
-		initializer.setDataSource(dataSource());
+		initializer.setDataSource(dataSource);
 
 		String[] activeProfiles = environment.getActiveProfiles();
 		String profile = getDatabaseProfile(activeProfiles);
 
-		ClassPathResource script = new ClassPathResource(TestUtils.createScriptName(testClass, profile));
+		ClassPathResource script = new ClassPathResource(TestUtils.createScriptName(testClass.getTestClass(), profile));
 		ResourceDatabasePopulator populator = new ResourceDatabasePopulator(script);
 		customizePopulator(populator);
 		initializer.setDatabasePopulator(populator);
@@ -79,7 +81,7 @@ abstract class DataSourceConfiguration {
 
 	private static String getDatabaseProfile(String[] activeProfiles) {
 
-		List<String> validDbs = Arrays.asList("hsql", "h2", "mysql", "mariadb", "postgres", "db2", "oracle", "mssql");
+		List<String> validDbs = Arrays.stream(DatabaseType.values()).map(DatabaseType::getProfile).toList();
 		for (String profile : activeProfiles) {
 			if (validDbs.contains(profile)) {
 				return profile;
@@ -122,6 +124,6 @@ abstract class DataSourceConfiguration {
 					}
 				});
 
-		LOG.info("Connectivity verified");
+		LOG.debug("Connectivity verified");
 	}
 }

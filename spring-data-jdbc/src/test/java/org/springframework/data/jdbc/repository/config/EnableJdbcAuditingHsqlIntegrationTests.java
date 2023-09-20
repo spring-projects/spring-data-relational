@@ -30,7 +30,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -39,12 +40,16 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Tests the {@link EnableJdbcAuditing} annotation.
@@ -53,7 +58,8 @@ import org.springframework.test.context.ActiveProfiles;
  * @author Jens Schauder
  * @author Salim Achouche
  */
-@ActiveProfiles("hsql")
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class EnableJdbcAuditingHsqlIntegrationTests {
 
 	SoftAssertions softly = new SoftAssertions();
@@ -63,7 +69,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		configureRepositoryWith( //
 				AuditingAnnotatedDummyEntityRepository.class, //
-				TestConfiguration.class, //
+				Config.class, //
 				AuditingConfiguration.class) //
 						.accept(repository -> {
 
@@ -120,7 +126,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		configureRepositoryWith( //
 				DummyEntityRepository.class, //
-				TestConfiguration.class, //
+				Config.class, //
 				AuditingConfiguration.class) //
 						.accept(repository -> {
 
@@ -142,7 +148,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		configureRepositoryWith( //
 				AuditingAnnotatedDummyEntityRepository.class, //
-				TestConfiguration.class, //
+				Config.class, //
 				CustomizeAuditorAwareAndDateTimeProvider.class) //
 						.accept(repository -> {
 
@@ -164,7 +170,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		configureRepositoryWith( //
 				AuditingAnnotatedDummyEntityRepository.class, //
-				TestConfiguration.class, //
+				Config.class, //
 				CustomizeAuditorAware.class) //
 						.accept(repository -> {
 
@@ -183,7 +189,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		configureRepositoryWith( //
 				AuditingAnnotatedDummyEntityRepository.class, //
-				TestConfiguration.class, //
+				Config.class, //
 				AuditingConfiguration.class, //
 				OrderAssertingEventListener.class, //
 				OrderAssertingCallback.class //
@@ -310,8 +316,10 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		@Override
 		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
 			DummyEntity that = (DummyEntity) o;
 			return Objects.equals(id, that.id) && Objects.equals(name, that.name);
 		}
@@ -322,13 +330,14 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		}
 	}
 
-	@ComponentScan("org.springframework.data.jdbc.testing")
+	@Configuration
 	@EnableJdbcRepositories(considerNestedRepositories = true)
-	static class TestConfiguration {
+	@Import(TestConfiguration.class)
+	static class Config {
 
 		@Bean
-		Class<?> testClass() {
-			return EnableJdbcAuditingHsqlIntegrationTests.class;
+		TestClass testClass() {
+			return TestClass.of(EnableJdbcAuditingHsqlIntegrationTests.class);
 		}
 
 		@Bean
@@ -336,6 +345,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 			return new NamingStrategy() {
 
+				@Override
 				public String getTableName(Class<?> type) {
 					return "DummyEntity";
 				}

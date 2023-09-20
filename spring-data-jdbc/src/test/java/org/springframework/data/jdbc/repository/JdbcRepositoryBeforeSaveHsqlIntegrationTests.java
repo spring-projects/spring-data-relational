@@ -29,10 +29,10 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
 import org.springframework.data.repository.ListCrudRepository;
@@ -47,29 +47,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 @EnabledOnDatabase(DatabaseType.HSQL)
 public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired
-		JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryBeforeSaveHsqlIntegrationTests.class;
-		}
-	}
-
-	@Autowired
-	NamedParameterJdbcTemplate template;
-	@Autowired
-	ImmutableEntityRepository immutableWithManualIdEntityRepository;
-	@Autowired
-	MutableEntityRepository mutableEntityRepository;
-	@Autowired
-	MutableWithImmutableIdEntityRepository mutableWithImmutableIdEntityRepository;
-	@Autowired
-	ImmutableWithMutableIdEntityRepository immutableWithMutableIdEntityRepository;
+	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired ImmutableEntityRepository immutableWithManualIdEntityRepository;
+	@Autowired MutableEntityRepository mutableEntityRepository;
+	@Autowired MutableWithImmutableIdEntityRepository mutableWithImmutableIdEntityRepository;
+	@Autowired ImmutableWithMutableIdEntityRepository immutableWithMutableIdEntityRepository;
 
 	@Test // GH-1199
 	public void immutableEntity() {
@@ -135,13 +117,10 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		assertThat(reloaded.getName()).isEqualTo("fromBeforeSaveCallback");
 	}
 
-	private interface ImmutableEntityRepository extends ListCrudRepository<ImmutableEntity, Long> {
-	}
+	private interface ImmutableEntityRepository extends ListCrudRepository<ImmutableEntity, Long> {}
 
 	static final class ImmutableEntity {
-		@Id
-		private final
-		Long id;
+		@Id private final Long id;
 		private final String name;
 
 		public ImmutableEntity(Long id, String name) {
@@ -158,7 +137,8 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final ImmutableEntity other))
 				return false;
 			final Object this$id = this.getId();
@@ -181,7 +161,8 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		}
 
 		public String toString() {
-			return "JdbcRepositoryBeforeSaveHsqlIntegrationTests.ImmutableEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+			return "JdbcRepositoryBeforeSaveHsqlIntegrationTests.ImmutableEntity(id=" + this.getId() + ", name="
+					+ this.getName() + ")";
 		}
 
 		public ImmutableEntity withId(Long id) {
@@ -193,12 +174,10 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 		}
 	}
 
-	private interface MutableEntityRepository extends ListCrudRepository<MutableEntity, Long> {
-	}
+	private interface MutableEntityRepository extends ListCrudRepository<MutableEntity, Long> {}
 
 	static class MutableEntity {
-		@Id
-		private Long id;
+		@Id private Long id;
 		private String name;
 
 		public MutableEntity(Long id, String name) {
@@ -224,12 +203,10 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 	}
 
 	private interface MutableWithImmutableIdEntityRepository
-			extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {
-	}
+			extends ListCrudRepository<MutableWithImmutableIdEntity, Long> {}
 
 	static class MutableWithImmutableIdEntity {
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private String name;
 
 		public MutableWithImmutableIdEntity(Long id, String name) {
@@ -251,12 +228,10 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 	}
 
 	private interface ImmutableWithMutableIdEntityRepository
-			extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {
-	}
+			extends ListCrudRepository<ImmutableWithMutableIdEntity, Long> {}
 
 	static class ImmutableWithMutableIdEntity {
-		@Id
-		private Long id;
+		@Id private Long id;
 		private final String name;
 
 		public ImmutableWithMutableIdEntity(Long id, String name) {
@@ -282,15 +257,10 @@ public class JdbcRepositoryBeforeSaveHsqlIntegrationTests {
 	}
 
 	@Configuration
-	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(value = ListCrudRepository.class, type = FilterType.ASSIGNABLE_TYPE))
-	static class TestConfiguration {
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryBeforeSaveHsqlIntegrationTests.class;
-		}
+	@Import(TestConfiguration.class)
+	static class Config {
 
 		/**
 		 * {@link NamingStrategy} that harmlessly uppercases the table name, demonstrating how to inject one while not

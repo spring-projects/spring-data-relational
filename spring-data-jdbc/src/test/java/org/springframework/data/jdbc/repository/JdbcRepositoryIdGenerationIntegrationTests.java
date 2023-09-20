@@ -29,9 +29,9 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.repository.CrudRepository;
@@ -45,18 +45,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  */
 @IntegrationTest
 public class JdbcRepositoryIdGenerationIntegrationTests {
-
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryIdGenerationIntegrationTests.class;
-		}
-	}
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired ReadOnlyIdEntityRepository readOnlyIdrepository;
@@ -113,8 +101,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	static final class ReadOnlyIdEntity {
 
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private final String name;
 
 		public ReadOnlyIdEntity(Long id, String name) {
@@ -131,7 +118,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final ReadOnlyIdEntity other))
 				return false;
 			final Object this$id = this.getId();
@@ -154,14 +142,14 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		public String toString() {
-			return "JdbcRepositoryIdGenerationIntegrationTests.ReadOnlyIdEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+			return "JdbcRepositoryIdGenerationIntegrationTests.ReadOnlyIdEntity(id=" + this.getId() + ", name="
+					+ this.getName() + ")";
 		}
 	}
 
 	static class PrimitiveIdEntity {
 
-		@Id
-		private long id;
+		@Id private long id;
 		String name;
 
 		public long getId() {
@@ -182,8 +170,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	static final class ImmutableWithManualIdEntity {
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private final String name;
 
 		public ImmutableWithManualIdEntity(Long id, String name) {
@@ -200,7 +187,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final ImmutableWithManualIdEntity other))
 				return false;
 			final Object this$id = this.getId();
@@ -223,7 +211,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		public String toString() {
-			return "JdbcRepositoryIdGenerationIntegrationTests.ImmutableWithManualIdEntity(id=" + this.getId() + ", name=" + this.getName() + ")";
+			return "JdbcRepositoryIdGenerationIntegrationTests.ImmutableWithManualIdEntity(id=" + this.getId() + ", name="
+					+ this.getName() + ")";
 		}
 
 		public ImmutableWithManualIdEntity withId(Long id) {
@@ -236,17 +225,12 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	@Configuration
-	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(value = CrudRepository.class, type = FilterType.ASSIGNABLE_TYPE))
-	static class TestConfiguration {
+	@Import(TestConfiguration.class)
+	static class Config {
 
 		AtomicLong lastId = new AtomicLong(0);
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryIdGenerationIntegrationTests.class;
-		}
 
 		/**
 		 * {@link NamingStrategy} that harmlessly uppercases the table name, demonstrating how to inject one while not

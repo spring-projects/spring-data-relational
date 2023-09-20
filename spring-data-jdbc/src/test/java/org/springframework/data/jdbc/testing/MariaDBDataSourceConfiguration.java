@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.MariaDBContainer;
@@ -34,11 +35,15 @@ import org.testcontainers.containers.MariaDBContainer;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnDatabase(DatabaseType.MARIADB)
 class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MariaDBContainer<?> MARIADB_CONTAINER;
+
+	public MariaDBDataSourceConfiguration(TestClass testClass, Environment environment) {
+		super(testClass, environment);
+	}
 
 	@Override
 	protected DataSource createDataSource() {

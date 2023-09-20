@@ -17,7 +17,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.CustomConversions;
@@ -64,17 +63,11 @@ public class PostgresDialectIntegrationTests {
 		});
 	}
 
-	@Profile("postgres")
 	@Configuration
 	@Import(TestConfiguration.class)
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(value = CustomerRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
-
-		@Bean
-		Class<?> testClass() {
-			return PostgresDialectIntegrationTests.class;
-		}
 
 		@Bean
 		CustomConversions jdbcCustomConversions(Dialect dialect) {

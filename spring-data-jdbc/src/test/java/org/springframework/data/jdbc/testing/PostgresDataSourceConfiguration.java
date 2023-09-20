@@ -19,6 +19,7 @@ import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -30,11 +31,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * @author Sedat Gokcen
  * @author Mark Paluch
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnDatabase(DatabaseType.POSTGRES)
 public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
 	private static PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
+
+	public PostgresDataSourceConfiguration(TestClass testClass, Environment environment) {
+		super(testClass, environment);
+	}
 
 	@Override
 	protected DataSource createDataSource() {

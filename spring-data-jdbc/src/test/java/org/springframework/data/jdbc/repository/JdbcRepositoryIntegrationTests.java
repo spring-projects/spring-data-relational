@@ -63,6 +63,8 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.ConditionalOnDatabase;
+import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -78,10 +80,12 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
 import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.data.support.WindowIterator;
 import org.springframework.data.util.Streamable;
@@ -467,7 +471,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // GH-945
-	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	@ConditionalOnDatabase(DatabaseType.POSTGRES)
 	public void usePrimitiveArrayAsArgument() {
 		assertThat(repository.unnestPrimitive(new int[] { 1, 2, 3 })).containsExactly(1, 2, 3);
 	}
@@ -559,7 +563,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // GH-974
-	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	@ConditionalOnDatabase(DatabaseType.POSTGRES)
 	void intervalCalculation() {
 
 		repository.updateWithIntervalCalculation(23L, LocalDateTime.now());
@@ -1422,11 +1426,6 @@ public class JdbcRepositoryIntegrationTests {
 		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryIntegrationTests.class;
-		}
-
-		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
@@ -1456,13 +1455,13 @@ public class JdbcRepositoryIntegrationTests {
 		}
 
 		@Bean
-		public ExtensionAwareQueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
-			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(
-					exts);
+		public QueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
+			return new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+		}
 
-			factory.setEvaluationContextProvider(extensionAwareQueryMethodEvaluationContextProvider);
-
-			return extensionAwareQueryMethodEvaluationContextProvider;
+		@Bean
+		RepositoryFactoryCustomizer customizer(QueryMethodEvaluationContextProvider provider) {
+			return repositoryFactory -> repositoryFactory.setEvaluationContextProvider(provider);
 		}
 
 		@Bean

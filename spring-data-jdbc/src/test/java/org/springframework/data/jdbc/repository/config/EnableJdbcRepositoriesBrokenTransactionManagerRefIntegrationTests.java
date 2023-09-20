@@ -18,25 +18,23 @@ package org.springframework.data.jdbc.repository.config;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Tests the {@link EnableJdbcRepositories} annotation.
  *
  * @author Jens Schauder
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(
-		classes = EnableJdbcRepositoriesBrokenTransactionManagerRefIntegrationTests.TestConfiguration.class)
+@IntegrationTest
 public class EnableJdbcRepositoriesBrokenTransactionManagerRefIntegrationTests {
 
 	@Autowired DummyRepository repository;
@@ -62,15 +60,12 @@ public class EnableJdbcRepositoriesBrokenTransactionManagerRefIntegrationTests {
 		}
 	}
 
-	@ComponentScan("org.springframework.data.jdbc.testing")
+	@Configuration
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			transactionManagerRef = "no-such-transaction-manager")
-	static class TestConfiguration {
+	@Import(TestConfiguration.class)
+	static class Config {
 
-		@Bean
-		Class<?> testClass() {
-			return EnableJdbcRepositoriesBrokenTransactionManagerRefIntegrationTests.class;
-		}
 	}
 }

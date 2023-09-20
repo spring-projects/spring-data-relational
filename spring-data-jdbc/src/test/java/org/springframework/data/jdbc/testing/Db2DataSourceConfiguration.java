@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.Db2Container;
@@ -30,7 +31,7 @@ import org.testcontainers.containers.Db2Container;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnDatabase(DatabaseType.DB2)
 class Db2DataSourceConfiguration extends DataSourceConfiguration {
 
@@ -38,6 +39,10 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 	private static final Log LOG = LogFactory.getLog(Db2DataSourceConfiguration.class);
 
 	private static Db2Container DB_2_CONTAINER;
+
+	public Db2DataSourceConfiguration(TestClass testClass, Environment environment) {
+		super(testClass, environment);
+	}
 
 	@Override
 	protected DataSource createDataSource() {

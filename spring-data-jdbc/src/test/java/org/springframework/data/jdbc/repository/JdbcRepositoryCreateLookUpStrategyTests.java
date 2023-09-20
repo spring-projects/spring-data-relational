@@ -16,15 +16,14 @@
 package org.springframework.data.jdbc.repository;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 
@@ -58,11 +57,10 @@ class JdbcRepositoryCreateLookUpStrategyTests extends AbstractJdbcRepositoryLook
 			includeFilters = @ComponentScan.Filter(value = OnesRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyTests.class;
+		TestClass testClass() {
+			// boostrap with a different SQL init script
+			return TestClass.of(AbstractJdbcRepositoryLookUpStrategyTests.class);
 		}
 	}
 

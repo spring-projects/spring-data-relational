@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
@@ -92,6 +93,7 @@ public class TestConfiguration {
 	}
 
 	@Bean
+	@Primary
 	NamedParameterJdbcOperations namedParameterJdbcTemplate() {
 		return new NamedParameterJdbcTemplate(dataSource);
 	}
