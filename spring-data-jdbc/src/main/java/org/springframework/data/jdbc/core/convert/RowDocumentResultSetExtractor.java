@@ -155,11 +155,9 @@ class RowDocumentResultSetExtractor {
 		private final AggregateContext<ResultSet> aggregateContext;
 
 		/**
-		 * Answers the question if the internal {@link ResultSet} points at an actual row. Since when not currently
-		 * extracting a document the {@link ResultSet} points at the next row to be read (or behind all rows), this is
-		 * equivalent to {@literal hasNext()} from the outside.
+		 * Answers the question if the internal {@link ResultSet} points at an actual row.
 		 */
-		private boolean pointsAtRow;
+		private boolean hasNext;
 
 		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
 
@@ -174,11 +172,10 @@ class RowDocumentResultSetExtractor {
 
 			this.resultSet = resultSet;
 			this.identifierIndex = columns.get(idColumn);
-
-			pointsAtRow = pointAtInitialRow();
+			this.hasNext = hasRow(resultSet);
 		}
 
-		private boolean pointAtInitialRow() throws SQLException {
+		private static boolean hasRow(ResultSet resultSet) {
 
 			// If we are before the first row we need to advance to the first row.
 			try {
@@ -202,13 +199,11 @@ class RowDocumentResultSetExtractor {
 			// maybe isBeforeFirst or isBeforeLast aren't implemented
 			// or the ResultSet is empty.
 
-
-			boolean peek = peek(resultSet);
-			if (peek) {
+			try {
+				resultSet.getObject(1);
 				// we can see actual data, so we are looking at a current row.
 				return true;
-			}
-
+			} catch (SQLException ignored) {}
 
 			try {
 				return resultSet.next();
@@ -219,25 +214,9 @@ class RowDocumentResultSetExtractor {
 			}
 		}
 
-		/**
-		 * Tries ot access values of the passed in {@link ResultSet} in order to check if it is pointing at an actual row.
-		 *
-		 * @param resultSet to check.
-		 * @return true if values of the {@literal ResultSet} can be accessed and it therefore points to an actual row.
-		 */
-		private boolean peek(ResultSet resultSet) {
-
-			try {
-				resultSet.getObject(1);
-				return true;
-			} catch (SQLException e) {
-				return false;
-			}
-		}
-
 		@Override
 		public boolean hasNext() {
-			return pointsAtRow;
+			return hasNext;
 		}
 
 		@Override
@@ -257,8 +236,8 @@ class RowDocumentResultSetExtractor {
 					}
 
 					reader.accept(resultSet);
-					pointsAtRow = resultSet.next();
-				} while (pointsAtRow);
+					hasNext = resultSet.next();
+				} while (hasNext);
 			} catch (SQLException e) {
 				throw new DataRetrievalFailureException("Cannot advance ResultSet", e);
 			}
