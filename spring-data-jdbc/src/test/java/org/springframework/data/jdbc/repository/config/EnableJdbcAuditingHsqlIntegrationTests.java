@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -62,8 +61,6 @@ import org.springframework.stereotype.Component;
 @EnabledOnDatabase(DatabaseType.HSQL)
 public class EnableJdbcAuditingHsqlIntegrationTests {
 
-	SoftAssertions softly = new SoftAssertions();
-
 	@Test // DATAJDBC-204
 	public void auditForAnnotatedEntity() {
 
@@ -78,25 +75,23 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							softly.assertThat(entity.id).as("id not null").isNotNull();
-							softly.assertThat(entity.getCreatedBy()).as("created by set").isEqualTo("user01");
-							softly.assertThat(entity.getCreatedDate()).as("created date set").isAfter(now);
-							softly.assertThat(entity.getLastModifiedBy()).as("modified by set").isEqualTo("user01");
-							softly.assertThat(entity.getLastModifiedDate()).as("modified date set")
+							assertThat(entity.id).as("id not null").isNotNull();
+							assertThat(entity.getCreatedBy()).as("created by set").isEqualTo("user01");
+							assertThat(entity.getCreatedDate()).as("created date set").isAfter(now);
+							assertThat(entity.getLastModifiedBy()).as("modified by set").isEqualTo("user01");
+							assertThat(entity.getLastModifiedDate()).as("modified date set")
 									.isAfterOrEqualTo(entity.getCreatedDate());
-							softly.assertThat(entity.getLastModifiedDate()).as("modified date after instance creation").isAfter(now);
+							assertThat(entity.getLastModifiedDate()).as("modified date after instance creation").isAfter(now);
 
 							AuditingAnnotatedDummyEntity reloaded = repository.findById(entity.id).get();
 
-							softly.assertThat(reloaded.getCreatedBy()).as("reload created by").isNotNull();
-							softly.assertThat(reloaded.getCreatedDate()).as("reload created date").isNotNull();
-							softly.assertThat(reloaded.getLastModifiedBy()).as("reload modified by").isNotNull();
-							softly.assertThat(reloaded.getLastModifiedDate()).as("reload modified date").isNotNull();
+							assertThat(reloaded.getCreatedBy()).as("reload created by").isNotNull();
+							assertThat(reloaded.getCreatedDate()).as("reload created date").isNotNull();
+							assertThat(reloaded.getLastModifiedBy()).as("reload modified by").isNotNull();
+							assertThat(reloaded.getLastModifiedDate()).as("reload modified date").isNotNull();
 
 							LocalDateTime beforeCreatedDate = entity.getCreatedDate();
 							LocalDateTime beforeLastModifiedDate = entity.getLastModifiedDate();
-
-							softly.assertAll();
 
 							sleepMillis(10);
 
@@ -104,20 +99,18 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							entity = repository.save(entity);
 
-							softly.assertThat(entity.getCreatedBy()).as("created by unchanged").isEqualTo("user01");
-							softly.assertThat(entity.getCreatedDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
-							softly.assertThat(entity.getLastModifiedBy()).as("modified by updated").isEqualTo("user02");
-							softly.assertThat(entity.getLastModifiedDate()).as("modified date updated")
+							assertThat(entity.getCreatedBy()).as("created by unchanged").isEqualTo("user01");
+							assertThat(entity.getCreatedDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
+							assertThat(entity.getLastModifiedBy()).as("modified by updated").isEqualTo("user02");
+							assertThat(entity.getLastModifiedDate()).as("modified date updated")
 									.isAfter(beforeLastModifiedDate);
 
 							reloaded = repository.findById(entity.id).get();
 
-							softly.assertThat(reloaded.getCreatedBy()).as("2. reload created by").isNotNull();
-							softly.assertThat(reloaded.getCreatedDate()).as("2. reload created date").isNotNull();
-							softly.assertThat(reloaded.getLastModifiedBy()).as("2. reload modified by").isNotNull();
-							softly.assertThat(reloaded.getLastModifiedDate()).as("2. reload modified date").isNotNull();
-
-							softly.assertAll();
+							assertThat(reloaded.getCreatedBy()).as("2. reload created by").isNotNull();
+							assertThat(reloaded.getCreatedDate()).as("2. reload created date").isNotNull();
+							assertThat(reloaded.getLastModifiedBy()).as("2. reload modified by").isNotNull();
+							assertThat(reloaded.getLastModifiedDate()).as("2. reload modified date").isNotNull();
 						});
 	}
 
@@ -132,10 +125,8 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							DummyEntity entity = repository.save(new DummyEntity());
 
-							softly.assertThat(entity.id).isNotNull();
-							softly.assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
-
-							softly.assertAll();
+							assertThat(entity.id).isNotNull();
+							assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
 
 							entity = repository.save(entity);
 
@@ -157,11 +148,11 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							softly.assertThat(entity.id).isNotNull();
-							softly.assertThat(entity.getCreatedBy()).isEqualTo("custom user");
-							softly.assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
-							softly.assertThat(entity.getLastModifiedBy()).isNull();
-							softly.assertThat(entity.getLastModifiedDate()).isNull();
+							assertThat(entity.id).isNotNull();
+							assertThat(entity.getCreatedBy()).isEqualTo("custom user");
+							assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
+							assertThat(entity.getLastModifiedBy()).isNull();
+							assertThat(entity.getLastModifiedDate()).isNull();
 						});
 	}
 
@@ -176,11 +167,11 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							softly.assertThat(entity.id).isNotNull();
-							softly.assertThat(entity.getCreatedBy()).isEqualTo("user");
-							softly.assertThat(entity.getCreatedDate()).isNull();
-							softly.assertThat(entity.getLastModifiedBy()).isEqualTo("user");
-							softly.assertThat(entity.getLastModifiedDate()).isNull();
+							assertThat(entity.id).isNotNull();
+							assertThat(entity.getCreatedBy()).isEqualTo("user");
+							assertThat(entity.getCreatedDate()).isNull();
+							assertThat(entity.getLastModifiedBy()).isEqualTo("user");
+							assertThat(entity.getLastModifiedDate()).isNull();
 						});
 	}
 
@@ -223,8 +214,6 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 			try (ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(configurationClasses)) {
 
 				test.accept(context.getBean(repositoryType));
-
-				softly.assertAll();
 			}
 		};
 	}
