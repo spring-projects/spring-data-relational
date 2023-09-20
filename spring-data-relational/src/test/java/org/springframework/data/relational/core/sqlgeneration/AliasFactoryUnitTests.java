@@ -34,7 +34,7 @@ class AliasFactoryUnitTests {
 
 	@Nested
 	class SimpleAlias {
-		@Test
+		@Test // GH-1446
 		void aliasForRoot() {
 
 			String alias = aliasFactory
@@ -43,7 +43,7 @@ class AliasFactoryUnitTests {
 			assertThat(alias).isEqualTo("c_dummy_entity_1");
 		}
 
-		@Test
+		@Test // GH-1446
 		void aliasSimpleProperty() {
 
 			String alias = aliasFactory
@@ -52,7 +52,7 @@ class AliasFactoryUnitTests {
 			assertThat(alias).isEqualTo("c_name_1");
 		}
 
-		@Test
+		@Test // GH-1446
 		void nameGetsSanitized() {
 
 			String alias = aliasFactory.getColumnAlias(
@@ -61,7 +61,7 @@ class AliasFactoryUnitTests {
 			assertThat(alias).isEqualTo("c_ameannamecontains3illegal_characters_1");
 		}
 
-		@Test
+		@Test // GH-1446
 		void aliasIsStable() {
 
 			String alias1 = aliasFactory.getColumnAlias(
@@ -76,7 +76,7 @@ class AliasFactoryUnitTests {
 	@Nested
 	class RnAlias {
 
-		@Test
+		@Test // GH-1446
 		void aliasIsStable() {
 
 			String alias1 = aliasFactory.getRowNumberAlias(
@@ -87,7 +87,7 @@ class AliasFactoryUnitTests {
 			assertThat(alias1).isEqualTo(alias2);
 		}
 
-		@Test
+		@Test // GH-1446
 		void aliasProjectsOnTableReferencingPath() {
 
 			String alias1 = aliasFactory.getRowNumberAlias(
@@ -99,7 +99,7 @@ class AliasFactoryUnitTests {
 			assertThat(alias1).isEqualTo(alias2);
 		}
 
-		@Test
+		@Test // GH-1446
 		void rnAliasIsIndependentOfTableAlias() {
 
 			String alias1 = aliasFactory.getRowNumberAlias(
@@ -114,7 +114,7 @@ class AliasFactoryUnitTests {
 
 	@Nested
 	class BackReferenceAlias {
-		@Test
+		@Test // GH-1446
 		void testBackReferenceAlias() {
 
 			String alias = aliasFactory.getBackReferenceAlias(
@@ -126,7 +126,7 @@ class AliasFactoryUnitTests {
 
 	@Nested
 	class KeyAlias {
-		@Test
+		@Test // GH-1446
 		void testKeyAlias() {
 
 			String alias = aliasFactory.getKeyAlias(
