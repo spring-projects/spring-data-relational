@@ -15,11 +15,12 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
@@ -37,7 +38,7 @@ public class AssumeFeatureTestExecutionListener implements TestExecutionListener
 		ApplicationContext applicationContext = testContext.getApplicationContext();
 		TestDatabaseFeatures databaseFeatures = applicationContext.getBean(TestDatabaseFeatures.class);
 
-		List<TestDatabaseFeatures.Feature> requiredFeatures = new ArrayList<>();
+		Set<Feature> requiredFeatures = new LinkedHashSet<>();
 
 		EnabledOnFeature classAnnotation = testContext.getTestClass().getAnnotation(EnabledOnFeature.class);
 		if (classAnnotation != null) {

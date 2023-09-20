@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,7 +31,6 @@ import java.util.Set;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -40,16 +38,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Tests storing and retrieving various data types that are considered essential and that might need conversion to
@@ -60,10 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Yunyung LEE
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryPropertyConversionIntegrationTests {
 
 	@Autowired DummyEntityRepository repository;
@@ -167,15 +158,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryPropertyConversionIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 

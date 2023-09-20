@@ -16,21 +16,16 @@
 package org.springframework.data.jdbc.repository;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test to verify that <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE)</code> works
@@ -39,9 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Diego Krupitza
  * @author Jens Schauder
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 class JdbcRepositoryCreateLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Test // GH-1043
@@ -64,11 +57,10 @@ class JdbcRepositoryCreateLookUpStrategyTests extends AbstractJdbcRepositoryLook
 			includeFilters = @ComponentScan.Filter(value = OnesRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyTests.class;
+		TestClass testClass() {
+			// boostrap with a different SQL init script
+			return TestClass.of(AbstractJdbcRepositoryLookUpStrategyTests.class);
 		}
 	}
 

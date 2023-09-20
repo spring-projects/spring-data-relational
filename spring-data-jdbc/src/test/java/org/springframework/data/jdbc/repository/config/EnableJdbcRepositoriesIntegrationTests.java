@@ -25,12 +25,13 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BatchJdbcOperations;
@@ -41,8 +42,9 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -50,8 +52,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -64,8 +64,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Chirag Tailor
  * @author Diego Krupitza
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = TestConfiguration.class)
+@IntegrationTest
 public class EnableJdbcRepositoriesIntegrationTests {
 
 	static final Field MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
@@ -143,17 +142,13 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		}
 	}
 
-	@ComponentScan("org.springframework.data.jdbc.testing")
+	@Configuration
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
 			repositoryBaseClass = DummyRepositoryBaseClass.class)
-	static class TestConfiguration {
-
-		@Bean
-		Class<?> testClass() {
-			return EnableJdbcRepositoriesIntegrationTests.class;
-		}
+	@Import(TestConfiguration.class)
+	static class Config {
 
 		@Bean
 		QueryMappingConfiguration rowMappers() {
@@ -172,8 +167,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		DataAccessStrategy defaultDataAccessStrategy(
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
-					template, new SqlParametersFactory(context, converter),
+			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
+					new SqlParametersFactory(context, converter),
 					new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect)).create();
 		}
 

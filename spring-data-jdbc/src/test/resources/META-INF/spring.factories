@@ -1,1 +1,1 @@
-org.springframework.test.context.TestExecutionListener=org.springframework.data.jdbc.testing.LicenseListener
+org.springframework.test.context.TestExecutionListener=org.springframework.data.jdbc.testing.LicenseListener,org.springframework.data.jdbc.testing.DatabaseTypeCondition

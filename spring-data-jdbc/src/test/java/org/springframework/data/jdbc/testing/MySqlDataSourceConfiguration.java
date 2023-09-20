@@ -21,7 +21,7 @@ import javax.sql.DataSource;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.MySQLContainer;
@@ -37,11 +37,15 @@ import com.mysql.cj.jdbc.MysqlDataSource;
  * @author Sedat Gokcen
  * @author Mark Paluch
  */
-@Configuration
-@Profile("mysql")
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnDatabase(DatabaseType.MYSQL)
 class MySqlDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MySQLContainer<?> MYSQL_CONTAINER;
+
+	public MySqlDataSourceConfiguration(TestClass testClass, Environment environment) {
+		super(testClass, environment);
+	}
 
 	@Override
 	protected DataSource createDataSource() {

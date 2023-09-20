@@ -15,48 +15,38 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.Objects;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedImmutableIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 
@@ -106,16 +96,15 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof DummyEntity)) return false;
-			final DummyEntity other = (DummyEntity) o;
+			if (!(o instanceof final DummyEntity other))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (!Objects.equals(this$id, other$id))
+				return false;
 			final Object this$prefixedEmbeddable = this.getPrefixedEmbeddable();
 			final Object other$prefixedEmbeddable = other.getPrefixedEmbeddable();
-			if (this$prefixedEmbeddable == null ? other$prefixedEmbeddable != null : !this$prefixedEmbeddable.equals(other$prefixedEmbeddable))
-				return false;
-			return true;
+			return Objects.equals(this$prefixedEmbeddable, other$prefixedEmbeddable);
 		}
 
 		public int hashCode() {
@@ -161,15 +150,15 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof Embeddable)) return false;
-			final Embeddable other = (Embeddable) o;
+			if (!(o instanceof final Embeddable other))
+				return false;
 			final Object this$attr1 = this.getAttr1();
 			final Object other$attr1 = other.getAttr1();
-			if (this$attr1 == null ? other$attr1 != null : !this$attr1.equals(other$attr1)) return false;
+			if (!Objects.equals(this$attr1, other$attr1))
+				return false;
 			final Object this$attr2 = this.getAttr2();
 			final Object other$attr2 = other.getAttr2();
-			if (this$attr2 == null ? other$attr2 != null : !this$attr2.equals(other$attr2)) return false;
-			return true;
+			return Objects.equals(this$attr2, other$attr2);
 		}
 
 		public int hashCode() {

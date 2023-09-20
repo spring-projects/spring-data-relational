@@ -17,10 +17,8 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
@@ -29,11 +27,15 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  *
  * @author Mark Paluch
  */
-@Configuration
-@Profile({ "h2" })
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnDatabase(DatabaseType.H2)
 class H2DataSourceConfiguration {
 
-	@Autowired Class<?> context;
+	private final TestClass testClass;
+
+	public H2DataSourceConfiguration(TestClass testClass) {
+		this.testClass = testClass;
+	}
 
 	@Bean
 	DataSource dataSource() {
@@ -43,7 +45,7 @@ class H2DataSourceConfiguration {
 				.setType(EmbeddedDatabaseType.H2) //
 				.setScriptEncoding("UTF-8") //
 				.ignoreFailedDrops(true) //
-				.addScript(TestUtils.createScriptName(context, "h2")) //
+				.addScript(TestUtils.createScriptName(testClass.getTestClass(), "h2")) //
 				.build();
 	}
 }

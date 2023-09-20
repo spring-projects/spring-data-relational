@@ -15,17 +15,14 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import static org.springframework.data.jdbc.testing.MsSqlDataSourceConfiguration.*;
+
 import org.junit.AssumptionViolatedException;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.env.Profiles;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
-import org.testcontainers.containers.Db2Container;
-import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.utility.LicenseAcceptance;
-
-import static org.springframework.data.jdbc.testing.MsSqlDataSourceConfiguration.*;
 
 /**
  * {@link TestExecutionListener} to selectively skip tests if the license for a particular database container was not
@@ -35,20 +32,18 @@ import static org.springframework.data.jdbc.testing.MsSqlDataSourceConfiguration
  * @author Jens Schauder
  */
 @Order(Integer.MIN_VALUE)
-public class LicenseListener implements TestExecutionListener {
+class LicenseListener implements TestExecutionListener {
 
-	private StandardEnvironment environment;
+	private final StandardEnvironment environment = new StandardEnvironment();
 
 	@Override
 	public void prepareTestInstance(TestContext testContext) {
 
-		environment = new StandardEnvironment();
-
-		if (environment.acceptsProfiles(Profiles.of("db2"))) {
+		if (environment.matchesProfiles(DatabaseType.DB2.getProfile())) {
 			assumeLicenseAccepted(Db2DataSourceConfiguration.DOCKER_IMAGE_NAME);
 		}
 
-		if (environment.acceptsProfiles(Profiles.of("mssql"))) {
+		if (environment.matchesProfiles(DatabaseType.SQL_SEVER.getProfile())) {
 			assumeLicenseAccepted(MS_SQL_SERVER_VERSION);
 		}
 	}

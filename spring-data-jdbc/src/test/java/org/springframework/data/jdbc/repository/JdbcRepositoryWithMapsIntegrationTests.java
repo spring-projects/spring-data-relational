@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
 
@@ -25,22 +24,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories for Entities that contain {@link java.util.Map}s.
@@ -48,25 +42,15 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Thomas Lang
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryWithMapsIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryWithMapsIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 	}

@@ -15,25 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.RecoverableDataAccessException;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
+import static org.assertj.core.api.Assertions.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,31 +25,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.RecoverableDataAccessException;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
  * Very simple use cases for creation and usage of {@link ResultSetExtractor}s in JdbcRepository.
  *
  * @author Evgeni Dimitrov
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryResultSetExtractorIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryResultSetExtractorIntegrationTests.class;
-		}
-
-		@Bean
-		PersonRepository personEntityRepository() {
+		PersonRepository personEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(PersonRepository.class);
 		}
 

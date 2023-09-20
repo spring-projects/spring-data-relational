@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +29,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -37,12 +37,8 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
@@ -51,34 +47,25 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Christoph Strobl
  * @author Mikhail Polivakha
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryEmbeddedIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 
 		@Bean
-		PersonRepository personRepository() {
+		PersonRepository personRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(PersonRepository.class);
 		}
 
 		@Bean
-		WithDotColumnRepo withDotColumnRepo() {
+		WithDotColumnRepo withDotColumnRepo(JdbcRepositoryFactory factory) {
 			return factory.getRepository(WithDotColumnRepo.class);
 		}
 
@@ -94,7 +81,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+		assertThat(JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), "dummy_entity",
 				"id = " + entity.getId())).isEqualTo(1);
 	}
 
@@ -234,7 +221,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		DummyEntity entity = repository.save(new DummyEntity());
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+		assertThat(JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), "dummy_entity",
 				"id = " + entity.getId())).isEqualTo(1);
 	}
 

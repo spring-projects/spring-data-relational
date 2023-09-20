@@ -235,6 +235,28 @@
 
 	</dependencies>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>integration-test</goal>
+						</goals>
+						<configuration>
+							<systemPropertyVariables>
+								<spring.profiles.active>hsql</spring.profiles.active>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 	<profiles>
 		<profile>
@@ -243,21 +265,18 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-plugin</artifactId>
+						<artifactId>maven-failsafe-plugin</artifactId>
 						<executions>
 							<execution>
 								<id>postgres-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
 									</systemPropertyVariables>
@@ -274,21 +293,18 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-plugin</artifactId>
+						<artifactId>maven-failsafe-plugin</artifactId>
 						<executions>
 							<execution>
 								<id>h2-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>h2</spring.profiles.active>
 									</systemPropertyVariables>
@@ -296,17 +312,14 @@
 							</execution>
 							<execution>
 								<id>mysql-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mysql</spring.profiles.active>
 									</systemPropertyVariables>
@@ -314,17 +327,14 @@
 							</execution>
 							<execution>
 								<id>postgres-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
 									</systemPropertyVariables>
@@ -332,17 +342,14 @@
 							</execution>
 							<execution>
 								<id>mariadb-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mariadb</spring.profiles.active>
 									</systemPropertyVariables>
@@ -350,17 +357,14 @@
 							</execution>
 							<execution>
 								<id>db2-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>db2</spring.profiles.active>
 									</systemPropertyVariables>
@@ -368,17 +372,14 @@
 							</execution>
 							<execution>
 								<id>oracle-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>oracle</spring.profiles.active>
 									</systemPropertyVariables>
@@ -386,17 +387,14 @@
 							</execution>
 							<execution>
 								<id>mssql-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>test</goal>
+									<goal>integration-test</goal>
 								</goals>
 								<configuration>
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
-									<excludes>
-										<exclude>**/*HsqlIntegrationTests.java</exclude>
-									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mssql</spring.profiles.active>
 									</systemPropertyVariables>

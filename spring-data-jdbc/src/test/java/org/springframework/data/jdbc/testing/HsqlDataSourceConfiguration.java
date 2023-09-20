@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -30,11 +29,15 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  * @author Jens Schauder
  * @author Oliver Gierke
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile({ "hsql", "!h2 && !mysql && !mariadb && !postgres && !oracle && !db2 && !mssql" })
 class HsqlDataSourceConfiguration {
 
-	@Autowired Class<?> context;
+	private final TestClass testClass;
+
+	public HsqlDataSourceConfiguration(TestClass testClass) {
+		this.testClass = testClass;
+	}
 
 	@Bean
 	DataSource dataSource() {
@@ -44,7 +47,7 @@ class HsqlDataSourceConfiguration {
 				.setType(EmbeddedDatabaseType.HSQL) //
 				.setScriptEncoding("UTF-8") //
 				.ignoreFailedDrops(true) //
-				.addScript(TestUtils.createScriptName(context, "hsql")) //
+				.addScript(TestUtils.createScriptName(testClass.getTestClass(), "hsql")) //
 				.build();
 	}
 }

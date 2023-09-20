@@ -16,20 +16,16 @@
 package org.springframework.data.jdbc.repository;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test to verify that
@@ -39,11 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Diego Krupitza
  * @author Jens Schauder
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
-class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests
-		extends AbstractJdbcRepositoryLookUpStrategyTests {
+@IntegrationTest
+class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Test // GH-1043
 	void declaredQueryShouldWork() {
@@ -61,16 +54,14 @@ class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests
 	@Import(TestConfiguration.class)
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
-			includeFilters = @ComponentScan.Filter(
-					value = AbstractJdbcRepositoryLookUpStrategyTests.OnesRepository.class,
+			includeFilters = @ComponentScan.Filter(value = AbstractJdbcRepositoryLookUpStrategyTests.OnesRepository.class,
 					type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyTests.class;
+		TestClass testClass() {
+			// boostrap with a different SQL init script
+			return TestClass.of(AbstractJdbcRepositoryLookUpStrategyTests.class);
 		}
 	}
 }

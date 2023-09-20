@@ -15,7 +15,18 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import junit.framework.AssertionFailedError;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.UnaryOperator;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,22 +40,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.UnaryOperator;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests that highly concurrent update operations of an entity don't cause deadlocks.
@@ -59,16 +61,13 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired
-		JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryConcurrencyIntegrationTests.class;
+		TestClass testClass() {
+			return TestClass.of(JdbcRepositoryConcurrencyIntegrationTests.class);
 		}
 
 		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 	}
@@ -107,7 +106,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 
 	private static void printThrowable(StringJoiner joiner, Throwable t) {
 
-		joiner.add(t.toString() + ExceptionUtils.readStackTrace(t));
+		joiner.add(t + ExceptionUtils.readStackTrace(t));
 		if (t.getCause() != null) {
 
 			joiner.add("\ncaused by:\n");

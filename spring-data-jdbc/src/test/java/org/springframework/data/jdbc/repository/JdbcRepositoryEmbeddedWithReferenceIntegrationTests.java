@@ -17,19 +17,17 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -37,13 +35,8 @@ import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
@@ -51,10 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Bastian Wilhelm
  * @author Jens Schauder
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -93,7 +83,7 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		SqlIdentifier id = SqlIdentifier.quoted("ID");
 		String whereClause = id.toSql(dialect.getIdentifierProcessing()) + " = " + idValue;
 
-		return JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), name, whereClause);
+		return JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), name, whereClause);
 	}
 
 	@Test // DATAJDBC-111
@@ -253,15 +243,8 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedWithReferenceIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 

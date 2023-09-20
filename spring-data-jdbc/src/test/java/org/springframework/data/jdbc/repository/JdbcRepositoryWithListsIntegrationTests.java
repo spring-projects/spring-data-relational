@@ -18,31 +18,26 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories for Entities that contain {@link List}s.
@@ -51,10 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Thomas Lang
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryWithListsIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -226,20 +218,13 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryWithListsIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 
 		@Bean
-		RootRepository rootRepository() {
+		RootRepository rootRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(RootRepository.class);
 		}
 	}
@@ -339,14 +324,11 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof Leaf))
+			if (!(o instanceof final Leaf other))
 				return false;
-			final Leaf other = (Leaf) o;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name))
-				return false;
-			return true;
+			return Objects.equals(this$name, other$name);
 		}
 
 		public int hashCode() {

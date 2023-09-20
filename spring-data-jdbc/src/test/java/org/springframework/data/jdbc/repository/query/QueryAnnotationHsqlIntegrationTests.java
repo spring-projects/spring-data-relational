@@ -25,9 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -35,13 +33,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.Nullable;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Tests the execution of queries from {@link Query} annotations on repository methods.
@@ -51,9 +49,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Mark Paluch
  * @author Dennis Effing
  */
-@Transactional
-@ActiveProfiles("hsql")
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class QueryAnnotationHsqlIntegrationTests {
 
 	@Configuration
@@ -62,10 +59,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 			includeFilters = @ComponentScan.Filter(value = DummyEntityRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
-		@Bean
-		Class<?> testClass() {
-			return QueryAnnotationHsqlIntegrationTests.class;
-		}
 	}
 
 	@Autowired DummyEntityRepository repository;

@@ -20,11 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -36,14 +34,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Very simple use cases for creation and usage of {@link ResultSetExtractor}s in JdbcRepository.
@@ -51,9 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Evgeni Dimitrov
  * @author Hebert Coelho
  */
-@ContextConfiguration
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 	private final static String CAR_MODEL = "ResultSetExtractor Car";
@@ -64,11 +58,6 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(value = CarRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
-
-		@Bean
-		Class<?> testClass() {
-			return StringBasedJdbcQueryMappingConfigurationIntegrationTests.class;
-		}
 
 		@Bean
 		QueryMappingConfiguration mappers() {
@@ -98,7 +87,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		@Override
 		public List<Car> extractData(ResultSet rs) throws SQLException, DataAccessException {
-			return Arrays.asList(new Car(1L, customerService.process()));
+			return List.of(new Car(1L, customerService.process()));
 		}
 
 	}
@@ -107,6 +96,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		@Autowired private CustomerService customerService;
 
+		@Override
 		public String mapRow(ResultSet rs, int rowNum) throws SQLException {
 			return customerService.process();
 		}

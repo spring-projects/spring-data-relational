@@ -15,9 +15,16 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import junit.framework.AssertionFailedError;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -25,21 +32,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -47,10 +46,8 @@ import static org.assertj.core.api.Assertions.*;
  * @author Jens Schauder
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@Transactional
-@ActiveProfiles("hsql")
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTests {
 
 	static AtomicLong id = new AtomicLong(0);
@@ -59,15 +56,8 @@ public class JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTe
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
+		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 

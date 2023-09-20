@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,13 +38,9 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
+import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Tests storing and retrieving data types that get processed by custom conversions.
@@ -55,25 +49,15 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Sanghyuk Jung
  * @author Chirag Tailor
  */
-@ContextConfiguration
-@Transactional
-@TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class JdbcRepositoryCustomConversionIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
 		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryCustomConversionIntegrationTests.class;
-		}
-
-		@Bean
-		EntityWithStringyBigDecimalRepository repository() {
+		EntityWithStringyBigDecimalRepository repository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(EntityWithStringyBigDecimalRepository.class);
 		}
 
