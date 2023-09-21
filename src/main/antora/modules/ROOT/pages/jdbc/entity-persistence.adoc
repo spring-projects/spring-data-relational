@@ -28,17 +28,19 @@ If the aggregate root references other entities those are loaded with separate s
 With this an arbitrary number of aggregates can be fully loaded with a single SQL query.
 This should be significant more efficient, especially for complex aggregates, consisting of many entities.
 +
-Currently, Single Query Loading is restricted to:
+Currently, Single Query Loading is restricted in different ways:
 
-1. It only works for aggregates that only reference one entity collection.The plan is to remove this constraint in the future.
+1. The aggregate must not have nested collections, this includes `Map`.The plan is to remove this constraint in the future.
 
-2. The aggregate must also not use `AggregateReference` or embedded entities.The plan is to remove this constraint in the future.
+2. The aggregate must not use `AggregateReference` or embedded entities.The plan is to remove this constraint in the future.
 
 3. The database dialect must support it.Of the dialects provided by Spring Data JDBC all but H2 and HSQL support this.H2 and HSQL don't support analytic functions (aka windowing functions).
 
 4. It only works for the find methods in `CrudRepository`, not for derived queries and not for annotated queries.The plan is to remove this constraint in the future.
 
 5. Single Query Loading needs to be enabled in the `JdbcMappingContext`, by calling `setSingleQueryLoadingEnabled(true)`
+
+If any condition is not fulfilled Spring Data JDBC falls back to the default approach of loading aggregates.
 
 NOTE: Single Query Loading is to be considered experimental.
 We appreciate feedback on how it works for you.
