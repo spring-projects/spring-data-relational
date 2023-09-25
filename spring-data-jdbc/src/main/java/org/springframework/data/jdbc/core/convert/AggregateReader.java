@@ -86,7 +86,7 @@ class AggregateReader<T> {
 		return jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), this::extractZeroOrOne);
 	}
 
-	public Iterable<T> findAllById(Iterable<?> ids) {
+	public List<T> findAllById(Iterable<?> ids) {
 
 		List<Object> convertedIds = new ArrayList<>();
 		for (Object id : ids) {
@@ -96,7 +96,7 @@ class AggregateReader<T> {
 		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), this::extractAll);
 	}
 
-	public Iterable<T> findAllBy(Query query) {
+	public List<T> findAllBy(Query query) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		BiFunction<Table, RelationalPersistentEntity, Condition> condition = createConditionSource(query, parameterSource);
