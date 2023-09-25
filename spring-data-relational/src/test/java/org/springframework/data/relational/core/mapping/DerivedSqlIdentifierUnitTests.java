@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -44,7 +43,6 @@ public class DerivedSqlIdentifierUnitTests {
 		assertThat(identifier.toSql(BRACKETS_LOWER_CASE)).isEqualTo("[somename]");
 		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
 		assertThat(identifier.getReference()).isEqualTo("someName");
-
 	}
 
 	@Test // DATAJDBC-386
@@ -77,12 +75,12 @@ public class DerivedSqlIdentifierUnitTests {
 		SqlIdentifier notSimple = SqlIdentifier.from(new DerivedSqlIdentifier("simple", false),
 				new DerivedSqlIdentifier("not", false));
 
-		assertSoftly(softly -> {
+		assertThat(basis).isEqualTo(equal).isEqualTo(SqlIdentifier.unquoted("simple"))
+				.hasSameHashCodeAs(SqlIdentifier.unquoted("simple"));
+		assertThat(equal).isEqualTo(basis);
+		assertThat(basis).isNotEqualTo(quoted);
+		assertThat(basis).isNotEqualTo(notSimple);
 
-			softly.assertThat(basis).isEqualTo(equal);
-			softly.assertThat(equal).isEqualTo(basis);
-			softly.assertThat(basis).isNotEqualTo(quoted);
-			softly.assertThat(basis).isNotEqualTo(notSimple);
-		});
+		assertThat(quoted).isEqualTo(SqlIdentifier.quoted("SIMPLE")).hasSameHashCodeAs(SqlIdentifier.quoted("SIMPLE"));
 	}
 }

@@ -21,12 +21,13 @@ import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
- * This {@link SqlParameterSource} will apply escaping to it's values.
- * 
+ * This {@link SqlParameterSource} will apply escaping to its values.
+ *
  * @author Jens Schauder
  * @since 3.2
  */
-public class EscapingParameterSource implements SqlParameterSource {
+class EscapingParameterSource implements SqlParameterSource {
+
 	private final SqlParameterSource parameterSource;
 	private final Escaper escaper;
 

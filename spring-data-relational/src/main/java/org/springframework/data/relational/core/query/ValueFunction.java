@@ -58,14 +58,18 @@ public interface ValueFunction<T> extends Function<Escaper, T> {
 	}
 
 	/**
-	 * Transforms the inner value of the ValueFunction using the profided transformation.
+	 * Return a new ValueFunction applying the given mapping {@link Function}. The mapping function is applied after
+	 * applying {@link Escaper}.
 	 *
-	 * The default implementation just return the current {@literal ValueFunction}.
-	 * This is not a valid implementation and serves just to maintain backward compatibility.
-	 *
-	 * @param transformation to be applied to the underlying value.
+	 * @param mapper the mapping function to apply to the value.
+	 * @param <R> the type of the value returned from the mapping function.
 	 * @return a new {@literal ValueFunction}.
 	 * @since 3.2
 	 */
-	default ValueFunction<T> transform(Function<Object, Object> transformation) {return  this;};
+	default <R> ValueFunction<R> map(Function<T, R> mapper) {
+
+		Assert.notNull(mapper, "Mapping function must not be null");
+
+		return escaper -> mapper.apply(this.apply(escaper));
+	}
 }

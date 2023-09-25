@@ -15,11 +15,8 @@
  */
 package org.springframework.data.relational.core.sqlgeneration;
 
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Table;
-
-import java.util.function.BiFunction;
+import org.springframework.lang.Nullable;
 
 /**
  * Generates SQL statements for loading aggregates.
@@ -28,13 +25,12 @@ import java.util.function.BiFunction;
  * @since 3.2
  */
 public interface SqlGenerator {
-	String findAll();
 
-	String findById();
+	default String findAll() {
+		return findAll(null);
+	}
 
-	String findAllById();
-
-	String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource);
+	String findAll(@Nullable Condition condition);
 
 	AliasFactory getAliasFactory();
 }
