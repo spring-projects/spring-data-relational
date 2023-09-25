@@ -45,8 +45,8 @@ public class EscapingParameterSource implements SqlParameterSource {
 	public Object getValue(String paramName) throws IllegalArgumentException {
 
 		Object value = parameterSource.getValue(paramName);
-		if (value instanceof ValueFunction<?>) {
-			return ((ValueFunction<?>) value).apply(escaper);
+		if (value instanceof ValueFunction<?> valueFunction) {
+			return valueFunction.apply(escaper);
 		}
 		return value;
 	}

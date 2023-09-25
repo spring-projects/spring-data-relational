@@ -138,12 +138,12 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 		switch (partType) {
 			case STARTING_WITH:
-				return SimpleValueFunction.of(value, s -> s + "%");
+				return ModifyingValueFunction.of(value, s -> s + "%");
 			case ENDING_WITH:
-				return SimpleValueFunction.of(value, s -> "%" + s);
+				return ModifyingValueFunction.of(value, s -> "%" + s);
 			case CONTAINING:
 			case NOT_CONTAINING:
-				return SimpleValueFunction.of(value, s -> "%" + s + "%");
+				return ModifyingValueFunction.of(value, s -> "%" + s + "%");
 			default:
 				return value;
 		}

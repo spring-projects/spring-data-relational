@@ -21,14 +21,25 @@ import org.springframework.data.relational.core.query.ValueFunction;
 
 import java.util.function.Function;
 
-record SimpleValueFunction(Object value, Function<String, String> modifier) implements ValueFunction<String> {
+/**
+ * Value function that has an underlying value and a modifier that gets applied after the escaper.
+ *
+ * @author Jens Schauder
+ * @since 3.2
+ */
+record ModifyingValueFunction(Object value, Function<String, String> modifier) implements ValueFunction<String> {
 
-	static SimpleValueFunction of(Object value, Function<String, String> modifier) {
-		return new SimpleValueFunction(value, modifier);
+	static ModifyingValueFunction of(Object value, Function<String, String> modifier) {
+		return new ModifyingValueFunction(value, modifier);
 	}
 
 	@Override
 	public String apply(Escaper escaper) {
 		return modifier.apply(escaper.escape(value.toString()));
+	}
+
+	@Override
+	public ValueFunction<String> transform(Function<Object, Object> transformation) {
+		return new ModifyingValueFunction(transformation.apply(value), modifier);
 	}
 }

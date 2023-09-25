@@ -310,7 +310,7 @@ public class QueryMapper {
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
 		} else if (criteria.getValue() instanceof ValueFunction valueFunction) {
 
-			mappedValue = valueFunction;
+			mappedValue = valueFunction.transform(v -> convertValue(comparator, v, propertyField.getTypeHint()));
 			sqlType = propertyField.getSqlType();
 
 		} else if (propertyField instanceof MetadataBackedField metadataBackedField //

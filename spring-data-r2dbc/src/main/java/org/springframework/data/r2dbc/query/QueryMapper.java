@@ -373,12 +373,10 @@ public class QueryMapper {
 
 			mappedValue = convertValue(comparator, parameter.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), parameter);
-		} else if (criteria.getValue() instanceof ValueFunction) {
+		} else if (criteria.getValue() instanceof ValueFunction<?> valueFunction) {
 
-			ValueFunction<Object> valueFunction = (ValueFunction<Object>) criteria.getValue();
-			Object value = valueFunction.apply(getEscaper(comparator));
+			mappedValue = valueFunction.transform(v -> convertValue(comparator, v, propertyField.getTypeHint())).apply(getEscaper(comparator));
 
-			mappedValue = convertValue(comparator, value, propertyField.getTypeHint());
 			typeHint = actualType.getType();
 		} else {
 
