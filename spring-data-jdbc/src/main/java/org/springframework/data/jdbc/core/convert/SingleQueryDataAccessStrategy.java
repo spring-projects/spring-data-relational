@@ -16,6 +16,7 @@
 
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
@@ -56,22 +57,22 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType) {
+	public <T> List<T> findAll(Class<T> domainType) {
 		return getReader(domainType).findAll();
 	}
 
 	@Override
-	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return getReader(domainType).findAllById(ids);
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -81,12 +82,12 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
+	public <T> List<T> findAll(Query query, Class<T> domainType) {
 		return getReader(domainType).findAll(query);
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
+	public <T> List<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -23,8 +23,16 @@ import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
 import java.time.LocalDateTime;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -49,6 +57,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
@@ -63,6 +72,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -1927,8 +1937,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	static class Config {
 
 		@Bean
-		Class<?> testClass() {
-			return JdbcAggregateTemplateIntegrationTests.class;
+		TestClass testClass() {
+			return TestClass.of(JdbcAggregateTemplateIntegrationTests.class);
 		}
 
 		@Bean
@@ -1938,9 +1948,11 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		}
 	}
 
+	@ContextConfiguration(classes = Config.class)
 	static class JdbcAggregateTemplateIntegrationTests extends AbstractJdbcAggregateTemplateIntegrationTests {}
 
 	@ActiveProfiles(value = PROFILE_SINGLE_QUERY_LOADING)
+	@ContextConfiguration(classes = Config.class)
 	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests
 			extends AbstractJdbcAggregateTemplateIntegrationTests {
 
