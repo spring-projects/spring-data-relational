@@ -200,11 +200,14 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	}
 
 	@Override
-	public Select build() {
+	public Select build(boolean validate) {
 
 		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy,
 				lockMode);
-		SelectValidator.validate(select);
+
+		if (validate) {
+			SelectValidator.validate(select);
+		}
 		return select;
 	}
 
@@ -359,9 +362,9 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		}
 
 		@Override
-		public Select build() {
+		public Select build(boolean validate) {
 			selectBuilder.join(finishJoin());
-			return selectBuilder.build();
+			return selectBuilder.build(validate);
 		}
 	}
 }

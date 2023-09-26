@@ -297,6 +297,7 @@ public interface SelectBuilder {
 		 * @param offset row offset, zero-based.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin limitOffset(long limit, long offset);
 
 		/**
@@ -305,6 +306,7 @@ public interface SelectBuilder {
 		 * @param limit rows to read.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin limit(long limit);
 
 		/**
@@ -313,6 +315,7 @@ public interface SelectBuilder {
 		 * @param offset start offset.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin offset(long offset);
 	}
 
@@ -331,6 +334,7 @@ public interface SelectBuilder {
 		 * @param offset row offset, zero-based.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin limitOffset(long limit, long offset);
 
 		/**
@@ -339,6 +343,7 @@ public interface SelectBuilder {
 		 * @param limit rows to read.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin limit(long limit);
 
 		/**
@@ -347,6 +352,7 @@ public interface SelectBuilder {
 		 * @param offset start offset.
 		 * @return {@code this} builder.
 		 */
+		@Override
 		SelectFromAndJoin offset(long offset);
 	}
 
@@ -488,11 +494,11 @@ public interface SelectBuilder {
 		SelectOn leftOuterJoin(TableLike table);
 
 		/**
-		 * Declar a join, where the join type ({@code INNER}, {@code LEFT OUTER}, {@code RIGHT OUTER}, {@code FULL OUTER})
+		 * Declare a join, where the join type ({@code INNER}, {@code LEFT OUTER}, {@code RIGHT OUTER}, {@code FULL OUTER})
 		 * is specified by an extra argument.
-		 * 
+		 *
 		 * @param table the table to join. Must not be {@literal null}.
-		 * @param joinType the type of joi. Must not be {@literal null}.
+		 * @param joinType the type of join. Must not be {@literal null}.
 		 * @return {@code this} builder.
 		 */
 		SelectOn join(TableLike table, Join.JoinType joinType);
@@ -577,8 +583,20 @@ public interface SelectBuilder {
 		 * Build the {@link Select} statement and verify basic relationship constraints such as all referenced columns have
 		 * a {@code FROM} or {@code JOIN} table import.
 		 *
-		 * @return the build and immutable {@link Select} statement.
+		 * @return the built and immutable {@link Select} statement.
 		 */
-		Select build();
+		default Select build() {
+			return build(true);
+		}
+
+		/**
+		 * Build the {@link Select} statement.
+		 *
+		 * @param validate whether to validate the generated select by checking basic relationship constraints such as all
+		 *          referenced columns have a {@code FROM} or {@code JOIN} table import.
+		 * @return the built and immutable {@link Select} statement.
+		 * @since 3.2
+		 */
+		Select build(boolean validate);
 	}
 }
