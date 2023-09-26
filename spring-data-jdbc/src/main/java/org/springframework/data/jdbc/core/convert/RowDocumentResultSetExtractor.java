@@ -159,7 +159,7 @@ class RowDocumentResultSetExtractor {
 		 */
 		private boolean hasNext;
 
-		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) throws SQLException {
+		RowDocumentIterator(RelationalPersistentEntity<?> entity, ResultSet resultSet) {
 
 			ResultSetAdapter adapter = ResultSetAdapter.INSTANCE;
 

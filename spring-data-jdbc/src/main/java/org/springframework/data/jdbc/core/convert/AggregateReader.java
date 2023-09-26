@@ -37,10 +37,10 @@ import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGene
 import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.Streamable;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
@@ -53,13 +53,14 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 3.2
  */
-class AggregateReader<T> {
+class AggregateReader<T> implements PathToColumnMapping {
 
 	private final RelationalPersistentEntity<T> aggregate;
 	private final Table table;
 	private final SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
+	private final AliasFactory aliasFactory;
 	private final RowDocumentResultSetExtractor extractor;
 
 	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
@@ -70,8 +71,25 @@ class AggregateReader<T> {
 		this.jdbcTemplate = jdbcTemplate;
 		this.table = Table.create(aggregate.getQualifiedTableName());
 		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate);
-		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(),
-				createPathToColumnMapping(aliasFactory));
+		this.aliasFactory = aliasFactory;
+		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(), this);
+	}
+
+	@Override
+	public String column(AggregatePath path) {
+
+		String alias = aliasFactory.getColumnAlias(path);
+
+		if (alias == null) {
+			throw new IllegalStateException(String.format("Alias for '%s' must not be null", path));
+		}
+
+		return alias;
+	}
+
+	@Override
+	public String keyColumn(AggregatePath path) {
+		return aliasFactory.getKeyAlias(path);
 	}
 
 	@Nullable
@@ -84,30 +102,34 @@ class AggregateReader<T> {
 
 	@Nullable
 	public T findOne(Query query) {
-
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		Condition condition = createCondition(query, parameterSource);
-
-		return jdbcTemplate.query(sqlGenerator.findAll(condition), parameterSource, this::extractZeroOrOne);
-	}
-
-	public List<T> findAll() {
-		return jdbcTemplate.query(sqlGenerator.findAll(), this::extractAll);
+		return doFind(query, this::extractZeroOrOne);
 	}
 
 	public List<T> findAllById(Iterable<?> ids) {
 
 		Collection<?> identifiers = ids instanceof Collection<?> idl ? idl : Streamable.of(ids).toList();
-		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).in(identifiers)).limit(1);
+		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).in(identifiers));
 
 		return findAll(query);
 	}
 
+	@SuppressWarnings("ConstantConditions")
+	public List<T> findAll() {
+		return jdbcTemplate.query(sqlGenerator.findAll(), this::extractAll);
+	}
+
 	public List<T> findAll(Query query) {
+		return doFind(query, this::extractAll);
+	}
+
+	@SuppressWarnings("ConstantConditions")
+	private <R> R doFind(Query query, ResultSetExtractor<R> extractor) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		Condition condition = createCondition(query, parameterSource);
-		return jdbcTemplate.query(sqlGenerator.findAll(condition), parameterSource, this::extractAll);
+		String sql = sqlGenerator.findAll(condition);
+
+		return jdbcTemplate.query(sql, parameterSource, extractor);
 	}
 
 	@Nullable
@@ -128,7 +150,7 @@ class AggregateReader<T> {
 	 *
 	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
 	 * @return a {@code List} of aggregates, fully converted.
-	 * @throws SQLException
+	 * @throws SQLException on underlying JDBC errors.
 	 */
 	private List<T> extractAll(ResultSet rs) throws SQLException {
 
@@ -146,10 +168,10 @@ class AggregateReader<T> {
 	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
 	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
 	 *
-	 * @param @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
+	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
 	 * @return The single instance when the conversion results in exactly one instance. If the {@literal ResultSet} is
 	 *         empty, null is returned.
-	 * @throws SQLException
+	 * @throws SQLException on underlying JDBC errors.
 	 * @throws IncorrectResultSizeDataAccessException when the conversion yields more than one instance.
 	 */
 	@Nullable
@@ -165,23 +187,6 @@ class AggregateReader<T> {
 			return converter.read(aggregate.getType(), object);
 		}
 		return null;
-	}
-
-	private PathToColumnMapping createPathToColumnMapping(AliasFactory aliasFactory) {
-		return new PathToColumnMapping() {
-			@Override
-			public String column(AggregatePath path) {
-
-				String alias = aliasFactory.getColumnAlias(path);
-				Assert.notNull(alias, () -> "alias for >" + path + "< must not be null");
-				return alias;
-			}
-
-			@Override
-			public String keyColumn(AggregatePath path) {
-				return aliasFactory.getKeyAlias(path);
-			}
-		};
 	}
 
 }
