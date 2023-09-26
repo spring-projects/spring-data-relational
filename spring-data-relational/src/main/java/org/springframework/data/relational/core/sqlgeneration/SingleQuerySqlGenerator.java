@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -46,7 +46,6 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	private final Dialect dialect;
 	private final AliasFactory aliases;
 	private final RelationalPersistentEntity<?> aggregate;
-	private final Table table;
 
 	public SingleQuerySqlGenerator(RelationalMappingContext context, AliasFactory aliasFactory, Dialect dialect,
 			RelationalPersistentEntity<?> aggregate) {
@@ -55,47 +54,14 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		this.aliases = aliasFactory;
 		this.dialect = dialect;
 		this.aggregate = aggregate;
-
-		this.table = Table.create(aggregate.getQualifiedTableName());
 	}
 
 	@Override
-	public String findAll() {
-		return createSelect(null);
-	}
-
-	@Override
-	public String findById() {
-
-		AggregatePath path = getRootIdPath();
-		Condition condition = Conditions.isEqual(table.column(path.getColumnInfo().name()), Expressions.just(":id"));
-
+	public String findAll(@Nullable Condition condition) {
 		return createSelect(condition);
 	}
 
-	@Override
-	public String findAllById() {
-
-		AggregatePath path = getRootIdPath();
-		Condition condition = Conditions.in(table.column(path.getColumnInfo().name()), Expressions.just(":ids"));
-
-		return createSelect(condition);
-	}
-
-	@Override
-	public String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource) {
-		Condition condition = conditionSource.apply(table, aggregate);
-		return createSelect(condition);
-	}
-
-	/**
-	 * @return The {@link AggregatePath} to the id property of the aggregate root.
-	 */
-	private AggregatePath getRootIdPath() {
-		return context.getAggregatePath(aggregate).append(aggregate.getRequiredIdProperty());
-	}
-
-	String createSelect(Condition condition) {
+	String createSelect(@Nullable Condition condition) {
 
 		AggregatePath rootPath = context.getAggregatePath(aggregate);
 		QueryMeta queryMeta = createInlineQuery(rootPath, condition);
@@ -168,7 +134,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 		List<QueryMeta> inlineQueries = new ArrayList<>();
 
-		for (PersistentPropertyPath ppp : paths) {
+		for (PersistentPropertyPath<? extends RelationalPersistentProperty> ppp : paths) {
 
 			QueryMeta queryMeta = createInlineQuery(context.getAggregatePath(ppp), null);
 			inlineQueries.add(queryMeta);
@@ -188,7 +154,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 * @param condition a condition that is to be applied to the query. May be {@literal null}.
 	 * @return an inline query for the given path.
 	 */
-	private QueryMeta createInlineQuery(AggregatePath basePath, Condition condition) {
+	private QueryMeta createInlineQuery(AggregatePath basePath, @Nullable Condition condition) {
 
 		RelationalPersistentEntity<?> entity = basePath.getRequiredLeafEntity();
 		Table table = Table.create(entity.getQualifiedTableName());

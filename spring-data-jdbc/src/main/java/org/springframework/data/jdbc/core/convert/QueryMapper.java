@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -35,7 +33,6 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -77,7 +74,7 @@ public class QueryMapper {
 		Assert.notNull(converter, "JdbcConverter must not be null");
 
 		this.converter = converter;
-		this.mappingContext = (MappingContext) converter.getMappingContext();
+		this.mappingContext = converter.getMappingContext();
 	}
 
 	/**
@@ -310,7 +307,7 @@ public class QueryMapper {
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
 		} else if (criteria.getValue() instanceof ValueFunction valueFunction) {
 
-			mappedValue = valueFunction.transform(v -> convertValue(comparator, v, propertyField.getTypeHint()));
+			mappedValue = valueFunction.map(v -> convertValue(comparator, v, propertyField.getTypeHint()));
 			sqlType = propertyField.getSqlType();
 
 		} else if (propertyField instanceof MetadataBackedField metadataBackedField //

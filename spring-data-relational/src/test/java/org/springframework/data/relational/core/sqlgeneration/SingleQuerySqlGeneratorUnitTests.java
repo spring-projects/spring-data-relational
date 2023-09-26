@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.relational.core.sqlgeneration;
 
 import static org.springframework.data.relational.core.sqlgeneration.SqlAssert.*;
@@ -28,7 +27,10 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Tests for {@link SingleQuerySqlGenerator}.
@@ -76,7 +78,8 @@ class SingleQuerySqlGeneratorUnitTests {
 		@Test // GH-1446
 		void createSelectForFindById() {
 
-			String sql = sqlGenerator.findById();
+			Table table = Table.create(persistentEntity.getQualifiedTableName());
+			String sql = sqlGenerator.findAll(table.column("id").isEqualTo(Conditions.just(":id")));
 
 			SqlAssert baseSelect = assertThatParsed(sql).hasInlineView();
 
@@ -94,13 +97,14 @@ class SingleQuerySqlGeneratorUnitTests {
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
-					.extractWhereClause().isEqualTo("\"trivial_aggregate\".\"id\" = :id");
+					.extractWhereClause().isEqualTo("\"trivial_aggregate\".id = :id");
 		}
 
 		@Test // GH-1446
 		void createSelectForFindAllById() {
 
-			String sql = sqlGenerator.findAllById();
+			Table table = Table.create(persistentEntity.getQualifiedTableName());
+			String sql = sqlGenerator.findAll(table.column("id").in(Conditions.just(":ids")));
 
 			SqlAssert baseSelect = assertThatParsed(sql).hasInlineView();
 
@@ -118,7 +122,7 @@ class SingleQuerySqlGeneratorUnitTests {
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
-					.extractWhereClause().isEqualTo("\"trivial_aggregate\".\"id\" IN (:ids)");
+					.extractWhereClause().isEqualTo("\"trivial_aggregate\".id IN (:ids)");
 		}
 
 	}
@@ -133,7 +137,8 @@ class SingleQuerySqlGeneratorUnitTests {
 		@Test // GH-1446
 		void createSelectForFindById() {
 
-			String sql = sqlGenerator.findById();
+			Table table = Table.create(persistentEntity.getQualifiedTableName());
+			String sql = sqlGenerator.findAll(table.column("id").isEqualTo(Conditions.just(":id")));
 
 			String rootRowNumber = rnAlias();
 			String rootCount = rcAlias();
@@ -167,7 +172,7 @@ class SingleQuerySqlGeneratorUnitTests {
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
-					.extractWhereClause().isEqualTo("\"single_reference_aggregate\".\"id\" = :id");
+					.extractWhereClause().isEqualTo("\"single_reference_aggregate\".id = :id");
 			baseSelect.hasInlineViewSelectingFrom("\"trivial_aggregate\"") //
 					.hasExactlyColumns( //
 							rn(col("\"single_reference_aggregate\"")).as(trivialsRowNumber), //
@@ -206,13 +211,14 @@ class SingleQuerySqlGeneratorUnitTests {
 	private class AbstractTestFixture {
 		final Class<?> aggregateRootType;
 		final SingleQuerySqlGenerator sqlGenerator;
+		final RelationalPersistentEntity<?> persistentEntity;
 		final AliasFactory aliases;
 
 		private AbstractTestFixture(Class<?> aggregateRootType) {
 
 			this.aggregateRootType = aggregateRootType;
-			this.sqlGenerator = new SingleQuerySqlGenerator(context, new AliasFactory(), dialect,
-					context.getRequiredPersistentEntity(aggregateRootType));
+			this.persistentEntity = context.getRequiredPersistentEntity(aggregateRootType);
+			this.sqlGenerator = new SingleQuerySqlGenerator(context, new AliasFactory(), dialect, persistentEntity);
 			this.aliases = sqlGenerator.getAliasFactory();
 		}
 

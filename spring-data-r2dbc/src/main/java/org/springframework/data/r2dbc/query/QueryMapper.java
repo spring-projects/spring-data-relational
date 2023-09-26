@@ -176,9 +176,8 @@ public class QueryMapper {
 			return expression;
 		}
 
-		if (expression instanceof Column) {
+		if (expression instanceof Column column) {
 
-			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
 			TableLike table = column.getTable();
 
@@ -186,9 +185,7 @@ public class QueryMapper {
 			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
 		}
 
-		if (expression instanceof SimpleFunction) {
-
-			SimpleFunction function = (SimpleFunction) expression;
+		if (expression instanceof SimpleFunction function) {
 
 			List<Expression> arguments = function.getExpressions();
 			List<Expression> mappedArguments = new ArrayList<>(arguments.size());
@@ -367,15 +364,14 @@ public class QueryMapper {
 		Class<?> typeHint;
 
 		Comparator comparator = criteria.getComparator();
-		if (criteria.getValue() instanceof Parameter) {
-
-			Parameter parameter = (Parameter) criteria.getValue();
+		if (criteria.getValue()instanceof Parameter parameter) {
 
 			mappedValue = convertValue(comparator, parameter.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), parameter);
 		} else if (criteria.getValue() instanceof ValueFunction<?> valueFunction) {
 
-			mappedValue = valueFunction.transform(v -> convertValue(comparator, v, propertyField.getTypeHint())).apply(getEscaper(comparator));
+			mappedValue = valueFunction.map(v -> convertValue(comparator, v, propertyField.getTypeHint()))
+					.apply(getEscaper(comparator));
 
 			typeHint = actualType.getType();
 		} else {

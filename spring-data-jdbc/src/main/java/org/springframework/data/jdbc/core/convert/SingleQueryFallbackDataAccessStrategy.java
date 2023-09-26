@@ -87,6 +87,7 @@ class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy
 		return super.findAllById(ids, domainType);
 	}
 
+	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
 
 		if (isSingleSelectQuerySupported(domainType) && isSingleSelectQuerySupported(query)) {
@@ -137,11 +138,6 @@ class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy
 
 				referenceFound = true;
 			}
-
-			// AggregateReferences aren't supported yet
-			// if (property.isAssociation()) {
-			// return false;
-			// }
 		}
 		return true;
 

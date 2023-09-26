@@ -18,16 +18,16 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.Condition;
@@ -36,6 +36,7 @@ import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
 import org.springframework.data.relational.core.sqlgeneration.SingleQuerySqlGenerator;
 import org.springframework.data.relational.core.sqlgeneration.SqlGenerator;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.Streamable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
@@ -43,7 +44,7 @@ import org.springframework.util.Assert;
 
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
- * through {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Results are converterd into an
+ * through {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Results are converted into an
  * intermediate {@link RowDocumentResultSetExtractor RowDocument} and mapped via
  * {@link org.springframework.data.relational.core.conversion.RelationalConverter#read(Class, RowDocument)}.
  *
@@ -55,7 +56,8 @@ import org.springframework.util.Assert;
 class AggregateReader<T> {
 
 	private final RelationalPersistentEntity<T> aggregate;
-	private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator sqlGenerator;
+	private final Table table;
+	private final SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
 	private final RowDocumentResultSetExtractor extractor;
@@ -66,6 +68,7 @@ class AggregateReader<T> {
 		this.converter = converter;
 		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
+		this.table = Table.create(aggregate.getQualifiedTableName());
 
 		this.sqlGenerator = new CachingSqlGenerator(
 				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate));
@@ -74,62 +77,58 @@ class AggregateReader<T> {
 				createPathToColumnMapping(aliasFactory));
 	}
 
+	@Nullable
+	public T findById(Object id) {
+
+		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).is(id)).limit(1);
+
+		return findOne(query);
+	}
+
+	@Nullable
+	public T findOne(Query query) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		Condition condition = createCondition(query, parameterSource);
+
+		return jdbcTemplate.query(sqlGenerator.findAll(condition), parameterSource, this::extractZeroOrOne);
+	}
+
 	public List<T> findAll() {
 		return jdbcTemplate.query(sqlGenerator.findAll(), this::extractAll);
 	}
 
-	@Nullable
-	public T findById(Object id) {
-
-		id = converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation());
-
-		return jdbcTemplate.query(sqlGenerator.findById(), Map.of("id", id), this::extractZeroOrOne);
-	}
-
 	public List<T> findAllById(Iterable<?> ids) {
 
-		List<Object> convertedIds = new ArrayList<>();
-		for (Object id : ids) {
-			convertedIds.add(converter.writeValue(id, aggregate.getRequiredIdProperty().getTypeInformation()));
-		}
+		Collection<?> identifiers = ids instanceof Collection<?> idl ? idl : Streamable.of(ids).toList();
+		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).in(identifiers)).limit(1);
 
-		return jdbcTemplate.query(sqlGenerator.findAllById(), Map.of("ids", convertedIds), this::extractAll);
+		return findAll(query);
 	}
 
-	public List<T> findAllBy(Query query) {
+	public List<T> findAll(Query query) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		BiFunction<Table, RelationalPersistentEntity, Condition> condition = createConditionSource(query, parameterSource);
-		return jdbcTemplate.query(sqlGenerator.findAllByCondition(condition), parameterSource, this::extractAll);
+		Condition condition = createCondition(query, parameterSource);
+		return jdbcTemplate.query(sqlGenerator.findAll(condition), parameterSource, this::extractAll);
 	}
 
-	public Optional<T> findOneByQuery(Query query) {
-		
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		BiFunction<Table, RelationalPersistentEntity, Condition> condition = createConditionSource(query, parameterSource);
-
-		return Optional.ofNullable(
-				jdbcTemplate.query(sqlGenerator.findAllByCondition(condition), parameterSource, this::extractZeroOrOne));
-	}
-
-	private BiFunction<Table, RelationalPersistentEntity, Condition> createConditionSource(Query query, MapSqlParameterSource parameterSource) {
+	@Nullable
+	private Condition createCondition(Query query, MapSqlParameterSource parameterSource) {
 
 		QueryMapper queryMapper = new QueryMapper(converter);
 
-		BiFunction<Table, RelationalPersistentEntity, Condition> condition = (table, aggregate) -> {
-			Optional<CriteriaDefinition> criteria = query.getCriteria();
-			return criteria
-					.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition, table, aggregate))
-					.orElse(null);
-		};
-		return condition;
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
+		return criteria
+				.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition, table, aggregate))
+				.orElse(null);
 	}
 
 	/**
 	 * Extracts a list of aggregates from the given {@link ResultSet} by utilizing the
 	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
 	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
-	 * 
+	 *
 	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
 	 * @return a {@code List} of aggregates, fully converted.
 	 * @throws SQLException
@@ -195,21 +194,15 @@ class AggregateReader<T> {
 	 * @author Jens Schauder
 	 * @since 3.2
 	 */
-	static class CachingSqlGenerator implements org.springframework.data.relational.core.sqlgeneration.SqlGenerator {
+	static class CachingSqlGenerator implements SqlGenerator {
 
-		private final org.springframework.data.relational.core.sqlgeneration.SqlGenerator delegate;
-
+		private final SqlGenerator delegate;
 		private final String findAll;
-		private final String findById;
-		private final String findAllById;
 
 		public CachingSqlGenerator(SqlGenerator delegate) {
 
 			this.delegate = delegate;
-
-			findAll = delegate.findAll();
-			findById = delegate.findById();
-			findAllById = delegate.findAllById();
+			this.findAll = delegate.findAll();
 		}
 
 		@Override
@@ -218,18 +211,8 @@ class AggregateReader<T> {
 		}
 
 		@Override
-		public String findById() {
-			return findById;
-		}
-
-		@Override
-		public String findAllById() {
-			return findAllById;
-		}
-
-		@Override
-		public String findAllByCondition(BiFunction<Table, RelationalPersistentEntity, Condition> conditionSource) {
-			return delegate.findAllByCondition(conditionSource);
+		public String findAll(@Nullable Condition condition) {
+			return delegate.findAll(condition);
 		}
 
 		@Override
