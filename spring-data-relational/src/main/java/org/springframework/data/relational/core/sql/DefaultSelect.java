@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.function.Consumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -92,15 +93,17 @@ class DefaultSelect implements Select {
 
 		Assert.notNull(visitor, "Visitor must not be null");
 
+		Consumer<? super AbstractSegment> action = it -> it.visit(visitor);
+
 		visitor.enter(this);
 
 		selectList.visit(visitor);
 		from.visit(visitor);
-		joins.forEach(it -> it.visit(visitor));
+		joins.forEach(action);
 
 		visitIfNotNull(where, visitor);
 
-		orderBy.forEach(it -> it.visit(visitor));
+		orderBy.forEach(action);
 
 		visitor.leave(this);
 	}

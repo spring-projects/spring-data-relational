@@ -69,10 +69,7 @@ class AggregateReader<T> {
 		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
 		this.table = Table.create(aggregate.getQualifiedTableName());
-
-		this.sqlGenerator = new CachingSqlGenerator(
-				new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate));
-
+		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate);
 		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(),
 				createPathToColumnMapping(aliasFactory));
 	}
@@ -187,38 +184,4 @@ class AggregateReader<T> {
 		};
 	}
 
-	/**
-	 * A wrapper for the {@link org.springframework.data.relational.core.sqlgeneration.SqlGenerator} that caches the
-	 * generated statements.
-	 *
-	 * @author Jens Schauder
-	 * @since 3.2
-	 */
-	static class CachingSqlGenerator implements SqlGenerator {
-
-		private final SqlGenerator delegate;
-		private final String findAll;
-
-		public CachingSqlGenerator(SqlGenerator delegate) {
-
-			this.delegate = delegate;
-			this.findAll = delegate.findAll();
-		}
-
-		@Override
-		public String findAll() {
-			return findAll;
-		}
-
-		@Override
-		public String findAll(@Nullable Condition condition) {
-			return delegate.findAll(condition);
-		}
-
-		@Override
-		public AliasFactory getAliasFactory() {
-			return delegate.getAliasFactory();
-		}
-
-	}
 }

@@ -21,6 +21,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.data.relational.core.sql.Visitor;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
  * Type-filtering {@link DelegatingVisitor visitor} applying a {@link Class type filter} derived from the generic type
@@ -37,28 +38,35 @@ import org.springframework.lang.Nullable;
  * {@link Visitable}.</li>
  * </ol>
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @since 1.1
  * @see FilteredSubtreeVisitor
  */
 abstract class TypedSubtreeVisitor<T extends Visitable> extends DelegatingVisitor {
 
+	private static final ConcurrentReferenceHashMap<Class<?>, ResolvableType> refCache = new ConcurrentReferenceHashMap<>();
+
 	private final ResolvableType type;
 	private @Nullable Visitable currentSegment;
+
+	enum Assignable {
+		YES, NO,
+	}
 
 	/**
 	 * Creates a new {@link TypedSubtreeVisitor}.
 	 */
 	TypedSubtreeVisitor() {
-		this.type = ResolvableType.forClass(getClass()).as(TypedSubtreeVisitor.class).getGeneric(0);
+		this.type = refCache.computeIfAbsent(this.getClass(),
+				key -> ResolvableType.forClass(key).as(TypedSubtreeVisitor.class).getGeneric(0));
 	}
 
 	/**
 	 * Creates a new {@link TypedSubtreeVisitor} with an explicitly provided type.
 	 */
-	TypedSubtreeVisitor(Class <T> type) {
-		this.type = ResolvableType.forType(type);
+	TypedSubtreeVisitor(Class<T> type) {
+		this.type = refCache.computeIfAbsent(type, key -> ResolvableType.forClass(type));
 	}
 
 	/**
@@ -117,7 +125,7 @@ abstract class TypedSubtreeVisitor<T extends Visitable> extends DelegatingVisito
 
 		if (currentSegment == null) {
 
-			if (this.type.isInstance(segment)) {
+			if (type.isInstance(segment)) {
 
 				currentSegment = segment;
 				return enterMatched((T) segment);
@@ -142,4 +150,5 @@ abstract class TypedSubtreeVisitor<T extends Visitable> extends DelegatingVisito
 			return leaveNested(segment);
 		}
 	}
+
 }

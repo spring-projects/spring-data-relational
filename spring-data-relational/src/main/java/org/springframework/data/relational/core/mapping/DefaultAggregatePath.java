@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -37,6 +38,10 @@ class DefaultAggregatePath implements AggregatePath {
 	private final @Nullable RelationalPersistentEntity<?> rootType;
 
 	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
+
+	private final Lazy<TableInfo> tableInfo = Lazy.of(() -> TableInfo.of(this));
+
+	private final Lazy<ColumnInfo> columnInfo = Lazy.of(() -> ColumnInfo.of(this));
 
 	@SuppressWarnings("unchecked")
 	DefaultAggregatePath(RelationalMappingContext context,
@@ -189,14 +194,24 @@ class DefaultAggregatePath implements AggregatePath {
 		return AggregatePathTraversal.getTableOwningPath(this);
 	}
 
+	/**
+	 * Creates an {@link Iterator} that iterates over the current path and all ancestors. It will start with the current
+	 * path, followed by its parent until ending with the root.
+	 */
 	@Override
-	public String toString() {
-		return "AggregatePath["
-				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
-				+ ((isRoot()) ? "/" : path.toDotPath());
+	public Iterator<AggregatePath> iterator() {
+		return new AggregatePathIterator(this);
 	}
 
+	@Override
+	public TableInfo getTableInfo() {
+		return this.tableInfo.get();
+	}
 
+	@Override
+	public ColumnInfo getColumnInfo() {
+		return this.columnInfo.get();
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -215,13 +230,12 @@ class DefaultAggregatePath implements AggregatePath {
 		return Objects.hash(context, rootType, path);
 	}
 
-	/**
-	 * Creates an {@link Iterator} that iterates over the current path and all ancestors. It will start with the current
-	 * path, followed by its parent until ending with the root.
-	 */
+
 	@Override
-	public Iterator<AggregatePath> iterator() {
-		return new AggregatePathIterator(this);
+	public String toString() {
+		return "AggregatePath["
+				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
+				+ ((isRoot()) ? "/" : path.toDotPath());
 	}
 
 	private static class AggregatePathIterator implements Iterator<AggregatePath> {

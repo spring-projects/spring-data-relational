@@ -104,7 +104,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		finalColumns.add(rootIdExpression);
 
 		Select fullQuery = StatementBuilder.select(finalColumns).from(inlineQuery).orderBy(rootIdExpression, just("rn"))
-				.build();
+				.build(false);
 
 		return SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext()).render(fullQuery);
 	}
@@ -118,7 +118,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		select = applyJoins(rootPath, inlineQueries, select);
 
 		SelectBuilder.BuildSelect buildSelect = applyWhereCondition(rootPath, inlineQueries, select);
-		Select mainSelect = buildSelect.build();
+		Select mainSelect = buildSelect.build(false);
 
 		return InlineQuery.create(mainSelect, "main");
 	}
@@ -215,7 +215,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 		SelectBuilder.BuildSelect buildSelect = condition != null ? select.where(condition) : select;
 
-		InlineQuery inlineQuery = InlineQuery.create(buildSelect.build(),
+		InlineQuery inlineQuery = InlineQuery.create(buildSelect.build(false),
 				aliases.getTableAlias(context.getAggregatePath(entity)));
 		return QueryMeta.of(basePath, inlineQuery, columnAliases, just(id), just(backReferenceAlias), just(keyAlias),
 				just(rowNumberAlias), just(rowCountAlias));
