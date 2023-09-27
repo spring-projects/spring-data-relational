@@ -25,9 +25,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sqlgeneration.AliasFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.ConcurrentLruCache;
 
 /**
  * A {@link ReadingDataAccessStrategy} that uses an {@link AggregateReader} to load entities with a single query.
@@ -39,31 +37,28 @@ import org.springframework.util.ConcurrentLruCache;
 class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 
 	private final RelationalMappingContext mappingContext;
-	private final AliasFactory aliasFactory;
-	private final ConcurrentLruCache<RelationalPersistentEntity<?>, AggregateReader<?>> readerCache;
+	private final AggregateReader aggregateReader;
 
 	public SingleQueryDataAccessStrategy(Dialect dialect, JdbcConverter converter,
 			NamedParameterJdbcOperations jdbcTemplate) {
 
 		this.mappingContext = converter.getMappingContext();
-		this.aliasFactory = new AliasFactory();
-		this.readerCache = new ConcurrentLruCache<>(256,
-				entity -> new AggregateReader<>(dialect, converter, aliasFactory, jdbcTemplate, entity));
+		this.aggregateReader = new AggregateReader(dialect, converter, jdbcTemplate);
 	}
 
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
-		return getReader(domainType).findById(id);
+		return aggregateReader.findById(id, getPersistentEntity(domainType));
 	}
 
 	@Override
 	public <T> List<T> findAll(Class<T> domainType) {
-		return getReader(domainType).findAll();
+		return aggregateReader.findAll(getPersistentEntity(domainType));
 	}
 
 	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
-		return getReader(domainType).findAllById(ids);
+		return aggregateReader.findAllById(ids, getPersistentEntity(domainType));
 	}
 
 	@Override
@@ -78,12 +73,12 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 
 	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
-		return Optional.ofNullable(getReader(domainType).findOne(query));
+		return Optional.ofNullable(aggregateReader.findOne(query, getPersistentEntity(domainType)));
 	}
 
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> domainType) {
-		return getReader(domainType).findAll(query);
+		return aggregateReader.findAll(query, getPersistentEntity(domainType));
 	}
 
 	@Override
@@ -92,11 +87,7 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> AggregateReader<T> getReader(Class<T> domainType) {
-
-		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) mappingContext
-				.getRequiredPersistentEntity(domainType);
-
-		return (AggregateReader<T>) readerCache.get(persistentEntity);
+	private <T> RelationalPersistentEntity<T> getPersistentEntity(Class<T> domainType) {
+		return (RelationalPersistentEntity<T>) mappingContext.getRequiredPersistentEntity(domainType);
 	}
 }

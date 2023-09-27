@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.mapping;
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -67,7 +66,6 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	@Override
 	public void verify() throws MappingException {}
 
-	@NotNull
 	@Override
 	public Iterator<RelationalPersistentProperty> iterator() {
 

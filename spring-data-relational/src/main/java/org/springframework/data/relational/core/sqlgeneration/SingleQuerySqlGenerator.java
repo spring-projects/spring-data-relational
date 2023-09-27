@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -33,6 +31,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.lang.Nullable;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.
@@ -45,23 +44,20 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	private final RelationalMappingContext context;
 	private final Dialect dialect;
 	private final AliasFactory aliases;
-	private final RelationalPersistentEntity<?> aggregate;
 
-	public SingleQuerySqlGenerator(RelationalMappingContext context, AliasFactory aliasFactory, Dialect dialect,
-			RelationalPersistentEntity<?> aggregate) {
+	public SingleQuerySqlGenerator(RelationalMappingContext context, AliasFactory aliasFactory, Dialect dialect) {
 
 		this.context = context;
 		this.aliases = aliasFactory;
 		this.dialect = dialect;
-		this.aggregate = aggregate;
 	}
 
 	@Override
-	public String findAll(@Nullable Condition condition) {
-		return createSelect(condition);
+	public String findAll(RelationalPersistentEntity<?> aggregate, @Nullable Condition condition) {
+		return createSelect(aggregate, condition);
 	}
 
-	String createSelect(@Nullable Condition condition) {
+	String createSelect(RelationalPersistentEntity<?> aggregate, @Nullable Condition condition) {
 
 		AggregatePath rootPath = context.getAggregatePath(aggregate);
 		QueryMeta queryMeta = createInlineQuery(rootPath, condition);
@@ -70,6 +66,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 		List<Expression> rownumbers = new ArrayList<>();
 		rownumbers.add(queryMeta.rowNumber);
+
 		PersistentPropertyPaths<?, RelationalPersistentProperty> entityPaths = context
 				.findPersistentPropertyPaths(aggregate.getType(), PersistentProperty::isEntity);
 		List<QueryMeta> inlineQueries = createInlineQueries(entityPaths);
@@ -83,44 +80,46 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		columns.add(totalRownumber);
 
 		InlineQuery inlineQuery = createMainSelect(columns, rootPath, rootQuery, inlineQueries);
+		Expression rootId = just(aliases.getColumnAlias(rootPath.append(aggregate.getRequiredIdProperty())));
 
-		Expression rootIdExpression = just(aliases.getColumnAlias(rootPath.append(aggregate.getRequiredIdProperty())));
-
-		List<Expression> finalColumns = new ArrayList<>();
-		queryMeta.simpleColumns
-				.forEach(e -> finalColumns.add(filteredColumnExpression(queryMeta.rowNumber.toString(), e.toString())));
-
-		for (QueryMeta meta : inlineQueries) {
-			meta.simpleColumns
-					.forEach(e -> finalColumns.add(filteredColumnExpression(meta.rowNumber.toString(), e.toString())));
-			if (meta.id != null) {
-				finalColumns.add(meta.id);
-			}
-			if (meta.key != null) {
-				finalColumns.add(meta.key);
-			}
-		}
-
-		finalColumns.add(rootIdExpression);
-
-		Select fullQuery = StatementBuilder.select(finalColumns).from(inlineQuery).orderBy(rootIdExpression, just("rn"))
-				.build(false);
+		List<Expression> selectList = getSelectList(queryMeta, inlineQueries, rootId);
+		Select fullQuery = StatementBuilder.select(selectList).from(inlineQuery).orderBy(rootId, just("rn")).build(false);
 
 		return SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext()).render(fullQuery);
 	}
 
-	@NotNull
+	private static List<Expression> getSelectList(QueryMeta queryMeta, List<QueryMeta> inlineQueries, Expression rootId) {
+
+		List<Expression> expressions = new ArrayList<>(inlineQueries.size() + queryMeta.simpleColumns.size() + 8);
+
+		queryMeta.simpleColumns
+				.forEach(e -> expressions.add(filteredColumnExpression(queryMeta.rowNumber.toString(), e.toString())));
+
+		for (QueryMeta meta : inlineQueries) {
+
+			meta.simpleColumns
+					.forEach(e -> expressions.add(filteredColumnExpression(meta.rowNumber.toString(), e.toString())));
+
+			if (meta.id != null) {
+				expressions.add(meta.id);
+			}
+			if (meta.key != null) {
+				expressions.add(meta.key);
+			}
+		}
+
+		expressions.add(rootId);
+		return expressions;
+	}
+
 	private InlineQuery createMainSelect(List<Expression> columns, AggregatePath rootPath, InlineQuery rootQuery,
 			List<QueryMeta> inlineQueries) {
 
 		SelectBuilder.SelectJoin select = StatementBuilder.select(columns).from(rootQuery);
-
 		select = applyJoins(rootPath, inlineQueries, select);
 
-		SelectBuilder.BuildSelect buildSelect = applyWhereCondition(rootPath, inlineQueries, select);
-		Select mainSelect = buildSelect.build(false);
-
-		return InlineQuery.create(mainSelect, "main");
+		SelectBuilder.BuildSelect buildSelect = applyWhereCondition(inlineQueries, select);
+		return InlineQuery.create(buildSelect.build(false), "main");
 	}
 
 	/**
@@ -159,16 +158,8 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		RelationalPersistentEntity<?> entity = basePath.getRequiredLeafEntity();
 		Table table = Table.create(entity.getQualifiedTableName());
 
-		List<AggregatePath> paths = new ArrayList<>();
-
-		entity.doWithProperties((RelationalPersistentProperty p) -> {
-			if (!p.isEntity()) {
-				paths.add(basePath.append(p));
-			}
-		});
-
+		List<AggregatePath> paths = getAggregatePaths(basePath, entity);
 		List<Expression> columns = new ArrayList<>();
-		List<Expression> columnAliases = new ArrayList<>();
 
 		String rowNumberAlias = aliases.getRowNumberAlias(basePath);
 		Expression rownumber = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowNumberAlias)
@@ -180,8 +171,10 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 				: AnalyticFunction.create("count", Expressions.just("*"))
 						.partitionBy(table.column(basePath.getTableInfo().reverseColumnInfo().name())).as(rowCountAlias);
 		columns.add(count);
+
 		String backReferenceAlias = null;
 		String keyAlias = null;
+
 		if (!basePath.isRoot()) {
 
 			backReferenceAlias = aliases.getBackReferenceAlias(basePath);
@@ -192,23 +185,11 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 					? table.column(basePath.getTableInfo().qualifierColumnInfo().name()).as(keyAlias)
 					: createRowNumberExpression(basePath, table, keyAlias);
 			columns.add(keyExpression);
-
-		}
-		String id = null;
-
-		for (AggregatePath path : paths) {
-
-			String alias = aliases.getColumnAlias(path);
-			if (path.getRequiredLeafProperty().isIdProperty()) {
-				id = alias;
-			} else {
-				columnAliases.add(just(alias));
-			}
-			columns.add(table.column(path.getColumnInfo().name()).as(alias));
 		}
 
+		String id = getIdentifierProperty(paths);
+		List<Expression> columnAliases = getColumnAliases(table, paths, columns);
 		SelectBuilder.SelectWhere select = StatementBuilder.select(columns).from(table);
-
 		SelectBuilder.BuildSelect buildSelect = condition != null ? select.where(condition) : select;
 
 		InlineQuery inlineQuery = InlineQuery.create(buildSelect.build(false), aliases.getTableAlias(basePath));
@@ -216,7 +197,45 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 				just(rowNumberAlias), just(rowCountAlias));
 	}
 
-	@NotNull
+	private List<Expression> getColumnAliases(Table table, List<AggregatePath> paths, List<Expression> columns) {
+
+		List<Expression> columnAliases = new ArrayList<>();
+		for (AggregatePath path : paths) {
+
+			String alias = aliases.getColumnAlias(path);
+			if (!path.getRequiredLeafProperty().isIdProperty()) {
+				columnAliases.add(just(alias));
+			}
+			columns.add(table.column(path.getColumnInfo().name()).as(alias));
+		}
+		return columnAliases;
+	}
+
+	private static List<AggregatePath> getAggregatePaths(AggregatePath basePath, RelationalPersistentEntity<?> entity) {
+
+		List<AggregatePath> paths = new ArrayList<>();
+
+		for (RelationalPersistentProperty property : entity) {
+			if (!property.isEntity()) {
+				paths.add(basePath.append(property));
+			}
+		}
+
+		return paths;
+	}
+
+	@Nullable
+	private String getIdentifierProperty(List<AggregatePath> paths) {
+
+		for (AggregatePath path : paths) {
+			if (path.getRequiredLeafProperty().isIdProperty()) {
+				return aliases.getColumnAlias(path);
+			}
+		}
+
+		return null;
+	}
+
 	private static AnalyticFunction createRowNumberExpression(AggregatePath basePath, Table table,
 			String rowNumberAlias) {
 		return AnalyticFunction.create("row_number") //
@@ -261,16 +280,19 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 	 * null (when there is no child elements at all) or the values for rownumber 1 are used for that child</li>
 	 * </ol>
 	 *
-	 * @param rootPath path to the root entity that gets selected.
 	 * @param inlineQueries all in the inline queries for all the children, as returned by
 	 *          {@link #createInlineQueries(PersistentPropertyPaths)}
 	 * @param select the select to which the where clause gets added.
 	 * @return the modified select.
 	 */
-	private SelectBuilder.SelectOrdered applyWhereCondition(AggregatePath rootPath, List<QueryMeta> inlineQueries,
+	private SelectBuilder.SelectOrdered applyWhereCondition(List<QueryMeta> inlineQueries,
 			SelectBuilder.SelectJoin select) {
 
 		SelectBuilder.SelectWhere selectWhere = (SelectBuilder.SelectWhere) select;
+
+		if (inlineQueries.isEmpty()) {
+			return selectWhere;
+		}
 
 		Condition joins = null;
 
@@ -287,8 +309,6 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 				AggregatePath rightPath = rightQueryMeta.basePath;
 				Expression rightRowNumber = just(aliases.getRowNumberAlias(rightPath));
 				Expression rightRowCount = just(aliases.getRowCountAlias(rightPath));
-
-				System.out.println("joining: " + leftPath + " and " + rightPath);
 
 				Condition mutualJoin = Conditions.isEqual(leftRowNumber, rightRowNumber).or(Conditions.isNull(leftRowNumber))
 						.or(Conditions.isNull(rightRowNumber))
@@ -307,18 +327,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 			}
 		}
 
-		// for (QueryMeta queryMeta : inlineQueries) {
-		//
-		// AggregatePath path = queryMeta.basePath;
-		// Expression childRowNumber = just(aliases.getRowNumberAlias(path));
-		// Condition pseudoJoinCondition = Conditions.isNull(childRowNumber)
-		// .or(Conditions.isEqual(childRowNumber, Expressions.just(aliases.getRowNumberAlias(rootPath))))
-		// .or(Conditions.isGreater(childRowNumber, Expressions.just(aliases.getRowCountAlias(rootPath))));
-		//
-		selectWhere = (SelectBuilder.SelectWhere) selectWhere.where(joins);
-		// }
-
-		return selectWhere == null ? (SelectBuilder.SelectOrdered) select : selectWhere;
+		return selectWhere.where(joins);
 	}
 
 	@Override
@@ -430,6 +439,5 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 			return new QueryMeta(basePath, inlineQuery, simpleColumns, selectableExpressions, id, backReference, key,
 					rowNumber, rowCount);
 		}
-
 	}
 }
