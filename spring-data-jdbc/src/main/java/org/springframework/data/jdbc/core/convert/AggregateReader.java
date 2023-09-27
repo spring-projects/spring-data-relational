@@ -48,30 +48,24 @@ import org.springframework.lang.Nullable;
  * intermediate {@link RowDocumentResultSetExtractor RowDocument} and mapped via
  * {@link org.springframework.data.relational.core.conversion.RelationalConverter#read(Class, RowDocument)}.
  *
- * @param <T> the type of aggregate produced by this reader.
  * @author Jens Schauder
  * @author Mark Paluch
  * @since 3.2
  */
-class AggregateReader<T> implements PathToColumnMapping {
+class AggregateReader implements PathToColumnMapping {
 
-	private final RelationalPersistentEntity<T> aggregate;
-	private final Table table;
+	private final AliasFactory aliasFactory;
 	private final SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
-	private final AliasFactory aliasFactory;
 	private final RowDocumentResultSetExtractor extractor;
 
-	AggregateReader(Dialect dialect, JdbcConverter converter, AliasFactory aliasFactory,
-			NamedParameterJdbcOperations jdbcTemplate, RelationalPersistentEntity<T> aggregate) {
+	AggregateReader(Dialect dialect, JdbcConverter converter, NamedParameterJdbcOperations jdbcTemplate) {
 
+		this.aliasFactory = new AliasFactory();
 		this.converter = converter;
-		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
-		this.table = Table.create(aggregate.getQualifiedTableName());
 		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect);
-		this.aliasFactory = aliasFactory;
 		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(), this);
 	}
 
@@ -93,54 +87,55 @@ class AggregateReader<T> implements PathToColumnMapping {
 	}
 
 	@Nullable
-	public T findById(Object id) {
+	public <T> T findById(Object id, RelationalPersistentEntity<T> entity) {
 
-		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).is(id)).limit(1);
+		Query query = Query.query(Criteria.where(entity.getRequiredIdProperty().getName()).is(id)).limit(1);
 
-		return findOne(query);
+		return findOne(query, entity);
 	}
 
 	@Nullable
-	public T findOne(Query query) {
-		return doFind(query, this::extractZeroOrOne);
+	public <T> T findOne(Query query, RelationalPersistentEntity<T> entity) {
+		return doFind(query, entity, rs -> extractZeroOrOne(rs, entity));
 	}
 
-	public List<T> findAllById(Iterable<?> ids) {
+	public <T> List<T> findAllById(Iterable<?> ids, RelationalPersistentEntity<T> entity) {
 
 		Collection<?> identifiers = ids instanceof Collection<?> idl ? idl : Streamable.of(ids).toList();
-		Query query = Query.query(Criteria.where(aggregate.getRequiredIdProperty().getName()).in(identifiers));
+		Query query = Query.query(Criteria.where(entity.getRequiredIdProperty().getName()).in(identifiers));
 
-		return findAll(query);
+		return findAll(query, entity);
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	public List<T> findAll() {
-		return jdbcTemplate.query(sqlGenerator.findAll(aggregate), this::extractAll);
+	public <T> List<T> findAll(RelationalPersistentEntity<T> entity) {
+		return jdbcTemplate.query(sqlGenerator.findAll(entity),
+				(ResultSetExtractor<? extends List<T>>) rs -> extractAll(rs, entity));
 	}
 
-	public List<T> findAll(Query query) {
-		return doFind(query, this::extractAll);
+	public <T> List<T> findAll(Query query, RelationalPersistentEntity<T> entity) {
+		return doFind(query, entity, rs -> extractAll(rs, entity));
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	private <R> R doFind(Query query, ResultSetExtractor<R> extractor) {
+	private <T, R> R doFind(Query query, RelationalPersistentEntity<T> entity, ResultSetExtractor<R> extractor) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		Condition condition = createCondition(query, parameterSource);
-		String sql = sqlGenerator.findAll(aggregate, condition);
+		Condition condition = createCondition(query, parameterSource, entity);
+		String sql = sqlGenerator.findAll(entity, condition);
 
 		return jdbcTemplate.query(sql, parameterSource, extractor);
 	}
 
 	@Nullable
-	private Condition createCondition(Query query, MapSqlParameterSource parameterSource) {
+	private Condition createCondition(Query query, MapSqlParameterSource parameterSource,
+			RelationalPersistentEntity<?> entity) {
 
 		QueryMapper queryMapper = new QueryMapper(converter);
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
-		return criteria
-				.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition, table, aggregate))
-				.orElse(null);
+		return criteria.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition,
+				Table.create(entity.getQualifiedTableName()), entity)).orElse(null);
 	}
 
 	/**
@@ -152,12 +147,13 @@ class AggregateReader<T> implements PathToColumnMapping {
 	 * @return a {@code List} of aggregates, fully converted.
 	 * @throws SQLException on underlying JDBC errors.
 	 */
-	private List<T> extractAll(ResultSet rs) throws SQLException {
+	private <T> List<T> extractAll(ResultSet rs, RelationalPersistentEntity<T> entity) throws SQLException {
 
-		Iterator<RowDocument> iterate = extractor.iterate(aggregate, rs);
+		Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
 		List<T> resultList = new ArrayList<>();
+
 		while (iterate.hasNext()) {
-			resultList.add(converter.read(aggregate.getType(), iterate.next()));
+			resultList.add(converter.read(entity.getType(), iterate.next()));
 		}
 
 		return resultList;
@@ -175,17 +171,19 @@ class AggregateReader<T> implements PathToColumnMapping {
 	 * @throws IncorrectResultSizeDataAccessException when the conversion yields more than one instance.
 	 */
 	@Nullable
-	private T extractZeroOrOne(ResultSet rs) throws SQLException {
+	private <T> T extractZeroOrOne(ResultSet rs, RelationalPersistentEntity<T> entity) throws SQLException {
 
-		Iterator<RowDocument> iterate = extractor.iterate(aggregate, rs);
+		Iterator<RowDocument> iterate = extractor.iterate(entity, rs);
+
 		if (iterate.hasNext()) {
 
 			RowDocument object = iterate.next();
 			if (iterate.hasNext()) {
 				throw new IncorrectResultSizeDataAccessException(1);
 			}
-			return converter.read(aggregate.getType(), object);
+			return converter.read(entity.getType(), object);
 		}
+
 		return null;
 	}
 

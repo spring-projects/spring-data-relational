@@ -38,8 +38,7 @@ public class SingleQuerySqlGeneratorBenchmark extends BenchmarkSettings {
 
 	@Benchmark
 	public String findAll(StateHolder state) {
-		return new SingleQuerySqlGenerator(state.context, state.aliasFactory, PostgresDialect.INSTANCE,
-				state.persistentEntity).findAll(null);
+		return new SingleQuerySqlGenerator(state.context, state.aliasFactory, PostgresDialect.INSTANCE).findAll(state.persistentEntity, null);
 	}
 
 	@State(Scope.Benchmark)
