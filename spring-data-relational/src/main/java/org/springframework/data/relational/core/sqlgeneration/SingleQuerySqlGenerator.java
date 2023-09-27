@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -33,6 +31,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.lang.Nullable;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.
@@ -109,7 +108,6 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		return SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext()).render(fullQuery);
 	}
 
-	@NotNull
 	private InlineQuery createMainSelect(List<Expression> columns, AggregatePath rootPath, InlineQuery rootQuery,
 			List<QueryMeta> inlineQueries) {
 
@@ -216,7 +214,6 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 				just(rowNumberAlias), just(rowCountAlias));
 	}
 
-	@NotNull
 	private static AnalyticFunction createRowNumberExpression(AggregatePath basePath, Table table,
 			String rowNumberAlias) {
 		return AnalyticFunction.create("row_number") //

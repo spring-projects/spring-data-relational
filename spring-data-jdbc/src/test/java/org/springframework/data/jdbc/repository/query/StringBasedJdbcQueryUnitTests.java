@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -441,7 +440,6 @@ class StringBasedJdbcQueryUnitTests {
 			this.values = List.of(values);
 		}
 
-		@NotNull
 		@Override
 		public Iterator<String> iterator() {
 			return values.iterator();
@@ -460,7 +458,7 @@ class StringBasedJdbcQueryUnitTests {
 	}
 
 	private static class DummyEntity {
-		private Long id;
+		private final Long id;
 
 		public DummyEntity(Long id) {
 			this.id = id;
@@ -488,6 +486,7 @@ class StringBasedJdbcQueryUnitTests {
 			}
 		}
 
+		@Override
 		public Object getRootObject() {
 			return new ExtensionRoot();
 		}

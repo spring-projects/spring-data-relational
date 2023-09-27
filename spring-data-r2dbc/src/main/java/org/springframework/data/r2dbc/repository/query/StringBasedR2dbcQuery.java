@@ -22,8 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -157,11 +155,8 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append(getClass().getSimpleName());
-		sb.append(" [").append(expressionQuery.getQuery());
-		sb.append(']');
-		return sb.toString();
+		String sb = getClass().getSimpleName() + " [" + expressionQuery.getQuery() + ']';
+		return sb;
 	}
 
 	private class ExpandedQuery implements PreparedOperation<String> {
@@ -234,7 +229,6 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 			byName.put(identifier, toParameter(value));
 		}
 
-		@NotNull
 		private Parameter toParameter(Object value) {
 			return value instanceof Parameter ? (Parameter) value : Parameter.from(value);
 		}
