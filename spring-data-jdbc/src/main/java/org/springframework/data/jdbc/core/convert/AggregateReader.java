@@ -70,7 +70,7 @@ class AggregateReader<T> implements PathToColumnMapping {
 		this.aggregate = aggregate;
 		this.jdbcTemplate = jdbcTemplate;
 		this.table = Table.create(aggregate.getQualifiedTableName());
-		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect, aggregate);
+		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect);
 		this.aliasFactory = aliasFactory;
 		this.extractor = new RowDocumentResultSetExtractor(converter.getMappingContext(), this);
 	}
@@ -115,7 +115,7 @@ class AggregateReader<T> implements PathToColumnMapping {
 
 	@SuppressWarnings("ConstantConditions")
 	public List<T> findAll() {
-		return jdbcTemplate.query(sqlGenerator.findAll(), this::extractAll);
+		return jdbcTemplate.query(sqlGenerator.findAll(aggregate), this::extractAll);
 	}
 
 	public List<T> findAll(Query query) {
@@ -127,7 +127,7 @@ class AggregateReader<T> implements PathToColumnMapping {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		Condition condition = createCondition(query, parameterSource);
-		String sql = sqlGenerator.findAll(condition);
+		String sql = sqlGenerator.findAll(aggregate, condition);
 
 		return jdbcTemplate.query(sql, parameterSource, extractor);
 	}

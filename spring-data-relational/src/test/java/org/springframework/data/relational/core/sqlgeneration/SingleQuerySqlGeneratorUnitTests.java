@@ -52,7 +52,7 @@ class SingleQuerySqlGeneratorUnitTests {
 		@Test // GH-1446
 		void createSelectForFindAll() {
 
-			String sql = sqlGenerator.findAll();
+			String sql = sqlGenerator.findAll(persistentEntity);
 
 			SqlAssert fullSelect = assertThatParsed(sql);
 			fullSelect.extractOrderBy().isEqualTo(alias("id") + ", rn");
@@ -79,7 +79,7 @@ class SingleQuerySqlGeneratorUnitTests {
 		void createSelectForFindById() {
 
 			Table table = Table.create(persistentEntity.getQualifiedTableName());
-			String sql = sqlGenerator.findAll(table.column("id").isEqualTo(Conditions.just(":id")));
+			String sql = sqlGenerator.findAll(persistentEntity, table.column("id").isEqualTo(Conditions.just(":id")));
 
 			SqlAssert baseSelect = assertThatParsed(sql).hasInlineView();
 
@@ -104,7 +104,7 @@ class SingleQuerySqlGeneratorUnitTests {
 		void createSelectForFindAllById() {
 
 			Table table = Table.create(persistentEntity.getQualifiedTableName());
-			String sql = sqlGenerator.findAll(table.column("id").in(Conditions.just(":ids")));
+			String sql = sqlGenerator.findAll(persistentEntity, table.column("id").in(Conditions.just(":ids")));
 
 			SqlAssert baseSelect = assertThatParsed(sql).hasInlineView();
 
@@ -138,7 +138,7 @@ class SingleQuerySqlGeneratorUnitTests {
 		void createSelectForFindById() {
 
 			Table table = Table.create(persistentEntity.getQualifiedTableName());
-			String sql = sqlGenerator.findAll(table.column("id").isEqualTo(Conditions.just(":id")));
+			String sql = sqlGenerator.findAll(persistentEntity, table.column("id").isEqualTo(Conditions.just(":id")));
 
 			String rootRowNumber = rnAlias();
 			String rootCount = rcAlias();
@@ -161,8 +161,7 @@ class SingleQuerySqlGeneratorUnitTests {
 									func("coalesce", col(trivialsRowNumber), lit(1))), //
 							col(backref), //
 							col(keyAlias) //
-					)
-					.extractWhereClause() //
+					).extractWhereClause() //
 					.isEqualTo("");
 			baseSelect.hasInlineViewSelectingFrom("\"single_reference_aggregate\"") //
 					.hasExactlyColumns( //
@@ -216,7 +215,7 @@ class SingleQuerySqlGeneratorUnitTests {
 
 			this.aggregateRootType = aggregateRootType;
 			this.persistentEntity = context.getRequiredPersistentEntity(aggregateRootType);
-			this.sqlGenerator = new SingleQuerySqlGenerator(context, new AliasFactory(), dialect, persistentEntity);
+			this.sqlGenerator = new SingleQuerySqlGenerator(context, new AliasFactory(), dialect);
 			this.aliases = sqlGenerator.getAliasFactory();
 		}
 
