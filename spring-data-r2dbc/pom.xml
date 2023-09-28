@@ -375,6 +375,9 @@
 							<includes>
 								<include>**/*Tests.java</include>
 							</includes>
+							<excludes>
+								<exclude/>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>

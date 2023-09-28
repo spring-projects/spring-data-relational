@@ -251,6 +251,9 @@
 							<systemPropertyVariables>
 								<spring.profiles.active>hsql</spring.profiles.active>
 							</systemPropertyVariables>
+							<excludes>
+								<exclude/>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>
@@ -277,6 +280,9 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes>
+										<exclude/>
+									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
 									</systemPropertyVariables>
@@ -305,6 +311,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>h2</spring.profiles.active>
 									</systemPropertyVariables>
@@ -320,6 +327,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mysql</spring.profiles.active>
 									</systemPropertyVariables>
@@ -335,6 +343,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
 									</systemPropertyVariables>
@@ -350,6 +359,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mariadb</spring.profiles.active>
 									</systemPropertyVariables>
@@ -365,6 +375,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>db2</spring.profiles.active>
 									</systemPropertyVariables>
@@ -380,6 +391,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>oracle</spring.profiles.active>
 									</systemPropertyVariables>
@@ -395,6 +407,7 @@
 									<includes>
 										<include>**/*IntegrationTests.java</include>
 									</includes>
+									<excludes><exclude/></excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mssql</spring.profiles.active>
 									</systemPropertyVariables>
