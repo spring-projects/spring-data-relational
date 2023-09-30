@@ -27,7 +27,7 @@ import org.springframework.util.ObjectUtils;
  * @author Kurt Niemi
  * @since 3.2
  */
-record Table(@Nullable String schema, String name, List<Column> keyColumns, List<Column> columns) {
+record Table(@Nullable String schema, String name, List<Column> columns, List<ForeignKey> foreignKeys) {
 
 	public Table(@Nullable String schema, String name) {
 		this(schema, name, new ArrayList<>(), new ArrayList<>());

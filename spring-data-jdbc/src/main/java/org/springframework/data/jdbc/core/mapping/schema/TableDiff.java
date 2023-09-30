@@ -25,10 +25,11 @@ import java.util.List;
  * @author Kurt Niemi
  * @since 3.2
  */
-record TableDiff(Table table, List<Column> columnsToAdd, List<Column> columnsToDrop) {
+record TableDiff(Table table, List<Column> columnsToAdd, List<Column> columnsToDrop, List<ForeignKey> fkToAdd,
+								 List<ForeignKey> fkToDrop) {
 
 	public TableDiff(Table table) {
-		this(table, new ArrayList<>(), new ArrayList<>());
+		this(table, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 	}
 
 }

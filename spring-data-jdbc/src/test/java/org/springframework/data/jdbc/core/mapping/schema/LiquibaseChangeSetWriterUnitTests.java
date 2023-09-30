@@ -15,9 +15,15 @@
  */
 package org.springframework.data.jdbc.core.mapping.schema;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.*;
 
+import liquibase.change.Change;
 import liquibase.change.ColumnConfig;
+import liquibase.change.core.AddForeignKeyConstraintChange;
 import liquibase.change.core.CreateTableChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
@@ -25,6 +31,7 @@ import liquibase.changelog.DatabaseChangeLog;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.schema.LiquibaseChangeSetWriter.ChangeSetMetadata;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
@@ -73,6 +80,45 @@ class LiquibaseChangeSetWriterUnitTests {
 		assertThat(createTable.getTableName()).isEqualTo("other_table");
 	}
 
+	@Test // GH-1599
+	void createForeignKeyWithNewTable() {
+
+		RelationalMappingContext context = new RelationalMappingContext();
+		context.getRequiredPersistentEntity(Tables.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		AddForeignKeyConstraintChange addForeignKey = (AddForeignKeyConstraintChange) changeSet.getChanges().get(2);
+
+		assertThat(addForeignKey.getBaseTableName()).isEqualTo("other_table");
+		assertThat(addForeignKey.getBaseColumnNames()).isEqualTo("tables");
+		assertThat(addForeignKey.getReferencedTableName()).isEqualTo("tables");
+		assertThat(addForeignKey.getReferencedColumnNames()).isEqualTo("id");
+
+	}
+
+	@Test // GH-1599
+	void fieldForFkShouldNotBeCreatedTwice() {
+
+		RelationalMappingContext context = new RelationalMappingContext();
+		context.getRequiredPersistentEntity(DifferentTables.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		Optional<Change> tableWithFk = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof CreateTableChange && ((CreateTableChange) change).getTableName()
+					.equals("table_with_fk_field");
+		}).findFirst();
+		assertThat(tableWithFk.isPresent()).isEqualTo(true);
+
+		List<ColumnConfig> columns = ((CreateTableChange) tableWithFk.get()).getColumns();
+		assertThat(columns).extracting(ColumnConfig::getName).containsExactly("id", "tables_id");
+	}
+
 	@org.springframework.data.relational.core.mapping.Table
 	static class VariousTypes {
 		@Id long id;
@@ -86,6 +132,26 @@ class LiquibaseChangeSetWriterUnitTests {
 	@org.springframework.data.relational.core.mapping.Table
 	static class OtherTable {
 		@Id long id;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class Tables {
+		@Id int id;
+		@MappedCollection
+		Set<OtherTable> tables;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class DifferentTables {
+		@Id int id;
+		@MappedCollection(idColumn = "tables_id")
+		Set<TableWithFkField> tables;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class TableWithFkField {
+		@Id int id;
+		int tablesId;
 	}
 
 }

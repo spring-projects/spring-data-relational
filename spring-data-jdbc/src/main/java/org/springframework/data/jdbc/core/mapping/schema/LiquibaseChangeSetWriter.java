@@ -21,8 +21,10 @@ import liquibase.change.AddColumnConfig;
 import liquibase.change.ColumnConfig;
 import liquibase.change.ConstraintsConfig;
 import liquibase.change.core.AddColumnChange;
+import liquibase.change.core.AddForeignKeyConstraintChange;
 import liquibase.change.core.CreateTableChange;
 import liquibase.change.core.DropColumnChange;
+import liquibase.change.core.DropForeignKeyConstraintChange;
 import liquibase.change.core.DropTableChange;
 import liquibase.changelog.ChangeLogChild;
 import liquibase.changelog.ChangeLogParameters;
@@ -52,6 +54,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 import org.springframework.data.mapping.context.MappingContext;
@@ -321,7 +324,7 @@ public class LiquibaseChangeSetWriter {
 	private SchemaDiff initial() {
 
 		Tables mappedEntities = Tables.from(mappingContext.getPersistentEntities().stream().filter(schemaFilter),
-				sqlTypeMapping, null);
+				sqlTypeMapping, null, mappingContext);
 		return SchemaDiff.diff(mappedEntities, Tables.empty(), nameComparator);
 	}
 
@@ -329,7 +332,7 @@ public class LiquibaseChangeSetWriter {
 
 		Tables existingTables = getLiquibaseModel(database);
 		Tables mappedEntities = Tables.from(mappingContext.getPersistentEntities().stream().filter(schemaFilter),
-				sqlTypeMapping, database.getDefaultCatalogName());
+				sqlTypeMapping, database.getDefaultCatalogName(), mappingContext);
 
 		return SchemaDiff.diff(mappedEntities, existingTables, nameComparator);
 	}
@@ -362,6 +365,13 @@ public class LiquibaseChangeSetWriter {
 
 	private void generateTableAdditionsDeletions(ChangeSet changeSet, SchemaDiff difference) {
 
+		for (Table table : difference.tableDeletions()) {
+			for (ForeignKey foreignKey : table.foreignKeys()) {
+				DropForeignKeyConstraintChange dropForeignKey = dropForeignKey(foreignKey);
+				changeSet.addChange(dropForeignKey);
+			}
+		}
+
 		for (Table table : difference.tableAdditions()) {
 			CreateTableChange newTable = changeTable(table);
 			changeSet.addChange(newTable);
@@ -373,11 +383,23 @@ public class LiquibaseChangeSetWriter {
 				changeSet.addChange(dropTable(table));
 			}
 		}
+
+		for (Table table : difference.tableAdditions()) {
+			for (ForeignKey foreignKey : table.foreignKeys()) {
+				AddForeignKeyConstraintChange addForeignKey = addForeignKey(foreignKey);
+				changeSet.addChange(addForeignKey);
+			}
+		}
 	}
 
 	private void generateTableModifications(ChangeSet changeSet, SchemaDiff difference) {
 
 		for (TableDiff table : difference.tableDiffs()) {
+
+			for (ForeignKey foreignKey : table.fkToDrop()) {
+				DropForeignKeyConstraintChange dropForeignKey = dropForeignKey(foreignKey);
+				changeSet.addChange(dropForeignKey);
+			}
 
 			if (!table.columnsToAdd().isEmpty()) {
 				changeSet.addChange(addColumns(table));
@@ -387,6 +409,11 @@ public class LiquibaseChangeSetWriter {
 
 			if (!deletedColumns.isEmpty()) {
 				changeSet.addChange(dropColumns(table, deletedColumns));
+			}
+
+			for (ForeignKey foreignKey : table.fkToAdd()) {
+				AddForeignKeyConstraintChange addForeignKey = addForeignKey(foreignKey);
+				changeSet.addChange(addForeignKey);
 			}
 		}
 	}
@@ -444,10 +471,25 @@ public class LiquibaseChangeSetWriter {
 				tableModel.columns().add(columnModel);
 			}
 
+			tableModel.foreignKeys().addAll(extractForeignKeys(table));
+
 			existingTables.add(tableModel);
 		}
 
 		return new Tables(existingTables);
+	}
+
+	private static List<ForeignKey> extractForeignKeys(liquibase.structure.core.Table table) {
+
+		return table.getOutgoingForeignKeys().stream().map(foreignKey -> {
+			String tableName = foreignKey.getForeignKeyTable().getName();
+			String columnName = foreignKey.getForeignKeyColumns().stream().findFirst()
+					.map(liquibase.structure.core.Column::getName).get();
+			String referencedTableName = foreignKey.getPrimaryKeyTable().getName();
+			String referencedColumnName = foreignKey.getPrimaryKeyColumns().stream().findFirst()
+					.map(liquibase.structure.core.Column::getName).get();
+			return new ForeignKey(foreignKey.getName(), tableName, columnName, referencedTableName, referencedColumnName);
+		}).collect(Collectors.toList());
 	}
 
 	private static AddColumnChange addColumns(TableDiff table) {
@@ -529,6 +571,25 @@ public class LiquibaseChangeSetWriter {
 		change.setTableName(table.name());
 		change.setCascadeConstraints(true);
 
+		return change;
+	}
+
+	private static AddForeignKeyConstraintChange addForeignKey(ForeignKey foreignKey) {
+
+		AddForeignKeyConstraintChange change = new AddForeignKeyConstraintChange();
+		change.setConstraintName(foreignKey.name());
+		change.setBaseTableName(foreignKey.tableName());
+		change.setBaseColumnNames(foreignKey.columnName());
+		change.setReferencedTableName(foreignKey.referencedTableName());
+		change.setReferencedColumnNames(foreignKey.referencedColumnName());
+		return change;
+	}
+
+	private static DropForeignKeyConstraintChange dropForeignKey(ForeignKey foreignKey) {
+
+		DropForeignKeyConstraintChange change = new DropForeignKeyConstraintChange();
+		change.setConstraintName(foreignKey.name());
+		change.setBaseTableName(foreignKey.tableName());
 		return change;
 	}
 
