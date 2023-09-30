@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.mapping.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.stream.Collectors;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
@@ -27,7 +28,7 @@ import org.springframework.util.ObjectUtils;
  * @author Kurt Niemi
  * @since 3.2
  */
-record Table(@Nullable String schema, String name, List<Column> keyColumns, List<Column> columns) {
+record Table(@Nullable String schema, String name, List<Column> columns, List<ForeignKey> foreignKeys) {
 
 	public Table(@Nullable String schema, String name) {
 		this(schema, name, new ArrayList<>(), new ArrayList<>());
@@ -35,6 +36,10 @@ record Table(@Nullable String schema, String name, List<Column> keyColumns, List
 
 	public Table(String name) {
 		this(null, name);
+	}
+
+	public List<Column> getIdColumns() {
+		return columns().stream().filter(Column::identity).collect(Collectors.toList());
 	}
 
 	@Override

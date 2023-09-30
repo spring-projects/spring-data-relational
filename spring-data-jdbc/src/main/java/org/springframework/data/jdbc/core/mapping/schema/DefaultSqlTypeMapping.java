@@ -63,4 +63,9 @@ public class DefaultSqlTypeMapping implements SqlTypeMapping {
 	public String getColumnType(RelationalPersistentProperty property) {
 		return typeMap.get(ClassUtils.resolvePrimitiveIfNecessary(property.getActualType()));
 	}
+
+	@Override
+	public String getColumnTypeByClass(Class clazz) {
+		return typeMap.get(clazz);
+	}
 }

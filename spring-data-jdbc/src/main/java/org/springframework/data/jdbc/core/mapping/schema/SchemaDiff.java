@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -91,41 +92,38 @@ record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<T
 			TableDiff tableDiff = new TableDiff(mappedEntity);
 
 			Map<String, Column> mappedColumns = createMapping(mappedEntity.columns(), Column::name, nameComparator);
-			mappedEntity.keyColumns().forEach(it -> mappedColumns.put(it.name(), it));
-
 			Map<String, Column> existingColumns = createMapping(existingTable.columns(), Column::name, nameComparator);
-			existingTable.keyColumns().forEach(it -> existingColumns.put(it.name(), it));
-
 			// Identify deleted columns
-			Map<String, Column> toDelete = new TreeMap<>(nameComparator);
-			toDelete.putAll(existingColumns);
-			mappedColumns.keySet().forEach(toDelete::remove);
-
-			tableDiff.columnsToDrop().addAll(toDelete.values());
-
-			// Identify added columns
-			Map<String, Column> addedColumns = new TreeMap<>(nameComparator);
-			addedColumns.putAll(mappedColumns);
-
-			existingColumns.keySet().forEach(addedColumns::remove);
-
-			// Add columns in order. This order can interleave with existing columns.
-			for (Column column : mappedEntity.keyColumns()) {
-				if (addedColumns.containsKey(column.name())) {
-					tableDiff.columnsToAdd().add(column);
-				}
-			}
-
+			tableDiff.columnsToDrop().addAll(findDiffs(mappedColumns, existingColumns, nameComparator));
+			// Identify added columns and add columns in order. This order can interleave with existing columns.
+			Collection<Column> addedColumns = findDiffs(existingColumns, mappedColumns, nameComparator);
 			for (Column column : mappedEntity.columns()) {
-				if (addedColumns.containsKey(column.name())) {
+				if (addedColumns.contains(column)) {
 					tableDiff.columnsToAdd().add(column);
 				}
 			}
+
+			Map<String, ForeignKey> mappedForeignKeys = createMapping(mappedEntity.foreignKeys(), ForeignKey::name,
+					nameComparator);
+			Map<String, ForeignKey> existingForeignKeys = createMapping(existingTable.foreignKeys(), ForeignKey::name,
+					nameComparator);
+			// Identify deleted foreign keys
+			tableDiff.fkToDrop().addAll(findDiffs(mappedForeignKeys, existingForeignKeys, nameComparator));
+			// Identify added foreign keys
+			tableDiff.fkToAdd().addAll(findDiffs(existingForeignKeys, mappedForeignKeys, nameComparator));
 
 			tableDiffs.add(tableDiff);
 		}
 
 		return tableDiffs;
+	}
+
+	private static <T> Collection<T> findDiffs(Map<String, T> baseMapping, Map<String, T> toCompareMapping,
+			Comparator<String> nameComparator) {
+		Map<String, T> diff = new TreeMap<>(nameComparator);
+		diff.putAll(toCompareMapping);
+		baseMapping.keySet().forEach(diff::remove);
+		return diff.values();
 	}
 
 	private static <T> SortedMap<String, T> createMapping(List<T> items, Function<T, String> keyFunction,
