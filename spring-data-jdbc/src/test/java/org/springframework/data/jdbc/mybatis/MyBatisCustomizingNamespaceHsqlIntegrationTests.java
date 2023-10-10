@@ -37,6 +37,10 @@ import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -54,10 +58,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Tyler Van Gorder
  */
-@ContextConfiguration
-@ActiveProfiles("hsql")
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
 	@Autowired SqlSessionFactory sqlSessionFactory;
@@ -84,8 +86,8 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 	static class Config {
 
 		@Bean
-		Class<?> testClass() {
-			return MyBatisCustomizingNamespaceHsqlIntegrationTests.class;
+		TestClass testClass() {
+			return TestClass.of(MyBatisCustomizingNamespaceHsqlIntegrationTests.class);
 		}
 
 		@Bean

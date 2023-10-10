@@ -23,7 +23,6 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +32,16 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
+import org.springframework.data.jdbc.testing.IntegrationTest;
+import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Tests the integration with Mybatis.
@@ -51,10 +50,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Greg Turnquist
  * @author Mark Paluch
  */
-@ContextConfiguration
-@ActiveProfiles("hsql")
-@Transactional
-@ExtendWith(SpringExtension.class)
+@IntegrationTest
+@EnabledOnDatabase(DatabaseType.HSQL)
 public class MyBatisHsqlIntegrationTests {
 
 	@Autowired SqlSessionFactory sqlSessionFactory;
@@ -91,8 +88,8 @@ public class MyBatisHsqlIntegrationTests {
 	static class Config {
 
 		@Bean
-		Class<?> testClass() {
-			return MyBatisHsqlIntegrationTests.class;
+		TestClass testClass() {
+			return TestClass.of(MyBatisHsqlIntegrationTests.class);
 		}
 
 		@Bean
