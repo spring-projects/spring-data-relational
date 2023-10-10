@@ -18,12 +18,12 @@ package org.springframework.data.relational.core.dialect;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
-import java.rmi.server.UID;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -51,7 +51,7 @@ public class PostgresDialect extends AbstractDialect {
 	 */
 	public static final PostgresDialect INSTANCE = new PostgresDialect();
 
-	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UID.class, URL.class, URI.class, InetAddress.class,
+	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UUID.class, URL.class, URI.class, InetAddress.class,
 			Map.class);
 
 	protected PostgresDialect() {}
