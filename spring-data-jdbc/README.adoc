@@ -23,11 +23,11 @@ If you are new to Spring Data JDBC read the following two articles https://sprin
 There are also examples in the https://github.com/spring-projects/spring-data-examples/tree/master/jdbc[Spring Data Examples] project.
 
 A very good source of information is the source code in this repository.
-Especially the integration tests (if you are reading this on github, type `t` and then `IntegrationTests.java`)
+Especially the integration tests (if you are reading this on GitHub, type `t` and then `IntegrationTests.java`)
 
-We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
+We are keeping an eye on the https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on Stack Overflow].
 
-If you think you found a bug, or have a feature request please https://github.com/spring-projects/spring-data-jdbc/issues[create a ticket in our issue tracker].
+If you think you found a bug, or have a feature request, please https://github.com/spring-projects/spring-data-jdbc/issues[create a ticket in our issue tracker].
 
 == Execute Tests
 
@@ -44,7 +44,7 @@ This will execute unit tests and integration tests using an in-memory database.
 
 === Running tests with a real database
 
-In order to run the integration tests against a specific database you need to have a local Docker installation available, and then execute.
+In order to run the integration tests against a specific database, you need to have a local Docker installation available, and then execute.
 
 [source]
 ----
@@ -53,7 +53,7 @@ mvn test -Dspring.profiles.active=<databasetype>
 
 This will also execute the unit tests.
 
-Currently the following _databasetypes_ are available:
+Currently, the following _databasetypes_ are available:
 
 * hsql (default, does not require a running database)
 * mysql
@@ -61,8 +61,8 @@ Currently the following _databasetypes_ are available:
 * mariadb
 * mssql
 
-Testing with Microsoft SQL Server requires you to accept the EULA of the Microsoft SQL Server Docker image, so the build may download and run it for you.
-In order to accept the EULA please add a file named `container-license-acceptance.txt` to the classpath, i.e. `src/test/resources` with the content:
+Testing with Microsoft SQL Server requires you to accept the EULA of the Microsoft SQL Server Docker image so that the build may download and run it for you.
+In order to accept the EULA, please add a file named `container-license-acceptance.txt` to the classpath, i.e. `src/test/resources` with the content:
 
 ```
 microsoft/mssql-server-linux:2017-CU6
@@ -75,4 +75,4 @@ microsoft/mssql-server-linux:2017-CU6
 mvn test -Pall-dbs
 ----
 
-This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
+This will execute the unit tests and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
