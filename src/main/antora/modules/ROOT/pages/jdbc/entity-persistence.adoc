@@ -30,13 +30,17 @@ This should be significant more efficient, especially for complex aggregates, co
 +
 Currently, Single Query Loading is restricted in different ways:
 
-1. The aggregate must not have nested collections, this includes `Map`.The plan is to remove this constraint in the future.
+1. The aggregate must not have nested collections, this includes `Map`.
+The plan is to remove this constraint in the future.
 
-2. The aggregate must not use `AggregateReference` or embedded entities.The plan is to remove this constraint in the future.
+2. The aggregate must not use `AggregateReference` or embedded entities.
+The plan is to remove this constraint in the future.
 
-3. The database dialect must support it.Of the dialects provided by Spring Data JDBC all but H2 and HSQL support this.H2 and HSQL don't support analytic functions (aka windowing functions).
+3. The database dialect must support it.Of the dialects provided by Spring Data JDBC all but H2 and HSQL support this.
+H2 and HSQL don't support analytic functions (aka windowing functions).
 
-4. It only works for the find methods in `CrudRepository`, not for derived queries and not for annotated queries.The plan is to remove this constraint in the future.
+4. It only works for the find methods in `CrudRepository`, not for derived queries and not for annotated queries.
+The plan is to remove this constraint in the future.
 
 5. Single Query Loading needs to be enabled in the `JdbcMappingContext`, by calling `setSingleQueryLoadingEnabled(true)`
 

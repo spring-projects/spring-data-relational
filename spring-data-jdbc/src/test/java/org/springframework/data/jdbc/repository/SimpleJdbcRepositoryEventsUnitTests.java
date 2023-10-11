@@ -65,6 +65,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
@@ -81,7 +82,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 
 	private static final long generatedId = 4711L;
 
-	private CollectingEventPublisher publisher = new CollectingEventPublisher();
+	private final CollectingEventPublisher publisher = new CollectingEventPublisher();
 
 	private DummyEntityRepository repository;
 	private DefaultDataAccessStrategy dataAccessStrategy;
@@ -306,7 +307,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 			extends CrudRepository<DummyEntity, Long>, PagingAndSortingRepository<DummyEntity, Long> {}
 
 	static final class DummyEntity {
-		@Id private final Long id;
+		private final @Id Long id;
 
 		public DummyEntity(Long id) {
 			this.id = id;
@@ -316,34 +317,31 @@ class SimpleJdbcRepositoryEventsUnitTests {
 			return this.id;
 		}
 
-		public boolean equals(final Object o) {
-			if (o == this)
-				return true;
-			if (!(o instanceof DummyEntity))
-				return false;
-			final DummyEntity other = (DummyEntity) o;
-			final Object this$id = this.getId();
-			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
-				return false;
-			return true;
+		public DummyEntity withId(Long id) {
+			return this.id == id ? this : new DummyEntity(id);
 		}
 
+		@Override
+		public boolean equals(Object o) {
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
+
+			DummyEntity that = (DummyEntity) o;
+
+			return ObjectUtils.nullSafeEquals(id, that.id);
+		}
+
+		@Override
 		public int hashCode() {
-			final int PRIME = 59;
-			int result = 1;
-			final Object $id = this.getId();
-			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-			return result;
+			return ObjectUtils.nullSafeHashCode(id);
 		}
 
 		public String toString() {
 			return "SimpleJdbcRepositoryEventsUnitTests.DummyEntity(id=" + this.getId() + ")";
 		}
 
-		public DummyEntity withId(Long id) {
-			return this.id == id ? this : new DummyEntity(id);
-		}
 	}
 
 	static class CollectingEventPublisher implements ApplicationEventPublisher {

@@ -43,9 +43,9 @@ public class InsertStrategyFactory {
 
 	/**
 	 * Constructor with additional {@link BatchJdbcOperations} constructor.
-	 * 
-	 * @deprecated Use the {@link InsertStrategyFactory#InsertStrategyFactory(NamedParameterJdbcOperations, Dialect)}
-	 *             instead.
+	 *
+	 * @deprecated since 3.2, use
+	 *             {@link InsertStrategyFactory#InsertStrategyFactory(NamedParameterJdbcOperations, Dialect)} instead.
 	 */
 	@Deprecated(since = "3.2")
 	public InsertStrategyFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,

@@ -15,49 +15,35 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
-import org.springframework.jdbc.core.RowMapperResultSetExtractor;
-import org.springframework.jdbc.core.SqlParameter;
-import org.springframework.jdbc.core.namedparam.NamedParameterUtils;
-import org.springframework.jdbc.core.namedparam.ParsedSql;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Counterpart to {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} containing methods for
  * performing batch updates with generated keys.
  *
  * @author Chirag Tailor
+ * @author Mark Paluch
  * @since 2.4
- * @deprecated Use the standard {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} instead.
+ * @deprecated since 3.2. Use {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations#batchUpdate}
+ *             methods instead.
  */
 @Deprecated(since = "3.2")
 public class BatchJdbcOperations {
 
-	private final JdbcOperations jdbcOperations;
+	private final NamedParameterJdbcOperations jdbcOperations;
 
 	public BatchJdbcOperations(JdbcOperations jdbcOperations) {
-		this.jdbcOperations = jdbcOperations;
+		this.jdbcOperations = new NamedParameterJdbcTemplate(jdbcOperations);
 	}
 
 	/**
 	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments, returning generated keys.
-	 * 
+	 *
 	 * @param sql the SQL statement to execute
 	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of arguments for the query
 	 * @param generatedKeyHolder a {@link KeyHolder} that will hold the generated keys
@@ -69,12 +55,12 @@ public class BatchJdbcOperations {
 	 * @since 2.4
 	 */
 	int[] batchUpdate(String sql, SqlParameterSource[] batchArgs, KeyHolder generatedKeyHolder) {
-		return batchUpdate(sql, batchArgs, generatedKeyHolder, null);
+		return jdbcOperations.batchUpdate(sql, batchArgs, generatedKeyHolder);
 	}
 
 	/**
 	 * Execute a batch using the supplied SQL statement with the batch of supplied arguments, returning generated keys.
-	 * 
+	 *
 	 * @param sql the SQL statement to execute
 	 * @param batchArgs the array of {@link SqlParameterSource} containing the batch of arguments for the query
 	 * @param generatedKeyHolder a {@link KeyHolder} that will hold the generated keys
@@ -88,87 +74,6 @@ public class BatchJdbcOperations {
 	 */
 	int[] batchUpdate(String sql, SqlParameterSource[] batchArgs, KeyHolder generatedKeyHolder,
 			@Nullable String[] keyColumnNames) {
-
-		if (batchArgs.length == 0) {
-			return new int[0];
-		}
-
-		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-		SqlParameterSource paramSource = batchArgs[0];
-		String sqlToUse = NamedParameterUtils.substituteNamedParameters(parsedSql, paramSource);
-		List<SqlParameter> declaredParameters = NamedParameterUtils.buildSqlParameterList(parsedSql, paramSource);
-		PreparedStatementCreatorFactory pscf = new PreparedStatementCreatorFactory(sqlToUse, declaredParameters);
-		if (keyColumnNames != null) {
-			pscf.setGeneratedKeysColumnNames(keyColumnNames);
-		} else {
-			pscf.setReturnGeneratedKeys(true);
-		}
-		Object[] params = NamedParameterUtils.buildValueArray(parsedSql, paramSource, null);
-		PreparedStatementCreator psc = pscf.newPreparedStatementCreator(params);
-		BatchPreparedStatementSetter bpss = new BatchPreparedStatementSetter() {
-
-			@Override
-			public void setValues(PreparedStatement ps, int i) throws SQLException {
-				Object[] values = NamedParameterUtils.buildValueArray(parsedSql, batchArgs[i], null);
-				pscf.newPreparedStatementSetter(values).setValues(ps);
-			}
-
-			@Override
-			public int getBatchSize() {
-				return batchArgs.length;
-			}
-		};
-		PreparedStatementCallback<int[]> preparedStatementCallback = ps -> {
-
-			int batchSize = bpss.getBatchSize();
-			generatedKeyHolder.getKeyList().clear();
-			if (JdbcUtils.supportsBatchUpdates(ps.getConnection())) {
-
-				for (int i = 0; i < batchSize; i++) {
-
-					bpss.setValues(ps, i);
-					ps.addBatch();
-				}
-				int[] results = ps.executeBatch();
-				storeGeneratedKeys(generatedKeyHolder, ps, batchSize);
-				return results;
-			} else {
-
-				List<Integer> rowsAffected = new ArrayList<>();
-				for (int i = 0; i < batchSize; i++) {
-
-					bpss.setValues(ps, i);
-					rowsAffected.add(ps.executeUpdate());
-					storeGeneratedKeys(generatedKeyHolder, ps, 1);
-				}
-				int[] rowsAffectedArray = new int[rowsAffected.size()];
-				for (int i = 0; i < rowsAffectedArray.length; i++) {
-					rowsAffectedArray[i] = rowsAffected.get(i);
-				}
-				return rowsAffectedArray;
-			}
-		};
-		int[] result = jdbcOperations.execute(psc, preparedStatementCallback);
-		Assert.state(result != null, "No result array");
-		return result;
-	}
-
-	private void storeGeneratedKeys(KeyHolder generatedKeyHolder, PreparedStatement ps, int rowsExpected)
-			throws SQLException {
-
-		List<Map<String, Object>> generatedKeys = generatedKeyHolder.getKeyList();
-		ResultSet keys = ps.getGeneratedKeys();
-		if (keys != null) {
-
-			try {
-
-				RowMapperResultSetExtractor<Map<String, Object>> rse = new RowMapperResultSetExtractor<>(
-						new ColumnMapRowMapper(), rowsExpected);
-				// noinspection ConstantConditions
-				generatedKeys.addAll(rse.extractData(keys));
-			} finally {
-				JdbcUtils.closeResultSet(keys);
-			}
-		}
+		return jdbcOperations.batchUpdate(sql, batchArgs, generatedKeyHolder, keyColumnNames);
 	}
 }
