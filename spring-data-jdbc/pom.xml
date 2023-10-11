@@ -318,6 +318,13 @@
 								</configuration>
 							</execution>
 							<execution>
+								<id>failsafe-verify-h2</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+							<execution>
 								<id>mysql-test</id>
 								<phase>integration-test</phase>
 								<goals>
@@ -332,6 +339,13 @@
 										<spring.profiles.active>mysql</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
+							</execution>
+							<execution>
+								<id>failsafe-verify-mysql</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
 							</execution>
 							<execution>
 								<id>postgres-test</id>
@@ -350,6 +364,13 @@
 								</configuration>
 							</execution>
 							<execution>
+								<id>failsafe-verify-postgres</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+							<execution>
 								<id>mariadb-test</id>
 								<phase>integration-test</phase>
 								<goals>
@@ -364,6 +385,13 @@
 										<spring.profiles.active>mariadb</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
+							</execution>
+							<execution>
+								<id>failsafe-verify-mariadb</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
 							</execution>
 							<execution>
 								<id>db2-test</id>
@@ -382,6 +410,13 @@
 								</configuration>
 							</execution>
 							<execution>
+								<id>failsafe-verify-db2</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+							<execution>
 								<id>oracle-test</id>
 								<phase>integration-test</phase>
 								<goals>
@@ -398,6 +433,13 @@
 								</configuration>
 							</execution>
 							<execution>
+								<id>failsafe-verify-oracle</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+							<execution>
 								<id>mssql-test</id>
 								<phase>integration-test</phase>
 								<goals>
@@ -412,6 +454,13 @@
 										<spring.profiles.active>mssql</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
+							</execution>
+							<execution>
+								<id>failsafe-verify-mssql</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
