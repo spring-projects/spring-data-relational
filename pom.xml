@@ -292,7 +292,7 @@
 					</execution>
 					<execution>
 						<id>failsafe-verify</id>
-						<phase>verify</phase>
+						<phase>integration-test</phase>
 						<goals>
 							<goal>verify</goal>
 						</goals>
