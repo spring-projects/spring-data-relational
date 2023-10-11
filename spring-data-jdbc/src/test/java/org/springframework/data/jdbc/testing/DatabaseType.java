@@ -21,10 +21,11 @@ import java.util.Locale;
  * Supported database types. Types are defined to express against which database a particular test is expected to run.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public enum DatabaseType {
 
-	DB2, HSQL, H2, MARIADB, MYSQL, ORACLE, POSTGRES, SQL_SEVER("mssql");
+	DB2, HSQL, H2, MARIADB, MYSQL, ORACLE, POSTGRES, SQL_SERVER("mssql");
 
 	private final String profile;
 

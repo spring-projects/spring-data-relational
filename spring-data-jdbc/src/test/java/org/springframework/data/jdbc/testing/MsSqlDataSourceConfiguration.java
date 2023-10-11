@@ -31,10 +31,11 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  *
  * @author Thomas Lang
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnDatabase(DatabaseType.MARIADB)
+@ConditionalOnDatabase(DatabaseType.SQL_SERVER)
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04";

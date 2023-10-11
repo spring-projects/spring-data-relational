@@ -43,7 +43,7 @@ class LicenseListener implements TestExecutionListener {
 			assumeLicenseAccepted(Db2DataSourceConfiguration.DOCKER_IMAGE_NAME);
 		}
 
-		if (environment.matchesProfiles(DatabaseType.SQL_SEVER.getProfile())) {
+		if (environment.matchesProfiles(DatabaseType.SQL_SERVER.getProfile())) {
 			assumeLicenseAccepted(MS_SQL_SERVER_VERSION);
 		}
 	}
