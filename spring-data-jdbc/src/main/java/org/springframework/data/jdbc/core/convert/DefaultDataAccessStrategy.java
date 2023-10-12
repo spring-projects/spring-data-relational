@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregatePath.TableInfo;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -300,11 +302,27 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, propertyPath);
 
-		RowMapper<?> rowMapper = path.isMap() ? this.getMapEntityRowMapper(path, identifier)
-				: this.getEntityRowMapper(path, identifier);
-
 		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIdentifier(identifier);
-		return operations.query(findAllByProperty, parameterSource, (RowMapper<Object>) rowMapper);
+		return operations.query(findAllByProperty, parameterSource, new RowMapper<>() {
+
+			@Override
+			public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+				if (path.isMap()) {
+					return getMapEntityRowMapper(path, identifier).mapRow(rs, rowNum);
+				}
+
+				// Add row number as key for paths that do not defile an identifier and that are contained in a collection.
+				Identifier identifierToUse = identifier;
+				if (!path.hasIdProperty() && path.isQualified()) {
+
+					TableInfo tableInfo = path.getTableInfo();
+					identifierToUse = identifierToUse.withPart(tableInfo.qualifierColumnInfo().name(), rowNum, Object.class);
+				}
+
+				return getEntityRowMapper(path, identifierToUse).mapRow(rs, rowNum);
+			}
+		});
 	}
 
 	@Override

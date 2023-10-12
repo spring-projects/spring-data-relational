@@ -883,6 +883,9 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(saved.four).describedAs("Something went wrong during saving").isNotNull();
 
 		NoIdListChain4 reloaded = template.findById(saved.four, NoIdListChain4.class);
+
+		assertThat(reloaded.chain3).hasSameSizeAs(saved.chain3);
+		assertThat(reloaded.chain3.get(0).chain2).hasSameSizeAs(saved.chain3.get(0).chain2);
 		assertThat(reloaded).isEqualTo(saved);
 	}
 
@@ -1537,11 +1540,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [zeroValue='").append(zeroValue).append('\'');
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [zeroValue='" + zeroValue + '\'' + ']';
+			return sb;
 		}
 	}
 
@@ -1566,12 +1566,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [oneValue='").append(oneValue).append('\'');
-			sb.append(", chain0=").append(chain0);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [oneValue='" + oneValue + '\'' + ", chain0=" + chain0 + ']';
+			return sb;
 		}
 	}
 
@@ -1596,12 +1592,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [twoValue='").append(twoValue).append('\'');
-			sb.append(", chain1=").append(chain1);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [twoValue='" + twoValue + '\'' + ", chain1=" + chain1 + ']';
+			return sb;
 		}
 	}
 
@@ -1626,12 +1618,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [threeValue='").append(threeValue).append('\'');
-			sb.append(", chain2=").append(chain2);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [threeValue='" + threeValue + '\'' + ", chain2=" + chain2 + ']';
+			return sb;
 		}
 	}
 
@@ -1658,13 +1646,9 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [four=").append(four);
-			sb.append(", fourValue='").append(fourValue).append('\'');
-			sb.append(", chain3=").append(chain3);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [four=" + four + ", fourValue='" + fourValue + '\'' + ", chain3="
+					+ chain3 + ']';
+			return sb;
 		}
 
 	}
@@ -1692,11 +1676,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [zeroValue='").append(zeroValue).append('\'');
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [zeroValue='" + zeroValue + '\'' + ']';
+			return sb;
 		}
 	}
 
@@ -1721,12 +1702,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [oneValue='").append(oneValue).append('\'');
-			sb.append(", chain0=").append(chain0);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [oneValue='" + oneValue + '\'' + ", chain0=" + chain0 + ']';
+			return sb;
 		}
 	}
 
@@ -1751,12 +1728,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [twoValue='").append(twoValue).append('\'');
-			sb.append(", chain1=").append(chain1);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [twoValue='" + twoValue + '\'' + ", chain1=" + chain1 + ']';
+			return sb;
 		}
 	}
 
@@ -1781,12 +1754,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [threeValue='").append(threeValue).append('\'');
-			sb.append(", chain2=").append(chain2);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [threeValue='" + threeValue + '\'' + ", chain2=" + chain2 + ']';
+			return sb;
 		}
 	}
 
@@ -1813,13 +1782,9 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		@Override
 		public String toString() {
-			final StringBuffer sb = new StringBuffer();
-			sb.append(getClass().getSimpleName());
-			sb.append(" [four=").append(four);
-			sb.append(", fourValue='").append(fourValue).append('\'');
-			sb.append(", chain3=").append(chain3);
-			sb.append(']');
-			return sb.toString();
+			String sb = getClass().getSimpleName() + " [four=" + four + ", fourValue='" + fourValue + '\'' + ", chain3="
+					+ chain3 + ']';
+			return sb;
 		}
 	}
 
