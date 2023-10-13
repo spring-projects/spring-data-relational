@@ -10,6 +10,7 @@ target/
 *.sonar4clipseExternals
 *.graphml
 *.json
+.mvn/.gradle-enterprise
 
 build/
 node_modules
