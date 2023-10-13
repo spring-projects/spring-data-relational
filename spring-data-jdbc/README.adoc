@@ -44,11 +44,11 @@ This will execute unit tests and integration tests using an in-memory database.
 
 === Running tests with a real database
 
-In order to run the integration tests against a specific database, you need to have a local Docker installation available, and then execute.
+In order to run the integration tests against a specific database, you need to have a local Docker installation available, and then execute:
 
 [source]
 ----
-mvn test -Dspring.profiles.active=<databasetype>
+mvn verify -Dspring.profiles.active=<databasetype>
 ----
 
 This will also execute the unit tests.
@@ -57,15 +57,20 @@ Currently, the following _databasetypes_ are available:
 
 * hsql (default, does not require a running database)
 * mysql
+* mariadb
 * postgres
 * mariadb
 * mssql
+* oracle
+* db2
 
-Testing with Microsoft SQL Server requires you to accept the EULA of the Microsoft SQL Server Docker image so that the build may download and run it for you.
-In order to accept the EULA, please add a file named `container-license-acceptance.txt` to the classpath, i.e. `src/test/resources` with the content:
+Testing with Microsoft SQL Server and IBM DB2 requires you to accept the EULA of the respective Docker image so that the build may download and run it for you.
+In order to accept the EULA, please add a file named `container-license-acceptance.txt` to the classpath, i.e. `src/test/resources` containing the name of the docker images.
+At the time of this writing this would be
 
 ```
-microsoft/mssql-server-linux:2017-CU6
+mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04
+ibmcom/db2:11.5.7.0a
 ```
 
 === Run tests with all databases
@@ -75,4 +80,4 @@ microsoft/mssql-server-linux:2017-CU6
 mvn test -Pall-dbs
 ----
 
-This will execute the unit tests and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
+This will execute the unit tests and all the integration tests with all the databases we currently support for testing.
