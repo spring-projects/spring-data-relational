@@ -55,19 +55,22 @@ The properties of the following types are currently supported:
 * References to other entities.
 They are considered a one-to-one relationship, or an embedded type.
 It is optional for one-to-one relationship entities to have an `id` attribute.
-The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References].
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see <<jdbc.entity-persistence.types.backrefs>>.
 Embedded entities do not need an `id`.
-If one is present it gets ignored.
+If one is present it gets mapped as a normal attribute without any special meaning.
 
 * `Set<some entity>` is considered a one-to-many relationship.
-The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References].
+The table of the referenced entity is expected to have an additional column with a name based on the referencing entity see <<jdbc.entity-persistence.types.backrefs>>.
 
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
-The table of the referenced entity is expected to have two additional columns: One named based on the referencing entity for the foreign key (see xref:jdbc/entity-persistence.adoc#jdbc.entity-persistence.types.backrefs[Back References]) and one with the same name and an additional `_key` suffix for the map key.
-You can change this behavior by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
-Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`
+The table of the referenced entity is expected to have two additional columns: One named based on the referencing entity for the foreign key (see <<jdbc.entity-persistence.types.backrefs>>) and one with the same name and an additional `_key` suffix for the map key.
 
-* `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
+* `List<some entity>` is mapped as a  `Map<Integer, some entity>`. The same additional columns are expected and the names used can be customized in the same way.
+
+For `List`, `Set`, and `Map` naming of the back reference can be controlled by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`.
+Specifying a key column for a `Set` has no effect.
+
 
 [[mapping.usage.annotations]]
 === Mapping Annotation Overview
