@@ -300,8 +300,7 @@ class SqlParametersFactoryTest {
 	private SqlParametersFactory createSqlParametersFactoryWithConverters(List<?> converters) {
 
 		MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver,
-				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)),
-				dialect.getIdentifierProcessing());
+				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)));
 		return new SqlParametersFactory(context, converter);
 	}
 }

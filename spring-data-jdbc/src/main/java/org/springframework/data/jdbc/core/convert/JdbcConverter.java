@@ -82,6 +82,7 @@ public interface JdbcConverter extends RelationalConverter {
 	@SuppressWarnings("unchecked")
 	@Deprecated(since = "3.2", forRemoval = true)
 	default <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
+
 		try {
 			return (T) readAndResolve(path.getRequiredLeafEntity().getType(),
 					RowDocumentResultSetExtractor.toRowDocument(resultSet), identifier);

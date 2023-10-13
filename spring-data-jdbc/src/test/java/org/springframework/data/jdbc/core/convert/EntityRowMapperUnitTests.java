@@ -54,7 +54,6 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
@@ -1066,7 +1065,7 @@ public class EntityRowMapperUnitTests {
 				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_LIST), any(PersistentPropertyPath.class));
 
 		MappingJdbcConverter converter = new MappingJdbcConverter(context, accessStrategy, new JdbcCustomConversions(),
-				JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
+				JdbcTypeFactory.unsupported());
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //

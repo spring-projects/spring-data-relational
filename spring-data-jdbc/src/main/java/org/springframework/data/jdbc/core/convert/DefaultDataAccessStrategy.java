@@ -312,7 +312,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 					return getMapEntityRowMapper(path, identifier).mapRow(rs, rowNum);
 				}
 
-				// Add row number as key for paths that do not defile an identifier and that are contained in a collection.
+				// Add row number as key for paths that do not define an identifier and that are contained in a collection.
 				Identifier identifierToUse = identifier;
 				if (!path.hasIdProperty() && path.isQualified()) {
 

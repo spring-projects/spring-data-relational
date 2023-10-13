@@ -52,7 +52,6 @@ public interface RelationalConverter {
 	/**
 	 * Return the underlying {@link EntityInstantiators}.
 	 *
-	 * @return
 	 * @since 2.3
 	 */
 	EntityInstantiators getEntityInstantiators();
@@ -109,7 +108,6 @@ public interface RelationalConverter {
 	 *
 	 * @param descriptor the projection descriptor, must not be {@literal null}.
 	 * @param document must not be {@literal null}.
-	 * @param <R>
 	 * @return a new instance of the projection return type {@code R}.
 	 * @since 3.2
 	 */

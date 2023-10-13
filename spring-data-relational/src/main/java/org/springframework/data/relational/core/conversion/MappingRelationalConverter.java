@@ -294,7 +294,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		return read(TypeInformation.of(type), source);
 	}
 
-	protected <S extends Object> S read(TypeInformation<S> type, RowDocument source) {
+	protected <S> S read(TypeInformation<S> type, RowDocument source) {
 		return readAggregate(getConversionContext(ObjectPath.ROOT), source, type);
 	}
 
@@ -306,9 +306,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 * @param typeHint the {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
 	 * @return the converted object, will never be {@literal null}.
 	 */
-	@SuppressWarnings("unchecked")
-	protected <S extends Object> S readAggregate(ConversionContext context, RowDocument document,
-			TypeInformation<? extends S> typeHint) {
+	protected <S> S readAggregate(ConversionContext context, RowDocument document,
+								  TypeInformation<? extends S> typeHint) {
 		return readAggregate(context, new RowDocumentAccessor(document), typeHint);
 	}
 
@@ -321,8 +320,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 * @return the converted object, will never be {@literal null}.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <S extends Object> S readAggregate(ConversionContext context, RowDocumentAccessor documentAccessor,
-			TypeInformation<? extends S> typeHint) {
+	protected <S> S readAggregate(ConversionContext context, RowDocumentAccessor documentAccessor,
+								  TypeInformation<? extends S> typeHint) {
 
 		Class<? extends S> rawType = typeHint.getType();
 
@@ -426,13 +425,13 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		return getPotentiallyConvertedSimpleRead(items, targetType);
 	}
 
-	private <T extends Object> T doConvert(Object value, Class<? extends T> target) {
+	private <T> T doConvert(Object value, Class<? extends T> target) {
 		return doConvert(value, target, null);
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	private <T extends Object> T doConvert(Object value, Class<? extends T> target,
-			@Nullable Class<? extends T> fallback) {
+	private <T> T doConvert(Object value, Class<? extends T> target,
+							@Nullable Class<? extends T> fallback) {
 
 		if (getConversionService().canConvert(value.getClass(), target) || fallback == null) {
 			return getConversionService().convert(value, target);
@@ -788,8 +787,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <S extends Object> S convert(Object source, TypeInformation<? extends S> typeHint,
-				ConversionContext context) {
+		public <S> S convert(Object source, TypeInformation<? extends S> typeHint,
+							 ConversionContext context) {
 
 			Assert.notNull(source, "Source must not be null");
 			Assert.notNull(typeHint, "TypeInformation must not be null");
@@ -855,7 +854,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 *
 		 * @param <T>
 		 */
-		public interface ValueConverter<T> {
+		interface ValueConverter<T> {
 
 			Object convert(T source, TypeInformation<?> typeHint);
 
@@ -867,7 +866,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 *
 		 * @param <T>
 		 */
-		public interface ContainerValueConverter<T> {
+		interface ContainerValueConverter<T> {
 
 			Object convert(ConversionContext context, T source, TypeInformation<?> typeHint);
 
@@ -928,7 +927,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * @param typeHint must not be {@literal null}.
 		 * @return the converted object.
 		 */
-		default <S extends Object> S convert(Object source, TypeInformation<? extends S> typeHint) {
+		default <S> S convert(Object source, TypeInformation<? extends S> typeHint) {
 			return convert(source, typeHint, this);
 		}
 
@@ -940,7 +939,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * @param context must not be {@literal null}.
 		 * @return the converted object.
 		 */
-		<S extends Object> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context);
+		<S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context);
 
 		/**
 		 * Obtain a {@link ConversionContext} for the given property {@code name}.
@@ -998,7 +997,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * Determine whether there is a value for the given {@link RelationalPersistentProperty}.
 		 *
 		 * @param property the property to check for whether a value is present.
-		 * @return
 		 */
 		boolean hasValue(RelationalPersistentProperty property);
 
@@ -1006,7 +1004,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * Contextualize this property value provider.
 		 *
 		 * @param context the context to use.
-		 * @return
 		 */
 		RelationalPropertyValueProvider withContext(ConversionContext context);
 
@@ -1021,7 +1018,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * Determine whether there is a value for the given {@link AggregatePath}.
 		 *
 		 * @param path the path to check for whether a value is present.
-		 * @return
 		 */
 		boolean hasValue(AggregatePath path);
 
@@ -1029,7 +1025,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * Determine whether there is a value for the given {@link SqlIdentifier}.
 		 *
 		 * @param identifier the path to check for whether a value is present.
-		 * @return
 		 */
 		boolean hasValue(SqlIdentifier identifier);
 
@@ -1037,16 +1032,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * Return a value for the given {@link AggregatePath}.
 		 *
 		 * @param path will never be {@literal null}.
-		 * @return
 		 */
 		@Nullable
 		Object getValue(AggregatePath path);
 
 		/**
 		 * Contextualize this property value provider.
-		 *
-		 * @param context
-		 * @return
 		 */
 		@Override
 		AggregatePathValueProvider withContext(ConversionContext context);

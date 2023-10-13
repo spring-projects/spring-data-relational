@@ -44,7 +44,6 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -77,7 +76,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	/**
 	 * Creates a new {@link MappingJdbcConverter} given {@link MappingContext} and a {@link JdbcTypeFactory#unsupported()
 	 * no-op type factory} throwing {@link UnsupportedOperationException} on type creation. Use
-	 * {@link #MappingJdbcConverter(RelationalMappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
+	 * {@link #MappingJdbcConverter(RelationalMappingContext, RelationResolver, CustomConversions, JdbcTypeFactory)}
 	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
@@ -110,13 +109,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
-	}
-
-	MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver,
-			CustomConversions conversions, JdbcTypeFactory typeFactory, IdentifierProcessing identifierProcessing) {
-		super(context, conversions);
-		this.relationResolver = relationResolver;
-		this.typeFactory = typeFactory;
 	}
 
 	@Nullable
@@ -217,8 +209,8 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return true;
 		}
 
-		if (AggregateReference.class.isAssignableFrom(value.getClass())) {
-			return canWriteAsJdbcValue(((AggregateReference) value).getId());
+		if (value instanceof AggregateReference aggregateReference) {
+			return canWriteAsJdbcValue(aggregateReference.getId());
 		}
 
 		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());

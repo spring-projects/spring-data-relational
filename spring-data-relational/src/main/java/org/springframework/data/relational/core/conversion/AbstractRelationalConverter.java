@@ -61,7 +61,6 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 		this(context, conversions, new DefaultConversionService(), new EntityInstantiators());
 	}
 
-	@SuppressWarnings("unchecked")
 	private AbstractRelationalConverter(RelationalMappingContext context, CustomConversions conversions,
 			ConfigurableConversionService conversionService, EntityInstantiators entityInstantiators) {
 

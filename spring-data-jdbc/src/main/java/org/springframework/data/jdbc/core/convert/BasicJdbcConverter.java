@@ -72,6 +72,6 @@ public class BasicJdbcConverter extends MappingJdbcConverter {
 	 */
 	public BasicJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver,
 			CustomConversions conversions, JdbcTypeFactory typeFactory, IdentifierProcessing identifierProcessing) {
-		super(context, relationResolver, conversions, typeFactory, identifierProcessing);
+		super(context, relationResolver, conversions, typeFactory);
 	}
 }

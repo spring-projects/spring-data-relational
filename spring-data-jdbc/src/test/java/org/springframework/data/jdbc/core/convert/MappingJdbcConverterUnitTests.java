@@ -41,7 +41,6 @@ import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -59,7 +58,7 @@ public class MappingJdbcConverterUnitTests {
 				throw new UnsupportedOperationException();
 			}, //
 			new JdbcCustomConversions(), //
-			typeFactory, IdentifierProcessing.ANSI //
+			typeFactory  //
 	);
 
 	@Test // DATAJDBC-104, DATAJDBC-1384
