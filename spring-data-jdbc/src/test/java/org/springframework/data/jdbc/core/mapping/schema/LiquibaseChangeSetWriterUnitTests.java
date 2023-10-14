@@ -119,6 +119,39 @@ class LiquibaseChangeSetWriterUnitTests {
 		assertThat(columns).extracting(ColumnConfig::getName).containsExactly("id", "tables_id");
 	}
 
+	@Test // GH-1599
+	void createForeignKeyForNestedEntities() {
+
+		RelationalMappingContext context = new RelationalMappingContext();
+		context.getRequiredPersistentEntity(SetOfTables.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		Optional<Change> tablesFkOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof AddForeignKeyConstraintChange
+					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("other_table");
+		}).findFirst();
+		assertThat(tablesFkOptional.isPresent()).isTrue();
+		AddForeignKeyConstraintChange tableFk = (AddForeignKeyConstraintChange) tablesFkOptional.get();
+		assertThat(tableFk.getBaseTableName()).isEqualTo("other_table");
+		assertThat(tableFk.getBaseColumnNames()).isEqualTo("tables");
+		assertThat(tableFk.getReferencedTableName()).isEqualTo("tables");
+		assertThat(tableFk.getReferencedColumnNames()).isEqualTo("id");
+
+		Optional<Change> setOfTablesFkOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof AddForeignKeyConstraintChange
+					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("tables");
+		}).findFirst();
+		assertThat(setOfTablesFkOptional.isPresent()).isTrue();
+		AddForeignKeyConstraintChange setOfTablesFk = (AddForeignKeyConstraintChange) setOfTablesFkOptional.get();
+		assertThat(setOfTablesFk.getBaseTableName()).isEqualTo("tables");
+		assertThat(setOfTablesFk.getBaseColumnNames()).isEqualTo("set_id");
+		assertThat(setOfTablesFk.getReferencedTableName()).isEqualTo("set_of_tables");
+		assertThat(setOfTablesFk.getReferencedColumnNames()).isEqualTo("id");
+	}
+
 	@org.springframework.data.relational.core.mapping.Table
 	static class VariousTypes {
 		@Id long id;
@@ -139,6 +172,13 @@ class LiquibaseChangeSetWriterUnitTests {
 		@Id int id;
 		@MappedCollection
 		Set<OtherTable> tables;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class SetOfTables {
+		@Id int id;
+		@MappedCollection(idColumn = "set_id")
+		Set<Tables> setOfTables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table

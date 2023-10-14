@@ -96,7 +96,7 @@ record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<T
 			// Identify deleted columns
 			tableDiff.columnsToDrop().addAll(findDiffs(mappedColumns, existingColumns, nameComparator));
 			// Identify added columns and add columns in order. This order can interleave with existing columns.
-			List<Column> addedColumns = new ArrayList<>(findDiffs(existingColumns, mappedColumns, nameComparator));
+			Collection<Column> addedColumns = findDiffs(existingColumns, mappedColumns, nameComparator);
 			for (Column column : mappedEntity.columns()) {
 				if (addedColumns.contains(column)) {
 					tableDiff.columnsToAdd().add(column);
@@ -107,9 +107,9 @@ record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<T
 					nameComparator);
 			Map<String, ForeignKey> existingForeignKeys = createMapping(existingTable.foreignKeys(), ForeignKey::name,
 					nameComparator);
-			// Identify deleted columns
+			// Identify deleted foreign keys
 			tableDiff.fkToDrop().addAll(findDiffs(mappedForeignKeys, existingForeignKeys, nameComparator));
-			// Identify added columns
+			// Identify added foreign keys
 			tableDiff.fkToAdd().addAll(findDiffs(existingForeignKeys, mappedForeignKeys, nameComparator));
 
 			tableDiffs.add(tableDiff);
