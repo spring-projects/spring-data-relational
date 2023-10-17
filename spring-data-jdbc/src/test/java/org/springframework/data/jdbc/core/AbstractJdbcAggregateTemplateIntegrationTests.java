@@ -1268,6 +1268,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.mapElements.get("delta")).isEqualTo(new MapElement("four"));
 	}
 
+	@Test // GH-1646
+	void recordOfSet() {
+
+		Author tolkien = template.save(new Author(null, Set.of(new Book("Lord of the Rings"))));
+
+		Iterable<Author> authors = template.findAll(Author.class);
+
+		assertThat(authors).containsExactly(tolkien);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -2077,6 +2087,13 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	}
 
 	record MapElement(String name) {
+	}
+
+	record Author(@Id Long id, Set<Book> books) {
+	}
+
+	record Book(String name) {
+
 	}
 
 	@Configuration

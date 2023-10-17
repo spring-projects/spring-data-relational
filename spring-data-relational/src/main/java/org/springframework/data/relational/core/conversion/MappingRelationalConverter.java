@@ -504,7 +504,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 				entity, contextualizing, context.getPath().getCurrentObject());
 
 		return new ConverterAwareSpELExpressionParameterValueProvider(context, evaluator, getConversionService(),
-				parameterProvider);
+				new ConvertingParameterValueProvider<>( parameterProvider::getParameterValue));
 	}
 
 	private <S> S populateProperties(ConversionContext context, RelationalPersistentEntity<S> entity,
