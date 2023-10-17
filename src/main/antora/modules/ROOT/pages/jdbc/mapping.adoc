@@ -203,6 +203,13 @@ NOTE: In previous versions of Spring Data JDBC it was recommended to directly ov
 This is no longer necessary or even recommended, since that method assembles conversions intended for all databases, conversions registered by the `Dialect` used and conversions registered by the user.
 If you are migrating from an older version of Spring Data JDBC and have `AbstractJdbcConfiguration.jdbcCustomConversions()` overwritten conversions from your `Dialect` will not get registered.
 
+[TIP]
+====
+If you want to rely on https://spring.io/projects/spring-boot[Spring Boot] to bootstrap Spring Data JDBC, but still want to override certain aspects of the configuration, you may want to expose beans of that type.
+For custom conversions you may e.g. choose to register a bean of type `JdbcCustomConversions` that will be picked up the by the Boot infrastructure.
+To learn more about this please make sure to read the Spring Boot https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#data.sql.jdbc[Reference Documentation].
+====
+
 [[jdbc.custom-converters.jdbc-value]]
 === JdbcValue
 
