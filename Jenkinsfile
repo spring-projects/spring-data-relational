@@ -102,7 +102,7 @@ pipeline {
 			steps {
 				script {
 					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.basic']) {
-						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ' +
+						sh 'MAVEN_OPTS="-Duser.name=spring-builds+jenkins -Duser.home=/tmp/jenkins-home" ' +
 						    'GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USR} ' +
                         	'GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PSW} ' +
                         	'GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY} ' +

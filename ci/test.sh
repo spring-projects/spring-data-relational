@@ -10,6 +10,6 @@ cp spring-data-relational/src/test/java/org/springframework/data/ProxyImageNameS
 
 mkdir -p /tmp/jenkins-home
 chown -R 1001:1001 .
-MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" \
+MAVEN_OPTS="-Duser.name=spring-builds+jenkins -Duser.home=/tmp/jenkins-home" \
   ./mvnw -s settings.xml \
   -P${PROFILE} clean dependency:list verify -Dsort -U -B -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc
