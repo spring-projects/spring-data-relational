@@ -6,7 +6,7 @@
 		<url>https://ge.spring.io</url>
 	</server>
 	<buildScan>
-		<backgroundBuildScanUpload>#{isFalse(env['CI'])}</backgroundBuildScanUpload>
+		<backgroundBuildScanUpload>false</backgroundBuildScanUpload>
 		<captureGoalInputFiles>true</captureGoalInputFiles>
 		<publishIfAuthenticated>true</publishIfAuthenticated>
 		<obfuscation>
@@ -20,12 +20,12 @@
 		<remote>
 			<server>
 				<credentials>
-					<username>${env.GRADLE_ENTERPRISE_CACHE_USERNAME}</username>
-					<password>${env.GRADLE_ENTERPRISE_CACHE_PASSWORD}</password>
+					<username>${env.DEVELOCITY_CACHE_USERNAME}</username>
+					<password>${env.DEVELOCITY_CACHE_PASSWORD}</password>
 				</credentials>
 			</server>
 			<enabled>true</enabled>
-			<storeEnabled>#{env['GRADLE_ENTERPRISE_CACHE_USERNAME'] != null and env['GRADLE_ENTERPRISE_CACHE_PASSWORD'] != null}</storeEnabled>
+			<storeEnabled>#{env['DEVELOCITY_CACHE_USERNAME'] != null and env['DEVELOCITY_CACHE_PASSWORD'] != null}</storeEnabled>
 		</remote>
 	</buildCache>
 </gradleEnterprise>
