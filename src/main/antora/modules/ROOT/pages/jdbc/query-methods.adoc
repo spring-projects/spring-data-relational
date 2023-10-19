@@ -169,6 +169,8 @@ Properties that don't have a matching column in the result will not be set.
 The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
 Separate queries are generated for maps, lists, sets and arrays of entities.
 
+
+
 NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag.
 By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
 
@@ -198,9 +200,14 @@ The recommended way to do that is a `try-with-resource clause`.
 It also means that, once the connection to the database is closed, the stream cannot obtain further elements and likely throws an exception.
 
 [[jdbc.query-methods.at-query.custom-rowmapper]]
-=== Custom `RowMapper`
+=== Custom `RowMapper` or `ResultSetExtractor`
 
-You can configure which `RowMapper` to use, either by using the `@Query(rowMapperClass = ....)` or by registering a `RowMapperMap` bean and registering a `RowMapper` per method return type.
+The `@Query` annotation allows you to specify a custom `RowMapper` or `ResultSetExtractor` to use.
+The attributes `rowMapperClass` and `resultSetExtractorClass` allow you to specify classes to use, which will get instantiated using a default constructor.
+Alternatively you may set `rowMapperClassRef` or `resultSetExtractorClassRef` to a bean name from your Spring application context.
+
+If you want to use a certain `RowMapper` not just for a single method but for all methods with custom queries returning a certain type,
+you may register a `RowMapperMap` bean and registering a `RowMapper` per method return type.
 The following example shows how to register `DefaultQueryMappingConfiguration`:
 
 [source,java]
