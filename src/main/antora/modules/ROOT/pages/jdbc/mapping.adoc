@@ -72,6 +72,7 @@ Alternatively you may annotate the attribute with `@MappedCollection(idColumn="y
 Specifying a key column for a `Set` has no effect.
 
 
+
 [[mapping.usage.annotations]]
 === Mapping Annotation Overview
 
@@ -127,6 +128,9 @@ Person p1, p2 = // some initialization
 p1.bestFriend = AggregateReference.to(p2.id);
 
 ----
+
+You should not include attributes in your entities to hold the actual value of a back reference, nor of the key column of maps or lists.
+If you want these value to be available in your domain model we recommend to do this in a `AfterConvertCallback` and store the values in transient values.
 
 * Types for which you registered suitable [[jdbc.custom-converters, custom conversions]].
 
