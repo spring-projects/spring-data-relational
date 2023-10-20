@@ -188,6 +188,9 @@ Named queries are expected to be provided in the property file `META-INF/jdbc-na
 
 The location of that file may be changed by setting a value to `@EnableJdbcRepositories.namedQueriesLocation`.
 
+[[jdbc.query-methods.customizing-query-methods]]
+=== Customizing Query Methods
+
 [[jdbc.query-methods.at-query.streaming-results]]
 === Streaming Results
 
