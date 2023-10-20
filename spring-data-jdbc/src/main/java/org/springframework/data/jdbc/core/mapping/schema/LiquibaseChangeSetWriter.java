@@ -483,12 +483,12 @@ public class LiquibaseChangeSetWriter {
 
 		return table.getOutgoingForeignKeys().stream().map(foreignKey -> {
 			String tableName = foreignKey.getForeignKeyTable().getName();
-			String columnName = foreignKey.getForeignKeyColumns().stream().findFirst()
-					.map(liquibase.structure.core.Column::getName).get();
+			List<String> columnNames = foreignKey.getForeignKeyColumns().stream()
+					.map(liquibase.structure.core.Column::getName).toList();
 			String referencedTableName = foreignKey.getPrimaryKeyTable().getName();
-			String referencedColumnName = foreignKey.getPrimaryKeyColumns().stream().findFirst()
-					.map(liquibase.structure.core.Column::getName).get();
-			return new ForeignKey(foreignKey.getName(), tableName, columnName, referencedTableName, referencedColumnName);
+			List<String> referencedColumnNames = foreignKey.getPrimaryKeyColumns().stream()
+					.map(liquibase.structure.core.Column::getName).toList();
+			return new ForeignKey(foreignKey.getName(), tableName, columnNames, referencedTableName, referencedColumnNames);
 		}).collect(Collectors.toList());
 	}
 
@@ -579,9 +579,9 @@ public class LiquibaseChangeSetWriter {
 		AddForeignKeyConstraintChange change = new AddForeignKeyConstraintChange();
 		change.setConstraintName(foreignKey.name());
 		change.setBaseTableName(foreignKey.tableName());
-		change.setBaseColumnNames(foreignKey.columnName());
+		change.setBaseColumnNames(String.join(",", foreignKey.columnNames()));
 		change.setReferencedTableName(foreignKey.referencedTableName());
-		change.setReferencedColumnNames(foreignKey.referencedColumnName());
+		change.setReferencedColumnNames(String.join(",", foreignKey.referencedColumnNames()));
 		return change;
 	}
 

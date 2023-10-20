@@ -41,6 +41,18 @@ public interface SqlTypeMapping {
 	String getColumnType(RelationalPersistentProperty property);
 
 	/**
+	 * Determines a column type for Class.
+	 *
+	 * @param clazz class for which the type should be determined.
+	 * @return the SQL type to use, such as {@code VARCHAR} or {@code NUMERIC}. Can be {@literal null} if the strategy
+	 *         cannot provide a column type.
+	 */
+	@Nullable
+	default String getColumnTypeByClass(Class clazz) {
+		return null;
+	}
+
+	/**
 	 * Returns the required column type for a persistent property or throws {@link IllegalArgumentException} if the type
 	 * cannot be determined.
 	 *

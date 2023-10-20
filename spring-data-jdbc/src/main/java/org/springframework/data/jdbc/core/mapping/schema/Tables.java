@@ -17,20 +17,21 @@ package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -51,7 +52,7 @@ record Tables(List<Table> tables) {
 			SqlTypeMapping sqlTypeMapping, @Nullable String defaultSchema,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
 
-		Map<String, List<ColumnWithForeignKey>> colAndFKByTableName = new HashMap<>();
+		List<NestedEntityMetadata> nestedEntityMetadataList = new ArrayList<>();
 		List<Table> tables = persistentEntities
 				.filter(it -> it.isAnnotationPresent(org.springframework.data.relational.core.mapping.Table.class)) //
 				.map(entity -> {
@@ -60,7 +61,7 @@ record Tables(List<Table> tables) {
 
 					Set<RelationalPersistentProperty> identifierColumns = new LinkedHashSet<>();
 					entity.getPersistentProperties(Id.class).forEach(identifierColumns::add);
-					collectForeignKeysInfo(entity, context, colAndFKByTableName, sqlTypeMapping);
+					collectNestedEntityMetadata(entity, context, nestedEntityMetadataList, sqlTypeMapping);
 
 					for (RelationalPersistentProperty property : entity) {
 
@@ -75,7 +76,7 @@ record Tables(List<Table> tables) {
 					return table;
 				}).collect(Collectors.toList());
 
-		applyForeignKeys(tables, colAndFKByTableName);
+		applyNestedEntityMetadata(tables, nestedEntityMetadataList);
 
 		return new Tables(tables);
 	}
@@ -84,61 +85,196 @@ record Tables(List<Table> tables) {
 		return new Tables(Collections.emptyList());
 	}
 
-	private static void applyForeignKeys(List<Table> tables,
-			Map<String, List<ColumnWithForeignKey>> colAndFKByTableName) {
+	/**
+	 * Apply all information we know about nested entities to correctly create foreign and primary keys
+	 */
+	private static void applyNestedEntityMetadata(List<Table> tables, List<NestedEntityMetadata> nestedEntityMetadataList) {
+		nestedEntityMetadataList.forEach(nestedEntityMetadata -> {
+			while (nestedEntityMetadata.parentMetadata != null) {
+				NestedEntityMetadata current = nestedEntityMetadata;
+				NestedEntityMetadata parentMetadata = current.parentMetadata;
 
-		colAndFKByTableName.forEach(
-				(tableName, colsAndFK) -> tables.stream().filter(table -> table.name().equals(tableName)).forEach(table -> {
+				Table table = tables.stream().filter(t -> t.name().equals(current.tableName)).findAny().get();
 
-					colsAndFK.forEach(colAndFK -> {
-						if (!table.columns().contains(colAndFK.column())) {
-							table.columns().add(colAndFK.column());
-						}
-					});
+				List<Column> parentIdColumns = new ArrayList<>();
+				collectIdentityColumns(parentMetadata, parentIdColumns);
+				List<String> parentIdColumnNames = parentIdColumns.stream().map(Column::name).toList();
 
-					colsAndFK.forEach(colAndFK -> table.foreignKeys().add(colAndFK.foreignKey()));
-				}));
+				String foreignKeyName = getForeignKeyName(parentMetadata.tableName, parentIdColumnNames);
+				if(parentIdColumnNames.size() == 1) {
+					addIfAbsent(table.columns(), new Column(parentMetadata.referencedIdColumnName, parentMetadata.idColumnType,
+									false, current.idColumnName == null));
+					if(parentMetadata.referencedKeyColumnName != null) {
+						addIfAbsent(table.columns(), new Column(parentMetadata.referencedKeyColumnName, parentMetadata.referencedKeyColumnType,
+								false, true));
+					}
+					table.foreignKeys().add(new ForeignKey(foreignKeyName, current.tableName,
+							List.of(parentMetadata.referencedIdColumnName), parentMetadata.tableName, parentIdColumnNames));
+				} else {
+					addIfAbsent(table.columns(), parentIdColumns.toArray(new Column[0]));
+					addIfAbsent(table.columns(), new Column(parentMetadata.referencedKeyColumnName, parentMetadata.referencedKeyColumnType,
+							false, true));
+					table.foreignKeys().add(new ForeignKey(foreignKeyName, current.tableName, parentIdColumnNames,
+							parentMetadata.tableName, parentIdColumnNames));
+				}
+
+				nestedEntityMetadata = nestedEntityMetadata.parentMetadata;
+			}
+		});
 	}
 
-	private static void collectForeignKeysInfo(RelationalPersistentEntity<?> entity,
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			Map<String, List<ColumnWithForeignKey>> keyColumnsByTableName, SqlTypeMapping sqlTypeMapping) {
+	private static  <E> void addIfAbsent(List<E> list, E... elements) {
+		for(E element : elements) {
+			if (!list.contains(element)) {
+				list.add(element);
+			}
+		}
+	}
 
-		RelationalPersistentProperty identifierColumn = entity.getPersistentProperty(Id.class);
+	private static void collectIdentityColumns(NestedEntityMetadata nestedEntityMetadata, List<Column> identityColumns) {
+		if(nestedEntityMetadata.idColumnName != null) {
+			if(identityColumns.isEmpty()) {
+				identityColumns.add(new Column(nestedEntityMetadata.idColumnName, nestedEntityMetadata.idColumnType,
+						false, true));
+			} else {
+				identityColumns.add(new Column(nestedEntityMetadata.referencedIdColumnName, nestedEntityMetadata.idColumnType,
+						false, true));
+			}
+			Collections.reverse(identityColumns);
+		} else {
+			NestedEntityMetadata parentMetadata = nestedEntityMetadata.parentMetadata;
+			identityColumns.add(new Column(parentMetadata.referencedKeyColumnName, parentMetadata.referencedKeyColumnType,
+					false, true));
+			collectIdentityColumns(parentMetadata, identityColumns);
+		}
+	}
+
+	private static void collectNestedEntityMetadata(RelationalPersistentEntity<?> entity,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			List<NestedEntityMetadata> nestedEntityMetadataList, SqlTypeMapping sqlTypeMapping) {
+
+		Optional<RelationalPersistentProperty> idColumn = Optional.ofNullable(entity.getPersistentProperty(Id.class));
 
 		entity.getPersistentProperties(MappedCollection.class).forEach(property -> {
 			if (property.isEntity()) {
 				property.getPersistentEntityTypeInformation().forEach(typeInformation -> {
 
-					String tableName = context.getRequiredPersistentEntity(typeInformation).getTableName().getReference();
-					String columnName = property.getReverseColumnName(entity).getReference();
-					String referencedTableName = entity.getTableName().getReference();
-					String referencedColumnName = identifierColumn.getColumnName().getReference();
+					String referencedKeyColumnType = null;
+					if(property.getType() == List.class) {
+						referencedKeyColumnType = sqlTypeMapping.getColumnTypeByClass(Integer.class);
+					} else if (property.getType() == Map.class) {
+						referencedKeyColumnType = sqlTypeMapping.getColumnTypeByClass(property.getComponentType());
+					}
 
-					ForeignKey foreignKey = new ForeignKey(getForeignKeyName(referencedTableName, referencedColumnName),
-							tableName, columnName, referencedTableName, referencedColumnName);
-					Column column = new Column(columnName, sqlTypeMapping.getColumnType(identifierColumn), true, false);
+					NestedEntityMetadata parent = new NestedEntityMetadata(
+							idColumn.map(column -> column.getColumnName().getReference()).orElse(null),
+							idColumn.map(column -> sqlTypeMapping.getColumnType(column)).orElse(null),
+							property.getReverseColumnName(entity).getReference(),
+							Optional.ofNullable(property.getKeyColumn()).map(SqlIdentifier::getReference).orElse(null),
+							referencedKeyColumnType,
+							entity.getTableName().getReference(),
+							null);
 
-					ColumnWithForeignKey columnWithForeignKey = new ColumnWithForeignKey(column, foreignKey);
-					keyColumnsByTableName.compute(
-							context.getRequiredPersistentEntity(typeInformation).getTableName().getReference(), (key, value) -> {
-								if (value == null) {
-									return new ArrayList<>(List.of(columnWithForeignKey));
-								} else {
-									value.add(columnWithForeignKey);
-									return value;
-								}
-							});
+					RelationalPersistentEntity childEntity = context.getRequiredPersistentEntity(typeInformation);
+					Optional<RelationalPersistentProperty> childIdColumn = Optional.ofNullable(entity.getPersistentProperty(Id.class));
+					NestedEntityMetadata child = new NestedEntityMetadata(
+							childIdColumn.map(column -> column.getColumnName().getReference()).orElse(null),
+							childIdColumn.map(column -> sqlTypeMapping.getColumnType(column)).orElse(null),
+							null,
+							null,
+							null,
+							childEntity.getTableName().getReference(),
+							parent);
+
+					boolean added = attachNewChild(nestedEntityMetadataList, child);
+					added = added || attachNewParent(nestedEntityMetadataList, child);
+					if(!added) {
+						nestedEntityMetadataList.add(child);
+					}
+
 				});
 			}
 		});
 	}
 
 	//TODO should we place it in BasicRelationalPersistentProperty/BasicRelationalPersistentEntity and generate using NamingStrategy?
-	private static String getForeignKeyName(String referencedTableName, String referencedColumnName) {
-		return String.format("%s_%s_fk", referencedTableName, referencedColumnName);
+	private static String getForeignKeyName(String referencedTableName, List<String> referencedColumnNames) {
+		return String.format("%s_%s_fk", referencedTableName, String.join("_", referencedColumnNames));
 	}
 
-	private record ColumnWithForeignKey(Column column, ForeignKey foreignKey) {
+	private static boolean attachNewParent(List<NestedEntityMetadata> nestedEntityMetadataList, NestedEntityMetadata newParent) {
+
+		Optional<NestedEntityMetadata> oldParent
+				= nestedEntityMetadataList.stream().filter(elem -> elem.getLastParent().equals(newParent)).findAny();
+		if(oldParent.isEmpty()) {
+			return false;
+		} else {
+			oldParent.get().parentMetadata.parentMetadata = newParent.parentMetadata;
+			return true;
+		}
+	}
+
+	private static boolean attachNewChild(List<NestedEntityMetadata> nestedEntityMetadataList, NestedEntityMetadata newChild) {
+
+		int index = nestedEntityMetadataList.indexOf(newChild.parentMetadata);
+		if(index == -1) {
+			return false;
+		} else {
+			NestedEntityMetadata oldChild = nestedEntityMetadataList.remove(index);
+			newChild.parentMetadata.parentMetadata = oldChild.parentMetadata;
+			nestedEntityMetadataList.add(newChild);
+			return true;
+		}
+	}
+
+	private static class NestedEntityMetadata {
+
+		public NestedEntityMetadata(String idColumnName, String idColumnType, String referencedIdColumnName,
+				String referencedKeyColumnName, String referencedKeyColumnType, String tableName,
+				NestedEntityMetadata parentMetadata) {
+			this.idColumnName = idColumnName;
+			this.idColumnType = idColumnType;
+			this.referencedIdColumnName = referencedIdColumnName;
+			this.referencedKeyColumnName = referencedKeyColumnName;
+			this.referencedKeyColumnType = referencedKeyColumnType;
+			this.tableName = tableName;
+			this.parentMetadata = parentMetadata;
+		}
+
+		private String idColumnName;
+		private String idColumnType;
+		//column name for nested entity set by 'idColumn' of MappedCollection
+		private String referencedIdColumnName;
+		//column name for nested entity set by 'keyColumn' of MappedCollection
+		private String referencedKeyColumnName;
+		private String referencedKeyColumnType;
+		private String tableName;
+		private NestedEntityMetadata parentMetadata;
+
+		public NestedEntityMetadata getLastParent() {
+			if(parentMetadata == null) {
+				return null;
+			}
+			NestedEntityMetadata lastParent = parentMetadata;
+			while (lastParent.parentMetadata != null) {
+				lastParent = lastParent.parentMetadata;
+			}
+			return lastParent;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
+			NestedEntityMetadata that = (NestedEntityMetadata) o;
+			return Objects.equals(tableName, that.tableName);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(tableName);
+		}
 	}
 }

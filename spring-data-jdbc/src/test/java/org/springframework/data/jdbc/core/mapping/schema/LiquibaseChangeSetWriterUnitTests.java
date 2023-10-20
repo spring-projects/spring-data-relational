@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping.schema;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import liquibase.change.core.CreateTableChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.schema.LiquibaseChangeSetWriter.ChangeSetMetadata;
@@ -123,33 +125,68 @@ class LiquibaseChangeSetWriterUnitTests {
 	void createForeignKeyForNestedEntities() {
 
 		RelationalMappingContext context = new RelationalMappingContext();
-		context.getRequiredPersistentEntity(SetOfTables.class);
+		context.getRequiredPersistentEntity(ListOfMapOfNoIdTables.class);
 
 		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
 
 		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
 
-		Optional<Change> tablesFkOptional = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof AddForeignKeyConstraintChange
-					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("other_table");
+		Optional<Change> createNoIdTableOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof CreateTableChange && ((CreateTableChange) change).getTableName().equals("no_id_table");
 		}).findFirst();
-		assertThat(tablesFkOptional.isPresent()).isTrue();
-		AddForeignKeyConstraintChange tableFk = (AddForeignKeyConstraintChange) tablesFkOptional.get();
-		assertThat(tableFk.getBaseTableName()).isEqualTo("other_table");
-		assertThat(tableFk.getBaseColumnNames()).isEqualTo("tables");
-		assertThat(tableFk.getReferencedTableName()).isEqualTo("tables");
-		assertThat(tableFk.getReferencedColumnNames()).isEqualTo("id");
+		assertThat(createNoIdTableOptional.isPresent()).isTrue();
+		CreateTableChange createNoIdTable = (CreateTableChange) createNoIdTableOptional.get();
+		assertThat(createNoIdTable.getColumns())
+				.extracting(ColumnConfig::getName, ColumnConfig::getType, column -> column.getConstraints().isPrimaryKey())
+				.containsExactly(
+						Tuple.tuple("field", "VARCHAR(255 BYTE)", null),
+						Tuple.tuple("list_id", "INT", true),
+						Tuple.tuple("list_of_map_of_no_id_tables_key", "INT", true),
+						Tuple.tuple("map_of_no_id_tables_key", "VARCHAR(255 BYTE)", true));
 
-		Optional<Change> setOfTablesFkOptional = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof AddForeignKeyConstraintChange
-					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("tables");
+		Optional<Change> createMapOfNoIdTablesOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof CreateTableChange && ((CreateTableChange) change).getTableName().equals("map_of_no_id_tables");
 		}).findFirst();
-		assertThat(setOfTablesFkOptional.isPresent()).isTrue();
-		AddForeignKeyConstraintChange setOfTablesFk = (AddForeignKeyConstraintChange) setOfTablesFkOptional.get();
-		assertThat(setOfTablesFk.getBaseTableName()).isEqualTo("tables");
-		assertThat(setOfTablesFk.getBaseColumnNames()).isEqualTo("set_id");
-		assertThat(setOfTablesFk.getReferencedTableName()).isEqualTo("set_of_tables");
-		assertThat(setOfTablesFk.getReferencedColumnNames()).isEqualTo("id");
+		assertThat(createMapOfNoIdTablesOptional.isPresent()).isTrue();
+		CreateTableChange createMapOfNoIdTables = (CreateTableChange) createMapOfNoIdTablesOptional.get();
+		assertThat(createMapOfNoIdTables.getColumns())
+				.extracting(ColumnConfig::getName, ColumnConfig::getType, column -> column.getConstraints().isPrimaryKey())
+				.containsExactly(
+						Tuple.tuple("list_id", "INT", true),
+						Tuple.tuple("list_of_map_of_no_id_tables_key", "INT", true));
+
+		Optional<Change> createListOfMapOfNoIdTablesOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof CreateTableChange
+					&& ((CreateTableChange) change).getTableName().equals("list_of_map_of_no_id_tables");
+		}).findFirst();
+		assertThat(createListOfMapOfNoIdTablesOptional.isPresent()).isTrue();
+		CreateTableChange createListOfMapOfNoIdTables = (CreateTableChange) createListOfMapOfNoIdTablesOptional.get();
+		assertThat(createListOfMapOfNoIdTables.getColumns().size()).isEqualTo(1);
+		assertThat(createListOfMapOfNoIdTables.getColumns().get(0))
+				.extracting(ColumnConfig::getName, ColumnConfig::getType, column -> column.getConstraints().isPrimaryKey())
+				.containsExactly("id", "INT", true);
+
+		Optional<Change> noIdTableFkOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof AddForeignKeyConstraintChange
+					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("no_id_table");
+		}).findFirst();
+		assertThat(noIdTableFkOptional.isPresent()).isTrue();
+		AddForeignKeyConstraintChange noIdTableFk = (AddForeignKeyConstraintChange) noIdTableFkOptional.get();
+		assertThat(noIdTableFk.getBaseTableName()).isEqualTo("no_id_table");
+		assertThat(noIdTableFk.getBaseColumnNames()).isEqualTo("list_id,list_of_map_of_no_id_tables_key");
+		assertThat(noIdTableFk.getReferencedTableName()).isEqualTo("map_of_no_id_tables");
+		assertThat(noIdTableFk.getReferencedColumnNames()).isEqualTo("list_id,list_of_map_of_no_id_tables_key");
+
+		Optional<Change> mapOfNoIdTablesFkOptional = changeSet.getChanges().stream().filter(change -> {
+			return change instanceof AddForeignKeyConstraintChange
+					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals("map_of_no_id_tables");
+		}).findFirst();
+		assertThat(mapOfNoIdTablesFkOptional.isPresent()).isTrue();
+		AddForeignKeyConstraintChange mapOfNoIdTablesFk = (AddForeignKeyConstraintChange) mapOfNoIdTablesFkOptional.get();
+		assertThat(mapOfNoIdTablesFk.getBaseTableName()).isEqualTo("map_of_no_id_tables");
+		assertThat(mapOfNoIdTablesFk.getBaseColumnNames()).isEqualTo("list_id");
+		assertThat(mapOfNoIdTablesFk.getReferencedTableName()).isEqualTo("list_of_map_of_no_id_tables");
+		assertThat(mapOfNoIdTablesFk.getReferencedColumnNames()).isEqualTo("id");
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
@@ -192,6 +229,24 @@ class LiquibaseChangeSetWriterUnitTests {
 	static class TableWithFkField {
 		@Id int id;
 		int tablesId;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class NoIdTable {
+		String field;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class MapOfNoIdTables {
+		@MappedCollection
+		Map<String, NoIdTable> tables;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class ListOfMapOfNoIdTables {
+		@Id int id;
+		@MappedCollection(idColumn = "list_id")
+		List<MapOfNoIdTables> listOfTables;
 	}
 
 }
