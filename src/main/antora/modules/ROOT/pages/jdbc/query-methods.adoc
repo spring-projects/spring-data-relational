@@ -169,7 +169,18 @@ Properties that don't have a matching column in the result will not be set.
 The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
 Separate queries are generated for maps, lists, sets and arrays of entities.
 
+Queries may contain SpEL expressions where bind variables are allowed.
+Such a SpEL expression will get replaced with a bind variable and the variable gets bound to the result of the SpEL expression.
 
+.Use a SpEL in a query
+[source,java]
+----
+@Query("SELECT * FROM person WHERE id = :#{person.id}")
+Person findWithSpEL(PersonRef person);
+----
+
+This can be used to access members of a parameter, as demonstrated in the example above.
+For more involved use cases an `EvaluationContextExtension` can be made available in the application context, which in turn can make any object available in to the SpEL.
 
 NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag.
 By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
@@ -187,6 +198,8 @@ Alternatively the `@Query` annotation has a `name` attribute which can be used t
 Named queries are expected to be provided in the property file `META-INF/jdbc-named-queries.properties` on the classpath.
 
 The location of that file may be changed by setting a value to `@EnableJdbcRepositories.namedQueriesLocation`.
+
+Named queries are handled in the same way as queries provided by annotation.
 
 [[jdbc.query-methods.customizing-query-methods]]
 === Customizing Query Methods
