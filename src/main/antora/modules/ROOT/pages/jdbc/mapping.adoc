@@ -142,7 +142,8 @@ include::partial$mapping.adoc[]
 == Overriding Mapping with Explicit Converters
 
 Spring Data allows registration of custom converters to influence how values are mapped in the database.
-Currently, converters are only applied on property-level.
+Currently, converters are only applied on property-level, i.e. you can only convert single values in your domain to single values in the database and back.
+Conversion between complex objects and multiple columns isn't supported.
 
 [[custom-converters.writer]]
 === Writing a Property by Using a Registered Spring Converter
