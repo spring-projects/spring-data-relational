@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.mapping.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.stream.Collectors;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
@@ -35,6 +36,10 @@ record Table(@Nullable String schema, String name, List<Column> columns, List<Fo
 
 	public Table(String name) {
 		this(null, name);
+	}
+
+	public List<Column> getIdColumns() {
+		return columns().stream().filter(Column::identity).collect(Collectors.toList());
 	}
 
 	@Override
