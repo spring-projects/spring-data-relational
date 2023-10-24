@@ -114,12 +114,25 @@ public abstract class AbstractDynamicTemplateProvider<TS extends TemplateStateme
     /**
      * Internal parsing, implemented by subclasses
      */
-    protected abstract List<TS> resolveInternal(String namespace, String labelType, NodeList nodeList);
+    protected List<TS> resolveInternal(String namespace, String labelType, NodeList nodeList) {
+        List<TS> templateStatements = new ArrayList<>(nodeList.getLength());
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Element element = (Element) nodeList.item(i);
+            String id = namespace + "." + resolveAttribute(element, TemplateStatement.TEMPLATE_STATEMENT_ID, () -> new IllegalArgumentException("id can't empty"));
+            templateStatements.add(this.resolveInternal(namespace, id, labelType, element.getTextContent()));
+        }
+        return templateStatements;
+    }
+
+    /**
+     * Internal parsing, implemented by subclasses
+     */
+    protected abstract TS resolveInternal(String namespace, String id, String labelType, String content);
 
     /**
      * load xml document from an xml input stream
      */
-    private static Element createElement(InputStream inputStream) {
+    protected static Element createElement(InputStream inputStream) {
         try {
             return DocumentBuilderFactoryHolder.INSTANCE.newDocumentBuilder().parse(inputStream).getDocumentElement();
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -130,7 +143,7 @@ public abstract class AbstractDynamicTemplateProvider<TS extends TemplateStateme
     /**
      * resolve xml attribute from xml element
      */
-    private static String resolveAttribute(Element element, String name, Supplier<RuntimeException> emptyException) {
+    protected static String resolveAttribute(Element element, String name, Supplier<RuntimeException> emptyException) {
         String attribute = element.getAttribute(name);
         if (emptyException != null && !StringUtils.hasText(attribute)) {
             throw emptyException.get();

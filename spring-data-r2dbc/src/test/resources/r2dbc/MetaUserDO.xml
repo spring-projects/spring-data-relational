@@ -1,0 +1,8 @@
+<mapper namespace="org.springframework.data.r2dbc.repository.query.template.DynamicTemplateQueryUnitTests$CarDao">
+    <select id="list">
+        select * from car
+        #if root[0]
+            where
+                id = :#{[0]}
+    </select>
+</mapper>
