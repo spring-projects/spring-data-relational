@@ -15,15 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import reactor.core.publisher.Mono;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jetbrains.annotations.NotNull;
-
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -41,6 +33,12 @@ import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.Assert;
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * String-based {@link StringBasedR2dbcQuery} implementation.
@@ -52,12 +50,12 @@ import org.springframework.util.Assert;
  */
 public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
-	private final ExpressionQuery expressionQuery;
-	private final ExpressionEvaluatingParameterBinder binder;
-	private final ExpressionParser expressionParser;
-	private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
-	private final ExpressionDependencies expressionDependencies;
-	private final ReactiveDataAccessStrategy dataAccessStrategy;
+	final ExpressionQuery expressionQuery;
+	final ExpressionEvaluatingParameterBinder binder;
+	protected final ExpressionParser expressionParser;
+	protected final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
+	protected final ExpressionDependencies expressionDependencies;
+	protected final ReactiveDataAccessStrategy dataAccessStrategy;
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -96,7 +94,9 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		this.expressionParser = expressionParser;
 		this.evaluationContextProvider = evaluationContextProvider;
 
-		Assert.hasText(query, "Query must not be empty");
+		if (this.getClass() == StringBasedR2dbcQuery.class) {
+			Assert.hasText(query, "Query must not be empty");
+		}
 
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.expressionQuery = ExpressionQuery.create(query);

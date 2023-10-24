@@ -15,9 +15,9 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import java.lang.reflect.Method;
-import java.util.Optional;
-
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -25,11 +25,13 @@ import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.r2dbc.repository.query.DynamicTemplateBasedR2dbcQuery;
 import org.springframework.data.r2dbc.repository.query.PartTreeR2dbcQuery;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.template.DynamicTemplateProvider;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
@@ -47,6 +49,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.function.Supplier;
+
 /**
  * Factory to create {@link R2dbcRepository} instances.
  *
@@ -61,6 +67,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final R2dbcConverter converter;
 	private final R2dbcEntityOperations operations;
+
+	private DynamicTemplateProvider<?> dynamicTemplateProvider;
 
 	/**
 	 * Creates a new {@link R2dbcRepositoryFactory} given {@link DatabaseClient} and {@link MappingContext}.
@@ -100,6 +108,16 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	}
 
 	@Override
+	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+		super.setBeanFactory(beanFactory);
+		if (beanFactory instanceof ListableBeanFactory listableBeanFactory) {
+			if (listableBeanFactory.getBeanNamesForType(DynamicTemplateProvider.class).length > 0) {
+				this.dynamicTemplateProvider = beanFactory.getBean(DynamicTemplateProvider.class);
+			}
+		}
+	}
+
+	@Override
 	protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
 		return SimpleR2dbcRepository.class;
 	}
@@ -117,7 +135,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(this.operations,
+		return Optional.of(new R2dbcQueryLookupStrategy(this.dynamicTemplateProvider, this.operations,
 				(ReactiveQueryMethodEvaluationContextProvider) evaluationContextProvider, this.converter,
 				this.dataAccessStrategy));
 	}
@@ -141,16 +159,19 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 * @author Mark Paluch
 	 */
 	private static class R2dbcQueryLookupStrategy implements QueryLookupStrategy {
-
+		private final DynamicTemplateProvider<?> dynamicTemplateProvider;
 		private final R2dbcEntityOperations entityOperations;
 		private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
 		private final ReactiveDataAccessStrategy dataAccessStrategy;
 		private final ExpressionParser parser = new CachingExpressionParser(EXPRESSION_PARSER);
 
-		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations,
-				ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
-				ReactiveDataAccessStrategy dataAccessStrategy) {
+		R2dbcQueryLookupStrategy(DynamicTemplateProvider<?> dynamicTemplateProvider,
+								 R2dbcEntityOperations entityOperations,
+                                 ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider,
+								 R2dbcConverter converter,
+                                 ReactiveDataAccessStrategy dataAccessStrategy) {
+			this.dynamicTemplateProvider = dynamicTemplateProvider;
 			this.entityOperations = entityOperations;
 			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
@@ -159,20 +180,34 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		}
 
 		@Override
-		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
-				NamedQueries namedQueries) {
-
-			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory,
-					this.converter.getMappingContext());
+		public RepositoryQuery resolveQuery(Method method,
+                                            RepositoryMetadata metadata,
+                                            ProjectionFactory factory,
+                                            NamedQueries namedQueries) {
+			Supplier<R2dbcQueryMethod> queryMethodProducer = () -> new R2dbcQueryMethod(method, metadata, factory, this.converter.getMappingContext());
+			R2dbcQueryMethod queryMethod = queryMethodProducer.get();
 			String namedQueryName = queryMethod.getNamedQueryName();
 
 			if (namedQueries.hasQuery(namedQueryName)) {
 				String namedQuery = namedQueries.getQuery(namedQueryName);
-				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.entityOperations, this.converter,
+				return new StringBasedR2dbcQuery(namedQuery,
+                        queryMethod,
+                        this.entityOperations,
+                        this.converter,
 						this.dataAccessStrategy,
-						parser, this.evaluationContextProvider);
+                        this.parser,
+                        this.evaluationContextProvider);
 			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy,
+				return new DynamicTemplateBasedR2dbcQuery(
+						false,
+						method,
+						queryMethod.getRequiredAnnotatedQuery(),
+						this.dynamicTemplateProvider,
+						queryMethodProducer,
+						queryMethod,
+						this.entityOperations,
+						this.converter,
+						this.dataAccessStrategy,
 						this.parser,
 						this.evaluationContextProvider);
 			} else {

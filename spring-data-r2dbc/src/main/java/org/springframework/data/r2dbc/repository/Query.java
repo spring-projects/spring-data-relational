@@ -15,13 +15,13 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import org.springframework.data.annotation.QueryAnnotation;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import org.springframework.data.annotation.QueryAnnotation;
 
 /**
  * Annotation to provide SQL statements that will get used for executing the method.
@@ -33,9 +33,11 @@ import org.springframework.data.annotation.QueryAnnotation;
 @QueryAnnotation
 @Documented
 public @interface Query {
-
-	/**
-	 * The SQL statement to execute when the annotated method gets invoked.
-	 */
-	String value();
+    /**
+     * The SQL statement to execute when the annotated method gets invoked.
+     * When empty, use dynamic templates
+     *
+     * @see org.springframework.data.relational.core.query.template.DynamicTemplateProvider
+     */
+    String value() default "";
 }

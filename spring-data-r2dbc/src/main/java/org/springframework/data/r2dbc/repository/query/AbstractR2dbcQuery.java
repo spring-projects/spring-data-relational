@@ -43,10 +43,10 @@ import org.springframework.util.Assert;
  */
 public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
-	private final R2dbcQueryMethod method;
-	private final R2dbcEntityOperations entityOperations;
-	private final R2dbcConverter converter;
-	private final EntityInstantiators instantiators;
+	protected final R2dbcQueryMethod method;
+	protected final R2dbcEntityOperations entityOperations;
+	protected final R2dbcConverter converter;
+	protected final EntityInstantiators instantiators;
 
 	/**
 	 * Creates a new {@link AbstractR2dbcQuery} from the given {@link R2dbcQueryMethod} and {@link R2dbcEntityOperations}.
