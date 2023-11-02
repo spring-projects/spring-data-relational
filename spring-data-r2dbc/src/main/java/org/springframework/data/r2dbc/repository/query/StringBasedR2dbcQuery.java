@@ -100,6 +100,21 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		this.expressionQuery = ExpressionQuery.create(query);
 		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery, dataAccessStrategy);
 		this.expressionDependencies = createExpressionDependencies();
+
+		if (method.isSliceQuery()) {
+			throw new UnsupportedOperationException(
+					"Slice queries are not supported using string-based queries; Offending method: " + method);
+		}
+
+		if (method.isPageQuery()) {
+			throw new UnsupportedOperationException(
+					"Page queries are not supported using string-based queries; Offending method: " + method);
+		}
+
+		if (method.getParameters().hasLimitParameter()) {
+			throw new UnsupportedOperationException(
+					"Queries with Limit are not supported using string-based queries; Offending method: " + method);
+		}
 	}
 
 	private ExpressionDependencies createExpressionDependencies() {

@@ -182,6 +182,27 @@ Therefore also fields with auditing annotations do not get updated if they don't
 
 Alternatively, you can add custom modifying behavior by using the facilities described in xref:repositories/custom-implementations.adoc[Custom Implementations for Spring Data Repositories].
 
+[[r2dbc.query-methods.at-query]]
+== Using `@Query`
+
+The following example shows how to use `@Query` to declare a query method:
+
+.Declare a query method by using @Query
+[source,java]
+----
+interface UserRepository extends ReactiveCrudRepository<User, Long> {
+
+  @Query("select firstName, lastName from User u where u.emailAddress = :email")
+  Flux<User> findByEmailAddress(@Param("email") String email);
+}
+----
+
+WARNING: Note that String-based queries do not support pagination nor accept `Sort`, `PageRequest`, and `Limit` as a query parameter as for these queries the query would be required to be rewritten.
+If you want to apply limiting, please express this intent using SQL and bind the appropriate parameters to the query yourself.
+
+NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag.
+By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
+
 [[r2dbc.repositories.queries.spel]]
 === Queries with SpEL Expressions
 

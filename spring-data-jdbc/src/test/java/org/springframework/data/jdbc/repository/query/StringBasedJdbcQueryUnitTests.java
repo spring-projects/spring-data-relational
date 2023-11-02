@@ -36,6 +36,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -51,6 +52,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -191,6 +193,16 @@ class StringBasedJdbcQueryUnitTests {
 						.hasMessageContaining("Page queries are not supported using string-based queries");
 	}
 
+	@Test // GH-1654
+	void limitNotSupported() {
+
+		JdbcQueryMethod queryMethod = createMethod("unsupportedLimitQuery", String.class, Limit.class);
+
+		assertThatThrownBy(
+				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+						.isInstanceOf(UnsupportedOperationException.class);
+	}
+
 	@Test // GH-1212
 	void convertsEnumCollectionParameterIntoStringCollectionParameter() {
 
@@ -230,7 +242,6 @@ class StringBasedJdbcQueryUnitTests {
 				.extractParameterSource();
 
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo("one");
-
 	}
 
 	QueryFixture forMethod(String name, Class... paramTypes) {
@@ -337,6 +348,9 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query("SELECT * FROM table WHERE c = :#{myext.testValue} AND c2 = :#{myext.doSomething()}")
 		Object findBySpelExpression(Object object);
+
+		@Query("SELECT * FROM person WHERE lastname = $1")
+		Object unsupportedLimitQuery(@Param("lastname") String lastname, Limit limit);
 	}
 
 	@Test // GH-619

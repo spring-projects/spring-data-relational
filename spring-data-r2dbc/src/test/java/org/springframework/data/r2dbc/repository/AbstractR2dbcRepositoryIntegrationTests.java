@@ -15,7 +15,21 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.IntStream;
+
+import javax.sql.DataSource;
+
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
@@ -35,17 +50,6 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
@@ -141,6 +145,22 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.consumeNextWith(actual -> {
 					assertThat(actual).contains("SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF");
 				}).verifyComplete();
+	}
+
+	@Test // GH-1654
+	void shouldFindItemsByNameContainsWithLimit() {
+
+		shouldInsertNewItems();
+
+		repository.findByNameContains("F", Limit.of(1)) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		repository.findByNameContains("F", Limit.unlimited()) //
+				.as(StepVerifier::create) //
+				.expectNextCount(2) //
+				.verifyComplete();
 	}
 
 	@Test // GH-475, GH-607
@@ -423,6 +443,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Flux<LegoSet> findByNameContains(String name);
 
+		Flux<LegoSet> findByNameContains(String name, Limit limit);
+
 		Flux<LegoSet> findFirst10By();
 
 		Flux<LegoSet> findAllByOrderByManual(Pageable pageable);
@@ -483,6 +505,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		public LegoSet() {
 		}
 
+		@Override
 		public String getName() {
 			return this.name;
 		}
@@ -547,15 +570,15 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof LegoDto)) return false;
-			final LegoDto other = (LegoDto) o;
+			if (!(o instanceof final LegoDto other))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			if (!Objects.equals(this$name, other$name))
+				return false;
 			final Object this$unknown = this.getUnknown();
 			final Object other$unknown = other.getUnknown();
-			if (this$unknown == null ? other$unknown != null : !this$unknown.equals(other$unknown)) return false;
-			return true;
+			return Objects.equals(this$unknown, other$unknown);
 		}
 
 		public int hashCode() {

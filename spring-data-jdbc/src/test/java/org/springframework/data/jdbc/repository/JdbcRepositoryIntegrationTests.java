@@ -52,6 +52,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -489,6 +490,18 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findPageByNameContains("a", PageRequest.of(0, 2)).getContent()).hasSize(2);
 		assertThat(repository.findPageByNameContains("a", PageRequest.of(1, 2)).getContent()).hasSize(1);
+	}
+
+	@Test // GH-1654
+	public void selectWithLimitShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		List<DummyEntity> page = repository.findByNameContains("a", Limit.of(3));
+		assertThat(page).hasSize(3);
+
+		assertThat(repository.findByNameContains("a", Limit.of(2))).hasSize(2);
+		assertThat(repository.findByNameContains("a", Limit.unlimited())).hasSize(3);
 	}
 
 	@Test // GH-774
@@ -1384,6 +1397,8 @@ public class JdbcRepositoryIntegrationTests {
 		List<Integer> unnestPrimitive(@Param("ids") int[] ids);
 
 		Page<DummyEntity> findPageByNameContains(String name, Pageable pageable);
+
+		List<DummyEntity> findByNameContains(String name, Limit limit);
 
 		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
 

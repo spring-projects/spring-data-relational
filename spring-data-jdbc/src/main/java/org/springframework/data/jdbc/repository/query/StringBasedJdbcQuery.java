@@ -117,6 +117,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			throw new UnsupportedOperationException(
 					"Page queries are not supported using string-based queries; Offending method: " + queryMethod);
 		}
+
+		if (queryMethod.getParameters().hasLimitParameter()) {
+			throw new UnsupportedOperationException(
+					"Queries with Limit are not supported using string-based queries; Offending method: " + queryMethod);
+		}
 	}
 
 	@Override
