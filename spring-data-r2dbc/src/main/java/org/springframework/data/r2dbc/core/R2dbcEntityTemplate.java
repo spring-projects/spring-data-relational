@@ -253,18 +253,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	Mono<Long> doCount(Query query, Class<?> entityClass, SqlIdentifier tableName) {
 
-		RelationalPersistentEntity<?> entity = getRequiredEntity(entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
-				.doWithTable((table, spec) -> {
-
-					Expression countExpression = entity.hasIdProperty()
-							? table.column(entity.getRequiredIdProperty().getColumnName())
-							: Expressions.just("1");
-					return spec.withProjection(Functions.count(countExpression));
-				});
+				.withProjection(Functions.count(Expressions.just("*")));
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
@@ -290,17 +283,9 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	Mono<Boolean> doExists(Query query, Class<?> entityClass, SqlIdentifier tableName) {
 
-		RelationalPersistentEntity<?> entity = getRequiredEntity(entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
-
-		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(tableName).limit(1);
-		if (entity.hasIdProperty()) {
-			selectSpec = selectSpec //
-					.withProjection(entity.getRequiredIdProperty().getColumnName());
-
-		} else {
-			selectSpec = selectSpec.withProjection(Expressions.just("1"));
-		}
+		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(tableName).limit(1)
+				.withProjection(Expressions.just("1"));
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {

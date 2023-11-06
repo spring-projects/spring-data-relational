@@ -100,7 +100,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-        assertThat(statement.getSql()).isEqualTo("SELECT COUNT(person.id) FROM person WHERE person.THE_NAME = $1");
+				assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
         assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
     }
 
@@ -141,7 +141,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT COUNT(1)"), result);
+				recorder.addStubbing(s -> s.startsWith("SELECT COUNT(*)"), result);
 
         entityTemplate.select(WithoutId.class).count() //
                 .as(StepVerifier::create) //
@@ -165,7 +165,7 @@ public class R2dbcEntityTemplateUnitTests {
 
         StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-        assertThat(statement.getSql()).isEqualTo("SELECT person.id FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+				assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
         assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
     }
 
