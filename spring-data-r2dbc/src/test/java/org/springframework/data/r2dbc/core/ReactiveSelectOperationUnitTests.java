@@ -28,7 +28,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -59,8 +58,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectAll() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -83,8 +81,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectAs() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -107,8 +104,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectFromTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder().rowMetadata(metadata)
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -131,8 +127,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectFirst() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder().rowMetadata(metadata)
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -154,8 +149,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectOne() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -177,8 +171,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectExists() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -200,8 +193,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectCount() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, Long.class, 1L).metadata(metadata).build()).build();
 

@@ -25,7 +25,6 @@ import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.Value;
 import lombok.With;
-import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -36,7 +35,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -55,6 +53,7 @@ import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.ReactiveAuditingEntityCallback;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
@@ -74,655 +73,618 @@ import org.springframework.util.CollectionUtils;
  */
 public class R2dbcEntityTemplateUnitTests {
 
-    private org.springframework.r2dbc.core.DatabaseClient client;
-    private R2dbcEntityTemplate entityTemplate;
-    private StatementRecorder recorder;
+	private org.springframework.r2dbc.core.DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
-    @BeforeEach
-    void before() {
+	@BeforeEach
+	void before() {
 
-        recorder = StatementRecorder.newInstance();
-        client = DatabaseClient.builder().connectionFactory(recorder)
-                .bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
-        entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE);
-    }
+		recorder = StatementRecorder.newInstance();
+		client = DatabaseClient.builder().connectionFactory(recorder)
+				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
+		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE);
+	}
 
-    @Test
-        // gh-220
-    void shouldCountBy() {
+	@Test // gh-220
+	void shouldCountBy() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
-        entityTemplate.count(Query.query(Criteria.where("name").is("Walter")), Person.class) //
-                .as(StepVerifier::create) //
-                .expectNext(1L) //
-                .verifyComplete();
+		entityTemplate.count(Query.query(Criteria.where("name").is("Walter")), Person.class) //
+				.as(StepVerifier::create) //
+				.expectNext(1L) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-				assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-469
-    void shouldProjectExistsResult() {
+	@Test // gh-469
+	void shouldProjectExistsResult() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
-        entityTemplate.select(Person.class) //
-                .as(Integer.class) //
-                .matching(Query.empty().columns("MAX(age)")) //
-                .all() //
-                .as(StepVerifier::create) //
-                .verifyComplete();
-    }
+		entityTemplate.select(Person.class) //
+				.as(Integer.class) //
+				.matching(Query.empty().columns("MAX(age)")) //
+				.all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+	}
 
-    @Test
-        // gh-1310
-    void shouldProjectExistsResultWithoutId() {
+	@Test // gh-1310
+	void shouldProjectExistsResultWithoutId() {
 
-        MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT 1"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT 1"), result);
 
-        entityTemplate.select(WithoutId.class).exists() //
-                .as(StepVerifier::create) //
-                .expectNext(true).verifyComplete();
-    }
+		entityTemplate.select(WithoutId.class).exists() //
+				.as(StepVerifier::create) //
+				.expectNext(true).verifyComplete();
+	}
 
-    @Test
-        // gh-1310
-    void shouldProjectCountResultWithoutId() {
+	@Test // gh-1310
+	void shouldProjectCountResultWithoutId() {
 
-        MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
-				recorder.addStubbing(s -> s.startsWith("SELECT COUNT(*)"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT COUNT(*)"), result);
 
-        entityTemplate.select(WithoutId.class).count() //
-                .as(StepVerifier::create) //
-                .expectNext(1L).verifyComplete();
-    }
+		entityTemplate.select(WithoutId.class).count() //
+				.as(StepVerifier::create) //
+				.expectNext(1L).verifyComplete();
+	}
 
-    @Test
-        // gh-469
-    void shouldExistsByCriteria() {
+	@Test // gh-469
+	void shouldExistsByCriteria() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
-        entityTemplate.exists(Query.query(Criteria.where("name").is("Walter")), Person.class) //
-                .as(StepVerifier::create) //
-                .expectNext(true) //
-                .verifyComplete();
+		entityTemplate.exists(Query.query(Criteria.where("name").is("Walter")), Person.class) //
+				.as(StepVerifier::create) //
+				.expectNext(true) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-				assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-220
-    void shouldSelectByCriteria() {
+	@Test // gh-220
+	void shouldSelectByCriteria() {
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
+		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
-        entityTemplate.select(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")), Person.class) //
-                .as(StepVerifier::create) //
-                .verifyComplete();
+		entityTemplate.select(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")), Person.class) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-        assertThat(statement.getSql())
-                .isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-215
-    void selectShouldInvokeCallback() {
+	@Test // gh-215
+	void selectShouldInvokeCallback() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-                .columnMetadata(MockColumnMetadata.builder().name("THE_NAME").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().row(MockRow.builder().identified("id", Object.class, "Walter")
-                .identified("THE_NAME", Object.class, "some-name").metadata(metadata).build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified("id", Object.class, "Walter")
+				.identified("THE_NAME", Object.class, "some-name").metadata(metadata).build()).build();
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
-        ValueCapturingAfterConvertCallback callback = new ValueCapturingAfterConvertCallback();
+		ValueCapturingAfterConvertCallback callback = new ValueCapturingAfterConvertCallback();
 
-        entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(callback));
+		entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(callback));
 
-        entityTemplate.select(Query.empty(), Person.class) //
-                .as(StepVerifier::create) //
-                .consumeNextWith(actual -> {
+		entityTemplate.select(Query.empty(), Person.class) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
 
-                    assertThat(actual.id).isEqualTo("after-convert");
-                    assertThat(actual.name).isEqualTo("some-name");
-                }).verifyComplete();
+					assertThat(actual.id).isEqualTo("after-convert");
+					assertThat(actual.name).isEqualTo("some-name");
+				}).verifyComplete();
 
-        assertThat(callback.getValues()).hasSize(1);
-    }
+		assertThat(callback.getValues()).hasSize(1);
+	}
 
-    @Test
-        // gh-220
-    void shouldSelectOne() {
+	@Test // gh-220
+	void shouldSelectOne() {
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
+		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
-        entityTemplate.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")), Person.class) //
-                .as(StepVerifier::create) //
-                .verifyComplete();
+		entityTemplate.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")), Person.class) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-        assertThat(statement.getSql())
-                .isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 2");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 2");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-220, gh-758
-    void shouldSelectOneDoNotOverrideExistingLimit() {
+	@Test // gh-220, gh-758
+	void shouldSelectOneDoNotOverrideExistingLimit() {
 
-        recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
+		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
-        entityTemplate
-                .selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")).limit(1), Person.class) //
-                .as(StepVerifier::create) //
-                .verifyComplete();
+		entityTemplate
+				.selectOne(Query.query(Criteria.where("name").is("Walter")).sort(Sort.by("name")).limit(1), Person.class) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-        assertThat(statement.getSql())
-                .isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 1");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-220
-    void shouldUpdateByQuery() {
+	@Test // gh-220
+	void shouldUpdateByQuery() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
-        entityTemplate
-                .update(Query.query(Criteria.where("name").is("Walter")), Update.update("name", "Heisenberg"), Person.class) //
-                .as(StepVerifier::create) //
-                .expectNext(1L) //
-                .verifyComplete();
+		entityTemplate
+				.update(Query.query(Criteria.where("name").is("Walter")), Update.update("name", "Heisenberg"), Person.class) //
+				.as(StepVerifier::create) //
+				.expectNext(1L) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-        assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
-        assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
-                Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
+				Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-220
-    void shouldDeleteByQuery() {
+	@Test // gh-220
+	void shouldDeleteByQuery() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder()
-                .columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
-        MockResult result = MockResult.builder().rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("DELETE"), result);
+		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
 
-        entityTemplate.delete(Query.query(Criteria.where("name").is("Walter")), Person.class) //
-                .as(StepVerifier::create) //
-                .expectNext(1L) //
-                .verifyComplete();
+		entityTemplate.delete(Query.query(Criteria.where("name").is("Walter")), Person.class) //
+				.as(StepVerifier::create) //
+				.expectNext(1L) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-        assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-220
-    void shouldDeleteEntity() {
+	@Test // gh-220
+	void shouldDeleteEntity() {
 
-        Person person = Person.empty() //
-                .withId("Walter");
-        recorder.addStubbing(s -> s.startsWith("DELETE"), Collections.emptyList());
+		Person person = Person.empty() //
+				.withId("Walter");
+		recorder.addStubbing(s -> s.startsWith("DELETE"), Collections.emptyList());
 
-        entityTemplate.delete(person) //
-                .as(StepVerifier::create) //
-                .expectNext(person).verifyComplete();
+		entityTemplate.delete(person) //
+				.as(StepVerifier::create) //
+				.expectNext(person).verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-        assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.id = $1");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
-    }
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.id = $1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+	}
 
-    @Test
-        // gh-365
-    void shouldInsertVersioned() {
+	@Test // gh-365
+	void shouldInsertVersioned() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        entityTemplate.insert(new VersionedPerson("id", 0, "bar")).as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
-                }) //
-                .verifyComplete();
+		entityTemplate.insert(new VersionedPerson("id", 0, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql()).isEqualTo("INSERT INTO versioned_person (id, version, name) VALUES ($1, $2, $3)");
-        assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("id")).containsEntry(1,
-                Parameter.from(1L));
-    }
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO versioned_person (id, version, name) VALUES ($1, $2, $3)");
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("id")).containsEntry(1,
+				Parameter.from(1L));
+	}
 
-    @Test
-        // gh-557, gh-402
-    void shouldSkipDefaultIdValueOnInsert() {
+	@Test // gh-557, gh-402
+	void shouldSkipDefaultIdValueOnInsert() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        entityTemplate.insert(new PersonWithPrimitiveId(0, "bar")).as(StepVerifier::create) //
-                .expectNextCount(1) //
-                .verifyComplete();
+		entityTemplate.insert(new PersonWithPrimitiveId(0, "bar")).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql()).isEqualTo("INSERT INTO person_with_primitive_id (name) VALUES ($1)");
-        assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("bar"));
-    }
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO person_with_primitive_id (name) VALUES ($1)");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("bar"));
+	}
 
-    @Test
-        // gh-557, gh-402
-    void shouldSkipDefaultIdValueOnVersionedInsert() {
+	@Test // gh-557, gh-402
+	void shouldSkipDefaultIdValueOnVersionedInsert() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        entityTemplate.insert(new VersionedPersonWithPrimitiveId(0, 0, "bar")).as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
-                }) //
-                .verifyComplete();
+		entityTemplate.insert(new VersionedPersonWithPrimitiveId(0, 0, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql())
-                .isEqualTo("INSERT INTO versioned_person_with_primitive_id (version, name) VALUES ($1, $2)");
-        assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from(1L)).containsEntry(1,
-                Parameter.from("bar"));
-    }
+		assertThat(statement.getSql())
+				.isEqualTo("INSERT INTO versioned_person_with_primitive_id (version, name) VALUES ($1, $2)");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from(1L)).containsEntry(1,
+				Parameter.from("bar"));
+	}
 
-    @Test
-        // gh-451
-    void shouldInsertCorrectlyVersionedAndAudited() {
+	@Test // gh-451
+	void shouldInsertCorrectlyVersionedAndAudited() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
-        when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
-                PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
+		ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
+		when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
+				PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
 
-        entityTemplate
-                .setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
-        entityTemplate.insert(new WithAuditingAndOptimisticLocking(null, 0, "Walter", null, null)) //
-                .as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(1);
-                    assertThat(actual.getCreatedDate()).isNotNull();
-                }) //
-                .verifyComplete();
+		entityTemplate
+				.setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
+		entityTemplate.insert(new WithAuditingAndOptimisticLocking(null, 0, "Walter", null, null)) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+					assertThat(actual.getCreatedDate()).isNotNull();
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql()).isEqualTo(
-                "INSERT INTO with_auditing_and_optimistic_locking (version, name, created_date, last_modified_date) VALUES ($1, $2, $3, $4)");
-    }
+		assertThat(statement.getSql()).isEqualTo(
+				"INSERT INTO with_auditing_and_optimistic_locking (version, name, created_date, last_modified_date) VALUES ($1, $2, $3, $4)");
+	}
 
-    @Test
-        // gh-451
-    void shouldUpdateCorrectlyVersionedAndAudited() {
+	@Test // gh-451
+	void shouldUpdateCorrectlyVersionedAndAudited() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
-        ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
-        when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
-                PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
+		ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
+		when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
+				PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
 
-        entityTemplate
-                .setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
-        entityTemplate.update(new WithAuditingAndOptimisticLocking(null, 2, "Walter", null, null)) //
-                .as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(3);
-                    assertThat(actual.getCreatedDate()).isNull();
-                    assertThat(actual.getLastModifiedDate()).isNotNull();
-                }) //
-                .verifyComplete();
+		entityTemplate
+				.setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
+		entityTemplate.update(new WithAuditingAndOptimisticLocking(null, 2, "Walter", null, null)) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(3);
+					assertThat(actual.getCreatedDate()).isNull();
+					assertThat(actual.getLastModifiedDate()).isNotNull();
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-        assertThat(statement.getSql()).startsWith(
-                "UPDATE with_auditing_and_optimistic_locking SET version = $1, name = $2, created_date = $3, last_modified_date = $4");
-    }
+		assertThat(statement.getSql()).startsWith(
+				"UPDATE with_auditing_and_optimistic_locking SET version = $1, name = $2, created_date = $3, last_modified_date = $4");
+	}
 
-    @Test
-        // gh-215
-    void insertShouldInvokeCallback() {
+	@Test // gh-215
+	void insertShouldInvokeCallback() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        ValueCapturingBeforeConvertCallback beforeConvert = new ValueCapturingBeforeConvertCallback();
-        ValueCapturingBeforeSaveCallback beforeSave = new ValueCapturingBeforeSaveCallback();
-        ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
+		ValueCapturingBeforeConvertCallback beforeConvert = new ValueCapturingBeforeConvertCallback();
+		ValueCapturingBeforeSaveCallback beforeSave = new ValueCapturingBeforeSaveCallback();
+		ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
 
-        entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
-        entityTemplate.insert(Person.empty()).as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.id).isEqualTo("after-save");
-                    assertThat(actual.name).isEqualTo("before-convert");
-                    assertThat(actual.description).isNull();
-                }) //
-                .verifyComplete();
+		entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
+		entityTemplate.insert(Person.empty()).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.id).isEqualTo("after-save");
+					assertThat(actual.name).isEqualTo("before-convert");
+					assertThat(actual.description).isNull();
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME, description) VALUES ($1, $2)");
-        assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
-                Parameter.from("before-save"));
-    }
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME, description) VALUES ($1, $2)");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
+				Parameter.from("before-save"));
+	}
 
-    @Test
-        // gh-365
-    void shouldUpdateVersioned() {
+	@Test // gh-365
+	void shouldUpdateVersioned() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
-        entityTemplate.update(new VersionedPerson("id", 1, "bar")).as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.getVersion()).isEqualTo(2);
-                }) //
-                .verifyComplete();
+		entityTemplate.update(new VersionedPerson("id", 1, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(2);
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-        assertThat(statement.getSql()).isEqualTo(
-                "UPDATE versioned_person SET version = $1, name = $2 WHERE versioned_person.id = $3 AND (versioned_person.version = $4)");
-        assertThat(statement.getBindings()).hasSize(4).containsEntry(0, Parameter.from(2L)).containsEntry(3,
-                Parameter.from(1L));
-    }
+		assertThat(statement.getSql()).isEqualTo(
+				"UPDATE versioned_person SET version = $1, name = $2 WHERE versioned_person.id = $3 AND (versioned_person.version = $4)");
+		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, Parameter.from(2L)).containsEntry(3,
+				Parameter.from(1L));
+	}
 
-    @Test
-        // gh-215
-    void updateShouldInvokeCallback() {
+	@Test // gh-215
+	void updateShouldInvokeCallback() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
-        ValueCapturingBeforeConvertCallback beforeConvert = new ValueCapturingBeforeConvertCallback();
-        ValueCapturingBeforeSaveCallback beforeSave = new ValueCapturingBeforeSaveCallback();
-        ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
+		ValueCapturingBeforeConvertCallback beforeConvert = new ValueCapturingBeforeConvertCallback();
+		ValueCapturingBeforeSaveCallback beforeSave = new ValueCapturingBeforeSaveCallback();
+		ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
 
-        Person person = Person.empty() //
-                .withId("the-id") //
-                .withName("name") //
-                .withDescription("description");
+		Person person = Person.empty() //
+				.withId("the-id") //
+				.withName("name") //
+				.withDescription("description");
 
-        entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
-        entityTemplate.update(person).as(StepVerifier::create) //
-                .assertNext(actual -> {
-                    assertThat(actual.id).isEqualTo("after-save");
-                    assertThat(actual.name).isEqualTo("before-convert");
-                    assertThat(actual.description).isNull();
-                }) //
-                .verifyComplete();
+		entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
+		entityTemplate.update(person).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.id).isEqualTo("after-save");
+					assertThat(actual.name).isEqualTo("before-convert");
+					assertThat(actual.description).isNull();
+				}) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-        assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1, description = $2 WHERE person.id = $3");
-        assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
-                Parameter.from("before-save"));
-    }
+		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1, description = $2 WHERE person.id = $3");
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
+				Parameter.from("before-save"));
+	}
 
-    @Test
-        // gh-637
-    void insertIncludesInsertOnlyColumns() {
+	@Test // gh-637
+	void insertIncludesInsertOnlyColumns() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
-        entityTemplate.insert(new WithInsertOnly(null, "Alfred", "insert this")).as(StepVerifier::create) //
-                .expectNextCount(1) //
-                .verifyComplete();
+		entityTemplate.insert(new WithInsertOnly(null, "Alfred", "insert this")).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-        assertThat(statement.getSql()).isEqualTo("INSERT INTO with_insert_only (name, insert_only) VALUES ($1, $2)");
-        assertThat(statement.getBindings()).hasSize(2)
-                .containsEntry(0, Parameter.from("Alfred"))
-                .containsEntry(1, Parameter.from("insert this"));
-    }
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO with_insert_only (name, insert_only) VALUES ($1, $2)");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Alfred")).containsEntry(1,
+				Parameter.from("insert this"));
+	}
 
-    @Test
-        // gh-637
-    void updateExcludesInsertOnlyColumns() {
+	@Test // gh-637
+	void updateExcludesInsertOnlyColumns() {
 
-        MockRowMetadata metadata = MockRowMetadata.builder().build();
-        MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
 
-        recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
-        entityTemplate.update(new WithInsertOnly(23L, "Alfred", "don't update this")).as(StepVerifier::create) //
-                .expectNextCount(1) //
-                .verifyComplete();
+		entityTemplate.update(new WithInsertOnly(23L, "Alfred", "don't update this")).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
 
-        StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-        assertThat(statement.getSql()).isEqualTo("UPDATE with_insert_only SET name = $1 WHERE with_insert_only.id = $2");
-        assertThat(statement.getBindings()).hasSize(2)
-                .containsEntry(0, Parameter.from("Alfred"))
-                .containsEntry(1, Parameter.from(23L));
-    }
+		assertThat(statement.getSql()).isEqualTo("UPDATE with_insert_only SET name = $1 WHERE with_insert_only.id = $2");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Alfred")).containsEntry(1,
+				Parameter.from(23L));
+	}
 
-    @Value
-    static class WithoutId {
+	@Value
+	static class WithoutId {
 
-        String name;
-    }
+		String name;
+	}
 
-    @Value
-    @With
-    static class Person {
+	@Value
+	@With
+	static class Person {
 
-        @Id
-        String id;
+		@Id String id;
 
-        @Column("THE_NAME")
-        String name;
+		@Column("THE_NAME") String name;
 
-        String description;
+		String description;
 
-        public static Person empty() {
-            return new Person(null, null, null);
-        }
-    }
+		public static Person empty() {
+			return new Person(null, null, null);
+		}
+	}
 
-    @Value
-    @With
-    private static class VersionedPerson {
+	@Value
+	@With
+	private static class VersionedPerson {
 
-        @Id
-        String id;
+		@Id String id;
 
-        @Version
-        long version;
+		@Version long version;
 
-        String name;
-    }
+		String name;
+	}
 
-    @Value
-    @With
-    private static class PersonWithPrimitiveId {
+	@Value
+	@With
+	private static class PersonWithPrimitiveId {
 
-        @Id
-        int id;
+		@Id int id;
 
-        String name;
-    }
+		String name;
+	}
 
-    @Value
-    @With
-    private static class VersionedPersonWithPrimitiveId {
+	@Value
+	@With
+	private static class VersionedPersonWithPrimitiveId {
 
-        @Id
-        int id;
+		@Id int id;
 
-        @Version
-        long version;
+		@Version long version;
 
-        String name;
-    }
+		String name;
+	}
 
-    @Value
-    @With
-    private static class WithAuditingAndOptimisticLocking {
+	@Value
+	@With
+	private static class WithAuditingAndOptimisticLocking {
 
-        @Id
-        String id;
+		@Id String id;
 
-        @Version
-        long version;
+		@Version long version;
 
-        String name;
+		String name;
 
-        @CreatedDate
-        LocalDateTime createdDate;
-        @LastModifiedDate
-        LocalDateTime lastModifiedDate;
-    }
+		@CreatedDate LocalDateTime createdDate;
+		@LastModifiedDate LocalDateTime lastModifiedDate;
+	}
 
-    @Value
-    private static class WithInsertOnly {
-        @Id
-        Long id;
+	@Value
+	private static class WithInsertOnly {
+		@Id Long id;
 
-        String name;
+		String name;
 
-        @InsertOnlyProperty
-        String insertOnly;
-    }
+		@InsertOnlyProperty String insertOnly;
+	}
 
-    static class ValueCapturingEntityCallback<T> {
+	static class ValueCapturingEntityCallback<T> {
 
-        private final List<T> values = new ArrayList<>(1);
+		private final List<T> values = new ArrayList<>(1);
 
-        void capture(T value) {
-            values.add(value);
-        }
+		void capture(T value) {
+			values.add(value);
+		}
 
-        public List<T> getValues() {
-            return values;
-        }
+		public List<T> getValues() {
+			return values;
+		}
 
-        @Nullable
-        public T getValue() {
-            return CollectionUtils.lastElement(values);
-        }
-    }
+		@Nullable
+		public T getValue() {
+			return CollectionUtils.lastElement(values);
+		}
+	}
 
-    static class ValueCapturingBeforeConvertCallback extends ValueCapturingEntityCallback<Person>
-            implements BeforeConvertCallback<Person> {
+	static class ValueCapturingBeforeConvertCallback extends ValueCapturingEntityCallback<Person>
+			implements BeforeConvertCallback<Person> {
 
-        @Override
-        public Mono<Person> onBeforeConvert(Person entity, SqlIdentifier table) {
+		@Override
+		public Mono<Person> onBeforeConvert(Person entity, SqlIdentifier table) {
 
-            capture(entity);
-            Person person = entity.withName("before-convert");
-            return Mono.just(person);
-        }
-    }
+			capture(entity);
+			Person person = entity.withName("before-convert");
+			return Mono.just(person);
+		}
+	}
 
-    static class ValueCapturingBeforeSaveCallback extends ValueCapturingEntityCallback<Person>
-            implements BeforeSaveCallback<Person> {
+	static class ValueCapturingBeforeSaveCallback extends ValueCapturingEntityCallback<Person>
+			implements BeforeSaveCallback<Person> {
 
-        @Override
-        public Mono<Person> onBeforeSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
+		@Override
+		public Mono<Person> onBeforeSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
 
-            capture(entity);
-            outboundRow.put(SqlIdentifier.unquoted("description"), Parameter.from("before-save"));
-            return Mono.just(entity);
-        }
-    }
+			capture(entity);
+			outboundRow.put(SqlIdentifier.unquoted("description"), Parameter.from("before-save"));
+			return Mono.just(entity);
+		}
+	}
 
-    static class ValueCapturingAfterSaveCallback extends ValueCapturingEntityCallback<Person>
-            implements AfterSaveCallback<Person> {
+	static class ValueCapturingAfterSaveCallback extends ValueCapturingEntityCallback<Person>
+			implements AfterSaveCallback<Person> {
 
-        @Override
-        public Mono<Person> onAfterSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
+		@Override
+		public Mono<Person> onAfterSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
 
-            capture(entity);
+			capture(entity);
 
-            Person person = Person.empty() //
-                    .withId("after-save") //
-                    .withName(entity.getName());
+			Person person = Person.empty() //
+					.withId("after-save") //
+					.withName(entity.getName());
 
-            return Mono.just(person);
-        }
-    }
+			return Mono.just(person);
+		}
+	}
 
-    static class ValueCapturingAfterConvertCallback extends ValueCapturingEntityCallback<Person>
-            implements AfterConvertCallback<Person> {
+	static class ValueCapturingAfterConvertCallback extends ValueCapturingEntityCallback<Person>
+			implements AfterConvertCallback<Person> {
 
-        @Override
-        public Mono<Person> onAfterConvert(Person entity, SqlIdentifier table) {
+		@Override
+		public Mono<Person> onAfterConvert(Person entity, SqlIdentifier table) {
 
-            capture(entity);
-            Person person = Person.empty() //
-                    .withId("after-convert") //
-                    .withName(entity.getName());
+			capture(entity);
+			Person person = Person.empty() //
+					.withId("after-convert") //
+					.withName(entity.getName());
 
-            return Mono.just(person);
-        }
-    }
+			return Mono.just(person);
+		}
+	}
 }
