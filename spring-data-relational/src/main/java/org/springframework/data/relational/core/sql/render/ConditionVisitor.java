@@ -15,16 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.AndCondition;
-import org.springframework.data.relational.core.sql.Between;
-import org.springframework.data.relational.core.sql.Comparison;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.ConstantCondition;
-import org.springframework.data.relational.core.sql.In;
-import org.springframework.data.relational.core.sql.IsNull;
-import org.springframework.data.relational.core.sql.Like;
-import org.springframework.data.relational.core.sql.NestedCondition;
-import org.springframework.data.relational.core.sql.OrCondition;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.lang.Nullable;
 
 /**
@@ -101,6 +92,10 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 
 		if (segment instanceof ConstantCondition) {
 			return new ConstantConditionVisitor(context, builder::append);
+		}
+
+		if (segment instanceof Not) {
+			return new NotConditionVisitor(context, builder::append);
 		}
 
 		return null;
