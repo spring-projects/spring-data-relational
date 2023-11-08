@@ -620,6 +620,19 @@ class SelectRendererUnitTests {
 				.isEqualTo("SELECT * FROM tableA JOIN tableB ON tableA.id = tableB.id ORDER BY tableA.name, tableB.name");
 	}
 
+	@Test // GH-1653
+	void notOfNested(){
+
+		Table table = SQL.table("atable");
+
+		Select select = StatementBuilder.select(table.asterisk()).from(table). where(
+				Conditions.nest(table.column("id").isEqualTo(Expressions.just("1"))
+						.and(table.column("id").isEqualTo(Expressions.just("2")))).not()).build();
+		String sql = SqlRenderer.toString(select);
+
+		assertThat(sql).isEqualTo("SELECT atable.* FROM atable WHERE NOT (atable.id = 1 AND atable.id = 2)");
+	}
+
 	/**
 	 * Tests the rendering of analytic functions.
 	 */
