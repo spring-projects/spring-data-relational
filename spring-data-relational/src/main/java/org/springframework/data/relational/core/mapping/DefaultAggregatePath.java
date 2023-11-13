@@ -52,7 +52,7 @@ class DefaultAggregatePath implements AggregatePath {
 
 		this.context = context;
 		this.path = (PersistentPropertyPath) path;
-		this.rootType = null;
+		this.rootType = path.getBaseProperty().getOwner();
 	}
 
 	DefaultAggregatePath(RelationalMappingContext context, RelationalPersistentEntity<?> rootType) {
