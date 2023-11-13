@@ -186,11 +186,13 @@ public class RelationalMappingContext
 	 */
 	public AggregatePath getAggregatePath(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-		AggregatePath aggregatePath = aggregatePathCache.get(path);
+		AggregatePathCacheKey cacheKey = AggregatePathCacheKey.of(path);
+
+		AggregatePath aggregatePath = aggregatePathCache.get(cacheKey);
 		if (aggregatePath == null) {
 
 			aggregatePath = new DefaultAggregatePath(this, path);
-			aggregatePathCache.put(path, aggregatePath);
+			aggregatePathCache.put(cacheKey, aggregatePath);
 		}
 
 		return aggregatePath;
@@ -198,13 +200,26 @@ public class RelationalMappingContext
 
 	public AggregatePath getAggregatePath(RelationalPersistentEntity<?> type) {
 
-		AggregatePath aggregatePath = aggregatePathCache.get(type);
+		AggregatePathCacheKey cacheKey = AggregatePathCacheKey.of(type);
+
+		AggregatePath aggregatePath = aggregatePathCache.get(cacheKey);
 		if (aggregatePath == null) {
 
 			aggregatePath = new DefaultAggregatePath(this, type);
-			aggregatePathCache.put(type, aggregatePath);
+			aggregatePathCache.put(cacheKey, aggregatePath);
 		}
 
 		return aggregatePath;
+	}
+
+	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+		static AggregatePathCacheKey of(RelationalPersistentEntity<?> root) {
+			return new AggregatePathCacheKey(root, null);
+		}
+		static AggregatePathCacheKey of(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+
+			RelationalPersistentEntity<?> root = path.getBaseProperty().getOwner();
+			return new AggregatePathCacheKey(root, path);
+		}
 	}
 }

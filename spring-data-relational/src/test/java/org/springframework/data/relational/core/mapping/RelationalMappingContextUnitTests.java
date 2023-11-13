@@ -104,6 +104,20 @@ public class RelationalMappingContextUnitTests {
 		assertThat(name.getColumnName()).isEqualTo(SqlIdentifier.quoted("PRNT_CHLD_NAME"));
 	}
 
+	@Test // GH-1657
+	void aggregatePathsOfBasePropertyForDifferentInheritedEntitiesAreDifferent() {
+
+		PersistentPropertyPath<RelationalPersistentProperty> path1 = context.getPersistentPropertyPath("name",
+				Inherit1.class);
+		PersistentPropertyPath<RelationalPersistentProperty> path2 = context.getPersistentPropertyPath("name",
+				Inherit2.class);
+
+		AggregatePath aggregatePath1 = context.getAggregatePath(path1);
+		AggregatePath aggregatePath2 = context.getAggregatePath(path2);
+
+		assertThat(aggregatePath1).isNotEqualTo(aggregatePath2);
+	}
+
 	static class EntityWithUuid {
 		@Id UUID uuid;
 	}
@@ -120,5 +134,13 @@ public class RelationalMappingContextUnitTests {
 	static class Child {
 		String name;
 	}
+
+	static class Base {
+		String name;
+	}
+
+	static class Inherit1 extends Base {}
+
+	static class Inherit2 extends Base {}
 
 }
