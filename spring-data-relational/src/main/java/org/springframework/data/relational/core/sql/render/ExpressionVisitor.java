@@ -85,9 +85,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			return Delegation.delegateTo(visitor);
 		}
 
-		if (segment instanceof Column) {
-
-			Column column = (Column) segment;
+		if (segment instanceof Column column) {
 
 			value = aliasHandling == AliasHandling.USE ? NameRenderer.fullyQualifiedReference(context, column)
 					: NameRenderer.fullyQualifiedUnaliasedReference(context, column);
@@ -101,12 +99,9 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		} else if (segment instanceof AsteriskFromTable asteriskFromTable) {
 
 			TableLike table = asteriskFromTable.getTable();
-			CharSequence renderedTable;
-			if (table instanceof Aliased aliasedTable) {
-				renderedTable = NameRenderer.render(context, aliasedTable);
-			} else {
-				renderedTable = NameRenderer.render(context, table);
-			}
+			CharSequence renderedTable = table instanceof Aliased aliasedTable ? NameRenderer.render(context, aliasedTable)
+					: NameRenderer.render(context, table);
+
 			value = renderedTable + ".*";
 		} else if (segment instanceof Cast) {
 
