@@ -635,6 +635,17 @@ class SelectRendererUnitTests {
 				.isEqualTo("SELECT table.name AS alias FROM table");
 	}
 
+	@Test // GH-1651
+	void asteriskOfAliasedTableUsesAlias() {
+
+		Table employee = SQL.table("employee").as("e");
+		Select select = Select.builder().select(employee.asterisk()).select(employee.column("id")).from(employee).build();
+
+		String rendered = SqlRenderer.toString(select);
+
+		assertThat(rendered).isEqualTo("SELECT e.*, e.id FROM employee e");
+	}
+
 	/**
 	 * Tests the rendering of analytic functions.
 	 */
