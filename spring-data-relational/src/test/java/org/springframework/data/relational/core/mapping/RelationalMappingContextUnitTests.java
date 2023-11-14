@@ -17,8 +17,8 @@ package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,10 +32,12 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * Unit tests for {@link RelationalMappingContext}.
  *
  * @author Toshiaki Maki
+ * @author Jens Schauder
  */
 public class RelationalMappingContextUnitTests {
+
 	RelationalMappingContext context = new RelationalMappingContext();
-	SimpleTypeHolder holder = new SimpleTypeHolder(new HashSet<>(Arrays.asList(UUID.class)), true);
+	SimpleTypeHolder holder = new SimpleTypeHolder(new HashSet<>(List.of(UUID.class)), true);
 
 	@BeforeEach
 	void setup() {

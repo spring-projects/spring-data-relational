@@ -44,7 +44,7 @@ public class RelationalMappingContext
 		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
 	private final NamingStrategy namingStrategy;
-	private final Map<Object, AggregatePath> aggregatePathCache = new ConcurrentHashMap<>();
+	private final Map<AggregatePathCacheKey, AggregatePath> aggregatePathCache = new ConcurrentHashMap<>();
 
 	private boolean forceQuote = true;
 
@@ -115,10 +115,7 @@ public class RelationalMappingContext
 	@Override
 	public RelationalPersistentEntity<?> getPersistentEntity(RelationalPersistentProperty persistentProperty) {
 
-		boolean embeddedDelegation = false;
-		if (persistentProperty instanceof EmbeddedRelationalPersistentProperty) {
-			embeddedDelegation = true;
-		}
+		boolean embeddedDelegation = persistentProperty instanceof EmbeddedRelationalPersistentProperty;
 
 		RelationalPersistentEntity<?> entity = super.getPersistentEntity(persistentProperty);
 
@@ -203,6 +200,7 @@ public class RelationalMappingContext
 		AggregatePathCacheKey cacheKey = AggregatePathCacheKey.of(type);
 
 		AggregatePath aggregatePath = aggregatePathCache.get(cacheKey);
+
 		if (aggregatePath == null) {
 
 			aggregatePath = new DefaultAggregatePath(this, type);
@@ -212,14 +210,27 @@ public class RelationalMappingContext
 		return aggregatePath;
 	}
 
-	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,
+			@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+
+		/**
+		 * Create a new AggregatePathCacheKey for a root entity.
+		 *
+		 * @param root the root entity.
+		 * @return
+		 */
 		static AggregatePathCacheKey of(RelationalPersistentEntity<?> root) {
 			return new AggregatePathCacheKey(root, null);
 		}
-		static AggregatePathCacheKey of(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-			RelationalPersistentEntity<?> root = path.getBaseProperty().getOwner();
-			return new AggregatePathCacheKey(root, path);
+		/**
+		 * Create a new AggregatePathCacheKey for a property path.
+		 *
+		 * @param path
+		 * @return
+		 */
+		static AggregatePathCacheKey of(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+			return new AggregatePathCacheKey(path.getBaseProperty().getOwner(), path);
 		}
 	}
 }
