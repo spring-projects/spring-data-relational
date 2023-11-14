@@ -638,6 +638,17 @@ class SelectRendererUnitTests {
 		assertThat(sql).isEqualTo("SELECT atable.* FROM atable WHERE NOT (atable.id = 1 AND atable.id = 2)");
 	}
 
+	@Test // GH-1651
+	void asteriskOfAliasedTableUsesAlias() {
+
+		Table employee = SQL.table("employee").as("e");
+		Select select = Select.builder().select(employee.asterisk()).select(employee.column("id")).from(employee).build();
+
+		String rendered = SqlRenderer.toString(select);
+
+		assertThat(rendered).isEqualTo("SELECT e.*, e.id FROM employee e");
+	}
+
 	/**
 	 * Tests the rendering of analytic functions.
 	 */

@@ -98,8 +98,16 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			} else {
 				value = segment.toString();
 			}
-		} else if (segment instanceof AsteriskFromTable) {
-			value = NameRenderer.render(context, ((AsteriskFromTable) segment).getTable()) + ".*";
+		} else if (segment instanceof AsteriskFromTable asteriskFromTable) {
+
+			TableLike table = asteriskFromTable.getTable();
+			CharSequence renderedTable;
+			if (table instanceof Aliased aliasedTable) {
+				renderedTable = NameRenderer.render(context, aliasedTable);
+			} else {
+				renderedTable = NameRenderer.render(context, table);
+			}
+			value = renderedTable + ".*";
 		} else if (segment instanceof Cast) {
 
 			CastVisitor visitor = new CastVisitor(context);
