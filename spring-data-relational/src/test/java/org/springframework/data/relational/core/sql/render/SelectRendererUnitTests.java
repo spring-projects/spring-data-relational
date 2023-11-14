@@ -149,7 +149,8 @@ class SelectRendererUnitTests {
 
 		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
 				.from(employee) //
-				.join(department, Join.JoinType.FULL_OUTER_JOIN).on(employee.column("department_id")).equals(department.column("id")) //
+				.join(department, Join.JoinType.FULL_OUTER_JOIN).on(employee.column("department_id"))
+				.equals(department.column("id")) //
 				.build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
@@ -253,11 +254,9 @@ class SelectRendererUnitTests {
 		Table merchantCustomers = Table.create("merchants_customers");
 		Table customerDetails = Table.create("customer_details");
 
-		Select innerSelect = Select.builder()
-				.select(customerDetails.column("cd_user_id"))
-				.from(customerDetails).join(merchantCustomers)
-				.on(merchantCustomers.column("mc_user_id").isEqualTo(customerDetails.column("cd_user_id")))
-				.build();
+		Select innerSelect = Select.builder().select(customerDetails.column("cd_user_id")).from(customerDetails)
+				.join(merchantCustomers)
+				.on(merchantCustomers.column("mc_user_id").isEqualTo(customerDetails.column("cd_user_id"))).build();
 
 		InlineQuery innerTable = InlineQuery.create(innerSelect, "inner");
 
@@ -285,8 +284,7 @@ class SelectRendererUnitTests {
 
 		Select innerSelectOne = Select.builder()
 				.select(employee.column("id").as("empId"), employee.column("department_Id"), employee.column("name"))
-				.from(employee)
-				.build();
+				.from(employee).build();
 		Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name")).from(department)
 				.build();
 
@@ -621,14 +619,21 @@ class SelectRendererUnitTests {
 	}
 
 	@Test // GH-1653
-	void notOfNested(){
+	void notOfNested() {
 
 		Table table = SQL.table("atable");
 
-		Select select = StatementBuilder.select(table.asterisk()).from(table). where(
-				Conditions.nest(table.column("id").isEqualTo(Expressions.just("1"))
-						.and(table.column("id").isEqualTo(Expressions.just("2")))).not()).build();
+		Select select = StatementBuilder.select(table.asterisk()).from(table).where(Conditions.nest(
+				table.column("id").isEqualTo(Expressions.just("1")).and(table.column("id").isEqualTo(Expressions.just("2"))))
+				.not()).build();
 		String sql = SqlRenderer.toString(select);
+
+		assertThat(sql).isEqualTo("SELECT atable.* FROM atable WHERE NOT (atable.id = 1 AND atable.id = 2)");
+
+		select = StatementBuilder.select(table.asterisk()).from(table).where(Conditions.not(Conditions.nest(
+				table.column("id").isEqualTo(Expressions.just("1")).and(table.column("id").isEqualTo(Expressions.just("2"))))))
+				.build();
+		sql = SqlRenderer.toString(select);
 
 		assertThat(sql).isEqualTo("SELECT atable.* FROM atable WHERE NOT (atable.id = 1 AND atable.id = 2)");
 	}
@@ -734,8 +739,7 @@ class SelectRendererUnitTests {
 
 			String rendered = SqlRenderer.toString(select);
 
-			assertThat(rendered).isEqualTo(
-					"SELECT ROW_NUMBER() OVER(PARTITION BY employee.department) FROM employee");
+			assertThat(rendered).isEqualTo("SELECT ROW_NUMBER() OVER(PARTITION BY employee.department) FROM employee");
 		}
 	}
 }

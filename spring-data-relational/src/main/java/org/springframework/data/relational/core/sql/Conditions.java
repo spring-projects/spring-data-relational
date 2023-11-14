@@ -58,6 +58,17 @@ public abstract class Conditions {
 	}
 
 	/**
+	 * Creates a NOT {@link Condition} that reverses the condition.
+	 *
+	 * @param condition the condition to {@code NOT}.
+	 * @return a NOT {@link Condition}.
+	 * @since 3.1.6
+	 */
+	public static Condition not(Condition condition) {
+		return new Not(condition);
+	}
+
+	/**
 	 * Creates a {@code IS NULL} condition.
 	 *
 	 * @param expression the expression to check for nullability, must not be {@literal null}.
