@@ -1278,6 +1278,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(authors).containsExactly(tolkien);
 	}
 
+	@Test // GH-1656
+	void mapWithEnumKey() {
+
+		EnumMapOwner enumMapOwner = template.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+
+		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
+
+		assertThat(enumMapOwners).containsExactly(enumMapOwner);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -2095,6 +2105,10 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	record Book(String name) {
 
 	}
+
+	record EnumMapOwner(@Id Long id, String name, Map<Color, MapElement> map) {
+	}
+
 
 	@Configuration
 	@Import(TestConfiguration.class)
