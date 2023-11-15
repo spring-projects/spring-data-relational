@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.util.Collection;
 
@@ -39,6 +40,11 @@ public class OracleDialect extends AnsiDialect {
 		@Override
 		public boolean driverRequiresKeyColumnNames() {
 			return true;
+		}
+
+		@Override
+		public String getKeyColumnName(SqlIdentifier id) {
+			return id.toSql(INSTANCE.getIdentifierProcessing());
 		}
 	};
 

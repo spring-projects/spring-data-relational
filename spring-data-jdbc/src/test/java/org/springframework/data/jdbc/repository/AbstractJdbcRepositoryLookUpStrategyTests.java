@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -34,6 +36,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  * @author Diego Krupitza
  * @since 2.4
  */
+@EnabledOnDatabase(DatabaseType.HSQL)
 abstract class AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Autowired protected OnesRepository onesRepository;
