@@ -46,7 +46,6 @@ public class JdbcAggregateTemplateSchemaIntegrationTests {
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 
 	@Test
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void insertFindUpdateDelete() {
 
 		DummyEntity entity = new DummyEntity();

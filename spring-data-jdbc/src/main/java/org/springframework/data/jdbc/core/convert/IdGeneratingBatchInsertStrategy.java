@@ -67,7 +67,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 		IdGeneration idGeneration = dialect.getIdGeneration();
 		if (idGeneration.driverRequiresKeyColumnNames()) {
 
-			String[] keyColumnNames = getKeyColumnNames();
+			String[] keyColumnNames = getKeyColumnNames(idGeneration);
 			if (keyColumnNames.length == 0) {
 				jdbcOperations.batchUpdate(sql, sqlParameterSources, holder);
 			} else {
@@ -94,10 +94,10 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 		return ids;
 	}
 
-	private String[] getKeyColumnNames() {
+	private String[] getKeyColumnNames(IdGeneration idGeneration) {
 
 		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[] { idColumn.getReference() })
+				.map(idColumn -> new String[] {idGeneration.getKeyColumnName( idColumn) })
 				.orElse(new String[0]);
 	}
 }
