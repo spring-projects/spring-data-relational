@@ -23,6 +23,7 @@ import java.util.Map;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -51,15 +52,19 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-		Object key = rs.getObject(keyColumn.getReference());
-		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
+		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(rs);
+
+		Object key = document.get(keyColumn.getReference());
+		Class<?> qualifierColumnType = path.getRequiredLeafProperty().getQualifierColumnType();
+		Object convertedKey = converter.readValue(key, TypeInformation.of(qualifierColumnType));
+
+		return new HashMap.SimpleEntry<>(convertedKey, mapEntity(document, key));
 	}
 
 	@SuppressWarnings("unchecked")
-	private T mapEntity(ResultSet resultSet, Object key) throws SQLException {
+	private T mapEntity(RowDocument document, Object key) {
 
-		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(resultSet);
-		return (T) converter.readAndResolve(path.getLeafEntity().getType(), document,
+		return (T) converter.readAndResolve(path.getRequiredLeafEntity().getType(), document,
 				identifier.withPart(keyColumn, key, Object.class));
 	}
 }
