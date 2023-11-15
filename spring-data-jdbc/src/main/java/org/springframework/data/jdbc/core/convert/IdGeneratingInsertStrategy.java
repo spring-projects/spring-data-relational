@@ -58,7 +58,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 
 		if (idGeneration.driverRequiresKeyColumnNames()) {
 
-			String[] keyColumnNames = getKeyColumnNames();
+			String[] keyColumnNames = getKeyColumnNames(idGeneration);
 			if (keyColumnNames.length == 0) {
 				jdbcOperations.update(sql, sqlParameterSource, holder);
 			} else {
@@ -84,8 +84,8 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 		}
 	}
 
-	private String[] getKeyColumnNames() {
-		return Optional.ofNullable(idColumn).map(idColumn -> new String[] { idColumn.getReference() })
+	private String[] getKeyColumnNames(IdGeneration idGeneration) {
+		return Optional.ofNullable(idColumn).map(idColumn -> new String[] { idGeneration.getKeyColumnName(idColumn) })
 				.orElse(new String[0]);
 	}
 }

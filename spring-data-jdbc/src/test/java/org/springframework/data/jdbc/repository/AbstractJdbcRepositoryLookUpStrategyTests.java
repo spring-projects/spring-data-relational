@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
  * Base class to test <code>@EnableJdbcRepositories(queryLookupStrategy = ...)</code>
- * 
+ *
  * @author Diego Krupitza
  * @since 2.4
  */

@@ -198,7 +198,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithReferencedEntityById() {
 
 		template.save(legoSet);
@@ -219,7 +218,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadManyEntitiesWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -232,7 +230,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
 
 		template.save(createLegoSet("Lava"));
@@ -247,7 +244,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
 
 		template.save(createLegoSet("Lava"));
@@ -262,7 +258,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-821
-	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE })
+	@EnabledOnFeature(SUPPORTS_NULL_PRECEDENCE)
 	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullPrecedence() {
 
 		template.save(createLegoSet(null));
@@ -279,7 +275,6 @@ class JdbcAggregateTemplateIntegrationTests {
 
 
 	@Test //
-	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS})
 	void findByNonPropertySortFails() {
 
 		assertThatThrownBy(() -> template.findAll(LegoSet.class,
@@ -289,7 +284,6 @@ class JdbcAggregateTemplateIntegrationTests {
 
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -301,7 +295,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithReferencedNullEntity() {
 
 		legoSet.setManual(null);
@@ -314,7 +307,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAnEntityWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -329,7 +321,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAllWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -345,7 +336,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-537
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAllByAggregateRootsWithReferencedEntity() {
 
 		LegoSet legoSet1 = template.save(legoSet);
@@ -362,7 +352,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-537
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndDeleteAllByIdsWithReferencedEntity() {
 
 		LegoSet legoSet1 = template.save(legoSet);
@@ -423,7 +412,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
+	@EnabledOnFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -442,7 +431,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void updateReferencedEntityToNull() {
 
 		template.save(legoSet);
@@ -473,7 +461,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void replaceReferencedEntity() {
 
 		template.save(legoSet);
@@ -494,7 +481,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	void changeReferencedEntity() {
 
 		template.save(legoSet);
@@ -509,7 +496,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void oneToOneChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -526,7 +512,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void oneToOneNullChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -542,7 +527,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void oneToOneNullAttributes() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -558,7 +542,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithSecondaryReferenceNull() {
 
 		template.save(legoSet);
@@ -571,7 +554,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
 
 		legoSet.alternativeInstructions = new Manual();
@@ -593,7 +575,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-276
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithListOfElementsWithoutId() {
 
 		ListParent entity = new ListParent();
@@ -612,7 +593,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-498 DATAJDBC-273
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadAnEntityWithListOfElementsInConstructor() {
 
 		ElementNoId element = new ElementNoId();
@@ -752,7 +732,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-340
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadLongChain() {
 
 		Chain4 chain4 = new Chain4();
@@ -781,7 +760,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-359
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadLongChainWithoutIds() {
 
 		NoIdChain4 chain4 = new NoIdChain4();
@@ -1012,7 +990,6 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-462
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void resavingAnUnversionedEntity() {
 
 		LegoSet legoSet = new LegoSet();

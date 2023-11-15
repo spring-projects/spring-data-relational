@@ -40,7 +40,7 @@ public class TestDatabaseFeatures {
 		String productName = jdbcTemplate.execute(
 				(ConnectionCallback<String>) c -> c.getMetaData().getDatabaseProductName().toLowerCase(Locale.ENGLISH));
 
-		database = Arrays.stream(Database.values()).filter(db -> db.matches(productName)).findFirst().get();
+		database = Arrays.stream(Database.values()).filter(db -> db.matches(productName)).findFirst().orElseThrow();
 	}
 
 	/**
@@ -48,15 +48,6 @@ public class TestDatabaseFeatures {
 	 */
 	private void supportsHugeNumbers() {
 		assumeThat(database).isNotIn(Database.Oracle, Database.SqlServer);
-	}
-
-	/**
-	 * Oracles JDBC driver seems to have a bug that makes it impossible to acquire generated keys when the column is
-	 * quoted. See
-	 * https://stackoverflow.com/questions/62263576/how-to-get-the-generated-key-for-a-column-with-lowercase-characters-from-oracle
-	 */
-	private void supportsQuotedIds() {
-		assumeThat(database).isNotEqualTo(Database.Oracle);
 	}
 
 	/**
@@ -115,7 +106,6 @@ public class TestDatabaseFeatures {
 	public enum Feature {
 
 		SUPPORTS_MULTIDIMENSIONAL_ARRAYS(TestDatabaseFeatures::supportsMultiDimensionalArrays), //
-		SUPPORTS_QUOTED_IDS(TestDatabaseFeatures::supportsQuotedIds), //
 		SUPPORTS_HUGE_NUMBERS(TestDatabaseFeatures::supportsHugeNumbers), //
 		SUPPORTS_ARRAYS(TestDatabaseFeatures::supportsArrays), //
 		SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES(TestDatabaseFeatures::supportsGeneratedIdsInReferencedEntities), //
