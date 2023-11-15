@@ -1095,6 +1095,16 @@ class JdbcAggregateTemplateIntegrationTests {
 		assertThat(template.findById(entity.id, EnumArrayOwner.class).digits).isEqualTo(new Color[]{Color.BLUE});
 	}
 
+	@Test // GH-1656
+	void mapWithEnumKey() {
+
+		EnumMapOwner enumMapOwner = template.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+
+		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
+
+		assertThat(enumMapOwners).containsExactly(enumMapOwner);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1546,6 +1556,12 @@ class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 		@InsertOnlyProperty
 		String insertOnly;
+	}
+
+	record EnumMapOwner(@Id Long id, String name, Map<Color, MapElement> map) {
+	}
+
+	record MapElement(String name) {
 	}
 
 	@Configuration

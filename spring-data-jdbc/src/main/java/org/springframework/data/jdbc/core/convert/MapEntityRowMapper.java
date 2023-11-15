@@ -23,7 +23,9 @@ import java.util.Map;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.JdbcUtils;
 
 /**
  * A {@link RowMapper} that maps a row to a {@link Map.Entry} so an {@link Iterable} of those can be converted to a
@@ -50,8 +52,11 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-		Object key = rs.getObject(keyColumn.getReference());
-		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
+		Object key = new ResultSetAccessor(rs).getObject(keyColumn.getReference());
+		Class<?> qualifierColumnType = path.getRequiredPersistentPropertyPath().getLeafProperty().getQualifierColumnType();
+		Object convertedKey = converter.readValue(key, TypeInformation.of(qualifierColumnType));
+
+		return new HashMap.SimpleEntry<>(convertedKey, mapEntity(rs, key));
 	}
 
 	private T mapEntity(ResultSet resultSet, Object key) {

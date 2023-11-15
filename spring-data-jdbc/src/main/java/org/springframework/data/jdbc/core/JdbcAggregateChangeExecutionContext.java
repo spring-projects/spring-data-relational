@@ -245,7 +245,7 @@ class JdbcAggregateChangeExecutionContext {
 		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(idOwningAction.getEntityType());
 		Object identifier = persistentEntity.getIdentifierAccessor(idOwningAction.getEntity()).getIdentifier();
 
-		Assert.state(identifier != null, "Couldn't obtain a required id value");
+		Assert.state(identifier != null,() -> "Couldn't obtain a required id value for " + persistentEntity);
 
 		return identifier;
 	}
