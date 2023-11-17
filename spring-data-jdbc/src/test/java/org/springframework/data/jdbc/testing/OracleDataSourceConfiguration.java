@@ -24,7 +24,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.testcontainers.containers.OracleContainer;
+import org.testcontainers.oracle.OracleContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -55,10 +55,9 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		if (ORACLE_CONTAINER == null) {
 
 			LOG.info("Oracle starting...");
-			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23-slim")
-					.asCompatibleSubstituteFor("gvenzl/oracle-xe");
-			OracleContainer container = new OracleContainer(dockerImageName)
-					.withDatabaseName("freepdb2")
+			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23.3-slim");
+			OracleContainer container = new OracleContainer(dockerImageName) //
+					.withStartupTimeoutSeconds(200) //
 					.withReuse(true);
 			container.start();
 			LOG.info("Oracle started");
