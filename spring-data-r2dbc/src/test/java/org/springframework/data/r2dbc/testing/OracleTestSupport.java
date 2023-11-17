@@ -29,7 +29,7 @@ import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.util.ClassUtils;
-import org.testcontainers.containers.OracleContainer;
+import org.testcontainers.oracle.OracleContainer;
 
 /**
  * Utility class for testing against Oracle.
@@ -128,7 +128,7 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:21.3.0-slim").withReuse(true);
+				OracleContainer container = new OracleContainer("23.3-slim-faststart").withReuse(true);
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
