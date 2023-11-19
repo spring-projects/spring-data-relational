@@ -10,7 +10,7 @@ asciidoc:
     attribute-missing: 'warn'
     commons: ${springdata.commons.docs}
     include-xml-namespaces: false
-    spring-data-commons-docs-url: https://docs.spring.io/spring-data-commons/reference
+    spring-data-commons-docs-url: https://docs.spring.io/spring-data/commons/reference
     spring-data-commons-javadoc-base: https://docs.spring.io/spring-data/commons/docs/${springdata.commons}/api/
     spring-data-jdbc-javadoc: https://docs.spring.io/spring-data/jdbc/docs/${version}/api/
     spring-data-r2dbc-javadoc: https://docs.spring.io/spring-data/r2dbc/docs/${version}/api/
