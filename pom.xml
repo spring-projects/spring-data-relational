@@ -38,10 +38,11 @@
 		<mysql-connector-java.version>8.0.32</mysql-connector-java.version>
 		<postgresql.version>42.6.0</postgresql.version>
 		<!--
-			Oracles later JDBC driver has a problem with returning ids from batch inserts
-		 	https://stackoverflow.com/questions/72717261/autokeyinfo-is-not-initialized-when-trying-to-batch-insert-into-table-with-gen
+			The Oracle driver 23.3.0.23.09 is not considered production ready by Oracle, but it fixes two important problems for Spring Data JDBC:
+		 	https://stackoverflow.com/q/72717261/66686
+		 	https://stackoverflow.com/q/62263576/66686
 		 -->
-		<oracle.version>19.18.0.0</oracle.version>
+		<oracle.version>23.3.0.23.09</oracle.version>
 
 		<!-- test utilities-->
 		<awaitility.version>4.2.0</awaitility.version>
