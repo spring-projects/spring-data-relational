@@ -128,7 +128,9 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("23.3-slim-faststart").withReuse(true);
+				OracleContainer container = new OracleContainer("23.3-slim") //
+						.withReuse(true) //
+						.withStartupTimeoutSeconds(200); // the default of 60s isn't sufficient
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //

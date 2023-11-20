@@ -55,8 +55,9 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		if (ORACLE_CONTAINER == null) {
 
 			LOG.info("Oracle starting...");
-			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23.3-slim-faststart");
-			OracleContainer container = new OracleContainer(dockerImageName)
+			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23.3-slim");
+			OracleContainer container = new OracleContainer(dockerImageName) //
+					.withStartupTimeoutSeconds(200) //
 					.withReuse(true);
 			container.start();
 			LOG.info("Oracle started");
