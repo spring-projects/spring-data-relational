@@ -93,8 +93,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 
 	private String[] getKeyColumnNames(IdGeneration idGeneration) {
 
-		return Optional.ofNullable(idColumn)
-				.map(idColumn -> new String[] {idGeneration.getKeyColumnName( idColumn) })
+		return Optional.ofNullable(idColumn).map(idColumn -> new String[] { idGeneration.getKeyColumnName(idColumn) })
 				.orElse(new String[0]);
 	}
 }
