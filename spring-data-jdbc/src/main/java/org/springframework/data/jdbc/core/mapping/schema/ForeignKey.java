@@ -7,10 +7,10 @@ import java.util.Objects;
  * Models a Foreign Key for generating SQL for Schema generation.
  *
  * @author Evgenii Koba
- * @since 3.2
+ * @since 3.3
  */
 record ForeignKey(String name, String tableName, List<String> columnNames, String referencedTableName,
-									List<String> referencedColumnNames) {
+		List<String> referencedColumnNames) {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
@@ -18,9 +18,9 @@ record ForeignKey(String name, String tableName, List<String> columnNames, Strin
 		if (o == null || getClass() != o.getClass())
 			return false;
 		ForeignKey that = (ForeignKey) o;
-		return Objects.equals(tableName, that.tableName) && Objects.equals(columnNames, that.columnNames) && Objects.equals(
-				referencedTableName, that.referencedTableName) && Objects.equals(referencedColumnNames,
-				that.referencedColumnNames);
+		return Objects.equals(tableName, that.tableName) && Objects.equals(columnNames, that.columnNames)
+				&& Objects.equals(referencedTableName, that.referencedTableName)
+				&& Objects.equals(referencedColumnNames, that.referencedColumnNames);
 	}
 
 	@Override

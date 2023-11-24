@@ -23,6 +23,7 @@ import java.util.List;
  * target {@link Tables}.
  *
  * @author Kurt Niemi
+ * @author Evgenii Koba
  * @since 3.2
  */
 record TableDiff(Table table, List<Column> columnsToAdd, List<Column> columnsToDrop, List<ForeignKey> fkToAdd,

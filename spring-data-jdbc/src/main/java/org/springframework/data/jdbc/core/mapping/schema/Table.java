@@ -26,6 +26,7 @@ import org.springframework.util.ObjectUtils;
  * Models a Table for generating SQL for Schema generation.
  *
  * @author Kurt Niemi
+ * @author Evgenii Koba
  * @since 3.2
  */
 record Table(@Nullable String schema, String name, List<Column> columns, List<ForeignKey> foreignKeys) {

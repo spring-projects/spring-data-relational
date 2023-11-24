@@ -55,6 +55,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  * Integration tests for {@link LiquibaseChangeSetWriter}.
  *
  * @author Mark Paluch
+ * @author Evgenii Koba
  */
 class LiquibaseChangeSetWriterIntegrationTests {
 

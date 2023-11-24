@@ -32,6 +32,8 @@ import org.springframework.util.ClassUtils;
  * instance of a class implementing {@link SqlTypeMapping} interface can be set on the {@link Tables} class
  *
  * @author Kurt Niemi
+ * @author Evgenii Koba
+ * @author Jens Schauder
  * @since 3.2
  */
 public class DefaultSqlTypeMapping implements SqlTypeMapping {
@@ -61,11 +63,11 @@ public class DefaultSqlTypeMapping implements SqlTypeMapping {
 
 	@Override
 	public String getColumnType(RelationalPersistentProperty property) {
-		return typeMap.get(ClassUtils.resolvePrimitiveIfNecessary(property.getActualType()));
+		return getColumnType(property.getActualType());
 	}
 
 	@Override
-	public String getColumnTypeByClass(Class clazz) {
-		return typeMap.get(clazz);
+	public String getColumnType(Class<?> type) {
+		return typeMap.get(ClassUtils.resolvePrimitiveIfNecessary(type));
 	}
 }

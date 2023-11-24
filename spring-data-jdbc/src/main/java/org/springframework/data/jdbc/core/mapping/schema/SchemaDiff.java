@@ -31,6 +31,7 @@ import java.util.function.Predicate;
  * or delete)
  *
  * @author Kurt Niemi
+ * @author Evgenii Koba
  * @since 3.2
  */
 record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<TableDiff> tableDiffs) {
@@ -120,6 +121,7 @@ record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<T
 
 	private static <T> Collection<T> findDiffs(Map<String, T> baseMapping, Map<String, T> toCompareMapping,
 			Comparator<String> nameComparator) {
+
 		Map<String, T> diff = new TreeMap<>(nameComparator);
 		diff.putAll(toCompareMapping);
 		baseMapping.keySet().forEach(diff::remove);

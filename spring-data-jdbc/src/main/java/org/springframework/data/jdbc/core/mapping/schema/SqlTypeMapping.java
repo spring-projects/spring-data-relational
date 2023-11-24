@@ -25,6 +25,8 @@ import org.springframework.util.ObjectUtils;
  *
  * @author Kurt Niemi
  * @author Mark Paluch
+ * @author Evgenii Koba
+ * @author Jens Schauder
  * @since 3.2
  */
 @FunctionalInterface
@@ -43,12 +45,14 @@ public interface SqlTypeMapping {
 	/**
 	 * Determines a column type for Class.
 	 *
-	 * @param clazz class for which the type should be determined.
+	 * @param type class for which the type should be determined.
 	 * @return the SQL type to use, such as {@code VARCHAR} or {@code NUMERIC}. Can be {@literal null} if the strategy
 	 *         cannot provide a column type.
+	 *
+	 * @since 3.3
 	 */
 	@Nullable
-	default String getColumnTypeByClass(Class clazz) {
+	default String getColumnType(Class<?> type) {
 		return null;
 	}
 

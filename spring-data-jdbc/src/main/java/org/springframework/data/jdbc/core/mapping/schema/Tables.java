@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -34,11 +35,13 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Model class that contains Table/Column information that can be used to generate SQL for Schema generation.
  *
  * @author Kurt Niemi
+ * @author Evgenii Koba
  * @since 3.2
  */
 record Tables(List<Table> tables) {
@@ -71,7 +74,7 @@ record Tables(List<Table> tables) {
 						}
 
 						Column column = new Column(property.getColumnName().getReference(), sqlTypeMapping.getColumnType(property),
-												   sqlTypeMapping.isNullable(property), identifierColumns.contains(property));
+								sqlTypeMapping.isNullable(property), identifierColumns.contains(property));
 						table.columns().add(column);
 					}
 					return table;
@@ -92,34 +95,40 @@ record Tables(List<Table> tables) {
 	private static void applyForeignKeyMetadata(List<Table> tables, List<ForeignKeyMetadata> foreignKeyMetadataList) {
 
 		foreignKeyMetadataList.forEach(foreignKeyMetadata -> {
-			Table table = tables.stream().filter(t -> t.name().equals(foreignKeyMetadata.tableName)).findAny().get();
+
+			Table table = tables.stream().filter(t -> t.name().equals(foreignKeyMetadata.tableName)).findAny().orElseThrow();
 
 			List<Column> parentIdColumns = collectParentIdentityColumns(foreignKeyMetadata, foreignKeyMetadataList, tables);
 			List<String> parentIdColumnNames = parentIdColumns.stream().map(Column::name).toList();
 
 			String foreignKeyName = getForeignKeyName(foreignKeyMetadata.parentTableName, parentIdColumnNames);
-			if(parentIdColumnNames.size() == 1) {
-				addIfAbsent(table.columns(), new Column(foreignKeyMetadata.referencingColumnName(), parentIdColumns.get(0).type(),
-						false, table.getIdColumns().isEmpty()));
-				if(foreignKeyMetadata.keyColumnName() != null) {
-					addIfAbsent(table.columns(), new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(),
-							false, true));
+			if (parentIdColumnNames.size() == 1) {
+
+				addIfAbsent(table.columns(), new Column(foreignKeyMetadata.referencingColumnName(),
+						parentIdColumns.get(0).type(), false, table.getIdColumns().isEmpty()));
+				if (foreignKeyMetadata.keyColumnName() != null) {
+					addIfAbsent(table.columns(),
+							new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(), false, true));
 				}
-				addIfAbsent(table.foreignKeys(), new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(),
-						List.of(foreignKeyMetadata.referencingColumnName()), foreignKeyMetadata.parentTableName(), parentIdColumnNames));
+				addIfAbsent(table.foreignKeys(),
+						new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(),
+								List.of(foreignKeyMetadata.referencingColumnName()), foreignKeyMetadata.parentTableName(),
+								parentIdColumnNames));
 			} else {
+
 				addIfAbsent(table.columns(), parentIdColumns.toArray(new Column[0]));
-				addIfAbsent(table.columns(), new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(),
-						false, true));
-				addIfAbsent(table.foreignKeys(), new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(), parentIdColumnNames,
-						foreignKeyMetadata.parentTableName(), parentIdColumnNames));
+				addIfAbsent(table.columns(),
+						new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(), false, true));
+				addIfAbsent(table.foreignKeys(), new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(),
+						parentIdColumnNames, foreignKeyMetadata.parentTableName(), parentIdColumnNames));
 			}
 
 		});
 	}
 
-	private static  <E> void addIfAbsent(List<E> list, E... elements) {
-		for(E element : elements) {
+	private static <E> void addIfAbsent(List<E> list, E... elements) {
+
+		for (E element : elements) {
 			if (!list.contains(element)) {
 				list.add(element);
 			}
@@ -137,26 +146,28 @@ record Tables(List<Table> tables) {
 		excludeTables.add(child.tableName());
 
 		Table parentTable = findTableByName(tables, child.parentTableName());
-		ForeignKeyMetadata parentMetadata = findMetadataByTableName(foreignKeyMetadataList, child.parentTableName(), excludeTables);
+		ForeignKeyMetadata parentMetadata = findMetadataByTableName(foreignKeyMetadataList, child.parentTableName(),
+				excludeTables);
 		List<Column> parentIdColumns = parentTable.getIdColumns();
 
 		if (!parentIdColumns.isEmpty()) {
 			return new ArrayList<>(parentIdColumns);
-		} else if(parentMetadata == null) {
-				//mustn't happen, probably wrong entity declaration
-				return new ArrayList<>();
-		} else {
-			List<Column> parentParentIdColumns = collectParentIdentityColumns(parentMetadata, foreignKeyMetadataList, tables);
-			if (parentParentIdColumns.size() == 1) {
-				Column parentParentIdColumn = parentParentIdColumns.get(0);
-				Column withChangedName = new Column(parentMetadata.referencingColumnName, parentParentIdColumn.type(), false, true);
-				parentParentIdColumns = new LinkedList<>(List.of(withChangedName));
-			}
-			if (parentMetadata.keyColumnName() != null) {
-				parentParentIdColumns.add(new Column(parentMetadata.keyColumnName(), parentMetadata.keyColumnType(), false, true));
-			}
-			return parentParentIdColumns;
 		}
+
+		Assert.state(parentMetadata != null, "parentMetadata must not be null at this stage");
+
+		List<Column> parentParentIdColumns = collectParentIdentityColumns(parentMetadata, foreignKeyMetadataList, tables);
+		if (parentParentIdColumns.size() == 1) {
+			Column parentParentIdColumn = parentParentIdColumns.get(0);
+			Column withChangedName = new Column(parentMetadata.referencingColumnName, parentParentIdColumn.type(), false,
+					true);
+			parentParentIdColumns = new LinkedList<>(List.of(withChangedName));
+		}
+		if (parentMetadata.keyColumnName() != null) {
+			parentParentIdColumns
+					.add(new Column(parentMetadata.keyColumnName(), parentMetadata.keyColumnType(), false, true));
+		}
+		return parentParentIdColumns;
 	}
 
 	@Nullable
@@ -167,14 +178,13 @@ record Tables(List<Table> tables) {
 	@Nullable
 	private static ForeignKeyMetadata findMetadataByTableName(List<ForeignKeyMetadata> metadata, String tableName,
 			Set<String> excludeTables) {
+
 		return metadata.stream()
-				.filter(m -> m.tableName().equals(tableName) && !excludeTables.contains(m.parentTableName()))
-				.findAny()
+				.filter(m -> m.tableName().equals(tableName) && !excludeTables.contains(m.parentTableName())).findAny()
 				.orElse(null);
 	}
 
-	private static ForeignKeyMetadata createForeignKeyMetadata(
-			RelationalPersistentEntity<?> entity,
+	private static ForeignKeyMetadata createForeignKeyMetadata(RelationalPersistentEntity<?> entity,
 			RelationalPersistentProperty property,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			SqlTypeMapping sqlTypeMapping) {
@@ -182,30 +192,26 @@ record Tables(List<Table> tables) {
 		RelationalPersistentEntity childEntity = context.getRequiredPersistentEntity(property.getActualType());
 
 		String referencedKeyColumnType = null;
-		if(property.isAnnotationPresent(MappedCollection.class)) {
+		if (property.isAnnotationPresent(MappedCollection.class)) {
 			if (property.getType() == List.class) {
-				referencedKeyColumnType = sqlTypeMapping.getColumnTypeByClass(Integer.class);
+				referencedKeyColumnType = sqlTypeMapping.getColumnType(Integer.class);
 			} else if (property.getType() == Map.class) {
-				referencedKeyColumnType = sqlTypeMapping.getColumnTypeByClass(property.getComponentType());
+				referencedKeyColumnType = sqlTypeMapping.getColumnType(property.getComponentType());
 			}
 		}
 
-		return new ForeignKeyMetadata(
-				childEntity.getTableName().getReference(),
+		return new ForeignKeyMetadata(childEntity.getTableName().getReference(),
 				property.getReverseColumnName(entity).getReference(),
 				Optional.ofNullable(property.getKeyColumn()).map(SqlIdentifier::getReference).orElse(null),
-				referencedKeyColumnType,
-				entity.getTableName().getReference()
-		);
+				referencedKeyColumnType, entity.getTableName().getReference());
 	}
 
-	//TODO should we place it in BasicRelationalPersistentProperty/BasicRelationalPersistentEntity and generate using NamingStrategy?
 	private static String getForeignKeyName(String referencedTableName, List<String> referencedColumnNames) {
 		return String.format("%s_%s_fk", referencedTableName, String.join("_", referencedColumnNames));
 	}
 
 	private record ForeignKeyMetadata(String tableName, String referencingColumnName, @Nullable String keyColumnName,
-																		@Nullable String keyColumnType, String parentTableName) {
+			@Nullable String keyColumnType, String parentTableName) {
 
 	}
 }

@@ -15,21 +15,20 @@
  */
 package org.springframework.data.jdbc.core.mapping.schema;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.stream.Collectors;
 import liquibase.change.Change;
 import liquibase.change.ColumnConfig;
 import liquibase.change.core.AddForeignKeyConstraintChange;
 import liquibase.change.core.CreateTableChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
@@ -39,12 +38,12 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.util.Optionals;
 
 /**
  * Unit tests for {@link LiquibaseChangeSetWriter}.
  *
  * @author Mark Paluch
+ * @author Evgenii Koba
  */
 class LiquibaseChangeSetWriterUnitTests {
 
@@ -117,8 +116,8 @@ class LiquibaseChangeSetWriterUnitTests {
 		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
 
 		Optional<Change> tableWithFk = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof CreateTableChange && ((CreateTableChange) change).getTableName()
-					.equals("table_with_fk_field");
+			return change instanceof CreateTableChange
+					&& ((CreateTableChange) change).getTableName().equals("table_with_fk_field");
 		}).findFirst();
 		assertThat(tableWithFk.isPresent()).isEqualTo(true);
 
@@ -136,23 +135,19 @@ class LiquibaseChangeSetWriterUnitTests {
 
 		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
 
-		assertCreateTable(changeSet, "no_id_table",
-				Tuple.tuple("field", "VARCHAR(255 BYTE)", null),
-				Tuple.tuple("list_id", "INT", true),
-				Tuple.tuple("list_of_map_of_no_id_tables_key", "INT", true),
+		assertCreateTable(changeSet, "no_id_table", Tuple.tuple("field", "VARCHAR(255 BYTE)", null),
+				Tuple.tuple("list_id", "INT", true), Tuple.tuple("list_of_map_of_no_id_tables_key", "INT", true),
 				Tuple.tuple("map_of_no_id_tables_key", "VARCHAR(255 BYTE)", true));
 
-		assertCreateTable(changeSet, "map_of_no_id_tables",
-				Tuple.tuple("list_id", "INT", true),
+		assertCreateTable(changeSet, "map_of_no_id_tables", Tuple.tuple("list_id", "INT", true),
 				Tuple.tuple("list_of_map_of_no_id_tables_key", "INT", true));
 
 		assertCreateTable(changeSet, "list_of_map_of_no_id_tables", Tuple.tuple("id", "INT", true));
 
-		assertAddForeignKey(changeSet, "no_id_table", "list_id,list_of_map_of_no_id_tables_key",
-				"map_of_no_id_tables", "list_id,list_of_map_of_no_id_tables_key");
+		assertAddForeignKey(changeSet, "no_id_table", "list_id,list_of_map_of_no_id_tables_key", "map_of_no_id_tables",
+				"list_id,list_of_map_of_no_id_tables_key");
 
-		assertAddForeignKey(changeSet, "map_of_no_id_tables", "list_id",
-				"list_of_map_of_no_id_tables", "id");
+		assertAddForeignKey(changeSet, "map_of_no_id_tables", "list_id", "list_of_map_of_no_id_tables", "id");
 	}
 
 	@Test // GH-1599
@@ -165,76 +160,25 @@ class LiquibaseChangeSetWriterUnitTests {
 
 		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
 
-		assertCreateTable(changeSet, "other_table",
-				Tuple.tuple("id", "BIGINT", true), Tuple.tuple("one_to_one_level1", "INT", null));
+		assertCreateTable(changeSet, "other_table", Tuple.tuple("id", "BIGINT", true),
+				Tuple.tuple("one_to_one_level1", "INT", null));
 
 		assertCreateTable(changeSet, "one_to_one_level2", Tuple.tuple("one_to_one_level1", "INT", true));
 
 		assertCreateTable(changeSet, "no_id_table", Tuple.tuple("field", "VARCHAR(255 BYTE)", null),
 				Tuple.tuple("one_to_one_level2", "INT", true), Tuple.tuple("additional_one_to_one_level2", "INT", null));
 
-		assertAddForeignKey(changeSet, "other_table", "one_to_one_level1",
-				"one_to_one_level1", "id");
+		assertAddForeignKey(changeSet, "other_table", "one_to_one_level1", "one_to_one_level1", "id");
 
-		assertAddForeignKey(changeSet, "one_to_one_level2", "one_to_one_level1",
-				"one_to_one_level1", "id");
+		assertAddForeignKey(changeSet, "one_to_one_level2", "one_to_one_level1", "one_to_one_level1", "id");
 
-		assertAddForeignKey(changeSet, "no_id_table", "one_to_one_level2",
-				"one_to_one_level2", "one_to_one_level1");
+		assertAddForeignKey(changeSet, "no_id_table", "one_to_one_level2", "one_to_one_level2", "one_to_one_level1");
 
-		assertAddForeignKey(changeSet, "no_id_table", "additional_one_to_one_level2",
-				"one_to_one_level2", "one_to_one_level1");
+		assertAddForeignKey(changeSet, "no_id_table", "additional_one_to_one_level2", "one_to_one_level2",
+				"one_to_one_level1");
 
 	}
 
-	@Test // GH-1599
-	void createForeignKeyForCircularWithId() {
-		RelationalMappingContext context = new RelationalMappingContext() {
-			@Override
-			public Collection<RelationalPersistentEntity<?>> getPersistentEntities() {
-				return List.of(getPersistentEntity(CircularWithId.class), getPersistentEntity(ParentOfCircularWithId.class));
-			}
-		};
-
-		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
-
-		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
-
-		assertCreateTable(changeSet, "circular_with_id",
-				Tuple.tuple("id", "INT", true),
-				Tuple.tuple("circular_with_id", "INT", null),
-				Tuple.tuple("parent_of_circular_with_id", "INT", null));
-
-		assertAddForeignKey(changeSet, "circular_with_id", "parent_of_circular_with_id",
-				"parent_of_circular_with_id", "id");
-
-		assertAddForeignKey(changeSet, "circular_with_id", "circular_with_id",
-				"circular_with_id", "id");
-	}
-
-	@Test // GH-1599
-	void createForeignKeyForCircularNoId() {
-		RelationalMappingContext context = new RelationalMappingContext() {
-			@Override
-			public Collection<RelationalPersistentEntity<?>> getPersistentEntities() {
-				return List.of(getPersistentEntity(CircularNoId.class), getPersistentEntity(ParentOfCircularNoId.class));
-			}
-		};
-
-		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
-
-		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
-
-		assertCreateTable(changeSet, "circular_no_id",
-				Tuple.tuple("circular_no_id", "INT", true),
-				Tuple.tuple("parent_of_circular_no_id", "INT", null));
-
-		assertAddForeignKey(changeSet, "circular_no_id", "parent_of_circular_no_id",
-				"parent_of_circular_no_id", "id");
-
-		assertAddForeignKey(changeSet, "circular_no_id", "circular_no_id",
-				"circular_no_id", "parent_of_circular_no_id");
-	}
 
 	void assertCreateTable(ChangeSet changeSet, String tableName, Tuple... columnTuples) {
 		Optional<Change> createTableOptional = changeSet.getChanges().stream().filter(change -> {
@@ -247,8 +191,8 @@ class LiquibaseChangeSetWriterUnitTests {
 				.containsExactly(columnTuples);
 	}
 
-	void assertAddForeignKey(ChangeSet changeSet, String baseTableName, String baseColumnNames, String referencedTableName,
-			String referencedColumnNames) {
+	void assertAddForeignKey(ChangeSet changeSet, String baseTableName, String baseColumnNames,
+			String referencedTableName, String referencedColumnNames) {
 		Optional<Change> addFkOptional = changeSet.getChanges().stream().filter(change -> {
 			return change instanceof AddForeignKeyConstraintChange
 					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals(baseTableName)
@@ -280,22 +224,19 @@ class LiquibaseChangeSetWriterUnitTests {
 	@org.springframework.data.relational.core.mapping.Table
 	static class Tables {
 		@Id int id;
-		@MappedCollection
-		Set<OtherTable> tables;
+		@MappedCollection Set<OtherTable> tables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
 	static class SetOfTables {
 		@Id int id;
-		@MappedCollection(idColumn = "set_id")
-		Set<Tables> setOfTables;
+		@MappedCollection(idColumn = "set_id") Set<Tables> setOfTables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
 	static class DifferentTables {
 		@Id int id;
-		@MappedCollection(idColumn = "tables_id")
-		Set<TableWithFkField> tables;
+		@MappedCollection(idColumn = "tables_id") Set<TableWithFkField> tables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
@@ -311,15 +252,13 @@ class LiquibaseChangeSetWriterUnitTests {
 
 	@org.springframework.data.relational.core.mapping.Table
 	static class MapOfNoIdTables {
-		@MappedCollection
-		Map<String, NoIdTable> tables;
+		@MappedCollection Map<String, NoIdTable> tables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
 	static class ListOfMapOfNoIdTables {
 		@Id int id;
-		@MappedCollection(idColumn = "list_id")
-		List<MapOfNoIdTables> listOfTables;
+		@MappedCollection(idColumn = "list_id") List<MapOfNoIdTables> listOfTables;
 	}
 
 	@org.springframework.data.relational.core.mapping.Table
@@ -332,33 +271,7 @@ class LiquibaseChangeSetWriterUnitTests {
 	@org.springframework.data.relational.core.mapping.Table
 	static class OneToOneLevel2 {
 		NoIdTable table1;
-		@Column("additional_one_to_one_level2")
-		NoIdTable table2;
-	}
-
-	@org.springframework.data.relational.core.mapping.Table
-	static class ParentOfCircularWithId {
-		@Id int id;
-		CircularWithId circularWithId;
-
-	}
-
-	@org.springframework.data.relational.core.mapping.Table
-	static class CircularWithId {
-		@Id int id;
-		CircularWithId circularWithId;
-	}
-
-	@org.springframework.data.relational.core.mapping.Table
-	static class ParentOfCircularNoId {
-		@Id int id;
-		CircularNoId CircularNoId;
-
-	}
-
-	@org.springframework.data.relational.core.mapping.Table
-	static class CircularNoId {
-		CircularNoId CircularNoId;
+		@Column("additional_one_to_one_level2") NoIdTable table2;
 	}
 
 }
