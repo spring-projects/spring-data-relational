@@ -41,8 +41,8 @@ pipeline {
 			steps {
 				script {
 					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.docker']) {
-						sh "PROFILE=ci,all-dbs ci/test.sh"
-						sh "ci/clean.sh"
+						sh "PROFILE=ci,all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
+						sh "JENKINS_USER_NAME=${p['jenkins.user.name']} ci/clean.sh"
 					}
 				}
 			}
@@ -71,8 +71,8 @@ pipeline {
 					steps {
 						script {
 							docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
-								sh "PROFILE=ci,all-dbs ci/test.sh"
-								sh "ci/clean.sh"
+								sh "PROFILE=ci,all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
+								sh "JENKINS_USER_NAME=${p['jenkins.user.name']} ci/clean.sh"
 							}
 						}
 					}
@@ -92,28 +92,26 @@ pipeline {
 				label 'data'
 			}
 			options { timeout(time: 20, unit: 'MINUTES') }
-
 			environment {
 				ARTIFACTORY = credentials("${p['artifactory.credentials']}")
 				DEVELOCITY_CACHE = credentials("${p['develocity.cache.credentials']}")
 				DEVELOCITY_ACCESS_KEY = credentials("${p['develocity.access-key']}")
 			}
-
 			steps {
 				script {
 					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.basic']) {
-						sh 'MAVEN_OPTS="-Duser.name=spring-builds+jenkins -Duser.home=/tmp/jenkins-home" ' +
-							'DEVELOCITY_CACHE_USERNAME=${DEVELOCITY_CACHE_USR} ' +
-							'DEVELOCITY_CACHE_PASSWORD=${DEVELOCITY_CACHE_PSW} ' +
-							'GRADLE_ENTERPRISE_ACCESS_KEY=${DEVELOCITY_ACCESS_KEY} ' +
-							'./mvnw -s settings.xml -Pci,artifactory -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-relational-non-root ' +
-							'-Dartifactory.server=https://repo.spring.io ' +
+						sh 'MAVEN_OPTS="-Duser.name=' + "${p['jenkins.user.name']}" + ' -Duser.home=/tmp/jenkins-home" ' +
+							"DEVELOCITY_CACHE_USERNAME=${DEVELOCITY_CACHE_USR} " +
+							"DEVELOCITY_CACHE_PASSWORD=${DEVELOCITY_CACHE_PSW} " +
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${DEVELOCITY_ACCESS_KEY} " +
+							"./mvnw -s settings.xml -Pci,artifactory " +
+							"-Dartifactory.server=${p['artifactory.url']} " +
 							"-Dartifactory.username=${ARTIFACTORY_USR} " +
 							"-Dartifactory.password=${ARTIFACTORY_PSW} " +
-							"-Dartifactory.staging-repository=libs-snapshot-local " +
+							"-Dartifactory.staging-repository=${p['artifactory.repository.snapshot']} " +
 							"-Dartifactory.build-name=spring-data-relational " +
 							"-Dartifactory.build-number=${BUILD_NUMBER} " +
-							'-Dmaven.test.skip=true clean deploy -U -B'
+							"-Dmaven.test.skip=true clean deploy -U -B"
 					}
 				}
 			}
