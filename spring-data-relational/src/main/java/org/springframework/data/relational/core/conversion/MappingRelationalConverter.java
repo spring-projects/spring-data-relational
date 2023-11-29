@@ -337,7 +337,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			return context.convert(documentAccessor, typeHint);
 		}
 
-		RelationalPersistentEntity<?> entity = getMappingContext().getPersistentEntity(rawType);
+		RelationalPersistentEntity<?> entity = getMappingContext().getPersistentEntity(typeHint);
 
 		if (entity == null) {
 			throw new MappingException(

@@ -91,9 +91,9 @@ class DefaultAggregatePath implements AggregatePath {
 	public AggregatePath append(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
-				? context.getPersistentPropertyPath(property.getName(), rootType.getType()) //
+				? context.getPersistentPropertyPath(property.getName(), rootType.getTypeInformation()) //
 				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(),
-						path.getBaseProperty().getOwner().getType());
+						path.getBaseProperty().getOwner().getTypeInformation());
 
 		return context.getAggregatePath(newPath);
 	}
@@ -171,7 +171,8 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	public RelationalPersistentEntity<?> getLeafEntity() {
-		return isRoot() ? rootType : context.getPersistentEntity(getRequiredLeafProperty().getActualType());
+		return isRoot() ? rootType
+				: context.getPersistentEntity(getRequiredLeafProperty().getTypeInformation().getActualType());
 	}
 
 	@Override

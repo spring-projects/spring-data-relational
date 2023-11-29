@@ -136,7 +136,8 @@ public class PersistentPropertyPathExtension {
 	 */
 	@Nullable
 	public RelationalPersistentEntity<?> getLeafEntity() {
-		return path == null ? entity : context.getPersistentEntity(path.getLeafProperty().getActualType());
+		return path == null ? entity
+				: context.getPersistentEntity(path.getLeafProperty().getTypeInformation().getActualType());
 	}
 
 	/**
@@ -363,8 +364,8 @@ public class PersistentPropertyPathExtension {
 	public PersistentPropertyPathExtension extendBy(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = path == null //
-				? context.getPersistentPropertyPath(property.getName(), entity.getType()) //
-				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
+				? context.getPersistentPropertyPath(property.getName(), entity.getTypeInformation()) //
+				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getTypeInformation());
 
 		return new PersistentPropertyPathExtension(context, newPath);
 	}
