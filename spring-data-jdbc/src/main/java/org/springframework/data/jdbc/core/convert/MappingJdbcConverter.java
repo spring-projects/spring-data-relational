@@ -112,7 +112,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	}
 
 	@Nullable
-	private Class<?> getEntityColumnType(Class<?> type) {
+	private Class<?> getEntityColumnType(TypeInformation<?> type) {
 
 		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(type);
 
@@ -153,7 +153,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		if (property.isEntity()) {
-			Class<?> columnType = getEntityColumnType(property.getActualType());
+			Class<?> columnType = getEntityColumnType(property.getTypeInformation().getActualType());
 
 			if (columnType != null) {
 				return columnType;

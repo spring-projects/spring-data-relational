@@ -837,7 +837,7 @@ class SqlGenerator {
 		}
 
 		PersistentPropertyPath<RelationalPersistentProperty> persistentPropertyPath = mappingContext
-				.getPersistentPropertyPath(order.getProperty(), entity.getType());
+				.getPersistentPropertyPath(order.getProperty(), entity.getTypeInformation());
 
 		propertyToSortBy = persistentPropertyPath.getBaseProperty();
 

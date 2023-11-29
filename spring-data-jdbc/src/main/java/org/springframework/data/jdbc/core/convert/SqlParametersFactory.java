@@ -256,7 +256,7 @@ public class SqlParametersFactory {
 			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
-				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
+				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getTypeInformation());
 				SqlIdentifierParameterSource additionalParameters = getParameterSource((T) value,
 						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				parameters.addAll(additionalParameters);
