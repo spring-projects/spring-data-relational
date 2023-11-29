@@ -13,33 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sqlgeneration;
-
-import jmh.mbr.junit5.Microbenchmark;
+package org.springframework.data.relational.core.mapping;
 
 import java.util.List;
 
+import org.junit.platform.commons.annotation.Testable;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.BenchmarkSettings;
-import org.springframework.data.relational.core.dialect.PostgresDialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
- * Benchmark for {@link SingleQuerySqlGenerator}.
- *
  * @author Mark Paluch
  */
-@Microbenchmark
-public class SingleQuerySqlGeneratorBenchmark extends BenchmarkSettings {
+@Testable
+public class AggregatePathBenchmark extends BenchmarkSettings {
 
 	@Benchmark
-	public String findAll(StateHolder state) {
-		return new SingleQuerySqlGenerator(state.context, state.aliasFactory, PostgresDialect.INSTANCE).findAll(state.persistentEntity, null);
+	public Object measureAggregatePathAppend(StateHolder holder) {
+
+		holder.context.getAggregatePath(holder.persistentEntity)
+				.append(holder.persistentEntity.getRequiredPersistentProperty("id"));
+		holder.context.getAggregatePath(holder.persistentEntity)
+				.append(holder.persistentEntity.getRequiredPersistentProperty("name"));
+		return holder.context.getAggregatePath(holder.persistentEntity)
+				.append(holder.persistentEntity.getRequiredPersistentProperty("trivials"));
+	}
+
+	@Benchmark
+	public Object measureGetAggregatePathAppend(StateHolder holder) {
+
+		return holder.context.getAggregatePath(holder.persistentEntity)
+				.append(holder.persistentEntity.getRequiredPersistentProperty("id"));
 	}
 
 	@State(Scope.Benchmark)
@@ -48,8 +55,6 @@ public class SingleQuerySqlGeneratorBenchmark extends BenchmarkSettings {
 		RelationalMappingContext context = new RelationalMappingContext();
 
 		RelationalPersistentEntity<?> persistentEntity;
-
-		AliasFactory aliasFactory = new AliasFactory();
 
 		@Setup
 		public void setup() {
@@ -62,5 +67,4 @@ public class SingleQuerySqlGeneratorBenchmark extends BenchmarkSettings {
 
 	record SingleReferenceAggregate(@Id Long id, String name, List<TrivialAggregate> trivials) {
 	}
-
 }
