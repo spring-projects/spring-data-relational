@@ -51,4 +51,20 @@ class EscapingParameterSource implements SqlParameterSource {
 		}
 		return value;
 	}
+
+
+	@Override
+	public int getSqlType(String paramName) {
+		return parameterSource.getSqlType(paramName);
+	}
+
+	@Override
+	public String getTypeName(String paramName) {
+		return parameterSource.getTypeName(paramName);
+	}
+
+	@Override
+	public String[] getParameterNames() {
+		return parameterSource.getParameterNames();
+	}
 }
