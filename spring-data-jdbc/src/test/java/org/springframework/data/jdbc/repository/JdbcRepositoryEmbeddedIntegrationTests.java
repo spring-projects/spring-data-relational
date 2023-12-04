@@ -114,6 +114,21 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 				.containsExactlyInAnyOrder(entity.getId(), other.getId());
 	}
 
+	@Test // GH-1676
+	public void findAllFindsAllEntitiesWithOnlyReferenceNotNull() {
+
+		DummyEntity entity = createDummyEntity();
+		entity.prefixedEmbeddable.test = null;
+		entity = repository.save(entity);
+		DummyEntity other = repository.save(createDummyEntity());
+
+		Iterable<DummyEntity> all = repository.findAll();
+
+		assertThat(all)//
+				.extracting(DummyEntity::getId)//
+				.containsExactlyInAnyOrder(entity.getId(), other.getId());
+	}
+
 	@Test // DATAJDBC-111
 	public void findByIdReturnsEmptyWhenNoneFound() {
 
