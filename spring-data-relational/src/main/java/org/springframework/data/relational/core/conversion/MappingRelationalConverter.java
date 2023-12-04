@@ -41,16 +41,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
-import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -561,7 +552,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			RowDocumentAccessor source, RelationalPersistentProperty property,
 			RelationalPersistentEntity<?> persistentEntity) {
 
-		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider)) {
+		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider, source)) {
 			return read(conversionContext, persistentEntity, source);
 		}
 
@@ -569,7 +560,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	private boolean shouldReadEmbeddable(ConversionContext context, RelationalPersistentProperty property,
-			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider) {
+			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider,
+			RowDocumentAccessor source) {
 
 		OnEmpty onEmpty = property.getRequiredAnnotation(Embedded.class).onEmpty();
 
@@ -579,8 +571,19 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		for (RelationalPersistentProperty persistentProperty : unwrappedEntity) {
 
-			RelationalPropertyValueProvider contextual = propertyValueProvider
-					.withContext(context.forProperty(persistentProperty));
+			ConversionContext nestedContext = context.forProperty(persistentProperty);
+			RelationalPropertyValueProvider contextual = propertyValueProvider.withContext(nestedContext);
+
+			if (persistentProperty.isEmbedded()) {
+
+				TypeInformation<?> typeInformation = persistentProperty.getTypeInformation();
+
+				RelationalPersistentEntity<?> nestedEntity = getMappingContext().getPersistentEntity(typeInformation);
+
+				if (readEmbedded(nestedContext, contextual, source, persistentProperty, nestedEntity) != null) {
+					return true;
+				}
+			}
 
 			if (contextual.hasValue(persistentProperty)) {
 				return true;
