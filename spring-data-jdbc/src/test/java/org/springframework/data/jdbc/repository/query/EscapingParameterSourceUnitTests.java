@@ -32,7 +32,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  *
  * @author Jens Schauder
  */
-class EscapingParameterSourceTest {
+class EscapingParameterSourceUnitTests {
 
 	MapSqlParameterSource delegate = new MapSqlParameterSource();
 	Escaper escaper = Escaper.of('x');
