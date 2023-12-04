@@ -41,16 +41,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
-import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -307,7 +298,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 * @return the converted object, will never be {@literal null}.
 	 */
 	protected <S> S readAggregate(ConversionContext context, RowDocument document,
-								  TypeInformation<? extends S> typeHint) {
+			TypeInformation<? extends S> typeHint) {
 		return readAggregate(context, new RowDocumentAccessor(document), typeHint);
 	}
 
@@ -321,7 +312,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 */
 	@SuppressWarnings("unchecked")
 	protected <S> S readAggregate(ConversionContext context, RowDocumentAccessor documentAccessor,
-								  TypeInformation<? extends S> typeHint) {
+			TypeInformation<? extends S> typeHint) {
 
 		Class<? extends S> rawType = typeHint.getType();
 
@@ -430,8 +421,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	private <T> T doConvert(Object value, Class<? extends T> target,
-							@Nullable Class<? extends T> fallback) {
+	private <T> T doConvert(Object value, Class<? extends T> target, @Nullable Class<? extends T> fallback) {
 
 		if (getConversionService().canConvert(value.getClass(), target) || fallback == null) {
 			return getConversionService().convert(value, target);
@@ -504,7 +494,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 				entity, contextualizing, context.getPath().getCurrentObject());
 
 		return new ConverterAwareSpELExpressionParameterValueProvider(context, evaluator, getConversionService(),
-				new ConvertingParameterValueProvider<>( parameterProvider::getParameterValue));
+				new ConvertingParameterValueProvider<>(parameterProvider::getParameterValue));
 	}
 
 	private <S> S populateProperties(ConversionContext context, RelationalPersistentEntity<S> entity,
@@ -562,7 +552,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			RowDocumentAccessor source, RelationalPersistentProperty property,
 			RelationalPersistentEntity<?> persistentEntity) {
 
-		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider)) {
+		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider, source)) {
 			return read(conversionContext, persistentEntity, source);
 		}
 
@@ -570,7 +560,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	private boolean shouldReadEmbeddable(ConversionContext context, RelationalPersistentProperty property,
-			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider) {
+			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider,
+			RowDocumentAccessor source) {
 
 		OnEmpty onEmpty = property.getRequiredAnnotation(Embedded.class).onEmpty();
 
@@ -580,8 +571,19 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		for (RelationalPersistentProperty persistentProperty : unwrappedEntity) {
 
-			RelationalPropertyValueProvider contextual = propertyValueProvider
-					.withContext(context.forProperty(persistentProperty));
+			ConversionContext nestedContext = context.forProperty(persistentProperty);
+			RelationalPropertyValueProvider contextual = propertyValueProvider.withContext(nestedContext);
+
+			if (persistentProperty.isEmbedded()) {
+
+				TypeInformation<?> typeInformation = persistentProperty.getTypeInformation();
+
+				RelationalPersistentEntity<?> nestedEntity = getMappingContext().getPersistentEntity(typeInformation);
+
+				if (readEmbedded(nestedContext, contextual, source, persistentProperty, nestedEntity) != null) {
+					return true;
+				}
+			}
 
 			if (contextual.hasValue(persistentProperty)) {
 				return true;
@@ -787,8 +789,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <S> S convert(Object source, TypeInformation<? extends S> typeHint,
-							 ConversionContext context) {
+		public <S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
 
 			Assert.notNull(source, "Source must not be null");
 			Assert.notNull(typeHint, "TypeInformation must not be null");
@@ -1196,7 +1197,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		}
 	}
 
-	private record PropertyTranslatingPropertyAccessor<T> (PersistentPropertyAccessor<T> delegate,
+	private record PropertyTranslatingPropertyAccessor<T>(PersistentPropertyAccessor<T> delegate,
 			PersistentPropertyTranslator propertyTranslator) implements PersistentPropertyAccessor<T> {
 
 		static <T> PersistentPropertyAccessor<T> create(PersistentPropertyAccessor<T> delegate,
