@@ -419,11 +419,16 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	@Override
 	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<T> entityClass) {
+		return query(operation, entityClass, entityClass);
+	}
+
+	@Override
+	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass, Class<T> resultType) throws DataAccessException {
 
 		Assert.notNull(operation, "PreparedOperation must not be null");
 		Assert.notNull(entityClass, "Entity class must not be null");
 
-		return new EntityCallbackAdapter<>(getRowsFetchSpec(databaseClient.sql(operation), entityClass, entityClass),
+		return new EntityCallbackAdapter<>(getRowsFetchSpec(databaseClient.sql(operation), entityClass, resultType),
 				getTableNameOrEmpty(entityClass));
 	}
 
@@ -774,7 +779,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return query.getColumns().stream().map(table::column).collect(Collectors.toList());
 	}
 
-	private <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityType,
+	public <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityType,
 			Class<T> resultType) {
 
 		boolean simpleType = getConverter().isSimpleType(resultType);
