@@ -17,50 +17,47 @@ package org.springframework.data.r2dbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.r2dbc.mssql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Row;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
-import java.util.Arrays;
-import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
-import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.r2dbc.core.Parameter;
+import org.springframework.lang.Nullable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Integration tests for {@link ConvertedRepository} that uses {@link Converter}s on entity-level.
+ * Integration tests projections.
  *
  * @author Mark Paluch
  */
 @ExtendWith(SpringExtension.class)
-public class ConvertingR2dbcRepositoryIntegrationTests {
+public class ProjectingRepositoryIntegrationTests {
 
-	@Autowired private ConvertedRepository repository;
+	@Autowired
+	private ImmutableObjectRepository repository;
 	private JdbcTemplate jdbc;
 
 	@Configuration
 	@EnableR2dbcRepositories(
-			includeFilters = @ComponentScan.Filter(value = ConvertedRepository.class, type = FilterType.ASSIGNABLE_TYPE),
+			includeFilters = @ComponentScan.Filter(value = ImmutableObjectRepository.class, type = FilterType.ASSIGNABLE_TYPE),
 			considerNestedRepositories = true)
 	static class TestConfiguration extends AbstractR2dbcConfiguration {
 		@Override
@@ -68,22 +65,21 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 			return H2TestSupport.createConnectionFactory();
 		}
 
-		@Override
-		protected List<Object> getCustomConverters() {
-			return Arrays.asList(ConvertedEntityToRow.INSTANCE, RowToConvertedEntity.INSTANCE);
-		}
 	}
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		this.jdbc = new JdbcTemplate(createDataSource());
 
 		try {
-			this.jdbc.execute("DROP TABLE CONVERTED_ENTITY");
-		} catch (DataAccessException e) {}
+			this.jdbc.execute("DROP TABLE immutable_non_null");
+		}
+		catch (DataAccessException e) {
+		}
 
-		this.jdbc.execute("CREATE TABLE CONVERTED_ENTITY (id serial PRIMARY KEY, name varchar(255))");
+		this.jdbc.execute("CREATE TABLE immutable_non_null (id serial PRIMARY KEY, name varchar(255), email varchar(255))");
+		this.jdbc.execute("INSERT INTO immutable_non_null VALUES (42, 'Walter', 'heisenberg@the-white-family.com')");
 	}
 
 	/**
@@ -105,65 +101,70 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 	}
 
 	@Test
-	void shouldInsertAndReadItems() {
+		// GH-1687
+	void shouldApplyProjectionDirectly() {
 
-		ConvertedEntity entity = new ConvertedEntity();
-		entity.name = "name";
-
-		repository.save(entity) //
-				.as(StepVerifier::create) //
-				.expectNextCount(1) //
-				.verifyComplete();
-
-		repository.findAll() //
+		repository.findProjectionByEmail("heisenberg@the-white-family.com") //
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
-					assertThat(actual.name).isEqualTo("read: prefixed: name");
+					assertThat(actual.getName()).isEqualTo("Walter");
 				}).verifyComplete();
 	}
 
-	interface ConvertedRepository extends ReactiveCrudRepository<ConvertedEntity, Integer> {
+	@Test
+		// GH-1687
+	void shouldApplyEntityQueryProjectionDirectly() {
+
+		repository.findAllByEmail("heisenberg@the-white-family.com") //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.getName()).isEqualTo("Walter");
+					assertThat(actual).isInstanceOf(ImmutableNonNullEntity.class);
+				}).verifyComplete();
+	}
+
+	interface ImmutableObjectRepository extends ReactiveCrudRepository<ImmutableNonNullEntity, Integer> {
+
+		Flux<ProjectionOnNonNull> findProjectionByEmail(String email);
+
+		Flux<Person> findAllByEmail(String email);
 
 	}
 
-	static class ConvertedEntity {
+	@Table("immutable_non_null")
+	static class ImmutableNonNullEntity implements Person {
+
+		final @Nullable
 		@Id Integer id;
-		String name;
-	}
+		final String name;
+		final String email;
 
-	@WritingConverter
-	enum ConvertedEntityToRow implements Converter<ConvertedEntity, OutboundRow> {
+		ImmutableNonNullEntity(@Nullable Integer id, String name, String email) {
 
-		INSTANCE;
+			Assert.notNull(name, "Name must not be null");
+			Assert.notNull(email, "Email must not be null");
+
+			this.id = id;
+			this.name = name;
+			this.email = email;
+		}
 
 		@Override
-		public OutboundRow convert(ConvertedEntity convertedEntity) {
-
-			OutboundRow outboundRow = new OutboundRow();
-
-			if (convertedEntity.id != null) {
-				outboundRow.put("id", Parameter.from(convertedEntity.id));
-			}
-
-			outboundRow.put("name", Parameter.from("prefixed: " + convertedEntity.name));
-
-			return outboundRow;
+		public String getName() {
+			return name;
 		}
 	}
 
-	@ReadingConverter
-	enum RowToConvertedEntity implements Converter<Row, ConvertedEntity> {
+	interface Person {
 
-		INSTANCE;
+		String getName();
 
-		@Override
-		public ConvertedEntity convert(Row source) {
-
-			ConvertedEntity entity = new ConvertedEntity();
-			entity.id = source.get("id", Integer.class);
-			entity.name = "read: " + source.get("name", String.class);
-
-			return entity;
-		}
 	}
+
+	interface ProjectionOnNonNull {
+
+		String getName();
+
+	}
+
 }

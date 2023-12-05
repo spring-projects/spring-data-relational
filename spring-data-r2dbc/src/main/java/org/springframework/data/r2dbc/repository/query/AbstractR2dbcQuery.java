@@ -90,13 +90,15 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		} else if (isExistsQuery()) {
 			fetchSpec = entityOperations.getDatabaseClient().sql(operation).map(row -> true);
 		} else {
-			fetchSpec = entityOperations.query(operation, resolveResultType(processor));
+			fetchSpec = entityOperations.query(operation, processor.getReturnedType()
+							.getDomainType(),
+					resolveResultType(processor));
 		}
 
 		R2dbcQueryExecution execution = new ResultProcessingExecution(getExecutionToWrap(processor.getReturnedType()),
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));
 
-		return execution.execute(RowsFetchSpec.class.cast(fetchSpec));
+		return execution.execute((RowsFetchSpec) fetchSpec);
 	}
 
 	Class<?> resolveResultType(ResultProcessor resultProcessor) {
@@ -107,7 +109,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 			return returnedType.getDomainType();
 		}
 
-		return returnedType.isProjecting() ? returnedType.getDomainType() : returnedType.getReturnedType();
+		return returnedType.getReturnedType();
 	}
 
 	private R2dbcQueryExecution getExecutionToWrap(ReturnedType returnedType) {
@@ -122,17 +124,17 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 				if (Boolean.class.isAssignableFrom(returnedType.getReturnedType())) {
 					return fs.rowsUpdated().map(integer -> integer > 0);
-			}
+				}
 
-			if (Number.class.isAssignableFrom(returnedType.getReturnedType())) {
+				if (Number.class.isAssignableFrom(returnedType.getReturnedType())) {
 
 					return fs.rowsUpdated()
 							.map(count -> converter.getConversionService().convert(count, returnedType.getReturnedType()));
-			}
+				}
 
-			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
+				if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
 					return fs.rowsUpdated().then();
-			}
+				}
 
 				return fs.rowsUpdated();
 			};

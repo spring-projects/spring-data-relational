@@ -266,12 +266,18 @@ public class StringBasedR2dbcQueryUnitTests {
 		verifyNoMoreInteractions(bindTarget);
 	}
 
-	@Test // gh-475
-	void usesDomainTypeForInterfaceProjectionResultMapping() {
+	@Test
+		// gh-475, GH-1687
+	void usesProjectionTypeForInterfaceProjectionResultMapping() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findAsInterfaceProjection");
 
-		assertThat(query.resolveResultType(query.getQueryMethod().getResultProcessor())).isEqualTo(Person.class);
+		assertThat(query.getQueryMethod().getResultProcessor().getReturnedType()
+				.getReturnedType()).isEqualTo(PersonProjection.class);
+		assertThat(query.getQueryMethod().getResultProcessor().getReturnedType()
+				.getDomainType()).isEqualTo(Person.class);
+		assertThat(query.resolveResultType(query.getQueryMethod()
+				.getResultProcessor())).isEqualTo(PersonProjection.class);
 	}
 
 	@Test // gh-475
