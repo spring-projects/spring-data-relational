@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -26,13 +27,16 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.convert.ConverterBuilder;
 import org.springframework.data.convert.ConverterBuilder.ConverterAware;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.mapping.Column;
@@ -81,6 +85,20 @@ class MappingRelationalConverterUnitTests {
 		WithExpression result = converter.read(WithExpression.class, document);
 
 		assertThat(result.name).isEqualTo("bar");
+	}
+
+	@Test
+		// GH-1689
+	void shouldApplySimpleTypeConverterSimpleType() {
+
+		converter = new MappingRelationalConverter(converter.getMappingContext(),
+				new CustomConversions(StoreConversions.NONE, List.of(MyEnumConverter.INSTANCE)));
+
+		RowDocument document = new RowDocument().append("my_enum", "one");
+
+		WithMyEnum result = converter.read(WithMyEnum.class, document);
+
+		assertThat(result.myEnum).isEqualTo(MyEnum.ONE);
 	}
 
 	@Test // GH-1586
@@ -326,6 +344,25 @@ class MappingRelationalConverterUnitTests {
 	interface AddressProjection {
 
 		String getStreet();
+	}
+
+	record WithMyEnum(MyEnum myEnum) {
+	}
+
+	enum MyEnum {
+		ONE, TWO,
+	}
+
+	@ReadingConverter
+	enum MyEnumConverter implements Converter<String, MyEnum> {
+
+		INSTANCE;
+
+		@Override
+		public MyEnum convert(String source) {
+			return MyEnum.valueOf(source.toUpperCase());
+		}
+
 	}
 
 }

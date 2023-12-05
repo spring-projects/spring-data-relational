@@ -307,7 +307,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 * @return the converted object, will never be {@literal null}.
 	 */
 	protected <S> S readAggregate(ConversionContext context, RowDocument document,
-								  TypeInformation<? extends S> typeHint) {
+			TypeInformation<? extends S> typeHint) {
 		return readAggregate(context, new RowDocumentAccessor(document), typeHint);
 	}
 
@@ -321,7 +321,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	 */
 	@SuppressWarnings("unchecked")
 	protected <S> S readAggregate(ConversionContext context, RowDocumentAccessor documentAccessor,
-								  TypeInformation<? extends S> typeHint) {
+			TypeInformation<? extends S> typeHint) {
 
 		Class<? extends S> rawType = typeHint.getType();
 
@@ -430,8 +430,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	private <T> T doConvert(Object value, Class<? extends T> target,
-							@Nullable Class<? extends T> fallback) {
+	private <T> T doConvert(Object value, Class<? extends T> target, @Nullable Class<? extends T> fallback) {
 
 		if (getConversionService().canConvert(value.getClass(), target) || fallback == null) {
 			return getConversionService().convert(value, target);
@@ -504,7 +503,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 				entity, contextualizing, context.getPath().getCurrentObject());
 
 		return new ConverterAwareSpELExpressionParameterValueProvider(context, evaluator, getConversionService(),
-				new ConvertingParameterValueProvider<>( parameterProvider::getParameterValue));
+				new ConvertingParameterValueProvider<>(parameterProvider::getParameterValue));
 	}
 
 	private <S> S populateProperties(ConversionContext context, RelationalPersistentEntity<S> entity,
@@ -641,6 +640,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
 
 		Class<?> target = type.getType();
+
+		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
+			return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
+		}
+
 		if (ClassUtils.isAssignableValue(target, value)) {
 			return value;
 		}
@@ -787,8 +791,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <S> S convert(Object source, TypeInformation<? extends S> typeHint,
-							 ConversionContext context) {
+		public <S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
 
 			Assert.notNull(source, "Source must not be null");
 			Assert.notNull(typeHint, "TypeInformation must not be null");
@@ -1196,7 +1199,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		}
 	}
 
-	private record PropertyTranslatingPropertyAccessor<T> (PersistentPropertyAccessor<T> delegate,
+	private record PropertyTranslatingPropertyAccessor<T>(
+			PersistentPropertyAccessor<T> delegate,
 			PersistentPropertyTranslator propertyTranslator) implements PersistentPropertyAccessor<T> {
 
 		static <T> PersistentPropertyAccessor<T> create(PersistentPropertyAccessor<T> delegate,
