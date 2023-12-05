@@ -1265,6 +1265,16 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(enumMapOwners).containsExactly(enumMapOwner);
 	}
 
+	@Test // GH-1684
+	void oneToOneWithIdenticalIdColumnName(){
+
+		WithOneToOne saved = template.insert(new WithOneToOne("one", new Referenced(23L)));
+
+		WithOneToOne reloaded = template.findById(saved.id, WithOneToOne.class);
+
+		assertThat(reloaded).isEqualTo(saved);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -2086,6 +2096,10 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	record EnumMapOwner(@Id Long id, String name, Map<Color, MapElement> map) {
 	}
 
+	record WithOneToOne(@Id String id,@MappedCollection(idColumn = "renamed") Referenced referenced){}
+
+	record Referenced(@Id Long id) {
+	}
 
 	@Configuration
 	@Import(TestConfiguration.class)
