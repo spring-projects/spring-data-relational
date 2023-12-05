@@ -327,7 +327,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			this.accessor = accessor;
 			this.context = context;
 			this.identifier = path.isEntity()
-					? potentiallyAppendIdentifier(identifier, path.getRequiredLeafEntity(), delegate::getPropertyValue)
+					? potentiallyAppendIdentifier(identifier, path.getRequiredLeafEntity(), property -> delegate.getValue(path.append(property)))
 					: identifier;
 		}
 
