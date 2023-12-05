@@ -30,6 +30,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
@@ -39,8 +40,10 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -138,6 +141,17 @@ public class MappingJdbcConverterUnitTests {
 		assertThat(converted.getValue()).isInstanceOf(Array.class);
 		assertThat(typeFactory.arraySource).containsExactly(1, 2, 3, 4, 5);
 	}
+
+	@Test // GH-1684
+	void accessesCorrectValuesForOneToOneRelationshipWithIdenticallyNamedIdProperties() {
+
+		RowDocument rowdocument = new RowDocument(Map.of("ID", "one", "REFERENCED_ID", 23));
+
+		WithOneToOne result = converter.readAndResolve(WithOneToOne.class, rowdocument);
+
+		assertThat(result).isEqualTo(new WithOneToOne("one", new Referenced(23L)));
+	}
+
 
 	private void checkConversionToTimestampAndBack(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Object value) {
@@ -284,4 +298,10 @@ public class MappingJdbcConverterUnitTests {
 			return mock(Array.class);
 		}
 	}
+
+	record WithOneToOne(@Id String id,@MappedCollection(idColumn = "renamed") Referenced referenced){}
+
+	record Referenced(@Id Long id) {
+	}
+
 }
