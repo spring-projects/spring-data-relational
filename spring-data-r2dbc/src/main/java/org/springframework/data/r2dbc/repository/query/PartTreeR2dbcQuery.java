@@ -67,7 +67,8 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 		this.parameters = method.getParameters();
 
 		try {
-			this.tree = new PartTree(method.getName(), method.getEntityInformation().getJavaType());
+			this.tree = new PartTree(method.getName(), processor.getReturnedType()
+					.getDomainType());
 			R2dbcQueryCreator.validate(this.tree, this.parameters);
 		} catch (RuntimeException e) {
 			throw new IllegalArgumentException(
@@ -115,10 +116,9 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append(getClass().getSimpleName());
-		sb.append(" [").append(getQueryMethod().getName());
-		sb.append(']');
-		return sb.toString();
+		String sb = getClass().getSimpleName()
+					+ " [" + getQueryMethod().getName()
+					+ ']';
+		return sb;
 	}
 }
