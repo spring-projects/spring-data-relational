@@ -552,7 +552,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			RowDocumentAccessor source, RelationalPersistentProperty property,
 			RelationalPersistentEntity<?> persistentEntity) {
 
-		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider, source)) {
+		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider)) {
 			return read(conversionContext, persistentEntity, source);
 		}
 
@@ -560,8 +560,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	private boolean shouldReadEmbeddable(ConversionContext context, RelationalPersistentProperty property,
-			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider,
-			RowDocumentAccessor source) {
+			RelationalPersistentEntity<?> unwrappedEntity, RelationalPropertyValueProvider propertyValueProvider) {
 
 		OnEmpty onEmpty = property.getRequiredAnnotation(Embedded.class).onEmpty();
 
@@ -576,16 +575,14 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 			if (persistentProperty.isEmbedded()) {
 
-				TypeInformation<?> typeInformation = persistentProperty.getTypeInformation();
+				RelationalPersistentEntity<?> nestedEntity = getMappingContext()
+						.getRequiredPersistentEntity(persistentProperty);
 
-				RelationalPersistentEntity<?> nestedEntity = getMappingContext().getPersistentEntity(typeInformation);
-
-				if (readEmbedded(nestedContext, contextual, source, persistentProperty, nestedEntity) != null) {
+				if (shouldReadEmbeddable(nestedContext, persistentProperty, nestedEntity, contextual)) {
 					return true;
 				}
-			}
 
-			if (contextual.hasValue(persistentProperty)) {
+			} else if (contextual.hasValue(persistentProperty)) {
 				return true;
 			}
 		}
