@@ -120,6 +120,35 @@ public class R2dbcEntityTemplateUnitTests {
 				.all() //
 				.as(StepVerifier::create) //
 				.assertNext(actual -> assertThat(actual.getName()).isEqualTo("Walter")).verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		assertThat(statement.getSql()).isEqualTo("SELECT foo.THE_NAME FROM foo WHERE foo.THE_NAME = $1");
+	}
+
+	@Test // GH-1690
+	void shouldProjectEntityUsingInheritedInterface() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("THE_NAME", Object.class, "Walter").metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(Person.class) //
+				.from("foo") //
+				.as(Named.class) //
+				.matching(Query.query(Criteria.where("name").is("Walter"))) //
+				.all() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getName()).isEqualTo("Walter");
+					assertThat(actual).isInstanceOf(Person.class);
+				}).verifyComplete();
+
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+		assertThat(statement.getSql()).isEqualTo("SELECT foo.* FROM foo WHERE foo.THE_NAME = $1");
 	}
 
 	@Test // gh-469
@@ -557,11 +586,15 @@ public class R2dbcEntityTemplateUnitTests {
 	record WithoutId(String name) {
 	}
 
+	interface Named{
+		String getName();
+	}
+
 	record Person(@Id String id,
 
 			@Column("THE_NAME") String name,
 
-			String description) {
+			String description) implements Named {
 
 		public static Person empty() {
 			return new Person(null, null, null);
@@ -577,6 +610,11 @@ public class R2dbcEntityTemplateUnitTests {
 
 		public Person withDescription(String description) {
 			return this.description == description ? this : new Person(this.id, this.name, description);
+		}
+
+		@Override
+		public String getName() {
+			return name();
 		}
 	}
 

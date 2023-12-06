@@ -102,7 +102,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT person.THE_NAME FROM person WHERE person.THE_NAME = $1");
 	}
 
-	@Test // gh-220
+	@Test // GH-220, GH-1690
 	void shouldSelectAsWithColumnName() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -123,7 +123,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT person.id, person.a_different_name FROM person WHERE person.THE_NAME = $1");
 	}
 
 	@Test // gh-220

@@ -21,16 +21,18 @@ import io.r2dbc.spi.RowMetadata;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.beans.FeatureDescriptor;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -46,7 +48,6 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.EntityProjection;
-import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
@@ -56,6 +57,7 @@ import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
@@ -68,6 +70,7 @@ import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.Predicates;
 import org.springframework.data.util.ProxyUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -332,7 +335,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
-				.doWithTable((table, spec) -> spec.withProjection(getSelectProjection(table, query, returnType)));
+				.doWithTable((table, spec) -> spec.withProjection(getSelectProjection(table, query, entityType, returnType)));
 
 		if (query.getLimit() > 0) {
 			selectSpec = selectSpec.limit(query.getLimit());
@@ -423,7 +426,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	@Override
-	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass, Class<T> resultType) throws DataAccessException {
+	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass, Class<T> resultType)
+			throws DataAccessException {
 
 		Assert.notNull(operation, "PreparedOperation must not be null");
 		Assert.notNull(entityClass, "Entity class must not be null");
@@ -759,18 +763,16 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return (RelationalPersistentEntity) getRequiredEntity(entityType);
 	}
 
-	private <T> List<Expression> getSelectProjection(Table table, Query query, Class<T> returnType) {
+	private <T> List<Expression> getSelectProjection(Table table, Query query, Class<?> entityType, Class<T> returnType) {
 
 		if (query.getColumns().isEmpty()) {
 
-			if (returnType.isInterface()) {
+			EntityProjection<T, ?> projection = converter.introspectProjection(returnType, entityType);
 
-				ProjectionInformation projectionInformation = projectionFactory.getProjectionInformation(returnType);
+			if (projection.isProjection() && projection.isClosedProjection()) {
 
-				if (projectionInformation.isClosed()) {
-					return projectionInformation.getInputProperties().stream().map(FeatureDescriptor::getName).map(table::column)
-							.collect(Collectors.toList());
-				}
+				return computeProjectedFields(table, returnType, projection);
+
 			}
 
 			return Collections.singletonList(table.asterisk());
@@ -779,6 +781,36 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return query.getColumns().stream().map(table::column).collect(Collectors.toList());
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T> List<Expression> computeProjectedFields(Table table, Class<T> returnType,
+			EntityProjection<T, ?> projection) {
+
+		if (returnType.isInterface()) {
+
+			Set<String> properties = new LinkedHashSet<>();
+			projection.forEach(it -> {
+				properties.add(it.getPropertyPath().getSegment());
+			});
+
+			return properties.stream().map(table::column).collect(Collectors.toList());
+		}
+
+		Set<SqlIdentifier> properties = new LinkedHashSet<>();
+		// DTO projections use merged metadata between domain type and result type
+		PersistentPropertyTranslator translator = PersistentPropertyTranslator.create(
+				mappingContext.getRequiredPersistentEntity(projection.getDomainType()),
+				Predicates.negate(RelationalPersistentProperty::hasExplicitColumnName));
+
+		RelationalPersistentEntity<?> persistentEntity = mappingContext
+				.getRequiredPersistentEntity(projection.getMappedType());
+		for (RelationalPersistentProperty property : persistentEntity) {
+			properties.add(translator.translate(property).getColumnName());
+		}
+
+		return properties.stream().map(table::column).collect(Collectors.toList());
+	}
+
+	@SuppressWarnings("unchecked")
 	public <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityType,
 			Class<T> resultType) {
 
@@ -791,13 +823,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		} else {
 
 			EntityProjection<T, ?> projection = converter.introspectProjection(resultType, entityType);
+			Class<T> typeToRead = projection.isProjection() ? resultType
+					: resultType.isInterface() ? (Class<T>) entityType : resultType;
 
 			rowMapper = (row, rowMetadata) -> {
 
-				RowDocument document = dataAccessStrategy.toRowDocument(resultType, row, rowMetadata.getColumnMetadatas());
-
-				return projection.isProjection() ? converter.project(projection, document)
-						: converter.read(resultType, document);
+				RowDocument document = dataAccessStrategy.toRowDocument(typeToRead, row, rowMetadata.getColumnMetadatas());
+				return converter.project(projection, document);
 			};
 		}
 
