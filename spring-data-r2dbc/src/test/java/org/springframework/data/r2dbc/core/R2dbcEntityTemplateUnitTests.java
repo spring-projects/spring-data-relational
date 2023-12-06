@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.relational.core.query.Criteria.*;
 
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
@@ -87,8 +88,6 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // gh-220
 	void shouldCountBy() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -104,11 +103,29 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
+	@Test
+	// GH-1690
+	void shouldApplyInterfaceProjection() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("THE_NAME", Object.class, "Walter").metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(Person.class) //
+				.from("foo") //
+				.as(PersonProjection.class) //
+				.matching(Query.query(Criteria.where("name").is("Walter"))) //
+				.all() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual.getName()).isEqualTo("Walter")).verifyComplete();
+	}
+
 	@Test // gh-469
 	void shouldProjectExistsResult() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -271,7 +288,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
 
-		entityTemplate.delete(Query.query(Criteria.where("name").is("Walter")), Person.class) //
+		entityTemplate.delete(Query.query(where("name").is("Walter")), Person.class) //
 				.as(StepVerifier::create) //
 				.expectNext(1L) //
 				.verifyComplete();
@@ -562,6 +579,11 @@ public class R2dbcEntityTemplateUnitTests {
 		public Person withDescription(String description) {
 			return this.description == description ? this : new Person(this.id, this.name, description);
 		}
+	}
+
+	interface PersonProjection {
+
+		String getName();
 	}
 
 	record VersionedPerson(@Id String id, @Version long version, String name) {
