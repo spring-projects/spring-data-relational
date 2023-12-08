@@ -32,6 +32,8 @@ import org.springframework.data.relational.repository.query.RelationalParameters
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -71,8 +73,8 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	@Override
-	protected RelationalParameters createParameters(Method method) {
-		return new RelationalParameters(method);
+	protected Parameters<?, ?> createParameters(ParametersSource parametersSource) {
+		return new RelationalParameters(parametersSource);
 	}
 
 	@Override
@@ -246,7 +248,7 @@ public class JdbcQueryMethod extends QueryMethod {
 
 	/**
 	 * Looks up the {@link Lock} annotation from the query method.
-	 * 
+	 *
 	 * @return the {@link Optional} wrapped {@link Lock} annotation.
 	 */
 	Optional<Lock> lookupLockAnnotation() {

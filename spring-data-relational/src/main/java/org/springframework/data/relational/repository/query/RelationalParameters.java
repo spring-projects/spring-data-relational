@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.repository.query;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import org.springframework.core.MethodParameter;
@@ -23,6 +22,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.repository.query.RelationalParameters.RelationalParameter;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -33,21 +33,17 @@ import org.springframework.data.util.TypeInformation;
 public class RelationalParameters extends Parameters<RelationalParameters, RelationalParameter> {
 
 	/**
-	 * Creates a new {@link RelationalParameters} instance from the given {@link Method}.
+	 * Creates a new {@link RelationalParameters} instance from the given {@link ParametersSource}.
 	 *
-	 * @param method must not be {@literal null}.
+	 * @param parametersSource must not be {@literal null}.
 	 */
-	public RelationalParameters(Method method) {
-		super(method);
+	public RelationalParameters(ParametersSource parametersSource) {
+		super(parametersSource,
+				methodParameter -> new RelationalParameter(methodParameter, parametersSource.getDomainTypeInformation()));
 	}
 
 	private RelationalParameters(List<RelationalParameter> parameters) {
 		super(parameters);
-	}
-
-	@Override
-	protected RelationalParameter createParameter(MethodParameter parameter) {
-		return new RelationalParameter(parameter);
 	}
 
 	@Override
@@ -70,8 +66,8 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 		 *
 		 * @param parameter must not be {@literal null}.
 		 */
-		RelationalParameter(MethodParameter parameter) {
-			super(parameter);
+		RelationalParameter(MethodParameter parameter, TypeInformation<?> domainType) {
+			super(parameter, domainType);
 			this.parameter = parameter;
 		}
 

@@ -38,10 +38,11 @@ import org.springframework.data.relational.repository.query.RelationalParameters
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
-import org.springframework.data.util.ReactiveWrappers;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.ReactiveWrappers;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -122,12 +123,9 @@ public class R2dbcQueryMethod extends QueryMethod {
 		this.lock = Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(method, Lock.class));
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryMethod#createParameters(java.lang.reflect.Method)
-	 */
 	@Override
-	protected RelationalParameters createParameters(Method method) {
-		return new RelationalParameters(method);
+	protected RelationalParameters createParameters(ParametersSource parametersSource) {
+		return new RelationalParameters(parametersSource);
 	}
 
 	/* (non-Javadoc)
