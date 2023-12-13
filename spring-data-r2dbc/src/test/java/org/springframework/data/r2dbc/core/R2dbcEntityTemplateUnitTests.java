@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
@@ -36,6 +37,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -44,8 +46,11 @@ import org.springframework.data.auditing.ReactiveIsNewAwareAuditingHandler;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.PersistentEntities;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
@@ -83,7 +88,11 @@ public class R2dbcEntityTemplateUnitTests {
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
-		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE);
+
+		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, new MoneyConverter());
+
+		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE,
+				new MappingR2dbcConverter(new R2dbcMappingContext(), conversions));
 	}
 
 	@Test // gh-220
@@ -540,6 +549,25 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(23L));
 	}
 
+	@Test // GH-1696
+	void shouldConsiderParameterConverter() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.insert(new WithMoney(null, new Money((byte) 1))).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO with_money (money) VALUES ($1)");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0,
+				Parameter.from(Parameters.in(R2dbcType.VARCHAR, "$$$")));
+	}
+
 	@Value
 	static class WithoutId {
 
@@ -686,5 +714,20 @@ public class R2dbcEntityTemplateUnitTests {
 
 			return Mono.just(person);
 		}
+	}
+
+	record WithMoney(@Id Integer id, Money money) {
+	}
+
+	record Money(byte amount) {
+	}
+
+	static class MoneyConverter implements Converter<Money, io.r2dbc.spi.Parameter> {
+
+		@Override
+		public io.r2dbc.spi.Parameter convert(Money source) {
+			return Parameters.in(R2dbcType.VARCHAR, "$$$");
+		}
+
 	}
 }
