@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.mapping;
 
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
+import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.Row;
 
 import java.math.BigDecimal;
@@ -42,7 +43,7 @@ public class R2dbcSimpleTypeHolder extends SimpleTypeHolder {
 	 */
 	public static final Set<Class<?>> R2DBC_SIMPLE_TYPES = Collections
 			.unmodifiableSet(new HashSet<>(Arrays.asList(OutboundRow.class, Row.class, BigInteger.class, BigDecimal.class,
-					UUID.class, Blob.class, Clob.class, ByteBuffer.class)));
+					UUID.class, Blob.class, Clob.class, ByteBuffer.class, Parameter.class)));
 
 	public static final SimpleTypeHolder HOLDER = new R2dbcSimpleTypeHolder();
 
