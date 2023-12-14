@@ -190,12 +190,16 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 
 	@Override
 	public void doWithAssociations(AssociationHandler<RelationalPersistentProperty> handler) {
-		delegate.doWithAssociations(handler);
+		delegate.doWithAssociations((AssociationHandler<RelationalPersistentProperty>) association -> {
+			handler.doWithAssociation(new Association<>(wrap(association.getInverse()), wrap(association.getObverse())));
+		});
 	}
 
 	@Override
 	public void doWithAssociations(SimpleAssociationHandler handler) {
-		delegate.doWithAssociations(handler);
+		delegate.doWithAssociations((AssociationHandler<RelationalPersistentProperty>) association -> {
+			handler.doWithAssociation(new Association<>(wrap(association.getInverse()), wrap(association.getObverse())));
+		});
 	}
 
 	@Override

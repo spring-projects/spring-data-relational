@@ -24,12 +24,14 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
@@ -38,6 +40,7 @@ import org.springframework.lang.Nullable;
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
  *
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 public class SqlGeneratorEmbeddedUnitTests {
 
@@ -213,6 +216,12 @@ public class SqlGeneratorEmbeddedUnitTests {
 						SqlIdentifier.unquoted("test"));
 	}
 
+	@Test // GH-1695
+	public void columnForEmbeddedPropertyWithPrefix() {
+		assertThat(generatedColumn("nested.childId", WithEmbeddedAndAggregateReference.class))
+				.hasToString("a.nested_child_id AS nested_child_id");
+	}
+
 	@Test // DATAJDBC-340
 	public void noColumnForEmbedded() {
 
@@ -350,6 +359,18 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	static class OtherEntity {
 		String value;
+	}
+
+	@Table("a")
+	record WithEmbeddedAndAggregateReference(@Id long id,
+			@Embedded.Nullable(prefix = "nested_") WithAggregateReference nested) {
+	}
+
+	record WithAggregateReference(AggregateReference<Child, Long> childId) {
+	}
+
+	record Child(@Id long id) {
+
 	}
 
 }
