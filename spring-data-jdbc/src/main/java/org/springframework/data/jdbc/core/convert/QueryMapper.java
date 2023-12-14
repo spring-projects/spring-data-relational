@@ -416,7 +416,6 @@ public class QueryMapper {
 
 		PersistentPropertyAccessor<Object> embeddedAccessor = persistentEntity.getPropertyAccessor(criteria.getValue());
 
-		String prefix = embeddedProperty.getEmbeddedPrefix();
 		Condition condition = null;
 		for (RelationalPersistentProperty nestedProperty : persistentEntity) {
 
