@@ -18,15 +18,17 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.RowMetadata;
+import org.springframework.data.util.ParsingUtils;
+import org.springframework.lang.Nullable;
 
 /**
  * Utility methods for {@link io.r2dbc.spi.RowMetadata}
  *
  * @author Mark Paluch
+ * @author kfyty725
  * @since 1.3.7
  */
 class RowMetadataUtils {
-
 	/**
 	 * Check whether the column {@code name} is contained in {@link RowMetadata}. The check happens case-insensitive.
 	 *
@@ -46,14 +48,32 @@ class RowMetadataUtils {
 	 * @return {@code true} if the metadata contains the column {@code name}.
 	 */
 	public static boolean containsColumn(Iterable<? extends ReadableMetadata> columns, String name) {
+		return findColumnMetadata(columns, name) != null;
+	}
 
+	/**
+	 * Query matching {@link ColumnMetadata} from name
+	 * <p>
+	 * This method will check the column name of property and the name of property.
+	 * Because when use alias in sql, the name of the property maybe equals to alias in sql, and the column name of property
+     * are not equals to alias in sql.
+	 *
+	 * @param columns the metadata to inspect.
+	 * @param name column name.
+	 * @return the column metadata.
+	 */
+	@Nullable
+	public static ReadableMetadata findColumnMetadata(Iterable<? extends ReadableMetadata> columns, String name) {
 		for (ReadableMetadata columnMetadata : columns) {
 			if (name.equalsIgnoreCase(columnMetadata.getName())) {
-				return true;
+				return columnMetadata;
+			}
+			String columnName = ParsingUtils.reconcatenateCamelCase(columnMetadata.getName(), "_");
+			if (name.equalsIgnoreCase(columnName)) {
+				return columnMetadata;
 			}
 		}
-
-		return false;
+		return null;
 	}
 
 	/**
@@ -63,7 +83,6 @@ class RowMetadataUtils {
 	 * @return
 	 * @since 1.4.1
 	 */
-	@SuppressWarnings("unchecked")
 	public static Iterable<? extends ColumnMetadata> getColumnMetadata(RowMetadata metadata) {
 		return metadata.getColumnMetadatas();
 	}
