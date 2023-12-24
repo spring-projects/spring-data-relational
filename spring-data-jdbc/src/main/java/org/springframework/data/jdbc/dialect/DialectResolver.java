@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.config;
+package org.springframework.data.jdbc.dialect;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

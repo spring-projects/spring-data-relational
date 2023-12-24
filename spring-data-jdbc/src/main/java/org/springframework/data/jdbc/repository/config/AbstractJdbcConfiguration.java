@@ -26,7 +26,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +39,7 @@ import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -61,6 +61,7 @@ import org.springframework.util.StringUtils;
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Tomohiko Ozawa
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -103,7 +104,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use
 	 *          {@link org.springframework.data.relational.core.mapping.DefaultNamingStrategy#INSTANCE} as fallback.
-	 * @param customConversions see {@link #jdbcCustomConversions()}.
+	 * @param customConversions see {@link #jdbcCustomConversions(Optional)}.
 	 * @param jdbcManagedTypes JDBC managed types, typically discovered through {@link #jdbcManagedTypes() an entity
 	 *          scan}.
 	 * @return must not be {@literal null}.
@@ -124,7 +125,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)}.
 	 *
 	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)
-	 * @see #jdbcCustomConversions()
+	 * @see #jdbcCustomConversions(Optional)
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -147,23 +148,17 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @return will never be {@literal null}.
 	 */
 	@Bean
-	public JdbcCustomConversions jdbcCustomConversions() {
-
-		try {
-
-			Dialect dialect = applicationContext.getBean(Dialect.class);
-			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
-					: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
-
-			return new JdbcCustomConversions(
-					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
-
-		} catch (NoSuchBeanDefinitionException exception) {
-
+	public JdbcCustomConversions jdbcCustomConversions(Optional<Dialect> dialect) {
+		return dialect.map(d -> {
+			SimpleTypeHolder simpleTypeHolder = d.simpleTypes().isEmpty()
+					? JdbcSimpleTypes.HOLDER
+					: new SimpleTypeHolder(d.simpleTypes(), JdbcSimpleTypes.HOLDER);
+			return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(d)),
+					userConverters());
+		}).orElseGet(() -> {
 			LOG.warn("No dialect found; CustomConversions will be configured without dialect specific conversions");
-
 			return new JdbcCustomConversions();
-		}
+		});
 	}
 
 	protected List<?> userConverters() {
@@ -191,7 +186,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
 			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
+		return new JdbcAggregateTemplate(applicationContext, converter, dataAccessStrategy);
 	}
 
 	/**
@@ -207,8 +202,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
-				new SqlParametersFactory(context, jdbcConverter),
-				new InsertStrategyFactory(operations, dialect));
+				new SqlParametersFactory(context, jdbcConverter), new InsertStrategyFactory(operations, dialect));
 
 		return factory.create();
 	}
@@ -219,8 +213,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @param operations the {@link NamedParameterJdbcOperations} allowing access to a {@link java.sql.Connection}.
 	 * @return the {@link Dialect} to be used.
 	 * @since 2.0
-	 * @throws org.springframework.data.jdbc.repository.config.DialectResolver.NoDialectException if the {@link Dialect}
-	 *           cannot be determined.
+	 * @throws DialectResolver.NoDialectException if the {@link Dialect} cannot be determined.
 	 */
 	@Bean
 	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {

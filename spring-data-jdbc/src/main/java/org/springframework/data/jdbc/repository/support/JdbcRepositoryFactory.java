@@ -19,9 +19,11 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -48,6 +50,7 @@ import org.springframework.util.Assert;
  * @author Hebert Coelho
  * @author Diego Krupitza
  * @author Christopher Klein
+ * @author Tomohiko Ozawa
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
@@ -61,6 +64,20 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;
+
+	public JdbcRepositoryFactory(ApplicationEventPublisher publisher, JdbcAggregateOperations jdbcAggregateOperations,
+			NamedParameterJdbcOperations operations) {
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		Assert.notNull(jdbcAggregateOperations, "JdbcAggregateOperations must not be null");
+		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
+
+		this.converter = jdbcAggregateOperations.getConverter();
+		this.accessStrategy = jdbcAggregateOperations.getDataAccessStrategy();
+		this.context = jdbcAggregateOperations.getConverter().getMappingContext();
+		this.dialect = DialectResolver.getDialect(operations.getJdbcOperations());
+		this.operations = operations;
+		this.publisher = publisher;
+	}
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -114,7 +131,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
+		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, converter, accessStrategy);
 
 		if (entityCallbacks != null) {
 			template.setEntityCallbacks(entityCallbacks);
