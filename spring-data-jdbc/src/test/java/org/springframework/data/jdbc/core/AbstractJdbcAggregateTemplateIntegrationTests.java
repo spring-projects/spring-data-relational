@@ -46,8 +46,6 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
@@ -1384,7 +1382,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	void mapWithEnumKey() {
 
 		EnumMapOwner enumMapOwner = template
-				.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+				.save(
+				new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
 
 		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
 

@@ -40,8 +40,11 @@ import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -66,7 +69,12 @@ class JdbcRepositoryFactoryBeanUnitTests {
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
 	@Mock Dialect dialect;
 
-	private RelationalMappingContext mappingContext;
+	@Mock
+	JdbcOperations operations;
+	@Mock
+	NamedParameterJdbcOperations namedParameterJdbcOperations;
+
+	RelationalMappingContext mappingContext;
 
 	@BeforeEach
 	void setUp() {
@@ -76,7 +84,9 @@ class JdbcRepositoryFactoryBeanUnitTests {
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
 
-		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
+		when(operations.execute(any(ConnectionCallback.class))).thenReturn(H2Dialect.INSTANCE);
+		when(namedParameterJdbcOperations.getJdbcOperations()).thenReturn(operations);
+		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(namedParameterJdbcOperations);
 
 		ObjectProvider<DataAccessStrategy> dataAccessStrategyObjectProvider = mock(ObjectProvider.class);
 		ObjectProvider<QueryMappingConfiguration> queryMappingConfigurationObjectProvider = mock(ObjectProvider.class);

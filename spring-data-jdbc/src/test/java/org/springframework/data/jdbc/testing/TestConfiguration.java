@@ -27,6 +27,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -35,12 +36,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.repository.config.DialectResolver;
+import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
@@ -192,6 +195,12 @@ public class TestConfiguration {
 	@Bean
 	Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
+	}
+
+	@Bean
+	JdbcAggregateOperations jdbcAggregateOperations(ApplicationContext publisher, JdbcConverter converter,
+			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy) {
+		return new JdbcAggregateTemplate(publisher, converter, dataAccessStrategy);
 	}
 
 	@Lazy

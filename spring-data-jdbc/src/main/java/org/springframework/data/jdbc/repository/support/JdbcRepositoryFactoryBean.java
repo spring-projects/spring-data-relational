@@ -22,6 +22,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
 import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
@@ -64,6 +66,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Mikhail Polivakha
  * @author Sergey Korotaev
+ * @author Tomohiko Ozawa
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
@@ -75,6 +78,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private @Nullable DataAccessStrategy dataAccessStrategy;
 	private @Nullable QueryMappingConfiguration queryMappingConfiguration;
 	private @Nullable NamedParameterJdbcOperations operations;
+	private JdbcAggregateOperations aggregateOperations;
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
 	private @Nullable Dialect dialect;
 
@@ -109,8 +113,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		Assert.state(this.operations != null, "NamedParameterJdbcOperations is required and must not be null");
 		Assert.state(this.queryMappingConfiguration != null, "RelationalConverter is required and must not be null");
 
-		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				converter, dialect, publisher, operations);
+		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(publisher, aggregateOperations, operations);
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 		jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
 		jdbcRepositoryFactory.setBeanFactory(beanFactory);
@@ -161,6 +164,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.operations = operations;
 	}
 
+	public void setJdbcAggregateOperations(JdbcAggregateOperations jdbcAggregateOperations) {
+		this.aggregateOperations = jdbcAggregateOperations;
+	}
+
 	public void setConverter(JdbcConverter converter) {
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -190,6 +197,9 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 			Assert.state(this.beanFactory != null, "If no JdbcOperations are set a BeanFactory must be available");
 			this.operations = this.beanFactory.getBean(NamedParameterJdbcOperations.class);
+		}
+
+			aggregateOperations = new JdbcAggregateTemplate(publisher, converter, dataAccessStrategy);
 		}
 
 		if (this.queryMappingConfiguration == null) {

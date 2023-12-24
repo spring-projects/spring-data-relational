@@ -24,6 +24,8 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.lang.Nullable;
 
@@ -37,6 +39,7 @@ import org.springframework.lang.Nullable;
  * @author Diego Krupitza
  * @author Myeonghyeon Lee
  * @author Sergey Korotaev
+ * @author Tomohiko Ozawa
  */
 public interface JdbcAggregateOperations {
 
@@ -324,4 +327,18 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate roots.
 	 */
 	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
+
+	/**
+	 * Returns the {@link JdbcConverter}.
+	 *
+	 * @return the {@link JdbcConverter}.
+	 */
+	JdbcConverter getConverter();
+
+	/**
+	 * Return the {@link DataAccessStrategy}
+	 *
+	 * @return the {@link DataAccessStrategy}
+	 */
+	DataAccessStrategy getDataAccessStrategy();
 }

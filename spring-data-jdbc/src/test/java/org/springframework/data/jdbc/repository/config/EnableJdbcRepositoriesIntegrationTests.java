@@ -27,12 +27,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
@@ -41,6 +43,8 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
+import org.springframework.data.jdbc.dialect.DialectResolver;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -72,6 +76,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	static final Field OPERATIONS = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "operations");
 	static final Field DATA_ACCESS_STRATEGY = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
 			"dataAccessStrategy");
+	static final Field AGGREGATE_OPERATIONS = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
+			"aggregateOperations");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
 
@@ -82,9 +88,15 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@Autowired
 	@Qualifier("defaultDataAccessStrategy") DataAccessStrategy defaultDataAccessStrategy;
 	@Autowired
+	@Qualifier("jdbcAggregateOperations")
+	JdbcAggregateOperations defaultJdbcAggregateOperations;
+	@Autowired
 	@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
 	@Autowired
 	@Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
+	@Autowired
+	@Qualifier("qualifierJdbcAggregateOperations")
+	JdbcAggregateOperations qualifierJdbcAggregateOperations;
 
 	@BeforeAll
 	public static void setup() {
@@ -92,6 +104,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		MAPPER_MAP.setAccessible(true);
 		OPERATIONS.setAccessible(true);
 		DATA_ACCESS_STRATEGY.setAccessible(true);
+		AGGREGATE_OPERATIONS.setAccessible(true);
 	}
 
 	@Test // DATAJDBC-100
@@ -126,6 +139,19 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
 	}
 
+	@Test  // GH-1704
+	public void jdbcAggregateOperationsRef() {
+
+		JdbcAggregateOperations aggregateOperations = (JdbcAggregateOperations) ReflectionUtils.getField(
+				AGGREGATE_OPERATIONS, factoryBean);
+		assertThat(aggregateOperations).isNotSameAs(defaultJdbcAggregateOperations)
+				.isSameAs(qualifierJdbcAggregateOperations);
+
+		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY,
+				factoryBean);
+		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
+	}
+
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {
 
 	}
@@ -146,6 +172,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
+			jdbcAggregateOperationsRef = "qualifierJdbcAggregateOperations",
 			repositoryBaseClass = DummyRepositoryBaseClass.class)
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -175,6 +202,12 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		@Bean
 		Dialect jdbcDialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations operations) {
 			return DialectResolver.getDialect(operations.getJdbcOperations());
+		}
+
+		@Bean("qualifierJdbcAggregateOperations")
+		JdbcAggregateOperations jdbcAggregateOperations(ApplicationContext publisher, JdbcConverter converter,
+				@Qualifier("qualifierDataAccessStrategy") DataAccessStrategy dataAccessStrategy) {
+			return new JdbcAggregateTemplate(publisher, converter, dataAccessStrategy);
 		}
 	}
 
