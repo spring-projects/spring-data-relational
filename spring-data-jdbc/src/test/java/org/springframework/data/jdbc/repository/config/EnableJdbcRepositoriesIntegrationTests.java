@@ -137,7 +137,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
 	}
 
-	@Test
+	@Test  // GH-1704
 	public void jdbcAggregateOperationsRef() {
 
 		JdbcAggregateOperations aggregateOperations = (JdbcAggregateOperations) ReflectionUtils.getField(
