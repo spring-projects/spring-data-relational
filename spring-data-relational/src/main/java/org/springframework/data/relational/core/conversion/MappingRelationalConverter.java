@@ -41,7 +41,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.*;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
+import org.springframework.data.mapping.model.EntityInstantiator;
+import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
+import org.springframework.data.mapping.model.PropertyValueProvider;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -316,8 +325,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		Class<? extends S> rawType = typeHint.getType();
 
-		if (getConversions().hasCustomReadTarget(documentAccessor.getClass(), rawType)) {
-			return doConvert(documentAccessor, rawType, typeHint.getType());
+		if (getConversions().hasCustomReadTarget(RowDocument.class, rawType)) {
+			return doConvert(documentAccessor.getDocument(), rawType, typeHint.getType());
 		}
 
 		if (RowDocument.class.isAssignableFrom(rawType)) {
@@ -1199,8 +1208,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		}
 	}
 
-	private record PropertyTranslatingPropertyAccessor<T>(
-			PersistentPropertyAccessor<T> delegate,
+	private record PropertyTranslatingPropertyAccessor<T>(PersistentPropertyAccessor<T> delegate,
 			PersistentPropertyTranslator propertyTranslator) implements PersistentPropertyAccessor<T> {
 
 		static <T> PersistentPropertyAccessor<T> create(PersistentPropertyAccessor<T> delegate,

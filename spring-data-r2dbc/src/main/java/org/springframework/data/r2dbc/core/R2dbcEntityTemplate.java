@@ -57,6 +57,7 @@ import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -818,7 +819,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		BiFunction<Row, RowMetadata, T> rowMapper;
 
-		if (simpleType) {
+		// Bridge-code: Consider Converter<Row, T> until we have fully migrated to RowDocument
+		if (converter instanceof AbstractRelationalConverter relationalConverter
+				&& relationalConverter.getConversions().hasCustomReadTarget(Row.class, entityType)) {
+
+			ConversionService conversionService = relationalConverter.getConversionService();
+			rowMapper = (row, rowMetadata) -> (T) conversionService.convert(row, entityType);
+		} else if (simpleType) {
 			rowMapper = dataAccessStrategy.getRowMapper(resultType);
 		} else {
 

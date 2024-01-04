@@ -21,6 +21,7 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 
 import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
+import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
@@ -62,6 +63,7 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
@@ -88,7 +90,8 @@ public class R2dbcEntityTemplateUnitTests {
 		client = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
 
-		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, new MoneyConverter());
+		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, new MoneyConverter(),
+				new RowConverter(), new RowDocumentConverter());
 
 		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE,
 				new MappingR2dbcConverter(new R2dbcMappingContext(), conversions));
@@ -611,6 +614,42 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(Parameters.in(R2dbcType.VARCHAR, "$$$")));
 	}
 
+	@Test // GH-1696
+	void shouldConsiderRowConverter() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("foo").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("bar").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified("foo", Object.class, 42)
+				.identified("bar", String.class, "the-bar").metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(MyRowToEntityType.class).all().as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.foo).isEqualTo(1); // converter-fixed value
+					assertThat(actual.bar).isEqualTo("the-bar"); // converted value
+				}).verifyComplete();
+	}
+
+	@Test // GH-1696
+	void shouldConsiderRowDocumentConverter() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("foo").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("bar").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified("foo", Object.class, 42)
+				.identified("bar", Object.class, "the-bar").metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(MyRowDocumentToEntityType.class).all().as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.foo).isEqualTo(1); // converter-fixed value
+					assertThat(actual.bar).isEqualTo("the-bar"); // converted value
+				}).verifyComplete();
+	}
+
 	record WithoutId(String name) {
 	}
 
@@ -823,6 +862,32 @@ public class R2dbcEntityTemplateUnitTests {
 		@Override
 		public io.r2dbc.spi.Parameter convert(Money source) {
 			return Parameters.in(R2dbcType.VARCHAR, "$$$");
+		}
+
+	}
+
+	record MyRowToEntityType(int foo, String bar) {
+
+	}
+
+	static class RowConverter implements Converter<Row, MyRowToEntityType> {
+
+		@Override
+		public MyRowToEntityType convert(Row source) {
+			return new MyRowToEntityType(1, source.get("bar", String.class));
+		}
+
+	}
+
+	record MyRowDocumentToEntityType(int foo, String bar) {
+
+	}
+
+	static class RowDocumentConverter implements Converter<RowDocument, MyRowDocumentToEntityType> {
+
+		@Override
+		public MyRowDocumentToEntityType convert(RowDocument source) {
+			return new MyRowDocumentToEntityType(1, (String) source.get("bar"));
 		}
 
 	}
