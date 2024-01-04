@@ -67,7 +67,7 @@ The table of the referenced entity is expected to have two additional columns: O
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`. The same additional columns are expected and the names used can be customized in the same way.
 
-For `List`, `Set`, and `Map` naming of the back reference can be controlled by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+For `List`, `Set`, and `Map` naming of the back reference can be controlled by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentEntity<?> owner)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
 Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`.
 Specifying a key column for a `Set` has no effect.
 
@@ -111,7 +111,7 @@ You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGN
 For `List` and `Map` references an additional column is required for holding the list index or map key.
 It is based on the foreign key column with an additional `_KEY` suffix.
 
-If you want a completely different way of naming these back references you may implement `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` in a way that fits your needs.
+If you want a completely different way of naming these back references you may implement `NamingStrategy.getReverseColumnName(RelationalPersistentEntity<?> owner)` in a way that fits your needs.
 
 .Declaring and setting an `AggregateReference`
 [source,java]
