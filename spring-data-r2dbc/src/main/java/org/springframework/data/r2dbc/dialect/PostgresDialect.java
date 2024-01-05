@@ -58,6 +58,18 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 				"io.r2dbc.postgresql.codec.Polygon") //
 				.forEach(s -> ifClassPresent(s, simpleTypes::add));
 
+		// support the native JTS types supported by r2dbc-postgresql
+		Stream.of("org.locationtech.jts.geom.Geometry", //
+				"org.locationtech.jts.geom.Point", //
+				"org.locationtech.jts.geom.MultiPoint", //
+				"org.locationtech.jts.geom.LineString", //
+				"org.locationtech.jts.geom.LinearRing", //
+				"org.locationtech.jts.geom.MultiLineString", //
+				"org.locationtech.jts.geom.Polygon", //
+				"org.locationtech.jts.geom.MultiPolygon", //
+				"org.locationtech.jts.geom.GeometryCollection") //
+				.forEach(s -> ifClassPresent(s, simpleTypes::add));
+
 		// conditional Postgres JSON support.
 		ifClassPresent("io.r2dbc.postgresql.codec.Json", simpleTypes::add);
 
