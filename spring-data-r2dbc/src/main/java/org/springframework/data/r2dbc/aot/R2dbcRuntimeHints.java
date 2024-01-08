@@ -21,6 +21,7 @@ import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
@@ -31,6 +32,7 @@ import org.springframework.data.r2dbc.repository.support.SimpleR2dbcRepository;
  * {@link RuntimeHintsRegistrar} for R2DBC.
  *
  * @author Christoph Strobl
+ * @author Mark Paluch
  * @since 3.0
  */
 class R2dbcRuntimeHints implements RuntimeHintsRegistrar {
@@ -45,5 +47,9 @@ class R2dbcRuntimeHints implements RuntimeHintsRegistrar {
 										.of(BeforeConvertCallback.class),
 								TypeReference.of(BeforeSaveCallback.class), TypeReference.of(AfterSaveCallback.class)),
 				hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_PUBLIC_METHODS));
+
+		for (Class<?> simpleType : PostgresDialect.INSTANCE.simpleTypes()) {
+			hints.reflection().registerType(TypeReference.of(simpleType), MemberCategory.PUBLIC_CLASSES);
+		}
 	}
 }
