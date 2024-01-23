@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -51,6 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link ConvertedRepository} that uses {@link Converter}s on entity-level.
  *
  * @author Mark Paluch
+ * @author Sebastian Wieland
  */
 @ExtendWith(SpringExtension.class)
 public class ConvertingR2dbcRepositoryIntegrationTests {
@@ -122,8 +124,26 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 				}).verifyComplete();
 	}
 
-	interface ConvertedRepository extends ReactiveCrudRepository<ConvertedEntity, Integer> {
+	@Test
+	void shouldNotUseConverterForCountQueries() {
+		ConvertedEntity entity = new ConvertedEntity();
+		entity.name = "name";
 
+		repository.save(entity) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		repository.countWithCustomQuery() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).isEqualTo(1L);
+				}).verifyComplete();
+	}
+
+	interface ConvertedRepository extends ReactiveCrudRepository<ConvertedEntity, Integer> {
+		@Query("SELECT COUNT(*) FROM CONVERTED_ENTITY")
+		Mono<Long> countWithCustomQuery();
 	}
 
 	static class ConvertedEntity {
