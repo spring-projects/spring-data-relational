@@ -57,7 +57,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 public class ConvertingR2dbcRepositoryIntegrationTests {
 
-	@Autowired private ConvertedRepository repository;
+	private @Autowired ConvertedRepository repository;
 	private JdbcTemplate jdbc;
 
 	@Configuration
@@ -77,7 +77,7 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 	}
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		this.jdbc = new JdbcTemplate(createDataSource());
 
@@ -124,8 +124,9 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 				}).verifyComplete();
 	}
 
-	@Test
+	@Test // GH-1723
 	void shouldNotUseConverterForCountQueries() {
+
 		ConvertedEntity entity = new ConvertedEntity();
 		entity.name = "name";
 
@@ -142,6 +143,7 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 	}
 
 	interface ConvertedRepository extends ReactiveCrudRepository<ConvertedEntity, Integer> {
+
 		@Query("SELECT COUNT(*) FROM CONVERTED_ENTITY")
 		Mono<Long> countWithCustomQuery();
 	}
