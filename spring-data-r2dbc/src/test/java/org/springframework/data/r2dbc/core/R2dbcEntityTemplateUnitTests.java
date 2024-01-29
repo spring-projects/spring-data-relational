@@ -29,6 +29,7 @@ import io.r2dbc.spi.test.MockRowMetadata;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.auditing.ReactiveIsNewAwareAuditingHandler;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.PersistentEntities;
@@ -91,7 +93,7 @@ public class R2dbcEntityTemplateUnitTests {
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
 
 		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, new MoneyConverter(),
-				new RowConverter(), new RowDocumentConverter());
+				new RowConverter(), new RowDocumentConverter(), new PkConverter());
 
 		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE,
 				new MappingR2dbcConverter(new R2dbcMappingContext(), conversions));
@@ -629,6 +631,53 @@ public class R2dbcEntityTemplateUnitTests {
 					assertThat(actual.foo).isEqualTo(1); // converter-fixed value
 					assertThat(actual.bar).isEqualTo("the-bar"); // converted value
 				}).verifyComplete();
+	}
+
+	@Test // GH-1725
+	void projectDtoShouldReadPropertiesOnce() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("number").type(R2dbcType.BINARY).build()).build();
+
+		ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+		byteBuffer.putDouble(1.2);
+		byteBuffer.flip();
+
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("number", Object.class, byteBuffer).metadata(metadata).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(WithDoubleHolder.class).as(DoubleHolderProjection.class).all().as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.number.number).isCloseTo(1.2d, withinPercentage(1d));
+				}).verifyComplete();
+	}
+
+	@ReadingConverter
+	static class PkConverter implements Converter<ByteBuffer, DoubleHolder> {
+
+		@Nullable
+		@Override
+		public DoubleHolder convert(ByteBuffer source) {
+			return new DoubleHolder(source.getDouble());
+		}
+	}
+
+	static class WithDoubleHolder {
+		DoubleHolder number;
+	}
+
+	static class DoubleHolderProjection {
+		DoubleHolder number;
+
+		public DoubleHolderProjection(DoubleHolder number) {
+			this.number = number;
+		}
+	}
+
+	record DoubleHolder(double number) {
+
 	}
 
 	@Test // GH-1696
