@@ -238,17 +238,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		EntityInstantiator instantiator = getEntityInstantiators().getInstantiatorFor(mappedEntity);
 		R instance = instantiator.createInstance(mappedEntity, provider);
-		PersistentPropertyAccessor<R> accessor = mappedEntity.getPropertyAccessor(instance);
 
-		populateProperties(context, mappedEntity, documentAccessor, evaluator, instance);
-
-		PersistentPropertyAccessor<?> convertingAccessor = new ConvertingPropertyAccessor<>(accessor,
-				getConversionService());
-		RelationalPropertyValueProvider valueProvider = newValueProvider(documentAccessor, evaluator, context);
-
-		readProperties(context, mappedEntity, convertingAccessor, documentAccessor, valueProvider, Predicates.isTrue());
-
-		return accessor.getBean();
+		return populateProperties(context, mappedEntity, documentAccessor, evaluator, instance);
 	}
 
 	private Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
@@ -452,11 +443,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		EntityInstantiator instantiator = getEntityInstantiators().getInstantiatorFor(entity);
 		S instance = instantiator.createInstance(entity, provider);
 
-		if (entity.requiresPropertyPopulation()) {
-			return populateProperties(context, entity, documentAccessor, evaluator, instance);
-		}
-
-		return instance;
+		return populateProperties(context, entity, documentAccessor, evaluator, instance);
 	}
 
 	@Override
@@ -508,6 +495,10 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 	private <S> S populateProperties(ConversionContext context, RelationalPersistentEntity<S> entity,
 			RowDocumentAccessor documentAccessor, SpELExpressionEvaluator evaluator, S instance) {
+
+		if (!entity.requiresPropertyPopulation()) {
+			return instance;
+		}
 
 		PersistentPropertyAccessor<S> accessor = new ConvertingPropertyAccessor<>(entity.getPropertyAccessor(instance),
 				getConversionService());
