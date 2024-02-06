@@ -88,7 +88,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 *
 	 * @param publisher must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
-	 * @since 1.1
+	 * @since 3.3
 	 */
 	public JdbcAggregateTemplate(ApplicationContext publisher, JdbcConverter converter,
 			DataAccessStrategy dataAccessStrategy) {
@@ -115,6 +115,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 *
 	 * @param publisher must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @since 3.3
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, JdbcConverter converter,
 			DataAccessStrategy dataAccessStrategy) {
@@ -127,6 +128,66 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
 		this.context = converter.getMappingContext();
+
+		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
+		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
+	}
+
+	/**
+	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationContext}, {@link RelationalMappingContext} and
+	 * {@link DataAccessStrategy}.
+	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @since 1.1
+	 * @deprecated since 3.3, use {@link JdbcAggregateTemplate(ApplicationContext, JdbcConverter, DataAccessStrategy)}
+	 *             instead.
+	 */
+	@Deprecated(since = "3.3")
+	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
+			DataAccessStrategy dataAccessStrategy) {
+
+		Assert.notNull(publisher, "ApplicationContext must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
+
+		this.eventDelegate.setPublisher(publisher);
+		this.context = context;
+		this.accessStrategy = dataAccessStrategy;
+		this.converter = converter;
+
+		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
+
+		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
+
+		setEntityCallbacks(EntityCallbacks.create(publisher));
+	}
+
+	/**
+	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationEventPublisher},
+	 * {@link RelationalMappingContext} and {@link DataAccessStrategy}.
+	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @deprecated since 3.3, use {@link JdbcAggregateTemplate(ApplicationEventPublisher, JdbcConverter,
+	 *             DataAccessStrategy)} instead.
+	 */
+	@Deprecated(since = "3.3")
+	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
+			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
+
+		this.eventDelegate.setPublisher(publisher);
+		this.context = context;
+		this.accessStrategy = dataAccessStrategy;
+		this.converter = converter;
 
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);

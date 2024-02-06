@@ -26,6 +26,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
@@ -104,7 +105,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use
 	 *          {@link org.springframework.data.relational.core.mapping.DefaultNamingStrategy#INSTANCE} as fallback.
-	 * @param customConversions see {@link #jdbcCustomConversions(Optional)}.
+	 * @param customConversions see {@link #jdbcCustomConversions()}.
 	 * @param jdbcManagedTypes JDBC managed types, typically discovered through {@link #jdbcManagedTypes() an entity
 	 *          scan}.
 	 * @return must not be {@literal null}.
@@ -125,7 +126,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)}.
 	 *
 	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)
-	 * @see #jdbcCustomConversions(Optional)
+	 * @see #jdbcCustomConversions()
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -148,17 +149,23 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @return will never be {@literal null}.
 	 */
 	@Bean
-	public JdbcCustomConversions jdbcCustomConversions(Optional<Dialect> dialect) {
-		return dialect.map(d -> {
-			SimpleTypeHolder simpleTypeHolder = d.simpleTypes().isEmpty()
-					? JdbcSimpleTypes.HOLDER
-					: new SimpleTypeHolder(d.simpleTypes(), JdbcSimpleTypes.HOLDER);
-			return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(d)),
-					userConverters());
-		}).orElseGet(() -> {
+	public JdbcCustomConversions jdbcCustomConversions() {
+
+		try {
+
+			Dialect dialect = applicationContext.getBean(Dialect.class);
+			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
+					: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+
+			return new JdbcCustomConversions(
+					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
+
+		} catch (NoSuchBeanDefinitionException exception) {
+
 			LOG.warn("No dialect found; CustomConversions will be configured without dialect specific conversions");
+
 			return new JdbcCustomConversions();
-		});
+		}
 	}
 
 	protected List<?> userConverters() {
