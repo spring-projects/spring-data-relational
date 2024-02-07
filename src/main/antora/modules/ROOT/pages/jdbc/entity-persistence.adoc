@@ -26,7 +26,7 @@ If the aggregate root references other entities those are loaded with separate s
 
 . Spring Data JDBC 3.2 allows the use of _Single Query Loading_.
 With this an arbitrary number of aggregates can be fully loaded with a single SQL query.
-This should be significant more efficient, especially for complex aggregates, consisting of many entities.
+This should be significantly more efficient, especially for complex aggregates, consisting of many entities.
 +
 Currently, Single Query Loading is restricted in different ways:
 
