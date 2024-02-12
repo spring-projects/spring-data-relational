@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
 
+import org.springframework.core.env.Environment;
 import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -87,6 +88,11 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	@Override
 	public void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory factory) {
 		delegate.setPersistentPropertyAccessorFactory(factory);
+	}
+
+	@Override
+	public void setEnvironment(Environment environment) {
+		delegate.setEnvironment(environment);
 	}
 
 	@Override
