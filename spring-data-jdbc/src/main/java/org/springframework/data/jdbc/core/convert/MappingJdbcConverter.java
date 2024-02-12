@@ -26,6 +26,7 @@ import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
@@ -35,7 +36,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.mapping.model.ValueExpressionEvaluator;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.ObjectPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -289,7 +290,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 	@Override
 	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
-			SpELExpressionEvaluator evaluator, ConversionContext context) {
+			ValueExpressionEvaluator evaluator, ConversionContext context) {
 
 		if (context instanceof ResolvingConversionContext rcc) {
 

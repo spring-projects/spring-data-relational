@@ -32,6 +32,9 @@ import org.springframework.core.CollectionFactory;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.EnvironmentCapable;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.MappingException;
@@ -41,16 +44,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
 import org.springframework.data.mapping.model.EntityInstantiator;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
 import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
-import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.ValueExpressionEvaluator;
+import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -67,6 +70,8 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.Predicates;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -84,13 +89,22 @@ import org.springframework.util.ClassUtils;
  * @see CustomConversions
  * @since 3.2
  */
-public class MappingRelationalConverter extends AbstractRelationalConverter implements ApplicationContextAware {
+public class MappingRelationalConverter extends AbstractRelationalConverter
+		implements ApplicationContextAware, EnvironmentCapable {
 
 	private SpELContext spELContext;
 
-	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+	private @Nullable Environment environment;
+
+	private final ExpressionParser expressionParser = new SpelExpressionParser();
+
+	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory(
+			expressionParser);
 
 	private final EntityProjectionIntrospector introspector;
+
+	private final CachingValueExpressionEvaluatorFactory valueExpressionEvaluatorFactory = new CachingValueExpressionEvaluatorFactory(
+			expressionParser, this, o -> spELContext.getEvaluationContext(o));
 
 	/**
 	 * Creates a new {@link MappingRelationalConverter} given the new {@link RelationalMappingContext}.
@@ -133,8 +147,18 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 
 		this.spELContext = new SpELContext(this.spELContext, applicationContext);
+		this.environment = applicationContext.getEnvironment();
 		this.projectionFactory.setBeanFactory(applicationContext);
 		this.projectionFactory.setBeanClassLoader(applicationContext.getClassLoader());
+	}
+
+	@Override
+	public Environment getEnvironment() {
+
+		if (this.environment == null) {
+			this.environment = new StandardEnvironment();
+		}
+		return this.environment;
 	}
 
 	/**
@@ -196,7 +220,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		TypeInformation<?> mappedType = projection.getActualMappedType();
 		RelationalPersistentEntity<R> mappedEntity = (RelationalPersistentEntity<R>) getMappingContext()
 				.getPersistentEntity(mappedType);
-		SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(document, spELContext);
+		ValueExpressionEvaluator evaluator = valueExpressionEvaluatorFactory.create(document);
 
 		boolean isInterfaceProjection = mappedType.getType().isInterface();
 		if (isInterfaceProjection) {
@@ -432,7 +456,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	private <S> S read(ConversionContext context, RelationalPersistentEntity<S> entity,
 			RowDocumentAccessor documentAccessor) {
 
-		SpELExpressionEvaluator evaluator = new DefaultSpELExpressionEvaluator(documentAccessor.getDocument(), spELContext);
+		ValueExpressionEvaluator evaluator = valueExpressionEvaluatorFactory.create(documentAccessor.getDocument());
 
 		InstanceCreatorMetadata<RelationalPersistentProperty> instanceCreatorMetadata = entity.getInstanceCreatorMetadata();
 
@@ -455,7 +479,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	private ParameterValueProvider<RelationalPersistentProperty> getParameterProvider(ConversionContext context,
-			RelationalPersistentEntity<?> entity, RowDocumentAccessor source, SpELExpressionEvaluator evaluator) {
+			RelationalPersistentEntity<?> entity, RowDocumentAccessor source, ValueExpressionEvaluator evaluator) {
 
 		// Ensure that ConversionContext is contextualized to the current property.
 		RelationalPropertyValueProvider contextualizing = new RelationalPropertyValueProvider() {
@@ -489,12 +513,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		PersistentEntityParameterValueProvider<RelationalPersistentProperty> parameterProvider = new PersistentEntityParameterValueProvider<>(
 				entity, contextualizing, context.getPath().getCurrentObject());
 
-		return new ConverterAwareSpELExpressionParameterValueProvider(context, evaluator, getConversionService(),
+		return new ConverterAwareExpressionParameterValueProvider(context, evaluator, getConversionService(),
 				new ConvertingParameterValueProvider<>(parameterProvider::getParameterValue));
 	}
 
 	private <S> S populateProperties(ConversionContext context, RelationalPersistentEntity<S> entity,
-			RowDocumentAccessor documentAccessor, SpELExpressionEvaluator evaluator, S instance) {
+			RowDocumentAccessor documentAccessor, ValueExpressionEvaluator evaluator, S instance) {
 
 		if (!entity.requiresPropertyPopulation()) {
 			return instance;
@@ -516,7 +540,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
-			SpELExpressionEvaluator evaluator, ConversionContext context) {
+			ValueExpressionEvaluator evaluator, ConversionContext context) {
 		return new DocumentValueProvider(context, documentAccessor, evaluator, spELContext);
 	}
 
@@ -1059,22 +1083,22 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		private final ConversionContext context;
 		private final RowDocumentAccessor accessor;
-		private final SpELExpressionEvaluator evaluator;
+		private final ValueExpressionEvaluator evaluator;
 		private final SpELContext spELContext;
 
 		/**
-		 * Creates a new {@link RelationalPropertyValueProvider} for the given source and {@link SpELExpressionEvaluator}.
+		 * Creates a new {@link RelationalPropertyValueProvider} for the given source and {@link ValueExpressionEvaluator}.
 		 *
 		 * @param context must not be {@literal null}.
 		 * @param accessor must not be {@literal null}.
 		 * @param evaluator must not be {@literal null}.
 		 */
 		private DocumentValueProvider(ConversionContext context, RowDocumentAccessor accessor,
-				SpELExpressionEvaluator evaluator, SpELContext spELContext) {
+				ValueExpressionEvaluator evaluator, SpELContext spELContext) {
 
 			Assert.notNull(context, "ConversionContext must no be null");
 			Assert.notNull(accessor, "DocumentAccessor must no be null");
-			Assert.notNull(evaluator, "SpELExpressionEvaluator must not be null");
+			Assert.notNull(evaluator, "ValueExpressionEvaluator must not be null");
 			this.context = context;
 			this.accessor = accessor;
 			this.evaluator = evaluator;
@@ -1166,24 +1190,24 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	/**
-	 * Extension of {@link SpELExpressionParameterValueProvider} to recursively trigger value conversion on the raw
+	 * Extension of {@link ValueExpressionParameterValueProvider} to recursively trigger value conversion on the raw
 	 * resolved SpEL value.
 	 */
-	private static class ConverterAwareSpELExpressionParameterValueProvider
-			extends SpELExpressionParameterValueProvider<RelationalPersistentProperty> {
+	private static class ConverterAwareExpressionParameterValueProvider
+			extends ValueExpressionParameterValueProvider<RelationalPersistentProperty> {
 
 		private final ConversionContext context;
 
 		/**
-		 * Creates a new {@link ConverterAwareSpELExpressionParameterValueProvider}.
+		 * Creates a new {@link ConverterAwareExpressionParameterValueProvider}.
 		 *
 		 * @param context must not be {@literal null}.
 		 * @param evaluator must not be {@literal null}.
 		 * @param conversionService must not be {@literal null}.
 		 * @param delegate must not be {@literal null}.
 		 */
-		public ConverterAwareSpELExpressionParameterValueProvider(ConversionContext context,
-				SpELExpressionEvaluator evaluator, ConversionService conversionService,
+		public ConverterAwareExpressionParameterValueProvider(ConversionContext context, ValueExpressionEvaluator evaluator,
+				ConversionService conversionService,
 				ParameterValueProvider<RelationalPersistentProperty> delegate) {
 
 			super(evaluator, conversionService, delegate);
@@ -1194,9 +1218,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		}
 
 		@Override
-		protected <T> T potentiallyConvertSpelValue(Object object, Parameter<T, RelationalPersistentProperty> parameter) {
+		protected <T> T potentiallyConvertExpressionValue(Object object,
+				Parameter<T, RelationalPersistentProperty> parameter) {
 			return context.convert(object, parameter.getType());
 		}
+
 	}
 
 	private record PropertyTranslatingPropertyAccessor<T>(PersistentPropertyAccessor<T> delegate,
