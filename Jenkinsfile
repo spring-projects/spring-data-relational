@@ -41,7 +41,7 @@ pipeline {
 			steps {
 				script {
 					docker.image(p['docker.java.main.image']).inside(p['docker.java.inside.docker']) {
-						sh "PROFILE=ci,all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
+						sh "PROFILE=all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
 						sh "JENKINS_USER_NAME=${p['jenkins.user.name']} ci/clean.sh"
 					}
 				}
@@ -71,7 +71,7 @@ pipeline {
 					steps {
 						script {
 							docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
-								sh "PROFILE=ci,all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
+								sh "PROFILE=all-dbs JENKINS_USER_NAME=${p['jenkins.user.name']} ci/test.sh"
 								sh "JENKINS_USER_NAME=${p['jenkins.user.name']} ci/clean.sh"
 							}
 						}

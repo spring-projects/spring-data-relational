@@ -359,7 +359,7 @@
 						<link>
 							https://docs.spring.io/spring-data/commons/docs/current/api/
 						</link>
-						<link>https://docs.oracle.com/javase/8/docs/api/</link>
+						<link>https://docs.oracle.com/en/java/javase/17/docs/api/</link>
 						<link>https://r2dbc.io/spec/0.9.1.RELEASE/api/</link>
 					</links>
 				</configuration>
@@ -386,31 +386,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-			</plugin>
-
-			<plugin>
-				<groupId>org.asciidoctor</groupId>
-				<artifactId>asciidoctor-maven-plugin</artifactId>
-				<configuration>
-					<sourceDirectory>${project.root}/src/main/asciidoc</sourceDirectory>
-					<sourceDocumentName>index.adoc</sourceDocumentName>
-					<doctype>book</doctype>
-					<attributes>
-						<version>${project.version}</version>
-						<projectName>${project.name}</projectName>
-						<projectVersion>${project.version}</projectVersion>
-						<aspectjVersion>${aspectj}</aspectjVersion>
-						<querydslVersion>${querydsl}</querydslVersion>
-						<springVersion>${spring}</springVersion>
-						<r2dbcVersion>${r2dbc-releasetrain.version}</r2dbcVersion>
-						<reactiveStreamsVersion>${reactive-streams.version}
-						</reactiveStreamsVersion>
-						<releasetrainVersion>${releasetrain}</releasetrainVersion>
-						<allow-uri-read>true</allow-uri-read>
-						<toclevels>3</toclevels>
-						<numbered>true</numbered>
-					</attributes>
-				</configuration>
 			</plugin>
 
 			<plugin>
