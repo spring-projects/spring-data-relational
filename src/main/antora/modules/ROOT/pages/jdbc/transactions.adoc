@@ -83,7 +83,7 @@ In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation an
 Thus, the method is with the `readOnly` flag set to `false`.
 
 NOTE: It is highly recommended to make query methods transactional.
-These methods might execute more then one query in order to populate an entity.
+These methods might execute more than one query in order to populate an entity.
 Without a common transaction Spring Data JDBC executes the queries in different connections.
 This may put excessive strain on the connection pool and might even lead to dead locks when multiple methods request a fresh connection while holding on to one.
 
