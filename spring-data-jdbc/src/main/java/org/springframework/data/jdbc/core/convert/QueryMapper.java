@@ -440,7 +440,7 @@ public class QueryMapper {
 	@Nullable
 	private Object convertValue(Comparator comparator, @Nullable Object value, TypeInformation<?> typeHint) {
 
-		if (Comparator.IN.equals(comparator) && value instanceof Collection<?> collection && !collection.isEmpty()) {
+		if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator)) && value instanceof Collection<?> collection && !collection.isEmpty()) {
 
 			Collection<Object> mapped = new ArrayList<>(collection.size());
 
