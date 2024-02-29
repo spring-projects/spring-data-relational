@@ -19,9 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
@@ -59,9 +57,11 @@ class QueryMapperUnitTests {
 	private QueryMapper mapper = createMapper(PostgresDialect.INSTANCE);
 
 	QueryMapper createMapper(R2dbcDialect dialect) {
+		return createMapper(dialect, JsonNodeToStringConverter.INSTANCE, StringToJsonNodeConverter.INSTANCE);
+	}
 
-		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, JsonNodeToStringConverter.INSTANCE,
-				StringToJsonNodeConverter.INSTANCE);
+	QueryMapper createMapper(R2dbcDialect dialect, Converter<?, ?>... converters) {
+		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, Arrays.asList(converters));
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
@@ -358,6 +358,18 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getCondition()).hasToString("person.name NOT IN (?[$1], ?[$2], ?[$3])");
 	}
 
+	@Test
+	void sholdMapIsNotInWithCollectionToStringConverter() {
+
+		mapper = createMapper(PostgresDialect.INSTANCE, JsonNodeToStringConverter.INSTANCE, StringToJsonNodeConverter.INSTANCE, CollectionToStringConverter.INSTANCE);
+
+		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.name NOT IN (?[$1], ?[$2], ?[$3])");
+	}
+
 	@Test // gh-64
 	void shouldMapIsGt() {
 
@@ -573,6 +585,15 @@ class QueryMapperUnitTests {
 			return source.asText();
 		}
 	}
+
+	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
+		INSTANCE;
+		@Override
+		public String convert(Collection<?> source) {
+			return source.toString();
+		}
+	}
+
 
 	enum StringToJsonNodeConverter implements Converter<String, JsonNode> {
 		INSTANCE;
