@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -61,7 +62,7 @@ class QueryMapperUnitTests {
 	QueryMapper createMapper(R2dbcDialect dialect) {
 
 		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, JsonNodeToStringConverter.INSTANCE,
-				StringToJsonNodeConverter.INSTANCE);
+				StringToJsonNodeConverter.INSTANCE, CollectionToStringConverter.INSTANCE);
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
@@ -573,6 +574,15 @@ class QueryMapperUnitTests {
 			return source.asText();
 		}
 	}
+
+	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
+		INSTANCE;
+		@Override
+		public String convert(Collection<?> source) {
+			return source.toString();
+		}
+	}
+
 
 	enum StringToJsonNodeConverter implements Converter<String, JsonNode> {
 		INSTANCE;
