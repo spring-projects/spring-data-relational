@@ -34,7 +34,7 @@
 		<oracle-r2dbc.version>1.1.1</oracle-r2dbc.version>
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
-		<netty>4.1.94.Final</netty>
+		<netty>4.1.107.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
