@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +28,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
@@ -51,6 +54,16 @@ public class QueryMapperUnitTests {
 
 	QueryMapper mapper = new QueryMapper(converter);
 	MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+	QueryMapper createMapper(Converter<?, ?>... converters) {
+
+		JdbcCustomConversions conversions = new JdbcCustomConversions(Arrays.asList(converters));
+
+		JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class), conversions,
+				mock(JdbcTypeFactory.class));
+
+		return new QueryMapper(converter);
+	}
 
 	@Test // DATAJDBC-318
 	public void shouldNotMapEmptyCriteria() {
@@ -308,6 +321,18 @@ public class QueryMapperUnitTests {
 		assertThat(condition).hasToString("person.\"NAME\" NOT IN (?[:name], ?[:name1], ?[:name2])");
 	}
 
+	@Test
+	void shouldMapIsNotInWithCollectionToStringConverter() {
+
+		mapper = createMapper(CollectionToStringConverter.INSTANCE);
+
+		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
+
+		Condition bindings = map(criteria);
+
+		assertThat(bindings).hasToString("person.\"NAME\" NOT IN (?[:name], ?[:name1], ?[:name2])");
+	}
+
 	@Test // DATAJDBC-318
 	public void shouldMapIsGt() {
 
@@ -415,7 +440,7 @@ public class QueryMapperUnitTests {
 
 		assertThatThrownBy(
 				() -> mapper.getMappedSort(Table.create("tbl"), sort, context.getRequiredPersistentEntity(Person.class)))
-						.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test // GH-1507
@@ -429,7 +454,7 @@ public class QueryMapperUnitTests {
 
 		assertThat(fields) //
 				.extracting(Objects::toString) //
-				.containsExactly( unsafeExpression + " ASC");
+				.containsExactly(unsafeExpression + " ASC");
 	}
 
 	private Condition map(Criteria criteria) {
@@ -442,5 +467,14 @@ public class QueryMapperUnitTests {
 
 		String name;
 		@Column("another_name") String alternative;
+	}
+
+	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
+		INSTANCE;
+
+		@Override
+		public String convert(Collection<?> source) {
+			return source.toString();
+		}
 	}
 }

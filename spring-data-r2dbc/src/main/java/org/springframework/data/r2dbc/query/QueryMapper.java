@@ -58,6 +58,7 @@ import org.springframework.util.ClassUtils;
  * @author Roman Chigvintsev
  * @author Manousos Mathioudakis
  * @author Jens Schauder
+ * @author Yan Qiang
  */
 public class QueryMapper {
 
@@ -142,14 +143,12 @@ public class QueryMapper {
 			SqlSort.validate(order);
 
 			OrderByField simpleOrderByField = createSimpleOrderByField(table, entity, order);
-			OrderByField orderBy = simpleOrderByField
-					.withNullHandling(order.getNullHandling());
+			OrderByField orderBy = simpleOrderByField.withNullHandling(order.getNullHandling());
 			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
 		}
 
 		return mappedOrder;
 	}
-
 
 	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
 
@@ -364,7 +363,7 @@ public class QueryMapper {
 		Class<?> typeHint;
 
 		Comparator comparator = criteria.getComparator();
-		if (criteria.getValue()instanceof Parameter parameter) {
+		if (criteria.getValue() instanceof Parameter parameter) {
 
 			mappedValue = convertValue(comparator, parameter.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), parameter);
@@ -411,7 +410,8 @@ public class QueryMapper {
 	@Nullable
 	private Object convertValue(Comparator comparator, @Nullable Object value, TypeInformation<?> typeHint) {
 
-		if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator)) && value instanceof Collection<?> collection && !collection.isEmpty()) {
+		if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
+				&& value instanceof Collection<?> collection && !collection.isEmpty()) {
 
 			Collection<Object> mapped = new ArrayList<>(collection.size());
 

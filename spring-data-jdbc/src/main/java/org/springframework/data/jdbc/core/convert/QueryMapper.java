@@ -53,6 +53,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Yan Qiang
  * @since 3.0
  */
 public class QueryMapper {

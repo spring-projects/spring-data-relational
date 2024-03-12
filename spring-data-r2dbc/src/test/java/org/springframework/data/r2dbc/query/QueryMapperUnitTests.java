@@ -19,7 +19,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
@@ -50,6 +54,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.node.TextNode;
  * @author Mark Paluch
  * @author Mingyuan Wu
  * @author Jens Schauder
+ * @author Yan Qiang
  */
 class QueryMapperUnitTests {
 
@@ -61,6 +66,7 @@ class QueryMapperUnitTests {
 	}
 
 	QueryMapper createMapper(R2dbcDialect dialect, Converter<?, ?>... converters) {
+
 		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, Arrays.asList(converters));
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
@@ -359,9 +365,10 @@ class QueryMapperUnitTests {
 	}
 
 	@Test
-	void sholdMapIsNotInWithCollectionToStringConverter() {
+	void shouldMapIsNotInWithCollectionToStringConverter() {
 
-		mapper = createMapper(PostgresDialect.INSTANCE, JsonNodeToStringConverter.INSTANCE, StringToJsonNodeConverter.INSTANCE, CollectionToStringConverter.INSTANCE);
+		mapper = createMapper(PostgresDialect.INSTANCE, JsonNodeToStringConverter.INSTANCE,
+				StringToJsonNodeConverter.INSTANCE, CollectionToStringConverter.INSTANCE);
 
 		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
 
@@ -479,14 +486,14 @@ class QueryMapperUnitTests {
 				.containsExactly("tbl.x(._)x DESC");
 	}
 
-
 	@Test // GH-1507
 	public void shouldNotMapSortWithIllegalExpression() {
 
 		Sort sort = Sort.by(desc("unknown Field"));
 
 		assertThatThrownBy(() -> mapper.getMappedSort(Table.create("tbl"), sort,
-				mapper.getMappingContext().getRequiredPersistentEntity(Person.class))).isInstanceOf(IllegalArgumentException.class);
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class)))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test // gh-369
@@ -588,12 +595,12 @@ class QueryMapperUnitTests {
 
 	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
 		INSTANCE;
+
 		@Override
 		public String convert(Collection<?> source) {
 			return source.toString();
 		}
 	}
-
 
 	enum StringToJsonNodeConverter implements Converter<String, JsonNode> {
 		INSTANCE;
