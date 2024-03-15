@@ -40,6 +40,7 @@ import org.springframework.util.StringUtils;
  * @author Fei Dong
  * @author Mark Paluch
  * @author Antoine Sauray
+ * @author Tomohiko Ozawa
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
@@ -79,9 +80,15 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager", transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
 
-		builder.addPropertyValue("mappingContext", new RuntimeBeanReference(JdbcMappingContext.class));
-		builder.addPropertyValue("dialect", new RuntimeBeanReference(Dialect.class));
-		builder.addPropertyValue("converter", new RuntimeBeanReference(JdbcConverter.class));
+		Optional<String> jdbcAggregateOperationsRef = source.getAttribute("jdbcAggregateOperationsRef");
+
+		if (jdbcAggregateOperationsRef.isPresent()) {
+			builder.addPropertyReference("jdbcAggregateOperations", jdbcAggregateOperationsRef.get());
+		} else {
+			builder.addPropertyValue("mappingContext", new RuntimeBeanReference(JdbcMappingContext.class));
+			builder.addPropertyValue("dialect", new RuntimeBeanReference(Dialect.class));
+			builder.addPropertyValue("converter", new RuntimeBeanReference(JdbcConverter.class));
+		}
 	}
 
 	/**

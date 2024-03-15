@@ -22,22 +22,13 @@ import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -51,8 +42,6 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
@@ -917,9 +906,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		template.save(entity);
 
-		assertThat(
-				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class))
-						.isEqualTo("from-db");
+		assertThat(jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(),
+				String.class)).isEqualTo("from-db");
 	}
 
 	@Test
@@ -1258,7 +1246,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Test // GH-1656
 	void mapWithEnumKey() {
 
-		EnumMapOwner enumMapOwner = template.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+		EnumMapOwner enumMapOwner = template.save(
+				new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
 
 		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
 
@@ -2086,7 +2075,6 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	record EnumMapOwner(@Id Long id, String name, Map<Color, MapElement> map) {
 	}
 
-
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -2094,12 +2082,6 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Bean
 		TestClass testClass() {
 			return TestClass.of(JdbcAggregateTemplateIntegrationTests.class);
-		}
-
-		@Bean
-		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
-				DataAccessStrategy dataAccessStrategy, JdbcConverter converter) {
-			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
 	}
 
