@@ -16,7 +16,7 @@
 package org.springframework.data.jdbc.repository.query;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.DtoInstantiatingConverter;
+import org.springframework.data.jdbc.core.convert.JdbcDtoInstantiatingConverter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -33,6 +33,7 @@ import org.springframework.util.ClassUtils;
  * query and how to process the result in order to get the desired return type.
  *
  * @author Mark Paluch
+ * @author Paul Jones
  * @since 2.0
  */
 @FunctionalInterface
@@ -52,6 +53,7 @@ interface JdbcQueryExecution<T> {
 	 * A {@link Converter} to post-process all source objects using the given {@link ResultProcessor}.
 	 *
 	 * @author Mark Paluch
+	 * @author Paul Jones
 	 * @since 2.3
 	 */
 	class ResultProcessingConverter implements Converter<Object, Object> {
@@ -63,7 +65,7 @@ interface JdbcQueryExecution<T> {
 				MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
 				EntityInstantiators instantiators) {
 			this.processor = processor;
-			this.converter = Lazy.of(() -> new DtoInstantiatingConverter(processor.getReturnedType().getReturnedType(),
+			this.converter = Lazy.of(() -> new JdbcDtoInstantiatingConverter(processor.getReturnedType().getReturnedType(),
 					mappingContext, instantiators));
 		}
 

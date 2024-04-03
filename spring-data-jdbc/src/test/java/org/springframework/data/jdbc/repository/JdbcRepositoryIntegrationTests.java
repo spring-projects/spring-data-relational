@@ -104,6 +104,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Diego Krupitza
  * @author Christopher Klein
  * @author Mikhail Polivakha
+ * @author Paul Jones
  */
 @IntegrationTest
 public class JdbcRepositoryIntegrationTests {
@@ -1286,6 +1287,36 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(match.get().getName()).contains(two.getName());
 	}
 
+	@Test
+	void fetchDtoWithNoArgsConstructorWithAggregateReferencePopulated() {
+		DummyEntity entity = new DummyEntity();
+		entity.setRef(AggregateReference.to(20L));
+		entity.setName("Test Dto");
+		repository.save(entity);
+
+		assertThat(repository.findById(entity.idProp).orElseThrow().getRef()).isEqualTo(AggregateReference.to(20L));
+
+		DummyDto foundDto = repository.findDtoByIdProp(entity.idProp).orElseThrow();
+		assertThat(foundDto.getName()).isEqualTo("Test Dto");
+		assertThat(foundDto.getRef()).isEqualTo(AggregateReference.to(20L));
+
+	}
+
+	@Test
+	void fetchDtoWithAllArgsConstructorWithAggregateReferencePopulated() {
+		DummyEntity entity = new DummyEntity();
+		entity.setRef(AggregateReference.to(20L));
+		entity.setName("Test Dto");
+		repository.save(entity);
+
+		assertThat(repository.findById(entity.idProp).orElseThrow().getRef()).isEqualTo(AggregateReference.to(20L));
+
+		DummyAllArgsDto foundDto = repository.findAllArgsDtoByIdProp(entity.idProp).orElseThrow();
+		assertThat(foundDto.getName()).isEqualTo("Test Dto");
+		assertThat(foundDto.getRef()).isEqualTo(AggregateReference.to(20L));
+
+	}
+
 	@Test // GH-1405
 	void withDelimitedColumnTest() {
 
@@ -1426,6 +1457,9 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE DIRECTION = :direction")
 		List<DummyEntity> findByEnumType(Direction direction);
+
+		Optional<DummyDto> findDtoByIdProp(Long idProp);
+		Optional<DummyAllArgsDto> findAllArgsDtoByIdProp(Long idProp);
 	}
 
 	interface RootRepository extends ListCrudRepository<Root, Long> {
@@ -1832,6 +1866,43 @@ public class JdbcRepositoryIntegrationTests {
 
 	enum Direction {
 		LEFT, CENTER, RIGHT
+	}
+
+	static class DummyDto {
+		@Id Long idProp;
+		String name;
+		AggregateReference<DummyEntity, Long> ref;
+
+		public DummyDto() {
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public AggregateReference<DummyEntity, Long> getRef() {
+			return ref;
+		}
+	}
+
+	static class DummyAllArgsDto {
+		@Id Long idProp;
+		String name;
+		AggregateReference<DummyEntity, Long> ref;
+
+		public DummyAllArgsDto(Long idProp, String name, AggregateReference<DummyEntity, Long> ref) {
+			this.idProp = idProp;
+			this.name = name;
+			this.ref = ref;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public AggregateReference<DummyEntity, Long> getRef() {
+			return ref;
+		}
 	}
 
 	interface DummyProjection {
