@@ -857,7 +857,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 		repository
 				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
-						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset(2))) //
+						q -> q.sortBy(Sort.by("name")).limit(2).scroll(ScrollPosition.offset(1))) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(window -> {
 
