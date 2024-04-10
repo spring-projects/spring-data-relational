@@ -54,7 +54,7 @@ public class ScrollDelegate {
 		List<T> result = queryFunction.apply(query);
 
 		if (scrollPosition instanceof OffsetScrollPosition offset) {
-			return createWindow(result, limit, OffsetScrollPosition.positionFunction(offset.getOffset()));
+			return createWindow(result, limit, offset.positionFunction());
 		}
 
 		throw new UnsupportedOperationException("ScrollPosition " + scrollPosition + " not supported");

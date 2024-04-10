@@ -409,7 +409,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 				int limit = getLimit();
 				return createQuery(q -> {
 
-					Query queryToUse = q.offset(osp.getOffset());
+					Query queryToUse = q;
+
+					if (!osp.isInitial()) {
+						queryToUse = queryToUse.offset(osp.getOffset() + 1);
+					}
 
 					if (limit > 0) {
 						queryToUse = queryToUse.limit(limit + 1);
@@ -419,8 +423,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 				}).all() //
 						.collectList() //
 						.map(content -> {
-							return ScrollDelegate.createWindow(content, limit,
-									OffsetScrollPosition.positionFunction(osp.getOffset()));
+							return ScrollDelegate.createWindow(content, limit, osp.positionFunction());
 						});
 			}
 

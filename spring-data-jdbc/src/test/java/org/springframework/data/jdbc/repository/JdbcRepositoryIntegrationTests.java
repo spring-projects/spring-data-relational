@@ -1137,7 +1137,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(first.map(DummyEntity::getName)).containsExactly("one", "three");
 
 		Window<DummyEntity> second = repository.findBy(example, q -> q.limit(2).sortBy(Sort.by("name")))
-				.scroll(ScrollPosition.offset(2));
+				.scroll(ScrollPosition.offset(1));
 		assertThat(second.map(DummyEntity::getName)).containsExactly("two");
 
 		WindowIterator<DummyEntity> iterator = WindowIterator.of(

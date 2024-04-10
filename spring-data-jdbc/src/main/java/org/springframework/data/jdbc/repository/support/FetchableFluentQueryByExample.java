@@ -102,7 +102,11 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
 		if (scrollPosition instanceof OffsetScrollPosition osp) {
 
-			Query query = createQuery().sort(getSort()).offset(osp.getOffset());
+			Query query = createQuery().sort(getSort());
+
+			if (!osp.isInitial()) {
+				query = query.offset(osp.getOffset() + 1);
+			}
 
 			if (getLimit() > 0) {
 				query = query.limit(getLimit());
