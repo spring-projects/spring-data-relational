@@ -15,12 +15,12 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>3.1.11-SNAPSHOT</version>
+		<version>3.1.11</version>
 	</parent>
 
 	<properties>
 		<dist.id>spring-data-jdbc</dist.id>
-		<springdata.commons>3.1.11-SNAPSHOT</springdata.commons>
+		<springdata.commons>3.1.11</springdata.commons>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<!-- dependency versions -->
@@ -156,20 +156,8 @@
 	</build>
 
 	<repositories>
-		<repository>
-			<id>spring-snapshot</id>
-			<url>https://repo.spring.io/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-milestone</id>
-			<url>https://repo.spring.io/milestone</url>
-		</repository>
+		
+		
 	</repositories>
 
 </project>
