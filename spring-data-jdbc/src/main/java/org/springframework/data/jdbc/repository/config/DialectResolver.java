@@ -32,11 +32,7 @@ import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.H2Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
-import org.springframework.data.relational.core.dialect.MariaDbDialect;
-import org.springframework.data.relational.core.dialect.OracleDialect;
+import org.springframework.data.relational.core.dialect.*;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -120,6 +116,9 @@ public class DialectResolver {
 			}
 			if (name.contains("h2")) {
 				return H2Dialect.INSTANCE;
+			}
+			if (name.contains("sqlite")) {
+				return SQLiteDialect.INSTANCE;
 			}
 			if (name.contains("mysql")) {
 				return new JdbcMySqlDialect(getIdentifierProcessing(metaData));
