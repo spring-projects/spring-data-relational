@@ -32,6 +32,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.ReadingConverter;
@@ -59,6 +61,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -106,7 +109,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("findAll");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
-		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
+		assertThat(query.determineRowMapper(queryMethod.getResultProcessor(), false)).isEqualTo(defaultRowMapper);
 	}
 
 	@Test // DATAJDBC-165, DATAJDBC-318
@@ -115,7 +118,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomRowMapper");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
-		assertThat(query.determineRowMapper(defaultRowMapper)).isInstanceOf(CustomRowMapper.class);
+		assertThat(query.determineRowMapper(queryMethod.getResultProcessor(), false)).isInstanceOf(CustomRowMapper.class);
 	}
 
 	@Test // DATAJDBC-290
@@ -124,12 +127,90 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomResultSetExtractor");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
-		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(defaultRowMapper);
+		ResultSetExtractor<Object> resultSetExtractor1 = query.determineResultSetExtractor(() -> defaultRowMapper);
+		ResultSetExtractor<Object> resultSetExtractor2 = query.determineResultSetExtractor(() -> defaultRowMapper);
 
-		assertThat(resultSetExtractor) //
+		assertThat(resultSetExtractor1) //
 				.isInstanceOf(CustomResultSetExtractor.class) //
 				.matches(crse -> ((CustomResultSetExtractor) crse).rowMapper == defaultRowMapper,
 						"RowMapper is expected to be default.");
+
+		assertThat(resultSetExtractor1).isNotSameAs(resultSetExtractor2);
+	}
+
+	@Test // GH-1721
+	void cachesCustomMapperAndExtractorInstances() {
+
+		JdbcQueryMethod queryMethod = createMethod("findAllCustomRowMapperResultSetExtractor");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+
+		ResultSetExtractor<Object> resultSetExtractor1 = query.determineResultSetExtractor(() -> {
+			throw new UnsupportedOperationException();
+		});
+
+		ResultSetExtractor<Object> resultSetExtractor2 = query.determineResultSetExtractor(() -> {
+			throw new UnsupportedOperationException();
+		});
+
+		assertThat(resultSetExtractor1).isSameAs(resultSetExtractor2);
+		assertThat(resultSetExtractor1).extracting("rowMapper").isInstanceOf(CustomRowMapper.class);
+
+		assertThat(ReflectionTestUtils.getField(resultSetExtractor1, "rowMapper"))
+				.isSameAs(ReflectionTestUtils.getField(resultSetExtractor2, "rowMapper"));
+	}
+
+	@Test // GH-1721
+	void obtainsCustomRowMapperRef() {
+
+		BeanFactory beanFactory = mock(BeanFactory.class);
+		JdbcQueryMethod queryMethod = createMethod("findAllCustomRowMapperRef");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+		query.setBeanFactory(beanFactory);
+
+		CustomRowMapper customRowMapper = new CustomRowMapper();
+
+		when(beanFactory.getBean("CustomRowMapper")).thenReturn(customRowMapper);
+
+		RowMapper<?> rowMapper = query.determineRowMapper(queryMethod.getResultProcessor(), false);
+		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(() -> {
+			throw new UnsupportedOperationException();
+		});
+
+		assertThat(rowMapper).isSameAs(customRowMapper);
+		assertThat(resultSetExtractor).isNull();
+	}
+
+	@Test // GH-1721
+	void obtainsCustomResultSetExtractorRef() {
+
+		BeanFactory beanFactory = mock(BeanFactory.class);
+		JdbcQueryMethod queryMethod = createMethod("findAllCustomResultSetExtractorRef");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+		query.setBeanFactory(beanFactory);
+
+		CustomResultSetExtractor cre = new CustomResultSetExtractor();
+
+		when(beanFactory.getBean("CustomResultSetExtractor")).thenReturn(cre);
+
+		RowMapper<?> rowMapper = query.determineRowMapper(queryMethod.getResultProcessor(), false);
+		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(() -> {
+			throw new UnsupportedOperationException();
+		});
+
+		assertThat(rowMapper).isSameAs(defaultRowMapper);
+		assertThat(resultSetExtractor).isSameAs(cre);
+	}
+
+	@Test // GH-1721
+	void failsOnRowMapperRefAndClassDeclaration() {
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(createMethod("invalidMapperRefAndClass")))
+				.withMessageContaining("Invalid RowMapper configuration");
+	}
+
+	@Test // GH-1721
+	void failsOnResultSetExtractorRefAndClassDeclaration() {
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(createMethod("invalidExtractorRefAndClass")))
+				.withMessageContaining("Invalid ResultSetExtractor configuration");
 	}
 
 	@Test // DATAJDBC-290
@@ -139,7 +220,7 @@ class StringBasedJdbcQueryUnitTests {
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		ResultSetExtractor<Object> resultSetExtractor = query
-				.determineResultSetExtractor(query.determineRowMapper(defaultRowMapper));
+				.determineResultSetExtractor(() -> query.determineRowMapper(queryMethod.getResultProcessor(), false));
 
 		assertThat(resultSetExtractor) //
 				.isInstanceOf(CustomResultSetExtractor.class) //
@@ -178,8 +259,8 @@ class StringBasedJdbcQueryUnitTests {
 
 		assertThatThrownBy(
 				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
-						.isInstanceOf(UnsupportedOperationException.class)
-						.hasMessageContaining("Slice queries are not supported using string-based queries");
+				.isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("Slice queries are not supported using string-based queries");
 	}
 
 	@Test // GH-774
@@ -189,8 +270,8 @@ class StringBasedJdbcQueryUnitTests {
 
 		assertThatThrownBy(
 				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
-						.isInstanceOf(UnsupportedOperationException.class)
-						.hasMessageContaining("Page queries are not supported using string-based queries");
+				.isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("Page queries are not supported using string-based queries");
 	}
 
 	@Test // GH-1654
@@ -200,7 +281,7 @@ class StringBasedJdbcQueryUnitTests {
 
 		assertThatThrownBy(
 				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
-						.isInstanceOf(UnsupportedOperationException.class);
+				.isInstanceOf(UnsupportedOperationException.class);
 	}
 
 	@Test // GH-1212
@@ -328,6 +409,24 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query(value = "some sql statement", resultSetExtractorClass = CustomResultSetExtractor.class)
 		Stream<Object> findAllWithStreamReturnTypeAndResultSetExtractor();
+
+		@Query(value = "some sql statement", rowMapperClass = CustomRowMapper.class,
+				resultSetExtractorClass = CustomResultSetExtractor.class)
+		Stream<Object> findAllCustomRowMapperResultSetExtractor();
+
+		@Query(value = "some sql statement", rowMapperRef = "CustomRowMapper")
+		Stream<Object> findAllCustomRowMapperRef();
+
+		@Query(value = "some sql statement", resultSetExtractorRef = "CustomResultSetExtractor")
+		Stream<Object> findAllCustomResultSetExtractorRef();
+
+		@Query(value = "some sql statement", rowMapperRef = "CustomResultSetExtractor",
+				rowMapperClass = CustomRowMapper.class)
+		Stream<Object> invalidMapperRefAndClass();
+
+		@Query(value = "some sql statement", resultSetExtractorRef = "CustomResultSetExtractor",
+				resultSetExtractorClass = CustomResultSetExtractor.class)
+		Stream<Object> invalidExtractorRefAndClass();
 
 		List<Object> noAnnotation();
 

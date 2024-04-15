@@ -77,14 +77,15 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
- * {@link RelationalConverter} that uses a {@link MappingContext} to apply sophisticated mapping of domain objects from
- * {@link RowDocument}.
+ * {@link org.springframework.data.relational.core.conversion.RelationalConverter} that uses a
+ * {@link org.springframework.data.mapping.context.MappingContext} to apply sophisticated mapping of domain objects from
+ * {@link org.springframework.data.relational.domain.RowDocument}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Vincent Galloy
- * @see MappingContext
+ * @see org.springframework.data.mapping.context.MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
  * @since 3.2
@@ -701,8 +702,25 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		if (getConversions().isSimpleType(value.getClass())) {
 
-			if (TypeInformation.OBJECT != type && getConversionService().canConvert(value.getClass(), type.getType())) {
-				value = getConversionService().convert(value, type.getType());
+			Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(type.getType());
+			if (customWriteTarget.isPresent()) {
+				return getConversionService().convert(value, customWriteTarget.get());
+			}
+
+			if (TypeInformation.OBJECT != type) {
+
+				if (type.getType().isAssignableFrom(value.getClass())) {
+
+					if (value.getClass().isEnum()) {
+						return getPotentiallyConvertedSimpleWrite(value);
+					}
+
+					return value;
+				} else {
+					if (getConversionService().canConvert(value.getClass(), type.getType())) {
+						value = getConversionService().convert(value, type.getType());
+					}
+				}
 			}
 
 			return getPotentiallyConvertedSimpleWrite(value);
@@ -724,7 +742,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return writeValue(id, type);
 		}
 
-		return getConversionService().convert(value, type.getType());
+		return
+
+		getConversionService().convert(value, type.getType());
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
@@ -1207,8 +1227,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		 * @param delegate must not be {@literal null}.
 		 */
 		public ConverterAwareExpressionParameterValueProvider(ConversionContext context, ValueExpressionEvaluator evaluator,
-				ConversionService conversionService,
-				ParameterValueProvider<RelationalPersistentProperty> delegate) {
+				ConversionService conversionService, ParameterValueProvider<RelationalPersistentProperty> delegate) {
 
 			super(evaluator, conversionService, delegate);
 
