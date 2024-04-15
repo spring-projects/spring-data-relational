@@ -192,7 +192,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			if (getQueryMethod().isModifyingQuery()) {
 				return createModifyingQueryExecutor();
 			} else {
-				return createReadingQueryExecution(extractor, rowMapper);
+				return createReadingQueryExecution(extractor, () -> rowMapper);
 			}
 		}
 	}

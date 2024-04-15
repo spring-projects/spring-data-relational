@@ -40,6 +40,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -122,6 +123,17 @@ public class JdbcQueryMethod extends QueryMethod {
 
 		String annotatedValue = getQueryValue();
 		return StringUtils.hasText(annotatedValue) ? annotatedValue : getNamedQuery();
+	}
+
+	String getRequiredQuery() {
+
+		String query = getDeclaredQuery();
+
+		if (ObjectUtils.isEmpty(query)) {
+			throw new IllegalStateException(String.format("No query specified on %s", getName()));
+		}
+
+		return query;
 	}
 
 	/**

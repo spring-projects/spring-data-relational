@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
@@ -83,9 +84,9 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 */
 	@Deprecated(since = "3.1", forRemoval = true)
 	// a better name would be createReadingQueryExecution
-	protected JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
+	JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
 			@Nullable ResultSetExtractor<?> extractor, RowMapper<?> rowMapper) {
-		return createReadingQueryExecution(extractor, rowMapper);
+		return createReadingQueryExecution(extractor, () -> rowMapper);
 	}
 
 	/**
@@ -96,21 +97,21 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 * @param rowMapper must not be {@literal null}.
 	 * @return a JdbcQueryExecution appropriate for {@literal queryMethod}. Guaranteed to be not {@literal null}.
 	 */
-	protected JdbcQueryExecution<?> createReadingQueryExecution(@Nullable ResultSetExtractor<?> extractor,
-			RowMapper<?> rowMapper) {
+	JdbcQueryExecution<?> createReadingQueryExecution(@Nullable ResultSetExtractor<?> extractor,
+			Supplier<RowMapper<?>> rowMapper) {
 
 		if (getQueryMethod().isCollectionQuery()) {
-			return extractor != null ? createSingleReadingQueryExecution(extractor) : collectionQuery(rowMapper);
+			return extractor != null ? createSingleReadingQueryExecution(extractor) : collectionQuery(rowMapper.get());
 		}
 
 		if (getQueryMethod().isStreamQuery()) {
-			return extractor != null ? createSingleReadingQueryExecution(extractor) : streamQuery(rowMapper);
+			return extractor != null ? createSingleReadingQueryExecution(extractor) : streamQuery(rowMapper.get());
 		}
 
-		return extractor != null ? createSingleReadingQueryExecution(extractor) : singleObjectQuery(rowMapper);
+		return extractor != null ? createSingleReadingQueryExecution(extractor) : singleObjectQuery(rowMapper.get());
 	}
 
-	protected JdbcQueryExecution<Object> createModifyingQueryExecutor() {
+	JdbcQueryExecution<Object> createModifyingQueryExecutor() {
 
 		return (query, parameters) -> {
 
