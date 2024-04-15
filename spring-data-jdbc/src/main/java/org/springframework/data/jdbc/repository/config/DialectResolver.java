@@ -46,6 +46,7 @@ import org.springframework.util.StringUtils;
  * available {@link JdbcDialectProvider extensions}.
  *
  * @author Jens Schauder
+ * @author Rudolf Schmidt
  * @since 2.0
  * @see Dialect
  * @see SpringFactoriesLoader

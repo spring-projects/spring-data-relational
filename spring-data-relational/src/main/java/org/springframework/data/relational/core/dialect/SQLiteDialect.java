@@ -21,52 +21,56 @@ public class SQLiteDialect extends AbstractDialect {
 
 	public static final SQLiteDialect INSTANCE = new SQLiteDialect();
 
+	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
+		@Override
+		public String getLimit(long limit) {
+			return String.format("limit %d", limit);
+		}
+
+		@Override
+		public String getOffset(long offset) {
+			throw new UnsupportedOperationException("offset alone not supported");
+		}
+
+		@Override
+		public String getLimitOffset(long limit, long offset) {
+			return String.format("limit %d offset %d", limit, offset);
+		}
+
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
+
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			return "";
+		}
+
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
+
 	private SQLiteDialect() {
 	}
 
 	@Override
 	public LimitClause limit() {
-		return new LimitClause() {
-			@Override
-			public String getLimit(final long limit) {
-				return String.format("limit %d", limit);
-			}
-
-			@Override
-			public String getOffset(final long offset) {
-				throw new UnsupportedOperationException("offset alone not supported");
-			}
-
-			@Override
-			public String getLimitOffset(final long limit, final long offset) {
-				return String.format("limit %d offset %d", limit, offset);
-			}
-
-			@Override
-			public Position getClausePosition() {
-				return Position.AFTER_ORDER_BY;
-			}
-		};
+		return LIMIT_CLAUSE;
 	}
 
 	@Override
 	public LockClause lock() {
-		return new LockClause() {
-			@Override
-			public String getLock(final LockOptions lockOptions) {
-				return "with lock";
-			}
-
-			@Override
-			public Position getClausePosition() {
-				return Position.AFTER_ORDER_BY;
-			}
-		};
+		return LOCK_CLAUSE;
 	}
 
 	@Override
 	public Collection<Object> getConverters() {
-		final var converters = new ArrayList<>(super.getConverters());
+		Collection<Object> converters = new ArrayList<>(super.getConverters());
 		converters.add(LocalDateTimeToNumericConverter.INSTANCE);
 		converters.add(NumericToLocalDateTimeConverter.INSTANCE);
 		return converters;
@@ -78,7 +82,7 @@ public class SQLiteDialect extends AbstractDialect {
 		INSTANCE;
 
 		@Override
-		public Long convert(final LocalDateTime source) {
+		public Long convert(LocalDateTime source) {
 			return source.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 		}
 	}
@@ -89,7 +93,7 @@ public class SQLiteDialect extends AbstractDialect {
 		INSTANCE;
 
 		@Override
-		public LocalDateTime convert(final Long source) {
+		public LocalDateTime convert(Long source) {
 			return Instant.ofEpochMilli(source).atZone(ZoneOffset.UTC).toLocalDateTime();
 		}
 	}

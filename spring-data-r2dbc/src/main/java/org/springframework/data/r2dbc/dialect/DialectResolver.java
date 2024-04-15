@@ -33,7 +33,6 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * resolution uses Spring's {@link SpringFactoriesLoader spring.factories} to determine available extensions.
  *
  * @author Mark Paluch
- * @author Rudolf Schmidt
  * @see R2dbcDialect
  * @see SpringFactoriesLoader
  */
