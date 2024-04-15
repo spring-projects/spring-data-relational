@@ -231,14 +231,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	}
 
 	@Override
-	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, SQLType sqlType) {
+	public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> columnType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
 		if (jdbcValue != null) {
 			return jdbcValue;
 		}
 
-		Object convertedValue = writeValue(value, TypeInformation.of(columnType));
+		Object convertedValue = writeValue(value, columnType);
 
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
 
@@ -275,7 +275,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> R readAndResolve(Class<R> type, RowDocument source, Identifier identifier) {
+	public <R> R readAndResolve(TypeInformation<R> type, RowDocument source, Identifier identifier) {
 
 		RelationalPersistentEntity<R> entity = (RelationalPersistentEntity<R>) getMappingContext()
 				.getRequiredPersistentEntity(type);

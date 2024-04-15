@@ -64,7 +64,7 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	@SuppressWarnings("unchecked")
 	private T mapEntity(RowDocument document, Object key) {
 
-		return (T) converter.readAndResolve(path.getRequiredLeafEntity().getType(), document,
+		return (T) converter.readAndResolve(path.getRequiredLeafEntity().getTypeInformation(), document,
 				identifier.withPart(keyColumn, key, Object.class));
 	}
 }

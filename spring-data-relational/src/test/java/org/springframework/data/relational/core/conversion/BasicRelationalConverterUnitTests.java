@@ -133,7 +133,7 @@ class BasicRelationalConverterUnitTests {
 	@Test // DATAJDBC-516
 	void shouldConsiderWriteConverter() {
 
-		Object result = converter.writeValue(new MyValue("hello-world"), TypeInformation.of(MyValue.class));
+		Object result = converter.writeValue(new MyValue("hello-world"), TypeInformation.of(String.class));
 
 		assertThat(result).isEqualTo("hello-world");
 	}

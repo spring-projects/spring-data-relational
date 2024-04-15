@@ -38,6 +38,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -57,6 +58,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	private final Map<Class<? extends Annotation>, Optional<Annotation>> annotationCache;
 	private final NamedQueries namedQueries;
 	private @Nullable RelationalEntityMetadata<?> metadata;
+	private final boolean modifyingQuery;
 
 	// TODO: Remove NamedQueries and put it into JdbcQueryLookupStrategy
 	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
@@ -68,11 +70,12 @@ public class JdbcQueryMethod extends QueryMethod {
 		this.method = method;
 		this.mappingContext = mappingContext;
 		this.annotationCache = new ConcurrentReferenceHashMap<>();
+		this.modifyingQuery = AnnotationUtils.findAnnotation(method, Modifying.class) != null;
 	}
 
 	@Override
 	protected RelationalParameters createParameters(Method method) {
-		return new RelationalParameters(method);
+		return new JdbcParameters(method);
 	}
 
 	@Override
@@ -106,8 +109,8 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	@Override
-	public RelationalParameters getParameters() {
-		return (RelationalParameters) super.getParameters();
+	public JdbcParameters getParameters() {
+		return (JdbcParameters) super.getParameters();
 	}
 
 	/**
@@ -120,6 +123,17 @@ public class JdbcQueryMethod extends QueryMethod {
 
 		String annotatedValue = getQueryValue();
 		return StringUtils.hasText(annotatedValue) ? annotatedValue : getNamedQuery();
+	}
+
+	String getRequiredQuery() {
+
+		String query = getDeclaredQuery();
+
+		if (ObjectUtils.isEmpty(query)) {
+			throw new IllegalStateException(String.format("No query specified on %s", getName()));
+		}
+
+		return query;
 	}
 
 	/**
@@ -208,7 +222,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 */
 	@Override
 	public boolean isModifyingQuery() {
-		return AnnotationUtils.findAnnotation(method, Modifying.class) != null;
+		return modifyingQuery;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -246,7 +260,7 @@ public class JdbcQueryMethod extends QueryMethod {
 
 	/**
 	 * Looks up the {@link Lock} annotation from the query method.
-	 * 
+	 *
 	 * @return the {@link Optional} wrapped {@link Lock} annotation.
 	 */
 	Optional<Lock> lookupLockAnnotation() {

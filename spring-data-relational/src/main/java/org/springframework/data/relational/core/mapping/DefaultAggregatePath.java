@@ -23,6 +23,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ConcurrentLruCache;
 
 /**
  * Represents a path within an aggregate starting from the aggregate root.
@@ -43,6 +44,8 @@ class DefaultAggregatePath implements AggregatePath {
 
 	private final Lazy<ColumnInfo> columnInfo = Lazy.of(() -> ColumnInfo.of(this));
 
+	private final ConcurrentLruCache<RelationalPersistentProperty, AggregatePath> nestedCache;
+
 	@SuppressWarnings("unchecked")
 	DefaultAggregatePath(RelationalMappingContext context,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
@@ -53,6 +56,7 @@ class DefaultAggregatePath implements AggregatePath {
 		this.context = context;
 		this.path = (PersistentPropertyPath) path;
 		this.rootType = path.getBaseProperty().getOwner();
+		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggegatePath);
 	}
 
 	DefaultAggregatePath(RelationalMappingContext context, RelationalPersistentEntity<?> rootType) {
@@ -63,6 +67,7 @@ class DefaultAggregatePath implements AggregatePath {
 		this.context = context;
 		this.rootType = rootType;
 		this.path = null;
+		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggegatePath);
 	}
 
 	/**
@@ -89,6 +94,10 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	public AggregatePath append(RelationalPersistentProperty property) {
+		return nestedCache.get(property);
+	}
+
+	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
 				? context.getPersistentPropertyPath(property.getName(), rootType.getTypeInformation()) //
