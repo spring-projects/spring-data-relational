@@ -69,13 +69,13 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(countRowsInTable("dummy_entity", entity.getId())).isEqualTo(1);
-		assertThat(countRowsInTable("dummy_entity2", entity.getId())).isEqualTo(2);
+		assertThat(countRowsInTable("dummy_entity", entity.getId(), "ID")).isEqualTo(1);
+		assertThat(countRowsInTable("dummy_entity2", entity.getId(), "DUMMY_ID")).isEqualTo(2);
 	}
 
-	private int countRowsInTable(String name, long idValue) {
+	private int countRowsInTable(String name, long idValue, String idColumnName) {
 
-		SqlIdentifier id = SqlIdentifier.quoted("ID");
+		SqlIdentifier id = SqlIdentifier.quoted(idColumnName);
 		String whereClause = id.toSql(dialect.getIdentifierProcessing()) + " = " + idValue;
 
 		return JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), name, whereClause);
@@ -273,7 +273,8 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	private static class Embeddable {
-		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<DummyEntity2> list = new ArrayList<>();
+		@MappedCollection(idColumn = "DUMMY_ID", keyColumn = "ORDER_KEY")
+		List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
 
