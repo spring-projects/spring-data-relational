@@ -8,8 +8,8 @@ CREATE TABLE dummy_entity
 DROP TABLE dummy_entity2;
 CREATE TABLE dummy_entity2
 (
-    "ID"        BIGINT,
+    "DUMMY_ID"  BIGINT,
     "ORDER_KEY" BIGINT,
     TEST        VARCHAR(100),
-    PRIMARY KEY ("ID", "ORDER_KEY")
+    PRIMARY KEY ("DUMMY_ID", "ORDER_KEY")
 );

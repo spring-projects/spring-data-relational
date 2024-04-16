@@ -44,6 +44,7 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -365,15 +366,19 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 				if (property.isCollectionLike() || property.isMap()) {
 
 					Identifier identifierToUse = this.identifier;
+					AggregatePath idDefiningParentPath = aggregatePath.getIdDefiningParentPath();
 
-					if (property.getOwner().hasIdProperty()) {
+					// note that the idDefiningParentPath might not itself have an id property, but have a combination of back
+					// references and possibly keys, that form an id
+					if (idDefiningParentPath.hasIdProperty()) {
 
-						Object id = this.identifier.get(property.getOwner().getRequiredIdProperty().getColumnName());
+						Class<?> idType = idDefiningParentPath.getRequiredIdProperty().getActualType();
+						SqlIdentifier parentId = idDefiningParentPath.getTableInfo().idColumnName();
+						Object idValue = this.identifier.get(parentId);
 
-						if (id != null) {
-							identifierToUse = Identifier.of(aggregatePath.getTableInfo().reverseColumnInfo().name(), id,
-									Object.class);
-						}
+						Assert.state(idValue != null, "idValue must not be null at this point");
+
+						identifierToUse = Identifier.of(aggregatePath.getTableInfo().reverseColumnInfo().name(), idValue, idType);
 					}
 
 					Iterable<Object> allByPath = relationResolver.findAllByPath(identifierToUse,
