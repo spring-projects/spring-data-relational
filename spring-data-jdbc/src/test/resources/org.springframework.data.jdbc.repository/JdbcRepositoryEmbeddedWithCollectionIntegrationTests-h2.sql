@@ -6,8 +6,8 @@ CREATE TABLE dummy_entity
 );
 CREATE TABLE dummy_entity2
 (
-  id        BIGINT,
+  dummy_id        BIGINT,
   ORDER_KEY BIGINT,
   TEST      VARCHAR(100),
-  PRIMARY KEY (id, ORDER_KEY)
+  PRIMARY KEY (dummy_id, ORDER_KEY)
 )
