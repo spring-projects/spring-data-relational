@@ -36,6 +36,8 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
+	private volatile IdentifierProcessing sql;
+	private volatile String sqlName;
 
 	DerivedSqlIdentifier(String name, boolean quoted) {
 
@@ -60,13 +62,20 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 
-		String normalized = processing.standardizeLetterCase(name);
+		if (sql != processing) {
+			String normalized = processing.standardizeLetterCase(name);
 
-		return quoted ? processing.quote(normalized) : normalized;
+			String sqlName = quoted ? processing.quote(normalized) : normalized;
+			this.sqlName = sqlName;
+			this.sql = processing;
+			return sqlName;
+		}
+
+		return sqlName;
 	}
 
 	@Override
-	@Deprecated(since="3.1", forRemoval = true)
+	@Deprecated(since = "3.1", forRemoval = true)
 	public String getReference(IdentifierProcessing processing) {
 		return this.name;
 	}

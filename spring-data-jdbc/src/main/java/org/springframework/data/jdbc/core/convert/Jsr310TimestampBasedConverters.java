@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.lang.NonNull;
@@ -57,7 +58,7 @@ public abstract class Jsr310TimestampBasedConverters {
 	 */
 	public static Collection<Converter<?, ?>> getConvertersToRegister() {
 
-		List<Converter<?, ?>> converters = new ArrayList<>(8);
+		List<Converter<?, ?>> converters = new ArrayList<>(28);
 
 		converters.add(TimestampToLocalDateTimeConverter.INSTANCE);
 		converters.add(TimestampToLocalDateConverter.INSTANCE);
@@ -66,6 +67,10 @@ public abstract class Jsr310TimestampBasedConverters {
 		converters.add(LocalTimeToTimestampConverter.INSTANCE);
 		converters.add(TimestampToInstantConverter.INSTANCE);
 		converters.add(InstantToTimestampConverter.INSTANCE);
+
+		// TODO: Install some JSR310 converters to avoid ObjectToObjectConverter usage, such as java.sql.Date ->
+		// LocalDateTime and vice versa
+		// converters.addAll(Jsr310Converters.getConvertersToRegister());
 
 		return converters;
 	}

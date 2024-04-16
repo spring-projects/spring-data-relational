@@ -82,7 +82,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
-	private final Map<RelationalParameters.RelationalParameter, SQLType> sqlTypeCache = new ConcurrentReferenceHashMap<>();
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -201,7 +200,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
-		RelationalParameters.RelationalParameter parameter = getQueryMethod().getParameters().getParameter(p.getIndex());
+		JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters().getParameter(p.getIndex());
 		TypeInformation<?> typeInformation = parameter.getTypeInformation();
 
 		JdbcValue jdbcValue;
@@ -212,8 +211,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			TypeInformation<?> actualType = typeInformation.getRequiredActualType();
 			for (Object o : (Iterable<?>) value) {
-				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, actualType.getType(),
-						JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(actualType.getType())));
+				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, actualType, parameter.getActualSqlType());
 				if (jdbcType == null) {
 					jdbcType = elementJdbcValue.getJdbcType();
 				}
@@ -223,9 +221,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			jdbcValue = JdbcValue.of(mapped, jdbcType);
 		} else {
-			SQLType sqlType = sqlTypeCache.computeIfAbsent(parameter, it -> JdbcUtil
-					.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(it.getTypeInformation().getType())));
-			jdbcValue = converter.writeJdbcValue(value, typeInformation.getType(), sqlType);
+			SQLType sqlType = parameter.getSqlType();
+			jdbcValue = converter.writeJdbcValue(value, typeInformation, sqlType);
 		}
 
 		SQLType jdbcType = jdbcValue.getJdbcType();
@@ -271,7 +268,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private static boolean isUnconfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
 		return configuredClass == null || configuredClass == defaultClass;
 	}
@@ -286,6 +282,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		private final boolean configuredRowMapper;
 		private final @Nullable Constructor<?> constructor;
 
+		@SuppressWarnings("unchecked")
 		public CachedRowMapperFactory(Supplier<RowMapper<Object>> defaultMapper) {
 
 			String rowMapperRef = getQueryMethod().getRowMapperRef();

@@ -79,8 +79,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(resultSet);
 
 		return identifier == null //
-				? converter.readAndResolve(entity.getType(), document) //
-				: converter.readAndResolve(entity.getType(), document, identifier);
+				? converter.readAndResolve(entity.getTypeInformation(), document, Identifier.empty()) //
+				: converter.readAndResolve(entity.getTypeInformation(), document, identifier);
 	}
 
 }

@@ -34,6 +34,8 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
+	private volatile IdentifierProcessing sql;
+	private volatile String sqlName;
 
 	DefaultSqlIdentifier(String name, boolean quoted) {
 
@@ -58,11 +60,20 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 	@Override
 	public String toSql(IdentifierProcessing processing) {
-		return quoted ? processing.quote(name) : name;
+
+		if (sql != processing) {
+
+			String sqlName = quoted ? processing.quote(name) : name;
+			this.sqlName = sqlName;
+			this.sql = processing;
+			return sqlName;
+		}
+
+		return sqlName;
 	}
 
 	@Override
-	@Deprecated(since="3.1", forRemoval = true)
+	@Deprecated(since = "3.1", forRemoval = true)
 	public String getReference(IdentifierProcessing processing) {
 		return name;
 	}
