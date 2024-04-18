@@ -21,7 +21,9 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
@@ -39,6 +42,7 @@ import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -61,7 +65,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	private final Parameters<?, ?> parameters;
 	private final Dialect dialect;
 	private final JdbcConverter converter;
-	private final RowMapperFactory rowMapperFactory;
+	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final PartTree tree;
 
 	/**
@@ -105,12 +109,12 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.parameters = queryMethod.getParameters();
 		this.dialect = dialect;
 		this.converter = converter;
-		this.rowMapperFactory = rowMapperFactory;
 
-		this.tree = new PartTree(queryMethod.getName(), queryMethod.getResultProcessor()
-				.getReturnedType().getDomainType());
+		this.tree = new PartTree(queryMethod.getName(), queryMethod.getResultProcessor().getReturnedType().getDomainType());
 		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext());
 
+		this.cachedRowMapperFactory = new CachedRowMapperFactory(tree, rowMapperFactory, converter,
+				queryMethod.getResultProcessor());
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {
@@ -134,18 +138,9 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			RelationalParametersParameterAccessor accessor) {
 
 		ResultSetExtractor<Boolean> extractor = tree.isExistsProjection() ? (ResultSet::next) : null;
-
-		RowMapper<Object> rowMapper;
-
-		if (tree.isCountProjection() || tree.isExistsProjection()) {
-			rowMapper = rowMapperFactory.create(resolveTypeToRead(processor));
-		} else {
-
-			Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
-					this.converter.getMappingContext(), this.converter.getEntityInstantiators());
-			rowMapper = new ConvertingRowMapper<>(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
-					resultProcessingConverter);
-		}
+		Supplier<RowMapper<?>> rowMapper = parameters.hasDynamicProjection()
+				? () -> cachedRowMapperFactory.getRowMapper(processor)
+				: cachedRowMapperFactory;
 
 		JdbcQueryExecution<?> queryExecution = getJdbcQueryExecution(extractor, rowMapper);
 
@@ -174,7 +169,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		return queryExecution;
 	}
 
-	protected ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
+	ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
 
 		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 
@@ -183,16 +178,17 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
-	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor, RowMapper<Object> rowMapper) {
+	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor,
+			Supplier<RowMapper<?>> rowMapper) {
 
 		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()) {
-			return collectionQuery(rowMapper);
+			return collectionQuery(rowMapper.get());
 		} else {
 
 			if (getQueryMethod().isModifyingQuery()) {
 				return createModifyingQueryExecutor();
 			} else {
-				return createReadingQueryExecution(extractor, () -> rowMapper);
+				return createReadingQueryExecution(extractor, rowMapper);
 			}
 		}
 	}
@@ -256,6 +252,47 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 			return PageableExecutionUtils.getPage(result instanceof List ? (List<T>) result : new ArrayList<>(result),
 					pageable, countSupplier);
+		}
+
+	}
+
+	/**
+	 * Cached implementation of {@link RowMapper} suppler providing either a cached variant of the RowMapper or creating a
+	 * new one when using dynamic projections.
+	 */
+	class CachedRowMapperFactory implements Supplier<RowMapper<?>> {
+
+		private final Lazy<RowMapper<?>> rowMapper;
+		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
+
+		public CachedRowMapperFactory(PartTree tree, RowMapperFactory rowMapperFactory, RelationalConverter converter,
+				ResultProcessor defaultResultProcessor) {
+
+			this.rowMapperFunction = processor -> {
+
+				if (tree.isCountProjection() || tree.isExistsProjection()) {
+					return rowMapperFactory.create(resolveTypeToRead(processor));
+				}
+				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
+						converter.getMappingContext(), converter.getEntityInstantiators());
+				return new ConvertingRowMapper<>(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
+						resultProcessingConverter);
+			};
+
+			this.rowMapper = Lazy.of(() -> this.rowMapperFunction.apply(defaultResultProcessor));
+		}
+
+		@Override
+		public RowMapper<?> get() {
+			return getRowMapper();
+		}
+
+		public RowMapper<?> getRowMapper() {
+			return rowMapper.get();
+		}
+
+		public RowMapper<?> getRowMapper(ResultProcessor resultProcessor) {
+			return rowMapperFunction.apply(resultProcessor);
 		}
 
 	}
