@@ -36,14 +36,15 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
-	private volatile IdentifierProcessing sql;
-	private volatile String sqlName;
+	private final String toString;
+	private volatile @Nullable CachedSqlName sqlName;
 
 	DerivedSqlIdentifier(String name, boolean quoted) {
 
 		Assert.hasText(name, "A database object must have at least on name part.");
 		this.name = name;
 		this.quoted = quoted;
+		this.toString = quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
 	}
 
 	@Override
@@ -62,16 +63,15 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 
-		if (sql != processing) {
-			String normalized = processing.standardizeLetterCase(name);
+		CachedSqlName sqlName = this.sqlName;
+		if (sqlName == null || sqlName.processing != processing) {
 
-			String sqlName = quoted ? processing.quote(normalized) : normalized;
-			this.sqlName = sqlName;
-			this.sql = processing;
-			return sqlName;
+			String normalized = processing.standardizeLetterCase(name);
+			this.sqlName = sqlName = new CachedSqlName(processing, quoted ? processing.quote(normalized) : normalized);
+			return sqlName.sqlName();
 		}
 
-		return sqlName;
+		return sqlName.sqlName();
 	}
 
 	@Override
@@ -101,6 +101,9 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 
 	@Override
 	public String toString() {
-		return quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
+		return toString;
+	}
+
+	record CachedSqlName(IdentifierProcessing processing, String sqlName) {
 	}
 }

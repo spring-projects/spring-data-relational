@@ -34,8 +34,8 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 	private final String name;
 	private final boolean quoted;
-	private volatile IdentifierProcessing sql;
-	private volatile String sqlName;
+	private final String toString;
+	private volatile @Nullable CachedSqlName sqlName;
 
 	DefaultSqlIdentifier(String name, boolean quoted) {
 
@@ -43,6 +43,7 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 		this.name = name;
 		this.quoted = quoted;
+		this.toString = quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
 	}
 
 	@Override
@@ -61,15 +62,14 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 
-		if (sql != processing) {
+		CachedSqlName sqlName = this.sqlName;
+		if (sqlName == null || sqlName.processing != processing) {
 
-			String sqlName = quoted ? processing.quote(name) : name;
-			this.sqlName = sqlName;
-			this.sql = processing;
-			return sqlName;
+			this.sqlName = sqlName = new CachedSqlName(processing, quoted ? processing.quote(name) : name);
+			return sqlName.sqlName();
 		}
 
-		return sqlName;
+		return sqlName.sqlName();
 	}
 
 	@Override
@@ -99,6 +99,9 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 	@Override
 	public String toString() {
-		return quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
+		return toString;
+	}
+
+	record CachedSqlName(IdentifierProcessing processing, String sqlName) {
 	}
 }
