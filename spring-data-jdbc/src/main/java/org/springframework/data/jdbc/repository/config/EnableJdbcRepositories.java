@@ -122,7 +122,9 @@ public @interface EnableJdbcRepositories {
 	/**
 	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.DataAccessStrategy} bean definition to
 	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
+	 * @deprecated since 3.3 use {@link #jdbcAggregateOperationsRef()} instead
 	 */
+	@Deprecated(since = "3.3")
 	String dataAccessStrategyRef() default "";
 
 	/**
@@ -132,6 +134,12 @@ public @interface EnableJdbcRepositories {
 	 * @since 2.1
 	 */
 	String transactionManagerRef() default "transactionManager";
+
+	/**
+	 * Configure the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateOperations} bean definition to be
+	 * used to create repositories discovered through this annotation.
+	 */
+	String jdbcAggregateOperationsRef() default "";
 
 	/**
 	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to

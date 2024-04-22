@@ -23,18 +23,14 @@ import java.util.Objects;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
@@ -601,12 +597,6 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		@Bean
 		Class<?> testClass() {
 			return ImmutableAggregateTemplateHsqlIntegrationTests.class;
-		}
-
-		@Bean
-		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
-				DataAccessStrategy dataAccessStrategy, JdbcConverter converter) {
-			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
 	}
 }

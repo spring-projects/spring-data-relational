@@ -74,7 +74,7 @@ public class JdbcAggregateTemplateUnitTests {
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		JdbcConverter converter = new MappingJdbcConverter(mappingContext, relationResolver);
 
-		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
+		template = new JdbcAggregateTemplate(eventPublisher, converter, dataAccessStrategy);
 		template.setEntityCallbacks(callbacks);
 
 	}

@@ -40,6 +40,7 @@ import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -61,6 +62,7 @@ import org.springframework.util.StringUtils;
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Tomohiko Ozawa
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -191,7 +193,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
 			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
+		return new JdbcAggregateTemplate(applicationContext, converter, dataAccessStrategy);
 	}
 
 	/**
@@ -207,8 +209,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
-				new SqlParametersFactory(context, jdbcConverter),
-				new InsertStrategyFactory(operations, dialect));
+				new SqlParametersFactory(context, jdbcConverter), new InsertStrategyFactory(operations, dialect));
 
 		return factory.create();
 	}
@@ -219,8 +220,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @param operations the {@link NamedParameterJdbcOperations} allowing access to a {@link java.sql.Connection}.
 	 * @return the {@link Dialect} to be used.
 	 * @since 2.0
-	 * @throws org.springframework.data.jdbc.repository.config.DialectResolver.NoDialectException if the {@link Dialect}
-	 *           cannot be determined.
+	 * @throws DialectResolver.NoDialectException if the {@link Dialect} cannot be determined.
 	 */
 	@Bean
 	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
