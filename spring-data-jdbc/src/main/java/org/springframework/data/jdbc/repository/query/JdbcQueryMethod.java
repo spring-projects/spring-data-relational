@@ -28,10 +28,11 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
-import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -67,6 +68,7 @@ public class JdbcQueryMethod extends QueryMethod {
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
 
 		super(method, metadata, factory);
+
 		this.namedQueries = namedQueries;
 		this.method = method;
 		this.mappingContext = mappingContext;
@@ -75,8 +77,8 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	@Override
-	protected RelationalParameters createParameters(Method method) {
-		return new JdbcParameters(method);
+	protected Parameters<?, ?> createParameters(ParametersSource parametersSource) {
+		return new JdbcParameters(parametersSource);
 	}
 
 	@Override

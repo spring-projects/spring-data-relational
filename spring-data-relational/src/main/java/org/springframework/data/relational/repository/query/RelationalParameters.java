@@ -24,6 +24,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.repository.query.RelationalParameters.RelationalParameter;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -43,7 +44,7 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 	}
 
 	protected RelationalParameters(ParametersSource parametersSource,
-			Function<MethodParameter, RelationalParameter> parameterFactory) {
+								   Function<MethodParameter, RelationalParameter> parameterFactory) {
 		super(parametersSource, parameterFactory);
 	}
 
@@ -78,6 +79,18 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 		 */
 		protected RelationalParameter(MethodParameter parameter) {
 			super(parameter);
+			this.typeInformation = TypeInformation.fromMethodParameter(parameter);
+		}
+
+		/**
+		 * Creates a new {@link RelationalParameter}.
+		 *
+		 * @param parameter must not be {@literal null}.
+		 */
+		protected RelationalParameter(MethodParameter parameter, TypeInformation<?> domainType) {
+
+			super(parameter, domainType);
+
 			this.typeInformation = TypeInformation.fromMethodParameter(parameter);
 		}
 
