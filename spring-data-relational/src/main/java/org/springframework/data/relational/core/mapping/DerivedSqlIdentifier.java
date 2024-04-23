@@ -63,6 +63,7 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	@Override
 	public String toSql(IdentifierProcessing processing) {
 
+		// using a local copy of volatile this.sqlName to ensure thread safety.
 		CachedSqlName sqlName = this.sqlName;
 		if (sqlName == null || sqlName.processing != processing) {
 
