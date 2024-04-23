@@ -34,6 +34,7 @@ import org.springframework.lang.Nullable;
  * versa.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.1
  */
 public interface JdbcConverter extends RelationalConverter {
