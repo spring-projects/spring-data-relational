@@ -80,6 +80,7 @@ import org.springframework.util.ClassUtils;
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Vincent Galloy
+ * @author Chanhyeong Cho
  * @see org.springframework.data.mapping.context.MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -322,7 +323,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		}
 
 		if (RowDocument.class.isAssignableFrom(rawType)) {
-			return (S) documentAccessor.document();
+			return (S) documentAccessor.getDocument();
 		}
 
 		if (typeHint.isMap()) {
@@ -1127,7 +1128,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		@Override
 		public Object getValue(AggregatePath path) {
 
-			Object value = accessor.document().get(path.getColumnInfo().alias().getReference());
+			Object value = accessor.getDocument().get(path.getColumnInfo().alias().getReference());
 
 			if (value == null) {
 				return null;
@@ -1138,12 +1139,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@Override
 		public boolean hasValue(AggregatePath path) {
-			return accessor.document().get(path.getColumnInfo().alias().getReference()) != null;
+			return accessor.getDocument().get(path.getColumnInfo().alias().getReference()) != null;
 		}
 
 		@Override
 		public boolean hasValue(SqlIdentifier identifier) {
-			return accessor().document().get(identifier.getReference()) != null;
+			return accessor().getDocument().get(identifier.getReference()) != null;
 		}
 
 		@Override
