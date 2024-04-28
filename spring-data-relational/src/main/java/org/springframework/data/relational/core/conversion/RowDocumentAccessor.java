@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * a {@link RelationalPersistentProperty} might refer to through a path expression in field names.
  *
  * @author Mark Paluch
+ * @author Chanhyeong Cho
  * @since 3.2
  */
 public class RowDocumentAccessor {
@@ -108,10 +109,6 @@ public class RowDocumentAccessor {
 
 	String getColumnName(RelationalPersistentProperty prop) {
 		return prop.getColumnName().getReference();
-	}
-
-	public RowDocument document() {
-		return document;
 	}
 
 	@Override
