@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
@@ -52,9 +52,6 @@ public class JdbcCustomConversions extends CustomConversions {
 
 	}
 
-	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
-			STORE_CONVERTERS);
-
 	/**
 	 * Creates an empty {@link JdbcCustomConversions} object.
 	 */
@@ -70,11 +67,7 @@ public class JdbcCustomConversions extends CustomConversions {
 	 */
 	public JdbcCustomConversions(List<?> converters) {
 
-		super(new ConverterConfiguration( //
-				STORE_CONVERSIONS, //
-				converters, //
-				JdbcCustomConversions::excludeConversionsBetweenDateAndJsr310Types //
-		));
+		super(constructConverterConfiguration(converters));
 	}
 
 	/**
@@ -101,6 +94,32 @@ public class JdbcCustomConversions extends CustomConversions {
 	 */
 	public JdbcCustomConversions(ConverterConfiguration converterConfiguration) {
 		super(converterConfiguration);
+	}
+
+	private static ConverterConfiguration constructConverterConfiguration(List<?> converters) {
+
+		StoreConversions storeConversions = storeConversions(converters);
+
+		return new ConverterConfiguration( //
+				storeConversions, //
+				converters, //
+				JdbcCustomConversions::excludeConversionsBetweenDateAndJsr310Types //
+		);
+	}
+
+	private static StoreConversions storeConversions(List<?> userConverters) {
+
+		List<Object> converters = new ArrayList<>(Jsr310TimestampBasedConverters.getConvertersToRegister());
+
+		DefaultConversionService defaultConversionService = new DefaultConversionService();
+		for (Object userConverter : userConverters) {
+			if (userConverter instanceof Converter<?, ?> converter)
+				defaultConversionService.addConverter(converter);
+		}
+
+		converters.addAll(AggregateReferenceConverters.getConvertersToRegister(defaultConversionService));
+
+		return StoreConversions.of(JdbcSimpleTypes.HOLDER, Collections.unmodifiableCollection(converters));
 	}
 
 	/**

@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -47,7 +48,7 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 	 * @param context must not be {@literal null}.
 	 */
 	public AbstractRelationalConverter(RelationalMappingContext context) {
-		this(context, new CustomConversions(StoreConversions.NONE, Collections.emptyList()), new DefaultConversionService(),
+		this(context, new CustomConversions(StoreConversions.NONE, Collections.emptyList()), createBaseConversionService(),
 				new EntityInstantiators());
 	}
 
@@ -58,7 +59,7 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 	 * @param conversions must not be {@literal null}.
 	 */
 	public AbstractRelationalConverter(RelationalMappingContext context, CustomConversions conversions) {
-		this(context, conversions, new DefaultConversionService(), new EntityInstantiators());
+		this(context, conversions, createBaseConversionService(), new EntityInstantiators());
 	}
 
 	private AbstractRelationalConverter(RelationalMappingContext context, CustomConversions conversions,
@@ -73,6 +74,14 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 		this.conversions = conversions;
 
 		conversions.registerConvertersIn(this.conversionService);
+	}
+
+	@NotNull
+	private static DefaultConversionService createBaseConversionService() {
+
+		DefaultConversionService conversionService = new DefaultConversionService();
+		conversionService.removeConvertible(Object[].class, Object.class);
+		return conversionService;
 	}
 
 	@Override
