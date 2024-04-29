@@ -60,7 +60,6 @@ public class RowDocumentAccessor {
 	 * @param source
 	 */
 	public void putAll(RowDocument source) {
-
 		document.putAll(source);
 	}
 
