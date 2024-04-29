@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
  * @author Kazuki Shimizu
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Paul-Christian Volkmer
  */
 public class JdbcMappingContext extends RelationalMappingContext {
 
@@ -57,19 +58,6 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	public JdbcMappingContext(NamingStrategy namingStrategy) {
 		super(namingStrategy);
 		setSimpleTypeHolder(JdbcSimpleTypes.HOLDER);
-	}
-
-	@Override
-	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
-
-		RelationalPersistentEntity<T> entity = super.createPersistentEntity(typeInformation);
-		InstanceCreatorMetadata<RelationalPersistentProperty> creator = entity.getInstanceCreatorMetadata();
-
-		if (creator == null) {
-			return entity;
-		}
-
-		return entity;
 	}
 
 	@Override
