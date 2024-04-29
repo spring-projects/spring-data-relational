@@ -178,7 +178,7 @@ Such a SpEL expression will get replaced with a bind variable and the variable g
 .Use a SpEL in a query
 [source,java]
 ----
-@Query("SELECT * FROM person WHERE id = :#{person.id}")
+@Query("SELECT * FROM person WHERE id = :#{#person.id}")
 Person findWithSpEL(PersonRef person);
 ----
 
