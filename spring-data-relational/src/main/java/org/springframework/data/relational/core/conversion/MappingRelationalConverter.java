@@ -600,14 +600,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			return null;
 		}
 
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
-		}
-
 		return getPotentiallyConvertedSimpleRead(value, type);
 	}
 
