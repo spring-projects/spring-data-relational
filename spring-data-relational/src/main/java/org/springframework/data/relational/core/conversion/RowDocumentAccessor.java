@@ -111,6 +111,14 @@ public class RowDocumentAccessor {
 		return prop.getColumnName().getReference();
 	}
 
+	/**
+	 * @deprecated since 3.2.6, this method was not intended to be exposed publicly. Use {@link #getDocument()} instead.
+	 */
+	@Deprecated(since = "3.2.6", forRemoval = true)
+	public RowDocument document() {
+		return document;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
