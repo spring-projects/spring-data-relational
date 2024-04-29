@@ -878,7 +878,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 *
 		 * @param <T>
 		 */
-		interface ValueConverter<T> {
+		protected interface ValueConverter<T> {
 
 			Object convert(T source, TypeInformation<?> typeHint);
 
@@ -890,7 +890,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 *
 		 * @param <T>
 		 */
-		interface ContainerValueConverter<T> {
+		protected interface ContainerValueConverter<T> {
 
 			Object convert(ConversionContext context, T source, TypeInformation<?> typeHint);
 
@@ -899,7 +899,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 	}
 
 	/**
-	 * @since 3.4.3
+	 * Projecting variant of {@link ConversionContext} applying mapping-metadata rules from the related entity.
+	 *
+	 * @since 3.2
 	 */
 	protected class ProjectingConversionContext extends DefaultConversionContext {
 
@@ -993,10 +995,19 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 */
 		ConversionContext withPath(ObjectPath currentPath);
 
+		/**
+		 * @return the current {@link ObjectPath}. Can be {@link ObjectPath#ROOT} for top-level contexts.
+		 */
 		ObjectPath getPath();
 
+		/**
+		 * @return the associated conversions.
+		 */
 		CustomConversions getCustomConversions();
 
+		/**
+		 * @return source {@link RelationalConverter}.
+		 */
 		RelationalConverter getSourceConverter();
 
 	}
@@ -1082,6 +1093,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		private final RowDocumentAccessor accessor;
 		private final SpELExpressionEvaluator evaluator;
 		private final SpELContext spELContext;
+		private final RowDocument document;
 
 		/**
 		 * Creates a new {@link RelationalPropertyValueProvider} for the given source and {@link SpELExpressionEvaluator}.
@@ -1100,6 +1112,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			this.accessor = accessor;
 			this.evaluator = evaluator;
 			this.spELContext = spELContext;
+			this.document = accessor.getDocument();
 		}
 
 		@Override
@@ -1128,7 +1141,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		@Override
 		public Object getValue(AggregatePath path) {
 
-			Object value = accessor.getDocument().get(path.getColumnInfo().alias().getReference());
+			Object value = document.get(path.getColumnInfo().alias().getReference());
 
 			if (value == null) {
 				return null;
@@ -1139,25 +1152,17 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@Override
 		public boolean hasValue(AggregatePath path) {
-			return accessor.getDocument().get(path.getColumnInfo().alias().getReference()) != null;
+			return document.get(path.getColumnInfo().alias().getReference()) != null;
 		}
 
 		@Override
 		public boolean hasValue(SqlIdentifier identifier) {
-			return accessor().getDocument().get(identifier.getReference()) != null;
+			return document.get(identifier.getReference()) != null;
 		}
 
 		@Override
 		public DocumentValueProvider withContext(ConversionContext context) {
 			return context == this.context ? this : new DocumentValueProvider(context, accessor, evaluator, spELContext);
-		}
-
-		public ConversionContext context() {
-			return context;
-		}
-
-		public RowDocumentAccessor accessor() {
-			return accessor;
 		}
 
 	}
