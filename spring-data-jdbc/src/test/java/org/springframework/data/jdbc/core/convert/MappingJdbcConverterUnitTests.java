@@ -56,15 +56,16 @@ import org.springframework.data.util.TypeInformation;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class MappingJdbcConverterUnitTests {
+class MappingJdbcConverterUnitTests {
 
-	public static final UUID UUID = java.util.UUID.fromString("87a48aa8-a071-705e-54a9-e52fe3a012f1");
-	public static final byte[] BYTES_REPRESENTING_UUID = { -121, -92, -118, -88, -96, 113, 112, 94, 84, -87, -27, 47, -29,
+	private static final UUID UUID = java.util.UUID.fromString("87a48aa8-a071-705e-54a9-e52fe3a012f1");
+	private static final byte[] BYTES_REPRESENTING_UUID = { -121, -92, -118, -88, -96, 113, 112, 94, 84, -87, -27, 47,
+			-29,
 			-96, 18, -15 };
 
-	JdbcMappingContext context = new JdbcMappingContext();
-	StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
-	MappingJdbcConverter converter = new MappingJdbcConverter( //
+	private JdbcMappingContext context = new JdbcMappingContext();
+	private StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
+	private MappingJdbcConverter converter = new MappingJdbcConverter( //
 			context, //
 			(identifier, path) -> {
 				throw new UnsupportedOperationException();
@@ -74,7 +75,7 @@ public class MappingJdbcConverterUnitTests {
 	);
 
 	@Test // DATAJDBC-104, DATAJDBC-1384
-	public void testTargetTypesForPropertyType() {
+	void testTargetTypesForPropertyType() {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
@@ -95,7 +96,7 @@ public class MappingJdbcConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-259
-	public void classificationOfCollectionLikeProperties() {
+	void classificationOfCollectionLikeProperties() {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
@@ -111,7 +112,7 @@ public class MappingJdbcConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-221
-	public void referencesAreNotEntitiesAndGetStoredAsTheirId() {
+	void referencesAreNotEntitiesAndGetStoredAsTheirId() {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
@@ -176,7 +177,7 @@ public class MappingJdbcConverterUnitTests {
 				typeFactory //
 		);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 			checkReadConversion(softly, converter, "uuidRef", AggregateReference.to(UUID));
 			checkReadConversion(softly, converter, "uuid", UUID);
 			checkReadConversion(softly, converter, "optionalUuid", Optional.of(UUID));
@@ -337,7 +338,7 @@ public class MappingJdbcConverterUnitTests {
 	private static class OtherEntity {}
 
 	private static class StubbedJdbcTypeFactory implements JdbcTypeFactory {
-		public Object[] arraySource;
+		Object[] arraySource;
 
 		@Override
 		public Array createArray(Object[] value) {
@@ -346,16 +347,16 @@ public class MappingJdbcConverterUnitTests {
 		}
 	}
 
-	record WithOneToOne(@Id String id, @MappedCollection(idColumn = "renamed") Referenced referenced) {
+	private record WithOneToOne(@Id String id, @MappedCollection(idColumn = "renamed") Referenced referenced) {
 	}
 
-	record Referenced(@Id Long id) {
+	private record Referenced(@Id Long id) {
 	}
 
-	record ReferencedByUuid(@Id UUID id) {
+	private record ReferencedByUuid(@Id UUID id) {
 	}
 
-	class ByteArrayToUuid implements Converter<byte[], UUID> {
+	static class ByteArrayToUuid implements Converter<byte[], UUID> {
 		@Override
 		public UUID convert(byte[] source) {
 
