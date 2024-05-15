@@ -134,7 +134,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
 		this.introspector = createIntrospector(projectionFactory, getConversions(), getMappingContext());
-
 	}
 
 	private static EntityProjectionIntrospector createIntrospector(ProjectionFactory projectionFactory,

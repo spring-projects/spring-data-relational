@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -91,6 +92,8 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = JdbcTypeFactory.unsupported();
 		this.relationResolver = relationResolver;
+
+		registerAggregateReferenceConverters();
 	}
 
 	/**
@@ -110,6 +113,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
+
+		registerAggregateReferenceConverters();
+	}
+
+	private void registerAggregateReferenceConverters() {
+
+		ConverterRegistry registry = (ConverterRegistry) getConversionService();
+		AggregateReferenceConverters.getConvertersToRegister(getConversionService()).forEach(registry::addConverter);
 	}
 
 	@Nullable
@@ -327,7 +338,8 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			this.accessor = accessor;
 			this.context = context;
 			this.identifier = path.isEntity()
-					? potentiallyAppendIdentifier(identifier, path.getRequiredLeafEntity(), property -> delegate.getValue(path.append(property)))
+					? potentiallyAppendIdentifier(identifier, path.getRequiredLeafEntity(),
+							property -> delegate.getValue(path.append(property)))
 					: identifier;
 		}
 
