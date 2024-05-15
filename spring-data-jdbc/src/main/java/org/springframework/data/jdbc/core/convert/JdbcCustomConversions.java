@@ -39,18 +39,8 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  */
 public class JdbcCustomConversions extends CustomConversions {
 
-	private static final Collection<Object> STORE_CONVERTERS;
-
-	static {
-
-		List<Object> converters = new ArrayList<>(Jsr310TimestampBasedConverters.getConvertersToRegister());
-
-		converters
-				.addAll(AggregateReferenceConverters.getConvertersToRegister(DefaultConversionService.getSharedInstance()));
-
-		STORE_CONVERTERS = Collections.unmodifiableCollection(converters);
-
-	}
+	private static final Collection<Object> STORE_CONVERTERS = Collections
+			.unmodifiableCollection(Jsr310TimestampBasedConverters.getConvertersToRegister());
 
 	/**
 	 * Creates an empty {@link JdbcCustomConversions} object.
@@ -66,7 +56,6 @@ public class JdbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public JdbcCustomConversions(List<?> converters) {
-
 		super(constructConverterConfiguration(converters));
 	}
 
@@ -98,29 +87,13 @@ public class JdbcCustomConversions extends CustomConversions {
 
 	private static ConverterConfiguration constructConverterConfiguration(List<?> converters) {
 
-		StoreConversions storeConversions = storeConversions(converters);
-
 		return new ConverterConfiguration( //
-				storeConversions, //
+				StoreConversions.of(JdbcSimpleTypes.HOLDER, STORE_CONVERTERS), //
 				converters, //
 				JdbcCustomConversions::excludeConversionsBetweenDateAndJsr310Types //
 		);
 	}
 
-	private static StoreConversions storeConversions(List<?> userConverters) {
-
-		List<Object> converters = new ArrayList<>(Jsr310TimestampBasedConverters.getConvertersToRegister());
-
-		DefaultConversionService defaultConversionService = new DefaultConversionService();
-		for (Object userConverter : userConverters) {
-			if (userConverter instanceof Converter<?, ?> converter)
-				defaultConversionService.addConverter(converter);
-		}
-
-		converters.addAll(AggregateReferenceConverters.getConvertersToRegister(defaultConversionService));
-
-		return StoreConversions.of(JdbcSimpleTypes.HOLDER, Collections.unmodifiableCollection(converters));
-	}
 
 	/**
 	 * Obtain a read only copy of default store converters.
