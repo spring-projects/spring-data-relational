@@ -69,7 +69,7 @@ In order to accept the EULA, please add a file named `container-license-acceptan
 At the time of this writing this would be
 
 ```
-mcr.microsoft.com/mssql/server:2022-CU5-ubuntu-20.04
+mcr.microsoft.com/mssql/server:2022-latest
 ibmcom/db2:11.5.7.0a
 ```
 
