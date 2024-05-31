@@ -17,7 +17,6 @@
 package org.springframework.data.relational.core.sqlgeneration;
 
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /**
@@ -30,7 +29,7 @@ record LiteralPattern(Object value) implements SelectItemPattern, ExpressionPatt
 
 	@Override
 	public boolean matches(SelectItem selectItem) {
-		return selectItem instanceof SelectExpressionItem sei && matches(sei.getExpression());
+		return matches(selectItem.getExpression());
 	}
 
 	@Override

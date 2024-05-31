@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.sqlgeneration;
 
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 import java.util.List;
@@ -44,19 +43,17 @@ public class AnalyticFunctionPattern extends TypedExpressionPattern<AnalyticExpr
 	@Override
 	public boolean matches(SelectItem selectItem) {
 
-		if (selectItem instanceof SelectExpressionItem sei) {
-			Expression expression = sei.getExpression();
-			if (expression instanceof AnalyticExpression analyticExpression) {
-				return matches(analyticExpression);
-			}
+		Expression expression = selectItem.getExpression();
+		if (expression instanceof AnalyticExpression analyticExpression) {
+			return matches(analyticExpression);
 		}
+
 		return false;
 	}
 
 	@Override
 	boolean matches(AnalyticExpression analyticExpression) {
-		return analyticExpression.getName().toLowerCase().equals(functionName)
-				&& partitionByMatches(analyticExpression);
+		return analyticExpression.getName().toLowerCase().equals(functionName) && partitionByMatches(analyticExpression);
 	}
 
 	private boolean partitionByMatches(AnalyticExpression analyticExpression) {

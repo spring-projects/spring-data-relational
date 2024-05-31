@@ -16,7 +16,6 @@
 
 package org.springframework.data.relational.core.sqlgeneration;
 
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /**
@@ -24,19 +23,14 @@ import net.sf.jsqlparser.statement.select.SelectItem;
  *
  * @param pattern for the expression to match
  * @param alias to match
- *
  * @author Jens Schauder
  */
-record AliasedPattern (SelectItemPattern pattern, String alias) implements SelectItemPattern {
+record AliasedPattern(SelectItemPattern pattern, String alias) implements SelectItemPattern {
 
 	@Override
 	public boolean matches(SelectItem selectItem) {
-
-		if (selectItem instanceof SelectExpressionItem sei) {
-			return pattern.matches(sei) && sei.getAlias() != null && sei.getAlias().getName().equals(alias);
-		}
-
-		return false;
+		return pattern.matches(selectItem) && selectItem.getAlias() != null
+				&& selectItem.getAlias().getName().equals(alias);
 	}
 
 	@Override

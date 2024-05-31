@@ -27,8 +27,6 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
-import net.sf.jsqlparser.statement.select.SpecialSubSelect;
-import net.sf.jsqlparser.statement.select.SubSelect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,10 +82,11 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 		return new AnalyticFunctionPattern("count", partitionBy);
 	}
 
-	static FunctionPattern func(String name, ExpressionPattern ... params) {
+	static FunctionPattern func(String name, ExpressionPattern... params) {
 		return new FunctionPattern(name, params);
 	}
-	static FunctionPattern func(String name, String ... params) {
+
+	static FunctionPattern func(String name, String... params) {
 		return new FunctionPattern(name, Arrays.stream(params).map(p -> col(p)).collect(Collectors.toList()));
 	}
 
@@ -104,7 +103,7 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 
 	SqlAssert hasExactlyColumns(SelectItemPattern... columns) {
 
-		List<SelectItem> actualSelectItems = actual.getSelectItems();
+		List<SelectItem<?>> actualSelectItems = actual.getSelectItems();
 		List<SelectItemPattern> unmatchedPatterns = new ArrayList<>(Arrays.asList(columns));
 		List<SelectItem> unmatchedSelectItems = new ArrayList<>();
 
@@ -169,15 +168,18 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 		Expression where = actual.getWhere();
 		return new StringAssert(where == null ? "" : where.toString());
 	}
+
 	public JoinAssert hasJoin() {
 		List<Join> joins = actual.getJoins();
 
 		if (joins == null || joins.size() < 1) {
-			throw failureWithActualExpected(actual, "select with a join", "Expected %s to contain a join but it doesn't.", actual);
+			throw failureWithActualExpected(actual, "select with a join", "Expected %s to contain a join but it doesn't.",
+					actual);
 		}
 
 		return new JoinAssert(joins.get(0));
 	}
+
 	private String prepare(SelectItemPattern[] columns) {
 		return Arrays.toString(columns);
 	}
@@ -185,7 +187,7 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 	SqlAssert hasInlineViewSelectingFrom(String tableName) {
 
 		Optional<PlainSelect> matchingSelect = getSubSelects(actual)
-				.filter(ps -> (ps.getFromItem()instanceof Table t) && t.getName().equals(tableName)).findFirst();
+				.filter(ps -> (ps.getFromItem() instanceof Table t) && t.getName().equals(tableName)).findFirst();
 
 		if (matchingSelect.isEmpty()) {
 			throw failureWithActualExpected(actual, "Subselect from " + tableName,
@@ -195,13 +197,11 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 		return new SqlAssert(matchingSelect.get());
 	}
 
-
 	public SqlAssert hasInlineView() {
 		Optional<PlainSelect> matchingSelect = getSubSelects(actual).findFirst();
 
 		if (matchingSelect.isEmpty()) {
-			throw failureWithActualExpected(actual, "Subselect",
-					"%s is expected to contain a subselect", actual);
+			throw failureWithActualExpected(actual, "Subselect", "%s is expected to contain a subselect", actual);
 		}
 
 		return new SqlAssert(matchingSelect.get());
@@ -227,15 +227,8 @@ class SqlAssert extends AbstractAssert<SqlAssert, PlainSelect> {
 	}
 
 	private static Stream<PlainSelect> subSelects(FromItem fromItem) {
-		Stream<PlainSelect> fromStream;
-		if (fromItem instanceof SubSelect ss) {
-			fromStream = Stream.of((PlainSelect) ss.getSelectBody());
-		} else if (fromItem instanceof SpecialSubSelect ss) {
-			fromStream = Stream.of((PlainSelect) ss.getSubSelect().getSelectBody());
-		} else {
-			fromStream = Stream.empty();
-		}
-		return fromStream;
+
+		return fromItem instanceof Select ss ? Stream.of(ss.getPlainSelect()) : Stream.empty();
 	}
 
 	public StringAssert extractOrderBy() {
