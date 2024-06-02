@@ -44,6 +44,7 @@
 		 	https://stackoverflow.com/q/62263576/66686
 		 -->
 		<oracle.version>23.3.0.23.09</oracle.version>
+		<sqlite.version>3.45.2.0</sqlite.version>
 
 		<!-- test utilities-->
 		<awaitility.version>4.2.0</awaitility.version>
