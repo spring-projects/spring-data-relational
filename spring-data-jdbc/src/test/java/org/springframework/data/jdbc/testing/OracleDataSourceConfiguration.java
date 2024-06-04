@@ -36,6 +36,7 @@ import org.testcontainers.utility.DockerImageName;
  * @see <a href="https://www.testcontainers.org/modules/databases/oraclexe/">Testcontainers Oracle</a>
  * @author Thomas Lang
  * @author Jens Schauder
+ * @author Loïc Lefèvre
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnDatabase(DatabaseType.ORACLE)

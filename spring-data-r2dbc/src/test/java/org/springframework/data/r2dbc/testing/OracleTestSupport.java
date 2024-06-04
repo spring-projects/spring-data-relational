@@ -36,6 +36,7 @@ import org.testcontainers.oracle.OracleContainer;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Loïc Lefèvre
  */
 public class OracleTestSupport {
 
