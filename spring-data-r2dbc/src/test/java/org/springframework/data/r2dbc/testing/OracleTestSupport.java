@@ -113,10 +113,10 @@ public class OracleTestSupport {
 		return ProvidedDatabase.builder() //
 				.hostname("localhost") //
 				.port(1521) //
-				.database("XEPDB1") //
-				.username("system") //
-				.password("oracle") //
-				.jdbcUrl("jdbc:oracle:thin:system/oracle@localhost:1521:XEPDB1") //
+				.database("freepdb1") //
+				.username("test") //
+				.password("test") //
+				.jdbcUrl("jdbc:oracle:thin:test/test@localhost:1521/freepdb1") //
 				.build();
 	}
 
@@ -128,7 +128,7 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("23.3-slim") //
+				OracleContainer container = new OracleContainer("gvenzl/oracle-free:23-slim") //
 						.withReuse(true) //
 						.withStartupTimeoutSeconds(200); // the default of 60s isn't sufficient
 				container.start();
@@ -167,7 +167,7 @@ public class OracleTestSupport {
 
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
-		dataSource.setUrl(database.getJdbcUrl().replace(":xe", "/XEPDB1"));
+		dataSource.setUrl(database.getJdbcUrl().replace(":freepdb1", "/freepdb1"));
 		dataSource.setUsername(database.getUsername());
 		dataSource.setPassword(database.getPassword());
 
