@@ -28,14 +28,15 @@ import org.testcontainers.oracle.OracleContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * {@link DataSource} setup for Oracle Database XE. Starts a docker container with an Oracle database.
+ * {@link DataSource} setup for Oracle Database 23ai FREE. Starts a docker container with an Oracle database.
  *
  * @see <a href=
- *      "https://blogs.oracle.com/oraclemagazine/deliver-oracle-database-18c-express-edition-in-containers">Oracle
+ *      "https://github.com/gvenzl/oci-oracle-free">Oracle
  *      Docker Image</a>
  * @see <a href="https://www.testcontainers.org/modules/databases/oraclexe/">Testcontainers Oracle</a>
  * @author Thomas Lang
  * @author Jens Schauder
+ * @author Loïc Lefèvre
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnDatabase(DatabaseType.ORACLE)
@@ -55,7 +56,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		if (ORACLE_CONTAINER == null) {
 
 			LOG.info("Oracle starting...");
-			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23.3-slim");
+			DockerImageName dockerImageName = DockerImageName.parse("gvenzl/oracle-free:23-slim");
 			OracleContainer container = new OracleContainer(dockerImageName) //
 					.withStartupTimeoutSeconds(200) //
 					.withReuse(true);
@@ -73,7 +74,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 	private void initDb() {
 
-		final DriverManagerDataSource dataSource = new DriverManagerDataSource(ORACLE_CONTAINER.getJdbcUrl(), "SYSTEM",
+		final DriverManagerDataSource dataSource = new DriverManagerDataSource(ORACLE_CONTAINER.getJdbcUrl(), "system",
 				ORACLE_CONTAINER.getPassword());
 		final JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 		jdbc.execute("GRANT ALL PRIVILEGES TO " + ORACLE_CONTAINER.getUsername());
