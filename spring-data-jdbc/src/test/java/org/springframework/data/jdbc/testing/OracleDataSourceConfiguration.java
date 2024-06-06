@@ -74,7 +74,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 	private void initDb() {
 
-		final DriverManagerDataSource dataSource = new DriverManagerDataSource(ORACLE_CONTAINER.getJdbcUrl(), "test",
+		final DriverManagerDataSource dataSource = new DriverManagerDataSource(ORACLE_CONTAINER.getJdbcUrl(), "system",
 				ORACLE_CONTAINER.getPassword());
 		final JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 		jdbc.execute("GRANT ALL PRIVILEGES TO " + ORACLE_CONTAINER.getUsername());
