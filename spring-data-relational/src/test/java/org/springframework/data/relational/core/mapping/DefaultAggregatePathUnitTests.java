@@ -467,6 +467,20 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
+	@Test // GH-1802
+	void dingens() {
+
+		assertSoftly(softly -> {
+
+			AggregatePath.TableInfo tableInfo = path("withId.second.third").getTableInfo();
+			AggregatePath idDefiningParentPath = path("withId.second.third").getIdDefiningParentPath();
+			AggregatePath.TableInfo parentTable = idDefiningParentPath.getTableInfo();
+			softly.assertThat(tableInfo.effectiveIdColumnName())
+					.isEqualTo(quoted("WITH_ID"));
+
+		});
+	}
+
 	@Test // GH-1525
 	void getLength() {
 
