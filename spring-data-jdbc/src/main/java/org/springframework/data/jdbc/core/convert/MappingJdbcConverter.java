@@ -385,8 +385,10 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					if (idDefiningParentPath.hasIdProperty()) {
 
 						Class<?> idType = idDefiningParentPath.getRequiredIdProperty().getActualType();
-						SqlIdentifier parentId = idDefiningParentPath.getTableInfo().idColumnName();
-						Object idValue = this.identifier.get(parentId);
+						//
+						RelationalPersistentProperty requiredIdProperty = idDefiningParentPath.getRequiredIdProperty();
+						AggregatePath idPath = idDefiningParentPath.append(requiredIdProperty);
+						Object idValue = delegate.getValue(idPath);
 
 						Assert.state(idValue != null, "idValue must not be null at this point");
 
