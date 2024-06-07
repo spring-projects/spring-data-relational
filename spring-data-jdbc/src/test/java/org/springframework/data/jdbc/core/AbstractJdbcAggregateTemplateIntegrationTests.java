@@ -22,19 +22,12 @@ import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -919,7 +912,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		assertThat(
 				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class))
-						.isEqualTo("from-db");
+				.isEqualTo("from-db");
 	}
 
 	@Test
@@ -1258,7 +1251,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Test // GH-1656
 	void mapWithEnumKey() {
 
-		EnumMapOwner enumMapOwner = template.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+		EnumMapOwner enumMapOwner = template
+				.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
 
 		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
 
@@ -1266,13 +1260,44 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-1684
-	void oneToOneWithIdenticalIdColumnName(){
+	void oneToOneWithIdenticalIdColumnName() {
 
 		WithOneToOne saved = template.insert(new WithOneToOne("one", new Referenced(23L)));
 
 		WithOneToOne reloaded = template.findById(saved.id, WithOneToOne.class);
 
 		assertThat(reloaded).isEqualTo(saved);
+	}
+
+	@Test // GH-1802
+	void singleEntitySetChain() {
+
+		First first1 = template.insert( //
+				new First(1L, "first-1", //
+						new Sec(2L, "second-1-2", Set.of( //
+								new Third("third-1-2-0"), //
+								new Third("third-1-2-1"), //
+								new Third("third-1-2-3")) //
+						) //
+				) //
+		);
+		First first2 = template.insert( //
+				new First(2L, "first-2", //
+						new Sec(3L, "second-2-3", Set.of( //
+								new Third("third-2-3-0"), //
+								new Third("third-2-3-1"), //
+								new Third("third-2-3-3")) //
+						) //
+				) //
+		);
+
+		First first1Reloaded = template.findById(first1.id, First.class);
+		First first2Reloaded = template.findById(first2.id, First.class);
+
+		SoftAssertions.assertSoftly(softly ->{
+			softly.assertThat(first1Reloaded).isEqualTo(first1);
+			softly.assertThat(first2Reloaded).isEqualTo(first2);
+		});
 	}
 
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
@@ -2096,9 +2121,19 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	record EnumMapOwner(@Id Long id, String name, Map<Color, MapElement> map) {
 	}
 
-	record WithOneToOne(@Id String id,@MappedCollection(idColumn = "renamed") Referenced referenced){}
+	record WithOneToOne(@Id String id, @MappedCollection(idColumn = "renamed") Referenced referenced) {
+	}
 
 	record Referenced(@Id Long id) {
+	}
+
+	record First(@Id Long id, String name, Sec sec) {
+	}
+
+	record Sec(@Id Long id, String name, Set<Third> thirds) {
+	}
+
+	record Third(String name) {
 	}
 
 	@Configuration
