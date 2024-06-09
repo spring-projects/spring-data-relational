@@ -55,6 +55,7 @@ import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -772,6 +773,36 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new HashSet<>(asList("one", "two", "three")));
 	}
 
+	@Test //GH-1737
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	void saveAndLoadEmbeddedArray() {
+
+		EmbeddedStringListOwner embeddedStringListOwner = new EmbeddedStringListOwner();
+		embeddedStringListOwner.embeddedStringList = new EmbeddedStringList();
+		embeddedStringListOwner.embeddedStringList.digits = List.of("one", "two", "three");
+
+		EmbeddedStringListOwner saved = template.save(embeddedStringListOwner);
+
+		EmbeddedStringListOwner reloaded = template.findById(saved.id, EmbeddedStringListOwner.class);
+
+		assertThat(reloaded.embeddedStringList.digits).containsExactly("one", "two", "three");
+	}
+
+	@Test //GH-1737
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	void saveAndLoadEmptyEmbeddedArray() {
+
+		EmbeddedStringListOwner embeddedStringListOwner = new EmbeddedStringListOwner();
+		embeddedStringListOwner.embeddedStringList = new EmbeddedStringList();
+		embeddedStringListOwner.embeddedStringList.digits = emptyList();
+
+		EmbeddedStringListOwner saved = template.save(embeddedStringListOwner);
+
+		EmbeddedStringListOwner reloaded = template.findById(saved.id, EmbeddedStringListOwner.class);
+
+		assertThat(reloaded.embeddedStringList).isNull();
+	}
+
 	@Test
 	// DATAJDBC-327
 	void saveAndLoadAnEntityWithByteArray() {
@@ -1393,6 +1424,17 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 
 		List<Float> digits = new ArrayList<>();
+	}
+
+	@Table("ARRAY_OWNER")
+	private static class EmbeddedStringListOwner {
+		@Id Long id;
+
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "") EmbeddedStringList embeddedStringList;
+	}
+
+	private static class EmbeddedStringList {
+		List<String> digits = new ArrayList<>();
 	}
 
 	static class LegoSet {
