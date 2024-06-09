@@ -421,7 +421,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		@Override
 		public boolean hasValue(RelationalPersistentProperty property) {
 
-			if (property.isCollectionLike() || property.isMap()) {
+			if ((property.isCollectionLike() && property.isEntity())|| property.isMap()) {
 				// attempt relation fetch
 				return true;
 			}
