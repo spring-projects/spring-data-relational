@@ -50,6 +50,7 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	}
 
 	@Override
+	@Deprecated(forRemoval = true)
 	public SqlIdentifier getIdColumn() {
 		throw new MappingException("Embedded entity does not have an id column");
 	}

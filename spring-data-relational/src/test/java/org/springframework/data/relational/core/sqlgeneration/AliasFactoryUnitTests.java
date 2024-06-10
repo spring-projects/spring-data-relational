@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
@@ -158,6 +159,7 @@ class AliasFactoryUnitTests {
 	}
 
 	static class Reference {
+		@Id Long id;
 		DummyEntity dummy;
 		DummyEntity dummy2;
 	}
