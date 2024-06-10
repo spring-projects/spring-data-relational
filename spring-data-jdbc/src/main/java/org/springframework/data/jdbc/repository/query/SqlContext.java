@@ -16,13 +16,12 @@
 package org.springframework.data.jdbc.repository.query;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
- * Utility to get from path to SQL DSL elements. This is a temporary class and duplicates
+ * Utility to get from path to SQL DSL elements. This is a temporary class and duplicates parts of
  * {@link org.springframework.data.jdbc.core.convert.SqlContext}.
  *
  * @author Jens Schauder
@@ -32,42 +31,29 @@ import org.springframework.data.relational.core.sql.Table;
  */
 class SqlContext {
 
-	private final RelationalPersistentEntity<?> entity;
-	private final Table table;
-
-	SqlContext(RelationalPersistentEntity<?> entity) {
-
-		this.entity = entity;
-		this.table = Table.create(entity.getQualifiedTableName());
-	}
-
-	Column getIdColumn() {
-		return table.column(entity.getIdColumn());
-	}
-
-	Column getVersionColumn() {
-		return table.column(entity.getRequiredVersionProperty().getColumnName());
-	}
-
-	Table getTable() {
-		return table;
-	}
-
 	Table getTable(AggregatePath path) {
 
-		SqlIdentifier tableAlias = path.getTableInfo().tableAlias();
-		Table table = Table.create(path.getTableInfo().qualifiedTableName());
+		Table table = getUnaliasedTable(path);
+		AggregatePath.TableInfo tableInfo = path.getTableInfo();
+		SqlIdentifier tableAlias = tableInfo.tableAlias();
 		return tableAlias == null ? table : table.as(tableAlias);
 	}
 
 	Column getColumn(AggregatePath path) {
+
 		AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
-		AggregatePath.ColumnInfo columnInfo1 = path.getColumnInfo();
-		return getTable(path).column(columnInfo1.name()).as(columnInfo.alias());
+		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 
-	Column getReverseColumn(AggregatePath path) {
-		return getTable(path).column(path.getTableInfo().reverseColumnInfo().name())
-				.as(path.getTableInfo().reverseColumnInfo().alias());
+	Column getAnyReverseColumn(AggregatePath path) {
+
+		AggregatePath.ColumnInfo anyReverseColumnInfo = path.getTableInfo().reverseColumnInfos().any();
+		return getTable(path).column(anyReverseColumnInfo.name()).as(anyReverseColumnInfo.alias());
+	}
+
+	public Table getUnaliasedTable(AggregatePath path) {
+
+		AggregatePath.TableInfo tableInfo = path.getTableInfo();
+		return Table.create(tableInfo.qualifiedTableName());
 	}
 }

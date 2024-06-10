@@ -27,10 +27,10 @@ import org.springframework.data.relational.core.sql.Table;
  *
  * @author Mark Paluch
  */
-public class DeleteRendererUnitTests {
+class DeleteRendererUnitTests {
 
 	@Test // DATAJDBC-335
-	public void shouldRenderWithoutWhere() {
+	void shouldRenderWithoutWhere() {
 
 		Table bar = SQL.table("bar");
 
@@ -40,7 +40,7 @@ public class DeleteRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-335
-	public void shouldRenderWithCondition() {
+	void shouldRenderWithCondition() {
 
 		Table table = Table.create("bar");
 
@@ -52,7 +52,7 @@ public class DeleteRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-335
-	public void shouldConsiderTableAlias() {
+	void shouldConsiderTableAlias() {
 
 		Table table = Table.create("bar").as("my_bar");
 

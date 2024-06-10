@@ -15,7 +15,13 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.function.Function;
+
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
 /**
@@ -41,13 +47,31 @@ public class JdbcIdentifierBuilder {
 	 */
 	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path, Object value) {
 
-		Identifier identifier = Identifier.of( //
-				path.getTableInfo().reverseColumnInfo().name(), //
-				value, //
-				converter.getColumnType(path.getIdDefiningParentPath().getRequiredIdProperty()) //
-		);
+		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
+		AggregatePath.ColumnInfos reverseColumnInfos = path.getTableInfo().reverseColumnInfos();
 
-		return new JdbcIdentifierBuilder(identifier);
+		// create property accessor
+		RelationalMappingContext mappingContext = converter.getMappingContext();
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(idProperty.getType());
+
+		Function<AggregatePath, Object> valueProvider;
+		if (persistentEntity == null) {
+			valueProvider = ap -> value;
+		} else {
+			PersistentPropertyPathAccessor<Object> propertyPathAccessor = persistentEntity.getPropertyPathAccessor(value);
+			valueProvider = ap -> propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+		}
+
+		final Identifier[] identifierHolder = new Identifier[] { Identifier.empty() };
+
+		reverseColumnInfos.forEach((ap, ci) -> {
+
+			RelationalPersistentProperty property = ap.getRequiredLeafProperty();
+			identifierHolder[0] = identifierHolder[0].withPart(ci.name(), valueProvider.apply(ap),
+					converter.getColumnType(property));
+		});
+
+		return new JdbcIdentifierBuilder(identifierHolder[0]);
 	}
 
 	/**
@@ -62,8 +86,9 @@ public class JdbcIdentifierBuilder {
 		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(value, "Value must not be null");
 
-		identifier = identifier.withPart(path.getTableInfo().qualifierColumnInfo().name(), value,
-				path.getTableInfo().qualifierColumnType());
+		AggregatePath.TableInfo tableInfo = path.getTableInfo();
+		identifier = identifier.withPart(tableInfo.qualifierColumnInfo().name(), value,
+				tableInfo.qualifierColumnType());
 
 		return this;
 	}
