@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
@@ -1294,7 +1295,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		First first1Reloaded = template.findById(first1.id, First.class);
 		First first2Reloaded = template.findById(first2.id, First.class);
 
-		SoftAssertions.assertSoftly(softly ->{
+		assertSoftly(softly -> {
 			softly.assertThat(first1Reloaded).isEqualTo(first1);
 			softly.assertThat(first2Reloaded).isEqualTo(first2);
 		});

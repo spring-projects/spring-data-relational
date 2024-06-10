@@ -202,7 +202,6 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second2.third").isEmbedded()).isFalse();
 			softly.assertThat(path("second2.third2").isEmbedded()).isTrue();
 			softly.assertThat(path("second2").isEmbedded()).isTrue();
-
 		});
 	}
 
@@ -464,20 +463,6 @@ class DefaultAggregatePathUnitTests {
 					.isEqualTo(quoted("WITH_ID"));
 			softly.assertThat(path("withId.second.third2.value").getTableInfo().effectiveIdColumnName())
 					.isEqualTo(quoted("WITH_ID"));
-		});
-	}
-
-	@Test // GH-1802
-	void dingens() {
-
-		assertSoftly(softly -> {
-
-			AggregatePath.TableInfo tableInfo = path("withId.second.third").getTableInfo();
-			AggregatePath idDefiningParentPath = path("withId.second.third").getIdDefiningParentPath();
-			AggregatePath.TableInfo parentTable = idDefiningParentPath.getTableInfo();
-			softly.assertThat(tableInfo.effectiveIdColumnName())
-					.isEqualTo(quoted("WITH_ID"));
-
 		});
 	}
 
