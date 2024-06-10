@@ -175,8 +175,9 @@ class BasicRelationalPersistentEntityUnitTests {
 		@Id private Long id;
 	}
 
-	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredSchemaName}",
+	@Table(
+			schema = "#{T(org.springframework.data.relational.core.mapping."
+					+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredSchemaName}",
 			name = "#{T(org.springframework.data.relational.core.mapping."
 					+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredTableName}")
 	private static class EntityWithSchemaAndTableSpelExpression {
@@ -185,10 +186,11 @@ class BasicRelationalPersistentEntityUnitTests {
 		public static String desiredSchemaName = "HELP_ME_OBI_WON";
 	}
 
-	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredSchemaName}",
+	@Table(
+			schema = "#{T(org.springframework.data.relational.core.mapping."
+					+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredSchemaName}",
 			name = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredTableName}")
+					+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredTableName}")
 	private static class LittleBobbyTables {
 		@Id private Long id;
 		public static String desiredTableName = "Robert'); DROP TABLE students;--";

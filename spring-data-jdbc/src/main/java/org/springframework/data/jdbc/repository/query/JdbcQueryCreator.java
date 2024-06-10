@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
@@ -32,14 +31,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
@@ -222,7 +214,8 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		SelectBuilder.SelectJoin builder;
 		if (tree.isExistsProjection()) {
 
-			Column idColumn = table.column(entity.getIdColumn());
+			AggregatePath.ColumnInfo anyIdColumnInfo = context.getAggregatePath(entity).getTableInfo().idColumnInfos().any();
+			Column idColumn = table.column(anyIdColumnInfo.name());
 			builder = Select.builder().select(idColumn).from(table);
 		} else if (tree.isCountProjection()) {
 			builder = Select.builder().select(Functions.count(Expressions.asterisk())).from(table);
@@ -237,7 +230,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		List<Expression> columnExpressions = new ArrayList<>();
 		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
-		SqlContext sqlContext = new SqlContext(entity);
+		SqlContext sqlContext = new SqlContext();
 
 		List<Join> joinTables = new ArrayList<>();
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
@@ -267,7 +260,19 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
 
 		for (Join join : joinTables) {
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+
+			Condition condition = null;
+
+			for (int i = 0; i < join.joinColumns.size(); i++) {
+				Column parentColumn = join.parentId.get(i);
+				Column joinColumn = join.joinColumns.get(i);
+				Comparison singleCondition = joinColumn.isEqualTo(parentColumn);
+				condition = condition == null ? singleCondition : condition.and(singleCondition);
+			}
+
+			Assert.state(condition != null, "No condition found");
+
+			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(condition);
 		}
 
 		return baseSelect;
@@ -276,7 +281,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	/**
 	 * Create a {@link Column} for {@link AggregatePath}.
 	 *
-	 * @param sqlContext
+	 * @param sqlContext for generating SQL constructs.
 	 * @param path the path to the column in question.
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
@@ -293,9 +298,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		if (path.isEntity()) {
 
-			// Simple entities without id include there backreference as an synthetic id in order to distinguish null entities
-			// from entities with only null values.
-
 			if (path.isQualified() //
 					|| path.isCollectionLike() //
 					|| path.hasIdProperty() //
@@ -303,7 +305,9 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				return null;
 			}
 
-			return sqlContext.getReverseColumn(path);
+			// Simple entities without id include there backreference as an synthetic id in order to distinguish null entities
+			// from entities with only null values.
+			return sqlContext.getAnyReverseColumn(path);
 		}
 
 		return sqlContext.getColumn(path);
@@ -321,53 +325,25 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
+		List<Column> reverseColumns = path.getTableInfo().reverseColumnInfos().toList(ci -> currentTable.column(ci.name()));
+		List<Column> idColumns = idDefiningParentPath.getTableInfo().idColumnInfos()
+				.toList(ci -> parentTable.column(ci.name()));
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getTableInfo().reverseColumnInfo().name()), //
-				parentTable.column(idDefiningParentPath.getTableInfo().idColumnName()) //
+				reverseColumns, //
+				idColumns //
 		);
 	}
 
 	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
-	static private final class Join {
+	private record Join(Table joinTable, List<Column> joinColumns, List<Column> parentId) {
 
-		private final Table joinTable;
-		private final Column joinColumn;
-		private final Column parentId;
-
-		Join(Table joinTable, Column joinColumn, Column parentId) {
-
-			Assert.notNull(joinTable, "JoinTable must not be null");
-			Assert.notNull(joinColumn, "JoinColumn must not be null");
-			Assert.notNull(parentId, "ParentId must not be null");
-
-			this.joinTable = joinTable;
-			this.joinColumn = joinColumn;
-			this.parentId = parentId;
+		Join {
+			Assert.isTrue(joinColumns.size() == parentId.size(),
+					"Both sides of a join condition must have the same number of columns");
 		}
 
-		@Override
-		public boolean equals(@Nullable Object o) {
-
-			if (this == o)
-				return true;
-			if (o == null || getClass() != o.getClass())
-				return false;
-			Join join = (Join) o;
-			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(joinTable, joinColumn, parentId);
-		}
-
-		@Override
-		public String toString() {
-
-			return "Join{" + "joinTable=" + joinTable + ", joinColumn=" + joinColumn + ", parentId=" + parentId + '}';
-		}
 	}
 }
