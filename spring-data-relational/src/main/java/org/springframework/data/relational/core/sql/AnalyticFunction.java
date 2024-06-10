@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Represents an analytic function, also known as windowing function
@@ -44,18 +45,62 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 		this.orderBy = orderBy;
 	}
 
+	/**
+	 * Specify the {@literal PARTITION BY} clause of an analytic function
+	 * 
+	 * @param partitionBy Typically, column but other expressions are fine to.
+	 * @return a new {@literal AnalyticFunction} is partitioned by the given expressions, overwriting any expression
+	 *         previously present.
+	 */
 	public AnalyticFunction partitionBy(Expression... partitionBy) {
-
 		return new AnalyticFunction(function, new Partition(partitionBy), orderBy);
 	}
 
+	/**
+	 * Specify the {@literal PARTITION BY} clause of an analytic function
+	 * 
+	 * @param partitionBy Typically, column but other expressions are fine to.
+	 * @return a new {@literal AnalyticFunction} is partitioned by the given expressions, overwriting any expression
+	 *         previously present.
+	 * @since 3.5
+	 */
+	public AnalyticFunction partitionBy(Collection<Expression> partitionBy) {
+		return partitionBy(partitionBy.toArray(new Expression[0]));
+	}
+
+	/**
+	 * Specify the {@literal ORDER BY} clause of an analytic function
+	 * 
+	 * @param orderBy Typically, column but other expressions are fine to.
+	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
+	 *         previously present.
+	 */
 	public AnalyticFunction orderBy(OrderByField... orderBy) {
 		return new AnalyticFunction(function, partition, new OrderBy(orderBy));
 	}
 
-	public AnalyticFunction orderBy(Expression... orderByExpression) {
+	/**
+	 * Specify the {@literal ORDER BY} clause of an analytic function
+	 * 
+	 * @param orderBy Typically, column but other expressions are fine to.
+	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
+	 *         previously present.
+	 * @since 3.5
+	 */
+	public AnalyticFunction orderBy(Collection<Expression> orderBy) {
+		return orderBy(orderBy.toArray(new Expression[0]));
+	}
 
-		final OrderByField[] orderByFields = Arrays.stream(orderByExpression) //
+	/**
+	 * Specify the {@literal ORDER BY} clause of an analytic function
+	 * 
+	 * @param orderBy array of {@link Expression}. Typically, column but other expressions are fine to.
+	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
+	 *         previously present.
+	 */
+	public AnalyticFunction orderBy(Expression... orderBy) {
+
+		final OrderByField[] orderByFields = Arrays.stream(orderBy) //
 				.map(OrderByField::from) //
 				.toArray(OrderByField[]::new);
 

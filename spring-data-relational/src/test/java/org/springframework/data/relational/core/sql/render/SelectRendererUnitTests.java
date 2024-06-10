@@ -17,14 +17,14 @@ package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 /**
  * Unit tests for {@link SqlRenderer}.
@@ -113,196 +113,6 @@ class SelectRendererUnitTests {
 		Select select = Select.builder().select(Functions.count(foo), foo).from(table).build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT COUNT(bar.foo), bar.foo AS foo_bar FROM bar");
-	}
-
-	@Test // DATAJDBC-309
-	void shouldRenderSimpleJoin() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
-				.join(department).on(employee.column("department_id")).equals(department.column("id")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "JOIN department ON employee.department_id = department.id");
-	}
-
-	@Test // DATAJDBC-340
-	void shouldRenderOuterJoin() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
-				.from(employee) //
-				.leftOuterJoin(department).on(employee.column("department_id")).equals(department.column("id")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "LEFT OUTER JOIN department ON employee.department_id = department.id");
-	}
-
-	@Test // GH-1421
-	void shouldRenderFullOuterJoin() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
-				.from(employee) //
-				.join(department, Join.JoinType.FULL_OUTER_JOIN).on(employee.column("department_id"))
-				.equals(department.column("id")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "FULL OUTER JOIN department ON employee.department_id = department.id");
-	}
-
-	@Test // DATAJDBC-309
-	void shouldRenderSimpleJoinWithAnd() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
-				.join(department).on(employee.column("department_id")).equals(department.column("id")) //
-				.and(employee.column("tenant")).equals(department.column("tenant")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
-				+ "JOIN department ON employee.department_id = department.id " //
-				+ "AND employee.tenant = department.tenant");
-	}
-
-	@Test // #995
-	void shouldRenderArbitraryJoinCondition() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder() //
-				.select(employee.column("id"), department.column("name")) //
-				.from(employee) //
-				.join(department) //
-				.on(Conditions.isEqual(employee.column("department_id"), department.column("id")) //
-						.or(Conditions.isNotEqual(employee.column("tenant"), department.column("tenant")) //
-						)).build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
-				+ "JOIN department ON employee.department_id = department.id " //
-				+ "OR employee.tenant != department.tenant");
-	}
-
-	@Test // #1009
-	void shouldRenderJoinWithJustExpression() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
-				.join(department).on(Expressions.just("alpha")).equals(Expressions.just("beta")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT employee.id, department.name FROM employee " + "JOIN department ON alpha = beta");
-	}
-
-	@Test // DATAJDBC-309
-	void shouldRenderMultipleJoinWithAnd() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-		Table tenant = SQL.table("tenant").as("tenant_base");
-
-		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
-				.join(department).on(employee.column("department_id")).equals(department.column("id")) //
-				.and(employee.column("tenant")).equals(department.column("tenant")) //
-				.join(tenant).on(tenant.column("tenant_id")).equals(department.column("tenant")) //
-				.build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
-				+ "JOIN department ON employee.department_id = department.id " //
-				+ "AND employee.tenant = department.tenant " //
-				+ "JOIN tenant tenant_base ON tenant_base.tenant_id = department.tenant");
-	}
-
-	@Test // GH-1003
-	void shouldRenderJoinWithInlineQuery() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select innerSelect = Select.builder()
-				.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
-				.build();
-
-		InlineQuery one = InlineQuery.create(innerSelect, "one");
-
-		Select select = Select.builder().select(one.column("id"), department.column("name")).from(department) //
-				.join(one).on(one.column("department_id")).equals(department.column("id")) //
-				.build();
-
-		String sql = SqlRenderer.toString(select);
-
-		assertThat(sql).isEqualTo("SELECT one.id, department.name FROM department " //
-				+ "JOIN (SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
-				+ "ON one.department_id = department.id");
-	}
-
-	@Test // GH-1362
-	void shouldRenderNestedJoins() {
-
-		Table merchantCustomers = Table.create("merchants_customers");
-		Table customerDetails = Table.create("customer_details");
-
-		Select innerSelect = Select.builder().select(customerDetails.column("cd_user_id")).from(customerDetails)
-				.join(merchantCustomers)
-				.on(merchantCustomers.column("mc_user_id").isEqualTo(customerDetails.column("cd_user_id"))).build();
-
-		InlineQuery innerTable = InlineQuery.create(innerSelect, "inner");
-
-		Select select = Select.builder().select(merchantCustomers.asterisk()) //
-				.from(merchantCustomers) //
-				.join(innerTable).on(innerTable.column("i_user_id").isEqualTo(merchantCustomers.column("mc_user_id"))) //
-				.build();
-
-		String sql = SqlRenderer.toString(select);
-
-		assertThat(sql).isEqualTo("SELECT merchants_customers.* FROM merchants_customers " + //
-				"JOIN (" + //
-				"SELECT customer_details.cd_user_id " + //
-				"FROM customer_details " + //
-				"JOIN merchants_customers ON merchants_customers.mc_user_id = customer_details.cd_user_id" + //
-				") inner " + //
-				"ON inner.i_user_id = merchants_customers.mc_user_id");
-	}
-
-	@Test // GH-1003
-	void shouldRenderJoinWithTwoInlineQueries() {
-
-		Table employee = SQL.table("employee");
-		Table department = SQL.table("department");
-
-		Select innerSelectOne = Select.builder()
-				.select(employee.column("id").as("empId"), employee.column("department_Id"), employee.column("name"))
-				.from(employee).build();
-		Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name")).from(department)
-				.build();
-
-		InlineQuery one = InlineQuery.create(innerSelectOne, "one");
-		InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
-
-		Select select = Select.builder().select(one.column("empId"), two.column("name")).from(one) //
-				.join(two).on(two.column("department_id")).equals(one.column("empId")) //
-				.build();
-
-		String sql = SqlRenderer.toString(select);
-		assertThat(sql).isEqualTo("SELECT one.empId, two.name FROM (" //
-				+ "SELECT employee.id AS empId, employee.department_Id, employee.name FROM employee) one " //
-				+ "JOIN (SELECT department.id, department.name FROM department) two " //
-				+ "ON two.department_id = one.empId");
 	}
 
 	@Test // DATAJDBC-309
@@ -424,7 +234,6 @@ class SelectRendererUnitTests {
 		Table floo = SQL.table("floo");
 		Column bah = floo.column("bah");
 
-
 		Select subselect = Select.builder().select(bah).from(floo).build();
 
 		SimpleFunction func = SimpleFunction.create("func", List.of(SubselectExpression.of(subselect)));
@@ -435,8 +244,8 @@ class SelectRendererUnitTests {
 				.where(Conditions.isEqual(func, SQL.literalOf(23))) //
 				.build();
 
-		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT func(SELECT floo.bah FROM floo) AS alias FROM foo WHERE func(SELECT floo.bah FROM floo) = 23");
+		assertThat(SqlRenderer.toString(select)).isEqualTo(
+				"SELECT func(SELECT floo.bah FROM floo) AS alias FROM foo WHERE func(SELECT floo.bah FROM floo) = 23");
 	}
 
 	@Test // DATAJDBC-309
@@ -709,7 +518,7 @@ class SelectRendererUnitTests {
 		assertThat(rendered).isEqualTo("SELECT e.*, e.id FROM employee e");
 	}
 
-	@Test
+	@Test // GH-1844
 	void rendersCaseExpression() {
 
 		Table table = SQL.table("table");
@@ -724,7 +533,225 @@ class SelectRendererUnitTests {
 				.build();
 
 		String rendered = SqlRenderer.toString(select);
-		assertThat(rendered).isEqualTo("SELECT CASE WHEN table.name IS NULL THEN 1 WHEN table.name IS NOT NULL THEN table.name ELSE 3 END FROM table");
+		assertThat(rendered).isEqualTo(
+				"SELECT CASE WHEN table.name IS NULL THEN 1 WHEN table.name IS NOT NULL THEN table.name ELSE 3 END FROM table");
+	}
+
+	@Test // GH-574
+	void rendersTupleExpression() {
+
+		Table table = SQL.table("table");
+		Column first = table.column("first");
+		Column middle = table.column("middle");
+		Column last = table.column("last").as("anAlias");
+
+		TupleExpression tupleExpression = TupleExpression.create(first, SQL.literalOf(1), middle, last); //
+
+		Select select = StatementBuilder.select(first) //
+				.from(table) //
+				.where(Conditions.in(tupleExpression, Expressions.just("some expression"))).build();
+
+		String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo(
+				"SELECT table.first FROM table WHERE (table.first, 1, table.middle, table.last) IN (some expression)");
+	}
+
+	/**
+	 * Tests for rendering joins.
+	 */
+	@Nested
+	class JoinsTests {
+
+		@Test // DATAJDBC-309
+		void shouldRenderSimpleJoin() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+					.join(department).on(employee.column("department_id")).equals(department.column("id")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+					+ "JOIN department ON employee.department_id = department.id");
+		}
+
+		@Test // DATAJDBC-340
+		void shouldRenderOuterJoin() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")) //
+					.from(employee) //
+					.leftOuterJoin(department).on(employee.column("department_id")).equals(department.column("id")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+					+ "LEFT OUTER JOIN department ON employee.department_id = department.id");
+		}
+
+		@Test // GH-1421
+		void shouldRenderFullOuterJoin() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")) //
+					.from(employee) //
+					.join(department, Join.JoinType.FULL_OUTER_JOIN).on(employee.column("department_id"))
+					.equals(department.column("id")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+					+ "FULL OUTER JOIN department ON employee.department_id = department.id");
+		}
+
+		@Test // DATAJDBC-309
+		void shouldRenderSimpleJoinWithAnd() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+					.join(department).on(employee.column("department_id")).equals(department.column("id")) //
+					.and(employee.column("tenant")).equals(department.column("tenant")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+					+ "JOIN department ON employee.department_id = department.id " //
+					+ "AND employee.tenant = department.tenant");
+		}
+
+		@Test // #995
+		void shouldRenderArbitraryJoinCondition() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder() //
+					.select(employee.column("id"), department.column("name")) //
+					.from(employee) //
+					.join(department) //
+					.on(Conditions.isEqual(employee.column("department_id"), department.column("id")) //
+							.or(Conditions.isNotEqual(employee.column("tenant"), department.column("tenant")) //
+							)).build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+					+ "JOIN department ON employee.department_id = department.id " //
+					+ "OR employee.tenant != department.tenant");
+		}
+
+		@Test // #1009
+		void shouldRenderJoinWithJustExpression() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+					.join(department).on(Expressions.just("alpha")).equals(Expressions.just("beta")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select))
+					.isEqualTo("SELECT employee.id, department.name FROM employee " + "JOIN department ON alpha = beta");
+		}
+
+		@Test // DATAJDBC-309
+		void shouldRenderMultipleJoinWithAnd() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+			Table tenant = SQL.table("tenant").as("tenant_base");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+					.join(department).on(employee.column("department_id")).equals(department.column("id")) //
+					.and(employee.column("tenant")).equals(department.column("tenant")) //
+					.join(tenant).on(tenant.column("tenant_id")).equals(department.column("tenant")) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+					+ "JOIN department ON employee.department_id = department.id " //
+					+ "AND employee.tenant = department.tenant " //
+					+ "JOIN tenant tenant_base ON tenant_base.tenant_id = department.tenant");
+		}
+
+		@Test // GH-1003
+		void shouldRenderJoinWithInlineQuery() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select innerSelect = Select.builder()
+					.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
+					.build();
+
+			InlineQuery one = InlineQuery.create(innerSelect, "one");
+
+			Select select = Select.builder().select(one.column("id"), department.column("name")).from(department) //
+					.join(one).on(one.column("department_id")).equals(department.column("id")) //
+					.build();
+
+			String sql = SqlRenderer.toString(select);
+
+			assertThat(sql).isEqualTo("SELECT one.id, department.name FROM department " //
+					+ "JOIN (SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
+					+ "ON one.department_id = department.id");
+		}
+
+		@Test // GH-1362
+		void shouldRenderNestedJoins() {
+
+			Table merchantCustomers = Table.create("merchants_customers");
+			Table customerDetails = Table.create("customer_details");
+
+			Select innerSelect = Select.builder().select(customerDetails.column("cd_user_id")).from(customerDetails)
+					.join(merchantCustomers)
+					.on(merchantCustomers.column("mc_user_id").isEqualTo(customerDetails.column("cd_user_id"))).build();
+
+			InlineQuery innerTable = InlineQuery.create(innerSelect, "inner");
+
+			Select select = Select.builder().select(merchantCustomers.asterisk()) //
+					.from(merchantCustomers) //
+					.join(innerTable).on(innerTable.column("i_user_id").isEqualTo(merchantCustomers.column("mc_user_id"))) //
+					.build();
+
+			String sql = SqlRenderer.toString(select);
+
+			assertThat(sql).isEqualTo("SELECT merchants_customers.* FROM merchants_customers " + //
+					"JOIN (" + //
+					"SELECT customer_details.cd_user_id " + //
+					"FROM customer_details " + //
+					"JOIN merchants_customers ON merchants_customers.mc_user_id = customer_details.cd_user_id" + //
+					") inner " + //
+					"ON inner.i_user_id = merchants_customers.mc_user_id");
+		}
+
+		@Test // GH-1003
+		void shouldRenderJoinWithTwoInlineQueries() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select innerSelectOne = Select.builder()
+					.select(employee.column("id").as("empId"), employee.column("department_Id"), employee.column("name"))
+					.from(employee).build();
+			Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name"))
+					.from(department).build();
+
+			InlineQuery one = InlineQuery.create(innerSelectOne, "one");
+			InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
+
+			Select select = Select.builder().select(one.column("empId"), two.column("name")).from(one) //
+					.join(two).on(two.column("department_id")).equals(one.column("empId")) //
+					.build();
+
+			String sql = SqlRenderer.toString(select);
+			assertThat(sql).isEqualTo("SELECT one.empId, two.name FROM (" //
+					+ "SELECT employee.id AS empId, employee.department_Id, employee.name FROM employee) one " //
+					+ "JOIN (SELECT department.id, department.name FROM department) two " //
+					+ "ON two.department_id = one.empId");
+		}
+
 	}
 
 	/**
@@ -742,8 +769,8 @@ class SelectRendererUnitTests {
 		void renderEmptyOver() {
 
 			Select select = StatementBuilder.select( //
-							AnalyticFunction.create("MAX", salary) //
-					) //
+					AnalyticFunction.create("MAX", salary) //
+			) //
 					.from(employee) //
 					.build();
 

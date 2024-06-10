@@ -299,8 +299,6 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // GH-220
 	void shouldUpdateByQuery() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
 		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
@@ -321,8 +319,6 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // GH-220
 	void shouldDeleteByQuery() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
 		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
