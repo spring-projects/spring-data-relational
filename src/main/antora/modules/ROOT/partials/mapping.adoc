@@ -149,6 +149,13 @@ Embedded entities containing a `Collection` or a `Map` will always be considered
 Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
 endif::[]
 
+[[entity-persistence.embedded-ids]]
+=== Embedded Ids
+
+Entities may be annotated with `@Id` and `@Embedded`, resulting in a composite id on the database side.
+The full embedded entity is considered the id, and therefore the check for determining if an aggregate is considered a new aggregate requiring an insert or an existing one, asking for an update is based on that entity, not its elements.
+Most use cases will require a custom `BeforeConvertCallback` to set the id for new aggregate.
+
 [[entity-persistence.read-only-properties]]
 == Read Only Properties
 
