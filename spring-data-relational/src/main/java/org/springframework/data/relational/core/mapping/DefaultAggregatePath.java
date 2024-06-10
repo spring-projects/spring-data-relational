@@ -19,7 +19,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -192,6 +194,20 @@ class DefaultAggregatePath implements AggregatePath {
 	@Override
 	public AggregatePath getIdDefiningParentPath() {
 		return AggregatePathTraversal.getIdDefiningPath(this);
+	}
+
+	@Override
+	public AggregatePath getTail() {
+
+		AggregatePath tail = null;
+		for (RelationalPersistentProperty prop : this.path) {
+			if (tail == null) {
+				tail = context.getAggregatePath(context.getPersistentEntity(prop));
+			} else {
+				tail = tail.append(prop);
+			}
+		}
+		return tail;
 	}
 
 	/**

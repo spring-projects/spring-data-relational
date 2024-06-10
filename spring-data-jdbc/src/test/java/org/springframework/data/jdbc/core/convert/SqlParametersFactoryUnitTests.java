@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
@@ -35,6 +36,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -44,7 +46,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  *
  * @author Chirag Tailor
  */
-class SqlParametersFactoryTest {
+class SqlParametersFactoryUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
@@ -88,7 +90,7 @@ class SqlParametersFactoryTest {
 	}
 
 	@Test
-	// DATAJDBC-146
+		// DATAJDBC-146
 	void identifiersGetAddedAsParameters() {
 
 		long id = 4711L;
@@ -103,7 +105,7 @@ class SqlParametersFactoryTest {
 	}
 
 	@Test
-	// DATAJDBC-146
+		// DATAJDBC-146
 	void additionalIdentifierForIdDoesNotLeadToDuplicateParameters() {
 
 		long id = 4711L;
@@ -116,7 +118,7 @@ class SqlParametersFactoryTest {
 	}
 
 	@Test
-	// DATAJDBC-235
+		// DATAJDBC-235
 	void considersConfiguredWriteConverter() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -131,7 +133,7 @@ class SqlParametersFactoryTest {
 	}
 
 	@Test
-	// DATAJDBC-412
+		// DATAJDBC-412
 	void considersConfiguredWriteConverterForIdValueObjects_onWrite() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -149,7 +151,7 @@ class SqlParametersFactoryTest {
 	}
 
 	@Test
-	// GH-1405
+		// GH-1405
 	void parameterNamesGetSanitized() {
 
 		WithIllegalCharacters entity = new WithIllegalCharacters(23L, "aValue");
@@ -162,6 +164,23 @@ class SqlParametersFactoryTest {
 
 		assertThat(sqlParameterSource.getValue("i.d")).isNull();
 		assertThat(sqlParameterSource.getValue("val&ue")).isNull();
+	}
+
+	@Test
+		// GH-574
+	void parametersForInsertForEmbeddedWrappedId() {
+
+		SingleEmbeddedIdEntity entity = new SingleEmbeddedIdEntity(new WrappedPk(23L), "alpha");
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(entity, SingleEmbeddedIdEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(parameterSource.getParameterNames()).containsExactlyInAnyOrder("id", "name");
+			softly.assertThat(parameterSource.getValue("id")).isEqualTo(23L);
+			softly.assertThat(parameterSource.getValue("name")).isEqualTo("alpha");
+		});
 	}
 
 	@WritingConverter
@@ -177,7 +196,8 @@ class SqlParametersFactoryTest {
 
 	private static class WithValueObjectId {
 
-		@Id private final IdValue id;
+		@Id
+		private final IdValue id;
 		String value;
 
 		private WithValueObjectId(IdValue id) {
@@ -255,7 +275,8 @@ class SqlParametersFactoryTest {
 
 	private static class EntityWithBoolean {
 
-		@Id Long id;
+		@Id
+		Long id;
 		boolean flag;
 
 		public EntityWithBoolean(Long id, boolean flag) {
@@ -267,7 +288,8 @@ class SqlParametersFactoryTest {
 	// DATAJDBC-349
 	private static class DummyEntityRoot {
 
-		@Id private final IdValue id;
+		@Id
+		private final IdValue id;
 		List<DummyEntity> dummyEntities = new ArrayList<>();
 
 		public DummyEntityRoot(IdValue id) {
@@ -277,7 +299,8 @@ class SqlParametersFactoryTest {
 
 	private static class DummyEntity {
 
-		@Id private final Long id;
+		@Id
+		private final Long id;
 
 		public DummyEntity(Long id) {
 			this.id = id;
@@ -287,9 +310,11 @@ class SqlParametersFactoryTest {
 	private static class WithIllegalCharacters {
 
 		@Column("i.d")
-		@Id Long id;
+		@Id
+		Long id;
 
-		@Column("val&ue") String value;
+		@Column("val&ue")
+		String value;
 
 		public WithIllegalCharacters(Long id, String value) {
 			this.id = id;
@@ -301,6 +326,17 @@ class SqlParametersFactoryTest {
 
 		MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)));
+		context.setSimpleTypeHolder(converter.getConversions().getSimpleTypeHolder());
+
 		return new SqlParametersFactory(context, converter);
+	}
+
+	private record WrappedPk(Long id) {
+	}
+
+	private record SingleEmbeddedIdEntity( //
+										   @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
+										   String name //
+	) {
 	}
 }

@@ -26,6 +26,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -81,6 +82,21 @@ class SqlGeneratorEmbeddedUnitTests {
 					.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
 					.contains("WHERE dummy_entity.id1 = :id") //
 					.doesNotContain("JOIN").doesNotContain("embeddable"); //
+		});
+	}
+    @Test // DATAJDBC-111
+	void findOneEmbeddedId() {
+
+		SqlGenerator sqlGenerator = new SqlGenerator(context,converter, context.getRequiredPersistentEntity(DummyEntityWithWrappedId.class), AnsiDialect.INSTANCE);
+
+		String sql = sqlGenerator.getFindOne();
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(sql).startsWith("SELECT") //
+					.contains("DUMMY_ENTITY_WITH_WRAPPED_ID.NAME AS NAME") //
+					.contains("DUMMY_ENTITY_WITH_WRAPPED_ID.ID") //
+					.contains("WHERE DUMMY_ENTITY_WITH_WRAPPED_ID.ID = :id");
 		});
 	}
 
@@ -330,6 +346,18 @@ class SqlGeneratorEmbeddedUnitTests {
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") CascadedEmbedded prefixedEmbeddable;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL) CascadedEmbedded embeddable;
+	}
+
+
+	record WrappedId(Long id) {
+	}
+	static class DummyEntityWithWrappedId {
+
+		@Id
+		@Embedded(onEmpty = OnEmpty.USE_NULL)
+		WrappedId wrappedId;
+
+		String name;
 	}
 
 	@SuppressWarnings("unused")

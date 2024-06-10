@@ -25,8 +25,11 @@ import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -87,11 +90,35 @@ public class SqlParametersFactory {
 
 		if (IdValueSource.PROVIDED.equals(idValueSource)) {
 
-			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-			Object idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
-			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			PersistentPropertyPathAccessor<T> propertyPathAccessor = persistentEntity.getPropertyPathAccessor(instance);
+			for (AggregatePath idPath : getIdPaths(persistentEntity)) {
+
+				Object idValue = propertyPathAccessor.getProperty(idPath.getRequiredPersistentPropertyPath());
+				RelationalPersistentProperty idProperty = idPath.getRequiredLeafProperty();
+				addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			}
 		}
 		return parameterSource;
+	}
+
+	private List<AggregatePath> getIdPaths(RelationalPersistentEntity<?> entity) {
+
+		List<AggregatePath> idPaths = new ArrayList<>();
+
+		AggregatePath aggregatePath = context.getAggregatePath(entity);
+		RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
+
+		if (idProperty.isEntity() && idProperty.isEmbedded()){
+
+			AggregatePath embeddedPath = aggregatePath.append(idProperty);
+			RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(idProperty);
+			embeddedEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>)  property -> idPaths.add(embeddedPath.append(property)));
+
+		} else {
+			idPaths.add(aggregatePath.append(idProperty));
+		}
+
+		return idPaths;
 	}
 
 	/**
@@ -121,12 +148,40 @@ public class SqlParametersFactory {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
-		addConvertedPropertyValue( //
-				parameterSource, //
-				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
-				id, //
-				name //
-		);
+
+		RelationalPersistentEntity<T> entity = getRequiredPersistentEntity(domainType);
+
+		RelationalPersistentProperty singleIdProperty = entity.getRequiredIdProperty();
+
+		if (singleIdProperty.isEntity()) {
+
+			RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
+			PersistentPropertyPathAccessor<Object> accessor = complexId.getPropertyPathAccessor(id);
+
+			List<AggregatePath> idPaths = getIdPaths(entity);
+
+			for (AggregatePath idPath : idPaths) {
+				AggregatePath idElementPath = idPath.getTail();
+				Object idValue = accessor.getProperty(idElementPath.getRequiredPersistentPropertyPath());
+
+				addConvertedPropertyValue( //
+						parameterSource, //
+						idElementPath.getRequiredLeafProperty(), //
+						idValue, //
+						name //
+				);
+			}
+
+		} else {
+
+
+			addConvertedPropertyValue( //
+					parameterSource, //
+					singleIdProperty, //
+					id, //
+					name //
+			);
+		}
 		return parameterSource;
 	}
 

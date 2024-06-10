@@ -227,6 +227,8 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 	 */
 	AggregatePath getIdDefiningParentPath();
 
+	AggregatePath getTail();
+
 	record TableInfo(
 
 			/*
