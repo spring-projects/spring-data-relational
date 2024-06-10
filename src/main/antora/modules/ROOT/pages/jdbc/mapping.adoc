@@ -106,6 +106,9 @@ Also, the type of that aggregate is encoded in a type parameter.
 All references in an aggregate result in a foreign key relationship in the opposite direction in the database.
 By default, the name of the foreign key column is the table name of the referencing entity.
 
+If the referenced id is an `@Embedded` id, the back reference consists of multiple columns, each named by a concatenation of <table-name> + `_` + <column-name>.
+E.g. the back reference to a `Person` entity, with a composite id with the properties `firstName` and `lastName` will consist of the two columns `PERSON_FIRST_NAME` and `PERSON_LAST_NAME`.
+
 Alternatively you may choose to have them named by the entity name of the referencing entity ignoring `@Table` annotations.
 You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `RelationalMappingContext`.
 

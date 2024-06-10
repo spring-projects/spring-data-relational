@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +67,7 @@ class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	@Autowired Dialect dialect;
 
 	@Test // DATAJDBC-111
-	void savesAnEntity() throws SQLException {
+	void savesAnEntity() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 

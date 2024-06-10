@@ -31,12 +31,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveSelectOperation;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -67,6 +71,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	private final R2dbcEntityOperations entityOperations;
 	private final Lazy<RelationalPersistentProperty> idProperty;
 	private final RelationalExampleMapper exampleMapper;
+	private MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 
 	/**
 	 * Create a new {@link SimpleR2dbcRepository}.
@@ -81,11 +86,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 
 		this.entity = entity;
 		this.entityOperations = entityOperations;
-		this.idProperty = Lazy.of(() -> converter //
-				.getMappingContext() //
+		this.mappingContext = converter.getMappingContext();
+		this.idProperty = Lazy.of(() -> mappingContext //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty());
-		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
+		this.exampleMapper = new RelationalExampleMapper(mappingContext);
 	}
 
 	/**
@@ -359,7 +364,28 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	}
 
 	private Query getIdQuery(Object id) {
-		return Query.query(Criteria.where(getIdProperty().getName()).is(id));
+
+		Criteria criteria;
+
+		RelationalPersistentProperty idProperty = getIdProperty();
+		if (idProperty.isEmbedded()) {
+
+			Criteria[] criteriaHolder = new Criteria[] { Criteria.empty() };
+
+			RelationalPersistentEntity<?> idEntity = mappingContext.getRequiredPersistentEntity(idProperty.getType());
+			PersistentPropertyAccessor<Object> accessor = idEntity.getPropertyAccessor(id);
+			idEntity.doWithProperties(new PropertyHandler<RelationalPersistentProperty>() {
+				@Override
+				public void doWithPersistentProperty(RelationalPersistentProperty persistentProperty) {
+					criteriaHolder[0] = criteriaHolder [0].and(persistentProperty.getName()).is(accessor.getProperty(persistentProperty));
+				}
+			});
+			criteria = criteriaHolder[0];
+		} else {
+			criteria = Criteria.where(idProperty.getName()).is(id);
+		}
+
+		return Query.query(criteria);
 	}
 
 	/**

@@ -48,7 +48,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	/**
 	 * Creates an {@code ExpressionVisitor}.
 	 *
-	 * @param context       must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param aliasHandling controls if columns should be rendered as their alias or using their table names.
 	 * @since 2.3
 	 */
@@ -74,6 +74,13 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		if (segment instanceof SimpleFunction) {
 
 			SimpleFunctionVisitor visitor = new SimpleFunctionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof TupleExpression) {
+
+			TupleVisitor visitor = new TupleVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}

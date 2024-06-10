@@ -60,7 +60,7 @@ public class RelationalMappingContextUnitTests {
 				EntityWithUuid.class);
 		AggregatePath aggregatePath = context.getAggregatePath(path);
 
-		assertThat(aggregatePath).isNotNull();
+		assertThat((Object) aggregatePath).isNotNull();
 	}
 
 	@Test // GH-1525
@@ -75,7 +75,7 @@ public class RelationalMappingContextUnitTests {
 		AggregatePath one = context.getAggregatePath(path);
 		AggregatePath two = context.getAggregatePath(path);
 
-		assertThat(one).isSameAs(two);
+		assertThat((Object) one).isSameAs(two);
 	}
 
 	@Test // GH-1525
@@ -87,7 +87,7 @@ public class RelationalMappingContextUnitTests {
 		AggregatePath one = context.getAggregatePath(context.getRequiredPersistentEntity(EntityWithUuid.class));
 		AggregatePath two = context.getAggregatePath(context.getRequiredPersistentEntity(EntityWithUuid.class));
 
-		assertThat(one).isSameAs(two);
+		assertThat((Object) one).isSameAs(two);
 	}
 
 	@Test // GH-1586
@@ -117,7 +117,7 @@ public class RelationalMappingContextUnitTests {
 		AggregatePath aggregatePath1 = context.getAggregatePath(path1);
 		AggregatePath aggregatePath2 = context.getAggregatePath(path2);
 
-		assertThat(aggregatePath1).isNotEqualTo(aggregatePath2);
+		assertThat((Object) aggregatePath1).isNotEqualTo(aggregatePath2);
 	}
 
 	static class EntityWithUuid {
@@ -126,6 +126,14 @@ public class RelationalMappingContextUnitTests {
 
 	static class WithEmbedded {
 		@Embedded.Empty(prefix = "prnt_") Parent parent;
+	}
+
+	static class WithEmbeddedId {
+		@Embedded.Nullable
+		@Id CompositeId id;
+	}
+
+	private record CompositeId(int a, int b) {
 	}
 
 	static class Parent {
@@ -144,5 +152,4 @@ public class RelationalMappingContextUnitTests {
 	static class Inherit1 extends Base {}
 
 	static class Inherit2 extends Base {}
-
 }

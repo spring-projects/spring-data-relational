@@ -20,11 +20,13 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Unit tests for the {@link AliasFactory}.
+ * 
  * @author Jens Schauder
  */
 class AliasFactoryUnitTests {
@@ -55,8 +57,8 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void nameGetsSanitized() {
 
-			String alias = aliasFactory.getColumnAlias(
-					context.getAggregatePath( context.getPersistentPropertyPath("evil", DummyEntity.class)));
+			String alias = aliasFactory
+					.getColumnAlias(context.getAggregatePath(context.getPersistentPropertyPath("evil", DummyEntity.class)));
 
 			assertThat(alias).isEqualTo("c_ameannamecontains3illegal_characters_1");
 		}
@@ -64,10 +66,10 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void aliasIsStable() {
 
-			String alias1 = aliasFactory.getColumnAlias(
-					context.getAggregatePath( context.getRequiredPersistentEntity(DummyEntity.class)));
-			String alias2 = aliasFactory.getColumnAlias(
-					context.getAggregatePath( context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias1 = aliasFactory
+					.getColumnAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias2 = aliasFactory
+					.getColumnAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
 
 			assertThat(alias1).isEqualTo(alias2);
 		}
@@ -79,10 +81,10 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void aliasIsStable() {
 
-			String alias1 = aliasFactory.getRowNumberAlias(
-					context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
-			String alias2 = aliasFactory.getRowNumberAlias(
-					context.getAggregatePath( context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias1 = aliasFactory
+					.getRowNumberAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias2 = aliasFactory
+					.getRowNumberAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
 
 			assertThat(alias1).isEqualTo(alias2);
 		}
@@ -90,11 +92,11 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void aliasProjectsOnTableReferencingPath() {
 
-			String alias1 = aliasFactory.getRowNumberAlias(
-					context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias1 = aliasFactory
+					.getRowNumberAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
 
-			String alias2 = aliasFactory.getRowNumberAlias(
-					context.getAggregatePath(context.getPersistentPropertyPath("evil", DummyEntity.class)));
+			String alias2 = aliasFactory
+					.getRowNumberAlias(context.getAggregatePath(context.getPersistentPropertyPath("evil", DummyEntity.class)));
 
 			assertThat(alias1).isEqualTo(alias2);
 		}
@@ -102,10 +104,10 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void rnAliasIsIndependentOfTableAlias() {
 
-			String alias1 = aliasFactory.getRowNumberAlias(
-					context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
-			String alias2 = aliasFactory.getColumnAlias(
-					context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias1 = aliasFactory
+					.getRowNumberAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
+			String alias2 = aliasFactory
+					.getColumnAlias(context.getAggregatePath(context.getRequiredPersistentEntity(DummyEntity.class)));
 
 			assertThat(alias1).isNotEqualTo(alias2);
 		}
@@ -117,8 +119,8 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void testBackReferenceAlias() {
 
-			String alias = aliasFactory.getBackReferenceAlias(
-					context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
+			String alias = aliasFactory
+					.getBackReferenceAlias(context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
 
 			assertThat(alias).isEqualTo("br_dummy_entity_1");
 		}
@@ -129,8 +131,8 @@ class AliasFactoryUnitTests {
 		@Test // GH-1446
 		void testKeyAlias() {
 
-			String alias = aliasFactory.getKeyAlias(
-					context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
+			String alias = aliasFactory
+					.getKeyAlias(context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
 
 			assertThat(alias).isEqualTo("key_dummy_entity_1");
 		}
@@ -141,11 +143,11 @@ class AliasFactoryUnitTests {
 		@Test // GH-1448
 		void tableAliasIsDifferentForDifferentPathsToSameEntity() {
 
-			String alias = aliasFactory.getTableAlias(
-					context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
+			String alias = aliasFactory
+					.getTableAlias(context.getAggregatePath(context.getPersistentPropertyPath("dummy", Reference.class)));
 
-			String alias2 = aliasFactory.getTableAlias(
-					context.getAggregatePath(context.getPersistentPropertyPath("dummy2", Reference.class)));
+			String alias2 = aliasFactory
+					.getTableAlias(context.getAggregatePath(context.getPersistentPropertyPath("dummy2", Reference.class)));
 
 			assertThat(alias).isNotEqualTo(alias2);
 		}
@@ -158,6 +160,7 @@ class AliasFactoryUnitTests {
 	}
 
 	static class Reference {
+		@Id Long id;
 		DummyEntity dummy;
 		DummyEntity dummy2;
 	}
