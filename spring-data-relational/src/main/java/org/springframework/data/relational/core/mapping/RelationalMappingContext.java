@@ -148,9 +148,9 @@ public class RelationalMappingContext
 	}
 
 	/**
-	 * @since 3.2
 	 * @return iff single query loading is enabled.
 	 * @see #setSingleQueryLoadingEnabled(boolean)
+	 * @since 3.2
 	 */
 	public boolean isSingleQueryLoadingEnabled() {
 		return singleQueryLoadingEnabled;
@@ -161,8 +161,8 @@ public class RelationalMappingContext
 	 * {@link org.springframework.data.relational.core.dialect.Dialect} supports it, Spring Data JDBC will try to use
 	 * Single Query Loading if possible.
 	 *
-	 * @since 3.2
 	 * @param singleQueryLoadingEnabled
+	 * @since 3.2
 	 */
 	public void setSingleQueryLoadingEnabled(boolean singleQueryLoadingEnabled) {
 		this.singleQueryLoadingEnabled = singleQueryLoadingEnabled;
@@ -217,7 +217,6 @@ public class RelationalMappingContext
 		 * Create a new AggregatePathCacheKey for a root entity.
 		 *
 		 * @param root the root entity.
-		 * @return
 		 */
 		static AggregatePathCacheKey of(RelationalPersistentEntity<?> root) {
 			return new AggregatePathCacheKey(root, null);
@@ -226,8 +225,7 @@ public class RelationalMappingContext
 		/**
 		 * Create a new AggregatePathCacheKey for a property path.
 		 *
-		 * @param path
-		 * @return
+		 * @param path {@Literal AggregatePath} to obtain a cache key for.
 		 */
 		static AggregatePathCacheKey of(PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 			return new AggregatePathCacheKey(path.getBaseProperty().getOwner(), path);

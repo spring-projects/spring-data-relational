@@ -50,7 +50,9 @@ public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T
 	 * Returns the column representing the identifier.
 	 *
 	 * @return will never be {@literal null}.
+	 * @deprecated use {@code AggregatePath.getTableInfo().getIdColumnInfos()} instead.
 	 */
+	@Deprecated(forRemoval = true)
 	SqlIdentifier getIdColumn();
 
 }
