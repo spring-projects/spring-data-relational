@@ -26,6 +26,7 @@ import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
@@ -45,7 +46,6 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -384,15 +384,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					// references and possibly keys, that form an id
 					if (idDefiningParentPath.hasIdProperty()) {
 
-						Class<?> idType = idDefiningParentPath.getRequiredIdProperty().getActualType();
-						//
-						RelationalPersistentProperty requiredIdProperty = idDefiningParentPath.getRequiredIdProperty();
-						AggregatePath idPath = idDefiningParentPath.append(requiredIdProperty);
-						Object idValue = delegate.getValue(idPath);
+						RelationalPersistentProperty identifier = idDefiningParentPath.getRequiredIdProperty();
+						AggregatePath idPath = idDefiningParentPath.append(identifier);
+						Object value = delegate.getValue(idPath);
 
-						Assert.state(idValue != null, "idValue must not be null at this point");
+						Assert.state(value != null, "Identifier value must not be null at this point");
 
-						identifierToUse = Identifier.of(aggregatePath.getTableInfo().reverseColumnInfo().name(), idValue, idType);
+						identifierToUse = Identifier.of(aggregatePath.getTableInfo().reverseColumnInfo().name(), value,
+								identifier.getActualType());
 					}
 
 					Iterable<Object> allByPath = relationResolver.findAllByPath(identifierToUse,
