@@ -15,7 +15,17 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
 /**
@@ -41,13 +51,46 @@ public class JdbcIdentifierBuilder {
 	 */
 	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path, Object value) {
 
-		Identifier identifier = Identifier.of( //
-				path.getTableInfo().reverseColumnInfo().name(), //
-				value, //
-				converter.getColumnType(path.getIdDefiningParentPath().getRequiredIdProperty()) //
-		);
+		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
+
+
+		Identifier identifier;
+		if (value != null && idProperty.isEntity() && idProperty.isEmbedded()) {
+			identifier = multiValueIdentifier(converter, path, value, idProperty);
+		} else {
+			identifier = singleValueIdentifier(converter, path, value, idProperty);
+		}
 
 		return new JdbcIdentifierBuilder(identifier);
+	}
+
+	private static Identifier multiValueIdentifier(JdbcConverter converter, AggregatePath path, Object value, RelationalPersistentProperty idProperty) {
+
+		AggregatePath.ColumnInfos reverseColumnInfos = path.getTableInfo().reverseColumnInfos();
+
+		// create property accessor
+		RelationalPersistentEntity<?> propertyType = converter.getMappingContext().getRequiredPersistentEntity(idProperty.getType());
+		PersistentPropertyAccessor<Object> propertyAccessor = propertyType.getPropertyAccessor(value);
+
+		final Identifier[] identifierHolder = new Identifier[]{Identifier.empty()};
+
+		reverseColumnInfos.forEach((ap, ci) -> {
+			RelationalPersistentProperty property = ap.getRequiredLeafProperty();
+			identifierHolder[0]=identifierHolder[0].withPart(ci.name(), propertyAccessor.getProperty(property), converter.getColumnType(property));
+		});
+
+		return identifierHolder[0];
+	}
+
+	private static Identifier singleValueIdentifier(JdbcConverter converter, AggregatePath path, Object value, RelationalPersistentProperty idProperty) {
+
+		SqlIdentifier backRefName = path.getTableInfo().reverseColumnInfos().unique().name();
+
+		return Identifier.of( //
+				backRefName, //
+				value, //
+				converter.getColumnType(idProperty) //
+		);
 	}
 
 	/**

@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;

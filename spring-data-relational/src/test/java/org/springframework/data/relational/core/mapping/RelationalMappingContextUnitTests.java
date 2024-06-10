@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -128,6 +129,13 @@ public class RelationalMappingContextUnitTests {
 		@Embedded.Empty(prefix = "prnt_") Parent parent;
 	}
 
+	static class WithEmbeddedId {
+		@Embedded.Nullable @Id CompositeId id;
+	}
+
+	private record CompositeId(int a, int b) {
+	}
+
 	static class Parent {
 
 		@Embedded.Empty(prefix = "chld_") Child child;
@@ -144,5 +152,4 @@ public class RelationalMappingContextUnitTests {
 	static class Inherit1 extends Base {}
 
 	static class Inherit2 extends Base {}
-
 }

@@ -115,6 +115,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
+
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
 				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
 						insertSubject.getIdentifier(), idValueSource))
@@ -160,7 +161,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Object id, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
+		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
 
 		operations.update(deleteByIdSql, parameter);
 	}
@@ -181,7 +182,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryById(id, domainType);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
 
@@ -201,8 +202,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
-		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryById(rootId, rootEntity.getType(),
-				ROOT_ID_PARAMETER);
+		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryById(rootId, rootEntity.getType()
+		);
 		operations.update(delete, parameters);
 	}
 
@@ -236,7 +237,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
-		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
+		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
 
 		operations.query(acquireLockByIdSql, parameter, ResultSet::next);
 	}
@@ -262,7 +263,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
-		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
+		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
 
 		try {
 			return operations.queryForObject(findOneSql, parameter, getEntityRowMapper(domainType));
@@ -329,7 +330,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
 		String existsSql = sql(domainType).getExists();
-		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
+		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
 
 		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
 		Assert.state(result != null, "The result of an exists query must not be null");

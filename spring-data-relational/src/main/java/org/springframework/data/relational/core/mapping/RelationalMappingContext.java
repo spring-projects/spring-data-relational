@@ -15,6 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +31,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -138,7 +142,7 @@ public class RelationalMappingContext
 
 	@Override
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
-			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
+																	RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
 
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
 				simpleTypeHolder, this.namingStrategy);
@@ -148,9 +152,9 @@ public class RelationalMappingContext
 	}
 
 	/**
-	 * @since 3.2
 	 * @return iff single query loading is enabled.
 	 * @see #setSingleQueryLoadingEnabled(boolean)
+	 * @since 3.2
 	 */
 	public boolean isSingleQueryLoadingEnabled() {
 		return singleQueryLoadingEnabled;
@@ -161,8 +165,8 @@ public class RelationalMappingContext
 	 * {@link org.springframework.data.relational.core.dialect.Dialect} supports it, Spring Data JDBC will try to use
 	 * Single Query Loading if possible.
 	 *
-	 * @since 3.2
 	 * @param singleQueryLoadingEnabled
+	 * @since 3.2
 	 */
 	public void setSingleQueryLoadingEnabled(boolean singleQueryLoadingEnabled) {
 		this.singleQueryLoadingEnabled = singleQueryLoadingEnabled;
@@ -211,7 +215,7 @@ public class RelationalMappingContext
 	}
 
 	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,
-			@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+										 @Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		/**
 		 * Create a new AggregatePathCacheKey for a root entity.

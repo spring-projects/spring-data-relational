@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Represents an analytic function, also known as windowing function
@@ -45,12 +46,19 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 	}
 
 	public AnalyticFunction partitionBy(Expression... partitionBy) {
-
 		return new AnalyticFunction(function, new Partition(partitionBy), orderBy);
+	}
+
+	public AnalyticFunction partitionBy(Collection<Expression> partitionBy) {
+		return partitionBy(partitionBy.toArray(new Expression[0]));
 	}
 
 	public AnalyticFunction orderBy(OrderByField... orderBy) {
 		return new AnalyticFunction(function, partition, new OrderBy(orderBy));
+	}
+
+	public AnalyticFunction orderBy(Collection<Expression> orderBy) {
+		return orderBy(orderBy.toArray(new Expression[0]));
 	}
 
 	public AnalyticFunction orderBy(Expression... orderByExpression) {
