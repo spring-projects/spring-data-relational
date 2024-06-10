@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -1332,6 +1331,20 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
+	@Test
+	// GH-574
+	void saveAndLoadSimpleEntityWithSingleEmbeddedId() {
+
+		SingleEmbeddedIdEntity entity = template.insert(new SingleEmbeddedIdEntity(new WrappedPk(23L), "alpha"));
+
+		assertThat(entity.wrappedPk).isNotNull() //
+				.extracting(WrappedPk::id).isNotNull();
+
+		SingleEmbeddedIdEntity reloaded = template.findById(entity.wrappedPk, SingleEmbeddedIdEntity.class);
+
+		assertThat(reloaded).isEqualTo(entity);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -2203,5 +2216,14 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests
 			extends AbstractJdbcAggregateTemplateIntegrationTests {
 
+	}
+
+	private record WrappedPk(Long id) {
+	}
+
+	private record SingleEmbeddedIdEntity( //
+			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
+			String name //
+	) {
 	}
 }

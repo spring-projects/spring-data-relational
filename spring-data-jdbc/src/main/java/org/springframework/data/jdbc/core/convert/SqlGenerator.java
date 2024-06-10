@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -804,8 +805,35 @@ class SqlGenerator {
 	}
 
 	private Column getIdColumn() {
-		return sqlContext.getIdColumn();
+
+		List<AggregatePath> idPaths = getIdPaths(entity);
+
+		AggregatePath idAggregatePath = idPaths.get(0);// TODO: hack for single column
+
+		return sqlContext.getColumn(idAggregatePath);
 	}
+
+	private List<AggregatePath> getIdPaths(RelationalPersistentEntity<?> entity) {
+
+		List<AggregatePath> idPaths = new ArrayList<>();
+
+		AggregatePath aggregatePath = mappingContext.getAggregatePath(entity);
+		RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
+
+		if (idProperty.isEntity() && idProperty.isEmbedded()){
+
+			AggregatePath embeddedPath = aggregatePath.append(idProperty);
+			RelationalPersistentEntity<?> embeddedEntity = mappingContext.getPersistentEntity(idProperty);
+			embeddedEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> idPaths.add(embeddedPath.append(property)));
+
+		} else {
+			idPaths.add(aggregatePath.append(idProperty));
+		}
+
+		return idPaths;
+	}
+
+
 
 	private Column getVersionColumn() {
 		return sqlContext.getVersionColumn();

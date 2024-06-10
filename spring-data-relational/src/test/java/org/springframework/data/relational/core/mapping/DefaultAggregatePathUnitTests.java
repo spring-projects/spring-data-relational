@@ -41,7 +41,8 @@ class DefaultAggregatePathUnitTests {
 
 	private RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isNotRootForNonRootPath() {
 
 		AggregatePath path = context.getAggregatePath(context.getPersistentPropertyPath("entityId", DummyEntity.class));
@@ -49,7 +50,8 @@ class DefaultAggregatePathUnitTests {
 		assertThat(path.isRoot()).isFalse();
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isRootForRootPath() {
 
 		AggregatePath path = context.getAggregatePath(entity);
@@ -57,7 +59,8 @@ class DefaultAggregatePathUnitTests {
 		assertThat(path.isRoot()).isTrue();
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getParentPath() {
 
 		assertSoftly(softly -> {
@@ -70,7 +73,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getRequiredLeafEntity() {
 
 		assertSoftly(softly -> {
@@ -89,7 +93,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void idDefiningPath() {
 
 		assertSoftly(softly -> {
@@ -105,7 +110,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getRequiredIdProperty() {
 
 		assertSoftly(softly -> {
@@ -116,7 +122,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void reverseColumnName() {
 
 		assertSoftly(softly -> {
@@ -140,7 +147,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getQualifierColumn() {
 
 		assertSoftly(softly -> {
@@ -154,7 +162,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getQualifierColumnType() {
 
 		assertSoftly(softly -> {
@@ -167,7 +176,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void extendBy() {
 
 		assertSoftly(softly -> {
@@ -178,7 +188,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isWritable() {
 
 		assertSoftly(softly -> {
@@ -193,7 +204,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isEmbedded() {
 
 		assertSoftly(softly -> {
@@ -205,7 +217,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isEntity() {
 
 		assertSoftly(softly -> {
@@ -220,7 +233,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isMultiValued() {
 
 		assertSoftly(softly -> {
@@ -229,16 +243,17 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second").isMultiValued()).isFalse();
 			softly.assertThat(path("second.third2").isMultiValued()).isFalse();
 			softly.assertThat(path("secondList.third2").isMultiValued()).isTrue(); // this seems wrong as third2 is an
-																																							// embedded path into Second, held by
-																																							// List<Second> (so the parent is
-																																							// multi-valued but not third2).
+			// embedded path into Second, held by
+			// List<Second> (so the parent is
+			// multi-valued but not third2).
 			// TODO: This test fails because MultiValued considers parents.
 			// softly.assertThat(path("secondList.third.value").isMultiValued()).isFalse();
 			softly.assertThat(path("secondList").isMultiValued()).isTrue();
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isQualified() {
 
 		assertSoftly(softly -> {
@@ -251,7 +266,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isMap() {
 
 		assertSoftly(softly -> {
@@ -266,7 +282,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isCollectionLike() {
 
 		assertSoftly(softly -> {
@@ -281,7 +298,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void isOrdered() {
 
 		assertSoftly(softly -> {
@@ -296,7 +314,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getTableAlias() {
 
 		assertSoftly(softly -> {
@@ -306,13 +325,13 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second.third2").getTableInfo().tableAlias()).isEqualTo(quoted("second"));
 			softly.assertThat(path("second.third2.value").getTableInfo().tableAlias()).isEqualTo(quoted("second"));
 			softly.assertThat(path("second.third").getTableInfo().tableAlias()).isEqualTo(quoted("second_third")); // missing
-																																																							// _
+			// _
 			softly.assertThat(path("second.third.value").getTableInfo().tableAlias()).isEqualTo(quoted("second_third")); // missing
-																																																										// _
+			// _
 			softly.assertThat(path("secondList.third2").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(path("secondList.third2.value").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(path("secondList.third").getTableInfo().tableAlias()).isEqualTo(quoted("secondList_third")); // missing
-																																																											// _
+			// _
 			softly.assertThat(path("secondList.third.value").getTableInfo().tableAlias())
 					.isEqualTo(quoted("secondList_third")); // missing _
 			softly.assertThat(path("secondList").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
@@ -321,7 +340,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getTableName() {
 
 		assertSoftly(softly -> {
@@ -337,7 +357,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getColumnName() {
 
 		assertSoftly(softly -> {
@@ -351,7 +372,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getColumnAlias() {
 
 		assertSoftly(softly -> {
@@ -367,7 +389,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getReverseColumnAlias() {
 
 		assertSoftly(softly -> {
@@ -385,7 +408,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getRequiredLeafProperty() {
 
 		assertSoftly(softly -> {
@@ -401,7 +425,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getBaseProperty() {
 
 		assertSoftly(softly -> {
@@ -416,7 +441,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getIdColumnName() {
 
 		assertSoftly(softly -> {
@@ -430,7 +456,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void toDotPath() {
 
 		assertSoftly(softly -> {
@@ -440,7 +467,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getRequiredPersistentPropertyPath() {
 
 		assertSoftly(softly -> {
@@ -452,7 +480,8 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getEffectiveIdColumnName() {
 
 		assertSoftly(softly -> {
@@ -466,17 +495,31 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
+	@Test
+		// GH-1525
 	void getLength() {
 
-		assertThat(path().getLength()).isEqualTo(1);
-		assertThat(path().stream().collect(Collectors.toList())).hasSize(1);
+		assertSoftly(softly -> {
+			softly.assertThat(path().getLength()).isEqualTo(1);
+			softly.assertThat(path().stream().collect(Collectors.toList())).hasSize(1);
 
-		assertThat(path("second.third2").getLength()).isEqualTo(3);
-		assertThat(path("second.third2").stream().collect(Collectors.toList())).hasSize(3);
+			softly.assertThat(path("second.third2").getLength()).isEqualTo(3);
+			softly.assertThat(path("second.third2").stream().collect(Collectors.toList())).hasSize(3);
 
-		assertThat(path("withId.second.third").getLength()).isEqualTo(4);
-		assertThat(path("withId.second.third2.value").getLength()).isEqualTo(5);
+			softly.assertThat(path("withId.second.third").getLength()).isEqualTo(4);
+			softly.assertThat(path("withId.second.third2.value").getLength()).isEqualTo(5);
+		});
+	}
+
+	@Test
+		// GH-574
+	void getTail() {
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(path("second").getTail().toDotPath()).isEqualTo("");
+			softly.assertThat(path("second.third2").getTail().toDotPath()).isEqualTo("third2");
+		});
 	}
 
 	private AggregatePath path() {
@@ -493,10 +536,14 @@ class DefaultAggregatePathUnitTests {
 
 	@SuppressWarnings("unused")
 	static class DummyEntity {
-		@Id Long entityId;
-		@ReadOnlyProperty Second second;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "sec") Second second2;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) Second second3;
+		@Id
+		Long entityId;
+		@ReadOnlyProperty
+		Second second;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "sec")
+		Second second2;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL)
+		Second second3;
 		List<Second> secondList;
 		Map<String, Second> secondMap;
 		WithId withId;
@@ -505,7 +552,8 @@ class DefaultAggregatePathUnitTests {
 	@SuppressWarnings("unused")
 	static class Second {
 		Third third;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "thrd") Third third2;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "thrd")
+		Third third2;
 	}
 
 	@SuppressWarnings("unused")
@@ -515,9 +563,11 @@ class DefaultAggregatePathUnitTests {
 
 	@SuppressWarnings("unused")
 	static class WithId {
-		@Id Long withIdId;
+		@Id
+		Long withIdId;
 		Second second;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "sec") Second second2;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "sec")
+		Second second2;
 	}
 
 }
