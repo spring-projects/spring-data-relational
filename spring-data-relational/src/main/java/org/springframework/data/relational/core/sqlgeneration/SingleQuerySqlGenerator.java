@@ -167,9 +167,13 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		columns.add(rownumber);
 
 		String rowCountAlias = aliases.getRowCountAlias(basePath);
-		Expression count = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowCountAlias)
-				: AnalyticFunction.create("count", Expressions.just("*"))
-						.partitionBy(table.column(basePath.getTableInfo().reverseColumnInfo().name())).as(rowCountAlias);
+		Expression count = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowCountAlias) //
+				: AnalyticFunction.create("count", Expressions.just("*")) //
+						.partitionBy( //
+								basePath.getTableInfo().reverseColumnInfos().toList( //
+										ci -> table.column(ci.name()) //
+								) //
+						).as(rowCountAlias);
 		columns.add(count);
 
 		String backReferenceAlias = null;
@@ -178,7 +182,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		if (!basePath.isRoot()) {
 
 			backReferenceAlias = aliases.getBackReferenceAlias(basePath);
-			columns.add(table.column(basePath.getTableInfo().reverseColumnInfo().name()).as(backReferenceAlias));
+			columns.add(table.column(basePath.getTableInfo().reverseColumnInfos().unique().name()).as(backReferenceAlias));
 
 			keyAlias = aliases.getKeyAlias(basePath);
 			Expression keyExpression = basePath.isQualified()
@@ -238,9 +242,10 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	private static AnalyticFunction createRowNumberExpression(AggregatePath basePath, Table table,
 			String rowNumberAlias) {
+		AggregatePath.ColumnInfos reverseColumnInfos = basePath.getTableInfo().reverseColumnInfos();
 		return AnalyticFunction.create("row_number") //
-				.partitionBy(table.column(basePath.getTableInfo().reverseColumnInfo().name())) //
-				.orderBy(table.column(basePath.getTableInfo().reverseColumnInfo().name())) //
+				.partitionBy(reverseColumnInfos.toList(ci -> table.column(ci.name()))) //
+				.orderBy(reverseColumnInfos.toList(ci -> table.column(ci.name()))) //
 				.as(rowNumberAlias);
 	}
 

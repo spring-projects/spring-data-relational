@@ -19,8 +19,11 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.util.Lazy;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentLruCache;
@@ -95,6 +98,20 @@ class DefaultAggregatePath implements AggregatePath {
 	@Override
 	public AggregatePath append(RelationalPersistentProperty property) {
 		return nestedCache.get(property);
+	}
+
+	@Override
+	public AggregatePath append(AggregatePath path) {
+
+		if (path.isRoot()) {
+			return this;
+		}
+
+		RelationalPersistentProperty baseProperty = path.getRequiredBaseProperty();
+		AggregatePath appended = append(baseProperty);
+		AggregatePath tail = path.getTail();
+		return tail == null ? appended : appended.append(tail);
+
 	}
 
 	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
@@ -194,6 +211,47 @@ class DefaultAggregatePath implements AggregatePath {
 		return AggregatePathTraversal.getIdDefiningPath(this);
 	}
 
+	@Override
+	public AggregatePath getTail() {
+
+		if (getLength() <= 2) {
+			return null;
+		}
+
+		AggregatePath tail = null;
+		for (RelationalPersistentProperty prop : this.path) {
+			if (tail == null) {
+				tail = context.getAggregatePath(context.getPersistentEntity(prop));
+			} else {
+				tail = tail.append(prop);
+			}
+		}
+		return tail;
+	}
+
+	@Override
+	@Nullable
+	public AggregatePath substract(@Nullable AggregatePath basePath) {
+
+		if (basePath == null || basePath.isRoot()) {
+			return this;
+		}
+
+		if (this.isRoot()) {
+			throw new IllegalStateException("Can't subtract from root path");
+		}
+
+		if (basePath.getRequiredBaseProperty().equals(getRequiredBaseProperty())) {
+			AggregatePath tail = this.getTail();
+			if (tail == null) {
+				return null;
+			}
+			return tail.substract(basePath.getTail());
+		}
+
+		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
+	}
+
 	/**
 	 * Finds and returns the longest path with ich identical or an ancestor to the current path and maps directly to a
 	 * table.
@@ -246,6 +304,11 @@ class DefaultAggregatePath implements AggregatePath {
 		return "AggregatePath["
 				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
 				+ ((isRoot()) ? "/" : path.toDotPath());
+	}
+
+	@Override
+	public int compareTo(@NonNull AggregatePath other) {
+		return toDotPath().compareTo(other.toDotPath());
 	}
 
 	private static class AggregatePathIterator implements Iterator<AggregatePath> {
