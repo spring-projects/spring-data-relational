@@ -22,6 +22,8 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -62,9 +64,9 @@ class DefaultAggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path("second.third2.value").getParentPath()).isEqualTo(path("second.third2"));
-			softly.assertThat(path("second.third2").getParentPath()).isEqualTo(path("second"));
-			softly.assertThat(path("second").getParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("second.third2.value").getParentPath()).isEqualTo(path("second.third2"));
+			softly.assertThat((Object) path("second.third2").getParentPath()).isEqualTo(path("second"));
+			softly.assertThat((Object) path("second").getParentPath()).isEqualTo(path());
 
 			softly.assertThatThrownBy(() -> path().getParentPath()).isInstanceOf(IllegalStateException.class);
 		});
@@ -94,14 +96,15 @@ class DefaultAggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path("second.third2.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("second.third.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("secondList.third2.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("secondList.third.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("second2.third2.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("second2.third.value").getIdDefiningParentPath()).isEqualTo(path());
-			softly.assertThat(path("withId.second.third2.value").getIdDefiningParentPath()).isEqualTo(path("withId"));
-			softly.assertThat(path("withId.second.third.value").getIdDefiningParentPath()).isEqualTo(path("withId"));
+			softly.assertThat((Object) path("second.third2.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("second.third.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("secondList.third2.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("secondList.third.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("second2.third2.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("second2.third.value").getIdDefiningParentPath()).isEqualTo(path());
+			softly.assertThat((Object) path("withId.second.third2.value").getIdDefiningParentPath())
+					.isEqualTo(path("withId"));
+			softly.assertThat((Object) path("withId.second.third.value").getIdDefiningParentPath()).isEqualTo(path("withId"));
 		});
 	}
 
@@ -121,13 +124,13 @@ class DefaultAggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path("second.third2").getTableInfo().reverseColumnInfo().name())
+			softly.assertThat((Object) path("second.third2").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("DUMMY_ENTITY"));
-			softly.assertThat(path("second.third").getTableInfo().reverseColumnInfo().name())
+			softly.assertThat((Object) path("second.third").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("DUMMY_ENTITY"));
-			softly.assertThat(path("secondList.third2").getTableInfo().reverseColumnInfo().name())
+			softly.assertThat((Object) path("secondList.third2").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("DUMMY_ENTITY"));
-			softly.assertThat(path("secondList.third").getTableInfo().reverseColumnInfo().name())
+			softly.assertThat((Object) path("secondList.third").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("DUMMY_ENTITY"));
 			softly.assertThat(path("second2.third").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("DUMMY_ENTITY"));
@@ -137,6 +140,17 @@ class DefaultAggregatePathUnitTests {
 					.isEqualTo(quoted("WITH_ID"));
 			softly.assertThat(path("withId.second2.third").getTableInfo().reverseColumnInfo().name())
 					.isEqualTo(quoted("WITH_ID"));
+		});
+	}
+
+	@Test // GH-574
+	void reverseColumnNames() {
+
+		assertSoftly(softly -> {
+			softly.assertThat(path(CompoundIdEntity.class, "second").getTableInfo().reverseColumnInfos().toList(x -> x))
+					.extracting(AggregatePath.ColumnInfo::name)
+					.containsExactlyInAnyOrder(quoted("COMPOUND_ID_ENTITY_ONE"), quoted("COMPOUND_ID_ENTITY_TWO"));
+
 		});
 	}
 
@@ -172,8 +186,9 @@ class DefaultAggregatePathUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(path().append(entity.getRequiredPersistentProperty("withId"))).isEqualTo(path("withId"));
-			softly.assertThat(path("withId").append(path("withId").getRequiredIdProperty()))
+			softly.assertThat((Object) path().append(entity.getRequiredPersistentProperty("withId")))
+					.isEqualTo(path("withId"));
+			softly.assertThat((Object) path("withId").append(path("withId").getRequiredIdProperty()))
 					.isEqualTo(path("withId.withIdId"));
 		});
 	}
@@ -229,9 +244,9 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second").isMultiValued()).isFalse();
 			softly.assertThat(path("second.third2").isMultiValued()).isFalse();
 			softly.assertThat(path("secondList.third2").isMultiValued()).isTrue(); // this seems wrong as third2 is an
-																																							// embedded path into Second, held by
-																																							// List<Second> (so the parent is
-																																							// multi-valued but not third2).
+			// embedded path into Second, held by
+			// List<Second> (so the parent is
+			// multi-valued but not third2).
 			// TODO: This test fails because MultiValued considers parents.
 			// softly.assertThat(path("secondList.third.value").isMultiValued()).isFalse();
 			softly.assertThat(path("secondList").isMultiValued()).isTrue();
@@ -306,13 +321,13 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second.third2").getTableInfo().tableAlias()).isEqualTo(quoted("second"));
 			softly.assertThat(path("second.third2.value").getTableInfo().tableAlias()).isEqualTo(quoted("second"));
 			softly.assertThat(path("second.third").getTableInfo().tableAlias()).isEqualTo(quoted("second_third")); // missing
-																																																							// _
+			// _
 			softly.assertThat(path("second.third.value").getTableInfo().tableAlias()).isEqualTo(quoted("second_third")); // missing
-																																																										// _
+			// _
 			softly.assertThat(path("secondList.third2").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(path("secondList.third2.value").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
 			softly.assertThat(path("secondList.third").getTableInfo().tableAlias()).isEqualTo(quoted("secondList_third")); // missing
-																																																											// _
+			// _
 			softly.assertThat(path("secondList.third.value").getTableInfo().tableAlias())
 					.isEqualTo(quoted("secondList_third")); // missing _
 			softly.assertThat(path("secondList").getTableInfo().tableAlias()).isEqualTo(quoted("secondList"));
@@ -417,20 +432,6 @@ class DefaultAggregatePathUnitTests {
 	}
 
 	@Test // GH-1525
-	void getIdColumnName() {
-
-		assertSoftly(softly -> {
-
-			softly.assertThat(path().getTableInfo().idColumnName()).isEqualTo(quoted("ENTITY_ID"));
-			softly.assertThat(path("withId").getTableInfo().idColumnName()).isEqualTo(quoted("WITH_ID_ID"));
-
-			softly.assertThat(path("second").getTableInfo().idColumnName()).isNull();
-			softly.assertThat(path("second.third2").getTableInfo().idColumnName()).isNull();
-			softly.assertThat(path("withId.second").getTableInfo().idColumnName()).isNull();
-		});
-	}
-
-	@Test // GH-1525
 	void toDotPath() {
 
 		assertSoftly(softly -> {
@@ -452,35 +453,76 @@ class DefaultAggregatePathUnitTests {
 		});
 	}
 
-	@Test // GH-1525
-	void getEffectiveIdColumnName() {
+	@Test
+	// GH-1525
+	void getLength() {
 
 		assertSoftly(softly -> {
+			softly.assertThat(path().getLength()).isEqualTo(1);
+			softly.assertThat(path().stream().collect(Collectors.toList())).hasSize(1);
 
-			softly.assertThat(path().getTableInfo().effectiveIdColumnName()).isEqualTo(quoted("ENTITY_ID"));
-			softly.assertThat(path("second.third2").getTableInfo().effectiveIdColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
-			softly.assertThat(path("withId.second.third").getTableInfo().effectiveIdColumnName())
-					.isEqualTo(quoted("WITH_ID"));
-			softly.assertThat(path("withId.second.third2.value").getTableInfo().effectiveIdColumnName())
-					.isEqualTo(quoted("WITH_ID"));
+			softly.assertThat(path("second.third2").getLength()).isEqualTo(3);
+			softly.assertThat(path("second.third2").stream().collect(Collectors.toList())).hasSize(3);
+
+			softly.assertThat(path("withId.second.third").getLength()).isEqualTo(4);
+			softly.assertThat(path("withId.second.third2.value").getLength()).isEqualTo(5);
 		});
 	}
 
-	@Test // GH-1525
-	void getLength() {
+	@Test // GH-574
+	void getTail() {
 
-		assertThat(path().getLength()).isEqualTo(1);
-		assertThat(path().stream().collect(Collectors.toList())).hasSize(1);
+		assertSoftly(softly -> {
 
-		assertThat(path("second.third2").getLength()).isEqualTo(3);
-		assertThat(path("second.third2").stream().collect(Collectors.toList())).hasSize(3);
+			softly.assertThat((Object) path().getTail()).isEqualTo(null);
+			softly.assertThat((Object) path("second").getTail()).isEqualTo(null);
+			softly.assertThat(path("second.third").getTail().toDotPath()).isEqualTo("third");
+			softly.assertThat(path("second.third.value").getTail().toDotPath()).isEqualTo("third.value");
+		});
+	}
 
-		assertThat(path("withId.second.third").getLength()).isEqualTo(4);
-		assertThat(path("withId.second.third2.value").getLength()).isEqualTo(5);
+	@Test // GH-74
+	void append() {
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(path("second").append(path()).toDotPath()).isEqualTo("second");
+			softly.assertThat(path().append(path("second")).toDotPath()).isEqualTo("second");
+			softly.assertThat(path().append(path("second.third")).toDotPath()).isEqualTo("second.third");
+			AggregatePath value = path("second.third.value").getTail().getTail();
+			softly.assertThat(path("second.third").append(value).toDotPath()).isEqualTo("second.third.value");
+		});
+	}
+
+	@Test // GH-574
+	void sortPaths() {
+
+		Set<AggregatePath> sorted = new TreeSet<>();
+
+		AggregatePath alpha = path();
+		AggregatePath as = path("second");
+		AggregatePath ast = path("second.third");
+		AggregatePath aw = path("withId");
+
+		sorted.add(aw);
+		sorted.add(ast);
+		sorted.add(as);
+		sorted.add(alpha);
+
+		assertThat(sorted).containsExactly(alpha, as, ast, aw);
+
 	}
 
 	private AggregatePath path() {
 		return context.getAggregatePath(entity);
+	}
+
+	private AggregatePath path(RelationalPersistentEntity<?> entity) {
+		return context.getAggregatePath(entity);
+	}
+
+	private AggregatePath path(Class<?> entityType, String path) {
+		return context.getAggregatePath(createSimplePath(entityType, path));
 	}
 
 	private AggregatePath path(String path) {
@@ -488,7 +530,12 @@ class DefaultAggregatePathUnitTests {
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> createSimplePath(String path) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, DummyEntity.class);
+		return createSimplePath(entity.getType(), path);
+	}
+
+	PersistentPropertyPath<RelationalPersistentProperty> createSimplePath(Class<?> entityType, String path) {
+
+		return PersistentPropertyPathTestUtils.getPath(context, path, entityType);
 	}
 
 	@SuppressWarnings("unused")
@@ -500,6 +547,12 @@ class DefaultAggregatePathUnitTests {
 		List<Second> secondList;
 		Map<String, Second> secondMap;
 		WithId withId;
+	}
+
+	record CompoundId(Long one, String two) {
+	}
+
+	record CompoundIdEntity(@Id CompoundId id, Second second) {
 	}
 
 	@SuppressWarnings("unused")

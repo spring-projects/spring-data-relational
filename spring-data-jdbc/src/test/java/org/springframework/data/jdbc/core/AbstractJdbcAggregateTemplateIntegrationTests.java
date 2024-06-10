@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -686,7 +685,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	void saveAndLoadAnEntityWithEmptyArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
-		arrayOwner.digits = new String[] { };
+		arrayOwner.digits = new String[] {};
 
 		ArrayOwner saved = template.save(arrayOwner);
 
@@ -810,7 +809,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new HashSet<>(asList("one", "two", "three")));
 	}
 
-	@Test //GH-1737
+	@Test // GH-1737
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	void saveAndLoadEmbeddedArray() {
 
@@ -825,7 +824,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.embeddedStringList.digits).containsExactly("one", "two", "three");
 	}
 
-	@Test //GH-1737
+	@Test // GH-1737
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	void saveAndLoadEmptyEmbeddedArray() {
 
