@@ -44,7 +44,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.*;
+import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.mapping.model.EntityInstantiator;
+import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
+import org.springframework.data.mapping.model.PropertyValueProvider;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.ValueExpressionEvaluator;
+import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -66,6 +75,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * {@link org.springframework.data.relational.core.conversion.RelationalConverter} that uses a
@@ -1164,37 +1174,15 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			if (value == null) {
 				return false;
 			}
+
 			if (!path.isCollectionLike()) {
 				return true;
 			}
 
-			if (value instanceof char[] ar) {
-				return ar.length != 0;
+			if (value instanceof Collection<?> || value.getClass().isArray()) {
+				return !ObjectUtils.isEmpty(value);
 			}
-			if (value instanceof byte[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof short[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof int[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof long[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof float[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof double[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof Object[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof Collection<?> col) {
-				return !col.isEmpty();
-			}
+
 			return true;
 		}
 
