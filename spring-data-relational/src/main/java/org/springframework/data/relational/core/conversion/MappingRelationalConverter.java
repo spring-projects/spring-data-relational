@@ -41,7 +41,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.*;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
+import org.springframework.data.mapping.model.EntityInstantiator;
+import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
+import org.springframework.data.mapping.model.PropertyValueProvider;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -61,6 +70,7 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * {@link org.springframework.data.relational.core.conversion.RelationalConverter} that uses a
@@ -1139,37 +1149,15 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			if (value == null) {
 				return false;
 			}
+
 			if (!path.isCollectionLike()) {
 				return true;
 			}
 
-			if (value instanceof char[] ar) {
-				return ar.length != 0;
+			if (value instanceof Collection<?> || value.getClass().isArray()) {
+				return !ObjectUtils.isEmpty(value);
 			}
-			if (value instanceof byte[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof short[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof int[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof long[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof float[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof double[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof Object[] ar) {
-				return ar.length != 0;
-			}
-			if (value instanceof Collection<?> col) {
-				return !col.isEmpty();
-			}
+
 			return true;
 		}
 
@@ -1227,7 +1215,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * @param delegate must not be {@literal null}.
 		 */
 		public ConverterAwareSpELExpressionParameterValueProvider(ConversionContext context,
-				SpELExpressionEvaluator evaluator, ConversionService conversionService, ParameterValueProvider<RelationalPersistentProperty> delegate) {
+				SpELExpressionEvaluator evaluator, ConversionService conversionService,
+				ParameterValueProvider<RelationalPersistentProperty> delegate) {
 
 			super(evaluator, conversionService, delegate);
 
