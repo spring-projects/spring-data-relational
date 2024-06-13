@@ -33,6 +33,7 @@
 		<!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
 		<db2.version>11.5.8.0</db2.version>
 		<h2.version>2.1.214</h2.version>
+		<hikari.version>5.1.0</hikari.version>
 		<hsqldb.version>2.7.1</hsqldb.version>
 		<mariadb-java-client.version>3.1.3</mariadb-java-client.version>
 		<mssql.version>12.2.0.jre11</mssql.version>
@@ -40,7 +41,7 @@
 		<postgresql.version>42.6.0</postgresql.version>
 		<oracle.version>23.4.0.24.05</oracle.version>
 
-		<!-- test utilities-->
+		<!-- test dependencies -->
 		<awaitility.version>4.2.0</awaitility.version>
 		<archunit.version>1.0.1</archunit.version>
 
