@@ -25,7 +25,7 @@ import org.testcontainers.utility.ImageNameSubstitutor;
 /**
  * An {@link ImageNameSubstitutor} only used on CI servers to leverage internal proxy solution, that needs to vary the
  * prefix based on which container image is needed.
- * 
+ *
  * @author Greg Turnquist
  */
 public class ProxyImageNameSubstitutor extends ImageNameSubstitutor {
@@ -37,13 +37,9 @@ public class ProxyImageNameSubstitutor extends ImageNameSubstitutor {
 
 	private static final List<String> NAMES_TO_LIBRARY_PROXY_PREFIX = List.of("mariadb", "mysql", "postgres");
 
-	private static final List<String> NAMES_TO_MCR_PROXY_PREFIX = List.of("mcr.microsoft.com/mssql");
-
-	private static final String PROXY_PREFIX = "harbor-repo.vmware.com/dockerhub-proxy-cache/";
+	private static final String PROXY_PREFIX = "docker-hub.usw1.packages.broadcom.com/";
 
 	private static final String LIBRARY_PROXY_PREFIX = PROXY_PREFIX + "library/";
-
-	private static final String MCR_PROXY_PREFIX = "harbor-repo.vmware.com/mcr-proxy-cache/";
 
 	@Override
 	public DockerImageName apply(DockerImageName dockerImageName) {
@@ -58,13 +54,6 @@ public class ProxyImageNameSubstitutor extends ImageNameSubstitutor {
 		if (NAMES_TO_LIBRARY_PROXY_PREFIX.stream().anyMatch(s -> dockerImageName.asCanonicalNameString().contains(s))) {
 
 			String transformedName = applyProxyAndLibraryPrefix(dockerImageName.asCanonicalNameString());
-			LOG.info("Converting " + dockerImageName.asCanonicalNameString() + " to " + transformedName);
-			return DockerImageName.parse(transformedName);
-		}
-
-		if (NAMES_TO_MCR_PROXY_PREFIX.stream().anyMatch(s -> dockerImageName.asCanonicalNameString().contains(s))) {
-
-			String transformedName = applyMcrProxyPrefix(dockerImageName.asCanonicalNameString());
 			LOG.info("Converting " + dockerImageName.asCanonicalNameString() + " to " + transformedName);
 			return DockerImageName.parse(transformedName);
 		}
@@ -92,10 +81,4 @@ public class ProxyImageNameSubstitutor extends ImageNameSubstitutor {
 		return LIBRARY_PROXY_PREFIX + imageName;
 	}
 
-	/**
-	 * Apply an MCR-based prefix.
-	 */
-	private static String applyMcrProxyPrefix(String imageName) {
-		return MCR_PROXY_PREFIX + imageName.substring("mcr.microsoft.com/".length());
-	}
 }
