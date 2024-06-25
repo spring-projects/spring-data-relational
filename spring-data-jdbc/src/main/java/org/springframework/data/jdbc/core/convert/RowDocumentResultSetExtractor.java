@@ -22,6 +22,8 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.AggregateContext;
 import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.RowDocumentSink;
@@ -42,6 +44,9 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * @since 3.2
  */
 class RowDocumentResultSetExtractor {
+
+	private static final Logger log = LoggerFactory.getLogger(RowDocumentResultSetExtractor.class);
+	public static final String DUPLICATE_COLUMN_WARNING = "ResultSet contains column \"{}\" multiple times. Later column index is {}";
 
 	private final RelationalMappingContext context;
 	private final PathToColumnMapping propertyToColumn;
@@ -66,9 +71,13 @@ class RowDocumentResultSetExtractor {
 		RowDocument document = new RowDocument(columnCount);
 
 		for (int i = 0; i < columnCount; i++) {
+
 			Object rsv = JdbcUtils.getResultSetValue(resultSet, i + 1);
 			String columnName = md.getColumnLabel(i + 1);
-			document.put(columnName, rsv instanceof Array a ? a.getArray() : rsv);
+			Object old = document.put(columnName, rsv instanceof Array a ? a.getArray() : rsv);
+			if (old != null) {
+				log.warn(DUPLICATE_COLUMN_WARNING, columnName, i);
+			}
 		}
 
 		return document;
@@ -107,7 +116,12 @@ class RowDocumentResultSetExtractor {
 				Map<String, Integer> columns = new LinkedCaseInsensitiveMap<>(metaData.getColumnCount());
 
 				for (int i = 0; i < metaData.getColumnCount(); i++) {
-					columns.put(metaData.getColumnLabel(i + 1), i + 1);
+
+					String columnLabel = metaData.getColumnLabel(i + 1);
+					Object old = columns.put(columnLabel, i + 1);
+					if (old != null) {
+						log.warn(DUPLICATE_COLUMN_WARNING, columnLabel, i);
+					}
 				}
 				return columns;
 			} catch (SQLException e) {
