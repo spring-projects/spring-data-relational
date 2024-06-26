@@ -681,6 +681,26 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new String[] { "one", "two", "three" });
 	}
 
+	@Test // GH-1826
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	void saveAndLoadAnEntityWithEmptyArray() {
+
+		ArrayOwner arrayOwner = new ArrayOwner();
+		arrayOwner.digits = new String[] { };
+
+		ArrayOwner saved = template.save(arrayOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		ArrayOwner reloaded = template.findById(saved.id, ArrayOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
 	@Test // DATAJDBC-259, DATAJDBC-512
 	@EnabledOnFeature(SUPPORTS_MULTIDIMENSIONAL_ARRAYS)
 	void saveAndLoadAnEntityWithMultidimensionalArray() {
@@ -716,6 +736,23 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
 		assertThat(reloaded.digits).isEqualTo(asList("one", "two", "three"));
+	}
+
+	@Test // DATAJDBC-1826
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	void saveAndLoadAnEntityWithEmptyList() {
+
+		ListOwner arrayOwner = new ListOwner();
+
+		ListOwner saved = template.save(arrayOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		ListOwner reloaded = template.findById(saved.id, ListOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits).isNotNull().isEmpty();
 	}
 
 	@Test // GH-1033

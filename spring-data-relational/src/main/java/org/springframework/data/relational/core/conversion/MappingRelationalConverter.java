@@ -466,6 +466,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 				return withContext(context.forProperty(property)).hasValue(property);
 			}
 
+			@Override
+			public boolean hasNonEmptyValue(RelationalPersistentProperty property) {
+				return withContext(context.forProperty(property)).hasNonEmptyValue(property);
+			}
+
 			@SuppressWarnings("unchecked")
 			@Nullable
 			@Override
@@ -541,6 +546,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 				continue;
 			}
 
+			// this hasValue should actually check against null
 			if (!valueProviderToUse.hasValue(property)) {
 				continue;
 			}
@@ -584,7 +590,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 					return true;
 				}
 
-			} else if (contextual.hasValue(persistentProperty)) {
+			} else if (contextual.hasNonEmptyValue(persistentProperty)) {
 				return true;
 			}
 		}
@@ -1028,6 +1034,13 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		boolean hasValue(RelationalPersistentProperty property);
 
 		/**
+		 * Determine whether there is a non empty value for the given {@link RelationalPersistentProperty}.
+		 *
+		 * @param property the property to check for whether a value is present.
+		 */
+		boolean hasNonEmptyValue(RelationalPersistentProperty property);
+
+		/**
 		 * Contextualize this property value provider.
 		 *
 		 * @param context the context to use.
@@ -1047,6 +1060,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		 * @param path the path to check for whether a value is present.
 		 */
 		boolean hasValue(AggregatePath path);
+
+		boolean hasNonEmptyValue(AggregatePath aggregatePath);
 
 		/**
 		 * Determine whether there is a value for the given {@link SqlIdentifier}.
@@ -1129,6 +1144,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			return accessor.hasValue(property);
 		}
 
+		@Override
+		public boolean hasNonEmptyValue(RelationalPersistentProperty property) {
+			return hasValue(property);
+		}
+
 		@Nullable
 		@Override
 		public Object getValue(AggregatePath path) {
@@ -1144,6 +1164,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 
 		@Override
 		public boolean hasValue(AggregatePath path) {
+
 			Object value = document.get(path.getColumnInfo().alias().getReference());
 
 			if (value == null) {
@@ -1153,6 +1174,18 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 			if (!path.isCollectionLike()) {
 				return true;
 			}
+
+			return true;
+		}
+
+		@Override
+		public boolean hasNonEmptyValue(AggregatePath path) {
+
+			if (!hasValue(path)) {
+				return false;
+			}
+
+			Object value = document.get(path.getColumnInfo().alias().getReference());
 
 			if (value instanceof Collection<?> || value.getClass().isArray()) {
 				return !ObjectUtils.isEmpty(value);
