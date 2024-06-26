@@ -44,6 +44,7 @@ import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
@@ -68,50 +69,50 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				AuditingAnnotatedDummyEntityRepository.class, //
 				Config.class, //
 				AuditingConfiguration.class) //
-						.accept(repository -> {
+				.accept(repository -> {
 
-							AuditingConfiguration.currentAuditor = "user01";
-							LocalDateTime now = LocalDateTime.now();
+					AuditingConfiguration.currentAuditor = "user01";
+					LocalDateTime now = LocalDateTime.now();
 
-							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+					AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							assertThat(entity.id).as("id not null").isNotNull();
-							assertThat(entity.getCreatedBy()).as("created by set").isEqualTo("user01");
-							assertThat(entity.getCreatedDate()).as("created date set").isAfter(now);
-							assertThat(entity.getLastModifiedBy()).as("modified by set").isEqualTo("user01");
-							assertThat(entity.getLastModifiedDate()).as("modified date set")
-									.isAfterOrEqualTo(entity.getCreatedDate());
-							assertThat(entity.getLastModifiedDate()).as("modified date after instance creation").isAfter(now);
+					assertThat(entity.id).as("id not null").isNotNull();
+					assertThat(entity.getCreatedBy()).as("created by set").isEqualTo("user01");
+					assertThat(entity.getCreatedDate()).as("created date set").isAfter(now);
+					assertThat(entity.getLastModifiedBy()).as("modified by set").isEqualTo("user01");
+					assertThat(entity.getLastModifiedDate()).as("modified date set")
+							.isAfterOrEqualTo(entity.getCreatedDate());
+					assertThat(entity.getLastModifiedDate()).as("modified date after instance creation").isAfter(now);
 
-							AuditingAnnotatedDummyEntity reloaded = repository.findById(entity.id).get();
+					AuditingAnnotatedDummyEntity reloaded = repository.findById(entity.id).get();
 
-							assertThat(reloaded.getCreatedBy()).as("reload created by").isNotNull();
-							assertThat(reloaded.getCreatedDate()).as("reload created date").isNotNull();
-							assertThat(reloaded.getLastModifiedBy()).as("reload modified by").isNotNull();
-							assertThat(reloaded.getLastModifiedDate()).as("reload modified date").isNotNull();
+					assertThat(reloaded.getCreatedBy()).as("reload created by").isNotNull();
+					assertThat(reloaded.getCreatedDate()).as("reload created date").isNotNull();
+					assertThat(reloaded.getLastModifiedBy()).as("reload modified by").isNotNull();
+					assertThat(reloaded.getLastModifiedDate()).as("reload modified date").isNotNull();
 
-							LocalDateTime beforeCreatedDate = entity.getCreatedDate();
-							LocalDateTime beforeLastModifiedDate = entity.getLastModifiedDate();
+					LocalDateTime beforeCreatedDate = entity.getCreatedDate();
+					LocalDateTime beforeLastModifiedDate = entity.getLastModifiedDate();
 
-							sleepMillis(10);
+					sleepMillis(10);
 
-							AuditingConfiguration.currentAuditor = "user02";
+					AuditingConfiguration.currentAuditor = "user02";
 
-							entity = repository.save(entity);
+					entity = repository.save(entity);
 
-							assertThat(entity.getCreatedBy()).as("created by unchanged").isEqualTo("user01");
-							assertThat(entity.getCreatedDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
-							assertThat(entity.getLastModifiedBy()).as("modified by updated").isEqualTo("user02");
-							assertThat(entity.getLastModifiedDate()).as("modified date updated")
-									.isAfter(beforeLastModifiedDate);
+					assertThat(entity.getCreatedBy()).as("created by unchanged").isEqualTo("user01");
+					assertThat(entity.getCreatedDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
+					assertThat(entity.getLastModifiedBy()).as("modified by updated").isEqualTo("user02");
+					assertThat(entity.getLastModifiedDate()).as("modified date updated")
+							.isAfter(beforeLastModifiedDate);
 
-							reloaded = repository.findById(entity.id).get();
+					reloaded = repository.findById(entity.id).get();
 
-							assertThat(reloaded.getCreatedBy()).as("2. reload created by").isNotNull();
-							assertThat(reloaded.getCreatedDate()).as("2. reload created date").isNotNull();
-							assertThat(reloaded.getLastModifiedBy()).as("2. reload modified by").isNotNull();
-							assertThat(reloaded.getLastModifiedDate()).as("2. reload modified date").isNotNull();
-						});
+					assertThat(reloaded.getCreatedBy()).as("2. reload created by").isNotNull();
+					assertThat(reloaded.getCreatedDate()).as("2. reload created date").isNotNull();
+					assertThat(reloaded.getLastModifiedBy()).as("2. reload modified by").isNotNull();
+					assertThat(reloaded.getLastModifiedDate()).as("2. reload modified date").isNotNull();
+				});
 	}
 
 	@Test // DATAJDBC-204
@@ -121,17 +122,17 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				DummyEntityRepository.class, //
 				Config.class, //
 				AuditingConfiguration.class) //
-						.accept(repository -> {
+				.accept(repository -> {
 
-							DummyEntity entity = repository.save(new DummyEntity());
+					DummyEntity entity = repository.save(new DummyEntity());
 
-							assertThat(entity.id).isNotNull();
-							assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+					assertThat(entity.id).isNotNull();
+					assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
 
-							entity = repository.save(entity);
+					entity = repository.save(entity);
 
-							assertThat(repository.findById(entity.id)).contains(entity);
-						});
+					assertThat(repository.findById(entity.id)).contains(entity);
+				});
 	}
 
 	@Test // DATAJDBC-204
@@ -141,19 +142,19 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				AuditingAnnotatedDummyEntityRepository.class, //
 				Config.class, //
 				CustomizeAuditorAwareAndDateTimeProvider.class) //
-						.accept(repository -> {
+				.accept(repository -> {
 
-							LocalDateTime currentDateTime = LocalDate.of(2018, 4, 14).atStartOfDay();
-							CustomizeAuditorAwareAndDateTimeProvider.currentDateTime = currentDateTime;
+					LocalDateTime currentDateTime = LocalDate.of(2018, 4, 14).atStartOfDay();
+					CustomizeAuditorAwareAndDateTimeProvider.currentDateTime = currentDateTime;
 
-							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+					AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							assertThat(entity.id).isNotNull();
-							assertThat(entity.getCreatedBy()).isEqualTo("custom user");
-							assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
-							assertThat(entity.getLastModifiedBy()).isNull();
-							assertThat(entity.getLastModifiedDate()).isNull();
-						});
+					assertThat(entity.id).isNotNull();
+					assertThat(entity.getCreatedBy()).isEqualTo("custom user");
+					assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
+					assertThat(entity.getLastModifiedBy()).isNull();
+					assertThat(entity.getLastModifiedDate()).isNull();
+				});
 	}
 
 	@Test // DATAJDBC-204
@@ -163,16 +164,16 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				AuditingAnnotatedDummyEntityRepository.class, //
 				Config.class, //
 				CustomizeAuditorAware.class) //
-						.accept(repository -> {
+				.accept(repository -> {
 
-							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+					AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							assertThat(entity.id).isNotNull();
-							assertThat(entity.getCreatedBy()).isEqualTo("user");
-							assertThat(entity.getCreatedDate()).isNull();
-							assertThat(entity.getLastModifiedBy()).isEqualTo("user");
-							assertThat(entity.getLastModifiedDate()).isNull();
-						});
+					assertThat(entity.id).isNotNull();
+					assertThat(entity.getCreatedBy()).isEqualTo("user");
+					assertThat(entity.getCreatedDate()).isNull();
+					assertThat(entity.getLastModifiedBy()).isEqualTo("user");
+					assertThat(entity.getLastModifiedDate()).isNull();
+				});
 	}
 
 	@Test // DATAJDBC-390
@@ -193,21 +194,97 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				});
 	}
 
+
+	@Test // DATAJDBC-1694
+	public void auditEmbeddedRecord() {
+
+		configureRepositoryWith( //
+				DummyEntityWithEmbeddedRecordRepository.class, //
+				Config.class, //
+				AuditingConfiguration.class) //
+				.accept(repository -> {
+
+					AuditingConfiguration.currentAuditor = "user01";
+					LocalDateTime now = LocalDateTime.now();
+
+					DummyEntityWithEmbeddedRecord entity = repository.save(new DummyEntityWithEmbeddedRecord(null, new EmbeddedAuditing(null, null, null, null)));
+
+					assertThat(entity.id).as("id not null").isNotNull();
+					assertThat(entity.auditing.createdBy).as("created by set").isEqualTo("user01");
+					assertThat(entity.auditing.createdDate()).as("created date set").isAfter(now);
+					assertThat(entity.auditing.lastModifiedBy()).as("modified by set").isEqualTo("user01");
+					assertThat(entity.auditing.lastModifiedDate()).as("modified date set")
+							.isAfterOrEqualTo(entity.auditing.createdDate());
+					assertThat(entity.auditing.lastModifiedDate()).as("modified date after instance creation").isAfter(now);
+
+					DummyEntityWithEmbeddedRecord reloaded = repository.findById(entity.id).get();
+
+					assertThat(reloaded.auditing.createdBy()).as("reload created by").isNotNull();
+					assertThat(reloaded.auditing.createdDate()).as("reload created date").isNotNull();
+					assertThat(reloaded.auditing.lastModifiedBy()).as("reload modified by").isNotNull();
+					assertThat(reloaded.auditing.lastModifiedDate()).as("reload modified date").isNotNull();
+
+					LocalDateTime beforeCreatedDate = entity.auditing().createdDate;
+					LocalDateTime beforeLastModifiedDate = entity.auditing().lastModifiedDate;
+
+					sleepMillis(10);
+
+					AuditingConfiguration.currentAuditor = "user02";
+
+					entity = repository.save(entity);
+
+					assertThat(entity.auditing.createdBy()).as("created by unchanged").isEqualTo("user01");
+					assertThat(entity.auditing.createdDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
+					assertThat(entity.auditing.lastModifiedBy()).as("modified by updated").isEqualTo("user02");
+					assertThat(entity.auditing.lastModifiedDate()).as("modified date updated")
+							.isAfter(beforeLastModifiedDate);
+
+					reloaded = repository.findById(entity.id).get();
+
+					assertThat(reloaded.auditing.createdBy()).as("2. reload created by").isNotNull();
+					assertThat(reloaded.auditing.createdDate()).as("2. reload created date").isNotNull();
+					assertThat(reloaded.auditing.lastModifiedBy()).as("2. reload modified by").isNotNull();
+					assertThat(reloaded.auditing.lastModifiedDate()).as("2. reload modified date").isNotNull();
+				});
+	}
+	@Test // DATAJDBC-1694
+	public void auditEmbeddedNullRecordStaysNull() {
+
+		configureRepositoryWith( //
+				DummyEntityWithEmbeddedRecordRepository.class, //
+				Config.class, //
+				AuditingConfiguration.class) //
+				.accept(repository -> {
+
+					AuditingConfiguration.currentAuditor = "user01";
+
+					DummyEntityWithEmbeddedRecord entity = repository.save(new DummyEntityWithEmbeddedRecord(null, null));
+
+					assertThat(entity.id).as("id not null").isNotNull();
+					assertThat(entity.auditing).isNull();
+
+					DummyEntityWithEmbeddedRecord reloaded = repository.findById(entity.id).get();
+
+					assertThat(reloaded.auditing).isNull();
+				});
+	}
+
+
 	/**
 	 * Usage looks like this:
 	 * <p>
 	 * {@code configure(MyRepository.class, MyConfiguration) .accept(repository -> { // perform tests on repository here
 	 * }); }
 	 *
-	 * @param repositoryType the type of repository you want to perform tests on.
+	 * @param repositoryType       the type of repository you want to perform tests on.
 	 * @param configurationClasses the classes containing the configuration for the
-	 *          {@link org.springframework.context.ApplicationContext}.
-	 * @param <T> type of the entity managed by the repository.
-	 * @param <R> type of the repository.
+	 *                             {@link org.springframework.context.ApplicationContext}.
+	 * @param <T>                  type of the entity managed by the repository.
+	 * @param <R>                  type of the repository.
 	 * @return a Consumer for repositories of type {@code R}.
 	 */
 	private <T, R extends CrudRepository<T, Long>> Consumer<Consumer<R>> configureRepositoryWith(Class<R> repositoryType,
-			Class... configurationClasses) {
+																								 Class... configurationClasses) {
 
 		return (Consumer<R> test) -> {
 
@@ -228,15 +305,21 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		}
 	}
 
-	interface AuditingAnnotatedDummyEntityRepository extends CrudRepository<AuditingAnnotatedDummyEntity, Long> {}
+	interface AuditingAnnotatedDummyEntityRepository extends CrudRepository<AuditingAnnotatedDummyEntity, Long> {
+	}
 
 	static class AuditingAnnotatedDummyEntity {
 
-		@Id long id;
-		@CreatedBy String createdBy;
-		@CreatedDate LocalDateTime createdDate;
-		@LastModifiedBy String lastModifiedBy;
-		@LastModifiedDate LocalDateTime lastModifiedDate;
+		@Id
+		long id;
+		@CreatedBy
+		String createdBy;
+		@CreatedDate
+		LocalDateTime createdDate;
+		@LastModifiedBy
+		String lastModifiedBy;
+		@LastModifiedDate
+		LocalDateTime lastModifiedDate;
 
 		public long getId() {
 			return this.id;
@@ -279,11 +362,13 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		}
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+	}
 
 	static class DummyEntity {
 
-		@Id private Long id;
+		@Id
+		private Long id;
 		// not actually used, exists just to avoid empty value list during insert.
 		String name;
 
@@ -317,6 +402,22 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		public int hashCode() {
 			return Objects.hash(id, name);
 		}
+	}
+
+	record DummyEntityWithEmbeddedRecord(
+			@Id Long id,
+			@Embedded.Nullable EmbeddedAuditing auditing
+	) {
+	}
+
+	record EmbeddedAuditing(
+			@CreatedBy String createdBy,
+			@CreatedDate LocalDateTime createdDate,
+			@LastModifiedBy String lastModifiedBy,
+			@LastModifiedDate LocalDateTime lastModifiedDate
+	) {
+	}
+	interface DummyEntityWithEmbeddedRecordRepository extends CrudRepository<DummyEntityWithEmbeddedRecord, Long> {
 	}
 
 	@Configuration
