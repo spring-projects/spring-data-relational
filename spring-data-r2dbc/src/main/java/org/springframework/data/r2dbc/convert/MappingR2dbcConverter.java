@@ -22,15 +22,6 @@ import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
-
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
@@ -51,6 +42,16 @@ import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+
+import static org.springframework.data.r2dbc.convert.RowMetadataUtils.findColumnMetadata;
 
 /**
  * Converter for R2DBC.
@@ -140,21 +141,24 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 		for (RelationalPersistentProperty property : persistentEntity) {
 
+			ReadableMetadata columnMetadata = null;
+
 			String identifier = property.getColumnName().getReference();
 
-			if (property.isEntity() || (metadata != null && !RowMetadataUtils.containsColumn(metadata, identifier))) {
+			if (property.isEntity() || (metadata != null && (columnMetadata = findColumnMetadata(metadata, identifier)) == null)) {
 				continue;
 			}
 
 			Object value;
 			Class<?> propertyType = property.getType();
+			String column = columnMetadata == null ? identifier : columnMetadata.getName();
 
 			if (propertyType.equals(Clob.class)) {
-				value = row.get(identifier, Clob.class);
+				value = row.get(column, Clob.class);
 			} else if (propertyType.equals(Blob.class)) {
-				value = row.get(identifier, Blob.class);
+				value = row.get(column, Blob.class);
 			} else {
-				value = row.get(identifier);
+				value = row.get(column);
 			}
 
 			document.put(identifier, value);
@@ -475,9 +479,9 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	@Nullable
 	private Object extractGeneratedIdentifier(Row row, RowMetadata metadata, String idColumnName) {
-
-		if (RowMetadataUtils.containsColumn(metadata, idColumnName)) {
-			return row.get(idColumnName);
+		ReadableMetadata columnMetadata = findColumnMetadata(RowMetadataUtils.getColumnMetadata(metadata), idColumnName);
+		if (columnMetadata != null) {
+			return row.get(columnMetadata.getName());
 		}
 
 		Iterable<? extends ColumnMetadata> columns = RowMetadataUtils.getColumnMetadata(metadata);

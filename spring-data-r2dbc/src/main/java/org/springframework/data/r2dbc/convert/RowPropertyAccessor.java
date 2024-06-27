@@ -15,9 +15,9 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
@@ -54,7 +54,16 @@ class RowPropertyAccessor implements PropertyAccessor {
 			return TypedValue.NULL;
 		}
 
-		Object value = ((Row) target).get(name);
+		String column = name;
+
+		if (rowMetadata != null) {
+			ReadableMetadata columnMetadata = RowMetadataUtils.findColumnMetadata(RowMetadataUtils.getColumnMetadata(rowMetadata), name);
+			if (columnMetadata != null) {
+				column = columnMetadata.getName();
+			}
+		}
+
+		Object value = ((Row) target).get(column);
 
 		if (value == null) {
 			return TypedValue.NULL;
