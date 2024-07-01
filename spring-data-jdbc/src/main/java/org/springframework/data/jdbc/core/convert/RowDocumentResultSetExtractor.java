@@ -73,8 +73,8 @@ class RowDocumentResultSetExtractor {
 		for (int i = 0; i < columnCount; i++) {
 
 			Object rsv = JdbcUtils.getResultSetValue(resultSet, i + 1);
-			String columnName = md.getColumnLabel(i + 1);
-			Object old = document.put(columnName, rsv instanceof Array a ? a.getArray() : rsv);
+			String columnName = JdbcUtils.lookupColumnName(md, i+1);
+			Object old = document.putIfAbsent(columnName, rsv instanceof Array a ? a.getArray() : rsv);
 			if (old != null) {
 				log.warn(DUPLICATE_COLUMN_WARNING, columnName, i);
 			}
