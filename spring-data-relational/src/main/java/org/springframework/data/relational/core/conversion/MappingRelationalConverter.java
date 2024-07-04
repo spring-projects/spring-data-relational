@@ -731,9 +731,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 		}
 
-		return
-
-		getConversionService().convert(value, type.getType());
+		return getConversionService().convert(value, type.getType());
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
