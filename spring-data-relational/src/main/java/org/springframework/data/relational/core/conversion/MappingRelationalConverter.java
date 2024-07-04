@@ -44,16 +44,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.ValueExpressionEvaluator;
-import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -568,7 +559,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				continue;
 			}
 
-			accessor.setProperty(property, valueProviderToUse.getPropertyValue(property));
+			Object propertyValue = valueProviderToUse.getPropertyValue(property);
+			propertyValue = readValue(propertyValue, property.getTypeInformation());
+			accessor.setProperty(property, propertyValue);
 		}
 	}
 
@@ -619,34 +612,23 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return false;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
 	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (null == value) {
 			return null;
 		}
 
-		return getPotentiallyConvertedSimpleRead(value, type);
-	}
-
-	/**
-	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
-	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
-	 *
-	 * @param value to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
-	 */
-	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(Object value) {
-
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
-
-		if (customTarget.isPresent()) {
-			return getConversionService().convert(value, customTarget.get());
-		}
-
-		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
+		return getPotentiallyConvertedSimpleRead(value, targetType);
 	}
 
 	/**
@@ -696,33 +678,28 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return null;
 		}
 
-		if (getConversions().isSimpleType(value.getClass())) {
+		// custom conversion
+		Optional<Class<?>> customWriteTarget = determinCustomWriteTarget(value, type);
 
-			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
-					? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-					: getConversions().getCustomWriteTarget(type.getType());
+		if (customWriteTarget.isPresent()) {
+			return getConversionService().convert(value, customWriteTarget.get());
+		}
 
-			if (customWriteTarget.isPresent()) {
-				return getConversionService().convert(value, customWriteTarget.get());
-			}
+		return getPotentiallyConvertedSimpleWrite(value, type);
+	}
 
-			if (!TypeInformation.OBJECT.equals(type)) {
+	private Optional<Class<?>> determinCustomWriteTarget(Object value, TypeInformation<?> type) {
 
-				if (type.getType().isAssignableFrom(value.getClass())) {
+		return getConversions().getCustomWriteTarget(value.getClass(), type.getType())
+				.or(() -> getConversions().getCustomWriteTarget(type.getType()))
+				.or(() -> getConversions().getCustomWriteTarget(value.getClass()));
+	}
 
-					if (value.getClass().isEnum()) {
-						return getPotentiallyConvertedSimpleWrite(value);
-					}
+	@Nullable
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
 
-					return value;
-				} else {
-					if (getConversionService().canConvert(value.getClass(), type.getType())) {
-						value = getConversionService().convert(value, type.getType());
-					}
-				}
-			}
-
-			return getPotentiallyConvertedSimpleWrite(value);
+		if (value instanceof Enum<?> enumValue) {
+			return enumValue.name();
 		}
 
 		if (value.getClass().isArray()) {
@@ -744,9 +721,10 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 		}
 
-		return
-
-		getConversionService().convert(value, type.getType());
+		if (getConversionService().canConvert(value.getClass(), type.getType())) {
+			return getConversionService().convert(value, type.getType());
+		}
+		return value;
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
@@ -1187,7 +1165,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				return null;
 			}
 
-			return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
+			return value;
 		}
 
 		@Override
