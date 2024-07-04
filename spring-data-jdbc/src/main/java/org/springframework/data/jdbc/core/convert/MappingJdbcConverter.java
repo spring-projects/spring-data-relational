@@ -27,9 +27,7 @@ import java.util.function.Function;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -91,8 +89,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = JdbcTypeFactory.unsupported();
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
 	}
 
 	/**
@@ -112,14 +108,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
-	}
-
-	private void registerAggregateReferenceConverters() {
-
-		ConverterRegistry registry = (ConverterRegistry) getConversionService();
-		AggregateReferenceConverters.getConvertersToRegister(getConversionService()).forEach(registry::addConverter);
 	}
 
 	@Nullable
@@ -185,33 +173,48 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	}
 
 	@Override
-	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (value == null) {
-			return value;
-		}
+	protected Object readTechnologyType(Object value) {
 
 		if (value instanceof Array array) {
 			try {
-				return super.readValue(array.getArray(), type);
-			} catch (SQLException | ConverterNotFoundException e) {
+				return array.getArray();
+			} catch (SQLException e) {
 				LOG.info("Failed to extract a value of type %s from an Array; Attempting to use standard conversions", e);
+
 			}
 		}
 
-		return super.readValue(value, type);
+		return value;
 	}
 
 	@Override
-	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
+	protected TypeInformation<?> determineModuleReadTarget(TypeInformation<?> ultimateTargetType) {
 
-		if (value == null) {
-			return null;
+		if (AggregateReference.class.isAssignableFrom(ultimateTargetType.getType())) {
+			// the id type of a AggregateReference
+			return ultimateTargetType.getTypeArguments().get(1);
+		}
+		return ultimateTargetType;
+	}
+
+	@Override
+	protected Object readModuleType(Object value, TypeInformation<?> targetType) {
+
+		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
+			return AggregateReference.to(value);
+		}
+		return value;
+	}
+
+	@Nullable
+	@Override
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
+
+		if (value instanceof AggregateReference<?, ?> aggregateReference) {
+			return writeValue(aggregateReference.getId(), type);
 		}
 
-		return super.writeValue(value, type);
+		return super.getPotentiallyConvertedSimpleWrite(value, type);
 	}
 
 	private boolean canWriteAsJdbcValue(@Nullable Object value) {

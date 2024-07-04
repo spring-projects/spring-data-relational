@@ -40,6 +40,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -60,8 +61,7 @@ class MappingJdbcConverterUnitTests {
 
 	private static final UUID UUID = java.util.UUID.fromString("87a48aa8-a071-705e-54a9-e52fe3a012f1");
 	private static final byte[] BYTES_REPRESENTING_UUID = { -121, -92, -118, -88, -96, 113, 112, 94, 84, -87, -27, 47,
-			-29,
-			-96, 18, -15 };
+			-29, -96, 18, -15 };
 
 	private JdbcMappingContext context = new JdbcMappingContext();
 	private StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
@@ -70,7 +70,7 @@ class MappingJdbcConverterUnitTests {
 			(identifier, path) -> {
 				throw new UnsupportedOperationException();
 			}, //
-			new JdbcCustomConversions(), //
+			new JdbcCustomConversions(List.of(CustomIdToLong.INSTANCE)), //
 			typeFactory //
 	);
 
@@ -91,6 +91,7 @@ class MappingJdbcConverterUnitTests {
 		checkTargetType(softly, entity, "date", Date.class);
 		checkTargetType(softly, entity, "timestamp", Timestamp.class);
 		checkTargetType(softly, entity, "uuid", UUID.class);
+		checkTargetType(softly, entity, "reference", Long.class);
 
 		softly.assertAll();
 	}
@@ -216,117 +217,26 @@ class MappingJdbcConverterUnitTests {
 	}
 
 	@SuppressWarnings("unused")
-	private static class DummyEntity {
-
-		@Id private final Long id;
-		private final SomeEnum someEnum;
-		private final LocalDateTime localDateTime;
-		private final LocalDate localDate;
-		private final LocalTime localTime;
-		private final ZonedDateTime zonedDateTime;
-		private final OffsetDateTime offsetDateTime;
-		private final Instant instant;
-		private final Date date;
-		private final Timestamp timestamp;
-		private final AggregateReference<DummyEntity, Long> reference;
-		private final UUID uuid;
-		private final AggregateReference<ReferencedByUuid, UUID> uuidRef;
-		private final Optional<UUID> optionalUuid;
-
-		// DATAJDBC-259
-		private final List<String> listOfString;
-		private final String[] arrayOfString;
-		private final List<OtherEntity> listOfEntity;
-		private final OtherEntity[] arrayOfEntity;
-
-		private DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, LocalDate localDate,
-							LocalTime localTime, ZonedDateTime zonedDateTime, OffsetDateTime offsetDateTime, Instant instant, Date date,
-							Timestamp timestamp, AggregateReference<DummyEntity, Long> reference, UUID uuid,
-							AggregateReference<ReferencedByUuid, UUID> uuidRef, Optional<java.util.UUID> optionalUUID, List<String> listOfString, String[] arrayOfString,
-							List<OtherEntity> listOfEntity, OtherEntity[] arrayOfEntity) {
-			this.id = id;
-			this.someEnum = someEnum;
-			this.localDateTime = localDateTime;
-			this.localDate = localDate;
-			this.localTime = localTime;
-			this.zonedDateTime = zonedDateTime;
-			this.offsetDateTime = offsetDateTime;
-			this.instant = instant;
-			this.date = date;
-			this.timestamp = timestamp;
-			this.reference = reference;
-			this.uuid = uuid;
-			this.uuidRef = uuidRef;
-			this.optionalUuid = optionalUUID;
-			this.listOfString = listOfString;
-			this.arrayOfString = arrayOfString;
-			this.listOfEntity = listOfEntity;
-			this.arrayOfEntity = arrayOfEntity;
-		}
-
-		public Long getId() {
-			return this.id;
-		}
-
-		public SomeEnum getSomeEnum() {
-			return this.someEnum;
-		}
-
-		public LocalDateTime getLocalDateTime() {
-			return this.localDateTime;
-		}
-
-		public LocalDate getLocalDate() {
-			return this.localDate;
-		}
-
-		public LocalTime getLocalTime() {
-			return this.localTime;
-		}
-
-		public ZonedDateTime getZonedDateTime() {
-			return this.zonedDateTime;
-		}
-
-		public OffsetDateTime getOffsetDateTime() {
-			return this.offsetDateTime;
-		}
-
-		public Instant getInstant() {
-			return this.instant;
-		}
-
-		public Date getDate() {
-			return this.date;
-		}
-
-		public Timestamp getTimestamp() {
-			return this.timestamp;
-		}
-
-		public AggregateReference<DummyEntity, Long> getReference() {
-			return this.reference;
-		}
-
-		public UUID getUuid() {
-			return this.uuid;
-		}
-
-		public List<String> getListOfString() {
-			return this.listOfString;
-		}
-
-		public String[] getArrayOfString() {
-			return this.arrayOfString;
-		}
-
-		public List<OtherEntity> getListOfEntity() {
-			return this.listOfEntity;
-		}
-
-		public OtherEntity[] getArrayOfEntity() {
-			return this.arrayOfEntity;
-		}
+	private record DummyEntity( //
+			@Id Long id, //
+			SomeEnum someEnum, //
+			LocalDateTime localDateTime, //
+			LocalDate localDate, //
+			LocalTime localTime, //
+			ZonedDateTime zonedDateTime, //
+			OffsetDateTime offsetDateTime, //
+			Instant instant, //
+			Date date, //
+			Timestamp timestamp, //
+			AggregateReference<DummyEntity, Long> reference, //
+			UUID uuid, //
+			AggregateReference<ReferencedByUuid, UUID> uuidRef, //
+			Optional<UUID> optionalUuid, //
+			List<String> listOfString, //
+			String[] arrayOfString, //
+			List<OtherEntity> listOfEntity, //
+			OtherEntity[] arrayOfEntity //
+	) {
 	}
 
 	@SuppressWarnings("unused")
@@ -336,6 +246,18 @@ class MappingJdbcConverterUnitTests {
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}
+
+	private static class EnumIdEntity {
+		@Id SomeEnum id;
+	}
+
+	private static class CustomIdEntity {
+		@Id CustomId id;
+	}
+
+	private record CustomId(Long id) {
+
+	}
 
 	private static class StubbedJdbcTypeFactory implements JdbcTypeFactory {
 		Object[] arraySource;
@@ -364,6 +286,16 @@ class MappingJdbcConverterUnitTests {
 			long high = byteBuffer.getLong();
 			long low = byteBuffer.getLong();
 			return new UUID(high, low);
+		}
+	}
+
+	@WritingConverter
+	enum CustomIdToLong implements Converter<CustomId, Long> {
+		INSTANCE;
+
+		@Override
+		public Long convert(CustomId source) {
+			return source.id;
 		}
 	}
 }
