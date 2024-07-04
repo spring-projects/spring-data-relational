@@ -559,7 +559,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				continue;
 			}
 
-			accessor.setProperty(property, valueProviderToUse.getPropertyValue(property));
+			Object propertyValue = valueProviderToUse.getPropertyValue(property);
+			propertyValue = readValue(propertyValue, property.getTypeInformation());
+			accessor.setProperty(property, propertyValue);
 		}
 	}
 
@@ -606,34 +608,65 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return false;
 	}
 
+	/**
+	 * Read and convert a single value that is comming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 * 
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
 	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (null == value) {
 			return null;
 		}
 
-		return getPotentiallyConvertedSimpleRead(value, type);
+		TypeInformation<?> originalTargetType = targetType;
+		value = readTechnologyType(value);
+		targetType = determineModuleReadTarget(targetType);
+
+		return readModuleType(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
 	}
 
 	/**
-	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
-	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
-	 *
-	 * @param value to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
+	 * Convert a read value using module dependent special conversions. Spring Data JDBC for example uses this to
+	 * implement the conversion of AggregateReferences. There is no guarantee that the value is converted to the exact
+	 * required TypeInformation, nor that it is converted at all.
+	 * 
+	 * @param value the value read from the database. Must not be {@literal null}.
+	 * @param targetType the type to which the value should get converted if possible. Must not be {@literal null}.
+	 * @return a potentially converted value.
 	 */
-	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(Object value) {
+	protected Object readModuleType(Object value, TypeInformation<?> targetType) {
+		return value;
+	}
 
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
+	/**
+	 * Read technology specific values into objects that then can be fed in the normal conversion process for reading. An
+	 * example are the conversion of JDBCs {@literal Array} type to normal java arrays.
+	 * 
+	 * @param value a value read from the database
+	 * @return a preprocessed value suitable for technology-agnostic further processing.
+	 */
+	protected Object readTechnologyType(Object value) {
+		return value;
+	}
 
-		if (customTarget.isPresent()) {
-			return getConversionService().convert(value, customTarget.get());
-		}
-
-		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
+	/**
+	 * When type is a type that has special support, this returns the type a value should be converted to before the
+	 * conversion to the special type happens. For example if type is AggregateReference this method returns the second
+	 * parameter type of AggregateReference, in order to allow conversions to handle that type.
+	 *
+	 * @param ultimateTargetType ultimate target type to be returned by the conversion process. Must not be
+	 *          {@literal null}.
+	 * @return a type that can be converted to the ultimate target type by module specific handling. Must not be
+	 *         {@literal null}.
+	 */
+	protected TypeInformation<?> determineModuleReadTarget(TypeInformation<?> ultimateTargetType) {
+		return ultimateTargetType;
 	}
 
 	/**
@@ -683,33 +716,28 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return null;
 		}
 
-		if (getConversions().isSimpleType(value.getClass())) {
+		// custom conversion
+		Optional<Class<?>> customWriteTarget = determinCustomWriteTarget(value, type);
 
-			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
-					? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-					: getConversions().getCustomWriteTarget(type.getType());
+		if (customWriteTarget.isPresent()) {
+			return getConversionService().convert(value, customWriteTarget.get());
+		}
 
-			if (customWriteTarget.isPresent()) {
-				return getConversionService().convert(value, customWriteTarget.get());
-			}
+		return getPotentiallyConvertedSimpleWrite(value, type);
+	}
 
-			if (TypeInformation.OBJECT != type) {
+	private Optional<Class<?>> determinCustomWriteTarget(Object value, TypeInformation<?> type) {
 
-				if (type.getType().isAssignableFrom(value.getClass())) {
+		return getConversions().getCustomWriteTarget(value.getClass(), type.getType())
+				.or(() -> getConversions().getCustomWriteTarget(type.getType()))
+				.or(() -> getConversions().getCustomWriteTarget(value.getClass()));
+	}
 
-					if (value.getClass().isEnum()) {
-						return getPotentiallyConvertedSimpleWrite(value);
-					}
+	@Nullable
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
 
-					return value;
-				} else {
-					if (getConversionService().canConvert(value.getClass(), type.getType())) {
-						value = getConversionService().convert(value, type.getType());
-					}
-				}
-			}
-
-			return getPotentiallyConvertedSimpleWrite(value);
+		if (value instanceof Enum<?> enumValue) {
+			return enumValue.name();
 		}
 
 		if (value.getClass().isArray()) {
@@ -731,9 +759,10 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 		}
 
-		return
-
-		getConversionService().convert(value, type.getType());
+		if (getConversionService().canConvert(value.getClass(), type.getType())) {
+			return getConversionService().convert(value, type.getType());
+		}
+		return value;
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
@@ -1174,7 +1203,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				return null;
 			}
 
-			return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
+			// TODO: converting here seems wrong, since we have the ConvertingParameterValueProvider
+			// return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
+			return value;
 		}
 
 		@Override
