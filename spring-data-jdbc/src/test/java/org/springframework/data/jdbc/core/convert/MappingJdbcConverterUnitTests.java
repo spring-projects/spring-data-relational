@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
@@ -40,6 +41,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -70,7 +72,7 @@ class MappingJdbcConverterUnitTests {
 			(identifier, path) -> {
 				throw new UnsupportedOperationException();
 			}, //
-			new JdbcCustomConversions(), //
+			new JdbcCustomConversions(List.of(CustomIdToLong.INSTANCE)), //
 			typeFactory //
 	);
 
@@ -92,6 +94,9 @@ class MappingJdbcConverterUnitTests {
 			checkTargetType(softly, entity, "date", Date.class);
 			checkTargetType(softly, entity, "timestamp", Timestamp.class);
 			checkTargetType(softly, entity, "uuid", UUID.class);
+			checkTargetType(softly, entity, "reference", Long.class);
+			checkTargetType(softly, entity, "enumIdReference", String.class);
+			checkTargetType(softly, entity, "customIdReference", Long.class);
 		});
 	}
 
@@ -234,6 +239,8 @@ class MappingJdbcConverterUnitTests {
 			Date date,
 			Timestamp timestamp,
 			AggregateReference<DummyEntity, Long> reference,
+			AggregateReference<EnumIdEntity, SomeEnum> enumIdReference,
+			AggregateReference<CustomIdEntity, SomeEnum> customIdReference,
 			UUID uuid,
 			AggregateReference<ReferencedByUuid, UUID> uuidRef,
 			Optional<UUID> optionalUuid,
@@ -253,6 +260,18 @@ class MappingJdbcConverterUnitTests {
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {
+	}
+
+	private static class EnumIdEntity {
+		@Id SomeEnum id;
+	}
+
+	private static class CustomIdEntity {
+		@Id CustomId id;
+	}
+
+	private record CustomId(Long id) {
+
 	}
 
 	private static class StubbedJdbcTypeFactory implements JdbcTypeFactory {
@@ -282,6 +301,16 @@ class MappingJdbcConverterUnitTests {
 			long high = byteBuffer.getLong();
 			long low = byteBuffer.getLong();
 			return new UUID(high, low);
+		}
+	}
+
+	@WritingConverter
+	private enum CustomIdToLong implements Converter<CustomId, Long> {
+		INSTANCE;
+
+		@Override
+		public Long convert(CustomId source) {
+			return source.id;
 		}
 	}
 }
