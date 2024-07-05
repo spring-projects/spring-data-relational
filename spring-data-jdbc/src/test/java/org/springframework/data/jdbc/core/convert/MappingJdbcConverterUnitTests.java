@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
@@ -40,6 +41,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -70,7 +72,7 @@ class MappingJdbcConverterUnitTests {
 			(identifier, path) -> {
 				throw new UnsupportedOperationException();
 			}, //
-			new JdbcCustomConversions(), //
+			new JdbcCustomConversions(List.of(CustomIdToLong.INSTANCE)), //
 			typeFactory //
 	);
 
@@ -91,6 +93,9 @@ class MappingJdbcConverterUnitTests {
 		checkTargetType(softly, entity, "date", Date.class);
 		checkTargetType(softly, entity, "timestamp", Timestamp.class);
 		checkTargetType(softly, entity, "uuid", UUID.class);
+		checkTargetType(softly, entity, "reference", Long.class);
+		checkTargetType(softly, entity, "enumIdReference", String.class);
+		checkTargetType(softly, entity, "customIdReference", Long.class);
 
 		softly.assertAll();
 	}
@@ -216,22 +221,21 @@ class MappingJdbcConverterUnitTests {
 	}
 
 	@SuppressWarnings("unused")
-	private static class DummyEntity {
-
-		@Id private final Long id;
-		private final SomeEnum someEnum;
-		private final LocalDateTime localDateTime;
-		private final LocalDate localDate;
-		private final LocalTime localTime;
-		private final ZonedDateTime zonedDateTime;
-		private final OffsetDateTime offsetDateTime;
-		private final Instant instant;
-		private final Date date;
-		private final Timestamp timestamp;
-		private final AggregateReference<DummyEntity, Long> reference;
-		private final UUID uuid;
-		private final AggregateReference<ReferencedByUuid, UUID> uuidRef;
-		private final Optional<UUID> optionalUuid;
+	private record DummyEntity(
+			@Id Long id,
+			SomeEnum someEnum,
+			LocalDateTime localDateTime,
+			LocalDate localDate,
+			LocalTime localTime,
+			ZonedDateTime zonedDateTime,
+			OffsetDateTime offsetDateTime,
+			Instant instant,
+			Date date,
+			Timestamp timestamp,
+			AggregateReference<DummyEntity, Long> reference,
+			UUID uuid,
+			AggregateReference<ReferencedByUuid, UUID> uuidRef,
+			Optional<UUID> optionalUuid,
 
 		// DATAJDBC-259
 		private final List<String> listOfString;
@@ -337,6 +341,18 @@ class MappingJdbcConverterUnitTests {
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}
 
+	private static class EnumIdEntity {
+		@Id SomeEnum id;
+	}
+
+	private static class CustomIdEntity {
+		@Id CustomId id;
+	}
+
+	private record CustomId(Long id) {
+
+	}
+
 	private static class StubbedJdbcTypeFactory implements JdbcTypeFactory {
 		Object[] arraySource;
 
@@ -364,6 +380,16 @@ class MappingJdbcConverterUnitTests {
 			long high = byteBuffer.getLong();
 			long low = byteBuffer.getLong();
 			return new UUID(high, low);
+		}
+	}
+
+	@WritingConverter
+	private enum CustomIdToLong implements Converter<CustomId, Long> {
+		INSTANCE;
+
+		@Override
+		public Long convert(CustomId source) {
+			return source.id;
 		}
 	}
 }
