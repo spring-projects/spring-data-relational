@@ -75,6 +75,9 @@ class MappingJdbcConverterUnitTests {
 			new JdbcCustomConversions(List.of(CustomIdToLong.INSTANCE)), //
 			typeFactory //
 	);
+	{
+		context.setSimpleTypeHolder(converter.getConversions().getSimpleTypeHolder());
+	}
 
 	@Test // DATAJDBC-104, DATAJDBC-1384
 	void testTargetTypesForPropertyType() {
