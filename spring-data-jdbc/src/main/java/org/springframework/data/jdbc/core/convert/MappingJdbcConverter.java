@@ -243,15 +243,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	@Override
 	public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> columnType, SQLType sqlType) {
 
-		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
-		if (jdbcValue != null) {
-			return jdbcValue;
+		TypeInformation<?> targetType = canWriteAsJdbcValue(value) ? TypeInformation.of(JdbcValue.class) : columnType;
+		Object convertedValue = writeValue(value, targetType);
+
+		if (convertedValue instanceof JdbcValue result) {
+			return result;
 		}
 
-		Object convertedValue = writeValue(value, columnType);
-
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-
 			return JdbcValue.of(convertedValue, sqlType);
 		}
 
@@ -267,20 +266,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		return JdbcValue.of(convertedValue, JDBCType.BINARY);
-	}
-
-	@Nullable
-	private JdbcValue tryToConvertToJdbcValue(@Nullable Object value) {
-
-		if (canWriteAsJdbcValue(value)) {
-
-			Object converted = writeValue(value, TypeInformation.of(JdbcValue.class));
-			if (converted instanceof JdbcValue) {
-				return (JdbcValue) converted;
-			}
-		}
-
-		return null;
 	}
 
 	@SuppressWarnings("unchecked")
