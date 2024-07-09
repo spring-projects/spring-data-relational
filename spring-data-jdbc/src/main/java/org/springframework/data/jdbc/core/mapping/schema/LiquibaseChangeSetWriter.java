@@ -92,6 +92,7 @@ import org.springframework.util.Assert;
  * @author Kurt Niemi
  * @author Mark Paluch
  * @author Evgenii Koba
+ * @author Jens Schauder
  * @since 3.2
  */
 public class LiquibaseChangeSetWriter {
