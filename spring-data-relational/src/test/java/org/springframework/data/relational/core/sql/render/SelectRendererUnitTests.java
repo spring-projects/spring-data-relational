@@ -24,6 +24,8 @@ import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 /**
  * Unit tests for {@link SqlRenderer}.
  *
@@ -413,6 +415,29 @@ class SelectRendererUnitTests {
 				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}
 
+	@Test // GH-1831
+	void shouldRenderSimpleFunctionWithSubselect() {
+
+		Table foo = SQL.table("foo");
+
+		Table floo = SQL.table("floo");
+		Column bah = floo.column("bah");
+
+
+		Select subselect = Select.builder().select(bah).from(floo).build();
+
+		SimpleFunction func = SimpleFunction.create("func", List.of(SubselectExpression.of(subselect)));
+
+		Select select = Select.builder() //
+				.select(func.as("alias")) //
+				.from(foo) //
+				.where(Conditions.isEqual(func, SQL.literalOf(23))) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select))
+				.isEqualTo("SELECT func(SELECT floo.bah FROM floo) AS alias FROM foo WHERE func(SELECT floo.bah FROM floo) = 23");
+	}
+
 	@Test // DATAJDBC-309
 	void shouldConsiderNamingStrategy() {
 
@@ -678,8 +703,8 @@ class SelectRendererUnitTests {
 		void renderEmptyOver() {
 
 			Select select = StatementBuilder.select( //
-					AnalyticFunction.create("MAX", salary) //
-			) //
+							AnalyticFunction.create("MAX", salary) //
+					) //
 					.from(employee) //
 					.build();
 

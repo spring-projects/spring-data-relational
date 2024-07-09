@@ -27,4 +27,14 @@ public class SubselectExpression extends Subselect implements Expression {
 
 		super(subselect);
 	}
+
+	/**
+	 * Wraps a Select in a {@link SubselectExpression}, for using it as an expression in function calls or similar.
+	 *
+	 * @author Jens Schauder
+	 * @since 3.4
+	 */
+	public static Expression of(Select subselect) {
+		return new SubselectExpression(subselect);
+	}
 }
