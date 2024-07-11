@@ -15,6 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -138,7 +141,7 @@ public class RelationalMappingContext
 
 	@Override
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
-			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
+																	RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
 
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
 				simpleTypeHolder, this.namingStrategy);
@@ -148,9 +151,9 @@ public class RelationalMappingContext
 	}
 
 	/**
-	 * @since 3.2
 	 * @return iff single query loading is enabled.
 	 * @see #setSingleQueryLoadingEnabled(boolean)
+	 * @since 3.2
 	 */
 	public boolean isSingleQueryLoadingEnabled() {
 		return singleQueryLoadingEnabled;
@@ -161,8 +164,8 @@ public class RelationalMappingContext
 	 * {@link org.springframework.data.relational.core.dialect.Dialect} supports it, Spring Data JDBC will try to use
 	 * Single Query Loading if possible.
 	 *
-	 * @since 3.2
 	 * @param singleQueryLoadingEnabled
+	 * @since 3.2
 	 */
 	public void setSingleQueryLoadingEnabled(boolean singleQueryLoadingEnabled) {
 		this.singleQueryLoadingEnabled = singleQueryLoadingEnabled;
@@ -210,8 +213,45 @@ public class RelationalMappingContext
 		return aggregatePath;
 	}
 
+	public List<AggregatePath> getIdPaths(RelationalPersistentEntity<?> entity) {
+
+		RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+		if (idProperty == null) {
+			return Collections.emptyList();
+		} else {
+			PersistentPropertyPath<RelationalPersistentProperty> idPath = getPersistentPropertyPath(idProperty.getName(), entity.getTypeInformation());
+
+			if (!idProperty.isEmbedded()) {
+
+				return List.of(getAggregatePath(idPath));
+			} else {
+
+				return gatherSubPaths(getAggregatePath(idPath));
+
+			}
+		}
+	}
+
+	private List<AggregatePath> gatherSubPaths(AggregatePath path) {
+
+		if (path.getRequiredLeafProperty().isEntity()) {
+			RelationalPersistentEntity<?> leafEntity = path.getRequiredLeafEntity();
+
+			List<AggregatePath> result = new ArrayList<>();
+
+			leafEntity.doWithProperties( (RelationalPersistentProperty p) -> result.addAll(gatherSubPaths(path.append(p))));
+
+			return result;
+
+		} else {
+			return List.of(path);
+		}
+	}
+
+
 	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,
-			@Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
+										 @Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		/**
 		 * Create a new AggregatePathCacheKey for a root entity.

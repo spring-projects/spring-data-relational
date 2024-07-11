@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -120,12 +121,46 @@ public class RelationalMappingContextUnitTests {
 		assertThat(aggregatePath1).isNotEqualTo(aggregatePath2);
 	}
 
+	@Test // GH-574
+	void entityWithoutIdHasNoIdPath() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(Parent.class);
+		List<AggregatePath> idPaths = context.getIdPaths(entity);
+
+		assertThat(idPaths).isEmpty();
+	}
+
+	@Test // GH-574
+	void entityWithoutSimpleIdHasSingleIdPath() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(EntityWithUuid.class);
+		List<AggregatePath> idPaths = context.getIdPaths(entity);
+
+		assertThat(idPaths).containsExactly(context.getAggregatePath(context.getPersistentPropertyPath("uuid", EntityWithUuid.class)));
+	}
+
+	@Test // GH-574
+	void entityWithEmbeddedIdHasMultipleIdPaths() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithEmbeddedId.class);
+		List<AggregatePath> idPaths = context.getIdPaths(entity);
+
+		assertThat(idPaths).containsExactlyInAnyOrder(context.getAggregatePath(context.getPersistentPropertyPath("id.a", WithEmbeddedId.class)), context.getAggregatePath(context.getPersistentPropertyPath("id.b", WithEmbeddedId.class)));
+	}
+
 	static class EntityWithUuid {
 		@Id UUID uuid;
 	}
 
 	static class WithEmbedded {
 		@Embedded.Empty(prefix = "prnt_") Parent parent;
+	}
+
+	static class WithEmbeddedId {
+		@Embedded.Nullable @Id CompositeId id;
+	}
+
+	private record CompositeId(int a, int b) {
 	}
 
 	static class Parent {
@@ -144,5 +179,4 @@ public class RelationalMappingContextUnitTests {
 	static class Inherit1 extends Base {}
 
 	static class Inherit2 extends Base {}
-
 }
