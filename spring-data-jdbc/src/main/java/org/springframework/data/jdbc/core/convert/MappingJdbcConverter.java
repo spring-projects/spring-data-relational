@@ -20,6 +20,7 @@ import java.sql.JDBCType;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -368,9 +369,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					// references and possibly keys, that form an id
 					if (idDefiningParentPath.hasIdProperty()) {
 
-						RelationalPersistentProperty identifier = idDefiningParentPath.getRequiredIdProperty();
-						AggregatePath idPath = idDefiningParentPath.append(identifier);
-						Object value = delegate.getValue(idPath);
+						List<AggregatePath> idPaths = getMappingContext().getIdPaths(idDefiningParentPath.getRequiredLeafEntity());
+						RelationalPersistentProperty identifier = null;
+						Object value = null;
+						for (AggregatePath idPath : idPaths) {
+							// TODO this hack only works for single values.
+							identifier = idPath.getRequiredLeafProperty();
+							value = delegate.getValue(idPath);
+						}
 
 						Assert.state(value != null, "Identifier value must not be null at this point");
 
