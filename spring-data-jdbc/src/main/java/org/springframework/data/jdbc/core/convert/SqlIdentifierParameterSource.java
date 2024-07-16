@@ -73,7 +73,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
 		for (SqlIdentifier identifier : others.getIdentifiers()) {
 
-			String name = identifier.getReference();
+			String name = BindParameterNameSanitizer.sanitize( identifier.getReference());
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
 	}
