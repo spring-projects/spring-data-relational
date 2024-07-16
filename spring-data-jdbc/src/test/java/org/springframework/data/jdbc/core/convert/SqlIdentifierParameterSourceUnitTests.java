@@ -26,10 +26,10 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Jens Schauder
  * @author Mikhail Polivakha
  */
-public class SqlIdentifierParameterSourceUnitTests {
+class SqlIdentifierParameterSourceUnitTests {
 
 	@Test // DATAJDBC-386
-	public void empty() {
+	void empty() {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
@@ -43,7 +43,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void addSingleValue() {
+	void addSingleValue() {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
@@ -62,7 +62,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void addSingleValueWithType() {
+	void addSingleValueWithType() {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 
@@ -82,7 +82,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void addOtherDatabaseObjectIdentifierParameterSource() {
+	void addOtherDatabaseObjectIdentifierParameterSource() {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
 		parameters.addValue(SqlIdentifier.unquoted("key1"), 111, 11);
