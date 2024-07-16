@@ -36,6 +36,7 @@ import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -46,6 +47,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Bastian Wilhelm
  * @author Christoph Strobl
  * @author Mikhail Polivakha
+ * @author Jens Schauder
  */
 @IntegrationTest
 public class JdbcRepositoryEmbeddedIntegrationTests {
@@ -69,12 +71,18 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 			return factory.getRepository(WithDotColumnRepo.class);
 		}
 
+		@Bean
+		WithDotEmbeddedRepo withDotEmbeddedRepo(JdbcRepositoryFactory factory) {
+			return factory.getRepository(WithDotEmbeddedRepo.class);
+		}
+
 	}
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired PersonRepository personRepository;
 	@Autowired WithDotColumnRepo withDotColumnRepo;
+	@Autowired WithDotEmbeddedRepo withDotEmbeddedRepo;
 
 	@Test // DATAJDBC-111
 	void savesAnEntity() {
@@ -270,6 +278,16 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		Assertions.assertThat(fetchedPersons).containsExactly(saved.get(1), saved.get(0), saved.get(2));
 	}
 
+	@Test // GH-1565
+	void saveAndLoadEmbeddedWithDottedPrefix() {
+		WithDotEmbedded entity = withDotEmbeddedRepo.save(
+				new WithDotEmbedded(null, new PersonContacts("jens@jens.de", "123456789")));
+
+		WithDotEmbedded reloaded = withDotEmbeddedRepo.findById(entity.id).orElseThrow();
+
+		assertThat(reloaded).isEqualTo(entity);
+	}
+
 	private static DummyEntity createDummyEntity() {
 		DummyEntity entity = new DummyEntity();
 
@@ -303,6 +321,11 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 	record WithDotColumn(@Id Integer id, @Column("address.city") String address) {
 	}
+
+	record WithDotEmbedded(@Id Integer id, @Embedded.Nullable(prefix = "prefix.") PersonContacts contact) {
+	}
+
+	interface WithDotEmbeddedRepo extends ListCrudRepository<WithDotEmbedded, Integer> {}
 
 	@Table("SORT_EMBEDDED_ENTITY")
 	record Person(@Id Long id, String firstName, String address, @Embedded.Nullable PersonContacts personContacts) {
