@@ -61,6 +61,25 @@ class SqlIdentifierParameterSourceUnitTests {
 		});
 	}
 
+	@Test // GH-1565
+	void addSingleUnsanitaryValue() {
+
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
+
+		parameters.addValue(SqlIdentifier.unquoted("ke.y"), 23);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(parameters.getParameterNames()).isEqualTo(new String[] { "key" });
+			softly.assertThat(parameters.getValue("key")).isEqualTo(23);
+			softly.assertThat(parameters.hasValue("key")).isTrue();
+
+			softly.assertThat(parameters.getValue("ke.y")).isNull();
+			softly.assertThat(parameters.hasValue("ke.y")).isFalse();
+			softly.assertThat(parameters.getSqlType("ke.y")).isEqualTo(Integer.MIN_VALUE);
+		});
+	}
+
 	@Test // DATAJDBC-386
 	void addSingleValueWithType() {
 
@@ -91,6 +110,40 @@ class SqlIdentifierParameterSourceUnitTests {
 		SqlIdentifierParameterSource parameters2 = new SqlIdentifierParameterSource();
 		parameters2.addValue(SqlIdentifier.unquoted("key2"), 222, 22);
 		parameters2.addValue(SqlIdentifier.unquoted("key3"), 222);
+
+		parameters.addAll(parameters2);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(parameters.getParameterNames()).containsExactlyInAnyOrder("key1", "key2", "key3");
+			softly.assertThat(parameters.getValue("key1")).isEqualTo(111);
+			softly.assertThat(parameters.hasValue("key1")).isTrue();
+			softly.assertThat(parameters.getSqlType("key1")).isEqualTo(11);
+
+			softly.assertThat(parameters.getValue("key2")).isEqualTo(222);
+			softly.assertThat(parameters.hasValue("key2")).isTrue();
+			softly.assertThat(parameters.getSqlType("key2")).isEqualTo(22);
+
+			softly.assertThat(parameters.getValue("key3")).isEqualTo(222);
+			softly.assertThat(parameters.hasValue("key3")).isTrue();
+			softly.assertThat(parameters.getSqlType("key3")).isEqualTo(Integer.MIN_VALUE);
+
+			softly.assertThat(parameters.getValue("blah")).isNull();
+			softly.assertThat(parameters.hasValue("blah")).isFalse();
+			softly.assertThat(parameters.getSqlType("blah")).isEqualTo(Integer.MIN_VALUE);
+		});
+	}
+
+	@Test // DATAJDBC-386
+	void addOtherDatabaseObjectIdentifierParameterSourceWithUnsanitaryValue() {
+
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource();
+		parameters.addValue(SqlIdentifier.unquoted("key1"), 111, 11);
+		parameters.addValue(SqlIdentifier.unquoted("key2"), 111);
+
+		SqlIdentifierParameterSource parameters2 = new SqlIdentifierParameterSource();
+		parameters2.addValue(SqlIdentifier.unquoted("key.2"), 222, 22);
+		parameters2.addValue(SqlIdentifier.unquoted("key.3"), 222);
 
 		parameters.addAll(parameters2);
 
