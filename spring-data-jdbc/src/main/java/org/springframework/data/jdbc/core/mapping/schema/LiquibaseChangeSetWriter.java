@@ -329,7 +329,7 @@ public class LiquibaseChangeSetWriter {
 
 		Tables existingTables = getLiquibaseModel(database);
 		Tables mappedEntities = Tables.from(mappingContext.getPersistentEntities().stream().filter(schemaFilter),
-				sqlTypeMapping, database.getDefaultCatalogName());
+				sqlTypeMapping, database.getDefaultSchemaName());
 
 		return SchemaDiff.diff(mappedEntities, existingTables, nameComparator);
 	}
@@ -431,7 +431,7 @@ public class LiquibaseChangeSetWriter {
 				continue;
 			}
 
-			Table tableModel = new Table(table.getSchema().getCatalogName(), table.getName());
+			Table tableModel = new Table(table.getSchema().getName(), table.getName());
 
 			List<liquibase.structure.core.Column> columns = table.getColumns();
 
