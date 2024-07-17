@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Column;
@@ -50,7 +52,8 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Jens Schauder
  */
 @IntegrationTest
-public class JdbcRepositoryEmbeddedIntegrationTests {
+@EnabledOnDatabase(DatabaseType.HSQL)
+public class JdbcRepositoryEmbeddedHsqlIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
