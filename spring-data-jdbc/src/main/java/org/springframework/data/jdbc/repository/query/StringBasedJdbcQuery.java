@@ -204,7 +204,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		TypeInformation<?> typeInformation = parameter.getTypeInformation();
 
 		JdbcValue jdbcValue;
-		if (typeInformation.isCollectionLike() && value instanceof Collection<?>) {
+		if (typeInformation.isCollectionLike() //
+				&& value instanceof Collection<?> //
+				&& !typeInformation.getActualType().getType().isArray()
+		) {
 
 			List<Object> mapped = new ArrayList<>();
 			SQLType jdbcType = null;
@@ -221,6 +224,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			jdbcValue = JdbcValue.of(mapped, jdbcType);
 		} else {
+
 			SQLType sqlType = parameter.getSqlType();
 			jdbcValue = converter.writeJdbcValue(value, typeInformation, sqlType);
 		}

@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -325,6 +326,20 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo("one");
 	}
 
+	@Test // GH-1323
+	void queryByListOfTuples() {
+
+		String[][] tuples = {new String[]{"Albert", "Einstein"}, new String[]{"Richard", "Feynman"}};
+
+		SqlParameterSource parameterSource = forMethod("findByListOfTuples", List.class) //
+				.withArguments(Arrays.asList(tuples))
+				.extractParameterSource();
+
+		assertThat(parameterSource.getValue("tuples"))
+				.asInstanceOf(LIST)
+				.containsExactly(tuples);
+	}
+
 	QueryFixture forMethod(String name, Class... paramTypes) {
 		return new QueryFixture(createMethod(name, paramTypes));
 	}
@@ -450,6 +465,9 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = $1")
 		Object unsupportedLimitQuery(@Param("lastname") String lastname, Limit limit);
+
+		@Query("select count(1) from person where (firstname, lastname) in (:tuples)")
+		Object findByListOfTuples(@Param("tuples") List<Object[]> tuples);
 	}
 
 	@Test // GH-619
