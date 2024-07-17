@@ -117,9 +117,13 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
 
 	private static DummyEntity createDummyEntity() {
+		return createDummyEntity("Entity Name");
+	}
+
+	private static DummyEntity createDummyEntity(String entityName) {
 
 		DummyEntity entity = new DummyEntity();
-		entity.setName("Entity Name");
+		entity.setName(entityName);
 
 		return entity;
 	}
@@ -1334,6 +1338,21 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(inDatabase.get().getIdentifier()).isEqualTo("UR-123");
 	}
 
+	@Test // GH-1323
+	void queryWithTupleIn() {
+
+		DummyEntity one = repository.save(createDummyEntity("one"));
+		DummyEntity two = repository.save(createDummyEntity( "two"));
+		DummyEntity three = repository.save(createDummyEntity( "three"));
+
+		List<Object[]> tuples = List.of(
+				new Object[]{two.idProp, "two"}, // matches "two"
+				new Object[]{three.idProp, "two"} // matches nothing
+		);
+
+		repository.findByListInTuple(tuples);
+	}
+
 	private Root createRoot(String namePrefix) {
 
 		return new Root(null, namePrefix,
@@ -1461,6 +1480,9 @@ public class JdbcRepositoryIntegrationTests {
 		Optional<DummyDto> findDtoByIdProp(Long idProp);
 
 		Optional<DummyAllArgsDto> findAllArgsDtoByIdProp(Long idProp);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE (ID_PROP, NAME) IN (:tuples)")
+		List<DummyEntity> findByListInTuple(List<Object[]> tuples);
 	}
 
 	interface RootRepository extends ListCrudRepository<Root, Long> {
