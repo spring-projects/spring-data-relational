@@ -340,6 +340,19 @@ class StringBasedJdbcQueryUnitTests {
 				.containsExactly(tuples);
 	}
 
+	@Test // GH-1323
+	void queryByListOfConvertableTuples() {
+
+		SqlParameterSource parameterSource = forMethod("findByListOfTuples", List.class) //
+				.withCustomConverters(DirectionToIntegerConverter.INSTANCE) //
+				.withArguments(Arrays.asList(new Object[]{Direction.LEFT, "Einstein"}, new Object[]{Direction.RIGHT, "Feynman"}))
+				.extractParameterSource();
+
+		assertThat(parameterSource.getValue("tuples"))
+				.asInstanceOf(LIST)
+				.containsExactly(new Object[][]{new Object[]{-1, "Einstein"}, new Object[]{1, "Feynman"}});
+	}
+
 	QueryFixture forMethod(String name, Class... paramTypes) {
 		return new QueryFixture(createMethod(name, paramTypes));
 	}

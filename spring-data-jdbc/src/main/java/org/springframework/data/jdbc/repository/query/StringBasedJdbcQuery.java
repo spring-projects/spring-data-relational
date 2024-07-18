@@ -17,7 +17,9 @@ package org.springframework.data.jdbc.repository.query;
 
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +47,7 @@ import org.springframework.data.repository.query.SpelEvaluator;
 import org.springframework.data.repository.query.SpelQueryContext;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.data.util.TypeUtils;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -205,24 +208,44 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		JdbcValue jdbcValue;
 		if (typeInformation.isCollectionLike() //
-				&& value instanceof Collection<?> //
-				&& !typeInformation.getActualType().getType().isArray()
+				&& value instanceof Collection<?> collectionValue//
 		) {
+			if ( typeInformation.getActualType().getType().isArray() ){
 
-			List<Object> mapped = new ArrayList<>();
-			SQLType jdbcType = null;
+				TypeInformation<?> arrayElementType = typeInformation.getActualType().getActualType();
 
-			TypeInformation<?> actualType = typeInformation.getRequiredActualType();
-			for (Object o : (Iterable<?>) value) {
-				JdbcValue elementJdbcValue = converter.writeJdbcValue(o, actualType, parameter.getActualSqlType());
-				if (jdbcType == null) {
-					jdbcType = elementJdbcValue.getJdbcType();
+				List<Object[]> mapped = new ArrayList<>();
+
+				for (Object array : collectionValue) {
+					int length = Array.getLength(array);
+					Object[] mappedArray = new Object[length];
+
+					for (int i = 0; i < length; i++) {
+						Object element = Array.get(array, i);
+						JdbcValue elementJdbcValue = converter.writeJdbcValue(element, arrayElementType, parameter.getActualSqlType());
+
+						mappedArray[i] = elementJdbcValue.getValue();
+					}
+					mapped.add(mappedArray);
+				}
+				jdbcValue = JdbcValue.of(mapped, JDBCType.OTHER);
+
+			} else {
+				List<Object> mapped = new ArrayList<>();
+				SQLType jdbcType = null;
+
+				TypeInformation<?> actualType = typeInformation.getRequiredActualType();
+				for (Object o : collectionValue) {
+					JdbcValue elementJdbcValue = converter.writeJdbcValue(o, actualType, parameter.getActualSqlType());
+					if (jdbcType == null) {
+						jdbcType = elementJdbcValue.getJdbcType();
+					}
+
+					mapped.add(elementJdbcValue.getValue());
 				}
 
-				mapped.add(elementJdbcValue.getValue());
+				jdbcValue = JdbcValue.of(mapped, jdbcType);
 			}
-
-			jdbcValue = JdbcValue.of(mapped, jdbcType);
 		} else {
 
 			SQLType sqlType = parameter.getSqlType();
