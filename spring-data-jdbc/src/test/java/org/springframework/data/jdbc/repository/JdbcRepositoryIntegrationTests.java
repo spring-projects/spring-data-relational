@@ -1350,7 +1350,9 @@ public class JdbcRepositoryIntegrationTests {
 				new Object[]{three.idProp, "two"} // matches nothing
 		);
 
-		repository.findByListInTuple(tuples);
+		List<DummyEntity> result = repository.findByListInTuple(tuples);
+
+		assertThat(result).containsOnly(two);
 	}
 
 	private Root createRoot(String namePrefix) {
