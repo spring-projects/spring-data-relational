@@ -19,7 +19,6 @@ import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,8 +30,10 @@ import java.util.function.Supplier;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -223,7 +224,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			if (actualType != null && actualType.getType().isArray()) {
 
 				TypeInformation<?> nestedElementType = actualType.getRequiredActualType();
-				return writeCollection(collection, JDBCType.OTHER,
+				return writeCollection(collection, parameter.getActualSqlType(),
 						array -> writeArrayValue(parameter, array, nestedElementType));
 			}
 
@@ -265,21 +266,29 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return jdbcValue;
 	}
 
-	private Object[] writeArrayValue(JdbcParameters.JdbcParameter parameter, Object array,
+	private JdbcValue writeArrayValue(JdbcParameters.JdbcParameter parameter, Object array,
 			TypeInformation<?> nestedElementType) {
 
 		int length = Array.getLength(array);
 		Object[] mappedArray = new Object[length];
+		SQLType sqlType = null;
 
 		for (int i = 0; i < length; i++) {
 
 			Object element = Array.get(array, i);
-			JdbcValue elementJdbcValue = converter.writeJdbcValue(element, nestedElementType, parameter.getActualSqlType());
+			JdbcValue converted = converter.writeJdbcValue(element, nestedElementType, parameter.getActualSqlType());
 
-			mappedArray[i] = elementJdbcValue.getValue();
+			if (sqlType == null && converted.getJdbcType() != null) {
+				sqlType = converted.getJdbcType();
+			}
+			mappedArray[i] = converted.getValue();
 		}
 
-		return mappedArray;
+		if (sqlType == null) {
+			sqlType = JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(nestedElementType.getType()));
+		}
+
+		return JdbcValue.of(mappedArray, sqlType);
 	}
 
 	RowMapper<Object> determineRowMapper(ResultProcessor resultProcessor, boolean hasDynamicProjection) {

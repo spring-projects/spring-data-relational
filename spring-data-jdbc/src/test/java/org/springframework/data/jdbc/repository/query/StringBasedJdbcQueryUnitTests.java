@@ -49,6 +49,7 @@ import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
@@ -338,6 +339,8 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(parameterSource.getValue("tuples"))
 				.asInstanceOf(LIST)
 				.containsExactly(tuples);
+
+		assertThat(parameterSource.getSqlType("tuples")).isEqualTo(JdbcUtil.TYPE_UNKNOWN.getVendorTypeNumber());
 	}
 
 	@Test // GH-1323
