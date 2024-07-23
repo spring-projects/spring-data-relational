@@ -22,13 +22,11 @@ import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.jdbc.support.JdbcUtils;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -54,7 +52,12 @@ public final class JdbcUtil {
 		public Integer getVendorTypeNumber() {
 			return JdbcUtils.TYPE_UNKNOWN;
 		}
-	} ;
+
+		@Override
+		public String toString() {
+			return getName();
+		}
+	};
 	private static final Map<Class<?>, SQLType> sqlTypeMappings = new HashMap<>();
 
 	static {
