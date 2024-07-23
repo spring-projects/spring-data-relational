@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -66,6 +67,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.ConditionalOnDatabase;
 import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -107,6 +109,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Paul Jones
  */
 @IntegrationTest
+@EnabledOnDatabase(DatabaseType.MARIADB)
 public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -1339,15 +1342,15 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // GH-1323
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.WHERE_IN_TUPLE)
 	void queryWithTupleIn() {
 
 		DummyEntity one = repository.save(createDummyEntity("one"));
-		DummyEntity two = repository.save(createDummyEntity( "two"));
-		DummyEntity three = repository.save(createDummyEntity( "three"));
+		DummyEntity two = repository.save(createDummyEntity("two"));
+		DummyEntity three = repository.save(createDummyEntity("three"));
 
-		List<Object[]> tuples = List.of(
-				new Object[]{two.idProp, "two"}, // matches "two"
-				new Object[]{three.idProp, "two"} // matches nothing
+		List<Object[]> tuples = List.of(new Object[] { two.idProp, "two" }, // matches "two"
+				new Object[] { three.idProp, "two" } // matches nothing
 		);
 
 		List<DummyEntity> result = repository.findByListInTuple(tuples);
@@ -1886,6 +1889,11 @@ public class JdbcRepositoryIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(name, pointInTime, offsetDateTime, idProp, flag, ref, direction);
+		}
+
+		@Override
+		public String toString() {
+			return "DummyEntity{" + "name='" + name + '\'' + ", idProp=" + idProp + '}';
 		}
 	}
 
