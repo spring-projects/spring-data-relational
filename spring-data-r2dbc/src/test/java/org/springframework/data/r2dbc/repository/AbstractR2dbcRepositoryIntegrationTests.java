@@ -95,7 +95,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	protected abstract ConnectionFactory createConnectionFactory();
 
 	/**
-	 * Returns the the CREATE TABLE statement for table {@code legoset} with the following three columns:
+	 * Returns the CREATE TABLE statement for table {@code legoset} with the following three columns:
 	 * <ul>
 	 * <li>id integer (primary key), not null, auto-increment</li>
 	 * <li>name varchar(255), nullable</li>
