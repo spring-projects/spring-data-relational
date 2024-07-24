@@ -110,7 +110,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	protected abstract DataSource createDataSource();
 
 	/**
-	 * Returns the the CREATE TABLE statement for table {@code legoset} with the following three columns:
+	 * Returns the CREATE TABLE statement for table {@code legoset} with the following three columns:
 	 * <ul>
 	 * <li>id integer (primary key), not null, auto-increment</li>
 	 * <li>name varchar(255), nullable</li>
