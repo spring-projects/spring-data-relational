@@ -88,7 +88,7 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 	protected abstract String getCreateTableStatement();
 
 	/**
-	 * Returns the the DROP TABLE statement for table {@code LegoSet}.
+	 * Returns the DROP TABLE statement for table {@code LegoSet}.
 	 *
 	 * @return the DROP TABLE statement for table {@code LegoSet}.
 	 */
