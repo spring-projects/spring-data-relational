@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -67,6 +68,7 @@ import org.springframework.util.ClassUtils;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Andrey Rosa
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -85,13 +87,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationContext}, {@link RelationalMappingContext} and
 	 * {@link DataAccessStrategy}.
 	 *
-	 * @param publisher must not be {@literal null}.
-	 * @param context must not be {@literal null}.
+	 * @param publisher          must not be {@literal null}.
+	 * @param context            must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @since 1.1
 	 */
 	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
-			DataAccessStrategy dataAccessStrategy) {
+								 DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationContext must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
@@ -114,12 +116,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationEventPublisher},
 	 * {@link RelationalMappingContext} and {@link DataAccessStrategy}.
 	 *
-	 * @param publisher must not be {@literal null}.
-	 * @param context must not be {@literal null}.
+	 * @param publisher          must not be {@literal null}.
+	 * @param context            must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+								 JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
@@ -153,8 +155,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * published or whether emission should be suppressed. Enabled by default.
 	 *
 	 * @param enabled {@code true} to enable entity lifecycle events; {@code false} to disable entity lifecycle events.
-	 * @since 3.0
 	 * @see AbstractRelationalEvent
+	 * @since 3.0
 	 */
 	public void setEntityLifecycleEventsEnabled(boolean enabled) {
 		this.eventDelegate.setEventsEnabled(enabled);
@@ -447,11 +449,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> T afterExecute(AggregateChange<T> change, T entityAfterExecution) {
 
-		Object identifier = context.getRequiredPersistentEntity(change.getEntityType())
-				.getIdentifierAccessor(entityAfterExecution).getIdentifier();
-
-		Assert.notNull(identifier, "After saving the identifier must not be null");
-
 		return triggerAfterSave(entityAfterExecution, change);
 	}
 
@@ -482,7 +479,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> T performSave(EntityAndChangeCreator<T> instance) {
-
 		// noinspection unchecked
 		BatchingAggregateChange<T, RootAggregateChange<T>> batchingAggregateChange = //
 				BatchingAggregateChange.forSave((Class<T>) ClassUtils.getUserClass(instance.entity));
@@ -492,7 +488,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.isTrue(afterExecutionIterator.hasNext(), "Instances after execution must not be empty");
 
-		return afterExecute(batchingAggregateChange, afterExecutionIterator.next());
+		T afterExecute = afterExecutionIterator.next();
+		checkIfHaveId(context.getRequiredPersistentEntity(batchingAggregateChange.getEntityType())
+				.getIdentifierAccessor(afterExecute));
+		return afterExecute(batchingAggregateChange, afterExecute);
 	}
 
 	private <T> List<T> performSaveAll(Iterable<EntityAndChangeCreator<T>> instances) {
@@ -513,10 +512,20 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		ArrayList<T> results = new ArrayList<>(instancesAfterExecution.size());
 		for (T instance : instancesAfterExecution) {
-			results.add(afterExecute(batchingAggregateChange, instance));
+			T afterExecuteElement = afterExecute(batchingAggregateChange, instance);
+			checkIfHaveId(context.getRequiredPersistentEntity(batchingAggregateChange.getEntityType())
+					.getIdentifierAccessor(afterExecuteElement));
+			results.add(afterExecuteElement);
 		}
 
 		return results;
+	}
+
+	private <T> void checkIfHaveId(IdentifierAccessor context) {
+		Object identifier = context.getIdentifier();
+		if (Objects.isNull(identifier)) {
+			throw new IllegalStateException("After saving the identifier must not be null");
+		}
 	}
 
 	private <T> Function<T, RootAggregateChange<T>> changeCreatorSelectorForSave(T instance) {
@@ -656,9 +665,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return null;
 	}
 
-	private record EntityAndPreviousVersion<T> (T entity, @Nullable Number version) {
+	private record EntityAndPreviousVersion<T>(T entity, @Nullable Number version) {
 	}
 
-	private record EntityAndChangeCreator<T> (T entity, Function<T, RootAggregateChange<T>> changeCreator) {
+	private record EntityAndChangeCreator<T>(T entity, Function<T, RootAggregateChange<T>> changeCreator) {
 	}
 }

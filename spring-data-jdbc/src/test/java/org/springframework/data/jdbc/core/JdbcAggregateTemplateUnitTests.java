@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.core;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +55,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
  * @author Mark Paluch
  * @author Milan Milanov
  * @author Chirag Tailor
+ * @author Andrey Rosa
  */
 @ExtendWith(MockitoExtension.class)
 public class JdbcAggregateTemplateUnitTests {
@@ -161,6 +164,18 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(0L);
 	}
 
+	@Test
+		// GH-1502
+	void savePreparesInstanceWithoutIdentifier() {
+
+        EntityWitoutId entity = new EntityWitoutId();
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(entity, entity);
+
+		IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+			template.save(entity);
+		});
+		assertEquals("After saving the identifier must not be null", exception.getMessage());
+	}
 	@Test
 		// GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsPrimitiveType() {
@@ -423,7 +438,26 @@ public class JdbcAggregateTemplateUnitTests {
 			return this.version;
 		}
 	}
+    private static class EntityWitoutId {
 
+
+        @Version
+        private long version;
+
+        public EntityWitoutId() {
+
+        }
+
+
+
+        public long getVersion() {
+            return this.version;
+        }
+
+        public void setVersion(long version) {
+            this.version = version;
+        }
+    }
 	private static class EntityWithPrimitiveVersion {
 
 		@Column("id1")
