@@ -92,7 +92,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @since 1.1
 	 */
-	.
+	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
+			DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationContext must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
