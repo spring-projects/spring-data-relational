@@ -87,13 +87,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationContext}, {@link RelationalMappingContext} and
 	 * {@link DataAccessStrategy}.
 	 *
-	 * @param publisher          must not be {@literal null}.
-	 * @param context            must not be {@literal null}.
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @since 1.1
 	 */
-	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
-								 DataAccessStrategy dataAccessStrategy) {
+	.
 
 		Assert.notNull(publisher, "ApplicationContext must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
@@ -116,12 +115,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationEventPublisher},
 	 * {@link RelationalMappingContext} and {@link DataAccessStrategy}.
 	 *
-	 * @param publisher          must not be {@literal null}.
-	 * @param context            must not be {@literal null}.
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
-								 JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
