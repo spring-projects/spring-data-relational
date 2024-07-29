@@ -14,7 +14,9 @@ public class When extends AbstractSegment {
     private final Literal value;
 
     private When(Expression condition, Literal value) {
+
         super(condition, value);
+
         this.condition = condition;
         this.value = value;
     }

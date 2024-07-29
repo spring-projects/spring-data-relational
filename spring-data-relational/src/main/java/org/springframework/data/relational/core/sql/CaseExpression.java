@@ -26,7 +26,9 @@ public class CaseExpression extends AbstractSegment implements Expression {
     private final Literal other;
 
     private CaseExpression(List<When> whenList, Literal other) {
+
         super(children(whenList, other));
+
         this.whenList.addAll(whenList);
         this.other = other;
     }
@@ -79,9 +81,14 @@ public class CaseExpression extends AbstractSegment implements Expression {
     }
 
     private static Segment[] children(List<When> whenList, Literal other) {
+
         List<Segment> segments = new ArrayList<>();
         segments.addAll(whenList);
-        segments.add(other);
+
+        if (other != null) {
+            segments.add(other);
+        }
+
         return segments.toArray(new Segment[segments.size()]);
     }
 }
