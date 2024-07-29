@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.data.relational.core.sql.When;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -40,14 +41,20 @@ abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends Ty
 	@Override
 	Delegation enterNested(Visitable segment) {
 
-		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor(context);
+		if (segment instanceof When) {
+			WhenVisitor visitor = new WhenVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
 			ConditionVisitor visitor = new ConditionVisitor(context);
+			current = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof Expression) {
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}

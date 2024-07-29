@@ -688,6 +688,20 @@ class SelectRendererUnitTests {
 		assertThat(rendered).isEqualTo("SELECT e.*, e.id FROM employee e");
 	}
 
+	@Test
+	void rendersCaseExpression() {
+		Table table = SQL.table("table");
+		Column column = table.column("name");
+
+		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))).other(SQL.literalOf(2));
+		Select select = StatementBuilder.select(caseExpression) //
+				.from(table) //
+				.build();
+
+		String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT CASE WHEN table.name IS NULL THEN 1 ELSE 2 END FROM table");
+	}
+
 	/**
 	 * Tests the rendering of analytic functions.
 	 */

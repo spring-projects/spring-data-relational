@@ -108,6 +108,10 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			CastVisitor visitor = new CastVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
+		} else if (segment instanceof CaseExpression) {
+			CaseExpressionVisitor visitor = new CaseExpressionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
 		} else {
 			// works for literals and just and possibly more
 			value = segment.toString();
