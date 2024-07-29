@@ -11,7 +11,7 @@ import org.springframework.data.relational.core.sql.When;
  */
 public class WhenVisitor extends TypedSingleConditionRenderSupport<When> implements PartRenderer {
     private final StringBuilder part = new StringBuilder();
-    private boolean conditionRendeder;
+    private boolean conditionRendered;
 
     WhenVisitor(RenderContext context) {
         super(context);
@@ -22,12 +22,12 @@ public class WhenVisitor extends TypedSingleConditionRenderSupport<When> impleme
 
         if (hasDelegatedRendering()) {
 
-            if (conditionRendeder) {
+            if (conditionRendered) {
                 part.append(" THEN ");
             }
 
             part.append(consumeRenderedPart());
-            conditionRendeder = true;
+            conditionRendered = true;
         }
 
         return super.leaveNested(segment);
