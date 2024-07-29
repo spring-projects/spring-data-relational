@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.joining;
  * </p>
  *
  * @author Sven Rienstra
+ * @since 3.4
  */
 public class CaseExpression extends AbstractSegment implements Expression {
     private final List<When> whenList = new ArrayList<>();

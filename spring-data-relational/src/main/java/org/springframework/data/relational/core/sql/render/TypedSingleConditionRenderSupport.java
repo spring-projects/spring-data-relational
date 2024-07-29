@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * delegate nested {@link Expression} and {@link Condition} rendering.
  *
  * @author Mark Paluch
+ * @author Sven Rienstra
  * @since 1.1
  */
 abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends TypedSubtreeVisitor<T> {

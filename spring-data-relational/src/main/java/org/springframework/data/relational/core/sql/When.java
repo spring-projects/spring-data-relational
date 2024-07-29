@@ -5,6 +5,9 @@ package org.springframework.data.relational.core.sql;
  * <p>
  * Results in a rendered condition: {@code WHEN <condition> THEN <value>}.
  * </p>
+ *
+ * @author Sven Rienstra
+ * @since 3.4
  */
 public class When extends AbstractSegment {
     private final Expression condition;
