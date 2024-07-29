@@ -47,7 +47,7 @@ public class CaseExpression extends AbstractSegment implements Expression {
      */
     public CaseExpression when(When condition) {
         this.whenList.add(condition);
-        return this;
+        return new CaseExpression(whenList, other);
     }
 
     /**

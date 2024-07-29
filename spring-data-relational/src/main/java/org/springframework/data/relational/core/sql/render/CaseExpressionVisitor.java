@@ -25,6 +25,7 @@ public class CaseExpressionVisitor extends TypedSingleConditionRenderSupport<Cas
             CharSequence renderedPart = consumeRenderedPart();
 
             if (segment instanceof When) {
+                part.append(" ");
                 part.append(renderedPart);
             } else if (segment instanceof Literal<?>) {
                 part.append(" ELSE ");
@@ -37,7 +38,8 @@ public class CaseExpressionVisitor extends TypedSingleConditionRenderSupport<Cas
 
     @Override
     Delegation enterMatched(CaseExpression segment) {
-        part.append("CASE ");
+
+        part.append("CASE");
 
         return super.enterMatched(segment);
     }
