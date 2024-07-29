@@ -15,7 +15,13 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.*;
+
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.CaseExpression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SimpleFunction;
+import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
