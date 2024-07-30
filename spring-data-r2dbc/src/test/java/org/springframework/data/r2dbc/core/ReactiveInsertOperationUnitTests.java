@@ -15,24 +15,22 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import reactor.test.StepVerifier;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveInsertOperation}.
@@ -80,7 +78,7 @@ public class ReactiveInsertOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME) VALUES ($1)");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220

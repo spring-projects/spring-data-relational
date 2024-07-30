@@ -75,7 +75,7 @@ import org.springframework.data.util.Predicates;
 import org.springframework.data.util.ProxyUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.RowsFetchSpec;
 import org.springframework.util.Assert;
@@ -497,12 +497,12 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		SqlIdentifier columnName = idProperty.getColumnName();
 		Parameter parameter = outboundRow.get(columnName);
 
-		if (shouldSkipIdValue(parameter, idProperty)) {
+		if (shouldSkipIdValue(parameter)) {
 			outboundRow.remove(columnName);
 		}
 	}
 
-	private boolean shouldSkipIdValue(@Nullable Parameter value, RelationalPersistentProperty property) {
+	private boolean shouldSkipIdValue(@Nullable Parameter value) {
 
 		if (value == null || value.getValue() == null) {
 			return true;
@@ -521,8 +521,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.InsertSpec insert = mapper.createInsert(tableName);
 
 		for (SqlIdentifier column : outboundRow.keySet()) {
-			Parameter settableValue = outboundRow.get(column);
-			if (settableValue.hasValue()) {
+			io.r2dbc.spi.Parameter settableValue = outboundRow.get(column);
+			if (settableValue.getValue() != null) {
 				insert = insert.withColumn(column, settableValue);
 			}
 		}

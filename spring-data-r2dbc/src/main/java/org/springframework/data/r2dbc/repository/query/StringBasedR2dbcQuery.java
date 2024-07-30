@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import io.r2dbc.spi.Parameters;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ import org.springframework.data.spel.ExpressionDependencies;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.Assert;
@@ -245,7 +246,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		}
 
 		private Parameter toParameter(Object value) {
-			return value instanceof Parameter ? (Parameter) value : Parameter.from(value);
+			return value instanceof Parameter ? (Parameter) value : Parameters.in(value);
 		}
 
 		@Override
@@ -255,12 +256,12 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		@Override
 		public void bindNull(String identifier, Class<?> type) {
-			byName.put(identifier, Parameter.empty(type));
+			byName.put(identifier, Parameters.in(type));
 		}
 
 		@Override
 		public void bindNull(int index, Class<?> type) {
-			byIndex.put(index, Parameter.empty(type));
+			byIndex.put(index, Parameters.in(type));
 		}
 	}
 }

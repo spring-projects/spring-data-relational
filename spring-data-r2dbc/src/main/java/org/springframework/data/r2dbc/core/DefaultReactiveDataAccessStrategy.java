@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
@@ -40,6 +41,7 @@ import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.r2dbc.support.ArrayUtils;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -47,7 +49,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -197,20 +199,16 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			return false;
 		}
 
-		if (value.hasValue() && (value.getValue() instanceof Collection || value.getValue().getClass().isArray())) {
+		if (value.getValue() != null && (value.getValue() instanceof Collection || value.getType().getJavaType().isArray())) {
 			return true;
 		}
 
-		if (Collection.class.isAssignableFrom(value.getType()) || value.getType().isArray()) {
-			return true;
-		}
-
-		return false;
+		return Collection.class.isAssignableFrom(value.getType().getJavaType()) || value.getType().getJavaType().isArray();
 	}
 
 	private Parameter getArrayValue(Parameter value, RelationalPersistentProperty property) {
 
-		if (value.getType().equals(byte[].class)) {
+		if (value.getType().getJavaType().equals(byte[].class)) {
 			return value;
 		}
 
@@ -224,7 +222,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Class<?> actualType = null;
 		if (value.getValue() instanceof Collection) {
 			actualType = CollectionUtils.findCommonElementType((Collection<?>) value.getValue());
-		} else if (!value.isEmpty() && value.getValue().getClass().isArray()) {
+		} else if (value.getValue() != null && value.getValue().getClass().isArray()) {
 			actualType = value.getValue().getClass().getComponentType();
 		}
 
@@ -234,15 +232,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		actualType = converter.getTargetType(actualType);
 
-		if (value.isEmpty()) {
+		if (value.getValue() == null) {
 
 			Class<?> targetType = arrayColumns.getArrayType(actualType);
 			int depth = actualType.isArray() ? ArrayUtils.getDimensionDepth(actualType) : 1;
 			Class<?> targetArrayType = ArrayUtils.getArrayClass(targetType, depth);
-			return Parameter.empty(targetArrayType);
+			return Parameters.in(targetArrayType);
 		}
 
-		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()), actualType);
+		return Parameters.in(R2dbcTypes.fromClass(actualType), this.converter.getArrayValue(arrayColumns, property, value.getValue()));
 	}
 
 	@Override

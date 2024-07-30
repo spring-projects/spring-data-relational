@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
 import org.springframework.r2dbc.core.binding.Bindings;
@@ -83,7 +83,7 @@ public class UpdateMapper extends QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundAssignments}.
 	 */
-	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ? extends Object> assignments,
+	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ?> assignments,
 			Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(markers, "BindMarkers must not be null");

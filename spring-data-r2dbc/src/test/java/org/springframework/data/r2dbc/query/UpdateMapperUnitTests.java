@@ -15,14 +15,15 @@
  */
 package org.springframework.data.r2dbc.query;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import io.r2dbc.spi.Parameters;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -34,7 +35,6 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
 
@@ -66,7 +66,7 @@ public class UpdateMapperUnitTests {
 	@Test // gh-64
 	void shouldUpdateToSettableValue() {
 
-		Update update = Update.update("alternative", Parameter.empty(String.class));
+		Update update = Update.update("alternative", Parameters.in(String.class));
 
 		BoundAssignments mapped = map(update);
 

@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.convert;
 import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
@@ -43,7 +44,7 @@ import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 /**
  * Postgres-specific unit tests for {@link MappingR2dbcConverter}.
@@ -79,7 +80,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(person, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("json_value"), Parameter.from(person.jsonValue));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("json_value"), Parameters.in(person.jsonValue));
 	}
 
 	@Test // gh-453

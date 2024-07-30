@@ -15,18 +15,14 @@
  */
 package org.springframework.data.r2dbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Row;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import java.util.Arrays;
 import java.util.List;
-
 import javax.sql.DataSource;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +41,9 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 /**
  * Integration tests for {@link ConvertedRepository} that uses {@link Converter}s on entity-level.
@@ -164,10 +161,10 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 			OutboundRow outboundRow = new OutboundRow();
 
 			if (convertedEntity.id != null) {
-				outboundRow.put("id", Parameter.from(convertedEntity.id));
+				outboundRow.put("id", Parameters.in(convertedEntity.id));
 			}
 
-			outboundRow.put("name", Parameter.from("prefixed: " + convertedEntity.name));
+			outboundRow.put("name", Parameters.in("prefixed: " + convertedEntity.name));
 
 			return outboundRow;
 		}

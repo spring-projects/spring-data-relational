@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
+import io.r2dbc.spi.Parameters;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.SqlSort;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
@@ -256,7 +257,7 @@ class QueryMapperUnitTests {
 	@Test // gh-64
 	void shouldMapSimpleNullableCriteria() {
 
-		Criteria criteria = Criteria.where("name").is(Parameter.empty(Integer.class));
+		Criteria criteria = Criteria.where("name").is(Parameters.in(Integer.class));
 
 		BoundCondition bindings = map(criteria);
 

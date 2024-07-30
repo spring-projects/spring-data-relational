@@ -15,7 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 /**
  * SPI for components that can evaluate Spring EL expressions and return {@link Parameter}.

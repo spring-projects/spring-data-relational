@@ -15,23 +15,22 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.core.query.Criteria.*;
-import static org.springframework.data.relational.core.query.Query.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.test.MockResult;
-import reactor.test.StepVerifier;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+
+import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveUpdateOperation}.
@@ -69,7 +68,7 @@ public class ReactiveUpdateOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Heisenberg"));
 	}
 
 	@Test // gh-410
@@ -88,7 +87,7 @@ public class ReactiveUpdateOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE table SET THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Heisenberg"));
 	}
 
 	@Test // gh-220
@@ -108,8 +107,8 @@ public class ReactiveUpdateOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
-				Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in("Heisenberg")).containsEntry(1,
+				Parameters.in("Walter"));
 	}
 
 	@Test // gh-220

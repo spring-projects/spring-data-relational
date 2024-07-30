@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
@@ -29,7 +30,6 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
 

@@ -15,11 +15,13 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,9 +35,10 @@ import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -78,11 +81,11 @@ public class MappingR2dbcConverterUnitTests {
 		LocalDateTime localDateTime = LocalDateTime.now();
 		converter.write(new Person("id", "Walter", "White", instant, localDateTime), row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty("id", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("firstname"), Parameter.fromOrEmpty("Walter", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("lastname"), Parameter.fromOrEmpty("White", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("instant"), Parameter.from(instant));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("local_date_time"), Parameter.from(localDateTime));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), stringParameter("id"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("firstname"), stringParameter("Walter"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("lastname"), stringParameter("White"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("instant"), Parameters.in(instant));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("local_date_time"), Parameters.in(localDateTime));
 	}
 
 	@Test // gh-41
@@ -122,7 +125,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("nested"), Parameter.from("map"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("nested"), Parameters.in("map"));
 	}
 
 	@Test // gh-59
@@ -143,7 +146,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameter.from("Mint"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameters.in("Mint"));
 	}
 
 	@Test // gh-59
@@ -153,7 +156,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameter.fromOrEmpty(null, String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameters.in(String.class));
 	}
 
 	@Test // gh-59
@@ -177,8 +180,8 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(person, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("foo_column"), Parameter.from("bar"))
-				.containsEntry(SqlIdentifier.unquoted("entity"), Parameter.from("nested_entity"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("foo_column"), Parameters.in("bar"))
+				.containsEntry(SqlIdentifier.unquoted("entity"), Parameters.in("nested_entity"));
 	}
 
 	@Test // gh-530
@@ -215,7 +218,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(new WithPrimitiveId(1), row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty(1L, Long.TYPE));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameters.in(R2dbcTypes.fromClass(Long.TYPE), 1L));
 	}
 
 	@Test // gh-59
@@ -257,7 +260,12 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(entity, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(42L));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameters.in(42L));
+	}
+
+	@NotNull
+	private static Parameter stringParameter(String value) {
+		return Parameters.in(R2dbcTypes.fromClass(String.class), value);
 	}
 
 	static class Person {
@@ -378,8 +386,8 @@ public class MappingR2dbcConverterUnitTests {
 		public OutboundRow convert(CustomConversionPerson source) {
 
 			OutboundRow row = new OutboundRow();
-			row.put("foo_column", Parameter.from(source.foo));
-			row.put("entity", Parameter.from("nested_entity"));
+			row.put("foo_column", Parameters.in(source.foo));
+			row.put("entity", Parameters.in("nested_entity"));
 
 			return row;
 		}

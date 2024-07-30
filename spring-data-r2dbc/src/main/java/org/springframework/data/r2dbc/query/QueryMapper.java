@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.query;
 
+import io.r2dbc.spi.Parameters;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -42,7 +44,7 @@ import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
 import org.springframework.r2dbc.core.binding.Bindings;
@@ -399,12 +401,7 @@ public class QueryMapper {
 	 * @since 1.2
 	 */
 	public Parameter getBindValue(Parameter value) {
-
-		if (value.isEmpty()) {
-			return Parameter.empty(converter.getTargetType(value.getType()));
-		}
-
-		return Parameter.from(convertValue(value.getValue(), TypeInformation.OBJECT));
+		return Parameters.in(R2dbcTypes.fromClass(converter.getTargetType(value.getType().getJavaType())), value.getValue());
 	}
 
 	@Nullable
@@ -574,18 +571,14 @@ public class QueryMapper {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
 	}
 
-	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType) {
-		return propertyType;
-	}
-
 	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, Parameter parameter) {
 
 		if (mappedValue == null || propertyType.equals(Object.class)) {
-			return parameter.getType();
+			return parameter.getType().getJavaType();
 		}
 
 		if (mappedValue.getClass().equals(parameter.getValue().getClass())) {
-			return parameter.getType();
+			return parameter.getType().getJavaType();
 		}
 
 		return propertyType;
