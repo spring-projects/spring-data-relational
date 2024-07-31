@@ -4,7 +4,7 @@
 The methods of `CrudRepository` instances are transactional by default.
 For reading operations, the transaction configuration `readOnly` flag is set to `true`.
 All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
-For details, see the Javadoc of link:{spring-data-jdbc-javadoc}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`].
+For details, see the Javadoc of javadoc:org.springframework.data.jdbc.repository.support.SimpleJdbcRepository[].
 If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
 
 .Custom transaction configuration for CRUD

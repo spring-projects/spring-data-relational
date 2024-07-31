@@ -129,7 +129,7 @@ class ApplicationConfig extends AbstractJdbcConfiguration {                     
 ----
 
 <1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`
-<2> `AbstractJdbcConfiguration` provides various default beans required by Spring Data JDBC
+<2> javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] provides various default beans required by Spring Data JDBC
 <3> Creates a `DataSource` connecting to a database.
 This is required by the following two bean methods.
 <4> Creates the `NamedParameterJdbcOperations` used by Spring Data JDBC to access the database.
@@ -139,7 +139,7 @@ The configuration class in the preceding example sets up an embedded HSQL databa
 The `DataSource` is then used to set up `NamedParameterJdbcOperations` and a `TransactionManager`.
 We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
 If no base package is configured, it uses the package in which the configuration class resides.
-Extending `AbstractJdbcConfiguration` ensures various beans get registered.
+Extending javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] ensures various beans get registered.
 Overwriting its methods can be used to customize the setup (see below).
 
 This configuration can be further simplified by using Spring Boot.
@@ -152,7 +152,7 @@ There are a couple of things one might want to customize in this setup.
 == Dialects
 
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
-By default, the `AbstractJdbcConfiguration` attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `Dialect`.
+By default, the javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `Dialect`.
 You override `AbstractJdbcConfiguration.jdbcDialect(NamedParameterJdbcOperations)` to customize dialect selection.
 
 If you use a database for which no dialect is available, then your application won’t start up.
@@ -161,8 +161,8 @@ Alternatively, you can implement your own `Dialect`.
 
 [TIP]
 ====
-Dialects are resolved by {spring-data-jdbc-javadoc}/org/springframework/data/jdbc/repository/config/DialectResolver.html[`DialectResolver`] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
-+ You can let Spring auto-discover your `JdbcDialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+Dialects are resolved by javadoc:org.springframework.data.jdbc.repository.config.DialectResolver[] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
++ You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core.dialect.JdbcDialect[] by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
 
