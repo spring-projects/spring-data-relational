@@ -10,7 +10,7 @@ target/
 *.sonar4clipseExternals
 *.graphml
 package-lock.json
-.mvn/.gradle-enterprise
+.mvn/.develocity
 
 build/
 node_modules
