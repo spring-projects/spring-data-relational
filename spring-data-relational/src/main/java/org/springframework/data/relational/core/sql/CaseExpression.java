@@ -18,7 +18,6 @@ import static java.util.stream.Collectors.*;
  *     ELSE result
  *   END
  * </pre>
- * </p>
  *
  * @author Sven Rienstra
  * @since 3.4
