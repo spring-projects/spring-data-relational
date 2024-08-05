@@ -63,7 +63,7 @@ Then enter a project and a package name, such as `org.spring.r2dbc.example`.
 +
 [source,xml,subs="+attributes"]
 ----
-<spring.version>{springVersion}</spring-framework.version>
+<spring.version>{springVersion}</spring.version>
 ----
 
 . Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level as your `<dependencies/>` element:
