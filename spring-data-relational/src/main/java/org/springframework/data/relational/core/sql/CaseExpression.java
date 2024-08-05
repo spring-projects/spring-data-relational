@@ -1,9 +1,11 @@
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.*;
 
 /**
  * Case with one or more conditions expression.
@@ -22,73 +24,64 @@ import static java.util.stream.Collectors.joining;
  * @since 3.4
  */
 public class CaseExpression extends AbstractSegment implements Expression {
-    private final List<When> whenList;
-    private final Expression elseExpression;
 
-    private CaseExpression(List<When> whenList, Expression elseExpression) {
+	private final List<When> whenList;
+	@Nullable
+	private final Expression elseExpression;
 
-        super(children(whenList, elseExpression));
-        this.whenList = whenList;
-        this.elseExpression = elseExpression;
-    }
+	private static Segment[] children(List<When> whenList, @Nullable Expression elseExpression) {
 
-    /**
-     * Create CASE {@link Expression} with initial {@link When} condition.
-     * @param condition initial {@link When} condition
-     * @return the {@link CaseExpression}
-     */
-    public static CaseExpression create(When condition) {
-        return new CaseExpression(List.of(condition), null);
-    }
+		List<Segment> segments = new ArrayList<>(whenList);
 
-    /**
-     * Add additional {@link When} condition
-     * @param condition the {@link When} condition
-     * @return the {@link CaseExpression}
-     */
-    public CaseExpression when(When condition) {
-        List<When> conditions = new ArrayList<>(this.whenList);
-        conditions.add(condition);
-        return new CaseExpression(conditions, elseExpression);
-    }
+		if (elseExpression != null) {
+			segments.add(elseExpression);
+		}
 
-    /**
-     * Add ELSE clause
-     * @param elseExpression the {@link Expression} else value
-     * @return the {@link CaseExpression}
-     */
-    public CaseExpression elseExpression(Literal elseExpression) {
-        return new CaseExpression(whenList, elseExpression);
-    }
+		return segments.toArray(new Segment[0]);
+	}
 
-    /**
-     * @return the {@link When} conditions
-     */
-    public List<When> getWhenList() {
-        return whenList;
-    }
+	private CaseExpression(List<When> whenList, @Nullable Expression elseExpression) {
 
-    /**
-     * @return the ELSE {@link Literal} value
-     */
-    public Expression getElseExpression() {
-        return elseExpression;
-    }
+		super(children(whenList, elseExpression));
 
-    @Override
-    public String toString() {
-        return "CASE " + whenList.stream().map(When::toString).collect(joining(" ")) + (elseExpression != null ? " ELSE " + elseExpression : "") + " END";
-    }
+		this.whenList = whenList;
+		this.elseExpression = elseExpression;
+	}
 
-    private static Segment[] children(List<When> whenList, Expression elseExpression) {
+	/**
+	 * Create CASE {@link Expression} with initial {@link When} condition.
+	 *
+	 * @param condition initial {@link When} condition
+	 * @return the {@link CaseExpression}
+	 */
+	public static CaseExpression create(When condition) {
+		return new CaseExpression(List.of(condition), null);
+	}
 
-        List<Segment> segments = new ArrayList<>();
-        segments.addAll(whenList);
+	/**
+	 * Add additional {@link When} condition
+	 *
+	 * @param condition the {@link When} condition
+	 * @return the {@link CaseExpression}
+	 */
+	public CaseExpression when(When condition) {
+		List<When> conditions = new ArrayList<>(this.whenList);
+		conditions.add(condition);
+		return new CaseExpression(conditions, elseExpression);
+	}
 
-        if (elseExpression != null) {
-            segments.add(elseExpression);
-        }
+	/**
+	 * Add ELSE clause
+	 *
+	 * @param elseExpression the {@link Expression} else value
+	 * @return the {@link CaseExpression}
+	 */
+	public CaseExpression elseExpression(Expression elseExpression) {
+		return new CaseExpression(whenList, elseExpression);
+	}
 
-        return segments.toArray(new Segment[segments.size()]);
-    }
+	@Override
+	public String toString() {
+		return "CASE " + whenList.stream().map(When::toString).collect(joining(" ")) + (elseExpression != null ? " ELSE " + elseExpression : "") + " END";
+	}
 }

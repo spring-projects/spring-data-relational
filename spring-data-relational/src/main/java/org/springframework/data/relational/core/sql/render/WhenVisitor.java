@@ -10,6 +10,7 @@ import org.springframework.data.relational.core.sql.When;
  * @since 3.4
  */
 public class WhenVisitor extends TypedSingleConditionRenderSupport<When> implements PartRenderer {
+
     private final StringBuilder part = new StringBuilder();
     private boolean conditionRendered;
 

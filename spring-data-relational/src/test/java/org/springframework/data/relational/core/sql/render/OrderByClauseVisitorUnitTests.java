@@ -29,6 +29,7 @@ import java.util.List;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Koen Punt
+ * @author Sven Rienstra
  */
 class OrderByClauseVisitorUnitTests {
 
@@ -125,15 +126,16 @@ class OrderByClauseVisitorUnitTests {
 
 	@Test
 	void shouldRenderOrderByCase() {
+
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name");
 
-		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))).elseExpression(SQL.literalOf(2));
+		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))).elseExpression(SQL.literalOf(column));
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(caseExpression).asc()).build();
 
 		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
 		select.visit(visitor);
 
-		assertThat(visitor.getRenderedPart().toString()).isEqualTo("CASE WHEN emp.name IS NULL THEN 1 ELSE 2 END ASC");
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("CASE WHEN emp.name IS NULL THEN 1 ELSE emp.name END ASC");
 	}
 }

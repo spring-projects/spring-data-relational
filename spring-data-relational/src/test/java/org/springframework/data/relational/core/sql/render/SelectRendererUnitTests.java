@@ -31,6 +31,7 @@ import java.util.List;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Sven Rienstra
  */
 class SelectRendererUnitTests {
 
@@ -690,11 +691,12 @@ class SelectRendererUnitTests {
 
 	@Test
 	void rendersCaseExpression() {
+
 		Table table = SQL.table("table");
 		Column column = table.column("name");
 
 		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))) //
-				.when(When.when(column.isNotNull(), SQL.literalOf(2))) //
+				.when(When.when(column.isNotNull(), column)) //
 				.elseExpression(SQL.literalOf(3));
 
 		Select select = StatementBuilder.select(caseExpression) //
@@ -702,7 +704,7 @@ class SelectRendererUnitTests {
 				.build();
 
 		String rendered = SqlRenderer.toString(select);
-		assertThat(rendered).isEqualTo("SELECT CASE WHEN table.name IS NULL THEN 1 WHEN table.name IS NOT NULL THEN 2 ELSE 3 END FROM table");
+		assertThat(rendered).isEqualTo("SELECT CASE WHEN table.name IS NULL THEN 1 WHEN table.name IS NOT NULL THEN table.name ELSE 3 END FROM table");
 	}
 
 	/**

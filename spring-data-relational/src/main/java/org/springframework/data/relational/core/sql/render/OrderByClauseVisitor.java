@@ -16,8 +16,8 @@
 package org.springframework.data.relational.core.sql.render;
 
 
-import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.CaseExpression;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SimpleFunction;
@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Koen Punt
+ * @author Sven Rienstra
  * @since 1.1
  */
 class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements PartRenderer {
@@ -39,7 +40,8 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 	private final StringBuilder builder = new StringBuilder();
 
-	@Nullable private PartRenderer delegate;
+	@Nullable
+	private PartRenderer delegate;
 
 	private boolean first = true;
 
@@ -69,7 +71,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 		String nullPrecedence = context.getSelectRenderContext().evaluateOrderByNullHandling(segment.getNullHandling());
 		if (!nullPrecedence.isEmpty()) {
-			
+
 			builder.append(" ") //
 					.append(nullPrecedence);
 		}
@@ -82,12 +84,12 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 		if (segment instanceof SimpleFunction) {
 			delegate = new SimpleFunctionVisitor(context);
-			return Delegation.delegateTo((SimpleFunctionVisitor)delegate);
+			return Delegation.delegateTo((SimpleFunctionVisitor) delegate);
 		}
 
 		if (segment instanceof Expressions.SimpleExpression || segment instanceof CaseExpression) {
 			delegate = new ExpressionVisitor(context);
-			return Delegation.delegateTo((ExpressionVisitor)delegate);
+			return Delegation.delegateTo((ExpressionVisitor) delegate);
 		}
 
 		return super.enterNested(segment);

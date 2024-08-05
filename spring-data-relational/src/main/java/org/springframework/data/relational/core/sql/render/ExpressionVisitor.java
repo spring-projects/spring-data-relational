@@ -24,7 +24,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
- * @since 1.1
+ * @author Sven Rienstra
  * @see Column
  * @see SubselectExpression
  */
@@ -48,7 +48,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	/**
 	 * Creates an {@code ExpressionVisitor}.
 	 *
-	 * @param context must not be {@literal null}.
+	 * @param context       must not be {@literal null}.
 	 * @param aliasHandling controls if columns should be rendered as their alias or using their table names.
 	 * @since 2.3
 	 */
@@ -109,6 +109,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		} else if (segment instanceof CaseExpression) {
+
 			CaseExpressionVisitor visitor = new CaseExpressionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
@@ -132,7 +133,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 		if (segment instanceof InlineQuery) {
 
-			NoopVisitor<InlineQuery> partRenderer = new NoopVisitor(InlineQuery.class);
+			NoopVisitor<InlineQuery> partRenderer = new NoopVisitor<>(InlineQuery.class);
 			return Delegation.delegateTo(partRenderer);
 		}
 		return super.enterNested(segment);

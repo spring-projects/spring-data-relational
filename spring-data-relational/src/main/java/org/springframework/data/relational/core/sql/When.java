@@ -10,6 +10,7 @@ package org.springframework.data.relational.core.sql;
  * @since 3.4
  */
 public class When extends AbstractSegment {
+
     private final Condition condition;
     private final Expression value;
 
