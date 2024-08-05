@@ -22,15 +22,14 @@ import static java.util.stream.Collectors.joining;
  * @since 3.4
  */
 public class CaseExpression extends AbstractSegment implements Expression {
-    private final List<When> whenList = new ArrayList<>();
-    private final Literal other;
+    private final List<When> whenList;
+    private final Expression elseExpression;
 
-    private CaseExpression(List<When> whenList, Literal other) {
+    private CaseExpression(List<When> whenList, Expression elseExpression) {
 
-        super(children(whenList, other));
-
-        this.whenList.addAll(whenList);
-        this.other = other;
+        super(children(whenList, elseExpression));
+        this.whenList = whenList;
+        this.elseExpression = elseExpression;
     }
 
     /**
@@ -48,17 +47,18 @@ public class CaseExpression extends AbstractSegment implements Expression {
      * @return the {@link CaseExpression}
      */
     public CaseExpression when(When condition) {
-        this.whenList.add(condition);
-        return new CaseExpression(whenList, other);
+        List<When> conditions = new ArrayList<>(this.whenList);
+        conditions.add(condition);
+        return new CaseExpression(conditions, elseExpression);
     }
 
     /**
      * Add ELSE clause
-     * @param other the {@link Literal} else value
+     * @param elseExpression the {@link Expression} else value
      * @return the {@link CaseExpression}
      */
-    public CaseExpression other(Literal other) {
-        return new CaseExpression(whenList, other);
+    public CaseExpression elseExpression(Literal elseExpression) {
+        return new CaseExpression(whenList, elseExpression);
     }
 
     /**
@@ -71,22 +71,22 @@ public class CaseExpression extends AbstractSegment implements Expression {
     /**
      * @return the ELSE {@link Literal} value
      */
-    public Literal getOther() {
-        return other;
+    public Expression getElseExpression() {
+        return elseExpression;
     }
 
     @Override
     public String toString() {
-        return "CASE " + whenList.stream().map(When::toString).collect(joining(" ")) + (other != null ? " ELSE " + other : "") + " END";
+        return "CASE " + whenList.stream().map(When::toString).collect(joining(" ")) + (elseExpression != null ? " ELSE " + elseExpression : "") + " END";
     }
 
-    private static Segment[] children(List<When> whenList, Literal other) {
+    private static Segment[] children(List<When> whenList, Expression elseExpression) {
 
         List<Segment> segments = new ArrayList<>();
         segments.addAll(whenList);
 
-        if (other != null) {
-            segments.add(other);
+        if (elseExpression != null) {
+            segments.add(elseExpression);
         }
 
         return segments.toArray(new Segment[segments.size()]);

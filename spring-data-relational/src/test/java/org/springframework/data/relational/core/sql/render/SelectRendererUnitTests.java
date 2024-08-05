@@ -695,7 +695,7 @@ class SelectRendererUnitTests {
 
 		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))) //
 				.when(When.when(column.isNotNull(), SQL.literalOf(2))) //
-				.other(SQL.literalOf(3));
+				.elseExpression(SQL.literalOf(3));
 
 		Select select = StatementBuilder.select(caseExpression) //
 				.from(table) //

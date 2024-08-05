@@ -128,7 +128,7 @@ class OrderByClauseVisitorUnitTests {
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name");
 
-		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))).other(SQL.literalOf(2));
+		CaseExpression caseExpression = CaseExpression.create(When.when(column.isNull(), SQL.literalOf(1))).elseExpression(SQL.literalOf(2));
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(caseExpression).asc()).build();
 
 		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));

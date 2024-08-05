@@ -10,10 +10,10 @@ package org.springframework.data.relational.core.sql;
  * @since 3.4
  */
 public class When extends AbstractSegment {
-    private final Expression condition;
-    private final Literal value;
+    private final Condition condition;
+    private final Expression value;
 
-    private When(Expression condition, Literal value) {
+    private When(Condition condition, Expression value) {
 
         super(condition, value);
 
@@ -28,21 +28,21 @@ public class When extends AbstractSegment {
      * @param value     the {@link Literal} value.
      * @return the {@link When}.
      */
-    public static When when(Expression condition, Literal value) {
+    public static When when(Condition condition, Expression value) {
         return new When(condition, value);
     }
 
     /**
      * @return the condition
      */
-    public Expression getCondition() {
+    public Condition getCondition() {
         return condition;
     }
 
     /**
      * @return the value
      */
-    public Literal getValue() {
+    public Expression getValue() {
         return value;
     }
 
