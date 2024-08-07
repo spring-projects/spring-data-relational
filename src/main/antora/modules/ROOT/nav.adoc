@@ -11,6 +11,7 @@
 ** xref:commons/custom-conversions.adoc[]
 ** xref:repositories/custom-implementations.adoc[]
 ** xref:repositories/core-extensions.adoc[]
+** xref:value-expressions.adoc[]
 ** xref:query-by-example.adoc[]
 ** xref:repositories/core-domain-events.adoc[]
 ** xref:commons/entity-callbacks.adoc[]
