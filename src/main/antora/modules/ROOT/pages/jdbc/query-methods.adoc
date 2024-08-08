@@ -169,6 +169,10 @@ Properties that don't have a matching column in the result will not be set.
 The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
 Separate queries are generated for maps, lists, sets and arrays of entities.
 
+Properties one-to-one relationships must have there name prefixed by the name of the relationship plus `_`.
+For example if the `User` from the example above has an `address` with the property `city` the column for that `city` must be labeled `address_city`.
+
+
 WARNING: Note that String-based queries do not support pagination nor accept `Sort`, `PageRequest`, and `Limit` as a query parameter as for these queries the query would be required to be rewritten.
 If you want to apply limiting, please express this intent using SQL and bind the appropriate parameters to the query yourself.
 
