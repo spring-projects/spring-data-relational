@@ -15,22 +15,20 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.core.query.Criteria.*;
-import static org.springframework.data.relational.core.query.Query.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.test.MockResult;
-import reactor.test.StepVerifier;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveDeleteOperation}.
@@ -105,7 +103,7 @@ public class ReactiveDeleteOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
 		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220

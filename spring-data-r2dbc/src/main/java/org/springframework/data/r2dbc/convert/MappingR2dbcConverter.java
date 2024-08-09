@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
@@ -39,6 +40,7 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.support.ArrayUtils;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -47,7 +49,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -226,7 +228,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		Object result = getPotentiallyConvertedSimpleWrite(value);
 
 		sink.put(property.getColumnName(),
-				Parameter.fromOrEmpty(result, getPotentiallyConvertedSimpleNullType(property.getType())));
+				Parameters.in(R2dbcTypes.fromClass(getPotentiallyConvertedSimpleNullType(property.getType())), result));
 	}
 
 	private void writePropertyInternal(OutboundRow sink, Object value, boolean isNew,
@@ -244,7 +246,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			}
 
 			List<Object> collectionInternal = createCollection(asCollection(value), property);
-			sink.put(property.getColumnName(), Parameter.from(collectionInternal));
+			sink.put(property.getColumnName(), Parameters.in(collectionInternal));
 			return;
 		}
 
@@ -301,7 +303,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
 
-		sink.put(property.getColumnName(), Parameter.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
+		sink.put(property.getColumnName(), Parameters.in(getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
 	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {

@@ -15,15 +15,15 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRowMetadata;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -34,12 +34,10 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
 
 /**
  * Abstract base class for {@link R2dbcDialect}-aware {@link DefaultReactiveDataAccessStrategy} tests.
@@ -202,7 +200,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		setter.accept(toSave, testValue);
 
 		assertThat(strategy.getOutboundRow(toSave)).containsEntry(SqlIdentifier.unquoted(fieldname),
-				Parameter.from(testValue));
+				Parameters.in(testValue));
 
 		when(rowMock.get(fieldname)).thenReturn(testValue);
 

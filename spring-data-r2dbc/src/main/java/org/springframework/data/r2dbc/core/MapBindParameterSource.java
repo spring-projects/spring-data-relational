@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.data.util.Streamable;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.util.Assert;
 
 /**
@@ -55,22 +55,6 @@ class MapBindParameterSource implements BindParameterSource {
 		this.values = values;
 	}
 
-	/**
-	 * Add a key-value pair to the {@link MapBindParameterSource}. The value must not be {@literal null}.
-	 *
-	 * @param paramName must not be {@literal null}.
-	 * @param value must not be {@literal null}.
-	 * @return {@code this} {@link MapBindParameterSource}
-	 */
-	MapBindParameterSource addValue(String paramName, Object value) {
-
-		Assert.notNull(paramName, "Parameter name must not be null");
-		Assert.notNull(value, "Value must not be null");
-
-		this.values.put(paramName, Parameter.fromOrEmpty(value, value.getClass()));
-		return this;
-	}
-
 	@Override
 	public boolean hasValue(String paramName) {
 
@@ -85,8 +69,9 @@ class MapBindParameterSource implements BindParameterSource {
 		Assert.notNull(paramName, "Parameter name must not be null");
 
 		Parameter settableValue = this.values.get(paramName);
+
 		if (settableValue != null) {
-			return settableValue.getType();
+			return settableValue.getType().getJavaType();
 		}
 
 		return Object.class;

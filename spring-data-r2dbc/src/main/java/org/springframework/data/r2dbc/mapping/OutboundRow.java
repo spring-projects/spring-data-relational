@@ -15,17 +15,15 @@
  */
 package org.springframework.data.r2dbc.mapping;
 
+import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.Row;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 
 /**

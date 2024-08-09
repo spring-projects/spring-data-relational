@@ -15,7 +15,7 @@
  */
 package org.springframework.data.r2dbc.dialect;
 
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
@@ -41,7 +41,7 @@ public final class BindTargetBinder {
 	public void bind(String name, Parameter parameter) {
 		Object value = parameter.getValue();
 		if (value == null) {
-			target.bindNull(name, parameter.getType());
+			target.bindNull(name, parameter.getType().getJavaType());
 		} else {
 			target.bind(name, value);
 		}
@@ -56,7 +56,7 @@ public final class BindTargetBinder {
 	public void bind(int index, Parameter parameter) {
 		Object value = parameter.getValue();
 		if (value == null) {
-			target.bindNull(index, parameter.getType());
+			target.bindNull(index, parameter.getType().getJavaType());
 		} else {
 			target.bind(index, parameter.getValue());
 		}

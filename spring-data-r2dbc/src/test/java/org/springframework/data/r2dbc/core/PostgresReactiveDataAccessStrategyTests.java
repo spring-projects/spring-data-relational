@@ -15,11 +15,12 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.data.r2dbc.testing.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.springframework.data.r2dbc.testing.Assertions.assertThat;
 
 import io.r2dbc.postgresql.codec.Interval;
-
+import io.r2dbc.spi.Parameters;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
@@ -37,7 +37,6 @@ import org.springframework.data.r2dbc.core.StatementMapper.InsertSpec;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
 
@@ -69,7 +68,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		StatementMapper mapper = strategy.getStatementMapper();
 		MyEnum[] value = { MyEnum.ONE };
-		InsertSpec insert = mapper.createInsert("table").withColumn("my_col", Parameter.from(value));
+		InsertSpec insert = mapper.createInsert("table").withColumn("my_col", Parameters.in(value));
 		PreparedOperation<?> mappedObject = mapper.getMappedObject(insert);
 
 		BindTarget bindTarget = mock(BindTarget.class);

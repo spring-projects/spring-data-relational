@@ -15,11 +15,13 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import io.r2dbc.spi.Parameters;
 import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 /**
  * Simple {@link R2dbcSpELExpressionEvaluator} implementation using {@link ExpressionParser} and
@@ -56,7 +58,7 @@ class DefaultR2dbcSpELExpressionEvaluator implements R2dbcSpELExpressionEvaluato
 		Object value = expr.getValue(context, Object.class);
 		Class<?> valueType = expr.getValueType(context);
 
-		return org.springframework.r2dbc.core.Parameter.fromOrEmpty(value, valueType != null ? valueType : Object.class);
+		return Parameters.in(R2dbcTypes.fromClass(valueType != null ? valueType : Object.class), value);
 	}
 
 	/**

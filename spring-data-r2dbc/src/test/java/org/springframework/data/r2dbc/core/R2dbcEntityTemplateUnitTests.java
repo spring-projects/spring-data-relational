@@ -68,7 +68,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -114,7 +114,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test
@@ -221,7 +221,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220
@@ -237,7 +237,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-215
@@ -279,7 +279,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 2");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220, gh-758
@@ -296,7 +296,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY person.THE_NAME ASC LIMIT 1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220
@@ -317,8 +317,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
-				Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in("Heisenberg")).containsEntry(1,
+				Parameters.in("Walter"));
 	}
 
 	@Test // gh-220
@@ -338,7 +338,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
 		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-220
@@ -355,7 +355,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
 		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.id = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("Walter"));
 	}
 
 	@Test // gh-365
@@ -375,8 +375,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO versioned_person (id, version, name) VALUES ($1, $2, $3)");
-		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("id")).containsEntry(1,
-				Parameter.from(1L));
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameters.in("id")).containsEntry(1,
+				Parameters.in(1L));
 	}
 
 	@Test // gh-557, gh-402
@@ -394,7 +394,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO person_with_primitive_id (name) VALUES ($1)");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("bar"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameters.in("bar"));
 	}
 
 	@Test // gh-557, gh-402
@@ -415,8 +415,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("INSERT INTO versioned_person_with_primitive_id (version, name) VALUES ($1, $2)");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from(1L)).containsEntry(1,
-				Parameter.from("bar"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in(1L)).containsEntry(1,
+				Parameters.in("bar"));
 	}
 
 	@Test // gh-451
@@ -500,8 +500,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME, description) VALUES ($1, $2)");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
-				Parameter.from("before-save"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in("before-convert")).containsEntry(1,
+				Parameters.in("before-save"));
 	}
 
 	@Test // gh-365
@@ -522,8 +522,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql()).isEqualTo(
 				"UPDATE versioned_person SET version = $1, name = $2 WHERE versioned_person.id = $3 AND (versioned_person.version = $4)");
-		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, Parameter.from(2L)).containsEntry(3,
-				Parameter.from(1L));
+		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, Parameters.in(2L)).containsEntry(3,
+				Parameters.in(1L));
 	}
 
 	@Test // gh-215
@@ -555,8 +555,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1, description = $2 WHERE person.id = $3");
-		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
-				Parameter.from("before-save"));
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameters.in("before-convert")).containsEntry(1,
+				Parameters.in("before-save"));
 	}
 
 	@Test // gh-637
@@ -574,8 +574,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO with_insert_only (name, insert_only) VALUES ($1, $2)");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Alfred")).containsEntry(1,
-				Parameter.from("insert this"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in("Alfred")).containsEntry(1,
+				Parameters.in("insert this"));
 	}
 
 	@Test // gh-637
@@ -593,8 +593,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE with_insert_only SET name = $1 WHERE with_insert_only.id = $2");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Alfred")).containsEntry(1,
-				Parameter.from(23L));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameters.in("Alfred")).containsEntry(1,
+				Parameters.in(23L));
 	}
 
 	@Test // GH-1696
@@ -613,7 +613,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO with_money (money) VALUES ($1)");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0,
-				Parameter.from(Parameters.in(R2dbcType.VARCHAR, "$$$")));
+				Parameters.in(Parameters.in(R2dbcType.VARCHAR, "$$$")));
 	}
 
 	@Test // GH-1696
@@ -864,7 +864,7 @@ public class R2dbcEntityTemplateUnitTests {
 		public Mono<Person> onBeforeSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
 
 			capture(entity);
-			outboundRow.put(SqlIdentifier.unquoted("description"), Parameter.from("before-save"));
+			outboundRow.put(SqlIdentifier.unquoted("description"), Parameters.in("before-save"));
 			return Mono.just(entity);
 		}
 	}

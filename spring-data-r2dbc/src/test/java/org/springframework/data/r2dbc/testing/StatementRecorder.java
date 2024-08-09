@@ -21,6 +21,7 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.ConnectionMetadata;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 import io.r2dbc.spi.TransactionDefinition;
@@ -42,7 +43,7 @@ import java.util.regex.Pattern;
 
 import org.reactivestreams.Publisher;
 
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 /**
  * Recorder utility for R2DBC {@link Statement}s. Allows stubbing and introspection.
@@ -105,7 +106,7 @@ public class StatementRecorder implements ConnectionFactory {
 	 * </pre>
 	 *
 	 * @param sqlPredicate
-	 * @param result
+	 * @param results
 	 */
 	public void addStubbing(Predicate<String> sqlPredicate, List<Result> results) {
 		this.stubbings.put(sqlPredicate, () -> results);
@@ -128,7 +129,6 @@ public class StatementRecorder implements ConnectionFactory {
 	/**
 	 * Retrieve a statement by a {@link Predicate SQL predicate}.
 	 *
-	 * @param sql
 	 * @return
 	 */
 	public RecordedStatement getCreatedStatement(Predicate<String> predicate) {
@@ -299,25 +299,25 @@ public class StatementRecorder implements ConnectionFactory {
 
 		@Override
 		public Statement bind(int index, Object o) {
-			this.bindings.put(index, Parameter.from(o));
+			this.bindings.put(index, Parameters.in(o));
 			return this;
 		}
 
 		@Override
 		public Statement bind(String identifier, Object o) {
-			this.bindings.put(identifier, Parameter.from(o));
+			this.bindings.put(identifier, Parameters.in(o));
 			return this;
 		}
 
 		@Override
 		public Statement bindNull(int index, Class<?> type) {
-			this.bindings.put(index, Parameter.empty(type));
+			this.bindings.put(index, Parameters.in(type));
 			return this;
 		}
 
 		@Override
 		public Statement bindNull(String identifier, Class<?> type) {
-			this.bindings.put(identifier, Parameter.empty(type));
+			this.bindings.put(identifier, Parameters.in(type));
 			return this;
 		}
 

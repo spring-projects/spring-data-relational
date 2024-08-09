@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.r2dbc.spi.Parameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
@@ -44,7 +45,7 @@ class NamedParameterUtilsTests {
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement("select :names AND :names");
 		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(parsedSql,
 				BindMarkersFactory.anonymous("?"),
-				new MapBindParameterSource(Collections.singletonMap("names", Parameter.from(Arrays.asList("1", "2", "3")))));
+				new MapBindParameterSource(Collections.singletonMap("names", Parameters.in(Arrays.asList("1", "2", "3")))));
 
 		List<String> bindings = new ArrayList<>();
 
@@ -58,8 +59,8 @@ class NamedParameterUtilsTests {
 	void complexInCollectionSameParameterNameShouldBindAllAnonymousParameters() {
 
 		Map<String, Parameter> parameterMap = new HashMap<>();
-		parameterMap.put("names", Parameter.from(Arrays.asList("1", "2", "3")));
-		parameterMap.put("hello", Parameter.from("world"));
+		parameterMap.put("names", Parameters.in(Arrays.asList("1", "2", "3")));
+		parameterMap.put("hello", Parameters.in("world"));
 
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement("select :names AND :hello OR :names");
 		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(parsedSql,
@@ -79,7 +80,7 @@ class NamedParameterUtilsTests {
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement("select :names AND :names");
 		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(parsedSql,
 				BindMarkersFactory.indexed("$", 1),
-				new MapBindParameterSource(Collections.singletonMap("names", Parameter.from(Arrays.asList("1", "2", "3")))));
+				new MapBindParameterSource(Collections.singletonMap("names", Parameters.in(Arrays.asList("1", "2", "3")))));
 
 		List<String> bindings = new ArrayList<>();
 

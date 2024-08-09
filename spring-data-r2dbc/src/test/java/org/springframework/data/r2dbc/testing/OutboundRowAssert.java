@@ -28,7 +28,7 @@ import org.assertj.core.error.ShouldNotBeEmpty;
 
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
+import io.r2dbc.spi.Parameter;
 
 /**
  * Assertion methods for {@link OutboundRow}.
@@ -184,7 +184,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	}
 
 	/**
-	 * Verifies that the actual row contains the given column that is {@link Parameter#isEmpty() empty}.
+	 * Verifies that the actual row contains the given column that is {@link Parameter#getValue() empty}.
 	 *
 	 * @param identifier the given identifier.
 	 * @return {@code this} assertions object.
@@ -197,7 +197,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	}
 
 	/**
-	 * Verifies that the actual row contains the given column that is {@link Parameter#isEmpty() empty}.
+	 * Verifies that the actual row contains the given column that is {@link Parameter#getValue() empty}.
 	 *
 	 * @param identifier the given identifier.
 	 * @return {@code this} assertions object.
@@ -209,7 +209,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 		containsColumn(identifier);
 
 		Parameter parameter = actual.get(identifier);
-		if (!parameter.isEmpty()) {
+		if (parameter.getValue() != null) {
 			failWithMessage(ShouldBeEmpty.shouldBeEmpty(parameter).create());
 		}
 
@@ -259,7 +259,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 
 			isNotNull();
 
-			if (!this.actual.isEmpty()) {
+			if (this.actual.getValue() != null) {
 				failWithMessage(ShouldBeEmpty.shouldBeEmpty(actual).create());
 			}
 
@@ -277,7 +277,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 
 			isNotNull();
 
-			if (!this.actual.hasValue()) {
+			if (this.actual.getValue() == null) {
 				failWithMessage(ShouldNotBeEmpty.shouldNotBeEmpty().create());
 			}
 

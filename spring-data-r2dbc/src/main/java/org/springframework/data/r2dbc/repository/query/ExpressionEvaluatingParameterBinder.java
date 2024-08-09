@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.BindTargetBinder;
+import org.springframework.data.r2dbc.support.R2dbcTypes;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
@@ -79,7 +80,7 @@ class ExpressionEvaluatingParameterBinder {
 		BindTargetBinder binder = new BindTargetBinder(bindSpec);
 		for (ParameterBinding binding : expressionQuery.getBindings()) {
 
-			org.springframework.r2dbc.core.Parameter valueForBinding = getBindValue(
+			io.r2dbc.spi.Parameter valueForBinding = getBindValue(
 					evaluator.evaluate(binding.getExpression()));
 
 			binder.bind(binding.getParameterName(), valueForBinding);
@@ -102,33 +103,32 @@ class ExpressionEvaluatingParameterBinder {
 					continue;
 				}
 
-				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
+				io.r2dbc.spi.Parameter parameter = getBindValue(values, bindableParameter);
 
-				if (!parameter.isEmpty() || hasBindableNullValue) {
+				if (parameter.getValue() != null || hasBindableNullValue) {
 					binder.bind(name.get(), parameter);
 				}
 
 				// skip unused named parameters if there is SpEL
 			} else {
 
-				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
+				io.r2dbc.spi.Parameter parameter = getBindValue(values, bindableParameter);
 
-				if (!parameter.isEmpty() || hasBindableNullValue) {
+				if (parameter.getValue() != null || hasBindableNullValue) {
 					binder.bind(bindingIndex++, parameter);
 				}
 			}
 		}
 	}
 
-	private org.springframework.r2dbc.core.Parameter getBindValue(Object[] values, Parameter bindableParameter) {
+	private io.r2dbc.spi.Parameter getBindValue(Object[] values, Parameter bindableParameter) {
 
-		org.springframework.r2dbc.core.Parameter parameter = org.springframework.r2dbc.core.Parameter
-				.fromOrEmpty(values[bindableParameter.getIndex()], bindableParameter.getType());
+		io.r2dbc.spi.Parameter parameter = io.r2dbc.spi.Parameters.in(R2dbcTypes.fromClass(bindableParameter.getType()), values[bindableParameter.getIndex()]);
 
 		return dataAccessStrategy.getBindValue(parameter);
 	}
 
-	private org.springframework.r2dbc.core.Parameter getBindValue(org.springframework.r2dbc.core.Parameter bindValue) {
+	private io.r2dbc.spi.Parameter getBindValue(io.r2dbc.spi.Parameter bindValue) {
 		return dataAccessStrategy.getBindValue(bindValue);
 	}
 

@@ -15,21 +15,20 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.data.r2dbc.testing.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.springframework.data.r2dbc.testing.Assertions.assertThat;
 
+import io.r2dbc.spi.Parameters;
 import java.util.Arrays;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
 
@@ -50,15 +49,15 @@ public class ReactiveDataAccessStrategyTests {
 
 		UUID value = UUID.randomUUID();
 
-		assertThat(strategy.getBindValue(Parameter.from(value))).isEqualTo(Parameter.from(value.toString()));
-		assertThat(strategy.getBindValue(Parameter.from(Condition.New))).isEqualTo(Parameter.from("New"));
+		assertThat(strategy.getBindValue(Parameters.in(value))).isEqualTo(Parameters.in(value.toString()));
+		assertThat(strategy.getBindValue(Parameters.in(Condition.New))).isEqualTo(Parameters.in("New"));
 	}
 
 	@Test // gh-305
 	public void shouldConvertEmptyParameter() {
 
-		assertThat(strategy.getBindValue(Parameter.empty(UUID.class))).isEqualTo(Parameter.empty(String.class));
-		assertThat(strategy.getBindValue(Parameter.empty(Condition.class))).isEqualTo(Parameter.empty(String.class));
+		assertThat(strategy.getBindValue(Parameters.in(UUID.class))).isEqualTo(Parameters.in(String.class));
+		assertThat(strategy.getBindValue(Parameters.in(Condition.class))).isEqualTo(Parameters.in(String.class));
 	}
 
 	@Test // gh-305
