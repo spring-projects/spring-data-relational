@@ -23,6 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
@@ -40,6 +41,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
  * @author Fei Dong
  * @author Antoine Sauray
  * @author Diego Krupitza
+ * @author Christoph Strobl
  * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
@@ -105,6 +107,13 @@ public @interface EnableJdbcRepositories {
 	 * @since 2.1
 	 */
 	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
+
+	/**
+	 * Configure a specific {@link BeanNameGenerator} to be used when creating the repository beans.
+	 * @return the {@link BeanNameGenerator} to be used or the base {@link BeanNameGenerator} interface to indicate context default.
+	 * @since 3.4
+	 */
+	Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
 
 	/**
 	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the
