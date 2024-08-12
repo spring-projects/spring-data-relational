@@ -53,6 +53,52 @@ NOTE: While Single Query Loading can be abbreviated as SQL, but we highly discou
 
 include::partial$id-generation.adoc[]
 
+[[jdbc.template]]
+== Template API
+
+As an alternative to repositories Spring Data JDBC offers the javadoc:org.springframework.data.jdbc.core.JdbcAggregateTemplate[] as a more direct means to load and persist entities in a relational database.
+To a large extent, repositories use `JdbcAggregateTemplate` to implement their features.
+
+This section highlights only the most interesting parts of the `JdbcAggregateTemplate`.
+For a more complete overview, see the JavaDoc of `JdbcAggregateTemplate`.
+
+=== Accessing the JdbcAggregateTemplate
+
+`JdbcAggregateTemplate` is intended to be used as a Spring bean.
+If you have set up your application to include Spring Data JDBC, you can configure a dependency on `JdbcAggregateTemplate` in any Spring bean, and the Spring Framework injects a properly configured instance.
+
+This includes fragments you use to implement custom methods for your Spring Data Repositories, letting you to use `JdbcAggregateTemplate` to customize and extend your repositories.
+
+=== Persisting
+
+`JdbcAggregateTemplate offers three types of methods for persisting entities: `save`, `insert`, and `update`.
+Each comes in two flavors:
+Operating on single aggregates, named exactly as mentioned above, and with an `All` suffix operation on an `Iterable`.
+
+`save` does the same as the method of same name in a repository.
+
+`insert` and `update` skip the test if the entity is new and assume a new or existing aggregate as indicated by their name.
+
+=== Querying
+
+`JdbcAggregateTemplate` offers a considerable array of methods for querying aggregates and about collections of aggregates.
+There is one type of method that requires special attention.
+That's the methods taking a `Query` as an argument.
+They allow the execution of programmatically constructed queries, as follows:
+
+[source,java]
+----
+template.findOne(query(where("name").is("Gandalf")), Person.class);
+----
+
+The javadoc:org.springframework.data.relational.core.query.Query[] returned by the `query` method defines the list of columns to select, a where clause (through a CriteriaDefinition), and specification of limit and offset clauses.
+For details of the `Query` class, see its JavaDoc.
+
+The javadoc:org.springframework.data.relational.core.query.Criteria[] class, of which `where` is a static member, provides implementations of org.springframework.data.relational.core.query.CriteriaDefinition[], which represent the where-clause of the query.
+
+[[jdbc.criteria]]
+include::../commons/criteria-methods.adoc[]
+
 [[jdbc.entity-persistence.optimistic-locking]]
 == Optimistic Locking
 
