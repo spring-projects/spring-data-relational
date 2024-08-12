@@ -26,6 +26,7 @@
 ** xref:jdbc/entity-persistence.adoc[]
 ** xref:jdbc/mapping.adoc[]
 ** xref:jdbc/query-methods.adoc[]
+** xref:jdbc/template.adoc[]
 ** xref:jdbc/mybatis.adoc[]
 ** xref:jdbc/events.adoc[]
 ** xref:jdbc/auditing.adoc[]
