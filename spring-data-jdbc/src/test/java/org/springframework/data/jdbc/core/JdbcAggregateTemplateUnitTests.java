@@ -59,17 +59,13 @@ public class JdbcAggregateTemplateUnitTests {
 
 	JdbcAggregateTemplate template;
 
-	@Mock
-	DataAccessStrategy dataAccessStrategy;
-	@Mock
-	ApplicationEventPublisher eventPublisher;
-	@Mock
-	RelationResolver relationResolver;
-	@Mock
-	EntityCallbacks callbacks;
+	@Mock DataAccessStrategy dataAccessStrategy;
+	@Mock ApplicationEventPublisher eventPublisher;
+	@Mock RelationResolver relationResolver;
+	@Mock EntityCallbacks callbacks;
 
 	@BeforeEach
-	public void setUp() {
+	void setUp() {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		JdbcConverter converter = new MappingJdbcConverter(mappingContext, relationResolver);
@@ -80,24 +76,24 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // DATAJDBC-378
-	public void findAllByIdMustNotAcceptNullArgumentForType() {
+	void findAllByIdMustNotAcceptNullArgumentForType() {
 		assertThatThrownBy(() -> template.findAllById(singleton(23L), null)).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test // DATAJDBC-378
-	public void findAllByIdMustNotAcceptNullArgumentForIds() {
+	void findAllByIdMustNotAcceptNullArgumentForIds() {
 
 		assertThatThrownBy(() -> template.findAllById(null, SampleEntity.class))
 				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test // DATAJDBC-378
-	public void findAllByIdWithEmptyListMustReturnEmptyResult() {
+	void findAllByIdWithEmptyListMustReturnEmptyResult() {
 		assertThat(template.findAllById(emptyList(), SampleEntity.class)).isEmpty();
 	}
 
 	@Test // DATAJDBC-393, GH-1291
-	public void callbackOnSave() {
+	void callbackOnSave() {
 
 		SampleEntity first = new SampleEntity(null, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
@@ -115,7 +111,7 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // GH-1291
-	public void doesNotEmitEvents() {
+	void doesNotEmitEvents() {
 
 		SampleEntity first = new SampleEntity(null, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
@@ -129,8 +125,7 @@ public class JdbcAggregateTemplateUnitTests {
 		verifyNoInteractions(eventPublisher);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert() {
 
 		EntityWithVersion entity = new EntityWithVersion(1L);
@@ -145,8 +140,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(0L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsImmutable() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, null);
@@ -161,8 +155,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(0L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsPrimitiveType() {
 
 		EntityWithPrimitiveVersion entity = new EntityWithPrimitiveVersion(1L);
@@ -177,8 +170,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(1L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithInitialVersion_onInsert__whenVersionPropertyIsImmutableAndPrimitiveType() {
 
 		EntityWithImmutablePrimitiveVersion entity = new EntityWithImmutablePrimitiveVersion(1L, 0L);
@@ -194,8 +186,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(1L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesChangeWithPreviousVersion_onUpdate() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -212,8 +203,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(aggregateChange.getPreviousVersion()).isEqualTo(1L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithNextVersion_onUpdate() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -230,8 +220,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(2L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void savePreparesInstanceWithNextVersion_onUpdate_whenVersionPropertyIsImmutable() {
 
 		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
@@ -246,8 +235,7 @@ public class JdbcAggregateTemplateUnitTests {
 		assertThat(afterConvert.getVersion()).isEqualTo(2L);
 	}
 
-	@Test
-		// GH-1137
+	@Test // GH-1137
 	void deletePreparesChangeWithPreviousVersion_onDeleteByInstance() {
 
 		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
@@ -263,7 +251,7 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // DATAJDBC-393
-	public void callbackOnDelete() {
+	void callbackOnDelete() {
 
 		SampleEntity first = new SampleEntity(23L, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
@@ -277,7 +265,7 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void callbackOnLoadSorted() {
+	void callbackOnLoadSorted() {
 
 		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
 		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
@@ -299,7 +287,7 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void callbackOnLoadPaged() {
+	void callbackOnLoadPaged() {
 
 		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
 		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
@@ -321,35 +309,34 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // GH-1401
-	public void saveAllWithEmptyListDoesNothing() {
+	void saveAllWithEmptyListDoesNothing() {
 		assertThat(template.saveAll(emptyList())).isEmpty();
 	}
 
 	@Test // GH-1401
-	public void insertAllWithEmptyListDoesNothing() {
+	void insertAllWithEmptyListDoesNothing() {
 		assertThat(template.insertAll(emptyList())).isEmpty();
 	}
 
 	@Test // GH-1401
-	public void updateAllWithEmptyListDoesNothing() {
+	void updateAllWithEmptyListDoesNothing() {
 		assertThat(template.updateAll(emptyList())).isEmpty();
 	}
 
 	@Test // GH-1401
-	public void deleteAllWithEmptyListDoesNothing() {
+	void deleteAllWithEmptyListDoesNothing() {
 		template.deleteAll(emptyList());
 	}
 
 	@Test // GH-1401
-	public void deleteAllByIdWithEmptyListDoesNothing() {
+	void deleteAllByIdWithEmptyListDoesNothing() {
 		template.deleteAllById(emptyList(), SampleEntity.class);
 	}
 
 	private static class SampleEntity {
 
 		@Column("id1")
-		@Id
-		private Long id;
+		@Id private Long id;
 
 		private String name;
 
@@ -366,11 +353,11 @@ public class JdbcAggregateTemplateUnitTests {
 			return this.name;
 		}
 
-		public void setId(Long id) {
+		void setId(Long id) {
 			this.id = id;
 		}
 
-		public void setName(String name) {
+		void setName(String name) {
 			this.name = name;
 		}
 	}
@@ -378,11 +365,9 @@ public class JdbcAggregateTemplateUnitTests {
 	private static class EntityWithVersion {
 
 		@Column("id1")
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
-		@Version
-		private Long version;
+		@Version private Long version;
 
 		public EntityWithVersion(Long id) {
 			this.id = id;
@@ -396,7 +381,7 @@ public class JdbcAggregateTemplateUnitTests {
 			return this.version;
 		}
 
-		public void setVersion(Long version) {
+		void setVersion(Long version) {
 			this.version = version;
 		}
 	}
@@ -404,11 +389,9 @@ public class JdbcAggregateTemplateUnitTests {
 	private static class EntityWithImmutableVersion {
 
 		@Column("id1")
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
-		@Version
-		private final Long version;
+		@Version private final Long version;
 
 		public EntityWithImmutableVersion(Long id, Long version) {
 			this.id = id;
@@ -427,11 +410,9 @@ public class JdbcAggregateTemplateUnitTests {
 	private static class EntityWithPrimitiveVersion {
 
 		@Column("id1")
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
-		@Version
-		private long version;
+		@Version private long version;
 
 		public EntityWithPrimitiveVersion(Long id) {
 			this.id = id;
@@ -445,7 +426,7 @@ public class JdbcAggregateTemplateUnitTests {
 			return this.version;
 		}
 
-		public void setVersion(long version) {
+		void setVersion(long version) {
 			this.version = version;
 		}
 	}
@@ -453,11 +434,9 @@ public class JdbcAggregateTemplateUnitTests {
 	private static class EntityWithImmutablePrimitiveVersion {
 
 		@Column("id1")
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
-		@Version
-		private final long version;
+		@Version private final long version;
 
 		public EntityWithImmutablePrimitiveVersion(Long id, long version) {
 			this.id = id;
