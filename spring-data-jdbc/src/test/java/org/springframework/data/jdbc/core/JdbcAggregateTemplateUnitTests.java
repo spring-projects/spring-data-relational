@@ -32,10 +32,12 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -45,6 +47,8 @@ import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+
+import java.util.List;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -333,6 +337,38 @@ public class JdbcAggregateTemplateUnitTests {
 		template.deleteAllById(emptyList(), SampleEntity.class);
 	}
 
+	@Test // GH-1502
+	void saveThrowsExceptionWhenIdIsNotSet() {
+
+		SampleEntity alfred = new SampleEntity(null, "Alfred");
+		when(callbacks.callback(any(), any(), any(Object[].class))).thenReturn(alfred);
+
+		when(dataAccessStrategy.insert(eq(alfred), any(Class.class), any(Identifier.class), any(IdValueSource.class)))
+				.thenReturn(null);
+
+		assertThatIllegalArgumentException().isThrownBy(() -> template.save(alfred))
+				.withMessage("After saving the identifier must not be null");
+	}
+
+	@Test // GH-1502
+	void saveThrowsExceptionWhenIdDoesNotExist() {
+
+		NoIdEntity alfred = new NoIdEntity("Alfred");
+
+		assertThatIllegalArgumentException().isThrownBy(() -> template.save(alfred))
+				.withMessageContaining("Aggregate root must have an id property. " + NoIdEntity.class.getName() + " has none");
+	}
+
+	@Test // GH-1502
+	void saveThrowsExceptionWhenIdDoesNotExistOnSaveAll() {
+
+		NoIdEntity alfred = new NoIdEntity("Alfred");
+		NoIdEntity berta = new NoIdEntity("Berta");
+
+		assertThatIllegalArgumentException().isThrownBy(() -> template.saveAll(	List.of(alfred, berta)))
+				.withMessageContaining("Aggregate root must have an id property. " + NoIdEntity.class.getName() + " has none");
+	}
+
 	private static class SampleEntity {
 
 		@Column("id1")
@@ -450,5 +486,8 @@ public class JdbcAggregateTemplateUnitTests {
 		public long getVersion() {
 			return this.version;
 		}
+	}
+
+	record NoIdEntity(String name) {
 	}
 }

@@ -165,6 +165,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null");
 
+		verifyIdProperty(instance);
+
 		return performSave(new EntityAndChangeCreator<>(instance, changeCreatorSelectorForSave(instance)));
 	}
 
@@ -179,6 +181,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
+			verifyIdProperty(instance);
 			entityAndChangeCreators.add(new EntityAndChangeCreator<>(instance, changeCreatorSelectorForSave(instance)));
 		}
 		return performSaveAll(entityAndChangeCreators);
@@ -423,6 +426,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		for (Class type : groupedByType.keySet()) {
 			doDeleteAll(groupedByType.get(type), type);
 		}
+	}
+
+	private <T> void verifyIdProperty(T instance) {
+
+		Class<?> type = instance.getClass();
+		Assert.isTrue(context.getRequiredPersistentEntity(type).hasIdProperty(),() -> "Aggregate root must have an id property. " + type.getName() + " has none");
 	}
 
 	private <T> void doDeleteAll(Iterable<? extends T> instances, Class<T> domainType) {
