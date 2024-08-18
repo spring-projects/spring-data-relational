@@ -35,9 +35,6 @@ To create a Spring project in STS:
 Then enter a project and a package name, such as `org.spring.jdbc.example`.
 . Add the following to the `pom.xml` files `dependencies` element:
 +
-
-. Add the following to the pom.xml files `dependencies` element:
-+
 [source,xml,subs="+attributes"]
 ----
 <dependencies>
