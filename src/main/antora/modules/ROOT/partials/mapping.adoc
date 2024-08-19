@@ -23,9 +23,6 @@ class MyEntity {
 }
 ----
 
-You may use xref:value-expressions.adoc[Spring Data's SpEL support] to dynamically create the table name.
-Once generated the table name will be cached, so it is dynamic per mapping context only.
-
 [[entity-persistence.custom-column-name]]
 == Override column names
 
@@ -84,10 +81,6 @@ class MySubEntity {
 }
 ----
 endif::[]
-
-You may use xref:value-expressions.adoc[Spring Data's SpEL support] to dynamically create column names.
-Once generated the names will be cached, so it is dynamic per mapping context only.
-
 
 ifdef::embedded-entities[]
 
