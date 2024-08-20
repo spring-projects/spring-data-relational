@@ -36,6 +36,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
+import org.springframework.data.relational.repository.support.RelationalQueryLookupStrategy;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -60,7 +61,7 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Christopher Klein
  */
-abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
+abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
@@ -79,8 +80,10 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			@Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
+		super(context, dialect);
+
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
@@ -156,8 +159,10 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 							"Query method %s is annotated with both, a query and a query name; Using the declared query", method));
 				}
 
+				String queryString = evaluateTableExpressions(repositoryMetadata, queryMethod.getRequiredQuery());
+
 				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, getOperations(), this::createMapper,
-						getConverter(), evaluationContextProvider);
+						getConverter(), evaluationContextProvider, queryString);
 				query.setBeanFactory(getBeanFactory());
 				return query;
 			}

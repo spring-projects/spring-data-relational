@@ -16,67 +16,78 @@
 package org.springframework.data.r2dbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.H2Dialect;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.relational.core.dialect.AnsiDialect;
-import org.springframework.data.relational.repository.query.RelationalEntityInformation;
-import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.repository.Repository;
 import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
- * Unit test for {@link R2dbcRepositoryFactory}.
+ * Test extracting the SQL from a repository method call and performing assertions on it.
  *
- * @author Mark Paluch
  * @author Jens Schauder
  */
 @ExtendWith(MockitoExtension.class)
-public class R2dbcRepositoryFactoryUnitTests {
+public class SqlInspectingR2dbcRepositoryUnitTests {
 
 	R2dbcConverter r2dbcConverter = new MappingR2dbcConverter(new R2dbcMappingContext());
 
-	@Mock DatabaseClient databaseClient;
-	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
+	DatabaseClient databaseClient;
+	StatementRecorder recorder = StatementRecorder.newInstance();
+	ReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(H2Dialect.INSTANCE);
+
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	public void before() {
 
-		when(dataAccessStrategy.getConverter()).thenReturn(r2dbcConverter);
+		databaseClient = DatabaseClient.builder().connectionFactory(recorder)
+				.bindMarkers(H2Dialect.INSTANCE.getBindMarkersFactory()).build();
+
 	}
 
-	@Test
-	public void usesMappingRelationalEntityInformationIfMappingContextSet() {
+	@Test // GH-1856
+	public void replacesSpelExpressionInQuery() {
 
-		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
-		RelationalEntityInformation<Person, Long> entityInformation = factory.getEntityInformation(Person.class);
-
-		assertThat(entityInformation).isInstanceOf(MappingRelationalEntityInformation.class);
-	}
-
-	@Test
-	public void createsRepositoryWithIdTypeLong() {
-
-		when(dataAccessStrategy.getDialect()).thenReturn(AnsiDialect.INSTANCE);
+		recorder.addStubbing(SqlInspectingR2dbcRepositoryUnitTests::isSelect, List.of());
 
 		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
 		MyPersonRepository repository = factory.getRepository(MyPersonRepository.class);
 
 		assertThat(repository).isNotNull();
+
+		repository.findBySpel().block(Duration.ofMillis(100));
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
+
+		assertThat(statement.getSql()).isEqualTo("select * from PERSONx");
 	}
 
-	interface MyPersonRepository extends Repository<Person, Long> {}
+	private static boolean isSelect(String sql) {
+		return sql.toLowerCase().startsWith("select");
+	}
+
+	interface MyPersonRepository extends Repository<Person, Long> {
+		@Query("select * from #{#tableName +'x'}")
+		Mono<Person> findBySpel();
+	}
 
 	static class Person {
 		@Id long id;

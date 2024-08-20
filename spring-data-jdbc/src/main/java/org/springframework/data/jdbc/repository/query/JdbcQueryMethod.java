@@ -128,7 +128,7 @@ public class JdbcQueryMethod extends QueryMethod {
 		return StringUtils.hasText(annotatedValue) ? annotatedValue : getNamedQuery();
 	}
 
-	String getRequiredQuery() {
+	public String getRequiredQuery() {
 
 		String query = getDeclaredQuery();
 

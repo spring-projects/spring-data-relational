@@ -25,6 +25,8 @@ import java.util.function.BiFunction;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
@@ -152,6 +154,14 @@ public interface ReactiveDataAccessStrategy {
 		Assert.notNull(identifier, "SqlIdentifier must not be null");
 
 		return identifier.toSql(IdentifierProcessing.NONE);
+	}
+
+	/**
+	 * @return the {@link Dialect} used by this strategy.
+	 * @since 3.4
+	 */
+	default Dialect getDialect() {
+		return AnsiDialect.INSTANCE;
 	}
 
 	/**
