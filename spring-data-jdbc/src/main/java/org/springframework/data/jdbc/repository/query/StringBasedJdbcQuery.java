@@ -142,7 +142,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		this.query = queryMethod.getRequiredQuery();
 		this.spelEvaluator = queryContext.parse(query, getQueryMethod().getParameters());
-		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(queryContext);
+		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(query);
 	}
 
 	@Override

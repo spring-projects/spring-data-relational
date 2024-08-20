@@ -33,7 +33,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
@@ -330,14 +329,13 @@ class StringBasedJdbcQueryUnitTests {
 	@Test // GH-1323
 	void queryByListOfTuples() {
 
-		String[][] tuples = {new String[]{"Albert", "Einstein"}, new String[]{"Richard", "Feynman"}};
+		String[][] tuples = { new String[] { "Albert", "Einstein" }, new String[] { "Richard", "Feynman" } };
 
 		SqlParameterSource parameterSource = forMethod("findByListOfTuples", List.class) //
-				.withArguments(Arrays.asList(tuples))
+				.withArguments(Arrays.asList(tuples)) //
 				.extractParameterSource();
 
-		assertThat(parameterSource.getValue("tuples"))
-				.asInstanceOf(LIST)
+		assertThat(parameterSource.getValue("tuples")).asInstanceOf(LIST) //
 				.containsExactly(tuples);
 
 		assertThat(parameterSource.getSqlType("tuples")).isEqualTo(JdbcUtil.TYPE_UNKNOWN.getVendorTypeNumber());
@@ -348,12 +346,38 @@ class StringBasedJdbcQueryUnitTests {
 
 		SqlParameterSource parameterSource = forMethod("findByListOfTuples", List.class) //
 				.withCustomConverters(DirectionToIntegerConverter.INSTANCE) //
-				.withArguments(Arrays.asList(new Object[]{Direction.LEFT, "Einstein"}, new Object[]{Direction.RIGHT, "Feynman"}))
+				.withArguments(
+						Arrays.asList(new Object[] { Direction.LEFT, "Einstein" }, new Object[] { Direction.RIGHT, "Feynman" }))
 				.extractParameterSource();
 
-		assertThat(parameterSource.getValue("tuples"))
-				.asInstanceOf(LIST)
-				.containsExactly(new Object[][]{new Object[]{-1, "Einstein"}, new Object[]{1, "Feynman"}});
+		assertThat(parameterSource.getValue("tuples")).asInstanceOf(LIST) //
+				.containsExactly(new Object[][] { new Object[] { -1, "Einstein" }, new Object[] { 1, "Feynman" } });
+	}
+
+	@Test // GH-619
+	void spelCanBeUsedInsideQueries() {
+
+		JdbcQueryMethod queryMethod = createMethod("findBySpelExpression", Object.class);
+
+		List<EvaluationContextExtension> list = new ArrayList<>();
+		list.add(new MyEvaluationContextProvider());
+		QueryMethodEvaluationContextProvider evaluationContextProviderImpl = new ExtensionAwareQueryMethodEvaluationContextProvider(
+				list);
+
+		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter,
+				evaluationContextProviderImpl);
+
+		ArgumentCaptor<SqlParameterSource> paramSource = ArgumentCaptor.forClass(SqlParameterSource.class);
+		ArgumentCaptor<String> query = ArgumentCaptor.forClass(String.class);
+
+		sut.execute(new Object[] { "myValue" });
+
+		verify(this.operations).queryForObject(query.capture(), paramSource.capture(), any(RowMapper.class));
+
+		assertThat(query.getValue())
+				.isEqualTo("SELECT * FROM table WHERE c = :__$synthetic$__1 AND c2 = :__$synthetic$__2");
+		assertThat(paramSource.getValue().getValue("__$synthetic$__1")).isEqualTo("test-value1");
+		assertThat(paramSource.getValue().getValue("__$synthetic$__2")).isEqualTo("test-value2");
 	}
 
 	QueryFixture forMethod(String name, Class... paramTypes) {
@@ -484,32 +508,6 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query("select count(1) from person where (firstname, lastname) in (:tuples)")
 		Object findByListOfTuples(@Param("tuples") List<Object[]> tuples);
-	}
-
-	@Test // GH-619
-	public void spelCanBeUsedInsideQueries() {
-
-		JdbcQueryMethod queryMethod = createMethod("findBySpelExpression", Object.class);
-
-		List<EvaluationContextExtension> list = new ArrayList<>();
-		list.add(new MyEvaluationContextProvider());
-		QueryMethodEvaluationContextProvider evaluationContextProviderImpl = new ExtensionAwareQueryMethodEvaluationContextProvider(
-				list);
-
-		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter,
-				evaluationContextProviderImpl);
-
-		ArgumentCaptor<SqlParameterSource> paramSource = ArgumentCaptor.forClass(SqlParameterSource.class);
-		ArgumentCaptor<String> query = ArgumentCaptor.forClass(String.class);
-
-		sut.execute(new Object[] { "myValue" });
-
-		verify(this.operations).queryForObject(query.capture(), paramSource.capture(), any(RowMapper.class));
-
-		assertThat(query.getValue())
-				.isEqualTo("SELECT * FROM table WHERE c = :__$synthetic$__1 AND c2 = :__$synthetic$__2");
-		assertThat(paramSource.getValue().getValue("__$synthetic$__1")).isEqualTo("test-value1");
-		assertThat(paramSource.getValue().getValue("__$synthetic$__2")).isEqualTo("test-value2");
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
