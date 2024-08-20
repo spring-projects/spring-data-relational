@@ -35,6 +35,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
@@ -103,11 +104,33 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param rowMapperFactory must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param evaluationContextProvider must not be {@literal null}.
 	 * @since 2.3
+	 * @deprecated use alternative constructor
 	 */
+	@Deprecated(since = "3.4")
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+		this(queryMethod, operations, rowMapperFactory, converter, evaluationContextProvider, QueryPreprocessor.NOOP);
+	}
+
+	/**
+	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
+	 * and {@link RowMapperFactory}.
+	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param evaluationContextProvider must not be {@literal null}.
+	 * @param queryPreprocessor must not be {@literal null}.
+	 * @since 3.4
+	 */
+	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider, QueryPreprocessor queryPreprocessor) {
 
 		super(queryMethod, operations);
 
@@ -115,6 +138,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		this.converter = converter;
 		this.rowMapperFactory = rowMapperFactory;
+
 
 		if (queryMethod.isSliceQuery()) {
 			throw new UnsupportedOperationException(
@@ -140,7 +164,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				.of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
 				.withEvaluationContextProvider(evaluationContextProvider);
 
-		this.query = queryMethod.getRequiredQuery();
+
+		this.query = queryPreprocessor.transform(queryMethod.getRequiredQuery());
 		this.spelEvaluator = queryContext.parse(query, getQueryMethod().getParameters());
 		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(query);
 	}
@@ -160,7 +185,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap) {
 
 		if (containsSpelExpressions) {
-
+// TODO: Make code changes here
 			spelEvaluator.evaluate(objects).forEach(parameterMap::addValue);
 			return spelEvaluator.getQueryString();
 		}

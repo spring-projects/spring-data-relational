@@ -28,9 +28,13 @@ import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.PartTreeR2dbcQuery;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
+import org.springframework.data.relational.repository.query.TableNameQueryPreprocessor;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -51,6 +55,7 @@ import org.springframework.util.Assert;
  * Factory to create {@link R2dbcRepository} instances.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
@@ -162,19 +167,29 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 				NamedQueries namedQueries) {
 
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext = this.converter.getMappingContext();
+			Dialect dialect = dataAccessStrategy.getDialect();
+
 			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory,
-					this.converter.getMappingContext());
+					mappingContext);
 			String namedQueryName = queryMethod.getNamedQueryName();
 
-			if (namedQueries.hasQuery(namedQueryName)) {
-				String namedQuery = namedQueries.getQuery(namedQueryName);
-				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.entityOperations, this.converter,
+			Class<?> domainType = metadata.getDomainType();
+			RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(domainType);
+			SqlIdentifier tableName = entity.getTableName();
+			SqlIdentifier qualifiedTableName = entity.getQualifiedTableName();
+			
+			if (namedQueries.hasQuery(namedQueryName) || queryMethod.hasAnnotatedQuery()) {
+				
+				QueryPreprocessor queryPreprocessor = new TableNameQueryPreprocessor(tableName, qualifiedTableName, dialect);
+
+				String query = namedQueries.hasQuery(namedQueryName) ? namedQueries.getQuery(namedQueryName) : queryMethod.getRequiredAnnotatedQuery();
+				query  = queryPreprocessor.transform(query);		
+
+				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter,
 						this.dataAccessStrategy,
 						parser, this.evaluationContextProvider);
-			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy,
-						this.parser,
-						this.evaluationContextProvider);
+			
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy);
 			}

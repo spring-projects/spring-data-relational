@@ -34,6 +34,11 @@ public interface PersonRepository extends ReactiveCrudRepository<Person, String>
 
 	// tag::spel[]
 	@Query("SELECT * FROM person WHERE lastname = :#{[0]}")
-	Flux<Person> findByQueryWithExpression(String lastname);
+	Flux<Person> findByQueryWithParameterExpression(String lastname);
 	// end::spel[]
+
+	// tag::spel2[]
+	@Query("SELECT * FROM #{tableName} WHERE lastname = :lastname")
+	Flux<Person> findByQueryWithExpression(String lastname);
+	// end::spel2[]
 }
