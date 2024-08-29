@@ -66,8 +66,8 @@ public class JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTe
 
 			return (ApplicationListener<BeforeConvertEvent>) event -> {
 
-				if (event.getEntity() instanceof DummyEntity) {
-					setIds((DummyEntity) event.getEntity());
+				if (event.getEntity() instanceof DummyEntity dummyEntity) {
+					setIds(dummyEntity);
 				}
 			};
 		}

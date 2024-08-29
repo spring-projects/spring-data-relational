@@ -115,10 +115,8 @@ class LiquibaseChangeSetWriterUnitTests {
 
 		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
 
-		Optional<Change> tableWithFk = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof CreateTableChange
-					&& ((CreateTableChange) change).getTableName().equals("table_with_fk_field");
-		}).findFirst();
+		Optional<Change> tableWithFk = changeSet.getChanges().stream().filter(change -> change instanceof CreateTableChange createTableChange
+				&& createTableChange.getTableName().equals("table_with_fk_field")).findFirst();
 		assertThat(tableWithFk.isPresent()).isEqualTo(true);
 
 		List<ColumnConfig> columns = ((CreateTableChange) tableWithFk.get()).getColumns();
@@ -181,9 +179,7 @@ class LiquibaseChangeSetWriterUnitTests {
 
 
 	void assertCreateTable(ChangeSet changeSet, String tableName, Tuple... columnTuples) {
-		Optional<Change> createTableOptional = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof CreateTableChange && ((CreateTableChange) change).getTableName().equals(tableName);
-		}).findFirst();
+		Optional<Change> createTableOptional = changeSet.getChanges().stream().filter(change -> change instanceof CreateTableChange createTableChange && createTableChange.getTableName().equals(tableName)).findFirst();
 		assertThat(createTableOptional.isPresent()).isTrue();
 		CreateTableChange createTable = (CreateTableChange) createTableOptional.get();
 		assertThat(createTable.getColumns())
@@ -193,11 +189,9 @@ class LiquibaseChangeSetWriterUnitTests {
 
 	void assertAddForeignKey(ChangeSet changeSet, String baseTableName, String baseColumnNames,
 			String referencedTableName, String referencedColumnNames) {
-		Optional<Change> addFkOptional = changeSet.getChanges().stream().filter(change -> {
-			return change instanceof AddForeignKeyConstraintChange
-					&& ((AddForeignKeyConstraintChange) change).getBaseTableName().equals(baseTableName)
-					&& ((AddForeignKeyConstraintChange) change).getBaseColumnNames().equals(baseColumnNames);
-		}).findFirst();
+		Optional<Change> addFkOptional = changeSet.getChanges().stream().filter(change -> change instanceof AddForeignKeyConstraintChange addForeignKeyConstraintChange
+				&& addForeignKeyConstraintChange.getBaseTableName().equals(baseTableName)
+				&& addForeignKeyConstraintChange.getBaseColumnNames().equals(baseColumnNames)).findFirst();
 		assertThat(addFkOptional.isPresent()).isTrue();
 		AddForeignKeyConstraintChange addFk = (AddForeignKeyConstraintChange) addFkOptional.get();
 		assertThat(addFk.getBaseTableName()).isEqualTo(baseTableName);

@@ -148,7 +148,7 @@ public class QueryMapper {
 			Assert.state(table != null, String.format("The column %s must have a table set", column));
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
-			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
+			return column instanceof Aliased aliased ? columnFromTable.as(aliased.getAlias()) : columnFromTable;
 		}
 
 		if (expression instanceof SimpleFunction function) {
@@ -162,7 +162,7 @@ public class QueryMapper {
 
 			SimpleFunction mappedFunction = SimpleFunction.create(function.getFunctionName(), mappedArguments);
 
-			return function instanceof Aliased ? mappedFunction.as(((Aliased) function).getAlias()) : mappedFunction;
+			return function instanceof Aliased aliased ? mappedFunction.as(aliased.getAlias()) : mappedFunction;
 		}
 
 		throw new IllegalArgumentException(String.format("Cannot map %s", expression));

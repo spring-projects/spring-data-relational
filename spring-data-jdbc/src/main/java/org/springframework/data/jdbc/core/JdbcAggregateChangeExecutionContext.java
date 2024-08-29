@@ -312,8 +312,8 @@ class JdbcAggregateChangeExecutionContext {
 	@SuppressWarnings("unchecked")
 	private PersistentPropertyPath<?> getRelativePath(DbAction<?> action, PersistentPropertyPath<?> pathToValue) {
 
-		if (action instanceof DbAction.Insert) {
-			return pathToValue.getExtensionForBaseOf(((DbAction.Insert) action).getPropertyPath());
+		if (action instanceof DbAction.Insert insert) {
+			return pathToValue.getExtensionForBaseOf(insert.getPropertyPath());
 		}
 
 		if (action instanceof DbAction.InsertRoot) {

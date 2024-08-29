@@ -37,7 +37,7 @@ class ResultSetAccessorPropertyAccessor implements PropertyAccessor {
 
 	@Override
 	public boolean canRead(EvaluationContext context, @Nullable Object target, String name) {
-		return target instanceof ResultSetAccessor && ((ResultSetAccessor) target).hasValue(name);
+		return target instanceof ResultSetAccessor resultSetAccessor && resultSetAccessor.hasValue(name);
 	}
 
 	@Override
