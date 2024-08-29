@@ -35,7 +35,6 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -52,7 +51,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session, IdentifierProcessing.ANSI);
+	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
 
 	PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath("one.two",
 			DummyEntity.class, context);

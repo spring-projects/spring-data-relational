@@ -36,9 +36,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -102,8 +100,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
-		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession,
-				dialect.getIdentifierProcessing());
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession);
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		return new CascadingDataAccessStrategy(
@@ -120,15 +117,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
-	 * @deprecated because identifierProcessing now will not be considered in the process of applying it to
-	 *             {@link SqlIdentifier}, use {@link MyBatisDataAccessStrategy(SqlSession)} constructor instead
-	 */
-	@Deprecated(since = "3.1", forRemoval = true)
-	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
-		this(sqlSession);
-	}
-
-	/**
 	 * @since 3.1
 	 */
 	public MyBatisDataAccessStrategy(SqlSession sqlSession) {

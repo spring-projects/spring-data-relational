@@ -52,15 +52,7 @@ public class DefaultNamingStrategy implements NamingStrategy {
 
 		return getColumnNameReferencing(property.getOwner());
 	}
-
-	@Override
-	public String getReverseColumnName(PersistentPropertyPathExtension path) {
-
-		RelationalPersistentEntity<?> leafEntity = path.getIdDefiningParentPath().getRequiredLeafEntity();
-
-		return getColumnNameReferencing(leafEntity);
-	}
-
+	
 	@Override
 	public String getReverseColumnName(RelationalPersistentEntity<?> parent) {
 		return getColumnNameReferencing(parent);

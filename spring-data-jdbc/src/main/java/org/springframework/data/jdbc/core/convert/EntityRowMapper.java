@@ -19,7 +19,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.jdbc.core.RowMapper;
@@ -42,19 +41,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final AggregatePath path;
 	private final JdbcConverter converter;
 	private final @Nullable Identifier identifier;
-
-	/**
-	 * @deprecated use {@link EntityRowMapper#EntityRowMapper(AggregatePath, JdbcConverter, Identifier)} instead
-	 */
-	@Deprecated(since = "3.2", forRemoval = true)
-	@SuppressWarnings("unchecked")
-	public EntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier) {
-
-		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();
-		this.path = path.getAggregatePath();
-		this.converter = converter;
-		this.identifier = identifier;
-	}
 
 	@SuppressWarnings("unchecked")
 	public EntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier) {

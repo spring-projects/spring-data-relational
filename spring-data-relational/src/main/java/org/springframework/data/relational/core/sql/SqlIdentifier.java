@@ -63,26 +63,10 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create SQL snippets");
 		}
 
-		@Override
-		public String getReference(IdentifierProcessing processing) {
-			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names");
-		}
-
 		public String toString() {
 			return "<NULL-IDENTIFIER>";
 		}
 	};
-
-	/**
-	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
-	 * programmatic access to the object identified by this {@link SqlIdentifier}.
-	 *
-	 * @param processing identifier processing rules.
-	 * @return
-	 * @deprecated since 3.1, use the #getReference() method instead.
-	 */
-	@Deprecated(since = "3.1", forRemoval = true)
-	String getReference(IdentifierProcessing processing);
 
 	/**
 	 * The reference name is used for programmatic access to the object identified by this {@link SqlIdentifier}. Use this

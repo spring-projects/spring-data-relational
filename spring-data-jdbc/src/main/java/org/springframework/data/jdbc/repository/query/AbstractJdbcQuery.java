@@ -73,23 +73,6 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	}
 
 	/**
-	 * Creates a {@link JdbcQueryExecution} given a {@link JdbcQueryMethod}, and ac{@link ResultSetExtractor} or a
-	 * {@link RowMapper}. Prefers the given {@link ResultSetExtractor} over {@link RowMapper}.
-	 *
-	 * @param queryMethod must not be {@literal null}.
-	 * @param extractor must not be {@literal null}.
-	 * @param rowMapper must not be {@literal null}.
-	 * @return a JdbcQueryExecution appropriate for {@literal queryMethod}. Guaranteed to be not {@literal null}.
-	 * @deprecated use {@link #createReadingQueryExecution(ResultSetExtractor, RowMapper)} instead.
-	 */
-	@Deprecated(since = "3.1", forRemoval = true)
-	// a better name would be createReadingQueryExecution
-	JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
-			@Nullable ResultSetExtractor<?> extractor, RowMapper<?> rowMapper) {
-		return createReadingQueryExecution(extractor, () -> rowMapper);
-	}
-
-	/**
 	 * Creates a {@link JdbcQueryExecution} given a {@link ResultSetExtractor} or a {@link RowMapper}. Prefers the given
 	 * {@link ResultSetExtractor} over {@link RowMapper}.
 	 *

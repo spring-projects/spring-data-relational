@@ -1,19 +1,19 @@
 [[mapping]]
 = Mapping
 
-Rich mapping support is provided by the `BasicJdbcConverter`. `BasicJdbcConverter` has a rich metadata model that allows mapping domain objects to a data row.
+Rich mapping support is provided by the `MappingJdbcConverter`. `MappingJdbcConverter` has a rich metadata model that allows mapping domain objects to a data row.
 The mapping metadata model is populated by using annotations on your domain objects.
 However, the infrastructure is not limited to using annotations as the only source of metadata information.
-The `BasicJdbcConverter` also lets you map objects to rows without providing any additional metadata, by following a set of conventions.
+The `MappingJdbcConverter` also lets you map objects to rows without providing any additional metadata, by following a set of conventions.
 
-This section describes the features of the `BasicJdbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
+This section describes the features of the `MappingJdbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
 
 Read on the basics about xref:object-mapping.adoc[] before continuing with this chapter.
 
 [[mapping.conventions]]
 == Convention-based Mapping
 
-`BasicJdbcConverter` has a few conventions for mapping objects to rows when no additional mapping metadata is provided.
+`MappingJdbcConverter` has a few conventions for mapping objects to rows when no additional mapping metadata is provided.
 The conventions are:
 
 * The short Java class name is mapped to the table name in the following manner.

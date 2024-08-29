@@ -15,15 +15,11 @@
 */
 package org.springframework.data.jdbc.core.convert;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.SQLType;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
@@ -64,48 +60,6 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @since 3.2.6
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> type, SQLType sqlType);
-
-	/**
-	 * Read the current row from {@link ResultSet} to an {@link RelationalPersistentEntity#getType() entity}.
-	 *
-	 * @param entity the persistent entity type.
-	 * @param resultSet the {@link ResultSet} to read from.
-	 * @param key primary key.
-	 * @param <T>
-	 * @return
-	 * @deprecated since 3.2, use {@link #readAndResolve(Class, RowDocument, Identifier)} instead.
-	 */
-	@Deprecated(since = "3.2")
-	default <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
-		try {
-			return readAndResolve(entity.getType(), RowDocumentResultSetExtractor.toRowDocument(resultSet));
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Read the current row from {@link ResultSet} to an {@link PersistentPropertyPathExtension#getActualType() entity}.
-	 *
-	 * @param path path to the owning property.
-	 * @param resultSet the {@link ResultSet} to read from.
-	 * @param identifier entity identifier.
-	 * @param key primary key.
-	 * @param <T>
-	 * @return
-	 * @deprecated use {@link #readAndResolve(Class, RowDocument, Identifier)} instead.
-	 */
-	@SuppressWarnings("unchecked")
-	@Deprecated(since = "3.2", forRemoval = true)
-	default <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
-
-		try {
-			return (T) readAndResolve(path.getRequiredLeafEntity().getTypeInformation(),
-					RowDocumentResultSetExtractor.toRowDocument(resultSet), identifier);
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	};
 
 	/**
 	 * Read a {@link RowDocument} into the requested {@link Class aggregate type} and resolve references by looking these

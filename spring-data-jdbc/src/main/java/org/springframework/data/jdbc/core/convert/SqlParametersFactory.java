@@ -47,15 +47,7 @@ import org.springframework.util.Assert;
 public class SqlParametersFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
-
-	/**
-	 * @deprecated use {@link SqlParametersFactory(RelationalMappingContext, JdbcConverter)} instead.
-	 */
-	@Deprecated(since = "3.1", forRemoval = true)
-	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-		this(context, converter);
-	}
-
+	
 	/**
 	 * @since 3.1
 	 */

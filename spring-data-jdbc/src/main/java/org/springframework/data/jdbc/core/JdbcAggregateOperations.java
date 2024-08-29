@@ -266,22 +266,6 @@ public interface JdbcAggregateOperations {
 	<T> void delete(T aggregateRoot);
 
 	/**
-	 * Delete an aggregate identified by its aggregate root.
-	 *
-	 * @param aggregateRoot to delete. Must not be {@code null}.
-	 * @param domainType the type of the aggregate root. Must not be {@code null}.
-	 * @param <T> the type of the aggregate root.
-	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and the
-	 *           version attribute of the provided entity does not match the version attribute in the database, or when
-	 *           there is no aggregate root with matching id. In other cases a NOOP delete is silently ignored.
-	 * @deprecated since 3.0 use {@link #delete(Object)} instead
-	 */
-	@Deprecated(since = "3.0")
-	default <T> void delete(T aggregateRoot, Class<T> domainType) {
-		delete(aggregateRoot);
-	}
-
-	/**
 	 * Delete all aggregates of a given type.
 	 *
 	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
@@ -295,21 +279,4 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate roots.
 	 */
 	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
-
-	/**
-	 * Delete all aggregates identified by their aggregate roots.
-	 *
-	 * @param aggregateRoots to delete. Must not be {@code null}.
-	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
-	 * @param <T> the type of the aggregate roots.
-	 * @throws org.springframework.dao.OptimisticLockingFailureException when {@literal T} has a version attribute and for
-	 *           at least on entity the version attribute of the entity does not match the version attribute in the
-	 *           database, or when there is no aggregate root with matching id. In other cases a NOOP delete is silently
-	 *           ignored.
-	 * @deprecated since 3.0 use {@link #deleteAll(Iterable)} instead.
-	 */
-	@Deprecated(since = "3.0")
-	default <T> void deleteAll(Iterable<? extends T> aggregateRoots, Class<T> domainType) {
-		deleteAll(aggregateRoots);
-	}
 }

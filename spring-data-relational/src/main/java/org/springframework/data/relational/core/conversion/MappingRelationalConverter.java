@@ -472,14 +472,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return populateProperties(context, entity, documentAccessor, evaluator, instance);
 	}
 
-	@Override
-	public <T> T createInstance(PersistentEntity<T, RelationalPersistentProperty> entity,
-			Function<Parameter<?, RelationalPersistentProperty>, Object> parameterValueProvider) {
-
-		return getEntityInstantiators().getInstantiatorFor(entity) //
-				.createInstance(entity, new ConvertingParameterValueProvider<>(parameterValueProvider));
-	}
-
 	private ParameterValueProvider<RelationalPersistentProperty> getParameterProvider(ConversionContext context,
 			RelationalPersistentEntity<?> entity, RowDocumentAccessor source, ValueExpressionEvaluator evaluator) {
 

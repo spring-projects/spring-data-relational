@@ -64,23 +64,6 @@ public interface RelationalConverter {
 	MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext();
 
 	/**
-	 * Create a new instance of {@link PersistentEntity} given {@link ParameterValueProvider} to obtain constructor
-	 * properties.
-	 *
-	 * @param entity the kind of entity to create. Must not be {@code null}.
-	 * @param parameterValueProvider a function that provides the value to pass to a constructor, given a
-	 *          {@link Parameter}. Must not be {@code null}.
-	 * @param <T> the type of entity to create.
-	 * @return the instantiated entity. Guaranteed to be not {@code null}.
-	 * @deprecated since 3.2, use {@link #read} method instead.
-	 */
-	@Deprecated(since = "3.2")
-	default <T> T createInstance(PersistentEntity<T, RelationalPersistentProperty> entity,
-			Function<Parameter<?, RelationalPersistentProperty>, Object> parameterValueProvider) {
-		throw new UnsupportedOperationException("Not supported anymore. Use read(…) instead.");
-	}
-
-	/**
 	 * Return a {@link PersistentPropertyAccessor} to access property values of the {@code instance}.
 	 *
 	 * @param persistentEntity the kind of entity to operate on. Must not be {@code null}.

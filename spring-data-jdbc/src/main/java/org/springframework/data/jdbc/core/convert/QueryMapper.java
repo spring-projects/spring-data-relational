@@ -64,23 +64,6 @@ public class QueryMapper {
 	/**
 	 * Creates a new {@link QueryMapper} with the given {@link JdbcConverter}.
 	 *
-	 * @param dialect must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @deprecated use {@link QueryMapper(JdbcConverter)} instead.
-	 */
-	@Deprecated(since="3.2")
-	public QueryMapper(Dialect dialect, JdbcConverter converter) {
-
-		Assert.notNull(dialect, "Dialect must not be null");
-		Assert.notNull(converter, "JdbcConverter must not be null");
-
-		this.converter = converter;
-		this.mappingContext = converter.getMappingContext();
-	}
-
-	/**
-	 * Creates a new {@link QueryMapper} with the given {@link JdbcConverter}.
-	 *
 	 * @param converter must not be {@literal null}.
 	 */
 	public QueryMapper( JdbcConverter converter) {

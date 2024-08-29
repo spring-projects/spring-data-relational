@@ -47,12 +47,6 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	RelationalPersistentEntity<?> getOwner();
 
 	/**
-	 * @deprecated use {@link #getReverseColumnName(RelationalPersistentEntity)} instead
-	 */
-	@Deprecated(since = "3.2", forRemoval = true)
-	SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path);
-
-	/**
 	 * @param owner the owning entity.
 	 * @return the column name to represent the owning side.
 	 */

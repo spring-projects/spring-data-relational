@@ -427,26 +427,6 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getCondition()).hasToString("person.name LIKE ?[$1]");
 	}
 
-	@Test // gh-64
-	void shouldMapSort() {
-
-		Sort sort = Sort.by(desc("alternative"));
-
-		Sort mapped = mapper.getMappedObject(sort, mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
-
-		assertThat(mapped.getOrderFor("another_name")).isEqualTo(desc("another_name"));
-		assertThat(mapped.getOrderFor("alternative")).isNull();
-	}
-
-	@Test // gh-369
-	void mapSortForPropertyPathInPrimitiveShouldFallBackToColumnName() {
-
-		Sort sort = Sort.by(desc("alternative_name"));
-
-		Sort mapped = mapper.getMappedObject(sort, mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
-		assertThat(mapped.getOrderFor("alternative_name")).isEqualTo(desc("alternative_name"));
-	}
-
 	@Test // GH-1507
 	public void shouldMapSortWithUnknownField() {
 
