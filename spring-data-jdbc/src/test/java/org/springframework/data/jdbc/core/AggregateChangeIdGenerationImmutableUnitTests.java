@@ -491,8 +491,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof DummyEntity)) return false;
-			final DummyEntity other = (DummyEntity) o;
+			if (!(o instanceof DummyEntity other)) return false;
 			final Object this$rootId = this.getRootId();
 			final Object other$rootId = other.getRootId();
 			if (this$rootId == null ? other$rootId != null : !this$rootId.equals(other$rootId)) return false;
@@ -623,8 +622,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof Content)) return false;
-			final Content other = (Content) o;
+			if (!(o instanceof Content other)) return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
 			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
@@ -725,8 +723,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof ContentNoId)) return false;
-			final ContentNoId other = (ContentNoId) o;
+			if (!(o instanceof ContentNoId other)) return false;
 			final Object this$single = this.getSingle();
 			final Object other$single = other.getSingle();
 			if (this$single == null ? other$single != null : !this$single.equals(other$single)) return false;
@@ -805,8 +802,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		public boolean equals(final Object o) {
 			if (o == this) return true;
-			if (!(o instanceof Tag)) return false;
-			final Tag other = (Tag) o;
+			if (!(o instanceof Tag other)) return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
 			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
