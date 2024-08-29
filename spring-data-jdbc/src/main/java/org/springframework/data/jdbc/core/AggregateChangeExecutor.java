@@ -81,32 +81,32 @@ class AggregateChangeExecutor {
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
 
 		try {
-			if (action instanceof DbAction.InsertRoot) {
-				executionContext.executeInsertRoot((DbAction.InsertRoot<?>) action);
-			} else if (action instanceof DbAction.BatchInsertRoot<?>) {
-				executionContext.executeBatchInsertRoot((DbAction.BatchInsertRoot<?>) action);
-			} else if (action instanceof DbAction.Insert) {
-				executionContext.executeInsert((DbAction.Insert<?>) action);
-			} else if (action instanceof DbAction.BatchInsert) {
-				executionContext.executeBatchInsert((DbAction.BatchInsert<?>) action);
-			} else if (action instanceof DbAction.UpdateRoot) {
-				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
-			} else if (action instanceof DbAction.Delete) {
-				executionContext.executeDelete((DbAction.Delete<?>) action);
-			} else if (action instanceof DbAction.BatchDelete<?>) {
-				executionContext.executeBatchDelete((DbAction.BatchDelete<?>) action);
-			} else if (action instanceof DbAction.DeleteAll) {
-				executionContext.executeDeleteAll((DbAction.DeleteAll<?>) action);
-			} else if (action instanceof DbAction.DeleteRoot) {
-				executionContext.executeDeleteRoot((DbAction.DeleteRoot<?>) action);
-			} else if (action instanceof DbAction.BatchDeleteRoot) {
-				executionContext.executeBatchDeleteRoot((DbAction.BatchDeleteRoot<?>) action);
-			} else if (action instanceof DbAction.DeleteAllRoot) {
-				executionContext.executeDeleteAllRoot((DbAction.DeleteAllRoot<?>) action);
-			} else if (action instanceof DbAction.AcquireLockRoot) {
-				executionContext.executeAcquireLock((DbAction.AcquireLockRoot<?>) action);
-			} else if (action instanceof DbAction.AcquireLockAllRoot) {
-				executionContext.executeAcquireLockAllRoot((DbAction.AcquireLockAllRoot<?>) action);
+			if (action instanceof DbAction.InsertRoot<?> insertRoot) {
+				executionContext.executeInsertRoot(insertRoot);
+			} else if (action instanceof DbAction.BatchInsertRoot<?> batchInsertRoot) {
+				executionContext.executeBatchInsertRoot(batchInsertRoot);
+			} else if (action instanceof DbAction.Insert<?> insert) {
+				executionContext.executeInsert(insert);
+			} else if (action instanceof DbAction.BatchInsert<?> batchInsert) {
+				executionContext.executeBatchInsert(batchInsert);
+			} else if (action instanceof DbAction.UpdateRoot<?> updateRoot) {
+				executionContext.executeUpdateRoot(updateRoot);
+			} else if (action instanceof DbAction.Delete<?> delete) {
+				executionContext.executeDelete(delete);
+			} else if (action instanceof DbAction.BatchDelete<?> batchDelete) {
+				executionContext.executeBatchDelete(batchDelete);
+			} else if (action instanceof DbAction.DeleteAll<?> deleteAll) {
+				executionContext.executeDeleteAll(deleteAll);
+			} else if (action instanceof DbAction.DeleteRoot<?> deleteRoot) {
+				executionContext.executeDeleteRoot(deleteRoot);
+			} else if (action instanceof DbAction.BatchDeleteRoot<?> batchDeleteRoot) {
+				executionContext.executeBatchDeleteRoot(batchDeleteRoot);
+			} else if (action instanceof DbAction.DeleteAllRoot<?> deleteAllRoot) {
+				executionContext.executeDeleteAllRoot(deleteAllRoot);
+			} else if (action instanceof DbAction.AcquireLockRoot<?> acquireLockRoot) {
+				executionContext.executeAcquireLock(acquireLockRoot);
+			} else if (action instanceof DbAction.AcquireLockAllRoot<?> acquireLockAllRoot) {
+				executionContext.executeAcquireLockAllRoot(acquireLockAllRoot);
 			} else {
 				throw new RuntimeException("unexpected action");
 			}
