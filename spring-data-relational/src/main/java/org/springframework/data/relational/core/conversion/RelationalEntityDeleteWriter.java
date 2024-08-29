@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;

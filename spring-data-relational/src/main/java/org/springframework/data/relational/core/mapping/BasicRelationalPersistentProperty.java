@@ -69,22 +69,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
-	 * @param context must not be {@literal null}
-	 * @since 2.0, use
-	 *        {@link #BasicRelationalPersistentProperty(Property, PersistentEntity, SimpleTypeHolder, NamingStrategy)}.
-	 */
-	@Deprecated
-	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
-		this(property, owner, simpleTypeHolder, context.getNamingStrategy());
-	}
-
-	/**
-	 * Creates a new {@link BasicRelationalPersistentProperty}.
-	 *
-	 * @param property must not be {@literal null}.
-	 * @param owner must not be {@literal null}.
-	 * @param simpleTypeHolder must not be {@literal null}.
 	 * @param namingStrategy must not be {@literal null}
 	 * @since 2.0
 	 */
@@ -220,18 +204,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public RelationalPersistentEntity<?> getOwner() {
 		return (RelationalPersistentEntity<?>) super.getOwner();
-	}
-
-	@Override
-	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
-
-		if (collectionIdColumnNameExpression == null) {
-
-			return collectionIdColumnName.get()
-					.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
-		}
-
-		return createSqlIdentifier(expressionEvaluator.evaluate(collectionIdColumnNameExpression));
 	}
 
 	@Override

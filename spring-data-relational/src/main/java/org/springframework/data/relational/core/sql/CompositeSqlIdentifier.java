@@ -66,12 +66,6 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	}
 
 	@Override
-	@Deprecated(since="3.1", forRemoval = true)
-	public String getReference(IdentifierProcessing processing) {
-		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
-	}
-
-	@Override
 	public boolean equals(@Nullable Object o) {
 
 		if (this == o) {

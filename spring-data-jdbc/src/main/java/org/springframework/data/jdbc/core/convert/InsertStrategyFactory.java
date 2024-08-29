@@ -42,18 +42,6 @@ public class InsertStrategyFactory {
 	}
 
 	/**
-	 * Constructor with additional {@link BatchJdbcOperations} constructor.
-	 *
-	 * @deprecated since 3.2, use
-	 *             {@link InsertStrategyFactory#InsertStrategyFactory(NamedParameterJdbcOperations, Dialect)} instead.
-	 */
-	@Deprecated(since = "3.2")
-	public InsertStrategyFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,
-			BatchJdbcOperations batchJdbcOperations, Dialect dialect) {
-		this(namedParameterJdbcOperations, dialect);
-	}
-
-	/**
 	 * @param idValueSource the {@link IdValueSource} for the insert.
 	 * @param idColumn the identifier for the id, if an id is expected to be generated. May be {@code null}.
 	 * @return the {@link InsertStrategy} to be used for the insert.

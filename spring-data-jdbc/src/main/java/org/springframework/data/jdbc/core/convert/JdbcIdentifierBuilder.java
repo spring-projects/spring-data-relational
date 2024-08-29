@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -36,17 +35,6 @@ public class JdbcIdentifierBuilder {
 
 	public static JdbcIdentifierBuilder empty() {
 		return new JdbcIdentifierBuilder(Identifier.empty());
-	}
-
-	/**
-	 * Creates ParentKeys with backreference for the given path and value of the parents id.
-	 *
-	 * @deprecated Use {@link #forBackReferences(JdbcConverter, AggregatePath, Object)} instead.
-	 */
-	@Deprecated(since = "3.2", forRemoval = true)
-	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, PersistentPropertyPathExtension path,
-			@Nullable Object value) {
-		return forBackReferences(converter, path.getAggregatePath(), value);
 	}
 
 	/**
@@ -71,26 +59,13 @@ public class JdbcIdentifierBuilder {
 	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
 	 * @return this builder. Guaranteed to be not {@literal null}.
 	 */
-	@Deprecated
-	public JdbcIdentifierBuilder withQualifier(PersistentPropertyPathExtension path, Object value) {
-
-		return withQualifier(path.getAggregatePath(), value);
-	}
-
-
-	/**
-	 * Adds a qualifier to the identifier to build. A qualifier is a map key or a list index.
-	 *
-	 * @param path path to the map that gets qualified by {@code value}. Must not be {@literal null}.
-	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
-	 * @return this builder. Guaranteed to be not {@literal null}.
-	 */
 	public JdbcIdentifierBuilder withQualifier(AggregatePath path, Object value) {
 
 		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(value, "Value must not be null");
 
-		identifier = identifier.withPart(path.getTableInfo().qualifierColumnInfo().name(), value, path.getTableInfo().qualifierColumnType());
+		identifier = identifier.withPart(path.getTableInfo().qualifierColumnInfo().name(), value,
+				path.getTableInfo().qualifierColumnType());
 
 		return this;
 	}

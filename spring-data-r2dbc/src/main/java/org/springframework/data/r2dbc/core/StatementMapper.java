@@ -432,15 +432,6 @@ public interface StatementMapper {
 			return this.table;
 		}
 
-		/**
-		 * @return
-		 * @deprecated since 1.1, use {@link #getSelectList()} instead.
-		 */
-		@Deprecated
-		public List<String> getProjectedFields() {
-			return Collections.unmodifiableList(this.projectedFields);
-		}
-
 		public List<Expression> getSelectList() {
 			return Collections.unmodifiableList(selectList);
 		}

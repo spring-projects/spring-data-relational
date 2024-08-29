@@ -118,8 +118,7 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 			RelationalMappingContext context = new JdbcMappingContext();
 			JdbcConverter converter = new MappingJdbcConverter(context, (Identifier, path) -> null);
 
-			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession,
-					HsqlDbDialect.INSTANCE.getIdentifierProcessing());
+			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);
 
 			strategy.setNamespaceStrategy(new NamespaceStrategy() {
 				@Override

@@ -70,12 +70,6 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 	}
 
 	@Override
-	@Deprecated(since = "3.2", forRemoval = true)
-	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
-		return delegate.getReverseColumnName(path);
-	}
-
-	@Override
 	public SqlIdentifier getReverseColumnName(RelationalPersistentEntity<?> owner) {
 		return delegate.getReverseColumnName(owner);
 	}
