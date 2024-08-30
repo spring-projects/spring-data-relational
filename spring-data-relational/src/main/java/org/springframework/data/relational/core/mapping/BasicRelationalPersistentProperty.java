@@ -53,7 +53,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final boolean hasExplicitColumnName;
 	private final @Nullable Expression columnNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
-	private final @Nullable Expression collectionIdColumnNameExpression;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final @Nullable Expression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
@@ -98,8 +97,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				collectionIdColumnName = Lazy.of(() -> Optional.of(createSqlIdentifier(mappedCollection.idColumn())));
 			}
 
-			this.collectionIdColumnNameExpression = detectExpression(mappedCollection.idColumn());
-
 			collectionKeyColumnName = Lazy.of(
 					() -> StringUtils.hasText(mappedCollection.keyColumn()) ? createSqlIdentifier(mappedCollection.keyColumn())
 							: createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this)));
@@ -107,7 +104,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			this.collectionKeyColumnNameExpression = detectExpression(mappedCollection.keyColumn());
 		} else {
 
-			this.collectionIdColumnNameExpression = null;
 			this.collectionKeyColumnNameExpression = null;
 		}
 

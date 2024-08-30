@@ -15,16 +15,12 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import java.util.function.Function;
-
 import org.springframework.core.convert.ConversionService;
-import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.EntityInstantiators;
-import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -126,6 +122,5 @@ public interface RelationalConverter {
 	 */
 	@Nullable
 	Object writeValue(@Nullable Object value, TypeInformation<?> type);
-
 
 }
