@@ -32,7 +32,6 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -66,7 +65,7 @@ public class QueryMapper {
 	 *
 	 * @param converter must not be {@literal null}.
 	 */
-	public QueryMapper( JdbcConverter converter) {
+	public QueryMapper(JdbcConverter converter) {
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
 
@@ -90,8 +89,7 @@ public class QueryMapper {
 			SqlSort.validate(order);
 
 			OrderByField simpleOrderByField = createSimpleOrderByField(table, entity, order);
-			OrderByField orderBy = simpleOrderByField
-					.withNullHandling(order.getNullHandling());
+			OrderByField orderBy = simpleOrderByField.withNullHandling(order.getNullHandling());
 			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
 		}
 
@@ -285,7 +283,7 @@ public class QueryMapper {
 		SQLType sqlType;
 		Comparator comparator = criteria.getComparator();
 
-		if (criteria.getValue()instanceof JdbcValue settableValue) {
+		if (criteria.getValue() instanceof JdbcValue settableValue) {
 
 			mappedValue = convertValue(comparator, settableValue.getValue(), propertyField.getTypeHint());
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
@@ -424,7 +422,8 @@ public class QueryMapper {
 	@Nullable
 	private Object convertValue(Comparator comparator, @Nullable Object value, TypeInformation<?> typeHint) {
 
-		if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator)) && value instanceof Collection<?> collection && !collection.isEmpty()) {
+		if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
+				&& value instanceof Collection<?> collection && !collection.isEmpty()) {
 
 			Collection<Object> mapped = new ArrayList<>(collection.size());
 

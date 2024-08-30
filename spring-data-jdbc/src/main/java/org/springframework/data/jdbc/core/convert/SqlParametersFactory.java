@@ -26,7 +26,6 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -47,7 +46,7 @@ import org.springframework.util.Assert;
 public class SqlParametersFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
-	
+
 	/**
 	 * @since 3.1
 	 */
