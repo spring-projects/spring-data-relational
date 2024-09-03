@@ -28,14 +28,11 @@ import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.PartTreeR2dbcQuery;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
-import org.springframework.data.relational.repository.query.TableNameQueryPreprocessor;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
+import org.springframework.data.relational.repository.support.RelationalQueryLookupStrategy;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -144,8 +141,9 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 * {@link QueryLookupStrategy} to create R2DBC queries..
 	 *
 	 * @author Mark Paluch
+	 * @author Jens Schauder
 	 */
-	private static class R2dbcQueryLookupStrategy implements QueryLookupStrategy {
+	private static class R2dbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 		private final R2dbcEntityOperations entityOperations;
 		private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
@@ -156,11 +154,13 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations,
 				ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
 				ReactiveDataAccessStrategy dataAccessStrategy) {
+
+			super(converter.getMappingContext(), dataAccessStrategy.getDialect());
+
 			this.entityOperations = entityOperations;
 			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
 			this.dataAccessStrategy = dataAccessStrategy;
-
 		}
 
 		@Override
@@ -168,23 +168,15 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 				NamedQueries namedQueries) {
 
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext = this.converter.getMappingContext();
-			Dialect dialect = dataAccessStrategy.getDialect();
 
 			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory,
 					mappingContext);
 			String namedQueryName = queryMethod.getNamedQueryName();
 
-			Class<?> domainType = metadata.getDomainType();
-			RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(domainType);
-			SqlIdentifier tableName = entity.getTableName();
-			SqlIdentifier qualifiedTableName = entity.getQualifiedTableName();
-			
 			if (namedQueries.hasQuery(namedQueryName) || queryMethod.hasAnnotatedQuery()) {
-				
-				QueryPreprocessor queryPreprocessor = new TableNameQueryPreprocessor(tableName, qualifiedTableName, dialect);
 
 				String query = namedQueries.hasQuery(namedQueryName) ? namedQueries.getQuery(namedQueryName) : queryMethod.getRequiredAnnotatedQuery();
-				query  = queryPreprocessor.transform(query);		
+				query  = evaluateTableExpressions(metadata, query);
 
 				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter,
 						this.dataAccessStrategy,

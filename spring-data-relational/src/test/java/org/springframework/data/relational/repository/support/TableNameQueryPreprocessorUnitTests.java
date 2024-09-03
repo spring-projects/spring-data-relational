@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.springframework.data.relational.repository.query;
+package org.springframework.data.relational.repository.support;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
+/**
+ * Tests for {@link TableNameQueryPreprocessor}.
+ *
+ * @author Jens Schauder
+ */
 class TableNameQueryPreprocessorUnitTests {
 
 	@Test // GH-1856

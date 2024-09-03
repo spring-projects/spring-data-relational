@@ -29,8 +29,6 @@ import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.PartTreeJdbcQuery;
 import org.springframework.data.jdbc.repository.query.StringBasedJdbcQuery;
-import org.springframework.data.relational.repository.query.QueryPreprocessor;
-import org.springframework.data.relational.repository.query.TableNameQueryPreprocessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -38,7 +36,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.repository.support.RelationalQueryLookupStrategy;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -63,7 +61,7 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Christopher Klein
  */
-abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
+abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
@@ -82,8 +80,10 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			@Nullable BeanFactory beanfactory, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
+		super(context, dialect);
+
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
@@ -159,23 +159,16 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 							"Query method %s is annotated with both, a query and a query name; Using the declared query", method));
 				}
 
-				QueryPreprocessor queryPreprocessor = prepareQueryPreprocessor(repositoryMetadata);
+				String queryString = evaluateTableExpressions(repositoryMetadata, queryMethod.getRequiredQuery());
+
 				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, getOperations(), this::createMapper,
-						getConverter(), evaluationContextProvider,
-						queryPreprocessor);
+						getConverter(), evaluationContextProvider, queryString);
 				query.setBeanFactory(getBeanFactory());
 				return query;
 			}
 
 			throw new IllegalStateException(
 					String.format("Did neither find a NamedQuery nor an annotated query for method %s", method));
-		}
-
-		private QueryPreprocessor prepareQueryPreprocessor(RepositoryMetadata repositoryMetadata) {
-
-			SqlIdentifier tableName = getContext().getPersistentEntity(repositoryMetadata.getDomainType()).getTableName();
-			SqlIdentifier qualifiedTableName = getContext().getPersistentEntity(repositoryMetadata.getDomainType()).getQualifiedTableName();
-			return new TableNameQueryPreprocessor(tableName, qualifiedTableName, getDialect());
 		}
 	}
 

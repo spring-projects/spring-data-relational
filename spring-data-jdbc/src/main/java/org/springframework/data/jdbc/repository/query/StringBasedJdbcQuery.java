@@ -113,7 +113,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod, operations, rowMapperFactory, converter, evaluationContextProvider, QueryPreprocessor.NOOP);
+		this(queryMethod, operations, rowMapperFactory, converter, evaluationContextProvider, QueryPreprocessor.NOOP.transform(queryMethod.getRequiredQuery()));
 	}
 
 	/**
@@ -125,12 +125,12 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param rowMapperFactory must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
-	 * @param queryPreprocessor must not be {@literal null}.
+	 * @param query
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, QueryPreprocessor queryPreprocessor) {
+								RowMapperFactory rowMapperFactory, JdbcConverter converter,
+								QueryMethodEvaluationContextProvider evaluationContextProvider, String query) {
 
 		super(queryMethod, operations);
 
@@ -164,10 +164,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				.of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
 				.withEvaluationContextProvider(evaluationContextProvider);
 
-
-		this.query = queryPreprocessor.transform(queryMethod.getRequiredQuery());
-		this.spelEvaluator = queryContext.parse(query, getQueryMethod().getParameters());
-		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(query);
+		this.query = query;
+		this.spelEvaluator = queryContext.parse(this.query, getQueryMethod().getParameters());
+		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(this.query);
 	}
 
 	@Override
@@ -185,7 +184,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap) {
 
 		if (containsSpelExpressions) {
-// TODO: Make code changes here
+
 			spelEvaluator.evaluate(objects).forEach(parameterMap::addValue);
 			return spelEvaluator.getQueryString();
 		}

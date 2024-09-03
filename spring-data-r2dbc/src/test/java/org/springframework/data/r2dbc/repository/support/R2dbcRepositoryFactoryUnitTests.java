@@ -29,6 +29,7 @@ import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.Repository;
@@ -38,6 +39,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
  * Unit test for {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(MockitoExtension.class)
 public class R2dbcRepositoryFactoryUnitTests {
@@ -50,6 +52,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	public void before() {
+
 		when(dataAccessStrategy.getConverter()).thenReturn(r2dbcConverter);
 	}
 
@@ -64,6 +67,8 @@ public class R2dbcRepositoryFactoryUnitTests {
 
 	@Test
 	public void createsRepositoryWithIdTypeLong() {
+
+		when(dataAccessStrategy.getDialect()).thenReturn(AnsiDialect.INSTANCE);
 
 		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
 		MyPersonRepository repository = factory.getRepository(MyPersonRepository.class);

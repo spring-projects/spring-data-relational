@@ -52,7 +52,7 @@ public class DeclaredQueryRepositoryUnitTests {
 
 	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class, RETURNS_DEEP_STUBS);
 
-	@Test
+	@Test // GH-1856
 	void plainSql() {
 
 		repository(DummyEntityRepository.class).plainQuery();
@@ -60,7 +60,7 @@ public class DeclaredQueryRepositoryUnitTests {
 		assertThat(query()).isEqualTo("select * from someTable");
 	}
 
-	@Test
+	@Test // GH-1856
 	void tableNameQuery() {
 
 		repository(DummyEntityRepository.class).tableNameQuery();
@@ -68,7 +68,7 @@ public class DeclaredQueryRepositoryUnitTests {
 		assertThat(query()).isEqualTo("select * from \"DUMMY_ENTITY\"");
 	}
 
-	@Test
+	@Test // GH-1856
 	void renamedTableNameQuery() {
 
 		repository(RenamedEntityRepository.class).tableNameQuery();
@@ -76,7 +76,7 @@ public class DeclaredQueryRepositoryUnitTests {
 		assertThat(query()).isEqualTo("select * from \"ReNamed\"");
 	}
 
-	@Test
+	@Test // GH-1856
 	void fullyQualifiedTableNameQuery() {
 
 		repository(RenamedEntityRepository.class).qualifiedTableNameQuery();

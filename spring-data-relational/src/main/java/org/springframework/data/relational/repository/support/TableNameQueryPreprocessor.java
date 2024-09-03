@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.springframework.data.relational.repository.query;
+package org.springframework.data.relational.repository.support;
 
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -26,7 +27,12 @@ import org.springframework.util.Assert;
 
 import java.util.regex.Pattern;
 
-public class TableNameQueryPreprocessor implements QueryPreprocessor {
+/**
+ * Replaces SpEL expressions based on table names in query strings.
+ *
+ * @author Jens Schauder
+ */
+class TableNameQueryPreprocessor implements QueryPreprocessor {
 
 	private static final String EXPRESSION_PARAMETER = "$1#{";
 	private static final String QUOTED_EXPRESSION_PARAMETER = "$1__HASH__{";

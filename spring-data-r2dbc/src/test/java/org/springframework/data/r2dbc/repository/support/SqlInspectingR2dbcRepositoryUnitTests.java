@@ -63,7 +63,7 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 
 	}
 
-	@Test
+	@Test // GH-1856
 	public void replacesSpelExpressionInQuery() {
 
 		recorder.addStubbing(SqlInspectingR2dbcRepositoryUnitTests::isSelect, List.of());
