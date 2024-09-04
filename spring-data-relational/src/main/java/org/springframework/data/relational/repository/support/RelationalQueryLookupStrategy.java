@@ -20,8 +20,6 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.util.Assert;
@@ -48,17 +46,20 @@ public abstract class RelationalQueryLookupStrategy implements QueryLookupStrate
 		this.dialect = dialect;
 	}
 
-	protected String evaluateTableExpressions(RepositoryMetadata repositoryMetadata, String queryString) {
-
-		return prepareQueryPreprocessor(repositoryMetadata).transform(queryString);
+	public MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
+		return context;
 	}
 
-	private QueryPreprocessor prepareQueryPreprocessor(RepositoryMetadata repositoryMetadata) {
+	public Dialect getDialect() {
+		return dialect;
+	}
 
-		SqlIdentifier tableName = context.getPersistentEntity(repositoryMetadata.getDomainType()).getTableName();
-		SqlIdentifier qualifiedTableName = context.getPersistentEntity(repositoryMetadata.getDomainType())
-				.getQualifiedTableName();
-		return new TableNameQueryPreprocessor(tableName, qualifiedTableName, dialect);
+	protected String evaluateTableExpressions(RepositoryMetadata repositoryMetadata, String queryString) {
+
+		TableNameQueryPreprocessor preprocessor = new TableNameQueryPreprocessor(
+				context.getRequiredPersistentEntity(repositoryMetadata.getDomainType()), dialect);
+
+		return preprocessor.transform(queryString);
 	}
 
 }

@@ -66,10 +66,9 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
 	private final ApplicationEventPublisher publisher;
-	private final @Nullable EntityCallbacks callbacks;
 	private final RelationalMappingContext context;
+	private final @Nullable EntityCallbacks callbacks;
 	private final JdbcConverter converter;
-	private final Dialect dialect;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
 	@Nullable private final BeanFactory beanfactory;
@@ -83,22 +82,23 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		super(context, dialect);
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
-		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 		Assert.notNull(evaluationContextProvider, "QueryMethodEvaluationContextProvier must not be null");
 
+		this.context = context;
 		this.publisher = publisher;
 		this.callbacks = callbacks;
-		this.context = context;
 		this.converter = converter;
-		this.dialect = dialect;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 		this.operations = operations;
 		this.beanfactory = beanfactory;
 		this.evaluationContextProvider = evaluationContextProvider;
+	}
+
+	public RelationalMappingContext getMappingContext() {
+		return context;
 	}
 
 	/**
@@ -124,7 +124,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 			JdbcQueryMethod queryMethod = getJdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries);
 
-			return new PartTreeJdbcQuery(getContext(), queryMethod, getDialect(), getConverter(), getOperations(),
+			return new PartTreeJdbcQuery(getMappingContext(), queryMethod, getDialect(), getConverter(), getOperations(),
 					this::createMapper);
 		}
 	}
@@ -161,8 +161,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 				String queryString = evaluateTableExpressions(repositoryMetadata, queryMethod.getRequiredQuery());
 
-				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, getOperations(), this::createMapper,
-						getConverter(), evaluationContextProvider, queryString);
+				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryString, queryMethod, getOperations(),
+						this::createMapper, getConverter(), evaluationContextProvider);
 				query.setBeanFactory(getBeanFactory());
 				return query;
 			}
@@ -224,7 +224,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 */
 	JdbcQueryMethod getJdbcQueryMethod(Method method, RepositoryMetadata repositoryMetadata,
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
-		return new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries, context);
+		return new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries, getMappingContext());
 	}
 
 	/**
@@ -277,16 +277,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		}
 	}
 
-	RelationalMappingContext getContext() {
-		return context;
-	}
-
 	JdbcConverter getConverter() {
 		return converter;
-	}
-
-	Dialect getDialect() {
-		return dialect;
 	}
 
 	NamedParameterJdbcOperations getOperations() {
@@ -301,7 +293,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	@SuppressWarnings("unchecked")
 	RowMapper<Object> createMapper(Class<?> returnedObjectType) {
 
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
 			return (RowMapper<Object>) SingleColumnRowMapper.newInstance(returnedObjectType,
@@ -319,7 +311,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 			return configuredQueryMapper;
 
 		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
-				context.getRequiredPersistentEntity(returnedObjectType), //
+				getMappingContext().getRequiredPersistentEntity(returnedObjectType), //
 				converter //
 		);
 

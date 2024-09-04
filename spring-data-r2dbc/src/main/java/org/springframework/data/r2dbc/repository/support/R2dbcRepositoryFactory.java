@@ -112,8 +112,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType(),
 				information);
 
-		return getTargetRepositoryViaReflection(information, entityInformation,
-				operations, this.converter);
+		return getTargetRepositoryViaReflection(information, entityInformation, operations, this.converter);
 	}
 
 	@Override
@@ -138,7 +137,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	}
 
 	/**
-	 * {@link QueryLookupStrategy} to create R2DBC queries..
+	 * {@link QueryLookupStrategy} to create R2DBC queries.
 	 *
 	 * @author Mark Paluch
 	 * @author Jens Schauder
@@ -167,21 +166,18 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 				NamedQueries namedQueries) {
 
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext = this.converter.getMappingContext();
-
-			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory,
-					mappingContext);
+			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory, getMappingContext());
 			String namedQueryName = queryMethod.getNamedQueryName();
 
 			if (namedQueries.hasQuery(namedQueryName) || queryMethod.hasAnnotatedQuery()) {
 
-				String query = namedQueries.hasQuery(namedQueryName) ? namedQueries.getQuery(namedQueryName) : queryMethod.getRequiredAnnotatedQuery();
-				query  = evaluateTableExpressions(metadata, query);
+				String query = namedQueries.hasQuery(namedQueryName) ? namedQueries.getQuery(namedQueryName)
+						: queryMethod.getRequiredAnnotatedQuery();
+				query = evaluateTableExpressions(metadata, query);
 
 				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter,
-						this.dataAccessStrategy,
-						parser, this.evaluationContextProvider);
-			
+						this.dataAccessStrategy, parser, this.evaluationContextProvider);
+
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy);
 			}

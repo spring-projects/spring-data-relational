@@ -35,7 +35,6 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
@@ -113,32 +112,33 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod, operations, rowMapperFactory, converter, evaluationContextProvider, QueryPreprocessor.NOOP.transform(queryMethod.getRequiredQuery()));
+		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter,
+				evaluationContextProvider);
 	}
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
 	 * and {@link RowMapperFactory}.
 	 *
+	 * @param query must not be {@literal null} or empty.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param rowMapperFactory must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
-	 * @param query
 	 * @since 3.4
 	 */
-	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-								RowMapperFactory rowMapperFactory, JdbcConverter converter,
-								QueryMethodEvaluationContextProvider evaluationContextProvider, String query) {
+	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(queryMethod, operations);
 
+		Assert.hasText(query, "Query must not be null or empty");
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
 		this.converter = converter;
 		this.rowMapperFactory = rowMapperFactory;
-
 
 		if (queryMethod.isSliceQuery()) {
 			throw new UnsupportedOperationException(

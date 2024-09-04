@@ -16,23 +16,23 @@
 
 package org.springframework.data.relational.repository.support;
 
+import java.util.regex.Pattern;
+
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.repository.query.QueryPreprocessor;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.Assert;
 
-import java.util.regex.Pattern;
-
 /**
  * Replaces SpEL expressions based on table names in query strings.
  *
  * @author Jens Schauder
  */
-class TableNameQueryPreprocessor implements QueryPreprocessor {
+class TableNameQueryPreprocessor {
 
 	private static final String EXPRESSION_PARAMETER = "$1#{";
 	private static final String QUOTED_EXPRESSION_PARAMETER = "$1__HASH__{";
@@ -44,7 +44,11 @@ class TableNameQueryPreprocessor implements QueryPreprocessor {
 	private final SqlIdentifier qualifiedTableName;
 	private final Dialect dialect;
 
-	public TableNameQueryPreprocessor(SqlIdentifier tableName, SqlIdentifier qualifiedTableName, Dialect dialect) {
+	public TableNameQueryPreprocessor(RelationalPersistentEntity<?> entity, Dialect dialect) {
+		this(entity.getTableName(), entity.getQualifiedTableName(), dialect);
+	}
+
+	TableNameQueryPreprocessor(SqlIdentifier tableName, SqlIdentifier qualifiedTableName, Dialect dialect) {
 
 		Assert.notNull(tableName, "TableName must not be null");
 		Assert.notNull(qualifiedTableName, "QualifiedTableName must not be null");
@@ -55,7 +59,6 @@ class TableNameQueryPreprocessor implements QueryPreprocessor {
 		this.dialect = dialect;
 	}
 
-	@Override
 	public String transform(String query) {
 
 		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
