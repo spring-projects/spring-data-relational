@@ -33,7 +33,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.ReadingConverter;
@@ -163,14 +162,9 @@ class StringBasedJdbcQueryUnitTests {
 	@Test // GH-1721
 	void obtainsCustomRowMapperRef() {
 
-		BeanFactory beanFactory = mock(BeanFactory.class);
-		JdbcQueryMethod queryMethod = createMethod("findAllCustomRowMapperRef");
-		StringBasedJdbcQuery query = createQuery(queryMethod);
-		query.setBeanFactory(beanFactory);
-
 		CustomRowMapper customRowMapper = new CustomRowMapper();
-
-		when(beanFactory.getBean("CustomRowMapper")).thenReturn(customRowMapper);
+		JdbcQueryMethod queryMethod = createMethod("findAllCustomRowMapperRef");
+		StringBasedJdbcQuery query = createQuery(queryMethod, "CustomRowMapper", customRowMapper);
 
 		RowMapper<?> rowMapper = query.determineRowMapper(queryMethod.getResultProcessor(), false);
 		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(() -> {
@@ -184,14 +178,9 @@ class StringBasedJdbcQueryUnitTests {
 	@Test // GH-1721
 	void obtainsCustomResultSetExtractorRef() {
 
-		BeanFactory beanFactory = mock(BeanFactory.class);
-		JdbcQueryMethod queryMethod = createMethod("findAllCustomResultSetExtractorRef");
-		StringBasedJdbcQuery query = createQuery(queryMethod);
-		query.setBeanFactory(beanFactory);
-
 		CustomResultSetExtractor cre = new CustomResultSetExtractor();
-
-		when(beanFactory.getBean("CustomResultSetExtractor")).thenReturn(cre);
+		JdbcQueryMethod queryMethod = createMethod("findAllCustomResultSetExtractorRef");
+		StringBasedJdbcQuery query = createQuery(queryMethod, "CustomResultSetExtractor", cre);
 
 		RowMapper<?> rowMapper = query.determineRowMapper(queryMethod.getResultProcessor(), false);
 		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(() -> {
@@ -332,10 +321,10 @@ class StringBasedJdbcQueryUnitTests {
 		String[][] tuples = { new String[] { "Albert", "Einstein" }, new String[] { "Richard", "Feynman" } };
 
 		SqlParameterSource parameterSource = forMethod("findByListOfTuples", List.class) //
-				.withArguments(Arrays.asList(tuples)) //
+				.withArguments(Arrays.asList(tuples))//
 				.extractParameterSource();
 
-		assertThat(parameterSource.getValue("tuples")).asInstanceOf(LIST) //
+		assertThat(parameterSource.getValue("tuples")).asInstanceOf(LIST)//
 				.containsExactly(tuples);
 
 		assertThat(parameterSource.getSqlType("tuples")).isEqualTo(JdbcUtil.TYPE_UNKNOWN.getVendorTypeNumber());
@@ -441,7 +430,11 @@ class StringBasedJdbcQueryUnitTests {
 	}
 
 	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
-		return new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider);
+		return createQuery(queryMethod, null, null);
+	}
+
+	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod, String preparedReference, Object value) {
+		return new StringBasedJdbcQuery(queryMethod, operations, new StubRowMapperFactory(preparedReference, value), converter, evaluationContextProvider);
 	}
 
 	interface MyRepository extends Repository<Object, Long> {
@@ -636,4 +629,37 @@ class StringBasedJdbcQueryUnitTests {
 		}
 	}
 
+	private class StubRowMapperFactory implements AbstractJdbcQuery.RowMapperFactory {
+
+		private final String preparedReference;
+		private final Object value;
+
+		StubRowMapperFactory(String preparedReference, Object value) {
+			this.preparedReference = preparedReference;
+			this.value = value;
+		}
+
+		@Override
+		public RowMapper<Object> create(Class<?> result) {
+			return defaultRowMapper;
+		}
+
+		@Override
+		public RowMapper<Object> rowMapperByReference(String reference) {
+
+			if (preparedReference.equals(reference)) {
+				return (RowMapper<Object>) value;
+			}
+			return AbstractJdbcQuery.RowMapperFactory.super.rowMapperByReference(reference);
+		}
+
+		@Override
+		public ResultSetExtractor<Object> resultSetExtractorByReference(String reference) {
+
+			if (preparedReference.equals(reference)) {
+				return (ResultSetExtractor<Object>) value;
+			}
+			return AbstractJdbcQuery.RowMapperFactory.super.resultSetExtractorByReference(reference);
+		}
+	}
 }

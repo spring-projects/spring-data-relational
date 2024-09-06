@@ -26,6 +26,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.query.AbstractJdbcQuery;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.PartTreeJdbcQuery;
 import org.springframework.data.jdbc.repository.query.StringBasedJdbcQuery;
@@ -42,6 +43,7 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -161,14 +163,35 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 				String queryString = evaluateTableExpressions(repositoryMetadata, queryMethod.getRequiredQuery());
 
-				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryString, queryMethod, getOperations(),
-						this::createMapper, getConverter(), evaluationContextProvider);
-				query.setBeanFactory(getBeanFactory());
-				return query;
+				return new StringBasedJdbcQuery(queryString, queryMethod, getOperations(),
+						new BeanFactoryRowMapperFactory(getBeanFactory()), getConverter(), evaluationContextProvider);
 			}
 
 			throw new IllegalStateException(
 					String.format("Did neither find a NamedQuery nor an annotated query for method %s", method));
+		}
+
+		private class BeanFactoryRowMapperFactory implements AbstractJdbcQuery.RowMapperFactory {
+
+			private final BeanFactory beanFactory;
+
+			BeanFactoryRowMapperFactory(BeanFactory beanFactory) {
+				this.beanFactory = beanFactory;
+			}
+			@Override
+			public RowMapper<Object> create(Class<?> result) {
+				return createMapper(result);
+			}
+
+			@Override
+			public RowMapper<Object> rowMapperByReference(String reference) {
+				return beanFactory.getBean(reference, RowMapper.class);
+			}
+
+			@Override
+			public ResultSetExtractor<Object> resultSetExtractorByReference(String reference) {
+				return beanFactory.getBean(reference, ResultSetExtractor.class);
+			}
 		}
 	}
 
