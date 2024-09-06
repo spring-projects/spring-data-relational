@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
@@ -155,7 +156,34 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 * @since 2.3
 	 */
 	public interface RowMapperFactory {
+
+		/**
+		 * Create a {@link RowMapper} based on the expected return type passed in as an argument.
+		 *
+		 * @param result must not be {@code null}.
+		 * @return a {@code RowMapper} producing instances of {@code result}.
+		 */
 		RowMapper<Object> create(Class<?> result);
+
+		/**
+		 * Obtain a {@code RowMapper} from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
+		 *
+		 * @param reference must not be {@code null}.
+		 * @since 3.4
+		 */
+		default RowMapper<Object> rowMapperByReference(String reference) {
+			throw new UnsupportedOperationException("rowMapperByReference is not supported");
+		}
+
+		/**
+		 * Obtain a {@code ResultSetExtractor} from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
+		 *
+		 * @param reference must not be {@code null}.
+		 * @since 3.4
+		 */
+		default ResultSetExtractor<Object> resultSetExtractorByReference(String reference) {
+			throw new UnsupportedOperationException("resultSetExtractorByReference is not supported");
+		}
 	}
 
 	/**

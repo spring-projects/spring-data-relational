@@ -77,7 +77,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final SpelEvaluator spelEvaluator;
 	private final boolean containsSpelExpressions;
 	private final String query;
-	private BeanFactory beanFactory;
 
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
@@ -353,10 +352,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return configuredClass == null || configuredClass == defaultClass;
 	}
 
-	public void setBeanFactory(BeanFactory beanFactory) {
-		this.beanFactory = beanFactory;
-	}
-
 	class CachedRowMapperFactory {
 
 		private final Lazy<RowMapper<Object>> cachedRowMapper;
@@ -380,10 +375,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			this.cachedRowMapper = Lazy.of(() -> {
 
 				if (!ObjectUtils.isEmpty(rowMapperRef)) {
-
-					Assert.notNull(beanFactory, "When a RowMapperRef is specified the BeanFactory must not be null");
-
-					return (RowMapper<Object>) beanFactory.getBean(rowMapperRef);
+					return rowMapperFactory.rowMapperByReference(rowMapperRef);
 				}
 
 				if (isUnconfigured(rowMapperClass, RowMapper.class)) {
@@ -434,10 +426,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			this.resultSetExtractorFactory = rowMapper -> {
 
 				if (!ObjectUtils.isEmpty(resultSetExtractorRef)) {
-
-					Assert.notNull(beanFactory, "When a ResultSetExtractorRef is specified the BeanFactory must not be null");
-
-					return (ResultSetExtractor<Object>) beanFactory.getBean(resultSetExtractorRef);
+					return rowMapperFactory.resultSetExtractorByReference(resultSetExtractorRef);
 				}
 
 				if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
