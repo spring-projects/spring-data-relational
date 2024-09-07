@@ -44,7 +44,7 @@ import org.springframework.test.context.ContextCustomizerFactories;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-// required twice as the annotation lookup doesn't merge multiple occurences of the same annotation
+// required twice as the annotation lookup doesn't merge multiple occurrences of the same annotation
 @ContextCustomizerFactories(value = { TestClassCustomizerFactory.class, EnabledOnDatabaseCustomizerFactory.class })
 @Documented
 @Inherited
