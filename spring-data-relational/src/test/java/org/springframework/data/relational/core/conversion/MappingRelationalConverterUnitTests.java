@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -26,10 +25,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.convert.ConverterBuilder;
@@ -37,12 +39,14 @@ import org.springframework.data.convert.ConverterBuilder.ConverterAware;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link MappingRelationalConverter}.
@@ -210,6 +214,27 @@ class MappingRelationalConverterUnitTests {
 		assertThat(person.getAddresses()).extracting(Address::getStreet).hasSize(1).containsOnly("hwy");
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	void shouldApplyGenericTypeConverter() {
+
+		converter = new MappingRelationalConverter(converter.getMappingContext(),
+			new CustomConversions(StoreConversions.NONE, List.of(GenericTypeConverter.INSTANCE)));
+
+		var stringResult = (GenericClass<String>) converter.writeValue("test", TypeInformation.of(GenericClass.class));
+		var uuidResult = (GenericClass<UUID>) converter.writeValue(UUID.fromString("1234567-8910-1112-1314-151617181920"), TypeInformation.of(GenericClass.class));
+
+		var stringGeneric = new GenericClass<>("test");
+		var stringGenericResult = (String) converter.writeValue(stringGeneric, TypeInformation.of(String.class));
+		var uuidGeneric = new GenericClass<>(UUID.fromString("1234567-8910-1112-1314-151617181920"));
+		var uuidGenericResult = (UUID) converter.writeValue(uuidGeneric, TypeInformation.of(UUID.class));
+
+		assertThat(stringResult.value()).isEqualTo("test");
+		assertThat(uuidResult.value()).isEqualTo(UUID.fromString("1234567-8910-1112-1314-151617181920"));
+		assertThat(stringGenericResult).isEqualTo("test");
+		assertThat(uuidGenericResult).isEqualTo(UUID.fromString("1234567-8910-1112-1314-151617181920"));
+	}
+
 	static class SimpleType {
 
 		@Id String id;
@@ -364,5 +389,32 @@ class MappingRelationalConverterUnitTests {
 		}
 
 	}
+
+	@WritingConverter
+	enum GenericTypeConverter implements GenericConverter {
+
+		INSTANCE;
+
+		@Override
+		public Set<ConvertiblePair> getConvertibleTypes() {
+			return Set.of(
+				new ConvertiblePair(String.class, GenericClass.class),
+				new ConvertiblePair(UUID.class, GenericClass.class),
+				new ConvertiblePair(GenericClass.class, String.class),
+				new ConvertiblePair(GenericClass.class, UUID.class)
+			);
+		}
+
+		@Override
+		public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			if (targetType.getType() == GenericClass.class)
+				return new GenericClass<>(source);
+
+			return ((GenericClass<?>) source).value();
+		}
+
+	}
+
+	public record GenericClass<T>(T value) { }
 
 }
