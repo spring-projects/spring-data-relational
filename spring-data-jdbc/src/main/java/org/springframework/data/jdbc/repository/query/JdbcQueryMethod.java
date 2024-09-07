@@ -28,7 +28,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
-import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;

@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Subselect;
-import org.springframework.lang.Nullable;
 
 public class SubselectVisitor extends TypedSubtreeVisitor<Subselect> {
 
