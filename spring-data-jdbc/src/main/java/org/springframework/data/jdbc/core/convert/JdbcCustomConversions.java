@@ -15,14 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 
