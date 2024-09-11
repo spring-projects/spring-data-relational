@@ -57,8 +57,8 @@ public class AnalyticFunctionPattern extends TypedExpressionPattern<AnalyticExpr
 	}
 
 	private boolean partitionByMatches(AnalyticExpression analyticExpression) {
-
-		List<Expression> expressions = analyticExpression.getPartitionExpressionList().getExpressions();
+		
+		List<? extends Expression> expressions = analyticExpression.getPartitionExpressionList();
 		return expressions != null && expressions.size() == 1 && partitionBy.matches(expressions.get(0));
 	}
 
