@@ -81,17 +81,11 @@ public class SqlServerDialect extends AbstractDialect {
 
 		@Override
 		public String getLock(LockOptions lockOptions) {
-			switch (lockOptions.getLockMode()) {
-
-				case PESSIMISTIC_WRITE:
-					return "WITH (UPDLOCK, ROWLOCK)";
-
-				case PESSIMISTIC_READ:
-					return "WITH (HOLDLOCK, ROWLOCK)";
-
-				default:
-					return "";
-			}
+			
+			return switch (lockOptions.getLockMode()) {
+				case PESSIMISTIC_WRITE -> "WITH (UPDLOCK, ROWLOCK)";
+				case PESSIMISTIC_READ -> "WITH (HOLDLOCK, ROWLOCK)";
+			};
 		}
 
 		@Override

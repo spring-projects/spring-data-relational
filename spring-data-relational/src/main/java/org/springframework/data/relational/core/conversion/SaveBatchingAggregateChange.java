@@ -16,12 +16,9 @@
 package org.springframework.data.relational.core.conversion;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
 /**
@@ -34,9 +31,6 @@ import org.springframework.util.Assert;
  * @since 3.0
  */
 public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T, RootAggregateChange<T>> {
-
-	private static final Comparator<PersistentPropertyPath<RelationalPersistentProperty>> pathLengthComparator = //
-			Comparator.comparing(PersistentPropertyPath::getLength);
 
 	private final Class<T> entityType;
 	private final List<DbAction<?>> rootActions = new ArrayList<>();

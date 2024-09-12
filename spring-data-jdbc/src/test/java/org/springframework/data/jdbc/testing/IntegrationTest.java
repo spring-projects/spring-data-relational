@@ -49,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @see EnabledOnDatabase
  */
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
-// required twice as the annotation lookup doesn't merge multiple occurences of the same annotation
+// required twice as the annotation lookup doesn't merge multiple occurrences of the same annotation
 @ContextCustomizerFactories(value = { TestClassCustomizerFactory.class, EnabledOnDatabaseCustomizerFactory.class })
 @ActiveProfiles(resolver = CombiningActiveProfileResolver.class)
 @ExtendWith(SpringExtension.class)
