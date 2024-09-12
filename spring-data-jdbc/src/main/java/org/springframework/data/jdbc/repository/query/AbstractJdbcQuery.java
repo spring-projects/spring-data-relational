@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
@@ -171,8 +170,8 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		 * @param reference must not be {@code null}.
 		 * @since 3.4
 		 */
-		default RowMapper<Object> rowMapperByReference(String reference) {
-			throw new UnsupportedOperationException("rowMapperByReference is not supported");
+		default RowMapper<Object> getRowMapper(String reference) {
+			throw new UnsupportedOperationException("getRowMapper is not supported");
 		}
 
 		/**
@@ -181,8 +180,8 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		 * @param reference must not be {@code null}.
 		 * @since 3.4
 		 */
-		default ResultSetExtractor<Object> resultSetExtractorByReference(String reference) {
-			throw new UnsupportedOperationException("resultSetExtractorByReference is not supported");
+		default ResultSetExtractor<Object> getResultSetExtractor(String reference) {
+			throw new UnsupportedOperationException("getResultSetExtractor is not supported");
 		}
 	}
 
