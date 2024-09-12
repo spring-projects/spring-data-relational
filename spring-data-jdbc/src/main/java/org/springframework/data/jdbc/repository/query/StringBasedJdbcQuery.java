@@ -352,6 +352,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return configuredClass == null || configuredClass == defaultClass;
 	}
 
+	@Deprecated(since = "3.4")
+	public void setBeanFactory(BeanFactory beanFactory) {}
+
 	class CachedRowMapperFactory {
 
 		private final Lazy<RowMapper<Object>> cachedRowMapper;
@@ -375,7 +378,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			this.cachedRowMapper = Lazy.of(() -> {
 
 				if (!ObjectUtils.isEmpty(rowMapperRef)) {
-					return rowMapperFactory.rowMapperByReference(rowMapperRef);
+					return rowMapperFactory.getRowMapper(rowMapperRef);
 				}
 
 				if (isUnconfigured(rowMapperClass, RowMapper.class)) {
@@ -426,7 +429,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			this.resultSetExtractorFactory = rowMapper -> {
 
 				if (!ObjectUtils.isEmpty(resultSetExtractorRef)) {
-					return rowMapperFactory.resultSetExtractorByReference(resultSetExtractorRef);
+					return rowMapperFactory.getResultSetExtractor(resultSetExtractorRef);
 				}
 
 				if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {

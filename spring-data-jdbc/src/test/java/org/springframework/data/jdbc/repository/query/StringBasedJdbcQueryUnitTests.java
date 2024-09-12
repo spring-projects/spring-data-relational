@@ -645,21 +645,21 @@ class StringBasedJdbcQueryUnitTests {
 		}
 
 		@Override
-		public RowMapper<Object> rowMapperByReference(String reference) {
+		public RowMapper<Object> getRowMapper(String reference) {
 
 			if (preparedReference.equals(reference)) {
 				return (RowMapper<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.rowMapperByReference(reference);
+			return AbstractJdbcQuery.RowMapperFactory.super.getRowMapper(reference);
 		}
 
 		@Override
-		public ResultSetExtractor<Object> resultSetExtractorByReference(String reference) {
+		public ResultSetExtractor<Object> getResultSetExtractor(String reference) {
 
 			if (preparedReference.equals(reference)) {
 				return (ResultSetExtractor<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.resultSetExtractorByReference(reference);
+			return AbstractJdbcQuery.RowMapperFactory.super.getResultSetExtractor(reference);
 		}
 	}
 }
