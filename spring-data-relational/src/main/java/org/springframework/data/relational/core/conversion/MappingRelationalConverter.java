@@ -693,8 +693,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		if (getConversions().isSimpleType(value.getClass())) {
 
-			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(type.getType(), value.getClass())
-				? getConversions().getCustomWriteTarget(type.getType(), value.getClass())
+			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
+				? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
 				: getConversions().getCustomWriteTarget(type.getType());
 			if (customWriteTarget.isPresent()) {
 				return getConversionService().convert(value, customWriteTarget.get());

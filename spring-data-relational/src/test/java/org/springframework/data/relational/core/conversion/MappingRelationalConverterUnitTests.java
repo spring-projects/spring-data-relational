@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -40,6 +39,7 @@ import org.springframework.data.convert.ConverterBuilder.ConverterAware;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.mapping.Column;
@@ -390,6 +390,7 @@ class MappingRelationalConverterUnitTests {
 
 	}
 
+	@WritingConverter
 	enum GenericTypeConverter implements GenericConverter {
 
 		INSTANCE;
