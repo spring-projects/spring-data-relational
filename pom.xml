@@ -15,12 +15,12 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>3.4.0-SNAPSHOT</version>
+		<version>3.4.0-M1</version>
 	</parent>
 
 	<properties>
 		<dist.id>spring-data-jdbc</dist.id>
-		<springdata.commons>3.4.0-SNAPSHOT</springdata.commons>
+		<springdata.commons>3.4.0-M1</springdata.commons>
 		<liquibase.version>4.21.1</liquibase.version>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
@@ -303,16 +303,6 @@
 	</build>
 
 	<repositories>
-		<repository>
-			<id>spring-snapshot</id>
-			<url>https://repo.spring.io/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
 		<repository>
 			<id>spring-milestone</id>
 			<url>https://repo.spring.io/milestone</url>
