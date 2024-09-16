@@ -41,16 +41,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.SpELExpressionEvaluator;
-import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -82,6 +73,7 @@ import org.springframework.util.ObjectUtils;
  * @author Chirag Tailor
  * @author Vincent Galloy
  * @author Chanhyeong Cho
+ * @author Lukáš Křečan
  * @see org.springframework.data.mapping.context.MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -678,8 +670,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter impl
 		if (getConversions().isSimpleType(value.getClass())) {
 
 			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
-				? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-				: getConversions().getCustomWriteTarget(type.getType());
+					? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
+					: getConversions().getCustomWriteTarget(type.getType());
+
 			if (customWriteTarget.isPresent()) {
 				return getConversionService().convert(value, customWriteTarget.get());
 			}
