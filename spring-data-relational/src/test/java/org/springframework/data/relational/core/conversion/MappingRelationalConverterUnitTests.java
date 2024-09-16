@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
 
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
@@ -52,6 +52,8 @@ import org.springframework.data.util.TypeInformation;
  * Unit tests for {@link MappingRelationalConverter}.
  *
  * @author Mark Paluch
+ * @author Lukáš Křečan
+ * @author Jens Schauder
  */
 class MappingRelationalConverterUnitTests {
 
@@ -92,7 +94,7 @@ class MappingRelationalConverterUnitTests {
 	}
 
 	@Test
-		// GH-1689
+	// GH-1689
 	void shouldApplySimpleTypeConverterSimpleType() {
 
 		converter = new MappingRelationalConverter(converter.getMappingContext(),
@@ -214,25 +216,24 @@ class MappingRelationalConverterUnitTests {
 		assertThat(person.getAddresses()).extracting(Address::getStreet).hasSize(1).containsOnly("hwy");
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test
+	@Test // GH-1842
 	void shouldApplyGenericTypeConverter() {
 
 		converter = new MappingRelationalConverter(converter.getMappingContext(),
-			new CustomConversions(StoreConversions.NONE, List.of(GenericTypeConverter.INSTANCE)));
+				new CustomConversions(StoreConversions.NONE, List.of(GenericTypeConverter.INSTANCE)));
 
-		var stringResult = (GenericClass<String>) converter.writeValue("test", TypeInformation.of(GenericClass.class));
-		var uuidResult = (GenericClass<UUID>) converter.writeValue(UUID.fromString("1234567-8910-1112-1314-151617181920"), TypeInformation.of(GenericClass.class));
+		UUID uuid = UUID.randomUUID();
+		GenericClass<UUID> wrappedUuid = new GenericClass<>(uuid);
+		GenericClass<String> wrappedString = new GenericClass<>("test");
 
-		var stringGeneric = new GenericClass<>("test");
-		var stringGenericResult = (String) converter.writeValue(stringGeneric, TypeInformation.of(String.class));
-		var uuidGeneric = new GenericClass<>(UUID.fromString("1234567-8910-1112-1314-151617181920"));
-		var uuidGenericResult = (UUID) converter.writeValue(uuidGeneric, TypeInformation.of(UUID.class));
+		SoftAssertions.assertSoftly(softly -> {
 
-		assertThat(stringResult.value()).isEqualTo("test");
-		assertThat(uuidResult.value()).isEqualTo(UUID.fromString("1234567-8910-1112-1314-151617181920"));
-		assertThat(stringGenericResult).isEqualTo("test");
-		assertThat(uuidGenericResult).isEqualTo(UUID.fromString("1234567-8910-1112-1314-151617181920"));
+			softly.assertThat(converter.writeValue(uuid, TypeInformation.of(GenericClass.class))).isEqualTo(wrappedUuid);
+			softly.assertThat(converter.writeValue(wrappedUuid, TypeInformation.of(UUID.class))).isEqualTo(uuid);
+
+			softly.assertThat(converter.writeValue("test", TypeInformation.of(GenericClass.class))).isEqualTo(wrappedString);
+			softly.assertThat(converter.writeValue(wrappedString, TypeInformation.of(String.class))).isEqualTo("test");
+		});
 	}
 
 	static class SimpleType {
@@ -397,12 +398,9 @@ class MappingRelationalConverterUnitTests {
 
 		@Override
 		public Set<ConvertiblePair> getConvertibleTypes() {
-			return Set.of(
-				new ConvertiblePair(String.class, GenericClass.class),
-				new ConvertiblePair(UUID.class, GenericClass.class),
-				new ConvertiblePair(GenericClass.class, String.class),
-				new ConvertiblePair(GenericClass.class, UUID.class)
-			);
+			return Set.of(new ConvertiblePair(String.class, GenericClass.class),
+					new ConvertiblePair(UUID.class, GenericClass.class), new ConvertiblePair(GenericClass.class, String.class),
+					new ConvertiblePair(GenericClass.class, UUID.class));
 		}
 
 		@Override
@@ -415,6 +413,7 @@ class MappingRelationalConverterUnitTests {
 
 	}
 
-	public record GenericClass<T>(T value) { }
+	public record GenericClass<T>(T value) {
+	}
 
 }
