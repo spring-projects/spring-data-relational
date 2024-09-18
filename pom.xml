@@ -39,7 +39,7 @@
 		<mssql.version>12.8.1.jre11</mssql.version>
 		<mysql-connector-java.version>8.0.33</mysql-connector-java.version>
 		<postgresql.version>42.6.0</postgresql.version>
-		<oracle.version>23.4.0.24.05</oracle.version>
+		<oracle.version>23.5.0.24.07</oracle.version>
 
 		<!-- test dependencies -->
 		<awaitility.version>4.2.0</awaitility.version>
