@@ -1,322 +1,332 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.springframework.data</groupId>
-	<artifactId>spring-data-relational-parent</artifactId>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-relational-parent</artifactId>
     <version>3.4.0-move-r2dbc-properties-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <packaging>pom</packaging>
 
-	<name>Spring Data Relational Parent</name>
-	<description>Parent module for Spring Data Relational repositories.</description>
-	<url>https://projects.spring.io/spring-data-jdbc</url>
+    <name>Spring Data Relational Parent</name>
+    <description>Parent module for Spring Data Relational repositories.</description>
+    <url>https://projects.spring.io/spring-data-jdbc</url>
 
-	<parent>
-		<groupId>org.springframework.data.build</groupId>
-		<artifactId>spring-data-parent</artifactId>
-		<version>3.4.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.springframework.data.build</groupId>
+        <artifactId>spring-data-parent</artifactId>
+        <version>3.4.0-SNAPSHOT</version>
+    </parent>
 
-	<properties>
-		<dist.id>spring-data-jdbc</dist.id>
-		<springdata.commons>3.4.0-SNAPSHOT</springdata.commons>
-		<liquibase.version>4.21.1</liquibase.version>
-		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+    <properties>
+        <dist.id>spring-data-jdbc</dist.id>
+        <springdata.commons>3.4.0-SNAPSHOT</springdata.commons>
+        <liquibase.version>4.21.1</liquibase.version>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
-		<!-- dependency versions -->
-		<jsr305.version>3.0.2</jsr305.version>
-		<mybatis-spring.version>3.0.2</mybatis-spring.version>
-		<mybatis.version>3.5.13</mybatis.version>
+        <!-- dependency versions -->
+        <jsr305.version>3.0.2</jsr305.version>
+        <mybatis-spring.version>3.0.2</mybatis-spring.version>
+        <mybatis.version>3.5.13</mybatis.version>
 
-		<!-- databases and jdbc drivers -->
-		<!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
-		<db2.version>11.5.9.0</db2.version>
-		<h2.version>2.3.232</h2.version>
-		<hikari.version>5.1.0</hikari.version>
-		<hsqldb.version>2.7.3</hsqldb.version>
-		<mariadb-java-client.version>3.4.1</mariadb-java-client.version>
-		<mssql.version>12.8.1.jre11</mssql.version>
-		<mysql-connector-java.version>8.0.33</mysql-connector-java.version>
-		<postgresql.version>42.7.4</postgresql.version>
-		<oracle.version>23.5.0.24.07</oracle.version>
+        <!-- databases and jdbc drivers -->
+        <!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
+        <db2.version>11.5.9.0</db2.version>
+        <h2.version>2.3.232</h2.version>
+        <hikari.version>5.1.0</hikari.version>
+        <hsqldb.version>2.7.3</hsqldb.version>
+        <mariadb-java-client.version>3.4.1</mariadb-java-client.version>
+        <mssql.version>12.8.1.jre11</mssql.version>
+        <mysql-connector-java.version>8.0.33</mysql-connector-java.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <oracle.version>23.5.0.24.07</oracle.version>
 
-		<!-- test dependencies -->
-		<awaitility.version>4.2.0</awaitility.version>
-		<archunit.version>1.3.0</archunit.version>
+        <!-- R2DBC driver dependencies-->
+        <r2dbc-postgresql.version>1.0.5.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-h2.version>1.0.0.RELEASE</r2dbc-h2.version>
+        <r2dbc-mariadb.version>1.1.4</r2dbc-mariadb.version>
+        <r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
+        <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
+        <oracle-r2dbc.version>1.2.0</oracle-r2dbc.version>
 
-		<jmh.version>1.37</jmh.version>
-		<mbr.version>0.4.0.BUILD-SNAPSHOT</mbr.version>
-	</properties>
 
-	<inceptionYear>2017</inceptionYear>
+        <!-- test dependencies -->
+        <awaitility.version>4.2.0</awaitility.version>
+        <archunit.version>1.3.0</archunit.version>
 
-	<modules>
-		<module>spring-data-relational</module>
-		<module>spring-data-jdbc</module>
-		<module>spring-data-r2dbc</module>
-		<module>spring-data-jdbc-distribution</module>
-	</modules>
+        <jmh.version>1.37</jmh.version>
+        <mbr.version>0.4.0.BUILD-SNAPSHOT</mbr.version>
+    </properties>
 
-	<developers>
-		<developer>
-			<id>schauder</id>
-			<name>Jens Schauder</name>
-			<email>jschauder(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>mpaluch</id>
-			<name>Mark Paluch</name>
-			<email>mpaluch(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Lead</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>gregturn</id>
-			<name>Greg L. Turnquist</name>
-			<email>gturnquist(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>-6</timezone>
-		</developer>
-		<developer>
-			<id>ogierke</id>
-			<name>Oliver Gierke</name>
-			<email>ogierke(at)pivotal.io</email>
-			<organization>Pivotal Software, Inc.</organization>
-			<organizationUrl>https://pivotal.io</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>kurtn718</id>
-			<name>Kurt Niemi</name>
-			<email>kniemi(at)vmware.com</email>
-			<organization>VMware.</organization>
-			<organizationUrl>https://vmware.com</organizationUrl>
-			<roles>
-				<role>Project Contributor</role>
-			</roles>
-			<timezone>-5</timezone>
-		</developer>
+    <inceptionYear>2017</inceptionYear>
 
-	</developers>
+    <modules>
+        <module>spring-data-relational</module>
+        <module>spring-data-jdbc</module>
+        <module>spring-data-r2dbc</module>
+        <module>spring-data-jdbc-distribution</module>
+    </modules>
 
-	<profiles>
+    <developers>
+        <developer>
+            <id>schauder</id>
+            <name>Jens Schauder</name>
+            <email>jschauder(at)pivotal.io</email>
+            <organization>Pivotal Software, Inc.</organization>
+            <organizationUrl>https://pivotal.io</organizationUrl>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>mpaluch</id>
+            <name>Mark Paluch</name>
+            <email>mpaluch(at)pivotal.io</email>
+            <organization>Pivotal Software, Inc.</organization>
+            <organizationUrl>https://pivotal.io</organizationUrl>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>gregturn</id>
+            <name>Greg L. Turnquist</name>
+            <email>gturnquist(at)pivotal.io</email>
+            <organization>Pivotal Software, Inc.</organization>
+            <organizationUrl>https://pivotal.io</organizationUrl>
+            <roles>
+                <role>Project Contributor</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>ogierke</id>
+            <name>Oliver Gierke</name>
+            <email>ogierke(at)pivotal.io</email>
+            <organization>Pivotal Software, Inc.</organization>
+            <organizationUrl>https://pivotal.io</organizationUrl>
+            <roles>
+                <role>Project Contributor</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>kurtn718</id>
+            <name>Kurt Niemi</name>
+            <email>kniemi(at)vmware.com</email>
+            <organization>VMware.</organization>
+            <organizationUrl>https://vmware.com</organizationUrl>
+            <roles>
+                <role>Project Contributor</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
 
-		<profile>
-			<id>no-jacoco</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>jacoco-initialize</id>
-								<phase>none</phase>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
+    </developers>
 
-		</profile>
+    <profiles>
 
-		<profile>
-			<id>ignore-missing-license</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-plugin</artifactId>
-						<configuration>
-							<systemPropertyVariables>
-								<on-missing-license>ignore-test</on-missing-license>
-							</systemPropertyVariables>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+        <profile>
+            <id>no-jacoco</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>jacoco-initialize</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
 
-		<profile>
-			<id>jmh</id>
-			<dependencies>
-				<dependency>
-					<groupId>com.github.mp911de.microbenchmark-runner</groupId>
-					<artifactId>microbenchmark-runner-junit5</artifactId>
-					<version>${mbr.version}</version>
-					<scope>test</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.openjdk.jmh</groupId>
-					<artifactId>jmh-core</artifactId>
-					<version>${jmh.version}</version>
-					<scope>test</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.openjdk.jmh</groupId>
-					<artifactId>jmh-generator-annprocess</artifactId>
-					<version>${jmh.version}</version>
-					<scope>test</scope>
-				</dependency>
-			</dependencies>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>build-helper-maven-plugin</artifactId>
-						<version>3.3.0</version>
-						<executions>
-							<execution>
-								<id>add-source</id>
-								<phase>generate-sources</phase>
-								<goals>
-									<goal>add-test-source</goal>
-								</goals>
-								<configuration>
-									<sources>
-										<source>src/jmh/java</source>
-									</sources>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-plugin</artifactId>
-						<configuration>
-							<skip>true</skip>
-						</configuration>
-					</plugin>
+        </profile>
 
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<skip>true</skip>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>exec-maven-plugin</artifactId>
-						<version>3.1.0</version>
-						<executions>
-							<execution>
-								<id>run-benchmarks</id>
-								<phase>pre-integration-test</phase>
-								<goals>
-									<goal>exec</goal>
-								</goals>
-								<configuration>
-									<classpathScope>test</classpathScope>
-									<executable>java</executable>
-									<arguments>
-										<argument>-classpath</argument>
-										<classpath/>
-										<argument>org.openjdk.jmh.Main</argument>
-										<argument>.*</argument>
-									</arguments>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-			<repositories>
-				<repository>
-					<id>jitpack.io</id>
-					<url>https://jitpack.io</url>
-				</repository>
-			</repositories>
-		</profile>
-	</profiles>
+        <profile>
+            <id>ignore-missing-license</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <on-missing-license>ignore-test</on-missing-license>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-test</id>
-						<configuration>
-							<includes>
-								<include>**/*Tests.java</include>
-								<include>**/*Tests$*.java</include>
-							</includes>
-							<excludes>
-								<exclude>**/*IntegrationTests.java</exclude>
-								<exclude>**/*IntegrationTests$*.java</exclude>
-							</excludes>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+        <profile>
+            <id>jmh</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.github.mp911de.microbenchmark-runner</groupId>
+                    <artifactId>microbenchmark-runner-junit5</artifactId>
+                    <version>${mbr.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-core</artifactId>
+                    <version>${jmh.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-generator-annprocess</artifactId>
+                    <version>${jmh.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <executions>
+                            <execution>
+                                <id>add-source</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/jmh/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-test</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>integration-test</goal>
-						</goals>
-						<configuration>
-							<includes>
-								<include>**/*IntegrationTests.java</include>
-								<include>**/*IntegrationTests$*.java</include>
-							</includes>
-							<excludes>
-								<exclude/>
-							</excludes>
-						</configuration>
-					</execution>
-					<execution>
-						<id>failsafe-verify</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>verify</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>run-benchmarks</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <classpathScope>test</classpathScope>
+                                    <executable>java</executable>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath/>
+                                        <argument>org.openjdk.jmh.Main</argument>
+                                        <argument>.*</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <repositories>
+                <repository>
+                    <id>jitpack.io</id>
+                    <url>https://jitpack.io</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 
-	<repositories>
-		<repository>
-			<id>spring-snapshot</id>
-			<url>https://repo.spring.io/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-milestone</id>
-			<url>https://repo.spring.io/milestone</url>
-		</repository>
-	</repositories>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <includes>
+                                <include>**/*Tests.java</include>
+                                <include>**/*Tests$*.java</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*IntegrationTests.java</exclude>
+                                <exclude>**/*IntegrationTests$*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*IntegrationTests.java</include>
+                                <include>**/*IntegrationTests$*.java</include>
+                            </includes>
+                            <excludes>
+                                <exclude/>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>failsafe-verify</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>spring-snapshot</id>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>spring-milestone</id>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+    </repositories>
 
 </project>
