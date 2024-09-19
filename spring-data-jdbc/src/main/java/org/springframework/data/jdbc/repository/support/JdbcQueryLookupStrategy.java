@@ -25,7 +25,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.AbstractJdbcQuery;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.PartTreeJdbcQuery;

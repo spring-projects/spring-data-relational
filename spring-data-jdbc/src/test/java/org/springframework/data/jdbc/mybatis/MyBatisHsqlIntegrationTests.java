@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
@@ -49,6 +50,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
@@ -119,7 +121,7 @@ public class MyBatisHsqlIntegrationTests {
 				SqlSession sqlSession, EmbeddedDatabase db) {
 
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
-					new NamedParameterJdbcTemplate(db), sqlSession, HsqlDbDialect.INSTANCE);
+					new NamedParameterJdbcTemplate(db), sqlSession, HsqlDbDialect.INSTANCE, QueryMappingConfiguration.EMPTY);
 		}
 	}
 }

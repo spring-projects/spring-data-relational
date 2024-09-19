@@ -3,7 +3,7 @@ package org.springframework.data.jdbc.repository.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
