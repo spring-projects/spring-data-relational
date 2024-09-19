@@ -70,6 +70,7 @@ import org.springframework.util.ObjectUtils;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -95,7 +96,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations,
-				sqlParametersFactory, insertStrategyFactory));
+				sqlParametersFactory, insertStrategyFactory, QueryMappingConfiguration.EMPTY));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
