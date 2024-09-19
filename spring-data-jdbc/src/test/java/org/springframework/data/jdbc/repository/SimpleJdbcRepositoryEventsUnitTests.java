@@ -38,17 +38,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
-import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
-import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
-import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
-import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -83,6 +74,7 @@ import org.springframework.util.ObjectUtils;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -108,7 +100,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations,
-				sqlParametersFactory, insertStrategyFactory));
+				sqlParametersFactory, insertStrategyFactory, QueryMappingConfiguration.EMPTY));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
