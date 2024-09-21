@@ -42,7 +42,7 @@ public class SimpleJdbcRepositoryUnitTests {
 	@Test // DATAJDBC-252
 	public void saveReturnsEntityProducedByOperations() {
 
-		SimpleJdbcRepository<Sample, Object> repository = new SimpleJdbcRepository<>(operations, entity,converter);
+		SimpleJdbcRepository<Sample, Object> repository = new SimpleJdbcRepository<>(operations, entity, converter);
 
 		Sample expected = new Sample();
 		doReturn(expected).when(operations).save(any());
