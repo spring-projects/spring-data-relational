@@ -50,7 +50,7 @@ public class SqlServerDialect extends org.springframework.data.relational.core.d
 			}
 		}
 
-		if (builder.length() == 0) {
+		if (builder.isEmpty()) {
 			return "";
 		}
 
