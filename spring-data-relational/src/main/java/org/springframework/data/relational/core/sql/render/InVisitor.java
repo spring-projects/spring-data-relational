@@ -47,7 +47,7 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 				part.append(", ");
 			}
 
-			if (part.length() == 0) {
+			if (part.isEmpty()) {
 				part.append(renderedPart);
 				if (notIn) {
 					part.append(" NOT");

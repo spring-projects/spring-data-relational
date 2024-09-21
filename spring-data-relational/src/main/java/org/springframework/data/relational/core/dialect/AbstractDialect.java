@@ -196,7 +196,7 @@ public abstract class AbstractDialect implements Dialect {
 		@Override
 		public CharSequence apply(CharSequence charSequence) {
 
-			if (charSequence.length() == 0) {
+			if (charSequence.isEmpty()) {
 				return charSequence;
 			}
 
