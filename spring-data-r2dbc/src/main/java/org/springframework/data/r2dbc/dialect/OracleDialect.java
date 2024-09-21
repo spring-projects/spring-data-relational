@@ -53,7 +53,7 @@ public class OracleDialect extends org.springframework.data.relational.core.dial
 			}
 		}
 
-		if (builder.length() == 0) {
+		if (builder.isEmpty()) {
 			return "";
 		}
 
