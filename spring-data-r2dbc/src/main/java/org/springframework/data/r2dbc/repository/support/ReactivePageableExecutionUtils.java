@@ -60,7 +60,7 @@ abstract class ReactivePageableExecutionUtils {
 			return totalSupplier.map(total -> new PageImpl<>(content, pageable, total));
 		}
 
-		if (content.size() != 0 && pageable.getPageSize() > content.size()) {
+		if (!content.isEmpty() && pageable.getPageSize() > content.size()) {
 			return Mono.just(new PageImpl<>(content, pageable, pageable.getOffset() + content.size()));
 		}
 

@@ -227,6 +227,6 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 	}
 
 	private static Object convertKeyIfNecessary(Object key) {
-		return key instanceof String ? SqlIdentifier.unquoted((String) key) : key;
+		return key instanceof String string ? SqlIdentifier.unquoted(string) : key;
 	}
 }
