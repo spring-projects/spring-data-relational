@@ -297,8 +297,7 @@ abstract class NamedParameterUtils {
 						}
 						k++;
 						Object entryItem = entryIter.next();
-						if (entryItem instanceof Object[]) {
-							Object[] expressionList = (Object[]) entryItem;
+						if (entryItem instanceof Object[] expressionList) {
 							actualSql.append('(');
 							for (int m = 0; m < expressionList.length; m++) {
 								if (m > 0) {
@@ -520,8 +519,7 @@ abstract class NamedParameterUtils {
 
 						Object valueToBind = iterator.next();
 
-						if (valueToBind instanceof Object[]) {
-							Object[] objects = (Object[]) valueToBind;
+						if (valueToBind instanceof Object[] objects) {
 							for (Object object : objects) {
 								bind(target, markers, object);
 							}

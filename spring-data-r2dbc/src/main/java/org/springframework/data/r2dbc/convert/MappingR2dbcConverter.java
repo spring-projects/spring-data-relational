@@ -442,7 +442,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 			Object id = propertyAccessor.getProperty(idProperty);
 			if (idProperty.getType().isPrimitive()) {
-				idPropertyUpdateNeeded = id instanceof Number && ((Number) id).longValue() == 0;
+				idPropertyUpdateNeeded = id instanceof Number number && number.longValue() == 0;
 			} else {
 				idPropertyUpdateNeeded = id == null;
 			}
