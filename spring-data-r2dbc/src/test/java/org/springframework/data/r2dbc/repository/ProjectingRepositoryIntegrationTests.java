@@ -27,7 +27,6 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -51,14 +50,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 public class ProjectingRepositoryIntegrationTests {
 
-	@Autowired
-	private ImmutableObjectRepository repository;
+	@Autowired private ImmutableObjectRepository repository;
 	private JdbcTemplate jdbc;
 
 	@Configuration
-	@EnableR2dbcRepositories(
-			includeFilters = @ComponentScan.Filter(value = ImmutableObjectRepository.class, type = FilterType.ASSIGNABLE_TYPE),
-			considerNestedRepositories = true)
+	@EnableR2dbcRepositories(includeFilters = @ComponentScan.Filter(value = ImmutableObjectRepository.class,
+			type = FilterType.ASSIGNABLE_TYPE), considerNestedRepositories = true)
 	static class TestConfiguration extends AbstractR2dbcConfiguration {
 		@Override
 		public ConnectionFactory connectionFactory() {
@@ -74,9 +71,7 @@ public class ProjectingRepositoryIntegrationTests {
 
 		try {
 			this.jdbc.execute("DROP TABLE immutable_non_null");
-		}
-		catch (DataAccessException e) {
-		}
+		} catch (DataAccessException e) {}
 
 		this.jdbc.execute("CREATE TABLE immutable_non_null (id serial PRIMARY KEY, name varchar(255), email varchar(255))");
 		this.jdbc.execute("INSERT INTO immutable_non_null VALUES (42, 'Walter', 'heisenberg@the-white-family.com')");
@@ -100,8 +95,7 @@ public class ProjectingRepositoryIntegrationTests {
 		return H2TestSupport.createConnectionFactory();
 	}
 
-	@Test
-		// GH-1687
+	@Test // GH-1687
 	void shouldApplyProjectionDirectly() {
 
 		repository.findProjectionByEmail("heisenberg@the-white-family.com") //
@@ -111,8 +105,7 @@ public class ProjectingRepositoryIntegrationTests {
 				}).verifyComplete();
 	}
 
-	@Test
-		// GH-1687
+	@Test // GH-1687
 	void shouldApplyEntityQueryProjectionDirectly() {
 
 		repository.findAllByEmail("heisenberg@the-white-family.com") //
@@ -134,8 +127,7 @@ public class ProjectingRepositoryIntegrationTests {
 	@Table("immutable_non_null")
 	static class ImmutableNonNullEntity implements Person {
 
-		final @Nullable
-		@Id Integer id;
+		final @Nullable @Id Integer id;
 		final String name;
 		final String email;
 
