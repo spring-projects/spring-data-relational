@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -51,16 +50,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.ScrollPosition;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Window;
+import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -570,6 +560,24 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // GH-1813
+	public void partTreeQueryDynamicProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DummyProjection> result = repository.findDynamicProjectedByName("Entity Name", DummyProjection.class);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // GH-1813
+	public void partTreeQueryDynamicProjectionWithBrokenProjectionShouldError() {
+
+		assertThatThrownBy(() -> repository.findDynamicProjectedByName("Entity Name", BrokenProjection.class))
+				.hasMessageContaining("BrokenProjection does not define any properties to select");
 	}
 
 	@Test // GH-971
@@ -1428,6 +1436,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		List<DummyProjection> findProjectedByName(String name);
 
+		<T> List<T> findDynamicProjectedByName(String name, Class<T> projection);
+
 		@Query(value = "SELECT * FROM DUMMY_ENTITY", rowMapperClass = CustomRowMapper.class)
 		List<DummyEntity> findAllWithCustomMapper();
 
@@ -1939,6 +1949,10 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface DummyProjection {
 		String getName();
+	}
+
+	interface BrokenProjection {
+		String name();
 	}
 
 	static final class DtoProjection {

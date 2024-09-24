@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.EmptySelectListException;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
@@ -177,11 +178,21 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			completedBuildSelect = selectOrderBuilder.lock(this.lockMode.get().value());
 		}
 
-		Select select = completedBuildSelect.build();
+		Select select = getSelect(completedBuildSelect);
 
 		String sql = SqlRenderer.create(renderContextFactory.createRenderContext()).render(select);
 
 		return new ParametrizedQuery(sql, parameterSource);
+	}
+
+	private Select getSelect(SelectBuilder.BuildSelect completedBuildSelect) {
+
+		try {
+			return completedBuildSelect.build();
+		} catch (EmptySelectListException cause) {
+			throw new IllegalStateException(
+					returnedType.getReturnedType().getName() + " does not define any properties to select", cause);
+		}
 	}
 
 	SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,

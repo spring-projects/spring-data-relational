@@ -54,7 +54,7 @@ class SelectValidator extends AbstractImportValidator {
 		select.visit(this);
 
 		if (selectFieldCount == 0) {
-			throw new IllegalStateException("SELECT does not declare a select list");
+			throw new EmptySelectListException();
 		}
 
 		for (TableLike table : requiredBySelect) {
