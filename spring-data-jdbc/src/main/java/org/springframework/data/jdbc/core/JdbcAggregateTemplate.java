@@ -52,6 +52,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -171,7 +172,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> saveAll(Iterable<T> instances) {
+	public <T> List<T> saveAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
 
@@ -204,7 +205,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> insertAll(Iterable<T> instances) {
+	public <T> List<T> insertAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
 
@@ -239,7 +240,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> updateAll(Iterable<T> instances) {
+	public <T> List<T> updateAll(Iterable<T> instances) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
 
@@ -298,7 +299,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
 
 		Assert.notNull(domainType, "Domain type must not be null");
 
@@ -323,8 +324,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
-		return accessStrategy.findAll(query, domainType);
+	public <T> List<T> findAll(Query query, Class<T> domainType) {
+
+		Iterable<T> all = accessStrategy.findAll(query, domainType);
+		if (all instanceof List<T> list) {
+			return list;
+		}
+		return Streamable.of(all).toList();
 	}
 
 	@Override
@@ -337,7 +343,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType) {
+	public <T> List<T> findAll(Class<T> domainType) {
 
 		Assert.notNull(domainType, "Domain type must not be null");
 
@@ -346,7 +352,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		Assert.notNull(ids, "Ids must not be null");
 		Assert.notNull(domainType, "Domain type must not be null");
@@ -607,7 +613,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return aggregateChange;
 	}
 
-	private <T> Iterable<T> triggerAfterConvert(Iterable<T> all) {
+	private <T> List<T> triggerAfterConvert(Iterable<T> all) {
 
 		List<T> result = new ArrayList<>();
 
