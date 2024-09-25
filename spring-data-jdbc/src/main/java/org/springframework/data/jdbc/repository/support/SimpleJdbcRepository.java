@@ -73,7 +73,7 @@ public class SimpleJdbcRepository<T, ID>
 	@Transactional
 	@Override
 	public <S extends T> List<S> saveAll(Iterable<S> entities) {
-		return asList(entityOperations.saveAll(entities));
+		return entityOperations.saveAll(entities);
 	}
 
 	@Override
@@ -88,12 +88,12 @@ public class SimpleJdbcRepository<T, ID>
 
 	@Override
 	public List<T> findAll() {
-		return asList(entityOperations.findAll(entity.getType()));
+		return entityOperations.findAll(entity.getType());
 	}
 
 	@Override
 	public List<T> findAllById(Iterable<ID> ids) {
-		return asList(entityOperations.findAllById(ids, entity.getType()));
+		return entityOperations.findAllById(ids, entity.getType());
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class SimpleJdbcRepository<T, ID>
 
 	@Override
 	public List<T> findAll(Sort sort) {
-		return asList(entityOperations.findAll(entity.getType(), sort));
+		return entityOperations.findAll(entity.getType(), sort);
 	}
 
 	@Override
@@ -163,8 +163,8 @@ public class SimpleJdbcRepository<T, ID>
 		Assert.notNull(example, "Example must not be null");
 		Assert.notNull(sort, "Sort must not be null");
 
-		return asList(this.entityOperations.findAll(this.exampleMapper.getMappedExample(example).sort(sort),
-				example.getProbeType()));
+		return this.entityOperations.findAll(this.exampleMapper.getMappedExample(example).sort(sort),
+				example.getProbeType());
 	}
 
 	@Override
@@ -202,14 +202,4 @@ public class SimpleJdbcRepository<T, ID>
 
 		return queryFunction.apply(fluentQuery);
 	}
-
-
-	private <S extends T> List<S> asList(Iterable<S> iterable) {
-
-		if (iterable instanceof List<S> list) {
-			return list;
-		}
-		return Streamable.of(iterable).stream().toList();
-	}
-
 }
