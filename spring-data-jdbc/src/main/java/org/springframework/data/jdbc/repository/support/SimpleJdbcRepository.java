@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -30,6 +31,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -70,7 +72,7 @@ public class SimpleJdbcRepository<T, ID>
 
 	@Transactional
 	@Override
-	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
+	public <S extends T> List<S> saveAll(Iterable<S> entities) {
 		return entityOperations.saveAll(entities);
 	}
 
@@ -85,12 +87,12 @@ public class SimpleJdbcRepository<T, ID>
 	}
 
 	@Override
-	public Iterable<T> findAll() {
+	public List<T> findAll() {
 		return entityOperations.findAll(entity.getType());
 	}
 
 	@Override
-	public Iterable<T> findAllById(Iterable<ID> ids) {
+	public List<T> findAllById(Iterable<ID> ids) {
 		return entityOperations.findAllById(ids, entity.getType());
 	}
 
@@ -130,7 +132,7 @@ public class SimpleJdbcRepository<T, ID>
 	}
 
 	@Override
-	public Iterable<T> findAll(Sort sort) {
+	public List<T> findAll(Sort sort) {
 		return entityOperations.findAll(entity.getType(), sort);
 	}
 
@@ -148,7 +150,7 @@ public class SimpleJdbcRepository<T, ID>
 	}
 
 	@Override
-	public <S extends T> Iterable<S> findAll(Example<S> example) {
+	public <S extends T> List<S> findAll(Example<S> example) {
 
 		Assert.notNull(example, "Example must not be null");
 
@@ -156,7 +158,7 @@ public class SimpleJdbcRepository<T, ID>
 	}
 
 	@Override
-	public <S extends T> Iterable<S> findAll(Example<S> example, Sort sort) {
+	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
 
 		Assert.notNull(example, "Example must not be null");
 		Assert.notNull(sort, "Sort must not be null");
