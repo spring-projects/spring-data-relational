@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * Implementation of {@link ReactiveSelectOperation}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
@@ -43,7 +44,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 		Assert.notNull(domainType, "DomainType must not be null");
 
-		return new ReactiveSelectSupport<>(this.template, domainType, domainType, Query.empty(), null);
+		return new ReactiveSelectSupport<>(this.template, domainType, domainType, Query.empty(), null, null);
 	}
 
 	static class ReactiveSelectSupport<T> implements ReactiveSelect<T> {
@@ -54,14 +55,17 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		private final Query query;
 		private final @Nullable SqlIdentifier tableName;
 
+		private final @Nullable Integer fetchSize;
+
 		ReactiveSelectSupport(R2dbcEntityTemplate template, Class<?> domainType, Class<T> returnType, Query query,
-				@Nullable SqlIdentifier tableName) {
+				@Nullable SqlIdentifier tableName, @Nullable Integer fetchSize) {
 
 			this.template = template;
 			this.domainType = domainType;
 			this.returnType = returnType;
 			this.query = query;
 			this.tableName = tableName;
+			this.fetchSize = fetchSize;
 		}
 
 		@Override
@@ -69,7 +73,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
-			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName, fetchSize);
 		}
 
 		@Override
@@ -77,7 +81,15 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(returnType, "ReturnType must not be null");
 
-			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName, fetchSize);
+		}
+
+		@Override
+		public SelectWithQuery<T> withFetchSize(int fetchSize) {
+
+			Assert.notNull(returnType, "FetchSize must not be null");
+
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName, fetchSize);
 		}
 
 		@Override
@@ -85,7 +97,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(query, "Query must not be null");
 
-			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName, fetchSize);
 		}
 
 		@Override
@@ -100,17 +112,17 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 		@Override
 		public Mono<T> first() {
-			return template.doSelect(query.limit(1), domainType, getTableName(), returnType, RowsFetchSpec::first);
+			return template.doSelect(query.limit(1), domainType, getTableName(), returnType, RowsFetchSpec::first, fetchSize);
 		}
 
 		@Override
 		public Mono<T> one() {
-			return template.doSelect(query.limit(2), domainType, getTableName(), returnType, RowsFetchSpec::one);
+			return template.doSelect(query.limit(2), domainType, getTableName(), returnType, RowsFetchSpec::one, fetchSize);
 		}
 
 		@Override
 		public Flux<T> all() {
-			return template.doSelect(query, domainType, getTableName(), returnType, RowsFetchSpec::all);
+			return template.doSelect(query, domainType, getTableName(), returnType, RowsFetchSpec::all, fetchSize);
 		}
 
 		private SqlIdentifier getTableName() {
