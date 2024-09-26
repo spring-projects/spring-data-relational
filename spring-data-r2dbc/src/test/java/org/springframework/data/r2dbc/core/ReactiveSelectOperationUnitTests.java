@@ -24,6 +24,7 @@ import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
  * Unit test for {@link ReactiveSelectOperation}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class ReactiveSelectOperationUnitTests {
 
@@ -240,6 +242,32 @@ public class ReactiveSelectOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
+	}
+
+	@Test // gh-1652
+	void shouldBeAbleToProvideFetchSize() {
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.build();
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build())
+				.build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(Person.class) //
+				.withFetchSize(10)
+				.matching(query(where("name").is("Walter")).limit(10).offset(20)) //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 10 OFFSET 20");
+		assertThat(statement.getFetchSize()).isEqualTo(10);
 	}
 
 	static class Person {

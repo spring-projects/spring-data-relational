@@ -48,6 +48,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Recorder utility for R2DBC {@link Statement}s. Allows stubbing and introspection.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class StatementRecorder implements ConnectionFactory {
 
@@ -273,6 +274,8 @@ public class StatementRecorder implements ConnectionFactory {
 
 		private final List<Result> results;
 
+		private int fetchSize;
+
 		private final Map<Object, Parameter> bindings = new LinkedHashMap<>();
 
 		public RecordedStatement(String sql, Result result) {
@@ -290,6 +293,10 @@ public class StatementRecorder implements ConnectionFactory {
 
 		public String getSql() {
 			return sql;
+		}
+
+		public int getFetchSize() {
+			return fetchSize;
 		}
 
 		@Override
@@ -318,6 +325,12 @@ public class StatementRecorder implements ConnectionFactory {
 		@Override
 		public Statement bindNull(String identifier, Class<?> type) {
 			this.bindings.put(identifier, Parameter.empty(type));
+			return this;
+		}
+
+		@Override
+		public Statement fetchSize(int rows) {
+			fetchSize = rows;
 			return this;
 		}
 

@@ -94,6 +94,7 @@ import org.springframework.util.Assert;
  * @author Jose Luis Leon
  * @author Robert Heim
  * @author Sebastian Wieland
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -312,14 +313,14 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		Assert.notNull(entityClass, "Entity class must not be null");
 
 		SqlIdentifier tableName = getTableName(entityClass);
-		return doSelect(query, entityClass, tableName, entityClass, RowsFetchSpec::all);
+		return doSelect(query, entityClass, tableName, entityClass, RowsFetchSpec::all, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	<T, P extends Publisher<T>> P doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
-			Class<T> returnType, Function<RowsFetchSpec<T>, P> resultHandler) {
+			Class<T> returnType, Function<RowsFetchSpec<T>, P> resultHandler, @Nullable Integer fetchSize) {
 
-		RowsFetchSpec<T> fetchSpec = doSelect(query, entityClass, tableName, returnType);
+		RowsFetchSpec<T> fetchSpec = doSelect(query, entityClass, tableName, returnType, fetchSize);
 
 		P result = resultHandler.apply(fetchSpec);
 
@@ -331,7 +332,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName,
-			Class<T> returnType) {
+			Class<T> returnType, @Nullable Integer fetchSize) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
 
@@ -358,13 +359,17 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
-		return getRowsFetchSpec(databaseClient.sql(operation), entityType, returnType);
+		return getRowsFetchSpec(
+			databaseClient.sql(operation).filter((statement) -> statement.fetchSize(Optional.ofNullable(fetchSize).orElse(0))),
+			entityType,
+			returnType
+		);
 	}
 
 	@Override
 	public <T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException {
 		return doSelect(query.isLimited() ? query : query.limit(2), entityClass, getTableName(entityClass), entityClass,
-				RowsFetchSpec::one);
+				RowsFetchSpec::one, null);
 	}
 
 	@Override
