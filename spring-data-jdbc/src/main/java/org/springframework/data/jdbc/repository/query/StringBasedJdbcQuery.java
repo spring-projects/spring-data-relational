@@ -92,7 +92,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter, evaluationContextProvider);
+		this(queryMethod.getRequiredQuery(), queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter, evaluationContextProvider);
 	}
 
 	/**

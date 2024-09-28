@@ -397,7 +397,7 @@ class StringBasedJdbcQueryUnitTests {
 							mock(RelationResolver.class))
 					: this.converter;
 
-			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method, operations, result -> mock(RowMapper.class),
+			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method.getDeclaredQuery(), method, operations, result -> mock(RowMapper.class),
 					converter, evaluationContextProvider);
 
 			query.execute(arguments);
