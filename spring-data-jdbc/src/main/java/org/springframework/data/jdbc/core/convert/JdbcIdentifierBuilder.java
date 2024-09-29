@@ -40,8 +40,7 @@ public class JdbcIdentifierBuilder {
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path,
-			@Nullable Object value) {
+	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path, Object value) {
 
 		Identifier identifier = Identifier.of( //
 				path.getTableInfo().reverseColumnInfo().name(), //

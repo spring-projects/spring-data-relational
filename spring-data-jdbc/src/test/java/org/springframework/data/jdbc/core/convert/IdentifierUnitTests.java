@@ -50,14 +50,16 @@ public class IdentifierUnitTests {
 	public void parametersWithStringKeysUseObjectAsTypeForNull() {
 
 		HashMap<SqlIdentifier, Object> parameters = new HashMap<>();
-		parameters.put(unquoted("one"), null);
+		Object value = new Object();
+
+		parameters.put(unquoted("one"), value);
 
 		Identifier identifier = Identifier.from(parameters);
 
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						Assertions.tuple(unquoted("one"), null, Object.class) //
+						Assertions.tuple(unquoted("one"), value, Object.class) //
 				);
 	}
 
