@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -60,15 +59,15 @@ public final class Identifier {
 	/**
 	 * Creates an {@link Identifier} from {@code name}, {@code value}, and a {@link Class target type}.
 	 *
-	 * @param name must not be {@literal null} or empty.
-	 * @param value must not be null
+	 * @param name must not be {@literal null}.
+	 * @param value must not be {@literal null}.
 	 * @param targetType must not be {@literal null}.
 	 * @return the {@link Identifier} for {@code name}, {@code value}, and a {@link Class target type}.
 	 */
 	public static Identifier of(SqlIdentifier name, Object value, Class<?> targetType) {
 
-		Assert.notNull(name, "Name must not be empty");
-		Assert.notNull(value, "Value must not be empty");
+		Assert.notNull(name, "Name must not be null");
+		Assert.notNull(value, "Value must not be null");
 		Assert.notNull(targetType, "Target type must not be null");
 
 		return new Identifier(Collections.singletonList(new SingleIdentifierValue(name, value, targetType)));
@@ -92,7 +91,8 @@ public final class Identifier {
 
 		map.forEach((k, v) -> {
 
-			Assert.notNull(v, "The source map for identifier cannot contain null values");
+			Assert.notNull(v, "The source map for identifier must not contain null values");
+
 			values.add(new SingleIdentifierValue(k, v, ClassUtils.getUserClass(v)));
 		});
 

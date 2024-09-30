@@ -47,19 +47,28 @@ public class IdentifierUnitTests {
 	}
 
 	@Test // DATAJDBC-326
-	public void parametersWithStringKeysUseObjectAsTypeForNull() {
+	public void typeIsCalculatedCorrectly() {
 
 		HashMap<SqlIdentifier, Object> parameters = new HashMap<>();
-		Object value = new Object();
+		Object objectValue = new Object();
+		Object stringValue = "text";
+		Object intValue	= 23;
+		Object integerValue = 42;
 
-		parameters.put(unquoted("one"), value);
+		parameters.put(unquoted("one"), objectValue);
+		parameters.put(unquoted("two"), stringValue);
+		parameters.put(unquoted("three"), intValue);
+		parameters.put(unquoted("four"), integerValue);
 
 		Identifier identifier = Identifier.from(parameters);
 
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
-				.containsExactly( //
-						Assertions.tuple(unquoted("one"), value, Object.class) //
+				.containsExactlyInAnyOrder( //
+						Assertions.tuple(unquoted("one"), objectValue, Object.class), //
+						Assertions.tuple(unquoted("two"), stringValue, String.class), //
+						Assertions.tuple(unquoted("three"), intValue, Integer.class), //
+						Assertions.tuple(unquoted("four"), integerValue, Integer.class) //
 				);
 	}
 
