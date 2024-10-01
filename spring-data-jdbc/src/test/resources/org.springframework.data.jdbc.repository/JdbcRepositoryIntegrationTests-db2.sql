@@ -12,7 +12,8 @@ CREATE TABLE dummy_entity
     OFFSET_DATE_TIME TIMESTAMP, -- with time zone is only supported with z/OS
     FLAG             BOOLEAN,
     REF              BIGINT,
-    DIRECTION        VARCHAR(100)
+    DIRECTION        VARCHAR(100),
+    BYTES            BINARY(8)
 );
 
 CREATE TABLE ROOT
