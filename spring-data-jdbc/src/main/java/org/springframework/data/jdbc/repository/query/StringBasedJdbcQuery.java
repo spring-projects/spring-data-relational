@@ -93,7 +93,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter, evaluationContextProvider);
+		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper,
+				converter, evaluationContextProvider);
 	}
 
 	/**
@@ -221,7 +222,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			TypeInformation<?> actualType = typeInformation.getActualType();
 
 			// tuple-binding
-			if (actualType != null && actualType.getType().isArray()) {
+			if (actualType != null && actualType.getType().isArray() && !actualType.getType().equals(byte[].class)) {
 
 				TypeInformation<?> nestedElementType = actualType.getRequiredActualType();
 				return writeCollection(collection, parameter.getActualSqlType(),
