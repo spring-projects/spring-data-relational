@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -51,23 +50,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.ScrollPosition;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Window;
+import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.ConditionalOnDatabase;
 import org.springframework.data.jdbc.testing.DatabaseType;
-import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -1357,6 +1346,52 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).containsOnly(two);
 	}
 
+	@Test // GH-1900
+	void queryByListOfByteArray() {
+
+		byte[] oneBytes = { 1, 2, 3, 4, 5, 6, 7, 8 };
+		DummyEntity one = createDummyEntity("one");
+		one.setBytes(oneBytes);
+		one = repository.save(one);
+
+		byte[] twoBytes = { 8, 7, 6, 5, 4, 3, 2, 1 };
+		DummyEntity two = createDummyEntity("two");
+		two.setBytes(twoBytes);
+		two = repository.save(two);
+
+		byte[] threeBytes = { 3, 3, 3, 3, 3, 3, 3, 3 };
+		DummyEntity three = createDummyEntity("three");
+		three.setBytes(threeBytes);
+		three = repository.save(three);
+
+		List<DummyEntity> result = repository.findByBytesIn(List.of(threeBytes, oneBytes));
+
+		assertThat(result).extracting("idProp").containsExactlyInAnyOrder(one.idProp, three.idProp);
+	}
+
+	@Test // GH-1900
+	void queryByByteArray() {
+
+		byte[] oneBytes = { 1, 2, 3, 4, 5, 6, 7, 8 };
+		DummyEntity one = createDummyEntity("one");
+		one.setBytes(oneBytes);
+		one = repository.save(one);
+
+		byte[] twoBytes = { 8, 7, 6, 5, 4, 3, 2, 1 };
+		DummyEntity two = createDummyEntity("two");
+		two.setBytes(twoBytes);
+		two = repository.save(two);
+
+		byte[] threeBytes = { 3, 3, 3, 3, 3, 3, 3, 3 };
+		DummyEntity three = createDummyEntity("three");
+		three.setBytes(threeBytes);
+		three = repository.save(three);
+
+		List<DummyEntity> result = repository.findByBytes(twoBytes);
+
+		assertThat(result).extracting("idProp").containsExactly(two.idProp);
+	}
+
 	private Root createRoot(String namePrefix) {
 
 		return new Root(null, namePrefix,
@@ -1487,6 +1522,12 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE (ID_PROP, NAME) IN (:tuples)")
 		List<DummyEntity> findByListInTuple(List<Object[]> tuples);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE BYTES IN (:bytes)")
+		List<DummyEntity> findByBytesIn(List<byte[]> bytes);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE BYTES = :bytes")
+		List<DummyEntity> findByBytes(byte[] bytes);
 	}
 
 	interface RootRepository extends ListCrudRepository<Root, Long> {
@@ -1810,6 +1851,7 @@ public class JdbcRepositoryIntegrationTests {
 		boolean flag;
 		AggregateReference<DummyEntity, Long> ref;
 		Direction direction;
+		byte[] bytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 		public DummyEntity(String name) {
 			this.name = name;
@@ -1888,6 +1930,10 @@ public class JdbcRepositoryIntegrationTests {
 		@Override
 		public int hashCode() {
 			return Objects.hash(name, pointInTime, offsetDateTime, idProp, flag, ref, direction);
+		}
+
+		public void setBytes(byte[] bytes) {
+			this.bytes = bytes;
 		}
 
 		@Override
