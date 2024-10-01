@@ -99,7 +99,7 @@ public class R2dbcEntityTemplateUnitTests {
 				new MappingR2dbcConverter(new R2dbcMappingContext(), conversions));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldCountBy() {
 
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
@@ -117,8 +117,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test
-	// GH-1690
+	@Test // GH-1690
 	void shouldApplyInterfaceProjection() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -165,7 +164,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT foo.* FROM foo WHERE foo.THE_NAME = $1");
 	}
 
-	@Test // gh-469
+	@Test // GH-469
 	void shouldProjectExistsResult() {
 
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
@@ -180,7 +179,7 @@ public class R2dbcEntityTemplateUnitTests {
 				.verifyComplete();
 	}
 
-	@Test // gh-1310
+	@Test // GH-1310
 	void shouldProjectExistsResultWithoutId() {
 
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Object.class, null).build()).build();
@@ -192,7 +191,7 @@ public class R2dbcEntityTemplateUnitTests {
 				.expectNext(true).verifyComplete();
 	}
 
-	@Test // gh-1310
+	@Test // GH-1310
 	void shouldProjectCountResultWithoutId() {
 
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
@@ -204,7 +203,7 @@ public class R2dbcEntityTemplateUnitTests {
 				.expectNext(1L).verifyComplete();
 	}
 
-	@Test // gh-469
+	@Test // GH-469
 	void shouldExistsByCriteria() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -224,7 +223,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectByCriteria() {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
@@ -240,7 +239,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-215
+	@Test // GH-215
 	void selectShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -266,7 +265,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(callback.getValues()).hasSize(1);
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectOne() {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
@@ -282,7 +281,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-220, gh-758
+	@Test // GH-220, GH-758
 	void shouldSelectOneDoNotOverrideExistingLimit() {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
@@ -299,7 +298,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldUpdateByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -321,7 +320,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("Walter"));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldDeleteByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -341,7 +340,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldDeleteEntity() {
 
 		Person person = Person.empty() //
@@ -358,7 +357,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-365
+	@Test // GH-365
 	void shouldInsertVersioned() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -379,7 +378,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(1L));
 	}
 
-	@Test // gh-557, gh-402
+	@Test // GH-557, GH-402
 	void shouldSkipDefaultIdValueOnInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -397,7 +396,7 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("bar"));
 	}
 
-	@Test // gh-557, gh-402
+	@Test // GH-557, GH-402
 	void shouldSkipDefaultIdValueOnVersionedInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -419,7 +418,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("bar"));
 	}
 
-	@Test // gh-451
+	@Test // GH-451
 	void shouldInsertCorrectlyVersionedAndAudited() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -447,7 +446,7 @@ public class R2dbcEntityTemplateUnitTests {
 				"INSERT INTO with_auditing_and_optimistic_locking (version, name, created_date, last_modified_date) VALUES ($1, $2, $3, $4)");
 	}
 
-	@Test // gh-451
+	@Test // GH-451
 	void shouldUpdateCorrectlyVersionedAndAudited() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -476,7 +475,7 @@ public class R2dbcEntityTemplateUnitTests {
 				"UPDATE with_auditing_and_optimistic_locking SET version = $1, name = $2, created_date = $3, last_modified_date = $4");
 	}
 
-	@Test // gh-215
+	@Test // GH-215
 	void insertShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -504,7 +503,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("before-save"));
 	}
 
-	@Test // gh-365
+	@Test // GH-365
 	void shouldUpdateVersioned() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -526,7 +525,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(1L));
 	}
 
-	@Test // gh-215
+	@Test // GH-215
 	void updateShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -559,7 +558,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("before-save"));
 	}
 
-	@Test // gh-637
+	@Test // GH-637
 	void insertIncludesInsertOnlyColumns() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
@@ -578,7 +577,7 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("insert this"));
 	}
 
-	@Test // gh-637
+	@Test // GH-637
 	void updateExcludesInsertOnlyColumns() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();

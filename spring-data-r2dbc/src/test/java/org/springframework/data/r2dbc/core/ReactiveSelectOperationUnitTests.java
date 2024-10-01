@@ -24,11 +24,11 @@ import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -56,7 +56,7 @@ public class ReactiveSelectOperationUnitTests {
 		entityTemplate = new R2dbcEntityTemplate(client, new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectAll() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -80,7 +80,7 @@ public class ReactiveSelectOperationUnitTests {
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 10 OFFSET 20");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectAs() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -128,7 +128,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT person.id, person.a_different_name FROM person WHERE person.THE_NAME = $1");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectFromTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -152,7 +152,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT the_table.* FROM the_table WHERE the_table.THE_NAME = $1");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectFirst() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -175,7 +175,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 1");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectOne() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -198,7 +198,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 2");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectExists() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -221,7 +221,7 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
 	}
 
-	@Test // gh-220
+	@Test // GH-220
 	void shouldSelectCount() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -244,8 +244,9 @@ public class ReactiveSelectOperationUnitTests {
 		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
 	}
 
-	@Test // gh-1652
-	void shouldBeAbleToProvideFetchSize() {
+	@Test // GH-1652
+	void shouldConsiderFetchSize() {
+
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
 				.build();
@@ -256,8 +257,7 @@ public class ReactiveSelectOperationUnitTests {
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
 		entityTemplate.select(Person.class) //
-				.withFetchSize(10)
-				.matching(query(where("name").is("Walter")).limit(10).offset(20)) //
+				.withFetchSize(10) //
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNextCount(1) //
@@ -265,8 +265,6 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql())
-				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 10 OFFSET 20");
 		assertThat(statement.getFetchSize()).isEqualTo(10);
 	}
 

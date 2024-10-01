@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -320,7 +321,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	<T, P extends Publisher<T>> P doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
 			Class<T> returnType, Function<RowsFetchSpec<T>, P> resultHandler, @Nullable Integer fetchSize) {
 
-		RowsFetchSpec<T> fetchSpec = doSelect(query, entityClass, tableName, returnType, fetchSize);
+		RowsFetchSpec<T> fetchSpec = doSelect(query, entityClass, tableName, returnType,
+				fetchSize != null ? statement -> statement.fetchSize(fetchSize) : Function.identity());
 
 		P result = resultHandler.apply(fetchSpec);
 
@@ -332,7 +334,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName,
-			Class<T> returnType, @Nullable Integer fetchSize) {
+			Class<T> returnType, Function<? super Statement, ? extends Statement> filterFunction) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
 
@@ -360,7 +362,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
 		return getRowsFetchSpec(
-			databaseClient.sql(operation).filter((statement) -> statement.fetchSize(Optional.ofNullable(fetchSize).orElse(0))),
+				databaseClient.sql(operation).filter(filterFunction),
 			entityType,
 			returnType
 		);

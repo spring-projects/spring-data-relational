@@ -118,10 +118,12 @@ public interface ReactiveSelectOperation {
 	interface SelectWithQuery<T> extends TerminatingSelect<T> {
 
 		/**
-		 * Specifies the fetch size for this query
+		 * Specifies the fetch size for this query.
 		 *
 		 * @param fetchSize
-		 * @return
+		 * @return new instance of {@link SelectWithQuery}.
+		 * @since 3.4
+		 * @see io.r2dbc.spi.Statement#fetchSize(int)
 		 */
 		SelectWithQuery<T> withFetchSize(int fetchSize);
 

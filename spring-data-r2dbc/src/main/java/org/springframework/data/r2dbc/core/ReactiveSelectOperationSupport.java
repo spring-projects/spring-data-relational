@@ -54,7 +54,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		private final Class<T> returnType;
 		private final Query query;
 		private final @Nullable SqlIdentifier tableName;
-
 		private final @Nullable Integer fetchSize;
 
 		ReactiveSelectSupport(R2dbcEntityTemplate template, Class<?> domainType, Class<T> returnType, Query query,
@@ -86,9 +85,6 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 		@Override
 		public SelectWithQuery<T> withFetchSize(int fetchSize) {
-
-			Assert.notNull(returnType, "FetchSize must not be null");
-
 			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName, fetchSize);
 		}
 
