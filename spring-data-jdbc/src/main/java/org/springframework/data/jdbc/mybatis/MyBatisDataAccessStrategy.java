@@ -256,7 +256,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType) {
+	public <T> List<T> findAll(Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".findAll";
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
@@ -264,13 +264,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return sqlSession().selectList(namespace(domainType) + ".findAllById",
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
-	public Iterable<Object> findAllByPath(Identifier identifier,
+	public List<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		String statementName = namespace(getOwnerTyp(path)) + ".findAllByPath-" + path.toDotPath();
@@ -288,7 +288,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
 
 		Map<String, Object> additionalContext = new HashMap<>();
 		additionalContext.put("sort", sort);
@@ -297,7 +297,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
 
 		Map<String, Object> additionalContext = new HashMap<>();
 		additionalContext.put("pageable", pageable);
@@ -311,12 +311,12 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> probeType) {
+	public <T> List<T> findAll(Query query, Class<T> probeType) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> probeType, Pageable pageable) {
+	public <T> List<T> findAll(Query query, Class<T> probeType, Pageable pageable) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 

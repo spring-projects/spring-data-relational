@@ -272,12 +272,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType) {
+	public <T> List<T> findAll(Class<T> domainType) {
 		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
 	}
 
 	@Override
-	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		if (!ids.iterator().hasNext()) {
 			return Collections.emptyList();
@@ -290,7 +290,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterable<Object> findAllByPath(Identifier identifier,
+	public List<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
 
 		Assert.notNull(identifier, "identifier must not be null");
@@ -338,12 +338,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
 		return operations.query(sql(domainType).getFindAll(sort), getEntityRowMapper(domainType));
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
 		return operations.query(sql(domainType).getFindAll(pageable), getEntityRowMapper(domainType));
 	}
 
@@ -361,7 +361,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
+	public <T> List<T> findAll(Query query, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
@@ -370,7 +370,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
+	public <T> List<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource, pageable);
