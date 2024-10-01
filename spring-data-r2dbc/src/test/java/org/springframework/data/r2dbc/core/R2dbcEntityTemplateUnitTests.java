@@ -206,8 +206,6 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // GH-469
 	void shouldExistsByCriteria() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
 		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -652,6 +650,24 @@ public class R2dbcEntityTemplateUnitTests {
 				.assertNext(actual -> {
 					assertThat(actual.number.number).isCloseTo(1.2d, withinPercentage(1d));
 				}).verifyComplete();
+	}
+
+	@Test // GH-1652
+	void shouldConsiderFilterFunction() {
+
+		MockResult result = MockResult.builder().row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.setStatementFilterFunction(statement -> statement.fetchSize(10));
+		entityTemplate.count(Query.empty(), Person.class) //
+				.as(StepVerifier::create) //
+				.expectNext(1L) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
+
+		assertThat(statement.getFetchSize()).isEqualTo(10);
 	}
 
 	@ReadingConverter
