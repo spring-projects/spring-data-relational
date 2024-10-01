@@ -109,7 +109,6 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Paul Jones
  */
 @IntegrationTest
-@EnabledOnDatabase(DatabaseType.MARIADB)
 public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
