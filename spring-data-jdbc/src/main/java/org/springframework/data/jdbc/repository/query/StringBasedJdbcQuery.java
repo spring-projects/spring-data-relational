@@ -221,7 +221,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			TypeInformation<?> actualType = typeInformation.getActualType();
 
-			// tuple-binding
+			// allow tuple-binding for collection of byte arrays to be used as BINARY,
+			// we do not want to convert to column arrays.
 			if (actualType != null && actualType.getType().isArray() && !actualType.getType().equals(byte[].class)) {
 
 				TypeInformation<?> nestedElementType = actualType.getRequiredActualType();
