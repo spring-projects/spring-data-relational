@@ -18,7 +18,8 @@ package org.springframework.data.r2dbc.repository.query;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.data.expression.ValueExpressionParser;
+import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 
 /**
  * Query using Spring Expression Language to indicate parameter bindings. Queries using SpEL use {@code :#{…}} to
@@ -48,18 +49,17 @@ class ExpressionQuery {
 	 * @param query the query string to parse.
 	 * @return the parsed {@link ExpressionQuery}.
 	 */
-	public static ExpressionQuery create(String query) {
+	public static ExpressionQuery create(ValueExpressionParser parser, String query) {
 
 		List<ParameterBinding> parameterBindings = new ArrayList<>();
 
-		SpelQueryContext queryContext = SpelQueryContext.of((counter, expression) -> {
-
+		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(parser, (counter, expression) -> {
 			String parameterName = String.format(SYNTHETIC_PARAMETER_TEMPLATE, counter);
 			parameterBindings.add(new ParameterBinding(parameterName, expression));
 			return parameterName;
 		}, String::concat);
 
-		SpelQueryContext.SpelExtractor parsed = queryContext.parse(query);
+		ValueExpressionQueryRewriter.ParsedQuery parsed = rewriter.parse(query);
 
 		return new ExpressionQuery(parsed.getQueryString(), parameterBindings);
 	}

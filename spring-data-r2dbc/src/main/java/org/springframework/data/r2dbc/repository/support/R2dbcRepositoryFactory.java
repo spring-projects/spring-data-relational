@@ -37,13 +37,12 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.ReactiveRepositoryFactorySupport;
+import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
@@ -55,8 +54,6 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  */
 public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
-
-	private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
 	private final DatabaseClient databaseClient;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
@@ -116,11 +113,9 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	}
 
 	@Override
-	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(this.operations,
-				(ReactiveQueryMethodEvaluationContextProvider) evaluationContextProvider, this.converter,
-				this.dataAccessStrategy));
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key,
+			ValueExpressionDelegate valueExpressionDelegate) {
+		return Optional.of(new R2dbcQueryLookupStrategy(operations, new CachingValueExpressionDelegate(valueExpressionDelegate), converter, dataAccessStrategy));
 	}
 
 	public <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
@@ -145,19 +140,17 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private static class R2dbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 		private final R2dbcEntityOperations entityOperations;
-		private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
+		private final ValueExpressionDelegate delegate;
 		private final ReactiveDataAccessStrategy dataAccessStrategy;
-		private final ExpressionParser parser = new CachingExpressionParser(EXPRESSION_PARSER);
 
 		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations,
-				ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
+				ValueExpressionDelegate delegate, R2dbcConverter converter,
 				ReactiveDataAccessStrategy dataAccessStrategy) {
 
 			super(converter.getMappingContext(), dataAccessStrategy.getDialect());
-
+			this.delegate = delegate;
 			this.entityOperations = entityOperations;
-			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
 			this.dataAccessStrategy = dataAccessStrategy;
 		}
@@ -175,8 +168,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 						: queryMethod.getRequiredAnnotatedQuery();
 				query = evaluateTableExpressions(metadata, query);
 
-				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter,
-						this.dataAccessStrategy, parser, this.evaluationContextProvider);
+				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy, this.delegate);
 
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy);

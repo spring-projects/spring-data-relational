@@ -20,16 +20,20 @@ import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.sql.SQLType;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -37,14 +41,17 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
+import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
 import org.springframework.data.repository.query.ResultProcessor;
-import org.springframework.data.repository.query.SpelEvaluator;
-import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
+import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -74,12 +81,14 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or use the javac flag -parameters";
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
-	private final SpelEvaluator spelEvaluator;
+	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
 	private final boolean containsSpelExpressions;
 	private final String query;
 
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
+	private final ValueExpressionDelegate delegate;
+	private final List<Map.Entry<String, String>> parameterBindings;
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -88,7 +97,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
+	 * @deprecated since 3.4, use the constructors accepting {@link ValueExpressionDelegate} instead.
 	 */
+	@Deprecated(since = "3.4")
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -120,20 +131,35 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
 	 * and {@link RowMapperFactory}.
 	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param delegate must not be {@literal null}.
+	 * @since 3.4
+	 */
+	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			ValueExpressionDelegate delegate) {
+		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter, delegate);
+	}
+
+	/**
+	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
+	 * and {@link RowMapperFactory}.
+	 *
 	 * @param query must not be {@literal null} or empty.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param rowMapperFactory must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
-	 * @param evaluationContextProvider must not be {@literal null}.
+	 * @param delegate must not be {@literal null}.
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			RowMapperFactory rowMapperFactory, JdbcConverter converter,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-
+			ValueExpressionDelegate delegate) {
 		super(queryMethod, operations);
-
 		Assert.hasText(query, "Query must not be null or empty");
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
@@ -160,13 +186,40 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		this.cachedResultSetExtractorFactory = new CachedResultSetExtractorFactory(
 				this.cachedRowMapperFactory::getRowMapper);
 
-		SpelQueryContext.EvaluatingSpelQueryContext queryContext = SpelQueryContext
-				.of((counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat)
-				.withEvaluationContextProvider(evaluationContextProvider);
+		this.parameterBindings = new ArrayList<>();
+
+		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(delegate, (counter, expression) -> {
+			String newName = String.format("__$synthetic$__%d", counter + 1);
+			parameterBindings.add(new AbstractMap.SimpleEntry<>(newName, expression));
+			return newName;
+		}, String::concat);
 
 		this.query = query;
-		this.spelEvaluator = queryContext.parse(this.query, getQueryMethod().getParameters());
-		this.containsSpelExpressions = !this.spelEvaluator.getQueryString().equals(this.query);
+		this.parsedQuery = rewriter.parse(this.query);
+		this.containsSpelExpressions = !this.parsedQuery.getQueryString().equals(this.query);
+		this.delegate = delegate;
+	}
+
+	/**
+	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
+	 * and {@link RowMapperFactory}.
+	 *
+	 * @param query must not be {@literal null} or empty.
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param evaluationContextProvider must not be {@literal null}.
+	 * @since 3.4
+	 * @deprecated since 3.4, use the constructors accepting {@link ValueExpressionDelegate} instead.
+	 */
+	@Deprecated(since = "3.4")
+	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+		this(query, queryMethod, operations, rowMapperFactory, converter, new CachingValueExpressionDelegate(new QueryMethodValueEvaluationContextAccessor(null,
+				rootObject -> evaluationContextProvider.getEvaluationContext(queryMethod.getParameters(), new Object[] { rootObject })), ValueExpressionParser.create(
+				SpelExpressionParser::new)));
 	}
 
 	@Override
@@ -178,15 +231,19 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor);
 		MapSqlParameterSource parameterMap = this.bindParameters(accessor);
 
-		return queryExecution.execute(processSpelExpressions(objects, parameterMap), parameterMap);
+		return queryExecution.execute(processSpelExpressions(objects, accessor.getBindableParameters(), parameterMap), parameterMap);
 	}
 
-	private String processSpelExpressions(Object[] objects, MapSqlParameterSource parameterMap) {
+	private String processSpelExpressions(Object[] objects, Parameters<?, ?> bindableParameters, MapSqlParameterSource parameterMap) {
 
 		if (containsSpelExpressions) {
-
-			spelEvaluator.evaluate(objects).forEach(parameterMap::addValue);
-			return spelEvaluator.getQueryString();
+			ValueEvaluationContext evaluationContext = delegate.createValueContextProvider(bindableParameters)
+					.getEvaluationContext(objects);
+			for (Map.Entry<String, String> entry : parameterBindings) {
+				parameterMap.addValue(
+						entry.getKey(), delegate.parse(entry.getValue()).evaluate(evaluationContext));
+			}
+			return parsedQuery.getQueryString();
 		}
 
 		return this.query;
