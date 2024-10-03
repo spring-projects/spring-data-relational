@@ -22,6 +22,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.data.expression.ReactiveValueEvaluationContextProvider;
+import org.springframework.data.expression.ValueEvaluationContextProvider;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -29,8 +33,10 @@ import org.springframework.data.r2dbc.dialect.BindTargetBinder;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.spel.ExpressionDependencies;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -52,10 +58,10 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	private final ExpressionQuery expressionQuery;
 	private final ExpressionEvaluatingParameterBinder binder;
-	private final ExpressionParser expressionParser;
-	private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
 	private final ExpressionDependencies expressionDependencies;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
+	private final ValueExpressionDelegate valueExpressionDelegate;
+	private final ValueEvaluationContextProvider valueContextProvider;
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -67,7 +73,9 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param expressionParser must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
+	 * @deprecated use the constructor version with {@link ValueExpressionDelegate}
 	 */
+	@Deprecated(since = "3.4")
 	public StringBasedR2dbcQuery(R2dbcQueryMethod queryMethod, R2dbcEntityOperations entityOperations,
 			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ExpressionParser expressionParser,
 			ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -79,26 +87,60 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * Create a new {@link StringBasedR2dbcQuery} for the given {@code query}, {@link R2dbcQueryMethod},
 	 * {@link DatabaseClient}, {@link SpelExpressionParser}, and {@link QueryMethodEvaluationContextProvider}.
 	 *
+	 * @param query must not be {@literal null}.
 	 * @param method must not be {@literal null}.
 	 * @param entityOperations must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param expressionParser must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
+	 * @deprecated use the constructor version with {@link ValueExpressionDelegate}
 	 */
+	@Deprecated(since = "3.4")
 	public StringBasedR2dbcQuery(String query, R2dbcQueryMethod method, R2dbcEntityOperations entityOperations,
 			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ExpressionParser expressionParser,
 			ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
+		this(query, method, entityOperations, converter, dataAccessStrategy, new ValueExpressionDelegate(new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), evaluationContextProvider.getEvaluationContextProvider()), ValueExpressionParser.create(() -> expressionParser)));
+	}
+
+	/**
+	 * Create a new {@link StringBasedR2dbcQuery} for the given {@code query}, {@link R2dbcQueryMethod},
+	 * {@link DatabaseClient}, {@link SpelExpressionParser}, and {@link QueryMethodEvaluationContextProvider}.
+	 *
+	 * @param method must not be {@literal null}.
+	 * @param entityOperations must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @param valueExpressionDelegate must not be {@literal null}.
+	 */
+	public StringBasedR2dbcQuery(R2dbcQueryMethod method, R2dbcEntityOperations entityOperations,
+			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ValueExpressionDelegate valueExpressionDelegate) {
+		this(method.getRequiredAnnotatedQuery(), method, entityOperations, converter, dataAccessStrategy, valueExpressionDelegate);
+	}
+
+	/**
+	 * Create a new {@link StringBasedR2dbcQuery} for the given {@code query}, {@link R2dbcQueryMethod},
+	 * {@link DatabaseClient}, {@link SpelExpressionParser}, and {@link QueryMethodEvaluationContextProvider}.
+	 *
+	 * @param method must not be {@literal null}.
+	 * @param entityOperations must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @param valueExpressionDelegate must not be {@literal null}.
+	 */
+	public StringBasedR2dbcQuery(String query, R2dbcQueryMethod method, R2dbcEntityOperations entityOperations,
+			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ValueExpressionDelegate valueExpressionDelegate) {
 
 		super(method, entityOperations, converter);
-		this.expressionParser = expressionParser;
-		this.evaluationContextProvider = evaluationContextProvider;
+		this.valueExpressionDelegate = valueExpressionDelegate;
 
 		Assert.hasText(query, "Query must not be empty");
 
 		this.dataAccessStrategy = dataAccessStrategy;
-		this.expressionQuery = ExpressionQuery.create(query);
+		this.expressionQuery = ExpressionQuery.create(valueExpressionDelegate, query);
 		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery, dataAccessStrategy);
+		this.valueContextProvider = valueExpressionDelegate.createValueContextProvider(
+				method.getParameters());
 		this.expressionDependencies = createExpressionDependencies();
 
 		if (method.isSliceQuery()) {
@@ -126,7 +168,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		List<ExpressionDependencies> dependencies = new ArrayList<>();
 
 		for (ExpressionQuery.ParameterBinding binding : expressionQuery.getBindings()) {
-			dependencies.add(ExpressionDependencies.discover(expressionParser.parseExpression(binding.getExpression())));
+			dependencies.add(valueExpressionDelegate.parse(binding.getExpression()).getExpressionDependencies());
 		}
 
 		return ExpressionDependencies.merged(dependencies);
@@ -160,11 +202,11 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	}
 
 	private Mono<R2dbcSpELExpressionEvaluator> getSpelEvaluator(RelationalParameterAccessor accessor) {
-
-		return evaluationContextProvider
-				.getEvaluationContextLater(getQueryMethod().getParameters(), accessor.getValues(), expressionDependencies)
+		Assert.isInstanceOf(ReactiveValueEvaluationContextProvider.class, valueContextProvider, "ValueEvaluationContextProvider must be reactive");
+		return ((ReactiveValueEvaluationContextProvider) valueContextProvider)
+				.getEvaluationContextLater(accessor.getValues(), expressionDependencies)
 				.<R2dbcSpELExpressionEvaluator> map(
-						context -> new DefaultR2dbcSpELExpressionEvaluator(expressionParser, context))
+						context -> new DefaultR2dbcSpELExpressionEvaluator(valueExpressionDelegate, context))
 				.defaultIfEmpty(DefaultR2dbcSpELExpressionEvaluator.unsupported());
 	}
 

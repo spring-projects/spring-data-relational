@@ -15,9 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.r2dbc.core.Parameter;
 
@@ -30,12 +32,12 @@ import org.springframework.r2dbc.core.Parameter;
  */
 class DefaultR2dbcSpELExpressionEvaluator implements R2dbcSpELExpressionEvaluator {
 
-	private final ExpressionParser parser;
+	private final ValueExpressionDelegate delegate;
 
-	private final EvaluationContext context;
+	private final ValueEvaluationContext context;
 
-	DefaultR2dbcSpELExpressionEvaluator(ExpressionParser parser, EvaluationContext context) {
-		this.parser = parser;
+	DefaultR2dbcSpELExpressionEvaluator(ValueExpressionDelegate delegate, ValueEvaluationContext context) {
+		this.delegate = delegate;
 		this.context = context;
 	}
 
@@ -51,12 +53,12 @@ class DefaultR2dbcSpELExpressionEvaluator implements R2dbcSpELExpressionEvaluato
 	@Override
 	public Parameter evaluate(String expression) {
 
-		Expression expr = parser.parseExpression(expression);
+		ValueExpression expr = delegate.parse(expression);
 
-		Object value = expr.getValue(context, Object.class);
-		Class<?> valueType = expr.getValueType(context);
+		Object value = expr.evaluate(context);
+		Class<?> valueType = value != null ? value.getClass() : Object.class;
 
-		return org.springframework.r2dbc.core.Parameter.fromOrEmpty(value, valueType != null ? valueType : Object.class);
+		return org.springframework.r2dbc.core.Parameter.fromOrEmpty(value, valueType);
 	}
 
 	/**
