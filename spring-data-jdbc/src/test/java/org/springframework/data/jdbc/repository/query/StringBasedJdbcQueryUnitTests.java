@@ -33,7 +33,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
+import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
@@ -41,6 +44,7 @@ import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
@@ -53,9 +57,9 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
-import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -82,7 +86,7 @@ class StringBasedJdbcQueryUnitTests {
 	NamedParameterJdbcOperations operations;
 	RelationalMappingContext context;
 	JdbcConverter converter;
-	QueryMethodEvaluationContextProvider evaluationContextProvider;
+	ValueExpressionDelegate delegate;
 
 	@BeforeEach
 	void setup() {
@@ -91,7 +95,8 @@ class StringBasedJdbcQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 		this.converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
-		this.evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
+		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), new StaticApplicationContext());
+		this.delegate = new ValueExpressionDelegate(accessor, ValueExpressionParser.create());
 	}
 
 	@Test // DATAJDBC-165
@@ -248,7 +253,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("sliceAll", Pageable.class);
 
 		assertThatThrownBy(
-				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+				() -> new StringBasedJdbcQuery(queryMethod, operations,  result -> defaultRowMapper, converter, delegate))
 				.isInstanceOf(UnsupportedOperationException.class)
 				.hasMessageContaining("Slice queries are not supported using string-based queries");
 	}
@@ -259,7 +264,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("pageAll", Pageable.class);
 
 		assertThatThrownBy(
-				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
 				.isInstanceOf(UnsupportedOperationException.class)
 				.hasMessageContaining("Page queries are not supported using string-based queries");
 	}
@@ -270,7 +275,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("unsupportedLimitQuery", String.class, Limit.class);
 
 		assertThatThrownBy(
-				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
 				.isInstanceOf(UnsupportedOperationException.class);
 	}
 
@@ -350,11 +355,11 @@ class StringBasedJdbcQueryUnitTests {
 
 		List<EvaluationContextExtension> list = new ArrayList<>();
 		list.add(new MyEvaluationContextProvider());
-		QueryMethodEvaluationContextProvider evaluationContextProviderImpl = new ExtensionAwareQueryMethodEvaluationContextProvider(
-				list);
 
-		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter,
-				evaluationContextProviderImpl);
+		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), list);
+		this.delegate = new ValueExpressionDelegate(accessor, ValueExpressionParser.create());
+
+		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate);
 
 		ArgumentCaptor<SqlParameterSource> paramSource = ArgumentCaptor.forClass(SqlParameterSource.class);
 		ArgumentCaptor<String> query = ArgumentCaptor.forClass(String.class);
@@ -398,7 +403,7 @@ class StringBasedJdbcQueryUnitTests {
 					: this.converter;
 
 			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method.getDeclaredQuery(), method, operations, result -> mock(RowMapper.class),
-					converter, evaluationContextProvider);
+					converter, delegate);
 
 			query.execute(arguments);
 
@@ -434,7 +439,7 @@ class StringBasedJdbcQueryUnitTests {
 	}
 
 	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod, String preparedReference, Object value) {
-		return new StringBasedJdbcQuery(queryMethod, operations, new StubRowMapperFactory(preparedReference, value), converter, evaluationContextProvider);
+		return new StringBasedJdbcQuery(queryMethod, operations, new StubRowMapperFactory(preparedReference, value), converter, delegate);
 	}
 
 	interface MyRepository extends Repository<Object, Long> {

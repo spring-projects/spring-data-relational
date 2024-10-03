@@ -25,6 +25,7 @@ import reactor.test.StepVerifier;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
+import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,8 +34,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -51,8 +54,10 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
@@ -67,7 +72,7 @@ import org.springframework.util.ReflectionUtils;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class StringBasedR2dbcQueryUnitTests {
 
-	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+	private static final ValueExpressionParser PARSER = ValueExpressionParser.create(SpelExpressionParser::new);
 
 	@Mock private R2dbcEntityOperations entityOperations;
 	@Mock private BindTarget bindTarget;
@@ -77,6 +82,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	private ReactiveDataAccessStrategy accessStrategy;
 	private ProjectionFactory factory;
 	private RepositoryMetadata metadata;
+	private MockEnvironment environment;
 
 	@BeforeEach
 	void setUp() {
@@ -86,6 +92,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		this.accessStrategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE, converter);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();
+		this.environment = new MockEnvironment();
 	}
 
 	@Test
@@ -322,8 +329,10 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory, converter.getMappingContext());
 
-		return new StringBasedR2dbcQuery(queryMethod, entityOperations, converter, accessStrategy, PARSER,
-				ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
+		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(
+				environment, Collections.emptySet());
+
+		return new StringBasedR2dbcQuery(queryMethod, entityOperations, converter, accessStrategy, new ValueExpressionDelegate(accessor, PARSER));
 	}
 
 	@SuppressWarnings("unused")
