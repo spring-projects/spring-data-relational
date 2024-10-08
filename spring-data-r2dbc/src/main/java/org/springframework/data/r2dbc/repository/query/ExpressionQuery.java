@@ -15,9 +15,9 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
+import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 
@@ -34,13 +34,11 @@ class ExpressionQuery {
 	private static final String SYNTHETIC_PARAMETER_TEMPLATE = "__synthetic_%d__";
 
 	private final String query;
+	private final Map<String, ValueExpression> parameterMap;
 
-	private final List<ParameterBinding> parameterBindings;
-
-	private ExpressionQuery(String query, List<ParameterBinding> parameterBindings) {
-
+	private ExpressionQuery(String query, Map<String, ValueExpression> parameterMap) {
 		this.query = query;
-		this.parameterBindings = parameterBindings;
+		this.parameterMap = parameterMap;
 	}
 
 	/**
@@ -51,55 +49,25 @@ class ExpressionQuery {
 	 */
 	public static ExpressionQuery create(ValueExpressionParser parser, String query) {
 
-		List<ParameterBinding> parameterBindings = new ArrayList<>();
 
-		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(parser, (counter, expression) -> {
-			String parameterName = String.format(SYNTHETIC_PARAMETER_TEMPLATE, counter);
-			parameterBindings.add(new ParameterBinding(parameterName, expression));
-			return parameterName;
-		}, String::concat);
-
+		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(parser,
+				(counter, expression) -> String.format(SYNTHETIC_PARAMETER_TEMPLATE, counter), String::concat);
 		ValueExpressionQueryRewriter.ParsedQuery parsed = rewriter.parse(query);
 
-		return new ExpressionQuery(parsed.getQueryString(), parameterBindings);
+		return new ExpressionQuery(parsed.getQueryString(), parsed.getParameterMap());
 	}
 
 	public String getQuery() {
 		return query;
 	}
 
-	public List<ParameterBinding> getBindings() {
-		return parameterBindings;
+	public Map<String, ValueExpression> getBindings() {
+		return parameterMap;
 	}
-
 
 	@Override
 	public String toString() {
 		return query;
 	}
 
-	/**
-	 * A SpEL parameter binding.
-	 *
-	 * @author Mark Paluch
-	 */
-	static class ParameterBinding {
-
-		private final String parameterName;
-		private final String expression;
-
-		private ParameterBinding(String parameterName, String expression) {
-
-			this.expression = expression;
-			this.parameterName = parameterName;
-		}
-
-		String getExpression() {
-			return expression;
-		}
-
-		String getParameterName() {
-			return parameterName;
-		}
-	}
 }

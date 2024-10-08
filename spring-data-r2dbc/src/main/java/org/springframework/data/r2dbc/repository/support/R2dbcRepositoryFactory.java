@@ -52,6 +52,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Marcin Grzejszczak
  */
 public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
@@ -113,7 +114,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	}
 
 	@Override
-	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key,
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
 		return Optional.of(new R2dbcQueryLookupStrategy(operations, new CachingValueExpressionDelegate(valueExpressionDelegate), converter, dataAccessStrategy));
 	}

@@ -34,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.dao.DataAccessException;
@@ -79,6 +78,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Dennis Effing
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Marcin Grzejszczak
  */
 class StringBasedJdbcQueryUnitTests {
 
@@ -95,8 +95,7 @@ class StringBasedJdbcQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 		this.converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
-		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), new StaticApplicationContext());
-		this.delegate = new ValueExpressionDelegate(accessor, ValueExpressionParser.create());
+		this.delegate = ValueExpressionDelegate.create();
 	}
 
 	@Test // DATAJDBC-165

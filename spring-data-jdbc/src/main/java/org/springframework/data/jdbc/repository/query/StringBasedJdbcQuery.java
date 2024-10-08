@@ -20,18 +20,17 @@ import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.sql.SQLType;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
@@ -51,7 +50,6 @@ import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -74,6 +72,7 @@ import org.springframework.util.ObjectUtils;
  * @author Chirag Tailor
  * @author Christopher Klein
  * @author Mikhail Polivakha
+ * @author Marcin Grzejszczak
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -82,13 +81,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
-	private final boolean containsSpelExpressions;
 	private final String query;
 
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
 	private final ValueExpressionDelegate delegate;
-	private final List<Map.Entry<String, String>> parameterBindings;
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -185,17 +182,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		this.cachedResultSetExtractorFactory = new CachedResultSetExtractorFactory(
 				this.cachedRowMapperFactory::getRowMapper);
 
-		this.parameterBindings = new ArrayList<>();
-
-		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(delegate, (counter, expression) -> {
-			String newName = String.format("__$synthetic$__%d", counter + 1);
-			parameterBindings.add(new AbstractMap.SimpleEntry<>(newName, expression));
-			return newName;
-		}, String::concat);
+		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(delegate,
+				(counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat);
 
 		this.query = query;
 		this.parsedQuery = rewriter.parse(this.query);
-		this.containsSpelExpressions = !this.parsedQuery.getQueryString().equals(this.query);
 		this.delegate = delegate;
 	}
 
@@ -216,9 +207,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(query, queryMethod, operations, rowMapperFactory, converter, new CachingValueExpressionDelegate(new QueryMethodValueEvaluationContextAccessor(null,
-				rootObject -> evaluationContextProvider.getEvaluationContext(queryMethod.getParameters(), new Object[] { rootObject })), ValueExpressionParser.create(
-				SpelExpressionParser::new)));
+		this(query, queryMethod, operations, rowMapperFactory, converter, new CachingValueExpressionDelegate(
+				new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), rootObject -> evaluationContextProvider
+						.getEvaluationContext(queryMethod.getParameters(), new Object[] { rootObject })),
+				ValueExpressionParser.create()));
 	}
 
 	@Override
@@ -230,18 +222,22 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryExecution<?> queryExecution = createJdbcQueryExecution(accessor, processor);
 		MapSqlParameterSource parameterMap = this.bindParameters(accessor);
 
-		return queryExecution.execute(processSpelExpressions(objects, accessor.getBindableParameters(), parameterMap), parameterMap);
+		return queryExecution.execute(evaluateExpressions(objects, accessor.getBindableParameters(), parameterMap),
+				parameterMap);
 	}
 
-	private String processSpelExpressions(Object[] objects, Parameters<?, ?> bindableParameters, MapSqlParameterSource parameterMap) {
+	private String evaluateExpressions(Object[] objects, Parameters<?, ?> bindableParameters,
+			MapSqlParameterSource parameterMap) {
 
-		if (containsSpelExpressions) {
+		if (parsedQuery.hasParameterBindings()) {
+
 			ValueEvaluationContext evaluationContext = delegate.createValueContextProvider(bindableParameters)
 					.getEvaluationContext(objects);
-			for (Map.Entry<String, String> entry : parameterBindings) {
-				parameterMap.addValue(
-						entry.getKey(), delegate.parse(entry.getValue()).evaluate(evaluationContext));
-			}
+
+			parsedQuery.getParameterMap().forEach((paramName, valueExpression) -> {
+				parameterMap.addValue(paramName, valueExpression.evaluate(evaluationContext));
+			});
+
 			return parsedQuery.getQueryString();
 		}
 
@@ -253,13 +249,12 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		if (getQueryMethod().isModifyingQuery()) {
 			return createModifyingQueryExecutor();
-		} else {
-
-			Supplier<RowMapper<?>> rowMapper = () -> determineRowMapper(processor, accessor.findDynamicProjection() != null);
-			ResultSetExtractor<Object> resultSetExtractor = determineResultSetExtractor(rowMapper);
-
-			return createReadingQueryExecution(resultSetExtractor, rowMapper);
 		}
+
+		Supplier<RowMapper<?>> rowMapper = () -> determineRowMapper(processor, accessor.findDynamicProjection() != null);
+		ResultSetExtractor<Object> resultSetExtractor = determineResultSetExtractor(rowMapper);
+
+		return createReadingQueryExecution(resultSetExtractor, rowMapper);
 	}
 
 	private MapSqlParameterSource bindParameters(RelationalParameterAccessor accessor) {

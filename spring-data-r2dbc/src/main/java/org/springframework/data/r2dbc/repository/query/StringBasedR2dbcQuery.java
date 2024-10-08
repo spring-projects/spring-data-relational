@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.expression.ReactiveValueEvaluationContextProvider;
+import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.expression.ValueEvaluationContextProvider;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -53,6 +54,7 @@ import org.springframework.util.Assert;
  * named parameters (if enabled on {@link DatabaseClient}) and SpEL expressions enclosed with {@code :#{…}}.
  *
  * @author Mark Paluch
+ * @author Marcin Grzejszczak
  */
 public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
@@ -60,8 +62,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	private final ExpressionEvaluatingParameterBinder binder;
 	private final ExpressionDependencies expressionDependencies;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
-	private final ValueExpressionDelegate valueExpressionDelegate;
-	private final ValueEvaluationContextProvider valueContextProvider;
+	private final ReactiveValueEvaluationContextProvider valueContextProvider;
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -132,16 +133,21 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ValueExpressionDelegate valueExpressionDelegate) {
 
 		super(method, entityOperations, converter);
-		this.valueExpressionDelegate = valueExpressionDelegate;
 
 		Assert.hasText(query, "Query must not be empty");
 
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.expressionQuery = ExpressionQuery.create(valueExpressionDelegate, query);
 		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery, dataAccessStrategy);
-		this.valueContextProvider = valueExpressionDelegate.createValueContextProvider(
-				method.getParameters());
+
+		ValueEvaluationContextProvider valueContextProvider = valueExpressionDelegate
+				.createValueContextProvider(method.getParameters());
+		Assert.isInstanceOf(ReactiveValueEvaluationContextProvider.class, valueContextProvider,
+				"ValueEvaluationContextProvider must be reactive");
+
+		this.valueContextProvider = (ReactiveValueEvaluationContextProvider) valueContextProvider;
 		this.expressionDependencies = createExpressionDependencies();
+
 
 		if (method.isSliceQuery()) {
 			throw new UnsupportedOperationException(
@@ -167,9 +173,8 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		List<ExpressionDependencies> dependencies = new ArrayList<>();
 
-		for (ExpressionQuery.ParameterBinding binding : expressionQuery.getBindings()) {
-			dependencies.add(valueExpressionDelegate.parse(binding.getExpression()).getExpressionDependencies());
-		}
+		expressionQuery.getBindings()
+				.forEach((s, valueExpression) -> dependencies.add(valueExpression.getExpressionDependencies()));
 
 		return ExpressionDependencies.merged(dependencies);
 	}
@@ -191,7 +196,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	@Override
 	protected Mono<PreparedOperation<?>> createQuery(RelationalParameterAccessor accessor) {
-		return getSpelEvaluator(accessor).map(evaluator -> new ExpandedQuery(accessor, evaluator));
+		return getExpressionEvaluator(accessor).map(evaluator -> new ExpandedQuery(accessor, evaluator));
 	}
 
 	@Override
@@ -201,19 +206,13 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		return !returnedType.isInterface() ? returnedType : super.resolveResultType(resultProcessor);
 	}
 
-	private Mono<R2dbcSpELExpressionEvaluator> getSpelEvaluator(RelationalParameterAccessor accessor) {
-		Assert.isInstanceOf(ReactiveValueEvaluationContextProvider.class, valueContextProvider, "ValueEvaluationContextProvider must be reactive");
-		return ((ReactiveValueEvaluationContextProvider) valueContextProvider)
-				.getEvaluationContextLater(accessor.getValues(), expressionDependencies)
-				.<R2dbcSpELExpressionEvaluator> map(
-						context -> new DefaultR2dbcSpELExpressionEvaluator(valueExpressionDelegate, context))
-				.defaultIfEmpty(DefaultR2dbcSpELExpressionEvaluator.unsupported());
+	private Mono<ValueEvaluationContext> getExpressionEvaluator(RelationalParameterAccessor accessor) {
+		return valueContextProvider.getEvaluationContextLater(accessor.getValues(), expressionDependencies);
 	}
 
 	@Override
 	public String toString() {
-		String sb = getClass().getSimpleName() + " [" + expressionQuery.getQuery() + ']';
-		return sb;
+		return getClass().getSimpleName() + " [" + expressionQuery.getQuery() + ']';
 	}
 
 	private class ExpandedQuery implements PreparedOperation<String> {
@@ -226,10 +225,10 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		private final Map<Integer, Parameter> remainderByIndex;
 
-		public ExpandedQuery(RelationalParameterAccessor accessor, R2dbcSpELExpressionEvaluator evaluator) {
+		public ExpandedQuery(RelationalParameterAccessor accessor, ValueEvaluationContext evaluationContext) {
 
 			this.recordedBindings = new BindTargetRecorder();
-			binder.bind(recordedBindings, accessor, evaluator);
+			binder.bind(recordedBindings, accessor, evaluationContext);
 
 			remainderByName = new LinkedHashMap<>(recordedBindings.byName);
 			remainderByIndex = new LinkedHashMap<>(recordedBindings.byIndex);

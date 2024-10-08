@@ -17,8 +17,11 @@ package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.expression.ValueExpressionParser;
 
 /**
@@ -26,11 +29,12 @@ import org.springframework.data.expression.ValueExpressionParser;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Marcin Grzejszczak
  */
 class ExpressionQueryUnitTests {
 
-	@Test // gh-373
-	void bindsMultipleSpelParametersCorrectly() {
+	@Test // gh-373, gh-1904
+	void bindsMultipleExpressionParametersCorrectly() {
 
 		ExpressionQuery query = ExpressionQuery
 				.create(ValueExpressionParser.create(), "INSERT IGNORE INTO table (x, y) VALUES (:#{#point.x}, :${point.y})");
@@ -38,10 +42,10 @@ class ExpressionQueryUnitTests {
 		assertThat(query.getQuery())
 				.isEqualTo("INSERT IGNORE INTO table (x, y) VALUES (:__synthetic_0__, :__synthetic_1__)");
 
-		assertThat(query.getBindings()).hasSize(2);
-		assertThat(query.getBindings().get(0).getExpression()).isEqualTo("#{#point.x}");
-		assertThat(query.getBindings().get(0).getParameterName()).isEqualTo("__synthetic_0__");
-		assertThat(query.getBindings().get(1).getExpression()).isEqualTo("${point.y}");
-		assertThat(query.getBindings().get(1).getParameterName()).isEqualTo("__synthetic_1__");
+		Map<String, ValueExpression> bindings = query.getBindings();
+		assertThat(bindings).hasSize(2);
+
+		assertThat(bindings.get("__synthetic_0__").getExpressionString()).isEqualTo("#point.x");
+		assertThat(bindings.get("__synthetic_1__").getExpressionString()).isEqualTo("${point.y}");
 	}
 }
