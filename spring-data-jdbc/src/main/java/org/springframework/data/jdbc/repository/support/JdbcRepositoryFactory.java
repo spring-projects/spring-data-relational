@@ -32,6 +32,7 @@ import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -48,6 +49,7 @@ import org.springframework.util.Assert;
  * @author Hebert Coelho
  * @author Diego Krupitza
  * @author Christopher Klein
+ * @author Marcin Grzejszczak
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
@@ -57,7 +59,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 	private final Dialect dialect;
-	@Nullable private BeanFactory beanFactory;
+	private @Nullable BeanFactory beanFactory;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;
@@ -132,10 +134,12 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		return SimpleJdbcRepository.class;
 	}
 
-	@Override protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key,
+	@Override
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
 		return Optional.of(JdbcQueryLookupStrategy.create(key, publisher, entityCallbacks, context, converter, dialect,
-				queryMappingConfiguration, operations, beanFactory, valueExpressionDelegate));
+				queryMappingConfiguration, operations, beanFactory,
+				new CachingValueExpressionDelegate(valueExpressionDelegate)));
 	}
 
 	/**
