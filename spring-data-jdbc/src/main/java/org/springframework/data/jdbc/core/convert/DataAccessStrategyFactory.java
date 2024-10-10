@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -25,6 +26,7 @@ import org.springframework.util.Assert;
  * {@link DataAccessStrategy} for consistent access strategy creation.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 3.2
  */
 public class DataAccessStrategyFactory {
@@ -34,6 +36,7 @@ public class DataAccessStrategyFactory {
 	private final NamedParameterJdbcOperations operations;
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
+	private final QueryMappingConfiguration queryMappingConfiguration;
 
 	/**
 	 * Creates a new {@link DataAccessStrategyFactory}.
@@ -46,7 +49,7 @@ public class DataAccessStrategyFactory {
 	 */
 	public DataAccessStrategyFactory(SqlGeneratorSource sqlGeneratorSource, JdbcConverter converter,
 			NamedParameterJdbcOperations operations, SqlParametersFactory sqlParametersFactory,
-			InsertStrategyFactory insertStrategyFactory) {
+			InsertStrategyFactory insertStrategyFactory, QueryMappingConfiguration queryMappingConfiguration) {
 
 		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -59,6 +62,7 @@ public class DataAccessStrategyFactory {
 		this.operations = operations;
 		this.sqlParametersFactory = sqlParametersFactory;
 		this.insertStrategyFactory = insertStrategyFactory;
+		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
 
 	/**
@@ -70,7 +74,7 @@ public class DataAccessStrategyFactory {
 
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource,
 				this.converter.getMappingContext(), this.converter, this.operations, sqlParametersFactory,
-				insertStrategyFactory);
+				insertStrategyFactory, queryMappingConfiguration);
 
 		if (this.converter.getMappingContext().isSingleQueryLoadingEnabled()) {
 			return new SingleQueryFallbackDataAccessStrategy(sqlGeneratorSource, converter, operations,

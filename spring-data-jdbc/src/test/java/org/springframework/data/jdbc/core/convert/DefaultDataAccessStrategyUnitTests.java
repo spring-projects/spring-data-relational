@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
@@ -40,6 +41,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Myat Min
  * @author Radim Tlusty
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class DefaultDataAccessStrategyUnitTests {
 
@@ -66,7 +68,8 @@ class DefaultDataAccessStrategyUnitTests {
 				converter, //
 				namedJdbcOperations, //
 				sqlParametersFactory, //
-				insertStrategyFactory).create();
+				insertStrategyFactory,
+				QueryMappingConfiguration.EMPTY).create();
 
 		relationResolver.setDelegate(accessStrategy);
 
