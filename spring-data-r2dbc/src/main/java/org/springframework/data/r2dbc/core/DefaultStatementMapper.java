@@ -172,8 +172,7 @@ class DefaultStatementMapper implements StatementMapper {
 
 		for (Assignment assignment : boundAssignments.getAssignments()) {
 
-			if (assignment instanceof AssignValue) {
-				AssignValue assignValue = (AssignValue) assignment;
+			if (assignment instanceof AssignValue assignValue) {
 
 				insertBuilder.column(assignValue.getColumn());
 				withBuild = insertBuilder.value(assignValue.getValue());

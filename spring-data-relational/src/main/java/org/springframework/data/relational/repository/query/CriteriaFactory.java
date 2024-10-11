@@ -23,7 +23,6 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 /**
