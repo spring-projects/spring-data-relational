@@ -42,7 +42,7 @@
 		<oracle.version>23.5.0.24.07</oracle.version>
 
 		<!-- R2DBC driver dependencies-->
-		<r2dbc-postgresql.version>1.0.6.RELEASE</r2dbc-postgresql.version>
+		<r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
 		<r2dbc-h2.version>1.0.0.RELEASE</r2dbc-h2.version>
 		<r2dbc-mariadb.version>1.1.4</r2dbc-mariadb.version>
 		<r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
