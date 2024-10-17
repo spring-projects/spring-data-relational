@@ -101,9 +101,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	@Override
 	public Delegation doLeave(Visitable segment) {
 
-		if (segment instanceof Select) {
-
-			Select select = (Select) segment;
+		if (segment instanceof Select select) {
 
 			builder.append("SELECT ");
 

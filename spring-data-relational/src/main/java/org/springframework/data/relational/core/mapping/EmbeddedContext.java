@@ -23,9 +23,6 @@ package org.springframework.data.relational.core.mapping;
  */
 record EmbeddedContext(RelationalPersistentProperty ownerProperty) {
 
-	EmbeddedContext {
-	}
-
 	public String getEmbeddedPrefix() {
 		return ownerProperty.getEmbeddedPrefix();
 	}

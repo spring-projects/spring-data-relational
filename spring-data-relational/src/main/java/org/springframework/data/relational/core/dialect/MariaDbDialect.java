@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 

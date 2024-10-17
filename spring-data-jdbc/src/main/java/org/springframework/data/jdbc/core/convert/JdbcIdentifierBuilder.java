@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.relational.core.mapping.AggregatePath;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
