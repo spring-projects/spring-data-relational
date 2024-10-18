@@ -15,9 +15,12 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -479,15 +482,13 @@ public interface DbAction<T> {
 		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
 
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
-			if (qualifiers.isEmpty())
+			if (qualifiers.isEmpty()) {
 				return null;
-
-			if (qualifiers.size() > 1) {
-				throw new IllegalStateException("Can't handle more then one qualifier");
 			}
 
-			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = qualifiers.entrySet().iterator()
-					.next();
+			Set<Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object>> entries = qualifiers.entrySet();
+			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = entries.stream().sorted(Comparator.comparing(e -> -e.getKey().getLength())).findFirst().get();
+
 			if (entry.getValue() == null) {
 				return null;
 			}
