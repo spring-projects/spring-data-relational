@@ -27,6 +27,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
@@ -60,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Radim Tlusty
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -70,6 +72,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final NamedParameterJdbcOperations operations;
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
+
+	private final QueryMappingConfiguration queryMappingConfiguration;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy}
@@ -82,7 +86,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
 			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlParametersFactory sqlParametersFactory,
-			InsertStrategyFactory insertStrategyFactory) {
+			InsertStrategyFactory insertStrategyFactory, QueryMappingConfiguration queryMappingConfiguration) {
 
 		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
@@ -90,6 +94,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 		Assert.notNull(sqlParametersFactory, "SqlParametersFactory must not be null");
 		Assert.notNull(insertStrategyFactory, "InsertStrategyFactory must not be null");
+		Assert.notNull(queryMappingConfiguration, "InsertStrategyFactory must not be null");
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.context = context;
@@ -97,6 +102,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.operations = operations;
 		this.sqlParametersFactory = sqlParametersFactory;
 		this.insertStrategyFactory = insertStrategyFactory;
+		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
 
 	@Override
@@ -265,7 +271,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType, ID_SQL_PARAMETER);
 
 		try {
-			return operations.queryForObject(findOneSql, parameter, getEntityRowMapper(domainType));
+			return operations.queryForObject(findOneSql, parameter, getRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -273,7 +279,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> List<T> findAll(Class<T> domainType) {
-		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(), getRowMapper(domainType));
 	}
 
 	@Override
@@ -285,7 +291,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
 		String findAllInListSql = sql(domainType).getFindAllInList();
-		return operations.query(findAllInListSql, parameterSource, getEntityRowMapper(domainType));
+		return operations.query(findAllInListSql, parameterSource, getRowMapper(domainType));
 	}
 
 	@Override
@@ -339,12 +345,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
-		return operations.query(sql(domainType).getFindAll(sort), getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(sort), getRowMapper(domainType));
 	}
 
 	@Override
 	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
-		return operations.query(sql(domainType).getFindAll(pageable), getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(pageable), getRowMapper(domainType));
 	}
 
 	@Override
@@ -354,7 +360,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
 		try {
-			return Optional.ofNullable(operations.queryForObject(sqlQuery, parameterSource, getEntityRowMapper(domainType)));
+			return Optional.ofNullable(operations.queryForObject(sqlQuery, parameterSource, getRowMapper(domainType)));
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
@@ -366,7 +372,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
-		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(domainType));
+		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
 	}
 
 	@Override
@@ -375,7 +381,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource, pageable);
 
-		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(domainType));
+		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
 	}
 
 	@Override
@@ -404,7 +410,13 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
+	private <T> RowMapper<? extends T> getRowMapper(Class<T> domainType) {
+		RowMapper<? extends T> targetRowMapper;
+
+		if ((targetRowMapper = queryMappingConfiguration.getRowMapper(domainType)) != null) {
+			return targetRowMapper;
+		}
+
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), converter);
 	}
 
