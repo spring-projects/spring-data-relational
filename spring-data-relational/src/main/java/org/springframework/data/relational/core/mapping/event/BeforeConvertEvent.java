@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.data.relational.core.conversion.AggregateChange;
-
 import java.io.Serial;
 
 /**
@@ -37,7 +35,7 @@ import java.io.Serial;
  * <li>SQL statements get applied to the database.</li>
  * <li>{@link AfterSaveCallback} and {@link AfterSaveEvent} get published.</li>
  * </ol>
- * 
+ *
  * @since 1.1
  * @author Jens Schauder
  * @author Mark Paluch

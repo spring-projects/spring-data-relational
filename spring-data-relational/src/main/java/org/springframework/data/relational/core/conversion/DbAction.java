@@ -209,7 +209,7 @@ public interface DbAction<T> {
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
 	 * </p>
-	 * 
+	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class DeleteRoot<T> implements DbAction<T> {
@@ -274,7 +274,7 @@ public interface DbAction<T> {
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
 	 * </p>
-	 * 
+	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class DeleteAllRoot<T> implements DbAction<T> {
@@ -467,7 +467,7 @@ public interface DbAction<T> {
 		 * <p>
 		 * Values come from parent entities but one might also add values manually.
 		 * </p>
-		 * 
+		 *
 		 * @return guaranteed to be not {@code null}.
 		 */
 		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
@@ -479,7 +479,7 @@ public interface DbAction<T> {
 		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
 
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
-			if (qualifiers.size() == 0)
+			if (qualifiers.isEmpty())
 				return null;
 
 			if (qualifiers.size() > 1) {
