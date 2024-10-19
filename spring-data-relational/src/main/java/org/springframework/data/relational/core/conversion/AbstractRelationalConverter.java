@@ -89,7 +89,7 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 		return conversionService;
 	}
 
-	public CustomConversions getConversions() {
+	public CustomConversions getCustomConversions() {
 		return conversions;
 	}
 
