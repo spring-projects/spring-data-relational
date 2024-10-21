@@ -71,7 +71,7 @@ This includes fragments you use to implement custom methods for your Spring Data
 
 === Persisting
 
-`JdbcAggregateTemplate offers three types of methods for persisting entities: `save`, `insert`, and `update`.
+JdbcAggregateTemplate offers three types of methods for persisting entities: `save`, `insert`, and `update`.
 Each comes in two flavors:
 Operating on single aggregates, named exactly as mentioned above, and with an `All` suffix operation on an `Iterable`.
 
