@@ -40,6 +40,7 @@ import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -61,6 +62,7 @@ import org.springframework.util.StringUtils;
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -69,6 +71,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	private static final Log LOG = LogFactory.getLog(AbstractJdbcConfiguration.class);
 
 	private ApplicationContext applicationContext;
+
+	private QueryMappingConfiguration queryMappingConfiguration;
 
 	/**
 	 * Returns the base packages to scan for JDBC mapped entities at startup. Returns the package name of the
@@ -208,7 +212,9 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
 				new SqlParametersFactory(context, jdbcConverter),
-				new InsertStrategyFactory(operations, dialect));
+				new InsertStrategyFactory(operations, dialect),
+				this.queryMappingConfiguration
+		);
 
 		return factory.create();
 	}
@@ -230,6 +236,10 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
+	}
+
+	public void setQueryMappingConfiguration(Optional<QueryMappingConfiguration> queryMappingConfiguration) throws BeansException {
+		this.queryMappingConfiguration = queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY);
 	}
 
 	/**
