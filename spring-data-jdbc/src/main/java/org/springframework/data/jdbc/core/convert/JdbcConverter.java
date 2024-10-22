@@ -125,6 +125,15 @@ public interface JdbcConverter extends RelationalConverter {
 	 */
 	SQLType getTargetSqlType(RelationalPersistentProperty property);
 
+	/**
+	 * The SQL type constant used when using this property as a parameter for a SQL statement.
+	 *
+	 * @return Must not be {@code null}.
+	 * @see java.sql.Types
+	 * @since 2.0
+	 */
+	SQLType getTargetSqlType(Class<?> property);
+
 	@Override
 	RelationalMappingContext getMappingContext();
 

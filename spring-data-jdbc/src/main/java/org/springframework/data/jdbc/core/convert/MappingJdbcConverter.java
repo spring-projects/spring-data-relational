@@ -21,7 +21,6 @@ import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
@@ -153,6 +152,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	}
 
 	@Override
+	public SQLType getTargetSqlType(Class<?> property) {
+		return JdbcUtil.targetSqlTypeFor(property);
+	}
+
+	@Override
 	public Class<?> getColumnType(RelationalPersistentProperty property) {
 		return doGetColumnType(property);
 	}
@@ -205,13 +209,13 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 	@Override
 	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object writeValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (value == null) {
 			return null;
 		}
 
-		return super.writeValue(value, type);
+		return super.writeValue(value, targetType);
 	}
 
 	private boolean canWriteAsJdbcValue(@Nullable Object value) {
@@ -236,8 +240,9 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return true;
 		}
 
-		Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(value.getClass());
-		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
+		return getCustomConversions().getCustomWriteTarget(value.getClass())
+			.filter(it -> it.isAssignableFrom(JdbcValue.class))
+			.isPresent();
 	}
 
 	@Override
@@ -353,7 +358,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 			AggregatePath aggregatePath = this.context.aggregatePath();
 
-			if (getConversions().isSimpleType(property.getActualType())) {
+			if (getCustomConversions().isSimpleType(property.getActualType())) {
 				return (T) delegate.getValue(aggregatePath);
 			}
 
