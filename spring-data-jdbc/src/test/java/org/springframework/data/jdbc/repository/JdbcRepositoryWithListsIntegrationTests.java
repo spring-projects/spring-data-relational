@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
@@ -55,8 +56,7 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 	private static DummyEntity createDummyEntity() {
 
-		DummyEntity entity = new DummyEntity();
-		entity.setName("Entity Name");
+		DummyEntity entity = new DummyEntity(null, "Entity Name", new ArrayList<>());
 		return entity;
 	}
 
@@ -94,7 +94,7 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		assertThat(reloaded.content) //
 				.isNotNull() //
 				.extracting(e -> e.id) //
-				.containsExactlyInAnyOrder(element1.id, element2.id);
+				.containsExactlyInAnyOrder(entity.content.get(0).id, entity.content.get(1).id);
 	}
 
 	@Test // GH-1159
@@ -147,9 +147,9 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@EnabledOnFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	public void updateList() {
 
-		Element element1 = createElement("one");
-		Element element2 = createElement("two");
-		Element element3 = createElement("three");
+		Element element1 = new Element("one");
+		Element element2 = new Element("two");
+		Element element3 = new Element("three");
 
 		DummyEntity entity = createDummyEntity();
 		entity.content.add(element1);
@@ -157,14 +157,15 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 		entity = repository.save(entity);
 
-		entity.content.remove(element1);
-		element2.content = "two changed";
+		entity.content.remove(0);
+		entity.content.set(0, new Element(entity.content.get(0).id, "two changed"));
 		entity.content.add(element3);
 
 		entity = repository.save(entity);
 
 		assertThat(entity.id).isNotNull();
 		assertThat(entity.content).allMatch(v -> v.id != null);
+		assertThat(entity.content).hasSize(2);
 
 		DummyEntity reloaded = repository.findById(entity.id).orElseThrow(AssertionFailedError::new);
 
@@ -175,8 +176,8 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		assertThat(reloaded.content) //
 				.extracting(e -> e.id, e -> e.content) //
 				.containsExactly( //
-						tuple(element2.id, "two changed"), //
-						tuple(element3.id, "three") //
+						tuple(entity.content.get(0).id, "two changed"), //
+						tuple(entity.content.get(1).id, "three") //
 				);
 
 		Long count = template.queryForObject("SELECT count(1) FROM Element", new HashMap<>(), Long.class);
@@ -186,8 +187,8 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@Test // DATAJDBC-130
 	public void deletingWithList() {
 
-		Element element1 = createElement("one");
-		Element element2 = createElement("two");
+		Element element1 = new Element("one");
+		Element element2 = new Element("two");
 
 		DummyEntity entity = createDummyEntity();
 		entity.content.add(element1);
@@ -201,13 +202,6 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 		Long count = template.queryForObject("SELECT count(1) FROM Element", new HashMap<>(), Long.class);
 		assertThat(count).isEqualTo(0);
-	}
-
-	private Element createElement(String content) {
-
-		Element element = new Element();
-		element.content = content;
-		return element;
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
@@ -229,43 +223,22 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		}
 	}
 
-	static class DummyEntity {
-
-		String name;
-		List<Element> content = new ArrayList<>();
-		@Id private Long id;
-
-		public String getName() {
-			return this.name;
-		}
-
-		public List<Element> getContent() {
-			return this.content;
-		}
-
-		public Long getId() {
-			return this.id;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public void setContent(List<Element> content) {
-			this.content = content;
-		}
-
-		public void setId(Long id) {
-			this.id = id;
-		}
+	record DummyEntity(@Id Long id, String name, List<Element> content) {
 	}
 
-	static class Element {
+	record Element(@Id Long id, String content) {
 
-		String content;
-		@Id private Long id;
+		@PersistenceCreator
+		Element {}
 
-		public Element() {}
+		Element() {
+			this(null, null);
+		}
+
+		Element(String content) {
+			this(null, content);
+		}
+
 	}
 
 	static class Root {
