@@ -49,6 +49,7 @@ import org.springframework.util.Assert;
  * @author Umut Erturk
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mark Paluch
  */
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
@@ -268,12 +269,10 @@ class JdbcAggregateChangeExecutionContext {
 
 					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
 							qualifierValue, newEntity);
-
 				} else if (insert.getPropertyPath().getLeafProperty().isCollectionLike()) {
 
 					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(),
 							qualifierValue, newEntity);
-
 				}
 			}
 		}
@@ -289,6 +288,7 @@ class JdbcAggregateChangeExecutionContext {
 		return roots;
 	}
 
+	@SuppressWarnings("unchecked")
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,
 			StagedValues cascadingValues) {
 
@@ -328,6 +328,7 @@ class JdbcAggregateChangeExecutionContext {
 		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported", action.getClass()));
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(Class<T> type) {
 		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type);
 	}
@@ -358,7 +359,7 @@ class JdbcAggregateChangeExecutionContext {
 	 */
 	private static class StagedValues {
 
-		static final List<MultiValueAggregator> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
+		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
 				ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
 
 		Map<DbAction, Map<PersistentPropertyPath, StagedValue>> values = new HashMap<>();
@@ -374,13 +375,14 @@ class JdbcAggregateChangeExecutionContext {
 		 *          be {@literal null}.
 		 * @param value The value to be set. Must not be {@literal null}.
 		 */
-		@SuppressWarnings("unchecked")
-		<T> void stage(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
-			gather(action, path, qualifier, value);
-			values.get(action).get(path).isStaged = true;
+		void stage(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
+
+			StagedValue gather = gather(action, path, qualifier, value);
+			gather.isStaged = true;
 		}
 
-		<T> void gather(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
+		@SuppressWarnings("unchecked")
+		<T> StagedValue gather(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
 
 			MultiValueAggregator<T> aggregator = getAggregatorFor(path);
 
@@ -391,19 +393,20 @@ class JdbcAggregateChangeExecutionContext {
 					persistentPropertyPath -> new StagedValue(aggregator.createEmptyInstance()));
 			T currentValue = (T) stagedValue.value;
 
-			Object newValue = aggregator.add(currentValue, qualifier, value);
-
-			stagedValue.value = newValue;
+			stagedValue.value = aggregator.add(currentValue, qualifier, value);
 
 			valuesForPath.put(path, stagedValue);
+
+			return stagedValue;
 		}
 
-		private MultiValueAggregator getAggregatorFor(PersistentPropertyPath path) {
+		@SuppressWarnings("unchecked")
+		private <T> MultiValueAggregator<T> getAggregatorFor(PersistentPropertyPath path) {
 
 			PersistentProperty property = path.getLeafProperty();
-			for (MultiValueAggregator aggregator : aggregators) {
+			for (MultiValueAggregator<?> aggregator : aggregators) {
 				if (aggregator.handles(property)) {
-					return aggregator;
+					return (MultiValueAggregator<T>) aggregator;
 				}
 			}
 
@@ -427,10 +430,10 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	private static class StagedValue {
-		Object value;
+		@Nullable Object value;
 		boolean isStaged;
 
-		public StagedValue(Object value) {
+		public StagedValue(@Nullable Object value) {
 			this.value = value;
 		}
 	}
