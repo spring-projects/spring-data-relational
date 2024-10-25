@@ -1022,7 +1022,7 @@ class SqlGenerator {
 
 		if (query.isSorted()) {
 			List<OrderByField> sort = this.queryMapper.getMappedSort(table, query.getSort(), entity);
-			selectOrdered = selectBuilder.orderBy(sort);
+			selectOrdered = selectOrdered.orderBy(sort);
 		}
 
 		SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) selectOrdered;

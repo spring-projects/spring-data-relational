@@ -342,6 +342,42 @@ class SqlGeneratorUnitTests {
 				"LIMIT 10");
 	}
 
+	@Test // GH-1919
+	void selectByQuery() {
+
+		Query query = Query.query(Criteria.where("id").is(23L));
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT", //
+				"FROM dummy_entity", //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"WHERE dummy_entity.id1 = :id1" //
+		);
+	}
+
+	@Test // GH-1919
+	void selectBySortedQuery() {
+
+		Query query = Query.query(Criteria.where("id").is(23L)) //
+				.sort(Sort.by(Sort.Order.asc("id")));
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT", //
+				"FROM dummy_entity", //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"WHERE dummy_entity.id1 = :id1", //
+				"ORDER BY dummy_entity.id1 ASC" //
+		);
+		assertThat(sql).containsOnlyOnce("LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
+		assertThat(sql).containsOnlyOnce("LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id");
+	}
+
 	@Test // DATAJDBC-131, DATAJDBC-111
 	void findAllByProperty() {
 
