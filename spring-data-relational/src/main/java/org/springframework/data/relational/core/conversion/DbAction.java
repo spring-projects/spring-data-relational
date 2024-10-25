@@ -482,16 +482,21 @@ public interface DbAction<T> {
 		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
 
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
+
 			if (qualifiers.size() == 0) {
 				return null;
 			}
 
 			Set<Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object>> entries = qualifiers.entrySet();
-			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = entries.stream().sorted(Comparator.comparing(e -> -e.getKey().getLength())).findFirst().get();
+			Optional<Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object>> optionalEntry = entries.stream()
+					.filter(e -> e.getValue() != null).min(Comparator.comparing(e -> -e.getKey().getLength()));
 
-			if (entry.getValue() == null) {
+			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = optionalEntry.orElse(null);
+
+			if (entry == null) {
 				return null;
 			}
+
 			return Pair.of(entry.getKey(), entry.getValue());
 		}
 
