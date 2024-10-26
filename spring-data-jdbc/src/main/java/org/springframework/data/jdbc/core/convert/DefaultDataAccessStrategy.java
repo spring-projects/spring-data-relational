@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.ID_SQL_PARAMETER;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.ROOT_ID_PARAMETER;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.VERSION_SQL_PARAMETER;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -62,6 +64,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -105,12 +108,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
-				idValueSource);
+		idValueSource);
 
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
 
 		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				parameterSource);
+		parameterSource);
 	}
 
 	@Override
@@ -118,17 +121,22 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
-						insertSubject.getIdentifier(), idValueSource))
-				.toArray(SqlIdentifierParameterSource[]::new);
+				.map(insertSubject -> sqlParametersFactory.forInsert( //
+						insertSubject.getInstance(), //
+						domainType, //
+						insertSubject.getIdentifier(), //
+						idValueSource //
+				) //
+		) //
+		.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
 
 		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				sqlParameterSources);
+		sqlParameterSources);
 	}
 
-	@Override
+    @Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
@@ -479,5 +487,4 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return baseProperty.getOwner().getType();
 	}
-
 }

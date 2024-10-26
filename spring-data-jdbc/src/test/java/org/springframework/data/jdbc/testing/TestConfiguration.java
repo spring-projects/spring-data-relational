@@ -36,11 +36,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -81,10 +85,16 @@ public class TestConfiguration {
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
+			List<EntityCallback<?>> callbacks,
 			List<EvaluationContextExtension> evaulationContextExtensions) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, namedParameterJdbcTemplate());
+
+		factory.setEntityCallbacks(
+				EntityCallbacks.create(callbacks.toArray(new EntityCallback[0]))
+		);
+
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 
 		factory.setEvaluationContextProvider(
@@ -162,6 +172,21 @@ public class TestConfiguration {
 				relationResolver, //
 				conversions, //
 				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns));
+	}
+
+	/**
+	 * Creates a {@link IdGeneratingBeforeSaveCallback} bean using the configured
+	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
+	 *
+	 * @return must not be {@literal null}.
+	 */
+	@Bean
+	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
+			JdbcMappingContext mappingContext,
+			NamedParameterJdbcOperations operations,
+			Dialect dialect
+	) {
+		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
 	}
 
 	@Bean

@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -42,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -75,6 +76,7 @@ import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.TargetSequence;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -115,8 +117,8 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired DummyEntityRepository repository;
 	@Autowired MyEventListener eventListener;
 	@Autowired RootRepository rootRepository;
-
 	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
+	@Autowired EntityWithSequenceRepository entityWithSequenceRepository;
 
 	@BeforeEach
 	public void before() {
@@ -133,6 +135,29 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), "dummy_entity",
 				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
+	}
+
+	@Test
+	@EnabledOnFeature(value = TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
+	public void saveEntityWithTargetSequenceSpecified() {
+		EntityWithSequence first = entityWithSequenceRepository.save(new EntityWithSequence("first"));
+		EntityWithSequence second = entityWithSequenceRepository.save(new EntityWithSequence("second"));
+
+		assertThat(first.getId()).isNotNull();
+		assertThat(second.getId()).isNotNull();
+		assertThat(first.getId()).isLessThan(second.getId());
+		assertThat(first.getName()).isEqualTo("first");
+		assertThat(second.getName()).isEqualTo("second");
+	}
+
+	@Test
+    @EnabledOnFeature(value = TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
+	public void batchInsertEntityWithTargetSequenceSpecified() {
+		Iterable<EntityWithSequence> results = entityWithSequenceRepository.saveAll(
+			List.of(new EntityWithSequence("first"), new EntityWithSequence("second"))
+		);
+
+		assertThat(results).hasSize(2).extracting(EntityWithSequence::getId).containsExactly(1L, 2L);
 	}
 
 	@Test // DATAJDBC-95
@@ -1515,6 +1540,8 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
 
+	interface EntityWithSequenceRepository extends CrudRepository<EntityWithSequence, Long> {}
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -1534,6 +1561,11 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		WithDelimitedColumnRepository withDelimitedColumnRepository() {
 			return factory.getRepository(WithDelimitedColumnRepository.class);
+		}
+
+		@Bean
+		EntityWithSequenceRepository entityWithSequenceRepository() {
+			return factory.getRepository(EntityWithSequenceRepository.class);
 		}
 
 		@Bean
@@ -1837,6 +1869,32 @@ public class JdbcRepositoryIntegrationTests {
 		customizer.accept(entity);
 
 		return entity;
+	}
+
+	static class EntityWithSequence {
+
+		@Id
+		@TargetSequence(sequence = "entity_sequence")
+		private Long id;
+
+		private String name;
+
+		public EntityWithSequence(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public EntityWithSequence(String name) {
+			this.name = name;
+		}
+
+		public Long getId() {
+			return id;
+		}
+
+		public String getName() {
+			return name;
+		}
 	}
 
 	static class DummyEntity {

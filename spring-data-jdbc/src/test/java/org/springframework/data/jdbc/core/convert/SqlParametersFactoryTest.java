@@ -15,11 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategyUnitTests.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategyUnitTests.ORIGINAL_ID;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +33,6 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
-import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -49,7 +48,6 @@ class SqlParametersFactoryTest {
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
 	MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver);
-	AnsiDialect dialect = AnsiDialect.INSTANCE;
 	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
 	@Test // DATAJDBC-412

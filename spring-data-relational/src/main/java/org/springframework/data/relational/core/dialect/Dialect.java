@@ -146,5 +146,5 @@ public interface Dialect {
 
 	default boolean supportsSingleQueryLoading() {
 		return true;
-	};
+	}
 }
