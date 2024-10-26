@@ -27,6 +27,7 @@ import static java.util.Arrays.*;
  * An SQL dialect for Oracle.
  *
  * @author Jens Schauder
+ * @author Mikahil Polivakha
  * @since 2.1
  */
 public class OracleDialect extends AnsiDialect {
@@ -68,5 +69,10 @@ public class OracleDialect extends AnsiDialect {
 		public Integer convert(Boolean bool) {
 			return bool ? 1 : 0;
 		}
+	}
+
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT %s.nextval FROM DUAL".formatted(sequenceName);
 	}
 }

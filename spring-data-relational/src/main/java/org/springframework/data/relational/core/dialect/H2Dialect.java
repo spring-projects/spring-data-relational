@@ -31,6 +31,7 @@ import org.springframework.util.ClassUtils;
  * @author Myeonghyeon Lee
  * @author Christph Strobl
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class H2Dialect extends AbstractDialect {
@@ -112,5 +113,10 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public boolean supportsSingleQueryLoading() {
 		return false;
+	}
+
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT NEXT VALUE FOR %s".formatted(sequenceName);
 	}
 }

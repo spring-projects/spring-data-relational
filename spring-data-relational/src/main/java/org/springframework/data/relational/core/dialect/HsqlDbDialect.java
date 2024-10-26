@@ -20,6 +20,7 @@ package org.springframework.data.relational.core.dialect;
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 public class HsqlDbDialect extends AbstractDialect {
 
@@ -64,4 +65,16 @@ public class HsqlDbDialect extends AbstractDialect {
 			return Position.AFTER_ORDER_BY;
 		}
 	};
+
+	/**
+	 * One may think that this is an over-complication, but it is actually not.
+	 * There is no a direct way to query the next value for the sequence, only to use it as an expression
+	 * inside other queries (SELECT/INSERT). Therefore, such a workaround is required
+	 *
+	 * @see <a href="https://github.com/jOOQ/jOOQ/issues/3762">The way JOOQ solves this problem</a>
+	 */
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT NEXT VALUE FOR %s AS msq FROM INFORMATION_SCHEMA.SEQUENCES LIMIT 1".formatted(sequenceName);
+	}
 }

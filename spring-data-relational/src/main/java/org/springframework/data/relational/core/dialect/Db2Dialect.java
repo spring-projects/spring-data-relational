@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.LockOptions;
  * An SQL dialect for DB2.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class Db2Dialect extends AbstractDialect {
@@ -101,5 +102,15 @@ public class Db2Dialect extends AbstractDialect {
 	@Override
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+	}
+
+    /**
+     * This workaround (non-ANSI SQL way of querying sequence) exists for the same reasons it exists for {@link HsqlDbDialect}
+     *
+     * @see HsqlDbDialect#nextValueFromSequenceSelect(String)
+     */
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT NEXT VALUE FOR %s FROM SYSCAT.SEQUENCES LIMIT 1".formatted(sequenceName);
 	}
 }

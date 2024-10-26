@@ -131,4 +131,9 @@ public class SqlServerDialect extends AbstractDialect {
 	public OrderByNullPrecedence orderByNullHandling() {
 		return OrderByNullPrecedence.NONE;
 	}
+
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT NEXT VALUE FOR %s".formatted(sequenceName);
+	}
 }

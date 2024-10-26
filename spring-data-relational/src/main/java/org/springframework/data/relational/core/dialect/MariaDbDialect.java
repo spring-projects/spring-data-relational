@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * A SQL dialect for MariaDb.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.3
  */
 public class MariaDbDialect extends MySqlDialect {
@@ -37,5 +38,10 @@ public class MariaDbDialect extends MySqlDialect {
 		return Arrays.asList(
 				TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
 				NumberToBooleanConverter.INSTANCE);
+	}
+
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT NEXTVAL(%s)".formatted(sequenceName);
 	}
 }

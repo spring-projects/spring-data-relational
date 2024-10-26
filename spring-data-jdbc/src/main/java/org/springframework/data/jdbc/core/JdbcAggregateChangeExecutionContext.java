@@ -298,7 +298,7 @@ class JdbcAggregateChangeExecutionContext {
 		PersistentPropertyPathAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity,
 				originalEntity);
 
-		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
+		if (IdValueSource.isGeneratedByDatabased(action.getIdValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 

@@ -207,7 +207,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
-				new SqlParametersFactory(context, jdbcConverter),
+				new SqlParametersFactory(context, jdbcConverter, dialect, operations),
 				new InsertStrategyFactory(operations, dialect));
 
 		return factory.create();

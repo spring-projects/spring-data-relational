@@ -86,7 +86,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 			NamespaceStrategy namespaceStrategy, Dialect dialect) {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
-		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
+		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect, operations);
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		DataAccessStrategy defaultDataAccessStrategy = new DataAccessStrategyFactory( //

@@ -167,7 +167,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
-					new SqlParametersFactory(context, converter),
+					new SqlParametersFactory(context, converter, dialect, template),
 					new InsertStrategyFactory(template, dialect)).create();
 		}
 

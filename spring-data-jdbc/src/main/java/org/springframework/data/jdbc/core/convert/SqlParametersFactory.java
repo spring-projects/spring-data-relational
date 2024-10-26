@@ -15,10 +15,13 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -26,10 +29,14 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -46,13 +53,15 @@ import org.springframework.util.Assert;
 public class SqlParametersFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
+	private final Dialect dialect;
 
-	/**
-	 * @since 3.1
-	 */
-	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter) {
+	private final NamedParameterJdbcOperations operations;
+
+	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter, Dialect dialect, NamedParameterJdbcOperations operations) {
 		this.context = context;
 		this.converter = converter;
+		this.dialect = dialect;
+		this.operations = operations;
 	}
 
 	/**
@@ -71,17 +80,37 @@ public class SqlParametersFactory {
 			IdValueSource idValueSource) {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+
+		Object idValue = null;
+
+		if (IdValueSource.PROVIDED.equals(idValueSource)) {
+			idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
+		}
+		return forInsert(instance, domainType, identifier, idValue);
+	}
+
+	/**
+	 * Creates the parameters for a SQL insert operation. That method is different from its sibling
+	 * {@link #forInsert(Object, Class, Identifier, IdValueSource) forInsert method} in the sense, that
+	 * this method is invoked when we actually know the id to be added to the {@link SqlParameterSource paarameter source}.
+	 * It might be null, meaning, that we know for sure the id should be coming from the database, or
+	 * it could be not null, meaning, that we've got the id from some source (user provided by himself,
+	 * or we have queried the sequence for instance)
+	 */
+	<T> SqlIdentifierParameterSource forInsert(T instance, Class<T> domainType, Identifier identifier,
+			@Nullable Object id) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
 				PersistentProperty::isIdProperty);
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
-		if (IdValueSource.PROVIDED.equals(idValueSource)) {
-
-			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-			Object idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
-			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
-		}
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+		Optional
+            .ofNullable(id)
+            .filter(it -> idProperty != null)
+            .ifPresent(it -> addConvertedPropertyValue(parameterSource, idProperty, it, idProperty.getColumnName()));
 		return parameterSource;
 	}
 
@@ -172,6 +201,13 @@ public class SqlParametersFactory {
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
+			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
+
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property),
+				converter.getTargetSqlType(property));
+	}
+
+	private void addConvertedIdPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
 		addConvertedValue(parameterSource, value, name, converter.getColumnType(property),

@@ -19,9 +19,16 @@ import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -37,6 +44,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -60,6 +68,7 @@ import org.springframework.util.Assert;
  * @author Radim Tlusty
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -102,31 +111,35 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
-				idValueSource);
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(domainType);
+
+        Optional<Long> idFromSequence = getIdFromSequenceIfAnyDefined(idValueSource, persistentEntity);
+
+        SqlIdentifierParameterSource parameterSource = idFromSequence
+			.map(it -> sqlParametersFactory.forInsert(instance, domainType, identifier, it))
+			.orElseGet(() -> sqlParametersFactory.forInsert(instance, domainType, identifier, idValueSource));
 
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
 
-		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				parameterSource);
-	}
+        Object idAfterExecute = insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType))
+          .execute(insertSql, parameterSource);
+
+        return idFromSequence.map(it -> (Object) it).orElse(idAfterExecute);
+    }
 
 	@Override
 	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
-		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
-						insertSubject.getIdentifier(), idValueSource))
-				.toArray(SqlIdentifierParameterSource[]::new);
 
-		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
+        if (IdValueSource.SEQUENCE.equals(idValueSource)) {
+            return executeBatchInsertWithSequenceAsIdSource(insertSubjects, domainType, idValueSource);
+        } else {
+            return executeBatchInsert(insertSubjects, domainType, idValueSource);
+        }
+    }
 
-		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				sqlParameterSources);
-	}
-
-	@Override
+    @Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
@@ -444,6 +457,72 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(baseProperty, "The base property must not be null");
 
 		return baseProperty.getOwner().getType();
+	}
+
+    private <T> Object[] executeBatchInsert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+        SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects
+          .stream()
+          .map(insertSubject -> sqlParametersFactory.forInsert(
+            insertSubject.getInstance(), domainType,
+            insertSubject.getIdentifier(), idValueSource)
+          )
+          .toArray(SqlIdentifierParameterSource[]::new);
+
+        String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
+
+        return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType))
+          .execute(insertSql, sqlParameterSources);
+    }
+
+    private <T> Object[] executeBatchInsertWithSequenceAsIdSource(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+        List<Pair<Long, SqlIdentifierParameterSource>> sqlParameterSources = createBatchParameterSourcesWithSequence(insertSubjects, domainType,
+          context.getPersistentEntity(domainType).getIdTargetSequence()
+        );
+
+        String insertSql = sql(domainType).getInsert(sqlParameterSources.get(0).getSecond().getIdentifiers());
+
+        insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType))
+          .execute(insertSql, sqlParameterSources.stream()
+            .map(Pair::getSecond)
+            .toArray(SqlIdentifierParameterSource[]::new));
+
+        return sqlParameterSources.stream().map(Pair::getFirst).toArray(Object[]::new);
+    }
+
+    private <T> List<Pair<Long, SqlIdentifierParameterSource>> createBatchParameterSourcesWithSequence(List<InsertSubject<T>> insertSubjects, Class<T> domainType, Optional<String> idTargetSequence) {
+        List<Pair<Long, SqlIdentifierParameterSource>> sqlParameterSources;
+        int subjectsSize = insertSubjects.size();
+
+        List<Long> generatedIds = getMultipleIdsFromSequence(idTargetSequence.get(), subjectsSize);
+
+        sqlParameterSources = IntStream
+          .range(0, subjectsSize)
+          .mapToObj(index -> {
+              InsertSubject<T> subject = insertSubjects.get(index);
+              Long generatedId = generatedIds.get(index);
+              return Pair.of(generatedId, sqlParametersFactory.forInsert(
+                subject.getInstance(), domainType,
+                subject.getIdentifier(), generatedId
+              ));
+          })
+          .collect(Collectors.toList());
+        return sqlParameterSources;
+    }
+
+    private Optional<Long> getIdFromSequenceIfAnyDefined(IdValueSource idValueSource, RelationalPersistentEntity<?> persistentEntity) {
+		if (IdValueSource.SEQUENCE.equals(idValueSource) && persistentEntity.getIdTargetSequence().isPresent()) {
+			String nextSequenceValueSelect = insertStrategyFactory.getDialect().nextValueFromSequenceSelect(persistentEntity.getIdTargetSequence().get());
+			return Optional.of(operations.queryForObject(nextSequenceValueSelect, Map.of(), (rs, rowNum) -> rs.getLong(1)));
+		}
+		return Optional.empty();
+	}
+
+	private List<Long> getMultipleIdsFromSequence(String sequenceName, Integer requiredIds) {
+        String nextSequenceValueSelect = insertStrategyFactory.getDialect().nextValueFromSequenceSelect(sequenceName);
+
+        return IntStream.range(0, requiredIds)
+              .mapToObj(operand -> operations.queryForObject(nextSequenceValueSelect, Map.of(), (rs, rowNum) -> rs.getLong(1)))
+              .collect(Collectors.toList());
 	}
 
 }

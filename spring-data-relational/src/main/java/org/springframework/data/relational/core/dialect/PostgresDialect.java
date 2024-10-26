@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.sql.TableLike;
  * @author Myeonghyeon Lee
  * @author Jens Schauder
  * @author Nikita Konev
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class PostgresDialect extends AbstractDialect {
@@ -162,5 +163,10 @@ public class PostgresDialect extends AbstractDialect {
 	@Override
 	public SimpleFunction getExistsFunction() {
 		return Functions.least(Functions.count(SQL.literalOf(1)), SQL.literalOf(1));
+	}
+
+	@Override
+	public String nextValueFromSequenceSelect(String sequenceName) {
+		return "SELECT nextval('%s')".formatted(sequenceName);
 	}
 }

@@ -28,6 +28,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Chirag Tailor
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.4
  */
 public class InsertStrategyFactory {
@@ -102,4 +103,7 @@ public class InsertStrategyFactory {
 		}
 	}
 
+	public Dialect getDialect() {
+		return this.dialect;
+	}
 }

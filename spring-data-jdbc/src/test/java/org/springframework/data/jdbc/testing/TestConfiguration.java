@@ -109,7 +109,7 @@ public class TestConfiguration {
 			JdbcConverter converter, Dialect dialect) {
 
 		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
-				template, new SqlParametersFactory(context, converter),
+				template, new SqlParametersFactory(context, converter, dialect, template),
 				new InsertStrategyFactory(template, dialect)).create();
 	}
 

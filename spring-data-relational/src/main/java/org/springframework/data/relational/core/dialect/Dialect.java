@@ -146,5 +146,11 @@ public interface Dialect {
 
 	default boolean supportsSingleQueryLoading() {
 		return true;
-	};
+	}
+
+	default String nextValueFromSequenceSelect(String sequenceName) {
+		throw new UnsupportedOperationException(
+			"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket".formatted(this.getClass().getSimpleName())
+		);
+	}
 }
