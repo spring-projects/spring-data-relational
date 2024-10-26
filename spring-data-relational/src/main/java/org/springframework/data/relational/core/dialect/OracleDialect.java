@@ -27,6 +27,7 @@ import static java.util.Arrays.*;
  * An SQL dialect for Oracle.
  *
  * @author Jens Schauder
+ * @author Mikahil Polivakha
  * @since 2.1
  */
 public class OracleDialect extends AnsiDialect {
@@ -37,6 +38,7 @@ public class OracleDialect extends AnsiDialect {
 	public static final OracleDialect INSTANCE = new OracleDialect();
 
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+
 		@Override
 		public boolean driverRequiresKeyColumnNames() {
 			return true;
@@ -45,6 +47,11 @@ public class OracleDialect extends AnsiDialect {
 		@Override
 		public String getKeyColumnName(SqlIdentifier id) {
 			return id.toSql(INSTANCE.getIdentifierProcessing());
+		}
+
+		@Override
+		public String nextValueFromSequenceSelect(String sequenceName) {
+			return "SELECT %s.nextval FROM DUAL".formatted(sequenceName);
 		}
 	};
 

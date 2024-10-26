@@ -141,4 +141,15 @@ public class MySqlDialect extends AbstractDialect {
 	public OrderByNullPrecedence orderByNullHandling() {
 		return OrderByNullPrecedence.NONE;
 	}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return new IdGeneration() {
+
+			@Override
+			public boolean sequencesSupported() {
+				return false;
+			}
+		};
+	}
 }

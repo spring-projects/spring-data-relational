@@ -118,8 +118,13 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
-						insertSubject.getIdentifier(), idValueSource))
+				.map(insertSubject -> sqlParametersFactory.forInsert( //
+						insertSubject.getInstance(), //
+						domainType, //
+						insertSubject.getIdentifier(), //
+						idValueSource //
+				) //
+				) //
 				.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
@@ -280,7 +285,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Stream<T> streamAll(Class<T> domainType) {
-		return operations.queryForStream(sql(domainType).getFindAll(), new MapSqlParameterSource(), getEntityRowMapper(domainType));
+		return operations.queryForStream(sql(domainType).getFindAll(), new MapSqlParameterSource(),
+				getEntityRowMapper(domainType));
 	}
 
 	@Override
@@ -364,7 +370,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
-		return operations.queryForStream(sql(domainType).getFindAll(sort), new MapSqlParameterSource(), getEntityRowMapper(domainType));
+		return operations.queryForStream(sql(domainType).getFindAll(sort), new MapSqlParameterSource(),
+				getEntityRowMapper(domainType));
 	}
 
 	@Override
@@ -479,5 +486,4 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return baseProperty.getOwner().getType();
 	}
-
 }
