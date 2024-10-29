@@ -15,10 +15,10 @@
  */
 package org.springframework.data.relational.core.sqlgeneration;
 
-import jmh.mbr.junit5.Microbenchmark;
 
 import java.util.List;
 
+import org.junit.platform.commons.annotation.Testable;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  *
  * @author Mark Paluch
  */
-@Microbenchmark
+@Testable
 public class SingleQuerySqlGeneratorBenchmark extends BenchmarkSettings {
 
 	@Benchmark
