@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -58,7 +56,6 @@ import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
@@ -176,8 +173,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> saveAll(Iterable<T> instances) {
-		return doWithBatch(instances, entity -> changeCreatorSelectorForSave(entity).apply(entity), this::verifyIdProperty,
-				this::performSaveAll);
+
+		Assert.notNull(instances, "Aggregate instances must not be null");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
+
+		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
+		for (T instance : instances) {
+			verifyIdProperty(instance);
+			entityAndChangeCreators.add(new EntityAndChangeCreator<>(instance, changeCreatorSelectorForSave(instance)));
+		}
+		return performSaveAll(entityAndChangeCreators);
 	}
 
 	/**
@@ -198,7 +206,21 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> insertAll(Iterable<T> instances) {
-		return doWithBatch(instances, entity -> createInsertChange(prepareVersionForInsert(entity)), this::performSaveAll);
+
+		Assert.notNull(instances, "Aggregate instances must not be null");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
+
+		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
+		for (T instance : instances) {
+
+			Function<T, RootAggregateChange<T>> changeCreator = entity -> createInsertChange(prepareVersionForInsert(entity));
+			EntityAndChangeCreator<T> entityChange = new EntityAndChangeCreator<>(instance, changeCreator);
+			entityAndChangeCreators.add(entityChange);
+		}
+		return performSaveAll(entityAndChangeCreators);
 	}
 
 	/**
@@ -219,35 +241,21 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> updateAll(Iterable<T> instances) {
-		return doWithBatch(instances, entity -> createUpdateChange(prepareVersionForUpdate(entity)), this::performSaveAll);
-	}
 
-	private <T> List<T> doWithBatch(Iterable<T> iterable, Function<T, RootAggregateChange<T>> changeCreator,
-			Function<List<EntityAndChangeCreator<T>>, List<T>> performFunction) {
-		return doWithBatch(iterable, changeCreator, entity -> {}, performFunction);
-	}
+		Assert.notNull(instances, "Aggregate instances must not be null");
 
-	private <T> List<T> doWithBatch(Iterable<T> iterable, Function<T, RootAggregateChange<T>> changeCreator,
-			Consumer<T> beforeEntityChange, Function<List<EntityAndChangeCreator<T>>, List<T>> performFunction) {
-
-		Assert.notNull(iterable, "Aggregate instances must not be null");
-
-		if (ObjectUtils.isEmpty(iterable)) {
+		if (!instances.iterator().hasNext()) {
 			return Collections.emptyList();
 		}
 
-		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>(
-				iterable instanceof Collection<?> c ? c.size() : 16);
+		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
+		for (T instance : instances) {
 
-		for (T instance : iterable) {
-
-			beforeEntityChange.accept(instance);
-
+			Function<T, RootAggregateChange<T>> changeCreator = entity -> createUpdateChange(prepareVersionForUpdate(entity));
 			EntityAndChangeCreator<T> entityChange = new EntityAndChangeCreator<>(instance, changeCreator);
 			entityAndChangeCreators.add(entityChange);
 		}
-
-		return performFunction.apply(entityAndChangeCreators);
+		return performSaveAll(entityAndChangeCreators);
 	}
 
 	@Override

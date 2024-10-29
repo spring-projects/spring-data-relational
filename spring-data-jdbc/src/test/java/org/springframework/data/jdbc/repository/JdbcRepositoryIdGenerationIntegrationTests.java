@@ -95,6 +95,18 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		assertThat(immutableWithManualIdEntityRepository.findAll()).hasSize(1);
 	}
 
+	@Test // DATAJDBC-393
+	void manuallyGeneratedIdForSaveAll() {
+
+		ImmutableWithManualIdEntity one = new ImmutableWithManualIdEntity(null, "one");
+		ImmutableWithManualIdEntity two = new ImmutableWithManualIdEntity(null, "two");
+		List<ImmutableWithManualIdEntity> saved = immutableWithManualIdEntityRepository.saveAll(List.of(one, two));
+
+		assertThat(saved).allSatisfy(e -> assertThat(e.id).isNotNull());
+
+		assertThat(immutableWithManualIdEntityRepository.findAll()).hasSize(2);
+	}
+
 	private interface PrimitiveIdEntityRepository extends ListCrudRepository<PrimitiveIdEntity, Long> {}
 
 	private interface ReadOnlyIdEntityRepository extends ListCrudRepository<ReadOnlyIdEntity, Long> {}
