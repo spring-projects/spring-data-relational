@@ -722,13 +722,10 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		if (getMappingContext().hasPersistentEntityFor(value.getClass())) {
 
-			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());
-
-			if (persistentEntity != null) {
+			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getRequiredPersistentEntity(value.getClass());
 
 				Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
 				return writeValue(id, type);
-			}
 		}
 
 		return getConversionService().convert(value, type.getType());
