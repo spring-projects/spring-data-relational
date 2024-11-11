@@ -34,7 +34,7 @@
 		<db2.version>11.5.9.0</db2.version>
 		<h2.version>2.3.232</h2.version>
 		<hikari.version>5.1.0</hikari.version>
-		<hsqldb.version>2.7.3</hsqldb.version>
+		<hsqldb.version>2.7.4</hsqldb.version>
 		<mariadb-java-client.version>3.4.1</mariadb-java-client.version>
 		<mssql.version>12.8.1.jre11</mssql.version>
 		<mysql-connector-java.version>8.0.33</mysql-connector-java.version>
