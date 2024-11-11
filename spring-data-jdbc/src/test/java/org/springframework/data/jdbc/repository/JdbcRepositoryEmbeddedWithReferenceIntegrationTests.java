@@ -19,6 +19,7 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,19 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		entity.setEmbeddable(embeddable);
 
 		return entity;
+	}
+
+	@Test
+	void insertJdbcTemplate() {
+		Map<String, ?> params = Map.of("id", 4711, "test", "text1");
+		template.update("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", params);
+	}
+
+	@Test
+	void batchInsertJdbcTemplate() {
+		Map<String, ?> params = Map.of("id", 4711, "test", "text1");
+		Map<String, ?>[] batchParams = new Map[] {params};
+		template.batchUpdate("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", batchParams);
 	}
 
 	@Test // DATAJDBC-111
