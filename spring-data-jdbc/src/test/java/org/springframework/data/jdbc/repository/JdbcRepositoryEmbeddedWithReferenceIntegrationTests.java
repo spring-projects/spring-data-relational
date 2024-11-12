@@ -20,7 +20,10 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +50,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Jens Schauder
  */
 @IntegrationTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -74,20 +78,26 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 	}
 
 	@Test
-	void batchInsertJdbcTemplate() {
-		Map<String, ?> params = Map.of("id", 4711, "test", "text1");
-		KeyHolder keyHolder = new GeneratedKeyHolder();
-		SqlParameterSource[] sqlParameterSource = new SqlParameterSource[] { new MapSqlParameterSource(params) };
-		template.batchUpdate("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", sqlParameterSource,
-				keyHolder);
+	@Order(1)
+	void jdbcTemplateOne() {
+		System.out.println("insertJdbcTemplate");
+		insert();
 	}
 
 	@Test
-	void batchInsertJdbcTemplate2() {
+	@Order(2)
+	void jdbcTemplateTwo() {
+		System.out.println("rerunJdbcTemplate");
+		insert();
+	}
+
+	private void insert() {
 		Map<String, ?> params = Map.of("id", 4711, "test", "text1");
+		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource(params);
+		SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] {sqlParameterSource};
+
 		KeyHolder keyHolder = new GeneratedKeyHolder();
-		SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] { new MapSqlParameterSource(params) };
-		template.batchUpdate("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", sqlParameterSources,
+		template.update("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", sqlParameterSource,
 				keyHolder);
 	}
 
