@@ -109,6 +109,7 @@
 			<artifactId>hsqldb</artifactId>
 			<version>${hsqldb.version}</version>
 			<scope>test</scope>
+			<classifier>debug</classifier>
 		</dependency>
 
 		<dependency>

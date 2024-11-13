@@ -15,11 +15,17 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -53,6 +59,7 @@ import org.springframework.jdbc.support.KeyHolder;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
+	public static final String INSERT_MAIN = "INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES";
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired Dialect dialect;
@@ -79,30 +86,57 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Test
 	@Order(1)
-	void jdbcTemplateOne() {
-		System.out.println("insertJdbcTemplate");
-		insert();
+	void dsOne() {
+		insertDataSource();
 	}
 
 	@Test
 	@Order(2)
-	void jdbcTemplateTwo() {
-		System.out.println("rerunJdbcTemplate");
-		insert();
+	void dsTwo() {
+		insertDataSource();
 	}
 
-	private void insert() {
+	private void insertDataSource() {
+		try (Connection connection = dataSource.getConnection()) {
+
+			PreparedStatement preparedStatement = connection.prepareStatement(INSERT_MAIN + "(?, ?)", Statement.RETURN_GENERATED_KEYS);
+			preparedStatement.setInt(1, 4711);
+			preparedStatement.setString(2, "text1");
+			preparedStatement.executeUpdate();
+
+			try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+				while (resultSet.next()) {
+					System.out.println("rs element");
+				}
+			}
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+		}
+	}
+
+
+	@Test
+	@Order(10)
+	void jdbcTemplateOne() {
+		insertJdbcTemplate();
+	}
+
+	@Test
+	@Order(20)
+	void jdbcTemplateTwo() {
+		insertJdbcTemplate();
+	}
+
+
+
+	private void insertJdbcTemplate() {
 		Map<String, ?> params = Map.of("id", 4711, "test", "text1");
 		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource(params);
-		SqlParameterSource[] sqlParameterSources = new SqlParameterSource[] {sqlParameterSource};
 
 		KeyHolder keyHolder = new GeneratedKeyHolder();
-		template.update("INSERT INTO \"DUMMY_ENTITY2\" (\"ID\", \"TEST\") VALUES (:id, :test)", sqlParameterSource,
+		template.update(INSERT_MAIN + " (:id, :test)", sqlParameterSource,
 				keyHolder);
 	}
-
-
-
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 		List<DummyEntity> findByTest(String test);
