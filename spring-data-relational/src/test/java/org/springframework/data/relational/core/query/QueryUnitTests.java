@@ -28,10 +28,10 @@ import org.springframework.data.domain.Sort;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-public class QueryUnitTests {
+class QueryUnitTests {
 
 	@Test // DATAJDBC-614
-	public void withCombinesSortAndPaging() {
+	void withCombinesSortAndPaging() {
 
 		Query query = Query.empty() //
 				.sort(Sort.by("alpha")) //
@@ -43,7 +43,7 @@ public class QueryUnitTests {
 	}
 
 	@Test // DATAJDBC-614
-	public void withCombinesEmptySortAndPaging() {
+	void withCombinesEmptySortAndPaging() {
 
 		Query query = Query.empty() //
 				.with(PageRequest.of(2, 20, Sort.by("beta")));
@@ -54,7 +54,7 @@ public class QueryUnitTests {
 	}
 
 	@Test // DATAJDBC-614
-	public void withCombinesSortAndUnsortedPaging() {
+	void withCombinesSortAndUnsortedPaging() {
 
 		Query query = Query.empty() //
 				.sort(Sort.by("alpha")) //
@@ -66,7 +66,7 @@ public class QueryUnitTests {
 	}
 
 	@Test // GH-1939
-	public void withCombinesUnpagedWithSort() {
+	void withCombinesUnpagedWithSort() {
 
 		Query query = Query.empty() //
 				.with(Pageable.unpaged(Sort.by("beta")));
