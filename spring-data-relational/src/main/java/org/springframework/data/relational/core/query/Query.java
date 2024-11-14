@@ -171,11 +171,11 @@ public class Query {
 	 */
 	public Query with(Pageable pageable) {
 
-		if (pageable.isUnpaged()) {
-			return this;
-		}
-
 		assertNoCaseSort(pageable.getSort());
+
+		if (pageable.isUnpaged()) {
+			return new Query(this.criteria, this.columns, this.sort.and(pageable.getSort()), this.limit, this.offset);
+		}
 
 		return new Query(this.criteria, this.columns, this.sort.and(pageable.getSort()), pageable.getPageSize(),
 				pageable.getOffset());

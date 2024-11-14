@@ -19,16 +19,18 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
  * Tests the {@link Query} class.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class QueryUnitTests {
 
-	@Test // DATAJDBC614
+	@Test // DATAJDBC-614
 	public void withCombinesSortAndPaging() {
 
 		Query query = Query.empty() //
@@ -40,7 +42,7 @@ public class QueryUnitTests {
 				.containsExactly("alpha", "beta");
 	}
 
-	@Test // DATAJDBC614
+	@Test // DATAJDBC-614
 	public void withCombinesEmptySortAndPaging() {
 
 		Query query = Query.empty() //
@@ -51,7 +53,7 @@ public class QueryUnitTests {
 				.containsExactly("beta");
 	}
 
-	@Test // DATAJDBC614
+	@Test // DATAJDBC-614
 	public void withCombinesSortAndUnsortedPaging() {
 
 		Query query = Query.empty() //
@@ -61,5 +63,18 @@ public class QueryUnitTests {
 		assertThat(query.getSort().get()) //
 				.extracting(Sort.Order::getProperty) //
 				.containsExactly("alpha");
+	}
+
+	@Test // GH-1939
+	public void withCombinesUnpagedWithSort() {
+
+		Query query = Query.empty() //
+				.with(Pageable.unpaged(Sort.by("beta")));
+
+		assertThat(query.getSort().get()) //
+				.extracting(Sort.Order::getProperty) //
+				.containsExactly("beta");
+		assertThat(query.getLimit()).isEqualTo(-1);
+		assertThat(query.getOffset()).isEqualTo(-1);
 	}
 }
