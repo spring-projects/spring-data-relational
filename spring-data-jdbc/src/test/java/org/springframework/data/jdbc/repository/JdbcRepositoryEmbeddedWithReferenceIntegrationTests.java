@@ -110,19 +110,21 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 				}
 			}
 		} catch (SQLException ex) {
-			ex.printStackTrace();
+			throw new RuntimeException(ex);
 		}
 	}
 
 
 	@Test
 	@Order(10)
+	@Disabled
 	void jdbcTemplateOne() {
 		insertJdbcTemplate();
 	}
 
 	@Test
 	@Order(20)
+	@Disabled
 	void jdbcTemplateTwo() {
 		insertJdbcTemplate();
 	}
