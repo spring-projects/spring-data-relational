@@ -49,7 +49,7 @@ class R2dbcRepositoryConfigurationExtensionUnitTests {
 	private final BeanDefinitionRegistry registry = new DefaultListableBeanFactory();
 
 	private final RepositoryConfigurationSource configurationSource = new AnnotationRepositoryConfigurationSource(
-			metadata, EnableR2dbcRepositories.class, loader, environment, registry);
+			metadata, EnableR2dbcRepositories.class, loader, environment, registry, null);
 
 	@Test // gh-13
 	void isStrictMatchIfDomainTypeIsAnnotatedWithDocument() {

@@ -40,7 +40,6 @@ import org.springframework.data.repository.core.support.ReactiveRepositoryFactor
 import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
-import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.lang.Nullable;
@@ -78,7 +77,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
 		this.operations = new R2dbcEntityTemplate(this.databaseClient, this.dataAccessStrategy);
-		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
 	/**
@@ -96,7 +94,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
 		this.operations = operations;
-		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
 	@Override
@@ -116,7 +113,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
-		return Optional.of(new R2dbcQueryLookupStrategy(operations, new CachingValueExpressionDelegate(valueExpressionDelegate), converter, dataAccessStrategy));
+		return Optional.of(new R2dbcQueryLookupStrategy(operations,
+				new CachingValueExpressionDelegate(valueExpressionDelegate), converter, dataAccessStrategy));
 	}
 
 	public <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
@@ -145,9 +143,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		private final ValueExpressionDelegate delegate;
 		private final ReactiveDataAccessStrategy dataAccessStrategy;
 
-		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations,
-				ValueExpressionDelegate delegate, R2dbcConverter converter,
-				ReactiveDataAccessStrategy dataAccessStrategy) {
+		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations, ValueExpressionDelegate delegate,
+				R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy) {
 
 			super(converter.getMappingContext(), dataAccessStrategy.getDialect());
 			this.delegate = delegate;
@@ -169,7 +166,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 						: queryMethod.getRequiredAnnotatedQuery();
 				query = evaluateTableExpressions(metadata, query);
 
-				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy, this.delegate);
+				return new StringBasedR2dbcQuery(query, queryMethod, this.entityOperations, this.converter,
+						this.dataAccessStrategy, this.delegate);
 
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy);
