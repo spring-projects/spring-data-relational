@@ -113,13 +113,6 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	}
 
 	@Override
-	@Deprecated
-	@Nullable
-	public PreferredConstructor<T, RelationalPersistentProperty> getPersistenceConstructor() {
-		return delegate.getPersistenceConstructor();
-	}
-
-	@Override
 	@Nullable
 	public InstanceCreatorMetadata<RelationalPersistentProperty> getInstanceCreatorMetadata() {
 		return delegate.getInstanceCreatorMetadata();
