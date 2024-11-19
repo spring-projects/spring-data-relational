@@ -50,7 +50,7 @@ import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
-import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -97,8 +97,7 @@ public class TestConfiguration {
 
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 
-		factory.setEvaluationContextProvider(
-				new ExtensionAwareQueryMethodEvaluationContextProvider(evaulationContextExtensions));
+		factory.setEvaluationContextProvider(new ExtensionAwareEvaluationContextProvider(evaulationContextExtensions));
 		return factory;
 	}
 
@@ -118,22 +117,24 @@ public class TestConfiguration {
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect) {
 
-		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
-				template, new SqlParametersFactory(context, converter),
-				new InsertStrategyFactory(template, dialect)).create();
+		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
+				new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect)).create();
 	}
 
 	@Bean("jdbcMappingContext")
 	@Profile(PROFILE_NO_SINGLE_QUERY_LOADING)
-	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
+			CustomConversions conversions) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 		return mappingContext;
 	}
+
 	@Bean("jdbcMappingContext")
 	@Profile(PROFILE_SINGLE_QUERY_LOADING)
-	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
+			CustomConversions conversions) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
