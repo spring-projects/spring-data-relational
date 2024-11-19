@@ -84,11 +84,11 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
-import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.EvaluationContextProvider;
+import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.data.support.WindowIterator;
 import org.springframework.data.util.Streamable;
@@ -1551,12 +1551,12 @@ public class JdbcRepositoryIntegrationTests {
 		}
 
 		@Bean
-		public QueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
-			return new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+		public EvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
+			return new ExtensionAwareEvaluationContextProvider(exts);
 		}
 
 		@Bean
-		RepositoryFactoryCustomizer customizer(QueryMethodEvaluationContextProvider provider) {
+		RepositoryFactoryCustomizer customizer(EvaluationContextProvider provider) {
 			return repositoryFactory -> repositoryFactory.setEvaluationContextProvider(provider);
 		}
 
