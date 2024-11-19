@@ -41,7 +41,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.util.TypeInformation;
@@ -73,7 +72,6 @@ class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryMetadata metadata;
 	private NamedQueries namedQueries = mock(NamedQueries.class);
 	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
-	QueryMethodEvaluationContextProvider evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 
 	@BeforeEach
 	void setup() {

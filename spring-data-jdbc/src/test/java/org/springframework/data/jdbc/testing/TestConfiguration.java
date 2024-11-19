@@ -51,7 +51,7 @@ import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
-import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -100,8 +100,7 @@ public class TestConfiguration {
 
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 
-		factory.setEvaluationContextProvider(
-				new ExtensionAwareQueryMethodEvaluationContextProvider(evaulationContextExtensions));
+		factory.setEvaluationContextProvider(new ExtensionAwareEvaluationContextProvider(evaulationContextExtensions));
 		return factory;
 	}
 
