@@ -16,10 +16,8 @@
 package org.springframework.data.r2dbc.repository.support;
 
 import java.io.Serializable;
-import java.util.Optional;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.mapping.context.MappingContext;
@@ -29,8 +27,6 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.data.repository.query.ReactiveExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
@@ -96,12 +92,6 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 
 		return this.operations != null ? getFactoryInstance(this.operations)
 				: getFactoryInstance(this.client, this.dataAccessStrategy);
-	}
-
-	@Override
-	protected Optional<QueryMethodEvaluationContextProvider> createDefaultQueryMethodEvaluationContextProvider(
-			ListableBeanFactory beanFactory) {
-		return Optional.of(new ReactiveExtensionAwareQueryMethodEvaluationContextProvider(beanFactory));
 	}
 
 	/**
