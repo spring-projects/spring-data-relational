@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.NestedCondition;
 import org.springframework.data.relational.core.sql.Not;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
@@ -27,7 +26,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @since 3.1.6
  */
-class NotConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
+class NotConditionVisitor extends TypedSubtreeVisitor<Not> {
 
 	private final RenderContext context;
 	private final RenderTarget target;
@@ -63,7 +62,7 @@ class NotConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 
 		if (conditionVisitor != null) {
 
-			target.onRendered("NOT (" + conditionVisitor.getRenderedPart() + ")");
+			target.onRendered("NOT " + conditionVisitor.getRenderedPart());
 			conditionVisitor = null;
 		}
 

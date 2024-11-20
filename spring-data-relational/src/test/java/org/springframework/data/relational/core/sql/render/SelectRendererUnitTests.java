@@ -652,6 +652,26 @@ class SelectRendererUnitTests {
 		assertThat(sql).isEqualTo("SELECT atable.* FROM atable WHERE NOT (atable.id = 1 AND atable.id = 2)");
 	}
 
+	@Test // GH-1945
+	void notOfTrue() {
+
+		Select selectFalse = Select.builder().select(Expressions.just("*")).from("test_table")
+				.where(Conditions.just("true").not()).build();
+		String renderSelectFalse = SqlRenderer.create().render(selectFalse);
+
+		assertThat(renderSelectFalse).isEqualTo("SELECT * FROM test_table WHERE NOT true");
+	}
+
+	@Test // GH-1945
+	void notOfNestedTrue() {
+
+		Select selectFalseNested = Select.builder().select(Expressions.just("*")).from("test_table")
+				.where(Conditions.nest(Conditions.just("true")).not()).build();
+		String renderSelectFalseNested = SqlRenderer.create().render(selectFalseNested);
+
+		assertThat(renderSelectFalseNested).isEqualTo("SELECT * FROM test_table WHERE NOT (true)");
+	}
+
 	@Test // GH-1651
 	void asteriskOfAliasedTableUsesAlias() {
 
