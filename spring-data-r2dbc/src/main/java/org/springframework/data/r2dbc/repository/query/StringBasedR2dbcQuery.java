@@ -34,7 +34,6 @@ import org.springframework.data.relational.repository.query.RelationalParameterA
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.spel.ExpressionDependencies;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -60,7 +59,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	/**
 	 * Create a new {@link StringBasedR2dbcQuery} for the given {@code query}, {@link R2dbcQueryMethod},
-	 * {@link DatabaseClient}, {@link SpelExpressionParser}, and {@link QueryMethodEvaluationContextProvider}.
+	 * {@link DatabaseClient}, and {@link ValueExpressionDelegate}.
 	 *
 	 * @param method must not be {@literal null}.
 	 * @param entityOperations must not be {@literal null}.
@@ -77,7 +76,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	/**
 	 * Create a new {@link StringBasedR2dbcQuery} for the given {@code query}, {@link R2dbcQueryMethod},
-	 * {@link DatabaseClient}, {@link SpelExpressionParser}, and {@link QueryMethodEvaluationContextProvider}.
+	 * {@link DatabaseClient}, and {@link ValueExpressionDelegate}.
 	 *
 	 * @param method must not be {@literal null}.
 	 * @param entityOperations must not be {@literal null}.
