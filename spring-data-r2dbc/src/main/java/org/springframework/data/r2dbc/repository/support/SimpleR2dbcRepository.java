@@ -44,6 +44,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityInfo
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
+import org.springframework.data.support.ReactivePageableExecutionUtils;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Streamable;
 import org.springframework.r2dbc.core.DatabaseClient;
