@@ -1,0 +1,5 @@
+- conversions on id parts
+- documentation
+    - Single Query Loading is not supported.
+    - nested ids are not supported.
+- R2DBC
