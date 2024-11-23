@@ -182,16 +182,16 @@ This works only if the parameter name information is present in the Java `.class
 ----
 class OrderItem {
 
-  private @Id final String id;
-  private final int quantity;
-  private final double unitPrice;
+    private @Id final String id;
+    private final int quantity;
+    private final double unitPrice;
 
-  OrderItem(String id, int quantity, double unitPrice) {
-    this.id = id;
-    this.quantity = quantity;
-    this.unitPrice = unitPrice;
-  }
+    OrderItem(String id, int quantity, double unitPrice) {
+        this.id = id;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+    }
 
-  // getters/setters omitted
+    // getters/setters omitted
 }
 ----
