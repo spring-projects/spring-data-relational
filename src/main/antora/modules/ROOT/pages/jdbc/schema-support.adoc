@@ -11,11 +11,11 @@ Consider the following domain entity:
 ----
 @Table
 class Person {
-  @Id long id;
-  String firstName;
-  String lastName;
-  LocalDate birthday;
-  boolean active;
+    @Id long id;
+    String firstName;
+    String lastName;
+    LocalDate birthday;
+    boolean active;
 }
 ----
 

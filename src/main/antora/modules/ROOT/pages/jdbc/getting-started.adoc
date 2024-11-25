@@ -39,13 +39,13 @@ Then enter a project and a package name, such as `org.spring.jdbc.example`.
 ----
 <dependencies>
 
-  <!-- other dependency elements omitted -->
+    <!-- other dependency elements omitted -->
 
-  <dependency>
-    <groupId>org.springframework.data</groupId>
-    <artifactId>spring-data-jdbc</artifactId>
-    <version>{version}</version>
-  </dependency>
+    <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-jdbc</artifactId>
+        <version>{version}</version>
+    </dependency>
 
 </dependencies>
 ----
@@ -62,11 +62,11 @@ Then enter a project and a package name, such as `org.spring.jdbc.example`.
 [source,xml]
 ----
 <repositories>
-  <repository>
-    <id>spring-milestone</id>
-    <name>Spring Maven MILESTONE Repository</name>
-    <url>https://repo.spring.io/milestone</url>
-  </repository>
+    <repository>
+        <id>spring-milestone</id>
+        <name>Spring Maven MILESTONE Repository</name>
+        <url>https://repo.spring.io/milestone</url>
+    </repository>
 </repositories>
 ----
 

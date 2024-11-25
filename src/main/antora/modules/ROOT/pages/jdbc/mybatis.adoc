@@ -16,10 +16,10 @@ The easiest way to properly plug MyBatis into Spring Data JDBC is by importing `
 @Import(MyBatisJdbcConfiguration.class)
 class Application {
 
-  @Bean
-  SqlSessionFactoryBean sqlSessionFactoryBean() {
-    // Configure MyBatis here
-  }
+    @Bean
+    SqlSessionFactoryBean sqlSessionFactoryBean() {
+        // Configure MyBatis here
+    }
 }
 ----
 

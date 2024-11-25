@@ -11,10 +11,10 @@ In order to activate auditing, add `@EnableJdbcAuditing` to your configuration, 
 @EnableJdbcAuditing
 class Config {
 
-  @Bean
-  AuditorAware<AuditableUser> auditorProvider() {
-    return new AuditorAwareImpl();
-  }
+    @Bean
+    AuditorAware<AuditableUser> auditorProvider() {
+        return new AuditorAwareImpl();
+    }
 }
 ----
 

@@ -32,49 +32,49 @@ Here is a quick teaser of an application using Spring Data JDBC Repositories in 
 ----
 interface PersonRepository extends CrudRepository<Person, Long> {
 
-  @Query("SELECT * FROM person WHERE lastname = :lastname")
-  List<Person> findByLastname(String lastname);
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
+    List<Person> findByLastname(String lastname);
 
-  @Query("SELECT * FROM person WHERE firstname LIKE :firstname")
-  List<Person> findByFirstnameLike(String firstname);
+    @Query("SELECT * FROM person WHERE firstname LIKE :firstname")
+    List<Person> findByFirstnameLike(String firstname);
 }
 
 @Service
 class MyService {
 
-  private final PersonRepository repository;
+    private final PersonRepository repository;
 
-  public MyService(PersonRepository repository) {
-    this.repository = repository;
-  }
+    public MyService(PersonRepository repository) {
+        this.repository = repository;
+    }
 
-  public void doWork() {
+    public void doWork() {
 
-    repository.deleteAll();
+        repository.deleteAll();
 
-    Person person = new Person();
-    person.setFirstname("Jens");
-    person.setLastname("Schauder");
-    repository.save(person);
+        Person person = new Person();
+        person.setFirstname("Jens");
+        person.setLastname("Schauder");
+        repository.save(person);
 
-    List<Person> lastNameResults = repository.findByLastname("Schauder");
-    List<Person> firstNameResults = repository.findByFirstnameLike("Je%");
- }
+        List<Person> lastNameResults = repository.findByLastname("Schauder");
+        List<Person> firstNameResults = repository.findByFirstnameLike("Je%");
+    }
 }
 
 @Configuration
 @EnableJdbcRepositories
 class ApplicationConfig extends AbstractJdbcConfiguration {
 
-  @Bean
-  public DataSource dataSource() {
-    return …;
-  }
+    @Bean
+    public DataSource dataSource() {
+        return …;
+    }
 
-  @Bean
-  public NamedParameterJdbcTemplate namedParameterJdbcTemplate(DataSource dataSource) {
-    return new NamedParameterJdbcTemplate(dataSource);
-  }
+     @Bean
+     public NamedParameterJdbcTemplate namedParameterJdbcTemplate(DataSource dataSource) {
+         return new NamedParameterJdbcTemplate(dataSource);
+     }
 }
 ----
 
@@ -85,9 +85,9 @@ Add the Maven dependency:
 [source,xml]
 ----
 <dependency>
-  <groupId>org.springframework.data</groupId>
-  <artifactId>spring-data-jdbc</artifactId>
-  <version>${version}</version>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>${version}</version>
 </dependency>
 ----
 
@@ -96,15 +96,15 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 [source,xml]
 ----
 <dependency>
-  <groupId>org.springframework.data</groupId>
-  <artifactId>spring-data-jdbc</artifactId>
-  <version>${version}-SNAPSHOT</version>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>${version}-SNAPSHOT</version>
 </dependency>
 
 <repository>
-  <id>spring-snapshot</id>
-  <name>Spring Snapshot Repository</name>
-  <url>https://repo.spring.io/snapshot</url>
+    <id>spring-snapshot</id>
+    <name>Spring Snapshot Repository</name>
+    <url>https://repo.spring.io/snapshot</url>
 </repository>
 ----
 
@@ -116,46 +116,46 @@ Here is a quick teaser of an application using Spring Data R2DBC Repositories in
 ----
 interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
-  @Query("SELECT * FROM person WHERE lastname = :lastname")
-  Flux<Person> findByLastname(String lastname);
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
+    Flux<Person> findByLastname(String lastname);
 
-  @Query("SELECT * FROM person WHERE firstname LIKE :firstname")
-  Flux<Person> findByFirstnameLike(String firstname);
+    @Query("SELECT * FROM person WHERE firstname LIKE :firstname")
+    Flux<Person> findByFirstnameLike(String firstname);
 }
 
 @Service
 class MyService {
 
-  private final PersonRepository repository;
+    private final PersonRepository repository;
 
-  public MyService(PersonRepository repository) {
-    this.repository = repository;
-  }
+    public MyService(PersonRepository repository) {
+        this.repository = repository;
+    }
 
-  public Flux<Person> doWork() {
+    public Flux<Person> doWork() {
 
-    Person person = new Person();
-    person.setFirstname("Jens");
-    person.setLastname("Schauder");
-    repository.save(person);
+        Person person = new Person();
+        person.setFirstname("Jens");
+        person.setLastname("Schauder");
+        repository.save(person);
 
-    Mono<Void> deleteAll = repository.deleteAll();
+        Mono<Void> deleteAll = repository.deleteAll();
 
-    Flux<Person> lastNameResults = repository.findByLastname("Schauder");
-    Flux<Person> firstNameResults = repository.findByFirstnameLike("Je%");
+        Flux<Person> lastNameResults = repository.findByLastname("Schauder");
+        Flux<Person> firstNameResults = repository.findByFirstnameLike("Je%");
 
-    return deleteAll.thenMany(lastNameResults.concatWith(firstNameResults));
- }
+        return deleteAll.thenMany(lastNameResults.concatWith(firstNameResults));
+    }
 }
 
 @Configuration
 @EnableR2dbcRepositories
 class ApplicationConfig extends AbstractR2dbcConfiguration {
 
-  @Bean
-  public ConnectionFactory connectionFactory() {
-    return ConnectionFactories.get("r2dbc:<driver>://<host>:<port>/<database>");
-  }
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        return ConnectionFactories.get("r2dbc:<driver>://<host>:<port>/<database>");
+    }
 
 }
 ----
@@ -167,9 +167,9 @@ Add the Maven dependency:
 [source,xml]
 ----
 <dependency>
-  <groupId>org.springframework.data</groupId>
-  <artifactId>spring-data-r2dbc</artifactId>
-  <version>${version}</version>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-r2dbc</artifactId>
+    <version>${version}</version>
 </dependency>
 ----
 
@@ -178,15 +178,15 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 [source,xml]
 ----
 <dependency>
-  <groupId>org.springframework.data</groupId>
-  <artifactId>spring-data-r2dbc</artifactId>
-  <version>${version}-SNAPSHOT</version>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-r2dbc</artifactId>
+    <version>${version}-SNAPSHOT</version>
 </dependency>
 
 <repository>
-  <id>spring-libs-snapshot</id>
-  <name>Spring Snapshot Repository</name>
-  <url>https://repo.spring.io/snapshot</url>
+    <id>spring-libs-snapshot</id>
+    <name>Spring Snapshot Repository</name>
+    <url>https://repo.spring.io/snapshot</url>
 </repository>
 ----
 

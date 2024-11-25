@@ -12,11 +12,11 @@ If you need to tweak transaction configuration for one of the methods declared i
 ----
 interface UserRepository extends CrudRepository<User, Long> {
 
-  @Override
-  @Transactional(timeout = 10)
-  List<User> findAll();
+    @Override
+    @Transactional(timeout = 10)
+    List<User> findAll();
 
-  // Further query method declarations
+    // Further query method declarations
 }
 ----
 
@@ -32,23 +32,24 @@ The following example shows how to create such a facade:
 @Service
 public class UserManagementImpl implements UserManagement {
 
-  private final UserRepository userRepository;
-  private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
-  UserManagementImpl(UserRepository userRepository,
-    RoleRepository roleRepository) {
-    this.userRepository = userRepository;
-    this.roleRepository = roleRepository;
-  }
+    UserManagementImpl(UserRepository userRepository,
+        RoleRepository roleRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+    }
 
-  @Transactional
-  public void addRoleToAllUsers(String roleName) {
+    @Transactional
+    public void addRoleToAllUsers(String roleName) {
 
-    Role role = roleRepository.findByName(roleName);
+        Role role = roleRepository.findByName(roleName);
 
-    for (User user : userRepository.findAll()) {
-      user.addRole(role);
-      userRepository.save(user);
+        for (User user : userRepository.findAll()) {
+            user.addRole(role);
+            userRepository.save(user);
+        }
     }
 }
 ----
@@ -69,12 +70,12 @@ To let your query methods be transactional, use `@Transactional` at the reposito
 @Transactional(readOnly = true)
 interface UserRepository extends CrudRepository<User, Long> {
 
-  List<User> findByLastname(String lastname);
+    List<User> findByLastname(String lastname);
 
-  @Modifying
-  @Transactional
-  @Query("delete from User u where u.active = false")
-  void deleteInactiveUsers();
+    @Modifying
+    @Transactional
+    @Query("delete from User u where u.active = false")
+    void deleteInactiveUsers();
 }
 ----
 
@@ -105,8 +106,8 @@ In that cases both modes are equivalent of `PESSIMISTIC_WRITE`.
 ----
 interface UserRepository extends CrudRepository<User, Long> {
 
-  @Lock(LockMode.PESSIMISTIC_READ)
-  List<User> findByLastname(String lastname);
+    @Lock(LockMode.PESSIMISTIC_READ)
+    List<User> findByLastname(String lastname);
 }
 ----
 

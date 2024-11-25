@@ -18,12 +18,12 @@ Consider the following `Person` class:
 ----
 public class Person {
 
-  @Id
-  private Long id;
-  private String firstname;
-  private String lastname;
+    @Id
+    private Long id;
+    private String firstname;
+    private String lastname;
 
-  // … getters and setters omitted
+    // … getters and setters omitted
 }
 ----
 
@@ -34,7 +34,7 @@ The following example shows a repository interface for the preceding `Person` cl
 ----
 public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
-  // additional custom query methods go here
+    // additional custom query methods go here
 }
 ----
 
@@ -49,10 +49,10 @@ The following example shows how to use Java configuration for a repository:
 @EnableR2dbcRepositories
 class ApplicationConfig extends AbstractR2dbcConfiguration {
 
-  @Override
-  public ConnectionFactory connectionFactory() {
-    return …
-  }
+      @Override
+      public ConnectionFactory connectionFactory() {
+        return …
+      }
 }
 ----
 

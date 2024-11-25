@@ -11,25 +11,25 @@ Defining such a query is a matter of declaring a method on the repository interf
 ----
 interface PersonRepository extends PagingAndSortingRepository<Person, String> {
 
-  List<Person> findByFirstname(String firstname);                                   <1>
+    List<Person> findByFirstname(String firstname);                                   <1>
 
-  List<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <2>
+    List<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <2>
 
-  Slice<Person> findByLastname(String lastname, Pageable pageable);                 <3>
+    Slice<Person> findByLastname(String lastname, Pageable pageable);                 <3>
 
-  Page<Person> findByLastname(String lastname, Pageable pageable);                  <4>
+    Page<Person> findByLastname(String lastname, Pageable pageable);                  <4>
 
-  Person findByFirstnameAndLastname(String firstname, String lastname);             <5>
+    Person findByFirstnameAndLastname(String firstname, String lastname);             <5>
 
-  Person findFirstByLastname(String lastname);                                      <6>
+    Person findFirstByLastname(String lastname);                                      <6>
 
-  @Query("SELECT * FROM person WHERE lastname = :lastname")
-  List<Person> findByLastname(String lastname);                                     <7>
-  @Query("SELECT * FROM person WHERE lastname = :lastname")
-  Stream<Person> streamByLastname(String lastname);                                     <8>
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
+    List<Person> findByLastname(String lastname);                                     <7>
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
+    Stream<Person> streamByLastname(String lastname);                                     <8>
 
-  @Query("SELECT * FROM person WHERE username = :#{ principal?.username }")
-  Person findActiveUser();															<9>
+    @Query("SELECT * FROM person WHERE username = :#{ principal?.username }")
+    Person findActiveUser();															<9>
 }
 ----
 <1> The method shows a query for all people with the given `firstname`.
@@ -156,8 +156,8 @@ The following example shows how to use `@Query` to declare a query method:
 ----
 interface UserRepository extends CrudRepository<User, Long> {
 
-  @Query("select firstName, lastName from User u where u.emailAddress = :email")
-  User findByEmailAddress(@Param("email") String email);
+    @Query("select firstName, lastName from User u where u.emailAddress = :email")
+    User findByEmailAddress(@Param("email") String email);
 }
 ----
 
@@ -252,9 +252,9 @@ The following example shows how to register `DefaultQueryMappingConfiguration`:
 ----
 @Bean
 QueryMappingConfiguration rowMappers() {
-  return new DefaultQueryMappingConfiguration()
-    .register(Person.class, new PersonRowMapper())
-    .register(Address.class, new AddressRowMapper());
+    return new DefaultQueryMappingConfiguration()
+        .register(Person.class, new PersonRowMapper())
+        .register(Address.class, new AddressRowMapper());
 }
 ----
 

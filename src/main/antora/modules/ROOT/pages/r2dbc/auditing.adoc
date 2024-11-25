@@ -10,10 +10,10 @@ Since Spring Data R2DBC 1.2, auditing can be enabled by annotating a configurati
 @EnableR2dbcAuditing
 class Config {
 
-  @Bean
-  public ReactiveAuditorAware<AuditableUser> myAuditorProvider() {
-      return new AuditorAwareImpl();
-  }
+    @Bean
+    public ReactiveAuditorAware<AuditableUser> myAuditorProvider() {
+        return new AuditorAwareImpl();
+    }
 }
 ----
 

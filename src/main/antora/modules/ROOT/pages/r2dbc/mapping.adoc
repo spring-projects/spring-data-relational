@@ -62,16 +62,16 @@ See xref:r2dbc/getting-started.adoc#r2dbc.dialects[R2DBC Drivers] for how to con
 @Configuration
 public class MyAppConfig extends AbstractR2dbcConfiguration {
 
-  public ConnectionFactory connectionFactory() {
-    return ConnectionFactories.get("r2dbc:…");
-  }
+    public ConnectionFactory connectionFactory() {
+        return ConnectionFactories.get("r2dbc:…");
+    }
 
-  // the following are optional
+    // the following are optional
 
-  @Override
-  protected List<Object> getCustomConverters() {
-    return List.of(new PersonReadConverter(), new PersonWriteConverter());
-  }
+    @Override
+    protected List<Object> getCustomConverters() {
+        return List.of(new PersonReadConverter(), new PersonWriteConverter());
+    }
 }
 ----
 
@@ -100,14 +100,14 @@ package com.mycompany.domain;
 @Table
 public class Person {
 
-  @Id
-  private Long id;
+    @Id
+    private Long id;
 
-  private Integer ssn;
+    private Integer ssn;
 
-  private String firstName;
+    private String firstName;
 
-  private String lastName;
+    private String lastName;
 }
 ----
 
@@ -199,13 +199,13 @@ The following example of a Spring Converter implementation converts from a `Row`
 [source,java]
 ----
 @ReadingConverter
- public class PersonReadConverter implements Converter<Row, Person> {
+public class PersonReadConverter implements Converter<Row, Person> {
 
-  public Person convert(Row source) {
-    Person p = new Person(source.get("id", String.class),source.get("name", String.class));
-    p.setAge(source.get("age", Integer.class));
-    return p;
-  }
+    public Person convert(Row source) {
+        Person p = new Person(source.get("id", String.class),source.get("name", String.class));
+        p.setAge(source.get("age", Integer.class));
+        return p;
+    }
 }
 ----
 
@@ -222,13 +222,13 @@ The following example converts from a `Person` to a `OutboundRow`:
 @WritingConverter
 public class PersonWriteConverter implements Converter<Person, OutboundRow> {
 
-  public OutboundRow convert(Person source) {
-    OutboundRow row = new OutboundRow();
-    row.put("id", Parameter.from(source.getId()));
-    row.put("name", Parameter.from(source.getFirstName()));
-    row.put("age", Parameter.from(source.getAge()));
-    return row;
-  }
+    public OutboundRow convert(Person source) {
+        OutboundRow row = new OutboundRow();
+        row.put("id", Parameter.from(source.getId()));
+        row.put("name", Parameter.from(source.getFirstName()));
+        row.put("age", Parameter.from(source.getAge()));
+        return row;
+    }
 }
 ----
 

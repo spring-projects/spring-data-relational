@@ -10,21 +10,21 @@ Defining such a query is a matter of declaring a method on the repository interf
 ----
 interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Long> {
 
-  Flux<Person> findByFirstname(String firstname);                                   <1>
+    Flux<Person> findByFirstname(String firstname);                                   <1>
 
-  Flux<Person> findByFirstname(Publisher<String> firstname);                        <2>
+    Flux<Person> findByFirstname(Publisher<String> firstname);                        <2>
 
-  Flux<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <3>
+    Flux<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <3>
 
-  Mono<Person> findByFirstnameAndLastname(String firstname, String lastname);       <4>
+    Mono<Person> findByFirstnameAndLastname(String firstname, String lastname);       <4>
 
-  Mono<Person> findFirstByLastname(String lastname);                                <5>
+    Mono<Person> findFirstByLastname(String lastname);                                <5>
 
-  @Query("SELECT * FROM person WHERE lastname = :lastname")
-  Flux<Person> findByLastname(String lastname);                                     <6>
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
+    Flux<Person> findByLastname(String lastname);                                     <6>
 
-  @Query("SELECT firstname, lastname FROM person WHERE lastname = $1")
-  Mono<Person> findFirstByLastname(String lastname);                                <7>
+    @Query("SELECT firstname, lastname FROM person WHERE lastname = $1")
+    Mono<Person> findFirstByLastname(String lastname);                                <7>
 }
 ----
 
@@ -147,11 +147,11 @@ Using keywords from the preceding table can be used in conjunction with `deleteâ
 ----
 interface ReactivePersonRepository extends ReactiveSortingRepository<Person, String> {
 
-  Mono<Integer> deleteByLastname(String lastname);            <1>
+    Mono<Integer> deleteByLastname(String lastname);            <1>
 
-  Mono<Void> deletePersonByLastname(String lastname);         <2>
+    Mono<Void> deletePersonByLastname(String lastname);         <2>
 
-  Mono<Boolean> deletePersonByLastname(String lastname);      <3>
+    Mono<Boolean> deletePersonByLastname(String lastname);      <3>
 }
 ----
 
@@ -192,8 +192,8 @@ The following example shows how to use `@Query` to declare a query method:
 ----
 interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
-  @Query("select firstName, lastName from User u where u.emailAddress = :email")
-  Flux<User> findByEmailAddress(@Param("email") String email);
+    @Query("select firstName, lastName from User u where u.emailAddress = :email")
+    Flux<User> findByEmailAddress(@Param("email") String email);
 }
 ----
 

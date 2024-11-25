@@ -41,20 +41,20 @@ Then enter a project and a package name, such as `org.spring.r2dbc.example`.
 ----
 <dependencies>
 
-  <!-- other dependency elements omitted -->
+    <!-- other dependency elements omitted -->
 
-  <dependency>
-    <groupId>org.springframework.data</groupId>
-    <artifactId>spring-data-r2dbc</artifactId>
-    <version>{version}</version>
-  </dependency>
+    <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-r2dbc</artifactId>
+        <version>{version}</version>
+    </dependency>
 
-  <!-- a R2DBC driver -->
-  <dependency>
-    <groupId>io.r2dbc</groupId>
-    <artifactId>r2dbc-h2</artifactId>
-    <version>x.y.z</version>
-  </dependency>
+    <!-- a R2DBC driver -->
+    <dependency>
+        <groupId>io.r2dbc</groupId>
+        <artifactId>r2dbc-h2</artifactId>
+        <version>x.y.z</version>
+    </dependency>
 
 </dependencies>
 ----
@@ -71,11 +71,11 @@ Then enter a project and a package name, such as `org.spring.r2dbc.example`.
 [source,xml]
 ----
 <repositories>
-  <repository>
-    <id>spring-milestone</id>
-    <name>Spring Maven MILESTONE Repository</name>
-    <url>https://repo.spring.io/milestone</url>
-  </repository>
+    <repository>
+        <id>spring-milestone</id>
+        <name>Spring Maven MILESTONE Repository</name>
+        <url>https://repo.spring.io/milestone</url>
+    </repository>
 </repositories>
 ----
 
@@ -100,10 +100,11 @@ Next, you need to create a table structure in your database, as follows:
 
 [source,sql]
 ----
-CREATE TABLE person
-  (id VARCHAR(255) PRIMARY KEY,
-   name VARCHAR(255),
-   age INT);
+CREATE TABLE person(
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255),
+    age INT
+);
 ----
 
 You also need a main application to run, as follows:
@@ -117,10 +118,11 @@ When you run the main program, the preceding examples produce output similar to 
 
 [source]
 ----
-2018-11-28 10:47:03,893 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person
-  (id VARCHAR(255) PRIMARY KEY,
-   name VARCHAR(255),
-   age INT)]
+2018-11-28 10:47:03,893 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person(
+     id VARCHAR(255) PRIMARY KEY,
+     name VARCHAR(255),
+     age INT
+ )]
 2018-11-28 10:47:04,074 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
 2018-11-28 10:47:04,092 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
 2018-11-28 10:47:04,436  INFO        org.spring.r2dbc.example.R2dbcApp:  43 - Person [id='joe', name='Joe', age=34]
@@ -155,11 +157,11 @@ The following example shows an example of using Java-based bean metadata to regi
 @Configuration
 public class ApplicationConfiguration extends AbstractR2dbcConfiguration {
 
-  @Override
-  @Bean
-  public ConnectionFactory connectionFactory() {
-    return …
-  }
+    @Override
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        return …
+    }
 }
 ----
 

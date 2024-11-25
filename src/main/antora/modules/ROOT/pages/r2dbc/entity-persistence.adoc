@@ -189,10 +189,10 @@ include::partial$optimistic-locking.adoc[]
 @Table
 class Person {
 
-  @Id Long id;
-  String firstname;
-  String lastname;
-  @Version Long version;
+    @Id Long id;
+    String firstname;
+    String lastname;
+    @Version Long version;
 }
 
 R2dbcEntityTemplate template = …;
