@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import static org.springframework.data.repository.util.ClassUtils.*;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
 
@@ -90,7 +88,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 		this.mappingContext = mappingContext;
 
-		if (hasParameterOfType(method, Pageable.class)) {
+		if (ReflectionUtils.hasParameterOfType(method, Pageable.class)) {
 
 			TypeInformation<?> returnType = TypeInformation.fromReturnTypeOf(method);
 
@@ -111,7 +109,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 						method.toString()));
 			}
 
-			if (hasParameterOfType(method, Sort.class)) {
+			if (ReflectionUtils.hasParameterOfType(method, Sort.class)) {
 				throw new IllegalStateException(String.format("Method must not have Pageable *and* Sort parameter; "
 						+ "Use sorting capabilities on Pageable instead; Offending method: %s", method.toString()));
 			}
