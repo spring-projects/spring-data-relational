@@ -18,11 +18,11 @@ For example, the following listener gets invoked before an aggregate gets saved:
 @Bean
 ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 
-	return event -> {
+    return event -> {
 
-		Object entity = event.getEntity();
-		LOG.info("{} is getting saved.", entity);
-	};
+        Object entity = event.getEntity();
+        LOG.info("{} is getting saved.", entity);
+    };
 }
 ----
 
@@ -33,10 +33,10 @@ Callback methods will only get invoked for events related to the domain type and
 ----
 class PersonLoadListener extends AbstractRelationalEventListener<Person> {
 
-	@Override
-	protected void onAfterLoad(AfterLoadEvent<Person> personLoad) {
+    @Override
+    protected void onAfterLoad(AfterLoadEvent<Person> personLoad) {
 		LOG.info(personLoad.getEntity());
-	}
+    }
 }
 ----
 

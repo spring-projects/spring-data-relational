@@ -118,8 +118,8 @@ If you want a completely different way of naming these back references you may i
 [source,java]
 ----
 class Person {
-	@Id long id;
-	AggregateReference<Person, Long> bestFriend;
+    @Id long id;
+    AggregateReference<Person, Long> bestFriend;
 }
 
 // ...
