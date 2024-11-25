@@ -66,11 +66,12 @@ The table of the referenced entity is expected to have an additional column with
 The table of the referenced entity is expected to have two additional columns: One named based on the referencing entity for the foreign key (see <<jdbc.entity-persistence.types.backrefs>>) and one with the same name and an additional `_key` suffix for the map key.
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`. The same additional columns are expected and the names used can be customized in the same way.
-
++
 For `List`, `Set`, and `Map` naming of the back reference can be controlled by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentEntity<?> owner)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
 Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`.
 Specifying a key column for a `Set` has no effect.
 
+* Types for which you registered suitable xref:#mapping.explicit.converters[custom converters].
 
 
 [[mapping.usage.annotations]]
@@ -131,8 +132,6 @@ p1.bestFriend = AggregateReference.to(p2.id);
 
 You should not include attributes in your entities to hold the actual value of a back reference, nor of the key column of maps or lists.
 If you want these value to be available in your domain model we recommend to do this in a `AfterConvertCallback` and store the values in transient values.
-
-* Types for which you registered suitable [[jdbc.custom-converters, custom conversions]].
 
 :mapped-collection: true
 :embedded-entities: true
