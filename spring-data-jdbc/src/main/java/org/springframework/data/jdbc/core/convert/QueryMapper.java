@@ -381,10 +381,12 @@ public class QueryMapper {
 	 */
 	private JdbcValue getWriteValue(RelationalPersistentProperty property, Object value) {
 
+		Class<?> columnType = converter.getColumnType(property);
+
 		return converter.writeJdbcValue( //
 				value, //
-				converter.getColumnType(property), //
-				converter.getTargetSqlType(property) //
+		        columnType, //
+				converter.getTargetSqlType(columnType) //
 		);
 	}
 
