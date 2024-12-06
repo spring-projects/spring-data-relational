@@ -16,9 +16,13 @@
 package org.springframework.data.relational.core.query;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.function.Function;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -28,6 +32,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Zhengyu Wu
  * @since 2.0
  */
 public interface CriteriaDefinition {
@@ -139,17 +144,89 @@ public interface CriteriaDefinition {
 
 	enum Comparator {
 		INITIAL(""), EQ("="), NEQ("!="), BETWEEN("BETWEEN"), NOT_BETWEEN("NOT BETWEEN"), LT("<"), LTE("<="), GT(">"), GTE(
-				">="), IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), LIKE(
-						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
+				">="), IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), LIKE("LIKE"), NOT_LIKE(
+						"NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE"), CUSTOM("CUSTOM");
 
 		private final String comparator;
+		private Function<Object, String> customRenderValueFunc = Object::toString;
+		private String customComparator = "";
 
 		Comparator(String comparator) {
 			this.comparator = comparator;
 		}
 
+		Comparator setCustomComparator(String customComparator, Function<Object, String> customRenderValueFunc) {
+			if (this == CUSTOM) {
+				this.customComparator = customComparator;
+				this.customRenderValueFunc = customRenderValueFunc;
+			} else {
+				throw new UnsupportedOperationException("Only CUSTOM comparator can be customized.");
+			}
+			return this;
+		}
+
 		public String getComparator() {
+			if (this == CUSTOM) {
+				if (customComparator.isEmpty()) {
+					throw new UnsupportedOperationException("CUSTOM comparator must be customized.");
+				}
+				return customComparator;
+			}
 			return comparator;
 		}
+
+		private static String renderValue(@Nullable Object value) {
+
+			if (value instanceof Number) {
+				return value.toString();
+			}
+
+			if (value instanceof Collection) {
+
+				StringJoiner joiner = new StringJoiner(", ");
+				((Collection<?>) value).forEach(o -> joiner.add(renderValue(o)));
+				return joiner.toString();
+			}
+
+			if (value != null) {
+				return String.format("'%s'", value);
+			}
+
+			return "null";
+		}
+
+		public String render(Object value) {
+			StringBuilder stringBuilder = new StringBuilder();
+			switch (this) {
+				case BETWEEN:
+				case NOT_BETWEEN:
+					if (value instanceof Pair<?, ?> pair) {
+						stringBuilder.append(pair.getFirst()).append(" AND ").append(pair.getSecond());
+					} else {
+						throw new IllegalArgumentException("Value must be a Pair");
+					}
+					break;
+
+				case IS_NULL:
+				case IS_NOT_NULL:
+				case IS_TRUE:
+				case IS_FALSE:
+					break;
+
+				case IN:
+				case NOT_IN:
+					stringBuilder.append(" (").append(renderValue(value)).append(')');
+					break;
+				case CUSTOM:
+					stringBuilder.append(' ').append(customRenderValueFunc.apply(value));
+					break;
+
+				default:
+					stringBuilder.append(' ').append(renderValue(value));
+			}
+			return stringBuilder.toString();
+		}
+
 	}
+
 }
