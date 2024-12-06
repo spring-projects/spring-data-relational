@@ -21,7 +21,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
+import java.util.Objects;
+import java.util.function.Function;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -52,6 +53,7 @@ import org.springframework.util.Assert;
  * @author Oliver Drotbohm
  * @author Roman Chigvintsev
  * @author Jens Schauder
+ * @author Zhengyu Wu
  * @since 2.0
  */
 public class Criteria implements CriteriaDefinition {
@@ -456,47 +458,8 @@ public class Criteria implements CriteriaDefinition {
 		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
 				.append(criteria.getComparator().getComparator());
 
-		switch (criteria.getComparator()) {
-			case BETWEEN:
-			case NOT_BETWEEN:
-				Pair<Object, Object> pair = (Pair<Object, Object>) criteria.getValue();
-				stringBuilder.append(' ').append(pair.getFirst()).append(" AND ").append(pair.getSecond());
-				break;
-
-			case IS_NULL:
-			case IS_NOT_NULL:
-			case IS_TRUE:
-			case IS_FALSE:
-				break;
-
-			case IN:
-			case NOT_IN:
-				stringBuilder.append(" (").append(renderValue(criteria.getValue())).append(')');
-				break;
-
-			default:
-				stringBuilder.append(' ').append(renderValue(criteria.getValue()));
-		}
-	}
-
-	private static String renderValue(@Nullable Object value) {
-
-		if (value instanceof Number) {
-			return value.toString();
-		}
-
-		if (value instanceof Collection) {
-
-			StringJoiner joiner = new StringJoiner(", ");
-			((Collection<?>) value).forEach(o -> joiner.add(renderValue(o)));
-			return joiner.toString();
-		}
-
-		if (value != null) {
-			return String.format("'%s'", value);
-		}
-
-		return "null";
+		String renderValue = criteria.getComparator().render(criteria.getValue());
+		stringBuilder.append(renderValue);
 	}
 
 	/**
@@ -630,6 +593,8 @@ public class Criteria implements CriteriaDefinition {
 		 * @return a new {@link Criteria} object
 		 */
 		Criteria isFalse();
+
+		Criteria custom(String comparator, Function<Object, String> renderFunc, Object value);
 	}
 
 	/**
@@ -787,6 +752,11 @@ public class Criteria implements CriteriaDefinition {
 		@Override
 		public Criteria isFalse() {
 			return createCriteria(Comparator.IS_FALSE, false);
+		}
+
+		@Override
+		public Criteria custom(String comparator, Function<Object, String> renderFunc, Object value) {
+			return createCriteria(Comparator.CUSTOM.setCustomComparator(comparator, renderFunc), value);
 		}
 
 		protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {

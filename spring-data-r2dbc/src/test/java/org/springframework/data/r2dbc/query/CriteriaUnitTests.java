@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.query.Criteria.*;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Zhengyu Wu
  */
 class CriteriaUnitTests {
 
@@ -290,4 +293,17 @@ class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_FALSE);
 	}
+
+	@Test
+	void shouldBuildCustomCriteria() {
+		List<String> values = List.of("bar", "baz", "qux");
+		Criteria criteria = where("foo").custom("@>",
+				value -> "ARRAY[" + values.stream().map(s -> "'" + s + "'").collect(Collectors.joining(",")) + "]",
+				List.of("bar", "baz", "qux"));
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isEqualTo(Comparator.CUSTOM);
+		assertThat(criteria.toString()).isEqualTo("foo @> ARRAY['bar','baz','qux']");
+	}
+
 }
