@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -117,6 +118,22 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		mappingContext.setManagedTypes(jdbcManagedTypes);
 
 		return mappingContext;
+	}
+
+	/**
+	 * Creates a {@link IdGeneratingBeforeSaveCallback} bean using the configured
+	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)} and
+	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
+	 *
+	 * @return must not be {@literal null}.
+	 */
+	@Bean
+	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
+		JdbcMappingContext mappingContext,
+		NamedParameterJdbcOperations operations,
+		Dialect dialect
+	) {
+		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
 	}
 
 	/**

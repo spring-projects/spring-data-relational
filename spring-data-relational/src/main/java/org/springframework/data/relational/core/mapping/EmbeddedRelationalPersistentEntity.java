@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.mapping;
 
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
+import java.util.Optional;
 
 import org.springframework.core.env.Environment;
 import org.springframework.data.mapping.*;
@@ -31,6 +32,7 @@ import org.springframework.lang.Nullable;
  * Embedded entity extension for a {@link Embedded entity}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 3.2
  */
 class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntity<T> {
@@ -52,6 +54,11 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	@Override
 	public SqlIdentifier getIdColumn() {
 		throw new MappingException("Embedded entity does not have an id column");
+	}
+
+	@Override
+	public Optional<String> getIdTargetSequence() {
+		return Optional.empty();
 	}
 
 	@Override
