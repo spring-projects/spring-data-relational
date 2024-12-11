@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -37,6 +39,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,9 +52,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.*;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.domain.ScrollPosition;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -64,8 +79,8 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
-import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Sequence;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -104,6 +119,8 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+
+	@Autowired ProvidedIdEntityRepository providedIdEntityRepository;
 	@Autowired MyEventListener eventListener;
 	@Autowired RootRepository rootRepository;
 	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
@@ -206,6 +223,18 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllById(asList(entity.getIdProp(), other.getIdProp())))//
 				.extracting(DummyEntity::getIdProp)//
 				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
+
+	@Test // DATAJDBC-611
+	public void testDuplicateKeyExceptionIsThrownInCaseOfUniqueKeyViolation() {
+
+		// given.
+		ProvidedIdEntity first = ProvidedIdEntity.newInstance(1L, "name");
+		ProvidedIdEntity second = ProvidedIdEntity.newInstance(1L, "other");
+
+		// when/then
+		Assertions.assertThatCode(() -> providedIdEntityRepository.save(first)).doesNotThrowAnyException();
+		Assertions.assertThatThrownBy(() -> providedIdEntityRepository.save(second)).isInstanceOf(DuplicateKeyException.class);
 	}
 
 	@Test // DATAJDBC-97
@@ -1436,6 +1465,10 @@ public class JdbcRepositoryIntegrationTests {
 		String getName();
 	}
 
+	interface ProvidedIdEntityRepository extends CrudRepository<ProvidedIdEntity, Long> {
+
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {
 
 		@Lock(LockMode.PESSIMISTIC_WRITE)
@@ -1541,6 +1574,11 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		ProvidedIdEntityRepository providedIdEntityRepository() {
+			return factory.getRepository(ProvidedIdEntityRepository.class);
 		}
 
 		@Bean
@@ -1883,6 +1921,37 @@ public class JdbcRepositoryIntegrationTests {
 
 		public String getName() {
 			return name;
+		}
+	}
+
+	static class ProvidedIdEntity implements Persistable<Long> {
+
+		@Id
+		private final Long id;
+
+		private String name;
+
+		@Transient
+		private boolean isNew;
+
+		private ProvidedIdEntity(Long id, String name, boolean isNew) {
+			this.id = id;
+			this.name = name;
+			this.isNew = isNew;
+		}
+
+		private static ProvidedIdEntity newInstance(Long id, String name) {
+			return new ProvidedIdEntity(id, name, true);
+		}
+
+		@Override
+		public Long getId() {
+			return id;
+		}
+
+		@Override
+		public boolean isNew() {
+			return isNew;
 		}
 	}
 
