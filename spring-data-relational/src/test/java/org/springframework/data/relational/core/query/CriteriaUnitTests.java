@@ -22,7 +22,6 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
@@ -296,5 +295,32 @@ class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.IS_FALSE);
 		assertThat(criteria.getValue()).isEqualTo(false);
+	}
+
+	@Test // GH-1960
+	void identicallyCreatedCriteriaAreEqual() {
+
+		Criteria c1 = Criteria.where("status").in("PUBLISHED", "DRAFT");
+		Criteria c2 = Criteria.where("status").in("PUBLISHED", "DRAFT");
+
+		assertThat(c1).isEqualTo(c2);
+		assertThat(c1.hashCode()).isEqualTo(c2.hashCode());
+	}
+
+	@Test // GH-1960
+	void notIdenticallyCreatedCriteriaAreNotEqual() {
+
+		Criteria[] criteria = new Criteria[] { Criteria.where("status").is("PUBLISHED"), //
+				Criteria.where("statusx").is("PUBLISHED"), //
+				Criteria.where("status").greaterThan("PUBLISHED"), //
+				Criteria.where("status").is("PUBLISHEDx") };
+
+		for (int i = 0; i < criteria.length - 1; i++) {
+			for (int j = i + 1; j < criteria.length; j++) {
+
+				assertThat(criteria[i]).isNotEqualTo(criteria[j]);
+				assertThat(criteria[i].hashCode()).isNotEqualTo(criteria[j].hashCode());
+			}
+		}
 	}
 }

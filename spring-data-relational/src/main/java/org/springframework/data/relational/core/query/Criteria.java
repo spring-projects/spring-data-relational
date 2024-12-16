@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -388,6 +389,28 @@ public class Criteria implements CriteriaDefinition {
 		unroll(this, builder);
 
 		return builder.toString();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+
+		Criteria criteria = (Criteria) o;
+		return ignoreCase == criteria.ignoreCase //
+				&& Objects.equals(previous, criteria.previous) //
+				&& combinator == criteria.combinator //
+				&& Objects.equals(group, criteria.group) //
+				&& Objects.equals(column, criteria.column) //
+				&& comparator == criteria.comparator //
+				&& Objects.equals(value, criteria.value);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(previous, combinator, group, column, comparator, value, ignoreCase);
 	}
 
 	private void unroll(CriteriaDefinition criteria, StringBuilder stringBuilder) {
