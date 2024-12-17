@@ -46,9 +46,11 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
+ * @author Yunyoung LEE
+ * @author Nikita Konev
  */
 @IntegrationTest
-public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
+class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
@@ -66,7 +68,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	@Autowired Dialect dialect;
 
 	@Test // DATAJDBC-111
-	public void savesAnEntity() throws SQLException {
+	void savesAnEntity() throws SQLException {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -83,7 +85,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void saveAndLoadAnEntity() {
+	void saveAndLoadAnEntity() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -99,7 +101,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void findAllFindsAllEntities() {
+	void findAllFindsAllEntities() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
@@ -112,14 +114,14 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void findByIdReturnsEmptyWhenNoneFound() {
+	void findByIdReturnsEmptyWhenNoneFound() {
 
 		// NOT saving anything, so DB is empty
 		assertThat(repository.findById(-1L)).isEmpty();
 	}
 
 	@Test // DATAJDBC-111
-	public void update() {
+	void update() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -139,7 +141,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void updateMany() {
+	void updateMany() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
@@ -163,7 +165,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void deleteById() {
+	void deleteById() {
 
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
@@ -177,7 +179,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void deleteByEntity() {
+	void deleteByEntity() {
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
@@ -190,7 +192,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void deleteByList() {
+	void deleteByList() {
 
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
@@ -204,7 +206,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void deleteAll() {
+	void deleteAll() {
 
 		repository.save(createDummyEntity());
 		repository.save(createDummyEntity());
@@ -217,52 +219,53 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
-    @Test // DATAJDBC-551
-    public void deleteByTest() {
+	@Test // GH-771
+	void deleteBy() {
 
-        DummyEntity one = repository.save(createDummyEntity("root1"));
-        DummyEntity two = repository.save(createDummyEntity("root2"));
-        DummyEntity three = repository.save(createDummyEntity("root3"));
+		DummyEntity one = repository.save(createDummyEntity("root1"));
+		DummyEntity two = repository.save(createDummyEntity("root2"));
+		DummyEntity three = repository.save(createDummyEntity("root3"));
 
-        assertThat(repository.deleteByTest(two.getTest())).isEqualTo(1);
+		assertThat(repository.deleteByTest(two.getTest())).isEqualTo(1);
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getId) //
-                .containsExactlyInAnyOrder(one.getId(), three.getId());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getId) //
+				.containsExactlyInAnyOrder(one.getId(), three.getId());
 
-        Long count = template.queryForObject("select count(1) from dummy_entity2", Collections.emptyMap(), Long.class);
-        assertThat(count).isEqualTo(4);
+		Long count = template.queryForObject("select count(1) from dummy_entity2", Collections.emptyMap(), Long.class);
+		assertThat(count).isEqualTo(4);
 
-    }
+	}
 
-    private static DummyEntity createDummyEntity() {
-        return createDummyEntity("root");
-    }
+	private static DummyEntity createDummyEntity() {
+		return createDummyEntity("root");
+	}
 
-    private static DummyEntity createDummyEntity(String test) {
-        DummyEntity entity = new DummyEntity();
-        entity.setTest(test);
+	private static DummyEntity createDummyEntity(String test) {
 
-        final Embeddable embeddable = new Embeddable();
-        embeddable.setTest("embedded");
+		DummyEntity entity = new DummyEntity();
+		entity.setTest(test);
 
-        final DummyEntity2 dummyEntity21 = new DummyEntity2();
-        dummyEntity21.setTest("entity1");
+		final Embeddable embeddable = new Embeddable();
+		embeddable.setTest("embedded");
 
-        final DummyEntity2 dummyEntity22 = new DummyEntity2();
-        dummyEntity22.setTest("entity2");
+		final DummyEntity2 dummyEntity21 = new DummyEntity2();
+		dummyEntity21.setTest("entity1");
 
-        embeddable.getList().add(dummyEntity21);
-        embeddable.getList().add(dummyEntity22);
+		final DummyEntity2 dummyEntity22 = new DummyEntity2();
+		dummyEntity22.setTest("entity2");
 
-        entity.setEmbeddable(embeddable);
+		embeddable.getList().add(dummyEntity21);
+		embeddable.getList().add(dummyEntity22);
 
-        return entity;
-    }
+		entity.setEmbeddable(embeddable);
+
+		return entity;
+	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-        int deleteByTest(String test);
-    }
+		int deleteByTest(String test);
+	}
 
 	private static class DummyEntity {
 		@Column("ID")
@@ -298,8 +301,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 	}
 
 	private static class Embeddable {
-		@MappedCollection(idColumn = "DUMMY_ID", keyColumn = "ORDER_KEY")
-		List<DummyEntity2> list = new ArrayList<>();
+		@MappedCollection(idColumn = "DUMMY_ID", keyColumn = "ORDER_KEY") List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
 

@@ -42,9 +42,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Yunyoung LEE
+ * @author Nikita Konev
  */
 @IntegrationTest
-public class JdbcRepositoryWithCollectionsIntegrationTests {
+class JdbcRepositoryWithCollectionsIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
@@ -57,7 +59,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void saveAndLoadEmptySet() {
+	void saveAndLoadEmptySet() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -71,7 +73,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void saveAndLoadNonEmptySet() {
+	void saveAndLoadNonEmptySet() {
 
 		Element element1 = new Element();
 		Element element2 = new Element();
@@ -94,7 +96,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void findAllLoadsCollection() {
+	void findAllLoadsCollection() {
 
 		Element element1 = new Element();
 		Element element2 = new Element();
@@ -117,7 +119,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 
 	@Test // DATAJDBC-113
 	@EnabledOnFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
-	public void updateSet() {
+	void updateSet() {
 
 		Element element1 = createElement("one");
 		Element element2 = createElement("two");
@@ -154,7 +156,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void deletingWithSet() {
+	void deletingWithSet() {
 
 		Element element1 = createElement("one");
 		Element element2 = createElement("two");
@@ -173,8 +175,8 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		assertThat(count).isEqualTo(0);
 	}
 
-    @Test // DATAJDBC-551
-    public void deleteByName() {
+    @Test // GH-771
+    void deleteByName() {
 
         Element element1 = createElement("one");
         Element element2 = createElement("two");

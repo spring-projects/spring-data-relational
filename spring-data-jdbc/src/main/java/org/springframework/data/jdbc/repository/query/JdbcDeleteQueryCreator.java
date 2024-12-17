@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import java.util.stream.Stream;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
+import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -48,102 +49,110 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Implementation of {@link RelationalQueryCreator} that creates {@link Stream} of deletion {@link ParametrizedQuery}
+ * Implementation of {@link RelationalQueryCreator} that creates {@link List} of deletion {@link ParametrizedQuery}
  * from a {@link PartTree}.
  *
  * @author Yunyoung LEE
- * @since 2.3
+ * @author Nikita Konev
+ * @since 3.5
  */
-class JdbcDeleteQueryCreator extends RelationalQueryCreator<Stream<ParametrizedQuery>> {
+class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQuery>> {
 
-    private final RelationalMappingContext context;
-    private final QueryMapper queryMapper;
-    private final RelationalEntityMetadata<?> entityMetadata;
-    private final RenderContextFactory renderContextFactory;
+	private final RelationalMappingContext context;
+	private final QueryMapper queryMapper;
+	private final RelationalEntityMetadata<?> entityMetadata;
+	private final RenderContextFactory renderContextFactory;
 
-    /**
-     * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
-     * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
-     *
-     * @param context
-     * @param tree part tree, must not be {@literal null}.
-     * @param converter must not be {@literal null}.
-     * @param dialect must not be {@literal null}.
-     * @param entityMetadata relational entity metadata, must not be {@literal null}.
-     * @param accessor parameter metadata provider, must not be {@literal null}.
-     */
-    JdbcDeleteQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-                           RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
-        super(tree, accessor);
+	/**
+	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
+	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
+	 *
+	 * @param context
+	 * @param tree part tree, must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
+	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 */
+	JdbcDeleteQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
 
-        Assert.notNull(converter, "JdbcConverter must not be null");
-        Assert.notNull(dialect, "Dialect must not be null");
-        Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
+		super(tree, accessor);
 
-        this.context = context;
+		Assert.notNull(converter, "JdbcConverter must not be null");
+		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
 
-        this.entityMetadata = entityMetadata;
-        this.queryMapper = new QueryMapper(dialect, converter);
-        this.renderContextFactory = new RenderContextFactory(dialect);
-    }
+		this.context = context;
+		this.entityMetadata = entityMetadata;
+		this.queryMapper = new QueryMapper(converter);
+		this.renderContextFactory = new RenderContextFactory(dialect);
+	}
 
-    @Override
-    protected Stream<ParametrizedQuery> complete(@Nullable Criteria criteria, Sort sort) {
+	@Override
+	protected List<ParametrizedQuery> complete(@Nullable Criteria criteria, Sort sort) {
 
-        RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
-        Table table = Table.create(entityMetadata.getTableName());
-        MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
+		Table table = Table.create(entityMetadata.getTableName());
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-        SqlContext sqlContext = new SqlContext(entity);
+		SqlContext sqlContext = new SqlContext(entity);
 
-        Condition condition = criteria == null ? null
-                : queryMapper.getMappedObject(parameterSource, criteria, table, entity);
+		Condition condition = criteria == null ? null
+				: queryMapper.getMappedObject(parameterSource, criteria, table, entity);
 
-        // create select criteria query for subselect
-        SelectWhere selectBuilder = StatementBuilder.select(sqlContext.getIdColumn()).from(table);
-        Select select = condition == null ? selectBuilder.build() : selectBuilder.where(condition).build();
+		// create select criteria query for subselect
+		SelectWhere selectBuilder = StatementBuilder.select(sqlContext.getIdColumn()).from(table);
+		Select select = condition == null ? selectBuilder.build() : selectBuilder.where(condition).build();
 
-        // create delete relation queries
-        List<Delete> deleteChain = new ArrayList<>();
-        deleteRelations(deleteChain, entity, select);
+		// create delete relation queries
+		List<Delete> deleteChain = new ArrayList<>();
+		deleteRelations(deleteChain, entity, select);
 
-        // crate delete query
-        DeleteWhere deleteBuilder = StatementBuilder.delete(table);
-        Delete delete = condition == null ? deleteBuilder.build() : deleteBuilder.where(condition).build();
+		// crate delete query
+		DeleteWhere deleteBuilder = StatementBuilder.delete(table);
+		Delete delete = condition == null ? deleteBuilder.build() : deleteBuilder.where(condition).build();
 
-        deleteChain.add(delete);
+		deleteChain.add(delete);
 
-        SqlRenderer renderer = SqlRenderer.create(renderContextFactory.createRenderContext());
-        return deleteChain.stream().map(d -> new ParametrizedQuery(renderer.render(d), parameterSource));
-    }
+		SqlRenderer renderer = SqlRenderer.create(renderContextFactory.createRenderContext());
 
-    private void deleteRelations(List<Delete> deleteChain, RelationalPersistentEntity<?> entity, Select parentSelect) {
+		List<ParametrizedQuery> queries = new ArrayList<>(deleteChain.size());
+		for (Delete d : deleteChain) {
+			queries.add(new ParametrizedQuery(renderer.render(d), parameterSource));
+		}
 
-        for (PersistentPropertyPath<RelationalPersistentProperty> path : context
-                .findPersistentPropertyPaths(entity.getType(), p -> true)) {
+		return queries;
+	}
 
-            PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, path);
+	private void deleteRelations(List<Delete> deleteChain, RelationalPersistentEntity<?> entity, Select parentSelect) {
 
-            // prevent duplication on recursive call
-            if (path.getLength() > 1 && !extPath.getParentPath().isEmbedded()) {
-                continue;
-            }
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-            if (extPath.isEntity() && !extPath.isEmbedded()) {
+			AggregatePath aggregatePath = context.getAggregatePath(path);
 
-                SqlContext sqlContext = new SqlContext(extPath.getLeafEntity());
+			// prevent duplication on recursive call
+			if (path.getLength() > 1 && !aggregatePath.getParentPath().isEmbedded()) {
+				continue;
+			}
 
-                Condition inCondition = Conditions.in(sqlContext.getTable().column(extPath.getReverseColumnName()),
-                        parentSelect);
+			if (aggregatePath.isEntity() && !aggregatePath.isEmbedded()) {
 
-                Select select = StatementBuilder
-                        .select(sqlContext.getTable().column(extPath.getIdDefiningParentPath().getIdColumnName())
-                                // sqlContext.getIdColumn()
-                        ).from(sqlContext.getTable()).where(inCondition).build();
-                deleteRelations(deleteChain, extPath.getLeafEntity(), select);
+				SqlContext sqlContext = new SqlContext(aggregatePath.getLeafEntity());
 
-                deleteChain.add(StatementBuilder.delete(sqlContext.getTable()).where(inCondition).build());
-            }
-        }
-    }
+				Condition inCondition = Conditions
+						.in(sqlContext.getTable().column(aggregatePath.getTableInfo().reverseColumnInfo().name()), parentSelect);
+
+				Select select = StatementBuilder.select( //
+						sqlContext.getTable().column(aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnName()) //
+				).from(sqlContext.getTable()) //
+						.where(inCondition) //
+						.build();
+				deleteRelations(deleteChain, aggregatePath.getLeafEntity(), select);
+
+				deleteChain.add(StatementBuilder.delete(sqlContext.getTable()).where(inCondition).build());
+			}
+		}
+	}
 }

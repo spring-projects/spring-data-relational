@@ -23,8 +23,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
-import java.util.stream.Stream;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -58,6 +58,8 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Diego Krupitza
  * @author Mikhail Polivakha
+ * @author Yunyoung LEE
+ * @author Nikita Konev
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -123,17 +125,23 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	@Override
+	@Nullable
 	public Object execute(Object[] values) {
 
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
 
-        if (tree.isDelete()) {
-            JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
-            return createDeleteQueries(accessor)
-                    .map(query -> execution.execute(query.getQuery(), query.getParameterSource()))
-                    .reduce((a, b) -> b);
-        }
+		if (tree.isDelete()) {
+			JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
+
+			List<ParametrizedQuery> queries = createDeleteQueries(accessor);
+			Object result = null;
+			for (ParametrizedQuery query : queries) {
+				result = execution.execute(query.getQuery(), query.getParameterSource(dialect.getLikeEscaper()));
+			}
+
+			return result;
+		}
 
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
 		ParametrizedQuery query = createQuery(accessor, processor.getReturnedType());
@@ -153,11 +161,13 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryExecution<?> queryExecution = getJdbcQueryExecution(extractor, rowMapper);
 
 		if (getQueryMethod().isSliceQuery()) {
+			//noinspection unchecked
 			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable());
 		}
 
 		if (getQueryMethod().isPageQuery()) {
 
+			//noinspection unchecked
 			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable(),
 					() -> {
 
@@ -186,14 +196,14 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
-    private Stream<ParametrizedQuery> createDeleteQueries(RelationalParametersParameterAccessor accessor) {
+	private List<ParametrizedQuery> createDeleteQueries(RelationalParametersParameterAccessor accessor) {
 
-        RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
+		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 
-        JdbcDeleteQueryCreator queryCreator = new JdbcDeleteQueryCreator(context, tree, converter, dialect, entityMetadata,
-                accessor);
-        return queryCreator.createQuery();
-    }
+		JdbcDeleteQueryCreator queryCreator = new JdbcDeleteQueryCreator(context, tree, converter, dialect, entityMetadata,
+				accessor);
+		return queryCreator.createQuery();
+	}
 
 	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor,
 			Supplier<RowMapper<?>> rowMapper) {
