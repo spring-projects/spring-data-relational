@@ -189,6 +189,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>io.mockk</groupId>
+			<artifactId>mockk-jvm</artifactId>
+			<version>${mockk}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Testcontainers -->
 
 		<dependency>
@@ -238,6 +245,19 @@
 			<artifactId>HikariCP</artifactId>
 			<version>${hikari.version}</version>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- Kotlin extension -->
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-reflect</artifactId>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 
