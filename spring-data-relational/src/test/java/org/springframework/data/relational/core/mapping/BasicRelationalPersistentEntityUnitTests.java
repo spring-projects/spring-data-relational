@@ -58,6 +58,34 @@ class BasicRelationalPersistentEntityUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
 	}
 
+	@Test
+	void entityWithNotargetSequence() {
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(DummySubEntity.class);
+
+		assertThat(entity.getIdTargetSequence()).isEmpty();
+	}
+
+	@Test
+	void determineSequenceName() {
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequence.class);
+
+		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("my_seq");
+	}
+
+	@Test
+	void determineSequenceNameFromValue() {
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequenceValueAlias.class);
+
+		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("my_seq");
+	}
+
+	@Test
+	void determineSequenceNameWithSchemaSpecified() {
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequenceAndSchema.class);
+
+		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("public.my_seq");
+	}
+
 	@Test // DATAJDBC-294
 	void considerIdColumnName() {
 
@@ -199,6 +227,24 @@ class BasicRelationalPersistentEntityUnitTests {
 	static class DummySubEntity {
 		@Id
 		@Column("renamedId") Long id;
+	}
+
+	@Table("entity_with_sequence")
+	static class EntityWithSequence {
+		@Id
+		@TargetSequence(sequence = "my_seq") Long id;
+	}
+
+	@Table("entity_with_sequence_value_alias")
+	static class EntityWithSequenceValueAlias {
+		@Id
+		@Column("myId") @TargetSequence(value = "my_seq") Long id;
+	}
+
+	@Table("entity_with_sequence_and_schema")
+	static class EntityWithSequenceAndSchema {
+		@Id
+		@Column("myId") @TargetSequence(sequence = "my_seq", schema = "public") Long id;
 	}
 
 	@Table()

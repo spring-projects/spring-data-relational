@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
 
 /**
@@ -35,8 +36,10 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
-	private final Set<SqlIdentifier> identifiers = new HashSet<>();
+	private final Set<SqlIdentifier> sqlIdentifiers = new HashSet<>();
 	private final Map<String, Object> namesToValues = new HashMap<>();
+
+	private Pair<SqlIdentifier, Object> idToValue;
 
 	@Override
 	public boolean hasValue(String paramName) {
@@ -54,28 +57,32 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 	}
 
 	Set<SqlIdentifier> getIdentifiers() {
-		return Collections.unmodifiableSet(identifiers);
+		return Collections.unmodifiableSet(sqlIdentifiers);
 	}
 
 	void addValue(SqlIdentifier name, Object value) {
 		addValue(name, value, Integer.MIN_VALUE);
 	}
 
-	void addValue(SqlIdentifier identifier, Object value, int sqlType) {
+	void addValue(SqlIdentifier sqlIdentifier, Object value, int sqlType) {
 
-		identifiers.add(identifier);
-		String name = BindParameterNameSanitizer.sanitize(identifier.getReference());
+		sqlIdentifiers.add(sqlIdentifier);
+		String name = prepareSqlIdentifierName(sqlIdentifier);
 		namesToValues.put(name, value);
 		registerSqlType(name, sqlType);
 	}
 
-	void addAll(SqlIdentifierParameterSource others) {
+    void addAll(SqlIdentifierParameterSource others) {
 
 		for (SqlIdentifier identifier : others.getIdentifiers()) {
 
-			String name = BindParameterNameSanitizer.sanitize( identifier.getReference());
+			String name = prepareSqlIdentifierName(identifier);
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
+	}
+
+	private static String prepareSqlIdentifierName(SqlIdentifier sqlIdentifier) {
+		return BindParameterNameSanitizer.sanitize(sqlIdentifier.getReference());
 	}
 
 	int size() {
