@@ -15,15 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
-import org.springframework.dao.OptimisticLockingFailureException;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
-
-import java.util.List;
 
 /**
  * Executes an {@link MutableAggregateChange}.
@@ -37,11 +37,13 @@ class AggregateChangeExecutor {
 
 	private final JdbcConverter converter;
 	private final DataAccessStrategy accessStrategy;
+	private final PersistenceExceptionTranslator jdbcExceptionTranslator;
 
 	AggregateChangeExecutor(JdbcConverter converter, DataAccessStrategy accessStrategy) {
 
 		this.converter = converter;
 		this.accessStrategy = accessStrategy;
+		this.jdbcExceptionTranslator = new JdbcExceptionTranslator();
 	}
 
 	/**
@@ -110,12 +112,15 @@ class AggregateChangeExecutor {
 			} else {
 				throw new RuntimeException("unexpected action");
 			}
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 
-			if (e instanceof OptimisticLockingFailureException) {
-				throw e;
-			}
-			throw new DbActionExecutionException(action, e);
+			throw Optional
+					.ofNullable(jdbcExceptionTranslator.translateExceptionIfPossible(e))
+					.map(it -> (RuntimeException) it)
+					.orElseGet(() -> {
+						e.addSuppressed(new DbActionExecutionException(action, e));
+						return e;
+					});
 		}
 	}
 }
