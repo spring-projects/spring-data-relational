@@ -40,10 +40,6 @@ class SqlContext {
 		this.table = Table.create(entity.getQualifiedTableName());
 	}
 
-	Column getIdColumn() {
-		return table.column(entity.getIdColumn());
-	}
-
 	Column getVersionColumn() {
 		return table.column(entity.getRequiredVersionProperty().getColumnName());
 	}
@@ -60,11 +56,20 @@ class SqlContext {
 	}
 
 	Column getColumn(AggregatePath path) {
+
 		AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
 		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 
-	Column getReverseColumn(AggregatePath path) {
-		return getTable(path).column(path.getTableInfo().reverseColumnInfo().name()).as(path.getTableInfo().reverseColumnInfo().alias());
+	/**
+	 * A token reverse column, used in selects to identify, if an entity is present or {@literal null}.
+	 * 
+	 * @param path must not be null.
+	 * @return a {@literal Column} that is part of the effective primary key for the given path.
+	 */
+	Column getAnyReverseColumn(AggregatePath path) {
+
+		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().reverseColumnInfos().any();
+		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 }
