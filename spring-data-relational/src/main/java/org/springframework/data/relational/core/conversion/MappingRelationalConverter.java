@@ -690,7 +690,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 					: getConversions().getCustomWriteTarget(type.getType());
 
 			if (customWriteTarget.isPresent()) {
-				return getConversionService().convert(value, customWriteTarget.get());
+				return getPotentiallyConvertedSimpleWrite(getConversionService().convert(value, customWriteTarget.get()));
 			}
 
 			if (TypeInformation.OBJECT != type) {
@@ -722,18 +722,13 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		if (getMappingContext().hasPersistentEntityFor(value.getClass())) {
 
-			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());
-
-			if (persistentEntity != null) {
+			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getRequiredPersistentEntity(value.getClass());
 
 				Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
 				return writeValue(id, type);
-			}
 		}
 
-		return
-
-		getConversionService().convert(value, type.getType());
+		return getConversionService().convert(value, type.getType());
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
