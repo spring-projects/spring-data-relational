@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import java.util.Objects;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -27,6 +25,7 @@ import org.springframework.util.Assert;
  * @param <ID> the type of the id of the referenced aggregate root.
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  * @since 1.0
  */
 public interface AggregateReference<T, ID> {
@@ -48,42 +47,15 @@ public interface AggregateReference<T, ID> {
 	 * @param <T>
 	 * @param <ID>
 	 */
-	class IdOnlyAggregateReference<T, ID> implements AggregateReference<T, ID> {
+	record IdOnlyAggregateReference<T, ID>(ID id) implements AggregateReference<T, ID> {
 
-		private final ID id;
-
-		public IdOnlyAggregateReference(ID id) {
-
+		public IdOnlyAggregateReference {
 			Assert.notNull(id, "Id must not be null");
-
-			this.id = id;
 		}
 
 		@Override
 		public ID getId() {
-			return id;
-		}
-
-		@Override
-		public boolean equals(@Nullable Object o) {
-
-			if (this == o)
-				return true;
-			if (o == null || getClass() != o.getClass())
-				return false;
-			IdOnlyAggregateReference<?, ?> that = (IdOnlyAggregateReference<?, ?>) o;
-			return id.equals(that.id);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(id);
-		}
-
-		@Override
-		public String toString() {
-
-			return "IdOnlyAggregateReference{" + "id=" + id + '}';
+			return id();
 		}
 	}
 }

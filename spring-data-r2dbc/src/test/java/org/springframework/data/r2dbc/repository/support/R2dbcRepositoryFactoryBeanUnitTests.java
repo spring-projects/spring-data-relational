@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.repository.support;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -26,6 +27,8 @@ import org.springframework.data.r2dbc.dialect.H2Dialect;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.spel.ReactiveExtensionAwareEvaluationContextProvider;
+import org.springframework.data.repository.query.ReactiveExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -56,7 +59,5 @@ class R2dbcRepositoryFactoryBeanUnitTests {
 
 	static class Person {}
 
-	interface PersonRepository extends R2dbcRepository<Person, String>
-
-	{}
+	interface PersonRepository extends R2dbcRepository<Person, String> {}
 }
