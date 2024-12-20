@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -64,6 +65,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Christoph Strobl
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -106,11 +108,11 @@ public class TestConfiguration {
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
-			JdbcConverter converter, Dialect dialect) {
+			JdbcConverter converter, Dialect dialect, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
 
 		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
 				template, new SqlParametersFactory(context, converter),
-				new InsertStrategyFactory(template, dialect)).create();
+				new InsertStrategyFactory(template, dialect), queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY)).create();
 	}
 
 	@Bean("jdbcMappingContext")

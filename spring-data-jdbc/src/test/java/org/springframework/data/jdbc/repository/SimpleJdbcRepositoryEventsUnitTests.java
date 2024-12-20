@@ -33,6 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -70,6 +71,7 @@ import org.springframework.util.ObjectUtils;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -95,7 +97,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations,
-				sqlParametersFactory, insertStrategyFactory));
+				sqlParametersFactory, insertStrategyFactory, QueryMappingConfiguration.EMPTY));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
