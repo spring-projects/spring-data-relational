@@ -25,7 +25,9 @@ import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -78,9 +80,15 @@ public class SqlParametersFactory {
 
 		if (IdValueSource.PROVIDED.equals(idValueSource)) {
 
-			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-			Object idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
-			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			PersistentPropertyPathAccessor<T> propertyPathAccessor = persistentEntity.getPropertyPathAccessor(instance);
+
+			AggregatePath.ColumnInfos columnInfos = context.getAggregatePath(persistentEntity).getTableInfo().idColumnInfos();
+			columnInfos.forEach((ap, __) -> {
+				Object idValue = propertyPathAccessor.getProperty(columnInfos.fullPath(ap).getRequiredPersistentPropertyPath());
+				RelationalPersistentProperty idProperty = ap.getRequiredLeafProperty();
+				addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			});
+
 		}
 		return parameterSource;
 	}
@@ -104,20 +112,40 @@ public class SqlParametersFactory {
 	 *
 	 * @param id the entity id. Must not be {@code null}.
 	 * @param domainType the type of the instance. Must not be {@code null}.
-	 * @param name the name to be used for the id parameter.
 	 * @return the {@link SqlIdentifierParameterSource} for the query. Guaranteed to not be {@code null}.
 	 * @since 2.4
 	 */
-	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType, SqlIdentifier name) {
+	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType) {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
-		addConvertedPropertyValue( //
-				parameterSource, //
-				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
-				id, //
-				name //
-		);
+		RelationalPersistentEntity<T> entity = getRequiredPersistentEntity(domainType);
+		RelationalPersistentProperty singleIdProperty = entity.getRequiredIdProperty();
+
+		if (singleIdProperty.isEntity()) {
+
+			RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
+			PersistentPropertyPathAccessor<Object> accessor = complexId.getPropertyPathAccessor(id);
+
+			context.getAggregatePath(entity).getTableInfo().idColumnInfos().forEach((ap, ci) -> {
+				Object idValue = accessor.getProperty(ap.getRequiredPersistentPropertyPath());
+
+				addConvertedPropertyValue( //
+						parameterSource, //
+						ap.getRequiredLeafProperty(), //
+						idValue, //
+						ci.name() //
+				);
+			});
+		} else {
+
+			addConvertedPropertyValue( //
+					parameterSource, //
+					singleIdProperty, //
+					id, //
+					singleIdProperty.getColumnName() //
+			);
+		}
 		return parameterSource;
 	}
 
@@ -133,9 +161,32 @@ public class SqlParametersFactory {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
-		addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
-				ids);
+		RelationalPersistentEntity<?> entity = context.getPersistentEntity(domainType);
+		RelationalPersistentProperty singleIdProperty = entity.getRequiredIdProperty();
 
+		if (singleIdProperty.isEntity()) {
+
+			RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
+
+			AggregatePath.ColumnInfos idColumnInfos = context.getAggregatePath(entity).getTableInfo().idColumnInfos();
+
+			List<Object[]> parameterValues = new ArrayList<>();
+			for (Object id : ids) {
+
+				PersistentPropertyPathAccessor<Object> accessor = complexId.getPropertyPathAccessor(id);
+
+				List<Object> tupleList = new ArrayList<>();
+				idColumnInfos.forEach((ap, ci) -> {
+					tupleList.add(accessor.getProperty(ap.getRequiredPersistentPropertyPath()));
+				});
+				parameterValues.add(tupleList.toArray(new Object[0]));
+			}
+
+			parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, parameterValues);
+		} else {
+			addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
+					ids);
+		}
 		return parameterSource;
 	}
 
@@ -154,21 +205,6 @@ public class SqlParametersFactory {
 				.forEach((name, value) -> addConvertedPropertyValue(parameterSource, name, value, value.getClass()));
 
 		return parameterSource;
-	}
-
-	/**
-	 * Utility to create {@link Predicate}s.
-	 */
-	static class Predicates {
-
-		/**
-		 * Include all {@link Predicate} returning {@literal false} to never skip a property.
-		 *
-		 * @return the include all {@link Predicate}.
-		 */
-		static Predicate<RelationalPersistentProperty> includeAll() {
-			return it -> false;
-		}
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
