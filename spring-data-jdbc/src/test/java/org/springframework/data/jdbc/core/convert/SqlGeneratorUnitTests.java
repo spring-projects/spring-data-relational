@@ -351,17 +351,57 @@ class SqlGeneratorUnitTests {
 	@Test // GH-1919
 	void selectByQuery() {
 
-		Query query = Query.query(Criteria.where("id").is(23L));
+		Query query = Query.query(Criteria.where("id").is(23L)).columns(new String[0]);
 
 		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
 
 		assertThat(sql).contains( //
 				"SELECT", //
+				"dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name", //
 				"FROM dummy_entity", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
 				"WHERE dummy_entity.id1 = :id1" //
 		);
+	}
+
+	@Test // GH-1803
+	void selectByQueryWithColumnLimit() {
+
+		Query query = Query.empty().columns("id", "alpha", "beta", "gamma");
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT dummy_entity.id1 AS id1, dummy_entity.alpha, dummy_entity.beta, dummy_entity.gamma", //
+				"FROM dummy_entity" //
+		);
+	}
+
+	@Test // GH-1803
+	void selectingSetContentSelectsAllColumns() {
+
+		Query query = Query.empty().columns("elements.content");
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name"//
+		);
+	}
+
+	@Test // GH-1803
+	void selectByQueryWithMappedColumnPathsRendersCorrectSelection() {
+
+		Query query = Query.empty().columns("ref.content");
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT", //
+				"ref.id1 AS id1, ref.content AS x_content", //
+				"FROM dummy_entity", //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
 	}
 
 	@Test // GH-1919
@@ -381,7 +421,8 @@ class SqlGeneratorUnitTests {
 				"ORDER BY dummy_entity.id1 ASC" //
 		);
 		assertThat(sql).containsOnlyOnce("LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
-		assertThat(sql).containsOnlyOnce("LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id");
+		assertThat(sql).containsOnlyOnce(
+				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111

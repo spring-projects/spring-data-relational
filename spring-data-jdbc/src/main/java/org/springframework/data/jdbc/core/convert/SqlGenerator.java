@@ -39,6 +39,7 @@ import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -507,45 +508,85 @@ class SqlGenerator {
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder() {
-		return selectBuilder(Collections.emptyList());
+		return selectBuilder(Collections.emptyList(), Query.empty());
+	}
+
+	private SelectBuilder.SelectWhere selectBuilder(Query query) {
+		return selectBuilder(Collections.emptyList(), query);
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
+		return selectBuilder(keyColumns, Query.empty());
+	}
+
+	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns, Query query) {
 
 		Table table = getTable();
 
-		Set<Expression> columnExpressions = new LinkedHashSet<>();
-
-		List<Join> joinTables = new ArrayList<>();
-		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
-
-			AggregatePath extPath = mappingContext.getAggregatePath(path);
-
-			// add a join if necessary
-			Join join = getJoin(extPath);
-			if (join != null) {
-				joinTables.add(join);
-			}
-
-			Column column = getColumn(extPath);
-			if (column != null) {
-				columnExpressions.add(column);
-			}
-		}
-
-		for (SqlIdentifier keyColumn : keyColumns) {
-			columnExpressions.add(table.column(keyColumn).as(keyColumn));
-		}
-
-		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(columnExpressions);
+		Projection projection = getProjection(keyColumns, query, table);
+		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(projection.columns());
 		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
 
-		for (Join join : joinTables) {
+		for (Join join : projection.joins()) {
 			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
 		}
 
 		return (SelectBuilder.SelectWhere) baseSelect;
+	}
+
+	private Projection getProjection(Collection<SqlIdentifier> keyColumns, Query query, Table table) {
+
+		Set<Expression> columns = new LinkedHashSet<>();
+		Set<Join> joins = new LinkedHashSet<>();
+
+		if (!CollectionUtils.isEmpty(query.getColumns())) {
+			for (SqlIdentifier columnName : query.getColumns()) {
+
+				String columnNameString = columnName.getReference();
+				RelationalPersistentProperty property = entity.getPersistentProperty(columnNameString);
+				if (property != null) {
+
+					AggregatePath aggregatePath = mappingContext.getAggregatePath(
+							mappingContext.getPersistentPropertyPath(columnNameString, entity.getTypeInformation()));
+					gatherColumn(aggregatePath, joins, columns);
+				} else {
+					columns.add(Column.create(columnName, table));
+				}
+			}
+		} else {
+			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+					.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+				AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
+
+				gatherColumn(aggregatePath, joins, columns);
+			}
+		}
+
+		for (SqlIdentifier keyColumn : keyColumns) {
+			columns.add(table.column(keyColumn).as(keyColumn));
+		}
+
+		return new Projection(columns, joins);
+	}
+
+	private void gatherColumn(AggregatePath aggregatePath, Set<Join> joins, Set<Expression> columns) {
+
+		joins.addAll(getJoins(aggregatePath));
+
+		Column column = getColumn(aggregatePath);
+		if (column != null) {
+			columns.add(column);
+		}
+	}
+
+	/**
+	 * Projection including its source joins.
+	 *
+	 * @param columns
+	 * @param joins
+	 */
+	record Projection(Set<Expression> columns, Set<Join> joins) {
 	}
 
 	private SelectBuilder.SelectOrdered selectBuilder(Collection<SqlIdentifier> keyColumns, Sort sort,
@@ -611,9 +652,24 @@ class SqlGenerator {
 		return sqlContext.getColumn(path);
 	}
 
+	List<Join> getJoins(AggregatePath path) {
+
+		List<Join> joins = new ArrayList<>();
+		while (!path.isRoot()) {
+			Join join = getJoin(path);
+			if (join != null) {
+				joins.add(join);
+			}
+
+			path = path.getParentPath();
+		}
+		return joins;
+	}
+
 	@Nullable
 	Join getJoin(AggregatePath path) {
 
+		// TODO: This doesn't handle paths with length > 1 correctly
 		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
 			return null;
 		}
@@ -876,7 +932,7 @@ class SqlGenerator {
 
 		Assert.notNull(parameterSource, "parameterSource must not be null");
 
-		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder(query);
 
 		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
 				.build();
