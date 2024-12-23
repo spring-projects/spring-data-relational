@@ -507,32 +507,49 @@ class SqlGenerator {
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder() {
-		return selectBuilder(Collections.emptyList());
+		return selectBuilder(Collections.emptyList(), null);
+	}
+
+
+	private SelectBuilder.SelectWhere selectBuilder(Query query) {
+		return selectBuilder(Collections.emptyList(), query);
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
+		return selectBuilder(keyColumns, null);
+	}
+
+	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns, @Nullable Query query) {
 
 		Table table = getTable();
 
 		Set<Expression> columnExpressions = new LinkedHashSet<>();
 
 		List<Join> joinTables = new ArrayList<>();
-		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			AggregatePath extPath = mappingContext.getAggregatePath(path);
-
-			// add a join if necessary
-			Join join = getJoin(extPath);
-			if (join != null) {
-				joinTables.add(join);
+		if (query != null && !query.getColumns().isEmpty()) {
+			for (SqlIdentifier columnName : query.getColumns()) {
+				columnExpressions.add(Column.create(columnName, table));
 			}
+		} else {
+			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+					.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			Column column = getColumn(extPath);
-			if (column != null) {
-				columnExpressions.add(column);
+				AggregatePath extPath = mappingContext.getAggregatePath(path);
+
+				// add a join if necessary
+				Join join = getJoin(extPath);
+				if (join != null) {
+					joinTables.add(join);
+				}
+
+				Column column = getColumn(extPath);
+				if (column != null) {
+					columnExpressions.add(column);
+				}
 			}
 		}
+
 
 		for (SqlIdentifier keyColumn : keyColumns) {
 			columnExpressions.add(table.column(keyColumn).as(keyColumn));
@@ -876,13 +893,14 @@ class SqlGenerator {
 
 		Assert.notNull(parameterSource, "parameterSource must not be null");
 
-		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder(query);
 
 		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
 				.build();
 
 		return render(select);
 	}
+
 
 	/**
 	 * Constructs a single sql query that performs select based on the provided query and pagination information.

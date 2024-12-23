@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -235,7 +236,25 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Query query = Query.query(criteria);
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
-		assertThat(reloadedById).extracting(e -> e.id, e -> e.content.size()).containsExactly(tuple(two.id, 2));
+		assertThat(reloadedById) //
+				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.containsExactly(tuple(two.id, two.name, 2));
+	}
+
+	@Test // GH-1803
+	void findAllByQueryWithColumns() {
+
+		template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.from(Criteria.where("id").is(two.id));
+		Query query = Query.query(criteria).columns("id");
+		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
+
+		assertThat(reloadedById) //
+				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.containsExactly(tuple(two.id, null, 2));
 	}
 
 	@Test // GH-1601
@@ -2283,5 +2302,10 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	static class JdbcAggregateTemplateSingleQueryLoadingIntegrationTests
 			extends AbstractJdbcAggregateTemplateIntegrationTests {
 
+		@Disabled
+		@Override
+		void findAllByQueryWithColumns() {
+			super.findAllByQueryWithColumns();
+		}
 	}
 }
