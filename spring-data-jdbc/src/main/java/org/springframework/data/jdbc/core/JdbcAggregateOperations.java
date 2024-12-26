@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.domain.Example;
@@ -35,6 +36,7 @@ import org.springframework.lang.Nullable;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Myeonghyeon Lee
+ * @author Sergey Korotaev
  */
 public interface JdbcAggregateOperations {
 
@@ -166,6 +168,17 @@ public interface JdbcAggregateOperations {
 	<T> List<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
 	/**
+	 * Loads all entities that match one of the ids passed as an argument to a {@link Stream}.
+	 * It is not guaranteed that the number of ids passed in matches the number of entities returned.
+	 *
+	 * @param ids the Ids of the entities to load. Must not be {@code null}.
+	 * @param domainType the type of entities to load. Must not be {@code null}.
+	 * @param <T> type of entities to load.
+	 * @return the loaded entities. Guaranteed to be not {@code null}.
+	 */
+	<T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType);
+
+	/**
 	 * Load all aggregates of a given type.
 	 *
 	 * @param domainType the type of the aggregate roots. Must not be {@code null}.
@@ -173,6 +186,15 @@ public interface JdbcAggregateOperations {
 	 * @return Guaranteed to be not {@code null}.
 	 */
 	<T> List<T> findAll(Class<T> domainType);
+
+	/**
+	 * Load all aggregates of a given type to a {@link Stream}.
+	 *
+	 * @param domainType the type of the aggregate roots. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
+	<T> Stream<T> streamAll(Class<T> domainType);
 
 	/**
 	 * Load all aggregates of a given type, sorted.
@@ -184,6 +206,17 @@ public interface JdbcAggregateOperations {
 	 * @since 2.0
 	 */
 	<T> List<T> findAll(Class<T> domainType, Sort sort);
+
+	/**
+	 * Loads all entities of the given type to a {@link Stream}, sorted.
+	 *
+	 * @param domainType the type of entities to load. Must not be {@code null}.
+	 * @param <T> the type of entities to load.
+	 * @param sort the sorting information. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 * @since 2.0
+	 */
+	<T> Stream<T> streamAll(Class<T> domainType, Sort sort);
 
 	/**
 	 * Load a page of (potentially sorted) aggregates of a given type.
@@ -217,6 +250,17 @@ public interface JdbcAggregateOperations {
 	 * @since 3.0
 	 */
 	<T> List<T> findAll(Query query, Class<T> domainType);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Stream}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param domainType the type of entities. Must not be {@code null}.
+	 * @return a non-null list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 * @since 3.0
+	 */
+	<T> Stream<T> streamAll(Query query, Class<T> domainType);
 
 	/**
 	 * Returns a {@link Page} of entities matching the given {@link Query}. In case no match could be found, an empty

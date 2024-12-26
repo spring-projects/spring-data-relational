@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationContext;
@@ -68,6 +69,7 @@ import org.springframework.util.ClassUtils;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Sergey Korotaev
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -284,6 +286,16 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
+
+		Assert.notNull(domainType, "Domain type must not be null");
+
+		Stream<T> allStreamable = accessStrategy.streamAll(domainType, sort);
+
+		return allStreamable.map(this::triggerAfterConvert);
+	}
+
+	@Override
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
 		Assert.notNull(domainType, "Domain type must not be null");
@@ -310,6 +322,11 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Query query, Class<T> domainType) {
+		return accessStrategy.streamAll(query, domainType).map(this::triggerAfterConvert);
+	}
+
+	@Override
 	public <T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
 		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(query, domainType, pageable));
@@ -328,6 +345,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType) {
+		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(domainType));
+		return StreamSupport.stream(items.spliterator(), false).map(this::triggerAfterConvert);
+	}
+
+	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		Assert.notNull(ids, "Ids must not be null");
@@ -335,6 +358,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Iterable<T> allById = accessStrategy.findAllById(ids, domainType);
 		return triggerAfterConvert(allById);
+	}
+
+	@Override
+	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+
+		Assert.notNull(ids, "Ids must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
+
+		Stream<T> allByIdStreamable = accessStrategy.streamAllByIds(ids, domainType);
+
+		return allByIdStreamable.map(this::triggerAfterConvert);
 	}
 
 	@Override
