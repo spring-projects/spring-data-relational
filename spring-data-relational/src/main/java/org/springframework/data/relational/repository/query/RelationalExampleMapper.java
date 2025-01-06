@@ -78,6 +78,10 @@ public class RelationalExampleMapper {
 
 		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
+			if (property.isCollectionLike()) {
+				return;
+			}
+
 			if (matcherAccessor.isIgnoredPath(property.getName())) {
 				return;
 			}

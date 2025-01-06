@@ -42,7 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -52,16 +51,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.ScrollPosition;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Window;
+import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -923,6 +913,19 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
+	@Test
+	void findByExampleWithCollection() {
+
+		List<Root> roots = rootRepository.saveAll(List.of(createRoot("one"), createRoot("two")));
+
+		Example<Root> example = Example
+				.of(new Root(null, "one", null, List.of(new Intermediate(null, "peter", null, null))));
+
+		Iterable<Root> result = rootRepository.findAll(example);
+
+		assertThat(result).contains(roots.get(0));
+	}
+
 	public static Stream<Arguments> findAllByExamplePageableSource() {
 		return Stream.of( //
 				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
@@ -1509,7 +1512,7 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByBytes(byte[] bytes);
 	}
 
-	interface RootRepository extends ListCrudRepository<Root, Long> {
+	interface RootRepository extends ListCrudRepository<Root, Long>, QueryByExampleExecutor<Root> {
 		List<Root> findAllByOrderByIdAsc();
 	}
 
