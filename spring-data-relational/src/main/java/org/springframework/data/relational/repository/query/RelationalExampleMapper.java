@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  *
  * @since 2.2
  * @author Greg Turnquist
+ * @author Jens Schauder
  */
 public class RelationalExampleMapper {
 
@@ -77,6 +78,10 @@ public class RelationalExampleMapper {
 		final List<Criteria> criteriaBasedOnProperties = new ArrayList<>();
 
 		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+
+			if (property.isCollectionLike() || property.isMap()) {
+				return;
+			}
 
 			if (matcherAccessor.isIgnoredPath(property.getName())) {
 				return;
