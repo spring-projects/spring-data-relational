@@ -21,8 +21,8 @@ import java.sql.SQLException;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.domain.RowDocument;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced. This {@link RowMapper} might
@@ -37,26 +37,24 @@ import org.springframework.lang.Nullable;
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 
-	private final RelationalPersistentEntity<T> entity;
-	private final AggregatePath path;
+	private final TypeInformation<T> typeInformation;
 	private final JdbcConverter converter;
-	private final @Nullable Identifier identifier;
+	private final Identifier identifier;
 
-	@SuppressWarnings("unchecked")
-	public EntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier) {
+	private EntityRowMapper(TypeInformation<T> typeInformation, JdbcConverter converter, Identifier identifier) {
 
-		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();
-		this.path = path;
+		this.typeInformation = typeInformation;
 		this.converter = converter;
 		this.identifier = identifier;
 	}
 
-	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter) {
+	@SuppressWarnings("unchecked")
+	public EntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier) {
+		this(((RelationalPersistentEntity<T>) path.getRequiredLeafEntity()).getTypeInformation(), converter, identifier);
+	}
 
-		this.entity = entity;
-		this.path = null;
-		this.converter = converter;
-		this.identifier = null;
+	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter) {
+		this(entity.getTypeInformation(), converter, Identifier.empty());
 	}
 
 	@Override
@@ -64,9 +62,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(resultSet);
 
-		return identifier == null //
-				? converter.readAndResolve(entity.getTypeInformation(), document, Identifier.empty()) //
-				: converter.readAndResolve(entity.getTypeInformation(), document, identifier);
+		return converter.readAndResolve(typeInformation, document, identifier);
 	}
 
 }
