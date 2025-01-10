@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  *
  * @since 2.2
  * @author Greg Turnquist
+ * @author Jens Schauder
  */
 public class RelationalExampleMapper {
 
@@ -78,7 +79,7 @@ public class RelationalExampleMapper {
 
 		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (property.isCollectionLike()) {
+			if (property.isCollectionLike() || property.isMap()) {
 				return;
 			}
 

@@ -16,6 +16,15 @@
 
 package org.springframework.data.relational.repository.query;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
+import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
+import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
@@ -23,13 +32,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.query.Query;
-
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.*;
-import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
-import static org.springframework.data.domain.ExampleMatcher.*;
+import org.springframework.lang.Nullable;
 
 /**
  * Verify that the {@link RelationalExampleMapper} properly turns {@link Example}s into {@link Query}'s.
@@ -48,8 +51,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithId() {
 
-		Person person = new Person();
-		person.setId("id1");
+		Person person = new Person("id1", null, null, null, null, null);
 
 		Example<Person> example = Example.of(person);
 
@@ -63,8 +65,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstname() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
+		Person person = new Person(null, "Frodo", null, null, null, null);
 
 		Example<Person> example = Example.of(person);
 
@@ -78,9 +79,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastname() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setLastname("Baggins");
+		Person person = new Person(null, "Frodo", "Baggins", null, null, null);
 
 		Example<Person> example = Example.of(person);
 
@@ -94,8 +93,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithNullMatchingLastName() {
 
-		Person person = new Person();
-		person.setLastname("Baggins");
+		Person person = new Person(null, null, "Baggins", null, null, null);
 
 		ExampleMatcher matcher = matching().withIncludeNullValues();
 		Example<Person> example = Example.of(person, matcher);
@@ -110,9 +108,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithNullMatchingFirstnameAndLastname() {
 
-		Person person = new Person();
-		person.setFirstname("Bilbo");
-		person.setLastname("Baggins");
+		Person person = new Person(null, "Bilbo", "Baggins", null, null, null);
 
 		ExampleMatcher matcher = matching().withIncludeNullValues();
 		Example<Person> example = Example.of(person, matcher);
@@ -127,9 +123,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastnameIgnoringFirstname() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setLastname("Baggins");
+		Person person = new Person(null, "Bilbo", "Baggins", null, null, null);
 
 		ExampleMatcher matcher = matching().withIgnorePaths("firstname");
 		Example<Person> example = Example.of(person, matcher);
@@ -144,9 +138,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastnameWithNullMatchingIgnoringFirstName() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setLastname("Baggins");
+		Person person = new Person(null, "Bilbo", "Baggins", null, null, null);
 
 		ExampleMatcher matcher = matching().withIncludeNullValues().withIgnorePaths("firstname");
 		Example<Person> example = Example.of(person, matcher);
@@ -161,8 +153,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingAtTheBeginning() {
 
-		Person person = new Person();
-		person.setFirstname("Fro");
+		Person person = new Person(null, "Fro", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(STARTING);
 		Example<Person> example = Example.of(person, matcher);
@@ -177,8 +168,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingOnTheEnding() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(ENDING);
 		Example<Person> example = Example.of(person, matcher);
@@ -193,8 +183,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingContaining() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(CONTAINING);
 		Example<Person> example = Example.of(person, matcher);
@@ -209,8 +198,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingRegEx() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(ExampleMatcher.StringMatcher.REGEX);
 		Example<Person> example = Example.of(person, matcher);
@@ -222,8 +210,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherEndsWith() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withMatcher("firstname", endsWith());
 		Example<Person> example = Example.of(person, matcher);
@@ -238,8 +225,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherStartsWith() {
 
-		Person person = new Person();
-		person.setFirstname("Fro");
+		Person person = new Person(null, "Fro", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withMatcher("firstname", startsWith());
 		Example<Person> example = Example.of(person, matcher);
@@ -254,8 +240,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherContains() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withMatcher("firstname", contains());
 		Example<Person> example = Example.of(person, matcher);
@@ -270,8 +255,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingAtTheBeginningIncludingNull() {
 
-		Person person = new Person();
-		person.setFirstname("Fro");
+		Person person = new Person(null, "Fro", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(STARTING).withIncludeNullValues();
 		Example<Person> example = Example.of(person, matcher);
@@ -286,8 +270,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingOnTheEndingIncludingNull() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(ENDING).withIncludeNullValues();
 		Example<Person> example = Example.of(person, matcher);
@@ -302,8 +285,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameIgnoreCaseFieldLevel() {
 
-		Person person = new Person();
-		person.setFirstname("fro");
+		Person person = new Person(null, "fro", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withMatcher("firstname", startsWith().ignoreCase());
 		Example<Person> example = Example.of(person, matcher);
@@ -320,8 +302,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingContainingIncludingNull() {
 
-		Person person = new Person();
-		person.setFirstname("do");
+		Person person = new Person(null, "do", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withStringMatcher(CONTAINING).withIncludeNullValues();
 		Example<Person> example = Example.of(person, matcher);
@@ -336,8 +317,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameIgnoreCase() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
+		Person person = new Person(null, "Frodo", null, null, null, null);
 
 		ExampleMatcher matcher = matching().withIgnoreCase(true);
 		Example<Person> example = Example.of(person, matcher);
@@ -354,9 +334,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleWithFirstnameOrLastname() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setLastname("Baggins");
+		Person person = new Person(null, "Frodo", "Baggins", null, null, null);
 
 		ExampleMatcher matcher = matchingAny();
 		Example<Person> example = Example.of(person, matcher);
@@ -371,9 +349,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleEvenHandlesInvisibleFields() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setSecret("I have the ring!");
+		Person person = new Person(null, "Frodo", null, "I have the ring!", null, null);
 
 		Example<Person> example = Example.of(person);
 
@@ -388,10 +364,7 @@ public class RelationalExampleMapperTests {
 	@Test // GH-929
 	void queryByExampleSupportsPropertyTransforms() {
 
-		Person person = new Person();
-		person.setFirstname("Frodo");
-		person.setLastname("Baggins");
-		person.setSecret("I have the ring!");
+		Person person = new Person(null, "Frodo", "Baggins", "I have the ring!", null, null);
 
 		ExampleMatcher matcher = matching() //
 				.withTransformer("firstname", o -> {
@@ -418,55 +391,33 @@ public class RelationalExampleMapperTests {
 						"(secret = 'I have the ring!')");
 	}
 
-	static class Person {
+	@Test // GH-1969
+	void collectionLikeAttributesGetIgnored() {
 
-		@Id
-		String id;
-		String firstname;
-		String lastname;
-		String secret;
+		Example<Person> example = Example.of(new Person(null, "Frodo", null, null, List.of(new Possession("Ring")), null));
 
-		public Person(String id, String firstname, String lastname, String secret) {
-			this.id = id;
-			this.firstname = firstname;
-			this.lastname = lastname;
-			this.secret = secret;
-		}
+		Query query = exampleMapper.getMappedExample(example);
 
-		public Person() {
-		}
+		assertThat(query.getCriteria().orElseThrow().toString()).doesNotContainIgnoringCase("possession");
+	}
 
-		// Override default visibility of getting the secret.
-		private String getSecret() {
-			return this.secret;
-		}
+	@Test // GH-1969
+	void mapAttributesGetIgnored() {
 
-		public String getId() {
-			return this.id;
-		}
+		Example<Person> example = Example.of(new Person(null, "Frodo", null, null, null, Map.of("Home", new Address("Bag End"))));
 
-		public String getFirstname() {
-			return this.firstname;
-		}
+		Query query = exampleMapper.getMappedExample(example);
 
-		public String getLastname() {
-			return this.lastname;
-		}
+		assertThat(query.getCriteria().orElseThrow().toString()).doesNotContainIgnoringCase("address");
+	}
 
-		public void setId(String id) {
-			this.id = id;
-		}
+	record Person(@Id @Nullable String id, @Nullable String firstname, @Nullable String lastname, @Nullable String secret,
+				  @Nullable List<Possession> possessions,@Nullable Map<String,Address> addresses) {
+	}
 
-		public void setFirstname(String firstname) {
-			this.firstname = firstname;
-		}
+	record Possession(String name) {
+	}
 
-		public void setLastname(String lastname) {
-			this.lastname = lastname;
-		}
-
-		public void setSecret(String secret) {
-			this.secret = secret;
-		}
+	record Address(String description) {
 	}
 }
