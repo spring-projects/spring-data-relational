@@ -47,7 +47,7 @@
 		<r2dbc-mariadb.version>1.1.4</r2dbc-mariadb.version>
 		<r2dbc-mssql.version>1.0.2.RELEASE</r2dbc-mssql.version>
 		<r2dbc-mysql.version>1.3.1</r2dbc-mysql.version>
-		<oracle-r2dbc.version>1.2.0</oracle-r2dbc.version>
+		<oracle-r2dbc.version>1.3.0</oracle-r2dbc.version>
 
 		<!-- test dependencies -->
 		<awaitility.version>4.2.0</awaitility.version>
