@@ -27,7 +27,7 @@ import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -48,6 +48,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
@@ -166,6 +167,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			this.operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
 		}
 
+		if (this.queryMappingConfiguration == null) {
+			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+		}
+
 		if (this.dataAccessStrategy == null) {
 
 			Assert.state(beanFactory != null, "If no DataAccessStrategy is set a BeanFactory must be available");
@@ -181,14 +186,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 						InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(this.operations, this.dialect);
 
 						DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, this.converter,
-								this.operations, sqlParametersFactory, insertStrategyFactory);
+								this.operations, sqlParametersFactory, insertStrategyFactory, queryMappingConfiguration);
 
 						return factory.create();
 					});
-		}
-
-		if (this.queryMappingConfiguration == null) {
-			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 		}
 
 		if (beanFactory != null) {
