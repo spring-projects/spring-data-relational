@@ -320,17 +320,15 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
-		return accessStrategy.findOne(query, domainType);
+		return accessStrategy.findOne(query, domainType).map(this::triggerAfterConvert);
 	}
 
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> domainType) {
 
 		Iterable<T> all = accessStrategy.findAll(query, domainType);
-		if (all instanceof List<T> list) {
-			return list;
-		}
-		return Streamable.of(all).toList();
+
+		return triggerAfterConvert(all);
 	}
 
 	@Override

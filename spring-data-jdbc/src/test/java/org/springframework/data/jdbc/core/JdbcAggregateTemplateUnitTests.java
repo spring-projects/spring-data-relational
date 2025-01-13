@@ -47,8 +47,11 @@ import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -299,17 +302,61 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity neumann1 = new SampleEntity(42L, "Neumann");
 		SampleEntity neumann2 = new SampleEntity(42L, "Alfred E. Neumann");
 
-		when(dataAccessStrategy.findAll(SampleEntity.class, PageRequest.of(0, 20))).thenReturn(asList(alfred1, neumann1));
+		PageRequest pageRequest = PageRequest.of(0, 20);
+		when(dataAccessStrategy.findAll(SampleEntity.class, pageRequest)).thenReturn(asList(alfred1, neumann1));
 
 		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
 		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
 
-		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, PageRequest.of(0, 20));
+		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, pageRequest);
 
 		verify(callbacks).callback(AfterConvertCallback.class, alfred1);
 		verify(callbacks).callback(AfterConvertCallback.class, neumann1);
 
 		assertThat(all).containsExactly(alfred2, neumann2);
+	}
+
+	@Test // GH-1979
+	void callbackOnFindAllByQuery() {
+
+		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
+		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
+
+		SampleEntity neumann1 = new SampleEntity(42L, "Neumann");
+		SampleEntity neumann2 = new SampleEntity(42L, "Alfred E. Neumann");
+
+		Query query = Query.query(Criteria.where("not relevant").is("for test"));
+
+		when(dataAccessStrategy.findAll(query, SampleEntity.class)).thenReturn(asList(alfred1, neumann1));
+
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any(Object[].class))).thenReturn(neumann2);
+
+		Iterable<SampleEntity> all = template.findAll(query, SampleEntity.class);
+
+		verify(callbacks).callback(AfterConvertCallback.class, alfred1);
+		verify(callbacks).callback(AfterConvertCallback.class, neumann1);
+
+		assertThat(all).containsExactly(alfred2, neumann2);
+	}
+
+	@Test // GH-1979
+	void callbackOnFindOneByQuery() {
+
+		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
+		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
+
+		Query query = Query.query(Criteria.where("not relevant").is("for test"));
+
+		when(dataAccessStrategy.findOne(query, SampleEntity.class)).thenReturn(Optional.of(alfred1));
+
+		when(callbacks.callback(any(Class.class), eq(alfred1), any(Object[].class))).thenReturn(alfred2);
+
+		Optional<SampleEntity> all = template.findOne(query, SampleEntity.class);
+
+		verify(callbacks).callback(AfterConvertCallback.class, alfred1);
+
+		assertThat(all).contains(alfred2);
 	}
 
 	@Test // GH-1401
