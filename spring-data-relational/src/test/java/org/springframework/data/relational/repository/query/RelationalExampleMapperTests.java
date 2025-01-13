@@ -38,13 +38,14 @@ import org.springframework.lang.Nullable;
  * Verify that the {@link RelationalExampleMapper} properly turns {@link Example}s into {@link Query}'s.
  *
  * @author Greg Turnquist
+ * @author Jens Schauder
  */
-public class RelationalExampleMapperTests {
+class RelationalExampleMapperTests {
 
 	RelationalExampleMapper exampleMapper;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		exampleMapper = new RelationalExampleMapper(new RelationalMappingContext());
 	}
 
@@ -404,7 +405,8 @@ public class RelationalExampleMapperTests {
 	@Test // GH-1969
 	void mapAttributesGetIgnored() {
 
-		Example<Person> example = Example.of(new Person(null, "Frodo", null, null, null, Map.of("Home", new Address("Bag End"))));
+		Example<Person> example = Example
+				.of(new Person(null, "Frodo", null, null, null, Map.of("Home", new Address("Bag End"))));
 
 		Query query = exampleMapper.getMappedExample(example);
 
@@ -412,7 +414,7 @@ public class RelationalExampleMapperTests {
 	}
 
 	record Person(@Id @Nullable String id, @Nullable String firstname, @Nullable String lastname, @Nullable String secret,
-				  @Nullable List<Possession> possessions,@Nullable Map<String,Address> addresses) {
+			@Nullable List<Possession> possessions, @Nullable Map<String, Address> addresses) {
 	}
 
 	record Possession(String name) {
