@@ -610,7 +610,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return aggregateChange;
 	}
 
-	private <T> Iterable<T> triggerAfterConvert(Iterable<T> all) {
+	private <T> List<T> triggerAfterConvert(Iterable<T> all) {
 
 		List<T> result = new ArrayList<>();
 
