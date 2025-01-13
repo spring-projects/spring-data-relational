@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.Optional;
+
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
@@ -22,6 +24,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * Enumeration describing the source of a value for an id property.
  *
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  * @since 2.4
  */
 public enum IdValueSource {
@@ -39,7 +42,12 @@ public enum IdValueSource {
 	/**
 	 * There is no id property, and therefore no id value source.
 	 */
-	NONE;
+	NONE,
+
+	/**
+	 * The id should be dervied from the database sequence
+	 */
+	SEQUENCE;
 
 	/**
 	 * Returns the appropriate {@link IdValueSource} for the instance: {@link IdValueSource#NONE} when the entity has no
@@ -47,6 +55,11 @@ public enum IdValueSource {
 	 * primitive type, not zero, and {@link IdValueSource#GENERATED} otherwise.
 	 */
 	public static <T> IdValueSource forInstance(Object instance, RelationalPersistentEntity<T> persistentEntity) {
+
+		Optional<String> idTargetSequence = persistentEntity.getIdTargetSequence();
+		if (idTargetSequence.isPresent()) {
+			return IdValueSource.SEQUENCE;
+		}
 
 		Object idValue = persistentEntity.getIdentifierAccessor(instance).getIdentifier();
 		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();

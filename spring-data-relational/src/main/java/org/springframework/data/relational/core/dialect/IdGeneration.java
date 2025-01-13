@@ -21,10 +21,13 @@ import java.sql.PreparedStatement;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
- * Describes how obtaining generated ids after an insert works for a given JDBC driver.
+ * Encapsulates various properties that are related to ID generation process and specific to
+ * given {@link Dialect}
  *
  * @author Jens Schauder
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
+ *
  * @since 2.1
  */
 public interface IdGeneration {
@@ -60,6 +63,13 @@ public interface IdGeneration {
 	}
 
 	/**
+	 * @return {@literal true} in case the sequences are supported by the underlying database, {@literal false} otherwise
+	 */
+	default boolean sequencesSupported() {
+		return true;
+	}
+
+	/**
 	 * Does the driver support id generation for batch operations.
 	 * <p>
 	 * This should be {@literal true} for most dialects, except DB2 and SqlServer.
@@ -70,5 +80,17 @@ public interface IdGeneration {
 	 */
 	default boolean supportedForBatchOperations() {
 		return true;
+	}
+
+	/**
+	 * The SQL statement that allows retrieving the next value from the passed sequence
+	 *
+	 * @param sequenceName the sequence name to get the enxt value for
+	 * @return SQL string
+	 */
+	default String nextValueFromSequenceSelect(String sequenceName) {
+		throw new UnsupportedOperationException(
+			"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket".formatted(this.getClass().getSimpleName())
+		);
 	}
 }

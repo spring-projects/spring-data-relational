@@ -101,5 +101,4 @@ public class InsertStrategyFactory {
 			return new Object[sqlParameterSources.length];
 		}
 	}
-
 }

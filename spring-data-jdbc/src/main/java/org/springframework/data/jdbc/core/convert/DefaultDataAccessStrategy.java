@@ -19,9 +19,16 @@ import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -37,6 +44,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -60,6 +68,7 @@ import org.springframework.util.Assert;
  * @author Radim Tlusty
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -103,12 +112,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
-				idValueSource);
+		idValueSource);
 
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
 
 		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				parameterSource);
+		parameterSource);
 	}
 
 	@Override
@@ -116,17 +125,22 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert(insertSubject.getInstance(), domainType,
-						insertSubject.getIdentifier(), idValueSource))
-				.toArray(SqlIdentifierParameterSource[]::new);
+				.map(insertSubject -> sqlParametersFactory.forInsert(
+						insertSubject.getInstance(),
+						domainType,
+						insertSubject.getIdentifier(),
+						idValueSource
+				)
+		)
+		.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
 
 		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				sqlParameterSources);
+		sqlParameterSources);
 	}
 
-	@Override
+    @Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
@@ -445,5 +459,4 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return baseProperty.getOwner().getType();
 	}
-
 }

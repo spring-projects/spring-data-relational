@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.sqlgeneration;
 
-
 import java.util.List;
 
 import org.junit.platform.commons.annotation.Testable;

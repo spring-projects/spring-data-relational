@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
@@ -38,18 +39,20 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
  * Unit tests for {@link SqlParametersFactory}.
  *
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class SqlParametersFactoryTest {
 
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
 	MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver);
-	AnsiDialect dialect = AnsiDialect.INSTANCE;
 	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
 	@Test // DATAJDBC-412

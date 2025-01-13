@@ -42,6 +42,11 @@ public class SqlServerDialect extends AbstractDialect {
 		public boolean supportedForBatchOperations() {
 			return false;
 		}
+
+		@Override
+		public String nextValueFromSequenceSelect(String sequenceName) {
+			return "SELECT NEXT VALUE FOR %s".formatted(sequenceName);
+		}
 	};
 
 	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing

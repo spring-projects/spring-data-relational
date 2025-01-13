@@ -126,7 +126,6 @@
 	</developers>
 
 	<profiles>
-
 		<profile>
 			<id>no-jacoco</id>
 			<build>

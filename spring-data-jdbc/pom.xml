@@ -319,6 +319,37 @@
 			</build>
 		</profile>
 		<profile>
+			<id>mariadb</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>mariadb-test</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude/>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mariadb</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>all-dbs</id>
 			<build>
 				<plugins>
