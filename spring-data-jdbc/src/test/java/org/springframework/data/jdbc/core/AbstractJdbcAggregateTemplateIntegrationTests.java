@@ -27,8 +27,8 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -81,6 +81,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author Mikhail Polivakha
  * @author Chirag Tailor
  * @author Vincent Galloy
+ * @author Sergey Korotaev
  */
 @IntegrationTest
 abstract class AbstractJdbcAggregateTemplateIntegrationTests {
@@ -309,6 +310,18 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 				.containsExactly(tuple(legoSet.id, legoSet.manual.id, legoSet.manual.content));
 	}
 
+	@Test // GH-1714
+	void saveAndLoadManeEntitiesWithReferenceEntityLikeStream() {
+
+		template.save(legoSet);
+
+		Stream<LegoSet> streamable = template.streamAll(LegoSet.class);
+
+		assertThat(streamable)
+				.extracting("id", "manual.id", "manual.content") //
+				.containsExactly(tuple(legoSet.id, legoSet.manual.id, legoSet.manual.content));
+	}
+
 	@Test // DATAJDBC-101
 	void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
 
@@ -317,6 +330,20 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		template.save(createLegoSet("Frozen"));
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by("name"));
+
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Frozen", "Lava", "Star");
+	}
+
+	@Test // GH-1714
+	void saveAndLoadManyEntitiesWithReferencedEntitySortedLikeStream() {
+
+		template.save(createLegoSet("Lava"));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Stream<LegoSet> reloadedLegoSets = template.streamAll(LegoSet.class, Sort.by("name"));
 
 		assertThat(reloadedLegoSets) //
 				.extracting("name") //
@@ -360,12 +387,29 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 				.isInstanceOf(InvalidPersistentPropertyPath.class);
 	}
 
+	@Test // GH-1714
+	void findByNonPropertySortLikeStreamFails() {
+		assertThatThrownBy(() -> template.streamAll(LegoSet.class, Sort.by("somethingNotExistant")))
+				.isInstanceOf(InvalidPersistentPropertyPath.class);
+	}
+
 	@Test // DATAJDBC-112
 	void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
 
 		template.save(legoSet);
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAllById(singletonList(legoSet.id), LegoSet.class);
+
+		assertThat(reloadedLegoSets).hasSize(1).extracting("id", "manual.id", "manual.content")
+				.contains(tuple(legoSet.id, legoSet.manual.id, legoSet.manual.content));
+	}
+
+	@Test // GH-1714
+	void saveAndLoadManyEntitiesByIdWithReferencedEntityLikeStream() {
+
+		template.save(legoSet);
+
+		Stream<LegoSet> reloadedLegoSets = template.streamAllByIds(singletonList(legoSet.id), LegoSet.class);
 
 		assertThat(reloadedLegoSets).hasSize(1).extracting("id", "manual.id", "manual.content")
 				.contains(tuple(legoSet.id, legoSet.manual.id, legoSet.manual.content));

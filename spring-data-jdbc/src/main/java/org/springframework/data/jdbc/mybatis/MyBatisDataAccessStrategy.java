@@ -22,7 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -59,6 +62,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Christopher Klein
  * @author Mikhail Polivakha
+ * @author Sergey Korotaev
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -264,9 +268,25 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType) {
+		String statement = namespace(domainType) + ".streamAll";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
+		Cursor<T> cursor = sqlSession().selectCursor(statement, parameter);
+		return StreamSupport.stream(cursor.spliterator(), false);
+	}
+
+	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return sqlSession().selectList(namespace(domainType) + ".findAllById",
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
+	}
+
+	@Override
+	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+		String statement = namespace(domainType) + ".streamAllByIds";
+		MyBatisContext parameter = new MyBatisContext(ids, null, domainType, Collections.emptyMap());
+		Cursor<T> cursor = sqlSession().selectCursor(statement, parameter);
+		return StreamSupport.stream(cursor.spliterator(), false);
 	}
 
 	@Override
@@ -297,6 +317,19 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
+
+		Map<String, Object> additionalContext = new HashMap<>();
+		additionalContext.put("sort", sort);
+
+		String statement = namespace(domainType) + ".streamAllSorted";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, additionalContext);
+
+		Cursor<T> cursor = sqlSession().selectCursor(statement, parameter);
+		return StreamSupport.stream(cursor.spliterator(), false);
+	}
+
+	@Override
 	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
 
 		Map<String, Object> additionalContext = new HashMap<>();
@@ -312,6 +345,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> probeType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public <T> Stream<T> streamAll(Query query, Class<T> probeType) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 

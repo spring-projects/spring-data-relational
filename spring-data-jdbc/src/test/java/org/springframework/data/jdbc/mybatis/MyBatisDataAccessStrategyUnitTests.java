@@ -22,7 +22,12 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
+import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,6 +48,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Chirag Tailor
+ * @author Sergey Korotaev
  */
 public class MyBatisDataAccessStrategyUnitTests {
 
@@ -241,12 +247,69 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
+	@Test
+	public void streamAll() {
+
+		String value = "some answer";
+
+		Cursor<String> cursor = getCursor(value);
+
+		when(session.selectCursor(anyString(), any())).then(answer -> cursor);
+
+		Stream<String> streamable = accessStrategy.streamAll(String.class);
+
+		verify(session).selectCursor(eq("java.lang.StringMapper.streamAll"), captor.capture());
+
+		assertThat(streamable).isNotNull().containsExactly(value);
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("key") //
+				).containsExactly( //
+						null, //
+						null, //
+						String.class, //
+						null //
+				);
+	}
+
 	@Test // DATAJDBC-123
 	public void findAllById() {
 
 		accessStrategy.findAllById(asList("id1", "id2"), String.class);
 
 		verify(session).selectList(eq("java.lang.StringMapper.findAllById"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("key") //
+				).containsExactly( //
+						null, //
+						asList("id1", "id2"), //
+						String.class, //
+						null //
+				);
+	}
+
+	@Test
+	public void streamAllByIds() {
+
+		String value = "some answer 2";
+		Cursor<String> cursor = getCursor(value);
+
+		when(session.selectCursor(anyString(), any())).then(answer -> cursor);
+
+		accessStrategy.streamAllByIds(asList("id1", "id2"), String.class);
+
+		verify(session).selectCursor(eq("java.lang.StringMapper.streamAllByIds"), captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -367,6 +430,33 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
+	@Test
+	public void streamAllSorted() {
+
+		String value = "some answer 3";
+		Cursor<String> cursor = getCursor(value);
+
+		when(session.selectCursor(anyString(), any())).then(answer -> cursor);
+
+		accessStrategy.streamAll(String.class, Sort.by("length"));
+
+		verify(session).selectCursor(eq("java.lang.StringMapper.streamAllSorted"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("sort") //
+				).containsExactly( //
+						null, //
+						null, //
+						String.class, //
+						Sort.by("length") //
+				);
+	}
+
 	@Test // DATAJDBC-101
 	public void findAllPaged() {
 
@@ -399,5 +489,36 @@ public class MyBatisDataAccessStrategyUnitTests {
 		ChildTwo two;
 	}
 
-	private static class ChildTwo {}
+	private static class ChildTwo {
+	}
+
+	private Cursor<String> getCursor(String value) {
+		return new Cursor<>() {
+			@Override
+			public boolean isOpen() {
+				return false;
+			}
+
+			@Override
+			public boolean isConsumed() {
+				return false;
+			}
+
+			@Override
+			public int getCurrentIndex() {
+				return 0;
+			}
+
+			@Override
+			public void close() {
+
+			}
+
+			@NotNull
+			@Override
+			public Iterator<String> iterator() {
+				return List.of(value).iterator();
+			}
+		};
+	}
 }

@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -60,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Radim Tlusty
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Sergey Korotaev
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -277,6 +279,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType) {
+		return operations.queryForStream(sql(domainType).getFindAll(), new MapSqlParameterSource(), getEntityRowMapper(domainType));
+	}
+
+	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		if (!ids.iterator().hasNext()) {
@@ -286,6 +293,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
 		String findAllInListSql = sql(domainType).getFindAllInList();
 		return operations.query(findAllInListSql, parameterSource, getEntityRowMapper(domainType));
+	}
+
+	@Override
+	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+
+		if (!ids.iterator().hasNext()) {
+			return Stream.empty();
+		}
+
+		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
+		String findAllInListSql = sql(domainType).getFindAllInList();
+
+		return operations.queryForStream(findAllInListSql, parameterSource, getEntityRowMapper(domainType));
 	}
 
 	@Override
@@ -343,6 +363,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
+		return operations.queryForStream(sql(domainType).getFindAll(sort), new MapSqlParameterSource(), getEntityRowMapper(domainType));
+	}
+
+	@Override
 	public <T> List<T> findAll(Class<T> domainType, Pageable pageable) {
 		return operations.query(sql(domainType).getFindAll(pageable), getEntityRowMapper(domainType));
 	}
@@ -367,6 +392,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
 		return operations.query(sqlQuery, parameterSource, getEntityRowMapper(domainType));
+	}
+
+	@Override
+	public <T> Stream<T> streamAll(Query query, Class<T> domainType) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
+
+		return operations.queryForStream(sqlQuery, parameterSource, getEntityRowMapper(domainType));
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -42,6 +43,7 @@ import org.springframework.data.relational.core.sql.LockMode;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Sergey Korotaev
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -133,8 +135,18 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType) {
+		return collect(das -> das.streamAll(domainType));
+	}
+
+	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return collect(das -> das.findAllById(ids, domainType));
+	}
+
+	@Override
+	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+		return collect(das -> das.streamAllByIds(ids, domainType));
 	}
 
 	@Override
@@ -154,6 +166,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
+		return collect(das -> das.streamAll(domainType, sort));
+	}
+
+	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return collect(das -> das.findAll(domainType, pageable));
 	}
@@ -166,6 +183,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAll(Query query, Class<T> domainType) {
 		return collect(das -> das.findAll(query, domainType));
+	}
+
+	@Override
+	public <T> Stream<T> streamAll(Query query, Class<T> domainType) {
+		return collect(das -> das.streamAll(query, domainType));
 	}
 
 	@Override

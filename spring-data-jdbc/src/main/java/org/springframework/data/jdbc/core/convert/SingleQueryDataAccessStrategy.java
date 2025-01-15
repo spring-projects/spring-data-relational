@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,6 +33,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Sergey Korotaev
  * @since 3.2
  */
 class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
@@ -57,12 +59,27 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	}
 
 	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return aggregateReader.findAllById(ids, getPersistentEntity(domainType));
 	}
 
 	@Override
+	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public <T> List<T> findAll(Class<T> domainType, Sort sort) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <T> Stream<T> streamAll(Class<T> domainType, Sort sort) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -79,6 +96,11 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> domainType) {
 		return aggregateReader.findAll(query, getPersistentEntity(domainType));
+	}
+
+	@Override
+	public <T> Stream<T> streamAll(Query query, Class<T> domainType) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
