@@ -101,7 +101,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			return type.cast(row);
 		}
 
-		if (getConversions().hasCustomReadTarget(Row.class, rawType)
+		if (getCustomConversions().hasCustomReadTarget(Row.class, rawType)
 				&& getConversionService().canConvert(Row.class, rawType)) {
 			return getConversionService().convert(row, rawType);
 		}
@@ -170,7 +170,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 		Class<?> userClass = ClassUtils.getUserClass(source);
 
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(userClass, OutboundRow.class);
+		Optional<Class<?>> customTarget = getCustomConversions().getCustomWriteTarget(userClass, OutboundRow.class);
 		if (customTarget.isPresent()) {
 
 			OutboundRow result = getConversionService().convert(source, OutboundRow.class);
@@ -212,7 +212,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 				continue;
 			}
 
-			if (getConversions().isSimpleType(value.getClass())) {
+			if (getCustomConversions().isSimpleType(value.getClass())) {
 				writeSimpleInternal(sink, value, isNew, property);
 			} else {
 				writePropertyInternal(sink, value, isNew, property);
@@ -286,7 +286,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 			Class<?> elementType = element == null ? null : element.getClass();
 
-			if (elementType == null || getConversions().isSimpleType(elementType)) {
+			if (elementType == null || getCustomConversions().isSimpleType(elementType)) {
 				collection.add(getPotentiallyConvertedSimpleWrite(element,
 						componentType != null ? componentType.getType() : Object.class));
 			} else if (element instanceof Collection || elementType.isArray()) {
@@ -306,7 +306,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {
 
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(type);
+		Optional<Class<?>> customTarget = getCustomConversions().getCustomWriteTarget(type);
 
 		if (customTarget.isPresent()) {
 			return customTarget.get();
@@ -353,7 +353,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			}
 		}
 
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
+		Optional<Class<?>> customTarget = getCustomConversions().getCustomWriteTarget(value.getClass());
 
 		if (customTarget.isPresent()) {
 			return getConversionService().convert(value, customTarget.get());
@@ -393,7 +393,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 	@Override
 	public Class<?> getTargetType(Class<?> valueType) {
 
-		Optional<Class<?>> writeTarget = getConversions().getCustomWriteTarget(valueType);
+		Optional<Class<?>> writeTarget = getCustomConversions().getCustomWriteTarget(valueType);
 
 		return writeTarget.orElseGet(() -> {
 			return Enum.class.isAssignableFrom(valueType) ? String.class : valueType;
@@ -402,7 +402,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	@Override
 	public boolean isSimpleType(Class<?> type) {
-		return getConversions().isSimpleType(type);
+		return getCustomConversions().isSimpleType(type);
 	}
 
 	// ----------------------------------

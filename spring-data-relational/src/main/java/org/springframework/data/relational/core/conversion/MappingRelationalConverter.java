@@ -111,7 +111,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		super(context);
 
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
-		this.introspector = createIntrospector(projectionFactory, getConversions(), getMappingContext());
+		this.introspector = createIntrospector(projectionFactory, getCustomConversions(), getMappingContext());
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		super(context, conversions);
 
 		this.spELContext = new SpELContext(DocumentPropertyAccessor.INSTANCE);
-		this.introspector = createIntrospector(projectionFactory, getConversions(), getMappingContext());
+		this.introspector = createIntrospector(projectionFactory, getCustomConversions(), getMappingContext());
 	}
 
 	private static EntityProjectionIntrospector createIntrospector(ProjectionFactory projectionFactory,
@@ -164,7 +164,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		Assert.notNull(path, "ObjectPath must not be null");
 
-		return new DefaultConversionContext(this, getConversions(), path, this::readAggregate, this::readCollectionOrArray,
+		return new DefaultConversionContext(this, getCustomConversions(), path, this::readAggregate, this::readCollectionOrArray,
 				this::readMap, this::getPotentiallyConvertedSimpleRead);
 	}
 
@@ -202,7 +202,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	}
 
 	protected <R> ProjectingConversionContext newProjectingConversionContext(EntityProjection<R, ?> projection) {
-		return new ProjectingConversionContext(this, getConversions(), ObjectPath.ROOT, this::readCollectionOrArray,
+		return new ProjectingConversionContext(this, getCustomConversions(), ObjectPath.ROOT, this::readCollectionOrArray,
 				this::readMap, this::getPotentiallyConvertedSimpleRead, projection);
 	}
 
@@ -334,7 +334,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		Class<? extends S> rawType = typeHint.getType();
 
-		if (getConversions().hasCustomReadTarget(RowDocument.class, rawType)) {
+		if (getCustomConversions().hasCustomReadTarget(RowDocument.class, rawType)) {
 			return doConvert(documentAccessor.getDocument(), rawType, typeHint.getType());
 		}
 
@@ -627,7 +627,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	@Nullable
 	private Object getPotentiallyConvertedSimpleWrite(Object value) {
 
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
+		Optional<Class<?>> customTarget = getCustomConversions().getCustomWriteTarget(value.getClass());
 
 		if (customTarget.isPresent()) {
 			return getConversionService().convert(value, customTarget.get());
@@ -649,7 +649,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		Class<?> target = type.getType();
 
-		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
+		if (getCustomConversions().hasCustomReadTarget(value.getClass(), target)) {
 			return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
 		}
 
@@ -677,76 +677,63 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 	@Override
 	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object writeValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (value == null) {
 			return null;
 		}
 
-		if (getConversions().isSimpleType(value.getClass())) {
+		Optional<Class<?>> customTarget;
 
-			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
-					? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-					: getConversions().getCustomWriteTarget(type.getType());
+		if ((customTarget = getCustomConversions().getCustomWriteTarget(value.getClass())).isPresent()) {
+			return getConversionService().convert(value, customTarget.get());
+		}
 
-			if (customWriteTarget.isPresent()) {
-				return getConversionService().convert(value, customWriteTarget.get());
-			}
+		if (getCustomConversions().isSimpleType(value.getClass())) {
 
-			if (TypeInformation.OBJECT != type) {
+			if (targetType.getType().isAssignableFrom(value.getClass())) {
 
-				if (type.getType().isAssignableFrom(value.getClass())) {
+				if (value.getClass().isEnum()) {
+					return ((Enum<?>) value).name();
+				}
 
-					if (value.getClass().isEnum()) {
-						return getPotentiallyConvertedSimpleWrite(value);
-					}
-
-					return value;
-				} else {
-					if (getConversionService().canConvert(value.getClass(), type.getType())) {
-						value = getConversionService().convert(value, type.getType());
-					}
+				return value;
+			} else {
+				if (getConversionService().canConvert(value.getClass(), targetType.getType())) {
+					value = getConversionService().convert(value, targetType.getType());
 				}
 			}
 
-			return getPotentiallyConvertedSimpleWrite(value);
+			return value;
 		}
 
 		if (value.getClass().isArray()) {
-			return writeArray(value, type);
+			return writeArray(value, targetType);
 		}
 
 		if (value instanceof Collection<?>) {
-			return writeCollection((Iterable<?>) value, type);
+			return writeCollection((Iterable<?>) value, targetType);
 		}
 
 		if (getMappingContext().hasPersistentEntityFor(value.getClass())) {
-
-			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());
-
-			if (persistentEntity != null) {
-
-				Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
-				return writeValue(id, type);
-			}
+			RelationalPersistentEntity<?> persistentEntity = getMappingContext().getRequiredPersistentEntity(value.getClass());
+			Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
+			return writeValue(id, targetType);
 		}
 
-		return
-
-		getConversionService().convert(value, type.getType());
+		return getConversionService().convert(value, targetType.getType());
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
 
 		Class<?> componentType = value.getClass().getComponentType();
-		Optional<Class<?>> optionalWriteTarget = getConversions().getCustomWriteTarget(componentType);
+		Optional<Class<?>> optionalWriteTarget = getCustomConversions().getCustomWriteTarget(componentType);
 
 		if (optionalWriteTarget.isEmpty() && !componentType.isEnum()) {
 			return value;
 		}
 
-		Class<?> customWriteTarget = optionalWriteTarget
-				.orElseGet(() -> componentType.isEnum() ? String.class : componentType);
+		Class<?> customWriteTarget = optionalWriteTarget.orElse(String.class); // Enum -> String.class
 
 		// optimization: bypass identity conversion
 		if (customWriteTarget.equals(componentType)) {
