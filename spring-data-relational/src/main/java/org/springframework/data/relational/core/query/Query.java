@@ -41,6 +41,7 @@ import org.springframework.util.Assert;
  */
 public class Query {
 
+	private static final Query EMPTY = new Query(null);
 	private static final int NO_LIMIT = -1;
 
 	private final @Nullable CriteriaDefinition criteria;
@@ -84,7 +85,7 @@ public class Query {
 	 * @return
 	 */
 	public static Query empty() {
-		return new Query(null);
+		return EMPTY;
 	}
 
 	/**
