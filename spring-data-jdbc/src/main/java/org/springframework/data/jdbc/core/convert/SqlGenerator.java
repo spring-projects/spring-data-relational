@@ -39,6 +39,7 @@ import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -507,29 +508,40 @@ class SqlGenerator {
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder() {
-		return selectBuilder(Collections.emptyList(), null);
+		return selectBuilder(Collections.emptyList(), Query.empty());
 	}
-
 
 	private SelectBuilder.SelectWhere selectBuilder(Query query) {
 		return selectBuilder(Collections.emptyList(), query);
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
-		return selectBuilder(keyColumns, null);
+		return selectBuilder(keyColumns, Query.empty());
 	}
 
-	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns, @Nullable Query query) {
+	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns, Query query) {
 
 		Table table = getTable();
 
-		Set<Expression> columnExpressions = new LinkedHashSet<>();
+		Projection projection = getProjection(keyColumns, query, table);
+		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(projection.columns());
+		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
 
-		List<Join> joinTables = new ArrayList<>();
+		for (Join join : projection.joins()) {
+			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+		}
 
-		if (query != null && !query.getColumns().isEmpty()) {
+		return (SelectBuilder.SelectWhere) baseSelect;
+	}
+
+	private Projection getProjection(Collection<SqlIdentifier> keyColumns, Query query, Table table) {
+
+		Set<Expression> columns = new LinkedHashSet<>();
+		Set<Join> joins = new LinkedHashSet<>();
+
+		if (!CollectionUtils.isEmpty(query.getColumns())) {
 			for (SqlIdentifier columnName : query.getColumns()) {
-				columnExpressions.add(Column.create(columnName, table));
+				columns.add(Column.create(columnName, table));
 			}
 		} else {
 			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
@@ -540,29 +552,30 @@ class SqlGenerator {
 				// add a join if necessary
 				Join join = getJoin(extPath);
 				if (join != null) {
-					joinTables.add(join);
+					joins.add(join);
 				}
 
 				Column column = getColumn(extPath);
 				if (column != null) {
-					columnExpressions.add(column);
+					columns.add(column);
 				}
 			}
 		}
 
-
 		for (SqlIdentifier keyColumn : keyColumns) {
-			columnExpressions.add(table.column(keyColumn).as(keyColumn));
+			columns.add(table.column(keyColumn).as(keyColumn));
 		}
 
-		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(columnExpressions);
-		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
+		return new Projection(columns, joins);
+	}
 
-		for (Join join : joinTables) {
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
-		}
-
-		return (SelectBuilder.SelectWhere) baseSelect;
+	/**
+	 * Projection including its source joins.
+	 *
+	 * @param columns
+	 * @param joins
+	 */
+	record Projection(Set<Expression> columns, Set<Join> joins) {
 	}
 
 	private SelectBuilder.SelectOrdered selectBuilder(Collection<SqlIdentifier> keyColumns, Sort sort,
@@ -900,7 +913,6 @@ class SqlGenerator {
 
 		return render(select);
 	}
-
 
 	/**
 	 * Constructs a single sql query that performs select based on the provided query and pagination information.
