@@ -247,7 +247,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1714
 	public void streamAll() {
 
 		String value = "some answer";
@@ -299,7 +299,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1714
 	public void streamAllByIds() {
 
 		String value = "some answer 2";
@@ -430,7 +430,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
-	@Test
+	@Test // GH-1714
 	public void streamAllSorted() {
 
 		String value = "some answer 3";

@@ -389,6 +389,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	@Test // GH-1714
 	void findByNonPropertySortLikeStreamFails() {
+
 		assertThatThrownBy(() -> template.streamAll(LegoSet.class, Sort.by("somethingNotExistant")))
 				.isInstanceOf(InvalidPersistentPropertyPath.class);
 	}

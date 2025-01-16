@@ -344,6 +344,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> Stream<T> streamAll(Class<T> domainType) {
+
 		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(domainType));
 		return StreamSupport.stream(items.spliterator(), false).map(this::triggerAfterConvert);
 	}

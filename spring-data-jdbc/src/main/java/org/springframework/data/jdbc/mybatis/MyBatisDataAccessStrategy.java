@@ -269,6 +269,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Stream<T> streamAll(Class<T> domainType) {
+
 		String statement = namespace(domainType) + ".streamAll";
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
 		Cursor<T> cursor = sqlSession().selectCursor(statement, parameter);
@@ -277,12 +278,14 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> List<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+
 		return sqlSession().selectList(namespace(domainType) + ".findAllById",
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public <T> Stream<T> streamAllByIds(Iterable<?> ids, Class<T> domainType) {
+
 		String statement = namespace(domainType) + ".streamAllByIds";
 		MyBatisContext parameter = new MyBatisContext(ids, null, domainType, Collections.emptyMap());
 		Cursor<T> cursor = sqlSession().selectCursor(statement, parameter);
