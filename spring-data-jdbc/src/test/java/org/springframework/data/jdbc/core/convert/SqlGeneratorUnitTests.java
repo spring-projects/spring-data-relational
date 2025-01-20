@@ -373,7 +373,7 @@ class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
 
 		assertThat(sql).contains( //
-				"SELECT dummy_entity.id1, dummy_entity.alpha, dummy_entity.beta, dummy_entity.gamma", //
+				"SELECT dummy_entity.id1 AS id1, dummy_entity.alpha, dummy_entity.beta, dummy_entity.gamma", //
 				"FROM dummy_entity" //
 		);
 	}
