@@ -541,24 +541,25 @@ class SqlGenerator {
 
 		if (!CollectionUtils.isEmpty(query.getColumns())) {
 			for (SqlIdentifier columnName : query.getColumns()) {
-				columns.add(Column.create(columnName, table));
+
+				String columnNameString = columnName.getReference();
+				RelationalPersistentProperty property = entity.getPersistentProperty(columnNameString);
+				if (property != null) {
+
+					AggregatePath aggregatePath = mappingContext.getAggregatePath(
+							mappingContext.getPersistentPropertyPath(columnNameString, entity.getTypeInformation()));
+					gatherColumn(aggregatePath, joins, columns);
+				} else {
+					columns.add(Column.create(columnName, table));
+				}
 			}
 		} else {
 			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 					.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-				AggregatePath extPath = mappingContext.getAggregatePath(path);
+				AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
 
-				// add a join if necessary
-				Join join = getJoin(extPath);
-				if (join != null) {
-					joins.add(join);
-				}
-
-				Column column = getColumn(extPath);
-				if (column != null) {
-					columns.add(column);
-				}
+				gatherColumn(aggregatePath, joins, columns);
 			}
 		}
 
@@ -567,6 +568,20 @@ class SqlGenerator {
 		}
 
 		return new Projection(columns, joins);
+	}
+
+	private void gatherColumn(AggregatePath aggregatePath, Set<Join> joins, Set<Expression> columns) {
+
+		// add a join if necessary
+		Join join = getJoin(aggregatePath);
+		if (join != null) {
+			joins.add(join);
+		}
+
+		Column column = getColumn(aggregatePath);
+		if (column != null) {
+			columns.add(column);
+		}
 	}
 
 	/**
