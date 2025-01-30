@@ -65,7 +65,7 @@ import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.relational.core.mapping.TargetSequence;
+import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -126,9 +126,10 @@ public class JdbcRepositoryIntegrationTests {
 				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
 	}
 
-	@Test
+	@Test // GH-1923
 	@EnabledOnFeature(value = TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
 	public void saveEntityWithTargetSequenceSpecified() {
+
 		EntityWithSequence first = entityWithSequenceRepository.save(new EntityWithSequence("first"));
 		EntityWithSequence second = entityWithSequenceRepository.save(new EntityWithSequence("second"));
 
@@ -139,9 +140,10 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(second.getName()).isEqualTo("second");
 	}
 
-	@Test
+	@Test // GH-1923
 	@EnabledOnFeature(value = TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
 	public void batchInsertEntityWithTargetSequenceSpecified() {
+
 		Iterable<EntityWithSequence> results = entityWithSequenceRepository
 				.saveAll(List.of(new EntityWithSequence("first"), new EntityWithSequence("second")));
 
@@ -1862,7 +1864,7 @@ public class JdbcRepositoryIntegrationTests {
 	static class EntityWithSequence {
 
 		@Id
-		@TargetSequence(sequence = "entity_sequence") private Long id;
+		@Sequence(sequence = "ENTITY_SEQUENCE") private Long id;
 
 		private String name;
 

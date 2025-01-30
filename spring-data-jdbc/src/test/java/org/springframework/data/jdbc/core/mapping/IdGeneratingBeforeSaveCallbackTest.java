@@ -14,7 +14,7 @@ import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.relational.core.mapping.TargetSequence;
+import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -26,68 +26,58 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 class IdGeneratingBeforeSaveCallbackTest {
 
-    @Test
-    void test_mySqlDialect_sequenceGenerationIsNotSupported() {
-        // given
-        RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
+    @Test // GH-1923
+    void mySqlDialectsequenceGenerationIsNotSupported() {
+
+		RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
         MySqlDialect mySqlDialect = new MySqlDialect(IdentifierProcessing.NONE);
         NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-        // and
         IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
 
         NoSequenceEntity entity = new NoSequenceEntity();
 
-        // when
         Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
 
-        // then
         Assertions.assertThat(processed).isSameAs(entity);
         Assertions.assertThat(processed).usingRecursiveComparison().isEqualTo(entity);
     }
 
-    @Test
-    void test_EntityIsNotMarkedWithTargetSequence() {
-        // given
-        RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
+    @Test // GH-1923
+    void entityIsNotMarkedWithTargetSequence() {
+
+		RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
         PostgresDialect mySqlDialect = PostgresDialect.INSTANCE;
         NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-        // and
         IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
 
         NoSequenceEntity entity = new NoSequenceEntity();
 
-        // when
         Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
 
-        // then
         Assertions.assertThat(processed).isSameAs(entity);
         Assertions.assertThat(processed).usingRecursiveComparison().isEqualTo(entity);
     }
 
-    @Test
-    void test_EntityIdIsPopulatedFromSequence() {
-        // given
+    @Test // GH-1923
+    void entityIdIsPopulatedFromSequence() {
+
         RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
         relationalMappingContext.getRequiredPersistentEntity(EntityWithSequence.class);
 
         PostgresDialect mySqlDialect = PostgresDialect.INSTANCE;
         NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-        // and
         long generatedId = 112L;
         when(operations.queryForObject(anyString(), anyMap(), any(RowMapper.class))).thenReturn(generatedId);
 
-        // and
         IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
 
         EntityWithSequence entity = new EntityWithSequence();
 
-        // when
         Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
 
-        // then
         Assertions.assertThat(processed).isSameAs(entity);
         Assertions
           .assertThat(processed)
@@ -109,7 +99,7 @@ class IdGeneratingBeforeSaveCallbackTest {
     static class EntityWithSequence {
 
         @Id
-        @TargetSequence(value = "id_seq", schema = "public")
+        @Sequence(value = "id_seq", schema = "public")
         private Long id;
 
         private Long name;

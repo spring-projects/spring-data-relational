@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.util.Lazy;
 
@@ -36,6 +37,9 @@ public class SqlServerDialect extends AbstractDialect {
 	 */
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
+	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing
+			.create(IdentifierProcessing.Quoting.ANSI, IdentifierProcessing.LetterCasing.AS_IS);
+
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {
 
 		@Override
@@ -44,13 +48,10 @@ public class SqlServerDialect extends AbstractDialect {
 		}
 
 		@Override
-		public String nextValueFromSequenceSelect(String sequenceName) {
-			return "SELECT NEXT VALUE FOR %s".formatted(sequenceName);
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
+			return IdGeneration.createSequenceQuery(sequenceName.toSql(IDENTIFIER_PROCESSING));
 		}
 	};
-
-	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing
-			.create(IdentifierProcessing.Quoting.ANSI, IdentifierProcessing.LetterCasing.AS_IS);
 
 	protected SqlServerDialect() {}
 
@@ -86,7 +87,7 @@ public class SqlServerDialect extends AbstractDialect {
 
 		@Override
 		public String getLock(LockOptions lockOptions) {
-			
+
 			return switch (lockOptions.getLockMode()) {
 				case PESSIMISTIC_WRITE -> "WITH (UPDLOCK, ROWLOCK)";
 				case PESSIMISTIC_READ -> "WITH (HOLDLOCK, ROWLOCK)";

@@ -58,32 +58,40 @@ class BasicRelationalPersistentEntityUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
 	}
 
-	@Test
-	void entityWithNotargetSequence() {
+	@Test // GH-1923
+	void entityWithNoSequence() {
+
 		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(DummySubEntity.class);
 
-		assertThat(entity.getIdTargetSequence()).isEmpty();
+		assertThat(entity.getIdSequence()).isEmpty();
 	}
 
-	@Test
+	@Test // GH-1923
 	void determineSequenceName() {
-		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequence.class);
 
-		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("my_seq");
+		RelationalPersistentEntity<?> persistentEntity = mappingContext
+				.getRequiredPersistentEntity(EntityWithSequence.class);
+
+		assertThat(persistentEntity.getIdSequence()).contains(SqlIdentifier.quoted("my_seq"));
 	}
 
-	@Test
+	@Test // GH-1923
 	void determineSequenceNameFromValue() {
-		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequenceValueAlias.class);
 
-		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("my_seq");
+		RelationalPersistentEntity<?> persistentEntity = mappingContext
+				.getRequiredPersistentEntity(EntityWithSequenceValueAlias.class);
+
+		assertThat(persistentEntity.getIdSequence()).contains(SqlIdentifier.quoted("my_seq"));
 	}
 
-	@Test
+	@Test // GH-1923
 	void determineSequenceNameWithSchemaSpecified() {
-		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSequenceAndSchema.class);
 
-		assertThat(persistentEntity.getIdTargetSequence()).isPresent().hasValue("public.my_seq");
+		RelationalPersistentEntity<?> persistentEntity = mappingContext
+				.getRequiredPersistentEntity(EntityWithSequenceAndSchema.class);
+
+		assertThat(persistentEntity.getIdSequence())
+				.contains(SqlIdentifier.from(SqlIdentifier.quoted("public"), SqlIdentifier.quoted("my_seq")));
 	}
 
 	@Test // DATAJDBC-294
@@ -203,8 +211,9 @@ class BasicRelationalPersistentEntityUnitTests {
 		@Id private Long id;
 	}
 
-	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredSchemaName}",
+	@Table(
+			schema = "#{T(org.springframework.data.relational.core.mapping."
+					+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredSchemaName}",
 			name = "#{T(org.springframework.data.relational.core.mapping."
 					+ "BasicRelationalPersistentEntityUnitTests$EntityWithSchemaAndTableSpelExpression).desiredTableName}")
 	private static class EntityWithSchemaAndTableSpelExpression {
@@ -213,10 +222,11 @@ class BasicRelationalPersistentEntityUnitTests {
 		public static String desiredSchemaName = "HELP_ME_OBI_WON";
 	}
 
-	@Table(schema = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredSchemaName}",
+	@Table(
+			schema = "#{T(org.springframework.data.relational.core.mapping."
+					+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredSchemaName}",
 			name = "#{T(org.springframework.data.relational.core.mapping."
-			+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredTableName}")
+					+ "BasicRelationalPersistentEntityUnitTests$LittleBobbyTables).desiredTableName}")
 	private static class LittleBobbyTables {
 		@Id private Long id;
 		public static String desiredTableName = "Robert'); DROP TABLE students;--";
@@ -232,19 +242,21 @@ class BasicRelationalPersistentEntityUnitTests {
 	@Table("entity_with_sequence")
 	static class EntityWithSequence {
 		@Id
-		@TargetSequence(sequence = "my_seq") Long id;
+		@Sequence(sequence = "my_seq") Long id;
 	}
 
 	@Table("entity_with_sequence_value_alias")
 	static class EntityWithSequenceValueAlias {
 		@Id
-		@Column("myId") @TargetSequence(value = "my_seq") Long id;
+		@Column("myId")
+		@Sequence(value = "my_seq") Long id;
 	}
 
 	@Table("entity_with_sequence_and_schema")
 	static class EntityWithSequenceAndSchema {
 		@Id
-		@Column("myId") @TargetSequence(sequence = "my_seq", schema = "public") Long id;
+		@Column("myId")
+		@Sequence(sequence = "my_seq", schema = "public") Long id;
 	}
 
 	@Table()

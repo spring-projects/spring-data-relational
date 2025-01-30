@@ -57,7 +57,7 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	}
 
 	@Override
-	public Optional<String> getIdTargetSequence() {
+	public Optional<SqlIdentifier> getIdSequence() {
 		return Optional.empty();
 	}
 

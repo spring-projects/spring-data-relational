@@ -18,8 +18,8 @@ package org.springframework.data.relational.core.dialect;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * An SQL dialect for DB2.
@@ -41,14 +41,20 @@ public class Db2Dialect extends AbstractDialect {
 			return false;
 		}
 
-		/**
-		 * This workaround (non-ANSI SQL way of querying sequence) exists for the same reasons it exists for {@link HsqlDbDialect}
-		 *
-		 * @see HsqlDbDialect#getIdGeneration()#nextValueFromSequenceSelect(String)
-		 */
 		@Override
-		public String nextValueFromSequenceSelect(String sequenceName) {
-			return "SELECT NEXT VALUE FOR %s FROM SYSCAT.SEQUENCES LIMIT 1".formatted(sequenceName);
+		public boolean sequencesSupported() {
+			return true;
+		}
+
+		@Override
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
+			/*
+			 * This workaround (non-ANSI SQL way of querying sequence) exists for the same reasons it exists for {@link HsqlDbDialect}
+			 *
+			 * @see HsqlDbDialect#getIdGeneration()#nextValueFromSequenceSelect(String)
+			 */
+			return "SELECT NEXT VALUE FOR %s FROM SYSCAT.SEQUENCES LIMIT 1"
+					.formatted(sequenceName.toSql(INSTANCE.getIdentifierProcessing()));
 		}
 	};
 
@@ -102,11 +108,6 @@ public class Db2Dialect extends AbstractDialect {
 				return Position.AFTER_ORDER_BY;
 			}
 		};
-	}
-
-	@Override
-	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.ANSI;
 	}
 
 	@Override

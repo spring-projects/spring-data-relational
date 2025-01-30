@@ -18,19 +18,29 @@ package org.springframework.data.relational.core.dialect;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
- * Encapsulates various properties that are related to ID generation process and specific to
- * given {@link Dialect}
+ * Encapsulates various properties that are related to ID generation process and specific to given {@link Dialect}
  *
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Mikhail Polivakha
- *
  * @since 2.1
  */
 public interface IdGeneration {
+
+	static IdGeneration create(IdentifierProcessing identifierProcessing) {
+
+		return new IdGeneration() {
+
+			@Override
+			public String createSequenceQuery(SqlIdentifier sequenceName) {
+				return IdGeneration.createSequenceQuery(sequenceName.toSql(identifierProcessing));
+			}
+		};
+	}
 
 	/**
 	 * A default instance working for many databases and equivalent to Spring Data JDBCs behavior before version 2.1.
@@ -63,13 +73,6 @@ public interface IdGeneration {
 	}
 
 	/**
-	 * @return {@literal true} in case the sequences are supported by the underlying database, {@literal false} otherwise
-	 */
-	default boolean sequencesSupported() {
-		return true;
-	}
-
-	/**
 	 * Does the driver support id generation for batch operations.
 	 * <p>
 	 * This should be {@literal true} for most dialects, except DB2 and SqlServer.
@@ -83,14 +86,27 @@ public interface IdGeneration {
 	}
 
 	/**
+	 * @return {@literal true} in case the sequences are supported by the underlying database, {@literal false} otherwise
+	 * @since 3.5
+	 */
+	default boolean sequencesSupported() {
+		return true;
+	}
+
+	/**
 	 * The SQL statement that allows retrieving the next value from the passed sequence
 	 *
-	 * @param sequenceName the sequence name to get the enxt value for
+	 * @param sequenceName the sequence name to get the next value for
 	 * @return SQL string
+	 * @since 3.5
 	 */
-	default String nextValueFromSequenceSelect(String sequenceName) {
-		throw new UnsupportedOperationException(
-			"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket".formatted(this.getClass().getSimpleName())
-		);
+	default String createSequenceQuery(SqlIdentifier sequenceName) {
+
+		String nameString = sequenceName.toString();
+		return createSequenceQuery(nameString);
+	}
+
+	static String createSequenceQuery(String nameString) {
+		return "SELECT NEXT VALUE FOR" + nameString;
 	}
 }

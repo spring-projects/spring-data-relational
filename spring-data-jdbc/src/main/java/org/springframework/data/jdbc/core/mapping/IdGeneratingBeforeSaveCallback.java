@@ -11,6 +11,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -40,15 +41,17 @@ public class IdGeneratingBeforeSaveCallback implements BeforeSaveCallback<Object
 
     @Override
     public Object onBeforeSave(Object aggregate, MutableAggregateChange<Object> aggregateChange) {
+
         Assert.notNull(aggregate, "The aggregate cannot be null at this point");
+
         RelationalPersistentEntity<?> persistentEntity = relationalMappingContext.getPersistentEntity(aggregate.getClass());
-        Optional<String> idTargetSequence = persistentEntity.getIdTargetSequence();
+        Optional<SqlIdentifier> idSequence = persistentEntity.getIdSequence();
 
         if (dialect.getIdGeneration().sequencesSupported()) {
 
             if (persistentEntity.getIdProperty() != null) {
-                idTargetSequence
-                  .map(s -> dialect.getIdGeneration().nextValueFromSequenceSelect(s))
+                idSequence
+                  .map(s -> dialect.getIdGeneration().createSequenceQuery(s))
                   .ifPresent(sql -> {
                       Long idValue = operations.queryForObject(sql, Map.of(), (rs, rowNum) -> rs.getLong(1));
                       PersistentPropertyAccessor<Object> propertyAccessor = persistentEntity.getPropertyAccessor(aggregate);
@@ -56,7 +59,7 @@ public class IdGeneratingBeforeSaveCallback implements BeforeSaveCallback<Object
                   });
             }
         } else {
-            if (idTargetSequence.isPresent()) {
+            if (idSequence.isPresent()) {
                 LOG.warn("""
                         It seems you're trying to insert an aggregate of type '%s' annotated with @TargetSequence, but the problem is RDBMS you're
                         working with does not support sequences as such. Falling back to identity columns

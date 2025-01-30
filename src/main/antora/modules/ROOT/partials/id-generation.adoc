@@ -6,7 +6,9 @@ The ID of an entity must be annotated with Spring Data's https://docs.spring.io/
 
 When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
-Spring Data does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
+If you annotate the id additionally with `@Sequence` a database sequence will be used to obtain values for the id.
+
+Otherwise Spring Data does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
 That is `0` for primitive types and `null` if the identifier property uses a numeric wrapper type such as `Long`.
 
 xref:repositories/core-concepts.adoc#is-new-state-detection[Entity State Detection] explains in detail the strategies to detect whether an entity is new or whether it is expected to exist in your database.

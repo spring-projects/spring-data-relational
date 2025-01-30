@@ -17,7 +17,8 @@ package org.springframework.data.relational.core.mapping;
 
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
+import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
@@ -47,7 +48,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	private final Lazy<SqlIdentifier> tableName;
 	private final @Nullable Expression tableNameExpression;
 
-	private final Lazy<String> idTargetSequenceName;
+	private final Lazy<SqlIdentifier> idSequenceName;
 
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
 	private final @Nullable Expression schemaNameExpression;
@@ -91,7 +92,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 			this.schemaNameExpression = null;
 		}
 
-		this.idTargetSequenceName = Lazy.of(this::determineTargetSequenceName);
+		this.idSequenceName = Lazy.of(this::determineSequenceName);
 	}
 
 	/**
@@ -165,8 +166,8 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	}
 
 	@Override
-	public Optional<String> getIdTargetSequence() {
-		return idTargetSequenceName.getOptional();
+	public Optional<SqlIdentifier> getIdSequence() {
+		return idSequenceName.getOptional();
 	}
 
 	@Override
@@ -174,33 +175,28 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 		return String.format("BasicRelationalPersistentEntity<%s>", getType());
 	}
 
-	private @Nullable String determineTargetSequenceName() {
+	private @Nullable SqlIdentifier determineSequenceName() {
+
 		RelationalPersistentProperty idProperty = getIdProperty();
 
-		if (idProperty != null && idProperty.isAnnotationPresent(TargetSequence.class)) {
-			TargetSequence requiredAnnotation = idProperty.getRequiredAnnotation(TargetSequence.class);
-			if (!StringUtils.hasText(requiredAnnotation.sequence()) && !StringUtils.hasText(requiredAnnotation.value())) {
-				throw new IllegalStateException("""
-					For the persistent entity '%s' the @TargetSequence annotation was specified for the @Id, however, neither
-					the value() nor the sequence() attributes are specified
-					"""
-				);
-			} else {
-				String sequenceFullyQualifiedName = getSequenceName(requiredAnnotation);
-				if (StringUtils.hasText(requiredAnnotation.schema())) {
-					return String.join(".", requiredAnnotation.schema(), sequenceFullyQualifiedName);
-				}
-				return sequenceFullyQualifiedName;
+		if (idProperty != null && idProperty.isAnnotationPresent(Sequence.class)) {
+
+			Sequence requiredAnnotation = idProperty.getRequiredAnnotation(Sequence.class);
+
+			MergedAnnotation<Sequence> targetSequence = MergedAnnotations.from(requiredAnnotation)
+					.get(Sequence.class);
+
+			String sequence = targetSequence.getString("sequence");
+			String schema = targetSequence.getString("schema");
+
+			SqlIdentifier sequenceIdentifier = SqlIdentifier.quoted(sequence);
+			if (StringUtils.hasText(schema)) {
+				sequenceIdentifier = SqlIdentifier.from(SqlIdentifier.quoted(schema), sequenceIdentifier);
 			}
+
+			return sequenceIdentifier;
 		} else {
 			return null;
 		}
-	}
-
-	@NotNull
-	private static String getSequenceName(TargetSequence requiredAnnotation) {
-		return Optional.of(requiredAnnotation.sequence())
-		.filter(s -> !s.isBlank())
-		.orElse(requiredAnnotation.value());
 	}
 }

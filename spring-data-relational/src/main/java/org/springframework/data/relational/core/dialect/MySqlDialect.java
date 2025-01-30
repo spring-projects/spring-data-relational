@@ -18,10 +18,12 @@ package org.springframework.data.relational.core.dialect;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
 
 /**
@@ -131,10 +133,7 @@ public class MySqlDialect extends AbstractDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Arrays.asList(
-				TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
-				NumberToBooleanConverter.INSTANCE
-		);
+		return Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE);
 	}
 
 	@Override
@@ -144,11 +143,19 @@ public class MySqlDialect extends AbstractDialect {
 
 	@Override
 	public IdGeneration getIdGeneration() {
+
 		return new IdGeneration() {
 
 			@Override
 			public boolean sequencesSupported() {
 				return false;
+			}
+
+			@Override
+			public String createSequenceQuery(@NotNull SqlIdentifier sequenceName) {
+				throw new UnsupportedOperationException(
+						"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket"
+								.formatted(this.getClass().getSimpleName()));
 			}
 		};
 	}

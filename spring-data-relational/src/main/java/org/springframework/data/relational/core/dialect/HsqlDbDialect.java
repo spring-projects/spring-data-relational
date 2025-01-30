@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+
 /**
  * A {@link Dialect} for HsqlDb.
  *
@@ -70,16 +72,17 @@ public class HsqlDbDialect extends AbstractDialect {
 	public IdGeneration getIdGeneration() {
 		return new IdGeneration() {
 
-			/**
-			 * One may think that this is an over-complication, but it is actually not.
-			 * There is no a direct way to query the next value for the sequence, only to use it as an expression
-			 * inside other queries (SELECT/INSERT). Therefore, such a workaround is required
-			 *
-			 * @see <a href="https://github.com/jOOQ/jOOQ/issues/3762">The way JOOQ solves this problem</a>
-			 */
 			@Override
-			public String nextValueFromSequenceSelect(String sequenceName) {
-				return "SELECT NEXT VALUE FOR %s AS msq FROM INFORMATION_SCHEMA.SEQUENCES LIMIT 1".formatted(sequenceName);
+			public String createSequenceQuery(SqlIdentifier sequenceName) {
+				/*
+				 * One may think that this is an over-complication, but it is actually not.
+				 * There is no a direct way to query the next value for the sequence, only to use it as an expression
+				 * inside other queries (SELECT/INSERT). Therefore, such a workaround is required
+				 *
+				 * @see <a href="https://github.com/jOOQ/jOOQ/issues/3762">The way JOOQ solves this problem</a>
+				 */
+				return "SELECT NEXT VALUE FOR %s AS msq FROM INFORMATION_SCHEMA.SEQUENCES LIMIT 1"
+						.formatted(sequenceName.toSql(getIdentifierProcessing()));
 			}
 		};
 	}

@@ -40,6 +40,9 @@ public class H2Dialect extends AbstractDialect {
 	 * Singleton instance.
 	 */
 	public static final H2Dialect INSTANCE = new H2Dialect();
+	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing.create(Quoting.ANSI,
+			LetterCasing.UPPER_CASE);
+	private static final IdGeneration ID_GENERATION = IdGeneration.create(IDENTIFIER_PROCESSING);
 
 	protected H2Dialect() {}
 
@@ -101,7 +104,7 @@ public class H2Dialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
+		return IDENTIFIER_PROCESSING;
 	}
 
 	@Override
@@ -117,12 +120,6 @@ public class H2Dialect extends AbstractDialect {
 
 	@Override
 	public IdGeneration getIdGeneration() {
-		return new IdGeneration() {
-
-			@Override
-			public String nextValueFromSequenceSelect(String sequenceName) {
-				return "SELECT NEXT VALUE FOR %s".formatted(sequenceName);
-			}
-		};
+		return ID_GENERATION;
 	}
 }

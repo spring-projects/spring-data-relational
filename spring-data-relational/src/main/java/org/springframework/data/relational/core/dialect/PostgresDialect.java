@@ -55,6 +55,16 @@ public class PostgresDialect extends AbstractDialect {
 	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UUID.class, URL.class, URI.class, InetAddress.class,
 			Map.class);
 
+	private IdentifierProcessing identifierProcessing = IdentifierProcessing.create(Quoting.ANSI,
+			LetterCasing.LOWER_CASE);
+	private IdGeneration idGeneration = new IdGeneration() {
+
+		@Override
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
+			return "SELECT nextval('%s')".formatted(sequenceName.toSql(getIdentifierProcessing()));
+		}
+	};
+
 	protected PostgresDialect() {}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
@@ -131,10 +141,10 @@ public class PostgresDialect extends AbstractDialect {
 			// without schema
 			String tableName = last.toSql(this.identifierProcessing);
 
-            return switch (lockOptions.getLockMode()) {
-                case PESSIMISTIC_WRITE -> "FOR UPDATE OF " + tableName;
-                case PESSIMISTIC_READ -> "FOR SHARE OF " + tableName;
-            };
+			return switch (lockOptions.getLockMode()) {
+				case PESSIMISTIC_WRITE -> "FOR UPDATE OF " + tableName;
+				case PESSIMISTIC_READ -> "FOR SHARE OF " + tableName;
+			};
 		}
 
 		@Override
@@ -145,7 +155,7 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
+		return identifierProcessing;
 	}
 
 	@Override
@@ -160,12 +170,6 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public IdGeneration getIdGeneration() {
-		return new IdGeneration() {
-
-			@Override
-			public String nextValueFromSequenceSelect(String sequenceName) {
-				return "SELECT nextval('%s')".formatted(sequenceName);
-			}
-		};
+		return idGeneration;
 	}
 }

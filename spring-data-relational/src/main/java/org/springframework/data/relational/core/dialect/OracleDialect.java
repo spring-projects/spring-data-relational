@@ -15,13 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import static java.util.Arrays.*;
 
 import java.util.Collection;
 
-import static java.util.Arrays.*;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * An SQL dialect for Oracle.
@@ -50,8 +51,8 @@ public class OracleDialect extends AnsiDialect {
 		}
 
 		@Override
-		public String nextValueFromSequenceSelect(String sequenceName) {
-			return "SELECT %s.nextval FROM DUAL".formatted(sequenceName);
+		public String createSequenceQuery(@NotNull SqlIdentifier sequenceName) {
+			return "SELECT %s.nextval FROM DUAL".formatted(sequenceName.toSql(INSTANCE.getIdentifierProcessing()));
 		}
 	};
 
@@ -64,7 +65,8 @@ public class OracleDialect extends AnsiDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
+		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE,
+				BooleanToIntegerConverter.INSTANCE);
 	}
 
 	@WritingConverter
