@@ -23,6 +23,7 @@ import java.util.Arrays;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.relational.core.dialect.condition.Postgres;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
