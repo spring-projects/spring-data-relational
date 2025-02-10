@@ -20,7 +20,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.relational.core.query.Query
-import java.util.Optional
+import java.util.*
 
 /**
  * Kotlin extensions for [JdbcAggregateOperations].
@@ -80,7 +80,7 @@ inline fun <reified T> JdbcAggregateOperations.findAll(sort: Sort): List<T> =
 /**
  * Extension for [JdbcAggregateOperations.findAll] with pagination.
  */
-inline fun <reified T> JdbcAggregateOperations.findAll(pageable: Pageable): Page<T> =
+inline fun <reified T : Any> JdbcAggregateOperations.findAll(pageable: Pageable): Page<T> =
 		findAll(T::class.java, pageable)
 
 /**
@@ -98,7 +98,10 @@ inline fun <reified T> JdbcAggregateOperations.findAll(query: Query): List<T> =
 /**
  * Extension for [JdbcAggregateOperations.findAll] with query and pagination.
  */
-inline fun <reified T> JdbcAggregateOperations.findAll(query: Query, pageable: Pageable): Page<T> =
+inline fun <reified T : Any> JdbcAggregateOperations.findAll(
+	query: Query,
+	pageable: Pageable
+): Page<T> =
 		findAll(query, T::class.java, pageable)
 
 /**
