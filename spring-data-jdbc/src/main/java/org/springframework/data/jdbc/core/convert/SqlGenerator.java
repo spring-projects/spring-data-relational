@@ -69,7 +69,7 @@ class SqlGenerator {
 	/**
 	 * Length of an aggregate path that is one longer then the root path.
 	 */
-	private static final int FIRST_NON_ROOT_LENTH = 2;
+	private static final int FIRST_NON_ROOT_LENGTH = 2;
 
 	private final RelationalPersistentEntity<?> entity;
 	private final RelationalMappingContext mappingContext;
@@ -131,7 +131,7 @@ class SqlGenerator {
 	 * @return If the given path is considered deeply nested.
 	 */
 	private static boolean isFirstNonRoot(AggregatePath path) {
-		return path.getLength() == FIRST_NON_ROOT_LENTH;
+		return path.getLength() == FIRST_NON_ROOT_LENGTH;
 	}
 
 	/**
@@ -148,7 +148,7 @@ class SqlGenerator {
 	 * @return If the given path is considered deeply nested.
 	 */
 	private static boolean isDeeplyNested(AggregatePath path) {
-		return path.getLength() > FIRST_NON_ROOT_LENTH;
+		return path.getLength() > FIRST_NON_ROOT_LENGTH;
 	}
 
 	/**
