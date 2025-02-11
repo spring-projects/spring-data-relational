@@ -180,24 +180,29 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 		RelationalPersistentProperty idProperty = getIdProperty();
 
-		if (idProperty != null && idProperty.isAnnotationPresent(Sequence.class)) {
+		if (idProperty != null)
 
-			Sequence requiredAnnotation = idProperty.getRequiredAnnotation(Sequence.class);
+			if (idProperty.isAnnotationPresent(Sequence.class)) {
 
-			MergedAnnotation<Sequence> targetSequence = MergedAnnotations.from(requiredAnnotation)
-					.get(Sequence.class);
+				Sequence requiredAnnotation = idProperty.getRequiredAnnotation(Sequence.class);
 
-			String sequence = targetSequence.getString("sequence");
-			String schema = targetSequence.getString("schema");
+				MergedAnnotation<Sequence> targetSequence = MergedAnnotations.from(requiredAnnotation)
+						.get(Sequence.class);
 
-			SqlIdentifier sequenceIdentifier = SqlIdentifier.quoted(sequence);
-			if (StringUtils.hasText(schema)) {
-				sequenceIdentifier = SqlIdentifier.from(SqlIdentifier.quoted(schema), sequenceIdentifier);
+				String sequence = targetSequence.getString("sequence");
+				String schema = targetSequence.getString("schema");
+
+				SqlIdentifier sequenceIdentifier = SqlIdentifier.quoted(sequence);
+				if (StringUtils.hasText(schema)) {
+					sequenceIdentifier = SqlIdentifier.from(SqlIdentifier.quoted(schema), sequenceIdentifier);
+				}
+
+				return sequenceIdentifier;
+
+			} else if (idProperty.isEmbedded()) {
+				Class<?> idType = idProperty.getType();
+
 			}
-
-			return sequenceIdentifier;
-		} else {
-			return null;
-		}
+		return null;
 	}
 }
