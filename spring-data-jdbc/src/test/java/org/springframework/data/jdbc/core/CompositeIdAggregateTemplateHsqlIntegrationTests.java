@@ -18,7 +18,9 @@ package org.springframework.data.jdbc.core;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.DatabaseType;
@@ -34,6 +37,7 @@ import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
@@ -200,6 +204,52 @@ public class CompositeIdAggregateTemplateHsqlIntegrationTests {
 		WithListAndCompositeId reloaded = template.findById(entity.embeddedPk, WithListAndCompositeId.class);
 
 		assertThat(reloaded).isEqualTo(entity);
+	}
+
+	@Test // GH-574
+	void sortByCompositeIdParts() {
+
+		SimpleEntityWithEmbeddedPk alpha = template.insert( //
+				new SimpleEntityWithEmbeddedPk( //
+						new EmbeddedPk(23L, "x"), "alpha" //
+				));
+		SimpleEntityWithEmbeddedPk bravo = template.insert( //
+				new SimpleEntityWithEmbeddedPk( //
+						new EmbeddedPk(22L, "a"), "bravo" //
+				));
+		SimpleEntityWithEmbeddedPk charlie = template.insert( //
+				new SimpleEntityWithEmbeddedPk( //
+						new EmbeddedPk(21L, "z"), "charlie" //
+				) //
+		);
+
+		assertThat( //
+				template.findAll(SimpleEntityWithEmbeddedPk.class, Sort.by("embeddedPk.one"))) //
+				.containsExactly( //
+						charlie, bravo, alpha //
+				);
+
+		assertThat( //
+				template.findAll(SimpleEntityWithEmbeddedPk.class, Sort.by("embeddedPk.two").descending())) //
+				.containsExactly( //
+						charlie, alpha, bravo //
+				);
+	}
+
+	@Test // GH-574
+	void projectByCompositeIdParts() {
+
+		SimpleEntityWithEmbeddedPk alpha = template.insert( //
+				new SimpleEntityWithEmbeddedPk( //
+						new EmbeddedPk(23L, "x"), "alpha" //
+				));
+
+		Query projectingQuery = Query.empty().columns( "embeddedPk.two", "name");
+		SimpleEntityWithEmbeddedPk projected = template.findOne(projectingQuery, SimpleEntityWithEmbeddedPk.class).orElseThrow();
+
+		// Projection still does a full select, otherwise one would be null.
+		// See https://github.com/spring-projects/spring-data-relational/issues/1821
+		assertThat(projected).isEqualTo(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "alpha"));
 	}
 
 	private record WrappedPk(Long id) {
