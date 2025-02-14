@@ -347,14 +347,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<configuration>
-					<links>
-						<link>https://docs.spring.io/spring/docs/${spring}/javadoc-api/
-						</link>
-						<link>
-							https://docs.spring.io/spring-data/commons/docs/current/api/
-						</link>
-						<link>https://docs.oracle.com/en/java/javase/17/docs/api/</link>
-						<link>https://r2dbc.io/spec/0.9.1.RELEASE/api/</link>
+					<links combine.children="append">
+						<link>https://r2dbc.io/spec/1.0.0.RELEASE/api/</link>
 					</links>
 				</configuration>
 			</plugin>
