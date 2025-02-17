@@ -22,6 +22,7 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.relational.core.dialect.condition.Postgres;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
@@ -30,6 +31,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Roman Chigvintsev
+ * @author Mikhail Polivakha
  */
 class CriteriaUnitTests {
 
@@ -96,6 +98,27 @@ class CriteriaUnitTests {
 	}
 
 	@Test // DATAJDBC-513
+	void andChainedCriteriaWithDialectCriteriaCondition() {
+
+		Criteria criteria = where("foo").is("bar").and("baz").satisfies(Postgres.arrayContains("first", "second"));
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("baz"));
+		assertThat(criteria.getComparator()).isNull();
+		assertThat(criteria.getValue()).isNull();
+		assertThat(criteria.getPrevious()).isNotNull();
+		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
+		assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+
+		criteria = criteria.getPrevious();
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+		assertThat(criteria.getValue()).isEqualTo("bar");
+
+        criteria.toString().equals("foo = 'bar' AND baz @> ARRAY['first','second']::text[]");
+	}
+
+	@Test // DATAJDBC-513
 	void andGroupedCriteria() {
 
 		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or("bar").isNotNull());
@@ -114,6 +137,27 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 
 		assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR bar IS NOT NULL)");
+	}
+
+	@Test // DATAJDBC-1953
+	void andGroupedCriteriaWithDialectCriteriaCondition() {
+
+		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or("bar").satisfies(Postgres.arrayContains("electronics")));
+		Criteria criteria = grouped;
+
+		assertThat(criteria.isGroup()).isTrue();
+		assertThat(criteria.getGroup()).hasSize(1);
+		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("bar"));
+		assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+
+		criteria = criteria.getPrevious();
+
+		assertThat(criteria).isNotNull();
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+		assertThat(criteria.getValue()).isEqualTo("bar");
+
+		assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR bar @> ARRAY['electronics']::text[])");
 	}
 
 	@Test // DATAJDBC-513
@@ -177,6 +221,32 @@ class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.NEQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
+	}
+
+	@Test // DATAJDBC-1953
+	void shouldBuildSimplePredefinedDialectCriteriaCondition() {
+
+		Criteria criteria = where("foo").satisfies(Postgres.arrayContains(1, 2, 3));
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isNull();
+		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
+		assertThat(criteria.getValue()).isNull();
+
+        assertThat(criteria.toString()).isEqualTo("foo @> ARRAY[1,2,3]");
+	}
+
+	@Test // DATAJDBC-1953
+	void shouldBuildSimpleCustomDialectCriteriaCondition() {
+
+		Criteria criteria = where("foo").satisfies(() -> "~* '*.example.*'");
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isNull();
+		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
+		assertThat(criteria.getValue()).isNull();
+
+        assertThat(criteria.toString()).isEqualTo("foo ~* '*.example.*'");
 	}
 
 	@Test // DATAJDBC-513
