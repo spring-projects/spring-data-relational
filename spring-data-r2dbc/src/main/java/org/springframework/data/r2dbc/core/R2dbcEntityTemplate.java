@@ -852,7 +852,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		// Bridge-code: Consider Converter<Row, T> until we have fully migrated to RowDocument
 		if (converter instanceof AbstractRelationalConverter relationalConverter
-				&& relationalConverter.getConversions().hasCustomReadTarget(Row.class, resultType)) {
+				&& relationalConverter.getCustomConversions().hasCustomReadTarget(Row.class, resultType)) {
 
 			ConversionService conversionService = relationalConverter.getConversionService();
 			rowMapper = (row, rowMetadata) -> (T) conversionService.convert(row, resultType);
