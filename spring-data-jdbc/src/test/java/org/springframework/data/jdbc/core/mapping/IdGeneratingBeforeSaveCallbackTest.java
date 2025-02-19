@@ -27,7 +27,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 class IdGeneratingBeforeSaveCallbackTest {
 
     @Test // GH-1923
-    void mySqlDialectsequenceGenerationIsNotSupported() {
+    void mySqlDialectSequenceGenerationIsNotSupported() {
 
 		RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
         MySqlDialect mySqlDialect = new MySqlDialect(IdentifierProcessing.NONE);
