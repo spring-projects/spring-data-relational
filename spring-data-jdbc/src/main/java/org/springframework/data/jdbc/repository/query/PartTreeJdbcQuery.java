@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -298,11 +297,11 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			this.rowMapperFunction = processor -> {
 
 				if (tree.isCountProjection() || tree.isExistsProjection()) {
-					return rowMapperFactory.create(resolveTypeToRead(processor));
+					return rowMapperFactory.get(resolveTypeToRead(processor));
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new ConvertingRowMapper<>(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
+				return new ConvertingRowMapper(rowMapperFactory.get(processor.getReturnedType().getDomainType()),
 						resultProcessingConverter);
 			};
 
