@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +31,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.repository.support.ConvertingRowMapper;
+import org.springframework.data.jdbc.repository.support.RowMapperFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -298,11 +299,11 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			this.rowMapperFunction = processor -> {
 
 				if (tree.isCountProjection() || tree.isExistsProjection()) {
-					return rowMapperFactory.create(resolveTypeToRead(processor));
+					return rowMapperFactory.getRowMapper(resolveTypeToRead(processor));
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new ConvertingRowMapper<>(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
+				return new ConvertingRowMapper(rowMapperFactory.getRowMapper(processor.getReturnedType().getDomainType()),
 						resultProcessingConverter);
 			};
 

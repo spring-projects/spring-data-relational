@@ -50,6 +50,7 @@ import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.support.RowMapperFactory;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -633,7 +634,7 @@ class StringBasedJdbcQueryUnitTests {
 		}
 	}
 
-	private class StubRowMapperFactory implements AbstractJdbcQuery.RowMapperFactory {
+	private class StubRowMapperFactory implements RowMapperFactory {
 
 		private final String preparedReference;
 		private final Object value;
@@ -643,8 +644,7 @@ class StringBasedJdbcQueryUnitTests {
 			this.value = value;
 		}
 
-		@Override
-		public RowMapper<Object> create(Class<?> result) {
+		public RowMapper<Object> getRowMapper(Class<?> result) {
 			return defaultRowMapper;
 		}
 
@@ -654,7 +654,7 @@ class StringBasedJdbcQueryUnitTests {
 			if (preparedReference.equals(reference)) {
 				return (RowMapper<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.getRowMapper(reference);
+			return RowMapperFactory.super.getRowMapper(reference);
 		}
 
 		@Override
@@ -663,7 +663,7 @@ class StringBasedJdbcQueryUnitTests {
 			if (preparedReference.equals(reference)) {
 				return (ResultSetExtractor<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.getResultSetExtractor(reference);
+			return RowMapperFactory.super.getResultSetExtractor(reference);
 		}
 	}
 }
