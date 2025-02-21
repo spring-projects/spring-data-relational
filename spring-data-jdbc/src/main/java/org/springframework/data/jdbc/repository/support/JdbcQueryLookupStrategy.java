@@ -299,22 +299,18 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		DeclaredQueryLookupStrategy declaredQueryLookupStrategy = new DeclaredQueryLookupStrategy(publisher, callbacks,
 				context, converter, dialect, queryMappingConfiguration, operations, beanFactory, delegate);
 
-		Key keyToUse = key != null ? key : Key.CREATE_IF_NOT_FOUND;
+        CreateIfNotFoundQueryLookupStrategy createIfNotFoundQueryLookupStrategy = new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, createQueryLookupStrategy,
+          declaredQueryLookupStrategy, delegate);
 
-		LOG.debug(String.format("Using the queryLookupStrategy %s", keyToUse));
+        Key keyToUse = key != null ? key : Key.CREATE_IF_NOT_FOUND;
 
-		switch (keyToUse) {
-			case CREATE:
-				return createQueryLookupStrategy;
-			case USE_DECLARED_QUERY:
-				return declaredQueryLookupStrategy;
-			case CREATE_IF_NOT_FOUND:
-				return new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, context, converter, dialect,
-						queryMappingConfiguration, operations, createQueryLookupStrategy, declaredQueryLookupStrategy,
-						delegate);
-			default:
-				throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s", key));
-		}
+        LOG.debug(String.format("Using the queryLookupStrategy %s", keyToUse));
+
+        return switch (keyToUse) {
+            case CREATE -> createQueryLookupStrategy;
+            case USE_DECLARED_QUERY -> declaredQueryLookupStrategy;
+            case CREATE_IF_NOT_FOUND -> createIfNotFoundQueryLookupStrategy;
+        };
 	}
 
 	JdbcConverter getConverter() {
