@@ -16,36 +16,28 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Method;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.repository.query.AbstractJdbcQuery;
+import org.springframework.data.jdbc.repository.query.DefaultRowMapperFactory;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.PartTreeJdbcQuery;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.jdbc.repository.query.StringBasedJdbcQuery;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
-import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.repository.support.RelationalQueryLookupStrategy;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -62,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Hebert Coelho
  * @author Diego Krupitza
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  */
 abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
@@ -109,6 +102,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 */
 	static class CreateQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
+		private final RowMapperFactory rowMapperFactory;
+
 		CreateQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
@@ -116,6 +111,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations,
 					delegate);
+
+            this.rowMapperFactory = new DefaultRowMapperFactory(getMappingContext(), getConverter(), getQueryMappingConfiguration(), getCallbacks(), getPublisher());
 		}
 
 		@Override
@@ -124,8 +121,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 			JdbcQueryMethod queryMethod = getJdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries);
 
-			return new PartTreeJdbcQuery(getMappingContext(), queryMethod, getDialect(), getConverter(), getOperations(),
-					this::createMapper);
+			return new PartTreeJdbcQuery(getMappingContext(), queryMethod, getDialect(), getConverter(), getOperations(), rowMapperFactory);
 		}
 	}
 
@@ -138,7 +134,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 */
 	static class DeclaredQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
-		private final AbstractJdbcQuery.RowMapperFactory rowMapperFactory;
+		private final RowMapperFactory rowMapperFactory;
 
 		DeclaredQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
@@ -147,7 +143,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations,
 					delegate);
 
-			this.rowMapperFactory = new BeanFactoryRowMapperFactory(beanfactory);
+			this.rowMapperFactory = new BeanFactoryAwareRowMapperFactory(context, converter, queryMappingConfiguration, callbacks, publisher, beanfactory);
 		}
 
 		@Override
@@ -172,44 +168,6 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 			throw new IllegalStateException(
 					String.format("Did neither find a NamedQuery nor an annotated query for method %s", method));
 		}
-
-		@SuppressWarnings("unchecked")
-		private class BeanFactoryRowMapperFactory implements AbstractJdbcQuery.RowMapperFactory {
-
-			private final @Nullable BeanFactory beanFactory;
-
-			BeanFactoryRowMapperFactory(@Nullable BeanFactory beanFactory) {
-				this.beanFactory = beanFactory;
-			}
-
-			@Override
-			public RowMapper<Object> create(Class<?> result) {
-				return createMapper(result);
-			}
-
-			@Override
-			public RowMapper<Object> getRowMapper(String reference) {
-
-				if (beanFactory == null) {
-					throw new IllegalStateException(
-							"Cannot resolve RowMapper bean reference '" + reference + "'; BeanFactory is not configured.");
-				}
-
-				return beanFactory.getBean(reference, RowMapper.class);
-			}
-
-			@Override
-			public ResultSetExtractor<Object> getResultSetExtractor(String reference) {
-
-				if (beanFactory == null) {
-					throw new IllegalStateException(
-							"Cannot resolve ResultSetExtractor bean reference '" + reference + "'; BeanFactory is not configured.");
-				}
-
-				return beanFactory.getBean(reference, ResultSetExtractor.class);
-			}
-		}
-
 	}
 
 	/**
@@ -320,57 +278,15 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		return operations;
 	}
 
-	@SuppressWarnings("unchecked")
-	RowMapper<Object> createMapper(Class<?> returnedObjectType) {
+    QueryMappingConfiguration getQueryMappingConfiguration() {
+        return queryMappingConfiguration;
+    }
 
-		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(returnedObjectType);
+    EntityCallbacks getCallbacks() {
+        return callbacks;
+    }
 
-		if (persistentEntity == null) {
-			return (RowMapper<Object>) SingleColumnRowMapper.newInstance(returnedObjectType,
-					converter.getConversionService());
-		}
-
-		return (RowMapper<Object>) determineDefaultMapper(returnedObjectType);
-	}
-
-	private RowMapper<?> determineDefaultMapper(Class<?> returnedObjectType) {
-
-		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(returnedObjectType);
-
-		if (configuredQueryMapper != null)
-			return configuredQueryMapper;
-
-		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
-				getMappingContext().getRequiredPersistentEntity(returnedObjectType), //
-				converter //
-		);
-
-		return new PostProcessingRowMapper<>(defaultEntityRowMapper);
-	}
-
-	class PostProcessingRowMapper<T> implements RowMapper<T> {
-
-		private final RowMapper<T> delegate;
-
-		PostProcessingRowMapper(RowMapper<T> delegate) {
-			this.delegate = delegate;
-		}
-
-		@Override
-		public T mapRow(ResultSet rs, int rowNum) throws SQLException {
-
-			T entity = delegate.mapRow(rs, rowNum);
-
-			if (entity != null) {
-
-				publisher.publishEvent(new AfterConvertEvent<>(entity));
-
-				if (callbacks != null) {
-					return callbacks.callback(AfterConvertCallback.class, entity);
-				}
-			}
-
-			return entity;
-		}
-	}
+    ApplicationEventPublisher getPublisher() {
+        return publisher;
+    }
 }

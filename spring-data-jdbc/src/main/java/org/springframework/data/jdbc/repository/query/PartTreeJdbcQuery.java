@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -98,7 +97,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	 * @since 2.3
 	 */
 	public PartTreeJdbcQuery(RelationalMappingContext context, JdbcQueryMethod queryMethod, Dialect dialect,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, RowMapperFactory rowMapperFactory) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations, org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
 
 		super(queryMethod, operations);
 
@@ -292,7 +291,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Lazy<RowMapper<?>> rowMapper;
 		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
 
-		public CachedRowMapperFactory(PartTree tree, RowMapperFactory rowMapperFactory, RelationalConverter converter,
+		public CachedRowMapperFactory(PartTree tree, org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, RelationalConverter converter,
 				ResultProcessor defaultResultProcessor) {
 
 			this.rowMapperFunction = processor -> {
@@ -302,7 +301,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new ConvertingRowMapper<>(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
+				return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
 						resultProcessingConverter);
 			};
 
