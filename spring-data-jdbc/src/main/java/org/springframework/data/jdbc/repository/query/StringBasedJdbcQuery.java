@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
@@ -78,6 +80,8 @@ import org.springframework.util.ObjectUtils;
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or use the javac flag -parameters";
+	private final static String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing";
+	private static final Log LOG = LogFactory.getLog(StringBasedJdbcQuery.class);
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
@@ -187,6 +191,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				(counter, expression) -> String.format("__$synthetic$__%d", counter + 1), String::concat);
 
 		this.query = query;
+
+		if (queryMethod.hasLockMode()) {
+			LOG.warn(LOCKING_IS_NOT_SUPPORTED);
+		}
 		this.parsedQuery = rewriter.parse(this.query);
 		this.delegate = delegate;
 	}
