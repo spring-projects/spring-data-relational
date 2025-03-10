@@ -101,10 +101,6 @@ The required value of type `LockMode` offers two values: `PESSIMISTIC_READ` whic
 Some databases do not make this distinction.
 In that cases both modes are equivalent of `PESSIMISTIC_WRITE`.
 
-NOTE: It is worth stating explicitly, that `@Lock` currently is not supported on string-based queries. It means,
-that queries in the repository, created with `@Query`, will ignore the locking information provided by the `@Lock`,
-Using `@Lock` on string-based queries will result in the warning in logs.
-
 .Using @Lock on derived query method
 [source,java]
 ----
@@ -123,3 +119,9 @@ If you are using a databse with the MySQL Dialect this will result for example i
 ----
 Select * from user u where u.lastname = lastname LOCK IN SHARE MODE
 ----
+
+NOTE: `@Lock` is currently not supported on string-based queries.
+Query-methods created with `@Query`, will ignore the locking information provided by the `@Lock`,
+Using `@Lock` on string-based queries will result in the warning in logs.
+Future versions will throw an exception.
+
