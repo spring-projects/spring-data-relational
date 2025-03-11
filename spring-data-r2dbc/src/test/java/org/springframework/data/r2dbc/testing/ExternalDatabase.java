@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.opentest4j.TestAbortedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 /**
@@ -35,7 +35,7 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
  */
 public abstract class ExternalDatabase implements BeforeAllCallback {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ExternalDatabase.class);
+	private static final Log LOG = LogFactory.getLog(ExternalDatabase.class);
 
 	/**
 	 * Construct an absent database that is used as {@literal null} object if no database is available.
