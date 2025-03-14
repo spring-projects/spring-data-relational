@@ -44,7 +44,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -182,11 +182,10 @@ public class TestConfiguration {
 	 */
 	@Bean
 	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
-			JdbcMappingContext mappingContext,
 			NamedParameterJdbcOperations operations,
-			Dialect dialect
+			Dialect dialect, RelationalConverter converter
 	) {
-		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
+		return new IdGeneratingBeforeSaveCallback(dialect, operations, converter);
 	}
 
 	@Bean

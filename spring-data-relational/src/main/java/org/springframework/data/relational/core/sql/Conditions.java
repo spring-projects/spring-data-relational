@@ -247,7 +247,7 @@ public abstract class Conditions {
 	 * @param subselect the subselect.
 	 * @return the {@link In} condition.
 	 */
-	public static In in(Column column, Select subselect) {
+	public static In in(Expression column, Select subselect) {
 
 		Assert.notNull(column, "Column must not be null");
 		Assert.notNull(subselect, "Subselect must not be null");
