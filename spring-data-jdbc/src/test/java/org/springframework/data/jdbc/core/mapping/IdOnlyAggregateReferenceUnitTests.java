@@ -9,8 +9,9 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference.IdOnlyAggre
  * Unit tests for the {@link IdOnlyAggregateReference}.
  *
  * @author Myeonghyeon Lee
+ * @author Jens Schauder
  */
-public class IdOnlyAggregateReferenceTest {
+public class IdOnlyAggregateReferenceUnitTests {
 
 	@Test // DATAJDBC-427
 	public void equals() {
