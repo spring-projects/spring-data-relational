@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.query;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.data.relational.core.dialect.condition.DialectCriteriaCondition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -28,6 +29,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public interface CriteriaDefinition {
@@ -132,6 +134,12 @@ public interface CriteriaDefinition {
 	 * @return {@link Combinator} to combine this criteria with a previous one.
 	 */
 	Combinator getCombinator();
+
+    /**
+     * @return {@link DialectCriteriaCondition} used in this criteria
+     */
+    @Nullable
+    DialectCriteriaCondition getDialectCriteriaCondition();
 
 	enum Combinator {
 		INITIAL, AND, OR;
