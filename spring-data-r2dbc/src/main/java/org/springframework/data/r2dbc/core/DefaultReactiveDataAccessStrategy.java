@@ -181,11 +181,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		for (RelationalPersistentProperty property : entity) {
 
-			Parameter value = row.get(property.getColumnName());
+			Parameter value = row.get(property.getColumnName().getReference());
 			if (value != null && shouldConvertArrayValue(property, value)) {
 
 				Parameter writeValue = getArrayValue(value, property);
-				row.put(property.getColumnName(), writeValue);
+				row.put(property.getColumnName().getReference(), writeValue);
 			}
 		}
 

@@ -44,6 +44,7 @@ import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -225,7 +226,10 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 		Object result = getPotentiallyConvertedSimpleWrite(value);
 
-		sink.put(property.getColumnName(),
+		SqlIdentifier columnName = property.getColumnName();
+
+		sink.put(SqlIdentifier.unquoted(columnName.getReference()),
+//		sink.put(property.getColumnName(),
 				Parameter.fromOrEmpty(result, getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
@@ -244,7 +248,10 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			}
 
 			List<Object> collectionInternal = createCollection(asCollection(value), property);
-			sink.put(property.getColumnName(), Parameter.from(collectionInternal));
+//			sink.put(property.getColumnName(), Parameter.from(collectionInternal));
+			SqlIdentifier columnName = property.getColumnName();
+//
+			sink.put(SqlIdentifier.unquoted(columnName.getReference()), Parameter.from(collectionInternal));
 			return;
 		}
 
@@ -301,7 +308,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
 
-		sink.put(property.getColumnName(), Parameter.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
+		sink.put(property.getColumnName().getReference(), Parameter.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
 	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {

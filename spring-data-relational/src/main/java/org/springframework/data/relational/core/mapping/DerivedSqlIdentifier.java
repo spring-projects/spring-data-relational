@@ -45,6 +45,7 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 		this.name = name;
 		this.quoted = quoted;
 		this.toString = quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
+		this.sqlName = null;
 	}
 
 	@Override

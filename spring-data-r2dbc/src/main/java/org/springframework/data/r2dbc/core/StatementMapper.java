@@ -26,6 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.TestOnly;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -128,6 +129,7 @@ public interface StatementMapper {
 	 * @param table
 	 * @return the {@link SelectSpec}.
 	 */
+	@TestOnly
 	default SelectSpec createSelect(String table) {
 		return SelectSpec.create(table);
 	}
@@ -250,6 +252,7 @@ public interface StatementMapper {
 		 * @param table
 		 * @return the {@link SelectSpec}.
 		 */
+		@TestOnly
 		public static SelectSpec create(String table) {
 			return create(SqlIdentifier.unquoted(table));
 		}

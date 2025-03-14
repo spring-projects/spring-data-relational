@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.StatementMapper;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
@@ -163,9 +164,18 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 			for (String projectedProperty : projectedProperties) {
 
 				RelationalPersistentProperty property = entity.getPersistentProperty(projectedProperty);
-				Column column = table.column(property != null //
-						? property.getColumnName() //
-						: SqlIdentifier.unquoted(projectedProperty));
+				Column column;
+				if (property != null) {
+					column = table.column(property.getColumnName());
+				} else {
+					boolean forceQuote = false;
+					if (this.dataAccessStrategy.getConverter().getMappingContext() instanceof RelationalMappingContext relationalMappingContext) {
+						forceQuote = relationalMappingContext.isForceQuote();
+					}
+					column = table.column(forceQuote
+							? SqlIdentifier.quoted(projectedProperty)
+							: SqlIdentifier.unquoted(projectedProperty));
+				}
 				expressions.add(column);
 			}
 

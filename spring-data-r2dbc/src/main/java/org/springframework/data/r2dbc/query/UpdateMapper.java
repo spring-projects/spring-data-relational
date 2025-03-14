@@ -94,7 +94,7 @@ public class UpdateMapper extends QueryMapper {
 		List<Assignment> result = new ArrayList<>();
 
 		assignments.forEach((column, value) -> {
-			Assignment assignment = getAssignment(column, value, bindings, table, entity);
+			Assignment assignment = getAssignment(column, value, bindings, getTable(table), entity);
 			result.add(assignment);
 		});
 

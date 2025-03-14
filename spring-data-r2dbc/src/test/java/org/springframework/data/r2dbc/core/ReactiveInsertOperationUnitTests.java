@@ -79,7 +79,7 @@ public class ReactiveInsertOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME) VALUES ($1)");
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO \"person\" (\"THE_NAME\") VALUES ($1)");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
@@ -109,7 +109,7 @@ public class ReactiveInsertOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-		assertThat(statement.getSql()).isEqualTo("INSERT INTO the_table (THE_NAME) VALUES ($1)");
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO the_table (\"THE_NAME\") VALUES ($1)");
 	}
 
 	static class Person {
