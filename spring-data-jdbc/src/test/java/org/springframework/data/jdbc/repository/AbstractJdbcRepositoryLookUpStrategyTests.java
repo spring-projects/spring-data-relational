@@ -28,6 +28,7 @@ import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
@@ -40,7 +41,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 abstract class AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Autowired protected OnesRepository onesRepository;
-	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired NamedParameterJdbcOperations template;
 	@Autowired RelationalMappingContext context;
 
 	void insertTestInstances() {

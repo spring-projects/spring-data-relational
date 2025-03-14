@@ -557,7 +557,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> RootAggregateChange<T> createUpdateChange(EntityAndPreviousVersion<T> entityAndVersion) {
-
 		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
 				entityAndVersion.version);
 		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity, aggregateChange);
