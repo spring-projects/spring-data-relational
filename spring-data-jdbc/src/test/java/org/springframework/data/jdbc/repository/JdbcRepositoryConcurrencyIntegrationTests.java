@@ -53,6 +53,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  *
  * @author Myeonghyeon Lee
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 @ExtendWith(SpringExtension.class)
 public class JdbcRepositoryConcurrencyIntegrationTests {
@@ -159,7 +160,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			} catch (Exception ex) {
 				// When the delete execution is complete, the Update execution throws an
 				// IncorrectUpdateSemanticsDataAccessException.
-				if (ex.getCause() instanceof IncorrectUpdateSemanticsDataAccessException) {
+				if (ex instanceof IncorrectUpdateSemanticsDataAccessException) {
 					return null;
 				}
 				throw ex;
@@ -193,7 +194,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			} catch (Exception ex) {
 				// When the delete execution is complete, the Update execution throws an
 				// IncorrectUpdateSemanticsDataAccessException.
-				if (ex.getCause() instanceof IncorrectUpdateSemanticsDataAccessException) {
+				if (ex instanceof IncorrectUpdateSemanticsDataAccessException) {
 					return null;
 				}
 				throw ex;
