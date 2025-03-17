@@ -15,12 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -39,7 +37,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,17 +53,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Persistable;
-import org.springframework.data.domain.ScrollPosition;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Window;
+import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -125,6 +112,37 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired RootRepository rootRepository;
 	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
 	@Autowired EntityWithSequenceRepository entityWithSequenceRepository;
+
+	public static Stream<Arguments> findAllByExamplePageableSource() {
+
+		return Stream.of( //
+				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
+				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
+				Arguments.of(PageRequest.of(2, 10), 10, 10, Arrays.asList("1", "2", "3")), //
+				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
+		);
+	}
+
+	private static DummyEntity createEntity() {
+		return createEntity("Entity Name");
+	}
+
+	private static DummyEntity createEntity(String entityName) {
+		return createEntity(entityName, it -> {});
+	}
+
+	private static DummyEntity createEntity(String entityName, Consumer<DummyEntity> customizer) {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setName(entityName);
+
+		customizer.accept(entity);
+
+		return entity;
+	}
 
 	@BeforeEach
 	public void before() {
@@ -225,16 +243,14 @@ public class JdbcRepositoryIntegrationTests {
 				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
 	}
 
-	@Test // DATAJDBC-611
-	public void testDuplicateKeyExceptionIsThrownInCaseOfUniqueKeyViolation() {
+	@Test // GH-831
+	public void duplicateKeyExceptionIsThrownInCaseOfUniqueKeyViolation() {
 
-		// given.
 		ProvidedIdEntity first = ProvidedIdEntity.newInstance(1L, "name");
 		ProvidedIdEntity second = ProvidedIdEntity.newInstance(1L, "other");
 
-		// when/then
-		Assertions.assertThatCode(() -> providedIdEntityRepository.save(first)).doesNotThrowAnyException();
-		Assertions.assertThatThrownBy(() -> providedIdEntityRepository.save(second)).isInstanceOf(DuplicateKeyException.class);
+		assertThatCode(() -> providedIdEntityRepository.save(first)).doesNotThrowAnyException();
+		assertThatThrownBy(() -> providedIdEntityRepository.save(second)).isInstanceOf(DuplicateKeyException.class);
 	}
 
 	@Test // DATAJDBC-97
@@ -967,18 +983,6 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	public static Stream<Arguments> findAllByExamplePageableSource() {
-		return Stream.of( //
-				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
-				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
-				Arguments.of(PageRequest.of(2, 10), 10, 10, Arrays.asList("1", "2", "3")), //
-				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
-		);
-	}
-
 	@Test // GH-1192
 	void existsByExampleShouldGetOne() {
 
@@ -1461,6 +1465,10 @@ public class JdbcRepositoryIntegrationTests {
 		return now;
 	}
 
+	enum Direction {
+		LEFT, CENTER, RIGHT
+	}
+
 	interface DummyProjectExample {
 		String getName();
 	}
@@ -1564,6 +1572,10 @@ public class JdbcRepositoryIntegrationTests {
 	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
 
 	interface EntityWithSequenceRepository extends CrudRepository<EntityWithSequence, Long> {}
+
+	interface DummyProjection {
+		String getName();
+	}
 
 	@Configuration
 	@Import(TestConfiguration.class)
@@ -1709,20 +1721,20 @@ public class JdbcRepositoryIntegrationTests {
 			return this.id;
 		}
 
-		public String getIdentifier() {
-			return this.identifier;
-		}
-
-		public String getType() {
-			return this.type;
-		}
-
 		public void setId(Long id) {
 			this.id = id;
 		}
 
+		public String getIdentifier() {
+			return this.identifier;
+		}
+
 		public void setIdentifier(String identifier) {
 			this.identifier = identifier;
+		}
+
+		public String getType() {
+			return this.type;
 		}
 
 		public void setType(String type) {
@@ -1866,6 +1878,11 @@ public class JdbcRepositoryIntegrationTests {
 			return "myext";
 		}
 
+		@Override
+		public Object getRootObject() {
+			return new ExtensionRoot();
+		}
+
 		public static class ExtensionRoot {
 			// just public for testing purposes
 			public static Long ID = 1L;
@@ -1874,29 +1891,6 @@ public class JdbcRepositoryIntegrationTests {
 				return ID;
 			}
 		}
-
-		@Override
-		public Object getRootObject() {
-			return new ExtensionRoot();
-		}
-	}
-
-	private static DummyEntity createEntity() {
-		return createEntity("Entity Name");
-	}
-
-	private static DummyEntity createEntity(String entityName) {
-		return createEntity(entityName, it -> {});
-	}
-
-	private static DummyEntity createEntity(String entityName, Consumer<DummyEntity> customizer) {
-
-		DummyEntity entity = new DummyEntity();
-		entity.setName(entityName);
-
-		customizer.accept(entity);
-
-		return entity;
 	}
 
 	static class EntityWithSequence {
@@ -1926,13 +1920,11 @@ public class JdbcRepositoryIntegrationTests {
 
 	static class ProvidedIdEntity implements Persistable<Long> {
 
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
 		private String name;
 
-		@Transient
-		private boolean isNew;
+		@Transient private boolean isNew;
 
 		private ProvidedIdEntity(Long id, String name, boolean isNew) {
 			this.id = id;
@@ -1960,11 +1952,11 @@ public class JdbcRepositoryIntegrationTests {
 		String name;
 		Instant pointInTime;
 		OffsetDateTime offsetDateTime;
-		@Id private Long idProp;
 		boolean flag;
 		AggregateReference<DummyEntity, Long> ref;
 		Direction direction;
 		byte[] bytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+		@Id private Long idProp;
 
 		public DummyEntity(String name) {
 			this.name = name;
@@ -1976,52 +1968,52 @@ public class JdbcRepositoryIntegrationTests {
 			return this.name;
 		}
 
-		public Instant getPointInTime() {
-			return this.pointInTime;
-		}
-
-		public OffsetDateTime getOffsetDateTime() {
-			return this.offsetDateTime;
-		}
-
-		public Long getIdProp() {
-			return this.idProp;
-		}
-
-		public boolean isFlag() {
-			return this.flag;
-		}
-
-		public AggregateReference<DummyEntity, Long> getRef() {
-			return this.ref;
-		}
-
-		public Direction getDirection() {
-			return this.direction;
-		}
-
 		public void setName(String name) {
 			this.name = name;
+		}
+
+		public Instant getPointInTime() {
+			return this.pointInTime;
 		}
 
 		public void setPointInTime(Instant pointInTime) {
 			this.pointInTime = pointInTime;
 		}
 
+		public OffsetDateTime getOffsetDateTime() {
+			return this.offsetDateTime;
+		}
+
 		public void setOffsetDateTime(OffsetDateTime offsetDateTime) {
 			this.offsetDateTime = offsetDateTime;
+		}
+
+		public Long getIdProp() {
+			return this.idProp;
 		}
 
 		public void setIdProp(Long idProp) {
 			this.idProp = idProp;
 		}
 
+		public boolean isFlag() {
+			return this.flag;
+		}
+
 		public void setFlag(boolean flag) {
 			this.flag = flag;
 		}
 
+		public AggregateReference<DummyEntity, Long> getRef() {
+			return this.ref;
+		}
+
 		public void setRef(AggregateReference<DummyEntity, Long> ref) {
 			this.ref = ref;
+		}
+
+		public Direction getDirection() {
+			return this.direction;
 		}
 
 		public void setDirection(Direction direction) {
@@ -2045,22 +2037,18 @@ public class JdbcRepositoryIntegrationTests {
 			return Objects.hash(name, pointInTime, offsetDateTime, idProp, flag, ref, direction);
 		}
 
-		public void setBytes(byte[] bytes) {
-			this.bytes = bytes;
-		}
-
 		public byte[] getBytes() {
 			return bytes;
+		}
+
+		public void setBytes(byte[] bytes) {
+			this.bytes = bytes;
 		}
 
 		@Override
 		public String toString() {
 			return "DummyEntity{" + "name='" + name + '\'' + ", idProp=" + idProp + '}';
 		}
-	}
-
-	enum Direction {
-		LEFT, CENTER, RIGHT
 	}
 
 	static class DummyDto {
@@ -2097,10 +2085,6 @@ public class JdbcRepositoryIntegrationTests {
 		public AggregateReference<DummyEntity, Long> getRef() {
 			return ref;
 		}
-	}
-
-	interface DummyProjection {
-		String getName();
 	}
 
 	static final class DtoProjection {
