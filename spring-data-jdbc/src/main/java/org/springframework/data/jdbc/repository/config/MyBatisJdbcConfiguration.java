@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.util.Optional;
+
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +25,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -30,6 +33,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * Configuration class tweaking Spring Data JDBC to use a {@link MyBatisDataAccessStrategy} instead of the default one.
  *
  * @author Oliver Drotbohm
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -37,11 +41,13 @@ public class MyBatisJdbcConfiguration extends AbstractJdbcConfiguration {
 
 	private @Autowired SqlSession session;
 
+	private @Autowired Optional<QueryMappingConfiguration> queryMappingConfiguration;
+
 	@Bean
 	@Override
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
 			JdbcMappingContext context, Dialect dialect) {
 
-		return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, jdbcConverter, operations, session, dialect);
+		return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, jdbcConverter, operations, session, dialect, queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY));
 	}
 }

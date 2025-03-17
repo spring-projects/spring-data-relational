@@ -31,6 +31,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -60,7 +61,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	static class Config {
 
 		@Bean
-		QueryMappingConfiguration mappers() {
+        QueryMappingConfiguration mappers() {
 			return new DefaultQueryMappingConfiguration();
 		}
 

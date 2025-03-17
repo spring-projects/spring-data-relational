@@ -40,7 +40,7 @@ import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -62,6 +62,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Fei Dong
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  */
 @IntegrationTest
 public class EnableJdbcRepositoriesIntegrationTests {
@@ -168,7 +169,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
 					new SqlParametersFactory(context, converter),
-					new InsertStrategyFactory(template, dialect)).create();
+					new InsertStrategyFactory(template, dialect), QueryMappingConfiguration.EMPTY).create();
 		}
 
 		@Bean

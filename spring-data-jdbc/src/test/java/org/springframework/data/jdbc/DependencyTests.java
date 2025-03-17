@@ -62,7 +62,7 @@ public class DependencyTests {
 						"org.springframework.data.jdbc", // Spring Data Relational
 						"org.springframework.data.relational", // Spring Data Relational
 						"org.springframework.data" // Spring Data Commons
-				).that(onlySpringData()) //
+				)
 				.that(ignore(AuditingHandlerBeanDefinitionParser.class)) //
 				.that(ignorePackage("org.springframework.data.aot.hint")) // ignoring aot, since it causes cycles in commons
 				.that(ignorePackage("org.springframework.data.aot")); // ignoring aot, since it causes cycles in commons

@@ -1,4 +1,4 @@
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;

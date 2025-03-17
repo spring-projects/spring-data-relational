@@ -40,6 +40,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Myat Min
  * @author Radim Tlusty
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 class DefaultDataAccessStrategyUnitTests {
 
@@ -66,7 +67,8 @@ class DefaultDataAccessStrategyUnitTests {
 				converter, //
 				namedJdbcOperations, //
 				sqlParametersFactory, //
-				insertStrategyFactory).create();
+				insertStrategyFactory,
+				QueryMappingConfiguration.EMPTY).create();
 
 		relationResolver.setDelegate(accessStrategy);
 
