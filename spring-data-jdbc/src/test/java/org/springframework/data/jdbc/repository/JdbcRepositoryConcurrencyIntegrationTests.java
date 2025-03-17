@@ -73,12 +73,9 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		}
 	}
 
-	@Autowired
-	NamedParameterJdbcTemplate template;
-	@Autowired
-	DummyEntityRepository repository;
-	@Autowired
-	PlatformTransactionManager transactionManager;
+	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired DummyEntityRepository repository;
+	@Autowired PlatformTransactionManager transactionManager;
 
 	List<DummyEntity> concurrencyEntities;
 	DummyEntity entity;
@@ -216,7 +213,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 	}
 
 	private void executeInParallel(CountDownLatch startLatch, CountDownLatch doneLatch,
-								   UnaryOperator<DummyEntity> deleteAction, DummyEntity entity) {
+			UnaryOperator<DummyEntity> deleteAction, DummyEntity entity) {
 		// delete
 		new Thread(() -> {
 			try {
@@ -253,13 +250,11 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		return new DummyEntity(null, "Entity Name", new ArrayList<>());
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-	}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	static class DummyEntity {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 		String name;
 		final List<Element> content;
 
@@ -292,8 +287,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 
 	static class Element {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 		final Long content;
 
 		public Element(Long id, Long content) {
