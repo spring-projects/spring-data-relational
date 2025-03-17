@@ -78,6 +78,7 @@ class AggregateChangeExecutor {
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
+
 		if (action instanceof DbAction.InsertRoot<?> insertRoot) {
 			executionContext.executeInsertRoot(insertRoot);
 		} else if (action instanceof DbAction.BatchInsertRoot<?> batchInsertRoot) {
