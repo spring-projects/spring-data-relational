@@ -48,7 +48,7 @@ public class JdbcIdentifierBuilder {
 	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path, Object value) {
 
 		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
-		AggregatePath.ColumnInfos reverseColumnInfos = path.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos infos = path.getTableInfo().reverseColumnInfos();
 
 		// create property accessor
 		RelationalMappingContext mappingContext = converter.getMappingContext();
@@ -62,16 +62,14 @@ public class JdbcIdentifierBuilder {
 			valueProvider = ap -> propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
 		}
 
-		final Identifier[] identifierHolder = new Identifier[] { Identifier.empty() };
-
-		reverseColumnInfos.forEach((ap, ci) -> {
+		Identifier identifierHolder = infos.reduce(Identifier.empty(), (ap, ci) -> {
 
 			RelationalPersistentProperty property = ap.getRequiredLeafProperty();
-			identifierHolder[0] = identifierHolder[0].withPart(ci.name(), valueProvider.apply(ap),
+			return Identifier.of(ci.name(), valueProvider.apply(ap),
 					converter.getColumnType(property));
-		});
+		}, Identifier::withPart);
 
-		return new JdbcIdentifierBuilder(identifierHolder[0]);
+		return new JdbcIdentifierBuilder(identifierHolder);
 	}
 
 	/**

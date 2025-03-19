@@ -100,6 +100,25 @@ public final class Identifier {
 	}
 
 	/**
+	 * Creates a new {@link Identifier} from the current instance and sets the value from {@link Identifier}. Existing key
+	 * definitions for {@code name} are overwritten if they already exist.
+	 *
+	 * @param identifier the identifier to append.
+	 * @return the {@link Identifier} containing all existing keys and the key part for {@code name}, {@code value}, and a
+	 *         {@link Class target type}.
+	 * @since 3.5
+	 */
+	public Identifier withPart(Identifier identifier) {
+
+		Identifier result = this;
+		for (SingleIdentifierValue part : identifier.getParts()) {
+			result = result.withPart(part.getName(), part.getValue(), part.getTargetType());
+		}
+
+		return result;
+	}
+
+	/**
 	 * Creates a new {@link Identifier} from the current instance and sets the value for {@code key}. Existing key
 	 * definitions for {@code name} are overwritten if they already exist.
 	 *
@@ -187,6 +206,7 @@ public final class Identifier {
 
 		return null;
 	}
+
 
 	/**
 	 * A single value of an Identifier consisting of the column name, the value and the target type which is to be used to
