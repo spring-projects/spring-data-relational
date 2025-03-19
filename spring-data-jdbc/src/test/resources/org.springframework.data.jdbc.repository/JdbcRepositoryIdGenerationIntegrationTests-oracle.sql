@@ -16,3 +16,24 @@ CREATE TABLE ImmutableWithManualIdentity (
     ID NUMBER PRIMARY KEY,
     NAME VARCHAR2(100)
 );
+
+CREATE TABLE SimpleSeq (
+    ID NUMBER PRIMARY KEY,
+    NAME VARCHAR2(100)
+);
+
+CREATE SEQUENCE simple_seq_seq START WITH 1;
+
+CREATE TABLE PersistableSeq (
+    ID NUMBER PRIMARY KEY,
+    NAME VARCHAR2(100)
+);
+
+CREATE SEQUENCE persistable_seq_seq START WITH 1;
+
+CREATE TABLE PrimitiveIdSeq (
+    ID NUMBER PRIMARY KEY,
+    NAME VARCHAR2(100)
+);
+
+CREATE SEQUENCE primitive_seq_seq START WITH 1;
