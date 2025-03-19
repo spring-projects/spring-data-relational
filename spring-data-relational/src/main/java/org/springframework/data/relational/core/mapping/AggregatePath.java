@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -475,14 +476,44 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			return columnInfos.values().stream().map(mapper).toList();
 		}
 
+		/**
+		 * Performs a {@link Stream#reduce(Object, BiFunction, BinaryOperator)} on {@link ColumnInfo} and
+		 * {@link AggregatePath} to reduce the results into a single {@code T} return value.
+		 * <p>
+		 * If {@code ColumnInfos} is empty, then {@code identity} is returned. Without invoking {@code combiner}. The
+		 * {@link BinaryOperator combiner} is called with the current state (or initial {@code identity}) and the
+		 * accumulated {@code T} state to combine both into a single return value.
+		 *
+		 * @param identity the identity (initial) value for the combiner function.
+		 * @param accumulator an associative, non-interfering (free of side effects), stateless function for incorporating
+		 *          an additional element into a result.
+		 * @param combiner an associative, non-interfering, stateless function for combining two values, which must be
+		 *          compatible with the {@code accumulator} function.
+		 * @return result of the function.
+		 * @param <T> type of the result.
+		 * @since 3.5
+		 */
+		public <T> T reduce(T identity, BiFunction<AggregatePath, ColumnInfo, T> accumulator, BinaryOperator<T> combiner) {
+
+			T result = identity;
+
+			for (Map.Entry<AggregatePath, ColumnInfo> entry : columnInfos.entrySet()) {
+
+				T mapped = accumulator.apply(entry.getKey(), entry.getValue());
+				result = combiner.apply(result, mapped);
+			}
+
+			return result;
+		}
+
 		public void forEach(BiConsumer<AggregatePath, ColumnInfo> consumer) {
 			columnInfos.forEach(consumer);
 		}
 
-		public <T> T any(BiFunction<AggregatePath, ColumnInfo, T> consumer) {
+		public <T> T any(BiFunction<AggregatePath, ColumnInfo, T> mapper) {
 
 			Map.Entry<AggregatePath, ColumnInfo> any = columnInfos.entrySet().iterator().next();
-			return consumer.apply(any.getKey(), any.getValue());
+			return mapper.apply(any.getKey(), any.getValue());
 		}
 
 		public ColumnInfo get(AggregatePath path) {
