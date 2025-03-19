@@ -17,12 +17,10 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
-import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -31,14 +29,9 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Conditions;
-import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
-import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhere;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -49,8 +42,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Implementation of {@link RelationalQueryCreator} that creates {@link List} of deletion {@link ParametrizedQuery}
- * from a {@link PartTree}.
+ * Implementation of {@link RelationalQueryCreator} that creates {@link List} of deletion {@link ParametrizedQuery} from
+ * a {@link PartTree}.
  *
  * @author Yunyoung LEE
  * @author Nikita Konev
@@ -96,13 +89,16 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SqlContext sqlContext = new SqlContext(entity);
+		SqlContext sqlContext = new SqlContext();
 
 		Condition condition = criteria == null ? null
 				: queryMapper.getMappedObject(parameterSource, criteria, table, entity);
 
+		List<Column> idColumns = context.getAggregatePath(entity).getTableInfo().idColumnInfos()
+				.toList(ci -> table.column(ci.name()));
+
 		// create select criteria query for subselect
-		SelectWhere selectBuilder = StatementBuilder.select(sqlContext.getIdColumn()).from(table);
+		SelectWhere selectBuilder = StatementBuilder.select(idColumns).from(table);
 		Select select = condition == null ? selectBuilder.build() : selectBuilder.where(condition).build();
 
 		// create delete relation queries
@@ -139,19 +135,28 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 			if (aggregatePath.isEntity() && !aggregatePath.isEmbedded()) {
 
-				SqlContext sqlContext = new SqlContext(aggregatePath.getLeafEntity());
+				SqlContext sqlContext = new SqlContext();
 
-				Condition inCondition = Conditions
-						.in(sqlContext.getTable().column(aggregatePath.getTableInfo().reverseColumnInfo().name()), parentSelect);
+				// MariaDB prior to 11.6 does not  support aliases for delete statements
+				Table table = sqlContext.getUnaliasedTable(aggregatePath);
+
+				List<Column> reverseColumns = aggregatePath.getTableInfo().reverseColumnInfos()
+						.toList(ci -> table.column(ci.name()));
+				Expression expression = TupleExpression.maybeWrap(reverseColumns);
+
+				Condition inCondition = Conditions.in(expression, parentSelect);
+
+				List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
+						.toList(ci -> table.column(ci.name()));
 
 				Select select = StatementBuilder.select( //
-						sqlContext.getTable().column(aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnName()) //
-				).from(sqlContext.getTable()) //
+						parentIdColumns //
+				).from(table) //
 						.where(inCondition) //
 						.build();
 				deleteRelations(deleteChain, aggregatePath.getLeafEntity(), select);
 
-				deleteChain.add(StatementBuilder.delete(sqlContext.getTable()).where(inCondition).build());
+				deleteChain.add(StatementBuilder.delete(table).where(inCondition).build());
 			}
 		}
 	}

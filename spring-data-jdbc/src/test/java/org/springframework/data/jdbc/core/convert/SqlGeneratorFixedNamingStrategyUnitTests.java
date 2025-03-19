@@ -30,11 +30,12 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
- * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard wired
+ * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard-wired
  * schema, table, and property prefix.
  *
  * @author Greg Turnquist
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 class SqlGeneratorFixedNamingStrategyUnitTests {
 
@@ -90,7 +91,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 								+ "FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" "
 								+ "LEFT OUTER JOIN \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" \"ref\" ON \"ref\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_ID\" L"
 								+ "EFT OUTER JOIN \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_SECONDLEVELREFERENCEDENTITY\" \"ref_further\" ON \"ref_further\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" = \"ref\".\"FIXEDCUSTOMPROPERTYPREFIX_L1ID\" "
-								+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_ID\" = :id");
+								+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_ID\" = :FixedCustomPropertyPrefix_id");
 		softAssertions.assertAll();
 	}
 
@@ -121,7 +122,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :rootId");
+				+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :FixedCustomPropertyPrefix_id");
 	}
 
 	@Test // DATAJDBC-107
@@ -136,7 +137,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_SECONDLEVELREFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" IN "
 						+ "(SELECT \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMPROPERTYPREFIX_L1ID\" "
 						+ "FROM \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\" "
-						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :rootId)");
+						+ "WHERE \"FIXEDCUSTOMSCHEMA\".\"FIXEDCUSTOMTABLEPREFIX_REFERENCEDENTITY\".\"FIXEDCUSTOMTABLEPREFIX_DUMMYENTITY\" = :FixedCustomPropertyPrefix_id)");
 	}
 
 	@Test // DATAJDBC-107
