@@ -432,8 +432,11 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	}
 
 	/**
-	 * A group of {@link ColumnInfo} values referenced by there respective {@link AggregatePath}. This is relevant for
-	 * composite ids and references to such ids.
+	 * A group of {@link ColumnInfo} values referenced by there respective {@link AggregatePath}. It is used in a similar
+	 * way as {@literal ColumnInfo} when one needs to consider more than a single column. This is relevant for composite
+	 * ids and references to such ids.
+	 * 
+	 * @author Jens Schauder
 	 **/
 	class ColumnInfos {
 
@@ -441,6 +444,8 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		private final Map<AggregatePath, ColumnInfo> columnInfos;
 
 		/**
+		 * Creates a new ColumnInfos instances based on the arguments.
+		 * 
 		 * @param basePath The path on which all other paths in the other argument are based on. For the typical case of a
 		 *          composite id, this would be the path to the composite ids.
 		 * @param columnInfos A map, mapping {@literal AggregatePath} instances to the respective {@literal ColumnInfo}
@@ -451,10 +456,23 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			this.columnInfos = columnInfos;
 		}
 
-		public static ColumnInfos empty(AggregatePath base) {
-			return new ColumnInfos(base, new HashMap<>());
+		/**
+		 * An empty {@literal ColumnInfos} instance with a fixed base path. Useful as a base when collecting
+		 * {@link ColumnInfo} instances into an {@literal ColumnInfos} instance.
+		 *
+		 * @param basePath The path on which paths in the {@literal ColumnInfos} or derived objects will be based on.
+		 * @return an empty instance save the {@literal basePath}.
+		 */
+		public static ColumnInfos empty(AggregatePath basePath) {
+			return new ColumnInfos(basePath, new HashMap<>());
 		}
 
+		/**
+		 * If this instance contains exactly one {@link ColumnInfo} it will be returned.
+		 *
+		 * @return the unique {@literal ColumnInfo} if present.
+		 * @throws IllegalStateException if the number of contained {@literal ColumnInfo} instances is not exactly 1.
+		 */
 		public ColumnInfo unique() {
 
 			Collection<ColumnInfo> values = columnInfos.values();
@@ -462,16 +480,34 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			return values.iterator().next();
 		}
 
+		/**
+		 * Any of the contained {@link ColumnInfo} instances.
+		 * 
+		 * @return a {@link ColumnInfo} instance.
+		 * @throws java.util.NoSuchElementException if no instance is available.
+		 */
 		public ColumnInfo any() {
 
 			Collection<ColumnInfo> values = columnInfos.values();
 			return values.iterator().next();
 		}
 
+		/**
+		 * Checks if {@literal this} instance is empty, i.e. does not contain any {@link ColumnInfo} instance.
+		 * 
+		 * @return {@literal true} iff the collection of {@literal ColumnInfo} is empty.
+		 */
 		public boolean isEmpty() {
 			return columnInfos.isEmpty();
 		}
 
+		/**
+		 * Applies a function to all the {@link ColumnInfo} instances and returns the result in a list.
+		 * 
+		 * @param mapper the function to be applied
+		 * @return the list of results from mapper.
+		 * @param <T> the type returned by {@literal mapper} and contained in the resulting {@literal List}
+		 */
 		public <T> List<T> toList(Function<ColumnInfo, T> mapper) {
 			return columnInfos.values().stream().map(mapper).toList();
 		}
@@ -506,55 +542,125 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			return result;
 		}
 
+		/**
+		 * Calls the consumer for each pair of {@link AggregatePath} and {@literal ColumnInfo}.
+		 * 
+		 * @param consumer the function to call.
+		 */
 		public void forEach(BiConsumer<AggregatePath, ColumnInfo> consumer) {
 			columnInfos.forEach(consumer);
 		}
 
+		/**
+		 * Calls the {@literal mapper} for each pair one pair of {@link AggregatePath} and {@link ColumnInfo}, if there is
+		 * any.
+		 *
+		 * @param mapper the function to call.
+		 * @return the result of the mapper
+		 * @throws java.util.NoSuchElementException if this {@literal ColumnInfo} is empty.
+		 */
 		public <T> T any(BiFunction<AggregatePath, ColumnInfo, T> mapper) {
 
 			Map.Entry<AggregatePath, ColumnInfo> any = columnInfos.entrySet().iterator().next();
 			return mapper.apply(any.getKey(), any.getValue());
 		}
 
+		/**
+		 * Gets the {@link ColumnInfo} for the provided {@link AggregatePath}
+		 * 
+		 * @param path for which to return the {@literal ColumnInfo}
+		 * @return {@literal ColumnInfo} for the given path.
+		 */
 		public ColumnInfo get(AggregatePath path) {
 			return columnInfos.get(path);
 		}
 
+		/**
+		 * Constructs an {@link AggregatePath} from the {@literal basePath} and the provided argument.
+		 * 
+		 * @param ap {@literal AggregatePath} to be appended to the {@literal basePath}.
+		 * @return the combined (@literal AggregatePath}
+		 */
 		public AggregatePath fullPath(AggregatePath ap) {
 			return basePath.append(ap);
 		}
 
+		/**
+		 * Number of {@literal ColumnInfo} elements in this instance.
+		 *
+		 * @return the size of the collection of {@literal ColumnInfo}.
+		 */
 		public int size() {
 			return columnInfos.size();
 		}
 	}
 
+	/**
+	 * A builder for {@link ColumnInfos} instances.
+	 * 
+	 * @author Jens Schauder
+	 */
 	class ColumInfosBuilder {
 		private final AggregatePath basePath;
 
 		private final Map<AggregatePath, ColumnInfo> columnInfoMap = new TreeMap<>();
 
+		/**
+		 * Start construction with just the {@literal basePath} which all other paths are build upon.
+		 *
+		 * @param basePath must not be null.
+		 */
 		public ColumInfosBuilder(AggregatePath basePath) {
 			this.basePath = basePath;
 		}
 
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param path referencing the {@literal ColumnInfo}.
+		 * @param name of the column.
+		 * @param alias alias for the column.
+		 */
 		void add(AggregatePath path, SqlIdentifier name, SqlIdentifier alias) {
 			add(path, new ColumnInfo(name, alias));
 		}
 
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param property referencing the {@literal ColumnInfo}.
+		 * @param name of the column.
+		 * @param alias alias for the column.
+		 */
 		public void add(RelationalPersistentProperty property, SqlIdentifier name, SqlIdentifier alias) {
 			add(basePath.append(property), name, alias);
 		}
 
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param path the path referencing the {@literal ColumnInfo}
+		 * @param columnInfo the {@literal ColumnInfo} added.
+		 *
+		 */
+		public void add(AggregatePath path, ColumnInfo columnInfo) {
+			columnInfoMap.put(path.substract(basePath), columnInfo);
+		}
+		/**
+		 * Build the final {@link ColumnInfos} instance.
+		 * @return a {@literal ColumnInfos} instance containing all the added {@link ColumnInfo} instances.
+		 */
 		ColumnInfos build() {
 			return new ColumnInfos(basePath, columnInfoMap);
 		}
 
-		public void add(AggregatePath path, ColumnInfo columnInfo) {
-			columnInfoMap.put(path.substract(basePath), columnInfo);
-		}
 	}
 
+	/**
+	 * Substract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath} from the beginning of {@literal this}.
+	 * @param basePath the path to be removed.
+	 * @return an AggregatePath that ends like the original {@literal AggregatePath} but has {@literal basePath} removed from the beginning.
+	 */
 	@Nullable
 	AggregatePath substract(@Nullable AggregatePath basePath);
 
