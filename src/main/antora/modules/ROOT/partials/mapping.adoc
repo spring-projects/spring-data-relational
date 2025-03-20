@@ -156,6 +156,42 @@ Entities may be annotated with `@Id` and `@Embedded`, resulting in a composite i
 The full embedded entity is considered the id, and therefore the check for determining if an aggregate is considered a new aggregate requiring an insert or an existing one, asking for an update is based on that entity, not its elements.
 Most use cases will require a custom `BeforeConvertCallback` to set the id for new aggregate.
 
+====
+.Simple entity with composite id
+[source,java]
+----
+@Table("PERSON_WITH_COMPOSITE_ID")
+record Person( <1>
+    @Id @Embedded.Nullable Name pk, <2>
+    String nickName,
+    Integer age
+) {
+}
+
+record Name(String first, String last) {
+}
+----
+
+.Matching table for simple entity with composite id
+[source,sql]
+----
+CREATE TABLE PERSON_WITH_COMPOSITE_ID (
+    FIRST VARCHAR(100),
+    LAST VARCHAR(100),
+    NICK_NAME VARCHAR(100),
+    AGE INT,
+    PRIMARY KEY (FIRST, LAST) <3>
+);
+
+
+----
+<1> Entities may be represented as records without any special consideration
+<2> `pk` is marked as id and embedded
+<3> the two columns from the embedded `Name` entity make up the primary key in the database.
+
+Details of the create tables will depend on the database used.
+====
+
 [[entity-persistence.read-only-properties]]
 == Read Only Properties
 

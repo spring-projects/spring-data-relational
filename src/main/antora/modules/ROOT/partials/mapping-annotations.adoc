@@ -1,7 +1,13 @@
 The `RelationalConverter` can use metadata to drive the mapping of objects to rows.
 The following annotations are available:
 
-* `@Id`: Applied at the field level to mark the primary key.
+* `@Embedded`: an entity with this annotation will be mapped to the table of the parent entity, instead of a separate table. Allows to specify if the resulting columns should have a common prefix.
+If all columns resulting from such an entity are `null` either the annotated entity will be `null` or _empty_, i.e. all of its properties will be `null`, depending on the value of `@Embedded.onEmpty()`
+May be combined with `@Id` to form a composite id.
+* `@Id`: Applied at the field level to mark the primary key. It may be combined with `@Embedded` to form a composite id.
+* `@InsertOnlyProperty`: Marks a property as only to be written during insert. Such a property on an aggregate root will only be written once and never updated. Note that on a nested entity, all save operations result in an insert therefore this annotation has no effect on properties of nested entities.
+* `@MappedCollection`: Allows for configuration how a collection, or a single nested entity gets mapped. `idColumn` specifies the column used for referencing the parent entities primary key. `keyColumn` specifies the column used to store the index of a `List` or the key of a `Map`.
+* `@Sequence`: specify a database sequence for generating values for the annotated property.
 * `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
 You can specify the name of the table where the database is stored.
 * `@Transient`: By default, all fields are mapped to the row.
@@ -22,3 +28,5 @@ However, this is not recommended, since it may cause problems with other tools.
 The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
 The initially stored value is `zero` (`one` for primitive types).
 The version gets incremented automatically on every update.
+
+

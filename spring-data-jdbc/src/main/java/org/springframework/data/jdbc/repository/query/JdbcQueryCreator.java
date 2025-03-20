@@ -15,14 +15,14 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -65,6 +65,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final boolean isSliceQuery;
 	private final ReturnedType returnedType;
 	private final Optional<Lock> lockMode;
+	private final SqlGeneratorSource sqlGeneratorSource;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -78,16 +79,44 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
 	 * @param isSliceQuery flag denoting if the query returns a {@link org.springframework.data.domain.Slice}.
 	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
+	 * @deprecated use
+	 *             {@link JdbcQueryCreator#JdbcQueryCreator(RelationalMappingContext, PartTree, JdbcConverter, Dialect, RelationalEntityMetadata, RelationalParameterAccessor, boolean, ReturnedType, Optional, SqlGeneratorSource)}
+	 *             instead.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
 			ReturnedType returnedType, Optional<Lock> lockMode) {
+		this(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode,
+				new SqlGeneratorSource(context, converter, dialect));
+	}
+
+	/**
+	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
+	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
+	 *
+	 * @param context the mapping context. Must not be {@literal null}.
+	 * @param tree part tree, must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
+	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 * @param isSliceQuery flag denoting if the query returns a {@link org.springframework.data.domain.Slice}.
+	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
+	 * @param lockMode lock mode to be used for the query.
+	 * @param sqlGeneratorSource the source providing SqlGenerator instances for generating SQL. Must not be
+	 *          {@literal null}
+	 */
+	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
+			ReturnedType returnedType, Optional<Lock> lockMode, SqlGeneratorSource sqlGeneratorSource) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
 		Assert.notNull(returnedType, "ReturnedType must not be null");
+		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
 
 		this.context = context;
 		this.tree = tree;
@@ -99,6 +128,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.isSliceQuery = isSliceQuery;
 		this.returnedType = returnedType;
 		this.lockMode = lockMode;
+		this.sqlGeneratorSource = sqlGeneratorSource;
 	}
 
 	/**
@@ -228,122 +258,13 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 	private SelectBuilder.SelectJoin selectBuilder(Table table) {
 
-		List<Expression> columnExpressions = new ArrayList<>();
 		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
-		SqlContext sqlContext = new SqlContext();
 
-		List<Join> joinTables = new ArrayList<>();
-		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+		Predicate<AggregatePath> filter = ap -> returnedType.needsCustomConstruction()
+				&& !returnedType.getInputProperties().contains(ap.getRequiredBaseProperty().getName());
 
-			AggregatePath aggregatePath = context.getAggregatePath(path);
-
-			if (returnedType.needsCustomConstruction()) {
-				if (!returnedType.getInputProperties().contains(aggregatePath.getRequiredBaseProperty().getName())) {
-					continue;
-				}
-			}
-
-			// add a join if necessary
-			Join join = getJoin(sqlContext, aggregatePath);
-			if (join != null) {
-				joinTables.add(join);
-			}
-
-			Column column = getColumn(sqlContext, aggregatePath);
-			if (column != null) {
-				columnExpressions.add(column);
-			}
-		}
-
-		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(columnExpressions);
-		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
-
-		for (Join join : joinTables) {
-
-			Condition condition = null;
-
-			for (int i = 0; i < join.joinColumns.size(); i++) {
-				Column parentColumn = join.parentId.get(i);
-				Column joinColumn = join.joinColumns.get(i);
-				Comparison singleCondition = joinColumn.isEqualTo(parentColumn);
-				condition = condition == null ? singleCondition : condition.and(singleCondition);
-			}
-
-			Assert.state(condition != null, "No condition found");
-
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(condition);
-		}
-
-		return baseSelect;
-	}
-
-	/**
-	 * Create a {@link Column} for {@link AggregatePath}.
-	 *
-	 * @param sqlContext for generating SQL constructs.
-	 * @param path the path to the column in question.
-	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
-	 */
-	@Nullable
-	private Column getColumn(SqlContext sqlContext, AggregatePath path) {
-
-		// an embedded itself doesn't give an column, its members will though.
-		// if there is a collection or map on the path it won't get selected at all, but it will get loaded with a separate
-		// select
-		// only the parent path is considered in order to handle arrays that get stored as BINARY properly
-		if (path.isEmbedded() || path.getParentPath().isMultiValued()) {
-			return null;
-		}
-
-		if (path.isEntity()) {
-
-			if (path.isQualified() //
-					|| path.isCollectionLike() //
-					|| path.hasIdProperty() //
-			) {
-				return null;
-			}
-
-			// Simple entities without id include there backreference as an synthetic id in order to distinguish null entities
-			// from entities with only null values.
-			return sqlContext.getAnyReverseColumn(path);
-		}
-
-		return sqlContext.getColumn(path);
-	}
-
-	@Nullable
-	Join getJoin(SqlContext sqlContext, AggregatePath path) {
-
-		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
-			return null;
-		}
-
-		Table currentTable = sqlContext.getTable(path);
-
-		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
-		Table parentTable = sqlContext.getTable(idDefiningParentPath);
-
-		List<Column> reverseColumns = path.getTableInfo().reverseColumnInfos().toList(ci -> currentTable.column(ci.name()));
-		List<Column> idColumns = idDefiningParentPath.getTableInfo().idColumnInfos()
-				.toList(ci -> parentTable.column(ci.name()));
-		return new Join( //
-				currentTable, //
-				reverseColumns, //
-				idColumns //
+		return (SelectBuilder.SelectJoin) sqlGeneratorSource.getSqlGenerator(entity.getType()).createSelectBuilder(table, filter
 		);
 	}
 
-	/**
-	 * Value object representing a {@code JOIN} association.
-	 */
-	private record Join(Table joinTable, List<Column> joinColumns, List<Column> parentId) {
-
-		Join {
-			Assert.isTrue(joinColumns.size() == parentId.size(),
-					"Both sides of a join condition must have the same number of columns");
-		}
-
-	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for construction of {@link TupleExpression}.
+ *
+ * @author Jens Schauder
+ */
 class TupleExpressionUnitTests {
 
 	@Test // GH-574
@@ -29,7 +34,7 @@ class TupleExpressionUnitTests {
 
 		Column testColumn = Column.create("name", Table.create("employee"));
 
-		Expression wrapped = TupleExpression.maybeWrap(List.of(testColumn));
+		Expression wrapped = Expressions.of(List.of(testColumn));
 
 		assertThat(wrapped).isSameAs(testColumn);
 	}
@@ -40,7 +45,7 @@ class TupleExpressionUnitTests {
 		Column testColumn1 = Column.create("first", Table.create("employee"));
 		Column testColumn2 = Column.create("last", Table.create("employee"));
 
-		Expression wrapped = TupleExpression.maybeWrap(List.of(testColumn1, testColumn2));
+		Expression wrapped = Expressions.of(List.of(testColumn1, testColumn2));
 
 		assertThat(wrapped).isInstanceOf(TupleExpression.class);
 	}

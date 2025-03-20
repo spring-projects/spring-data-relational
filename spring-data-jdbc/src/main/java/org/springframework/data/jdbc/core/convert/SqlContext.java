@@ -69,7 +69,7 @@ class SqlContext {
 	 */
 	Column getAnyReverseColumn(AggregatePath path) {
 
-		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().reverseColumnInfos().any();
+		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().backReferenceColumnInfos().any();
 		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 }

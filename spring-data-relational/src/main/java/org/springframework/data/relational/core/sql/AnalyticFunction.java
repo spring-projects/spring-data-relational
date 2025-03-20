@@ -64,7 +64,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 	 *         previously present.
 	 * @since 3.5
 	 */
-	public AnalyticFunction partitionBy(Collection<Expression> partitionBy) {
+	public AnalyticFunction partitionBy(Collection<? extends Expression> partitionBy) {
 		return partitionBy(partitionBy.toArray(new Expression[0]));
 	}
 
@@ -87,7 +87,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 	 *         previously present.
 	 * @since 3.5
 	 */
-	public AnalyticFunction orderBy(Collection<Expression> orderBy) {
+	public AnalyticFunction orderBy(Collection<? extends Expression> orderBy) {
 		return orderBy(orderBy.toArray(new Expression[0]));
 	}
 

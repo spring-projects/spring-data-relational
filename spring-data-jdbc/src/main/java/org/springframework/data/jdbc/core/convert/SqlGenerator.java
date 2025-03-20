@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
@@ -33,10 +34,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -60,7 +59,7 @@ import org.springframework.util.Assert;
  * @author Viktor Ardelean
  * @author Kurt Niemi
  */
-class SqlGenerator {
+public class SqlGenerator {
 
 	static final SqlIdentifier VERSION_SQL_PARAMETER = SqlIdentifier.unquoted("___oldOptimisticLockingVersion");
 	static final SqlIdentifier IDS_SQL_PARAMETER = SqlIdentifier.unquoted("ids");
@@ -94,10 +93,6 @@ class SqlGenerator {
 	private final QueryMapper queryMapper;
 	private final Dialect dialect;
 
-	private final Function<Map<AggregatePath, Column>, Condition> inCondition;
-	private final Function<Map<AggregatePath, Column>, Condition> equalityCondition;
-	private final Function<Map<AggregatePath, Column>, Condition> notNullCondition;
-
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
 	 *
@@ -116,11 +111,11 @@ class SqlGenerator {
 		this.columns = new Columns(entity, mappingContext, converter);
 		this.queryMapper = new QueryMapper(converter);
 		this.dialect = dialect;
+	}
 
-		inCondition = inCondition();
-		equalityCondition = equalityCondition();
-		notNullCondition = isNotNullCondition();
 
+	public SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter) {
+		return createSelectBuilder(table, pathFilter, Collections.emptyList());
 	}
 
 	/**
@@ -197,7 +192,7 @@ class SqlGenerator {
 			innerCondition = getSubselectCondition(parentPath, conditionFunction, selectFilterColumns);
 		}
 
-		List<Expression> idColumns = parentPathTableInfo.idColumnInfos().toList(ci -> subSelectTable.column(ci.name()));
+		List<Column> idColumns = parentPathTableInfo.idColumnInfos().toColumnList(subSelectTable);
 
 		Select select = Select.builder() //
 				.select(idColumns) //
@@ -208,7 +203,7 @@ class SqlGenerator {
 	}
 
 	private Expression toExpression(Map<AggregatePath, Column> columnsMap) {
-			return TupleExpression.maybeWrap(new ArrayList<>(columnsMap.values()));
+		return Expressions.of(new ArrayList<>(columnsMap.values()));
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
@@ -454,7 +449,7 @@ class SqlGenerator {
 			return render(deleteAll.build());
 		}
 
-		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), notNullCondition);
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), this::isNotNullCondition);
 	}
 
 	/**
@@ -465,7 +460,7 @@ class SqlGenerator {
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), equalityCondition);
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), this::equalityCondition);
 	}
 
 	/**
@@ -476,63 +471,55 @@ class SqlGenerator {
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteInByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), inCondition);
+		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), this::inCondition);
 	}
 
 	/**
-	 * Constructs a function for constructing a where condition. The where condition will be of the form
-	 * {@literal <columns> IN :bind-marker}
+	 * Constructs a where condition. The where condition will be of the form {@literal <columns> IN :bind-marker}
 	 */
-	private Function<Map<AggregatePath, Column>, Condition> inCondition() {
+	private Condition inCondition(Map<AggregatePath, Column> columnMap) {
 
-		return columnMap -> {
+		List<Column> columns = List.copyOf(columnMap.values());
 
-			List<Column> columns = List.copyOf(columnMap.values());
-
-			if (columns.size() == 1) {
-				return Conditions.in(columns.get(0), getBindMarker(IDS_SQL_PARAMETER));
-			}
-			return Conditions.in(TupleExpression.create(columns), getBindMarker(IDS_SQL_PARAMETER));
-		};
+		if (columns.size() == 1) {
+			return Conditions.in(columns.get(0), getBindMarker(IDS_SQL_PARAMETER));
+		}
+		return Conditions.in(TupleExpression.create(columns), getBindMarker(IDS_SQL_PARAMETER));
 	}
 
 	/**
-	 * Constructs a function for constructing a where. The where condition will be of the form
+	 * Constructs a where-condition. The where condition will be of the form
 	 * {@literal <column-a> = :bind-marker-a AND <column-b> = :bind-marker-b ...}
 	 */
-	private Function<Map<AggregatePath, Column>, Condition> equalityCondition() {
+	private Condition equalityCondition(Map<AggregatePath, Column> columnMap) {
 
 		AggregatePath.ColumnInfos idColumnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
-		return columnMap -> {
+		Condition result = null;
+		for (Map.Entry<AggregatePath, Column> entry : columnMap.entrySet()) {
+			BindMarker bindMarker = getBindMarker(idColumnInfos.get(entry.getKey()).name());
+			Comparison singleCondition = entry.getValue().isEqualTo(bindMarker);
 
-			Condition result = null;
-			for (Map.Entry<AggregatePath, Column> entry : columnMap.entrySet()) {
-				BindMarker bindMarker = getBindMarker(idColumnInfos.get(entry.getKey()).name());
-				Comparison singleCondition = entry.getValue().isEqualTo(bindMarker);
-
-				result = result == null ? singleCondition : result.and(singleCondition);
-			}
-			return result;
-		};
+			result = result == null ? singleCondition : result.and(singleCondition);
+		}
+		Assert.state(result != null, "We need at least one condition");
+		return result;
 	}
 
 	/**
 	 * Constructs a function for constructing where a condition. The where condition will be of the form
 	 * {@literal <column-a> IS NOT NULL AND <column-b> IS NOT NULL ... }
 	 */
-	private Function<Map<AggregatePath, Column>, Condition> isNotNullCondition() {
+	private Condition isNotNullCondition(Map<AggregatePath, Column> columnMap) {
 
-		return columnMap -> {
+		Condition result = null;
+		for (Column column : columnMap.values()) {
+			Condition singleCondition = column.isNotNull();
 
-			Condition result = null;
-			for (Column column : columnMap.values()) {
-				Condition singleCondition = column.isNotNull();
-
-				result = result == null ? singleCondition : result.and(singleCondition);
-			}
-			return result;
-		};
+			result = result == null ? singleCondition : result.and(singleCondition);
+		}
+		Assert.state(result != null, "We need at least one condition");
+		return result;
 	}
 
 	private String createFindOneSql() {
@@ -591,7 +578,11 @@ class SqlGenerator {
 
 	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
 
-		Table table = getTable();
+		return createSelectBuilder(getTable(), ap -> false, keyColumns);
+	}
+
+	private SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter,
+			Collection<SqlIdentifier> keyColumns) {
 
 		Set<Expression> columnExpressions = new LinkedHashSet<>();
 
@@ -599,15 +590,19 @@ class SqlGenerator {
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
-			AggregatePath extPath = mappingContext.getAggregatePath(path);
+			AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
+
+			if (pathFilter.test(aggregatePath)) {
+				continue;
+			}
 
 			// add a join if necessary
-			Join join = getJoin(extPath);
+			Join join = getJoin(aggregatePath);
 			if (join != null) {
 				joinTables.add(join);
 			}
 
-			Column column = getColumn(extPath);
+			Column column = getColumn(aggregatePath);
 			if (column != null) {
 				columnExpressions.add(column);
 			}
@@ -626,13 +621,7 @@ class SqlGenerator {
 
 		for (Join join : joinTables) {
 
-			Condition condition = null;
-			for (Pair<Column, Column> columnPair : join.columns) {
-				Comparison elementalCondition = columnPair.getFirst().isEqualTo(columnPair.getSecond());
-				condition = condition == null ? elementalCondition : condition.and(elementalCondition);
-			}
-
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(Objects.requireNonNull(condition));
+			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.condition);
 		}
 		return baseSelect;
 	}
@@ -708,21 +697,25 @@ class SqlGenerator {
 		}
 
 		Table currentTable = sqlContext.getTable(path);
-		AggregatePath.ColumnInfos backRefColumnInfos = path.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos backRefColumnInfos = path.getTableInfo().backReferenceColumnInfos();
 
 		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 		AggregatePath.ColumnInfos idColumnInfos = idDefiningParentPath.getTableInfo().idColumnInfos();
 
-		List<Pair<Column, Column>> joinConditions = new ArrayList<>();
+		final Condition[] joinCondition = { null };
 		backRefColumnInfos.forEach((ap, ci) -> {
-			joinConditions.add(Pair.of(currentTable.column(ci.name()), parentTable.column(idColumnInfos.get(ap).name())));
+
+			Condition elementalCondition = currentTable.column(ci.name())
+					.isEqualTo(parentTable.column(idColumnInfos.get(ap).name()));
+			joinCondition[0] = joinCondition[0] == null ? elementalCondition : joinCondition[0].and(elementalCondition);
 		});
 
 		return new Join( //
 				currentTable, //
-				joinConditions //
+				joinCondition[0] //
 		);
+
 	}
 
 	private String createFindAllInListSql() {
@@ -860,7 +853,7 @@ class SqlGenerator {
 		Delete delete;
 
 		Map<AggregatePath, Column> columns = new TreeMap<>();
-		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().backReferenceColumnInfos();
 		columnInfos.forEach((ag, ci) -> columns.put(ag, table.column(ci.name())));
 
 		if (isFirstNonRoot(path)) {
@@ -1171,7 +1164,7 @@ class SqlGenerator {
 	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
-	record Join(Table joinTable, List<Pair<Column, Column>> columns) {
+	record Join(Table joinTable, Condition condition) {
 	}
 
 	/**

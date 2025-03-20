@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
@@ -56,7 +57,7 @@ public class SqlGeneratorSource {
 		return dialect;
 	}
 
-	SqlGenerator getSqlGenerator(Class<?> domainType) {
+	public SqlGenerator getSqlGenerator(Class<?> domainType) {
 
 		return CACHE.computeIfAbsent(domainType,
 				t -> new SqlGenerator(context, converter, context.getRequiredPersistentEntity(t), dialect));

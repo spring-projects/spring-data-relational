@@ -89,42 +89,42 @@ class SqlGeneratorEmbeddedUnitTests {
 	@Test // GH-574
 	void findOneWrappedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithWrappedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithWrappedId.class);
 
 		String sql = sqlGenerator.getFindOne();
 
 		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity_with_wrapped_id.name AS name") //
-					.contains("dummy_entity_with_wrapped_id.id") //
-					.contains("WHERE dummy_entity_with_wrapped_id.id = :id");
+					.contains("with_wrapped_id.name AS name") //
+					.contains("with_wrapped_id.id") //
+					.contains("WHERE with_wrapped_id.id = :id");
 		});
 	}
 
 	@Test // GH-574
 	void findOneEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getFindOne();
 
 		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity_with_embedded_id.name AS name") //
-					.contains("dummy_entity_with_embedded_id.one") //
-					.contains("dummy_entity_with_embedded_id.two") //
+					.contains("with_embedded_id.name AS name") //
+					.contains("with_embedded_id.one") //
+					.contains("with_embedded_id.two") //
 					.contains(" WHERE ") //
-					.contains("dummy_entity_with_embedded_id.one = :one") //
-					.contains("dummy_entity_with_embedded_id.two = :two");
+					.contains("with_embedded_id.one = :one") //
+					.contains("with_embedded_id.two = :two");
 		});
 	}
 
 	@Test // GH-574
 	void deleteByIdEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getDeleteById();
 
@@ -132,15 +132,15 @@ class SqlGeneratorEmbeddedUnitTests {
 
 			softly.assertThat(sql).startsWith("DELETE") //
 					.contains(" WHERE ") //
-					.contains("dummy_entity_with_embedded_id.one = :one") //
-					.contains("dummy_entity_with_embedded_id.two = :two");
+					.contains("with_embedded_id.one = :one") //
+					.contains("with_embedded_id.two = :two");
 		});
 	}
 
 	@Test // GH-574
 	void deleteByIdInEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getDeleteByIdIn();
 
@@ -148,33 +148,33 @@ class SqlGeneratorEmbeddedUnitTests {
 
 			softly.assertThat(sql).startsWith("DELETE") //
 					.contains(" WHERE ") //
-					.contains("(dummy_entity_with_embedded_id.one, dummy_entity_with_embedded_id.two) IN (:ids)");
+					.contains("(with_embedded_id.one, with_embedded_id.two) IN (:ids)");
 		});
 	}
 
 	@Test // GH-574
 	void deleteByPathEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 		PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath("other",
-				DummyEntityWithEmbeddedIdAndReference.class, context);
+				WithEmbeddedIdAndReference.class, context);
 
 		String sql = sqlGenerator.createDeleteByPath(path);
 
 		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
-					.contains("other_entity.dummy_entity_with_embedded_id_and_reference_one = :one") //
-					.contains("other_entity.dummy_entity_with_embedded_id_and_reference_two = :two");
+					.contains("other_entity.with_embedded_id_and_reference_one = :one") //
+					.contains("other_entity.with_embedded_id_and_reference_two = :two");
 		});
 	}
 
 	@Test // GH-574
 	void deleteInByPathEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 		PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath("other",
-				DummyEntityWithEmbeddedIdAndReference.class, context);
+				WithEmbeddedIdAndReference.class, context);
 
 		String sql = sqlGenerator.createDeleteInByPath(path);
 
@@ -183,14 +183,14 @@ class SqlGeneratorEmbeddedUnitTests {
 			softly.assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
 					.contains(" WHERE ") //
 					.contains(
-							"(other_entity.dummy_entity_with_embedded_id_and_reference_one, other_entity.dummy_entity_with_embedded_id_and_reference_two) IN (:ids)");
+							"(other_entity.with_embedded_id_and_reference_one, other_entity.with_embedded_id_and_reference_two) IN (:ids)");
 		});
 	}
 
 	@Test // GH-574
 	void updateWithEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getUpdate();
 
@@ -198,15 +198,15 @@ class SqlGeneratorEmbeddedUnitTests {
 
 			softly.assertThat(sql).startsWith("UPDATE") //
 					.contains(" WHERE ") //
-					.contains("dummy_entity_with_embedded_id.one = :one") //
-					.contains("dummy_entity_with_embedded_id.two = :two");
+					.contains("with_embedded_id.one = :one") //
+					.contains("with_embedded_id.two = :two");
 		});
 	}
 
 	@Test // GH-574
 	void existsByIdEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getExists();
 
@@ -214,8 +214,8 @@ class SqlGeneratorEmbeddedUnitTests {
 
 			softly.assertThat(sql).startsWith("SELECT COUNT") //
 					.contains(" WHERE ") //
-					.contains("dummy_entity_with_embedded_id.one = :one") //
-					.contains("dummy_entity_with_embedded_id.two = :two");
+					.contains("with_embedded_id.one = :one") //
+					.contains("with_embedded_id.two = :two");
 		});
 	}
 
@@ -269,24 +269,24 @@ class SqlGeneratorEmbeddedUnitTests {
 	@Test // GH-574
 	void findAllInListEmbeddedId() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedId.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
 
 		String sql = sqlGenerator.getFindAllInList();
 
 		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity_with_embedded_id.name AS name") //
-					.contains("dummy_entity_with_embedded_id.one") //
-					.contains("dummy_entity_with_embedded_id.two") //
-					.contains(" WHERE (dummy_entity_with_embedded_id.one, dummy_entity_with_embedded_id.two) IN (:ids)");
+					.contains("with_embedded_id.name AS name") //
+					.contains("with_embedded_id.one") //
+					.contains("with_embedded_id.two") //
+					.contains(" WHERE (with_embedded_id.one, with_embedded_id.two) IN (:ids)");
 		});
 	}
 
 	@Test // GH-574
 	void findOneWithReference() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntityWithEmbeddedIdAndReference.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedIdAndReference.class);
 
 		String sql = sqlGenerator.getFindOne();
 
@@ -296,12 +296,12 @@ class SqlGeneratorEmbeddedUnitTests {
 					.contains(" LEFT OUTER JOIN other_entity other ") //
 					.contains(" ON ") //
 					.contains(
-							" other.dummy_entity_with_embedded_id_and_reference_one = dummy_entity_with_embedded_id_and_reference.one ") //
+							" other.with_embedded_id_and_reference_one = with_embedded_id_and_reference.one ") //
 					.contains(
-							" other.dummy_entity_with_embedded_id_and_reference_two = dummy_entity_with_embedded_id_and_reference.two ") //
+							" other.with_embedded_id_and_reference_two = with_embedded_id_and_reference.two ") //
 					.contains(" WHERE ") //
-					.contains("dummy_entity_with_embedded_id_and_reference.one = :one") //
-					.contains("dummy_entity_with_embedded_id_and_reference.two = :two");
+					.contains("with_embedded_id_and_reference.one = :one") //
+					.contains("with_embedded_id_and_reference.two = :two");
 		});
 	}
 
@@ -445,17 +445,8 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		assertSoftly(softly -> {
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
-			softly.assertThat(join.columns()).extracting( //
-					pair -> pair.getFirst().getTable(), //
-					pair -> pair.getFirst().getName(), //
-					pair -> pair.getSecond().getTable().getName(), //
-					pair -> pair.getSecond().getName() //
-			).contains(tuple( //
-					join.joinTable(), //
-					SqlIdentifier.unquoted("dummy_entity2"), //
-					SqlIdentifier.unquoted("dummy_entity2"), //
-					SqlIdentifier.unquoted("id") //
-			));
+			softly.assertThat(join.condition())
+					.isEqualTo(SqlGeneratorUnitTests.equalsCondition("dummy_entity2", "id", join.joinTable(), "dummy_entity2"));
 		});
 	}
 
@@ -511,7 +502,7 @@ class SqlGeneratorEmbeddedUnitTests {
 	record WrappedId(Long id) {
 	}
 
-	static class DummyEntityWithWrappedId {
+	static class WithWrappedId {
 
 		@Id
 		@Embedded(onEmpty = OnEmpty.USE_NULL) WrappedId wrappedId;
@@ -522,7 +513,7 @@ class SqlGeneratorEmbeddedUnitTests {
 	record EmbeddedId(Long one, String two) {
 	}
 
-	static class DummyEntityWithEmbeddedId {
+	static class WithEmbeddedId {
 
 		@Id
 		@Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddedId embeddedId;
@@ -531,7 +522,7 @@ class SqlGeneratorEmbeddedUnitTests {
 
 	}
 
-	static class DummyEntityWithEmbeddedIdAndReference {
+	static class WithEmbeddedIdAndReference {
 
 		@Id
 		@Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddedId embeddedId;
