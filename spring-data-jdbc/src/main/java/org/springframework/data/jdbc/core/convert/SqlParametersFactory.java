@@ -19,6 +19,8 @@ import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -122,30 +124,18 @@ public class SqlParametersFactory {
 		RelationalPersistentEntity<T> entity = getRequiredPersistentEntity(domainType);
 		RelationalPersistentProperty singleIdProperty = entity.getRequiredIdProperty();
 
-		if (singleIdProperty.isEntity()) {
+		RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
 
-			RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
-			PersistentPropertyPathAccessor<Object> accessor = complexId.getPropertyPathAccessor(id);
+		Function<AggregatePath, Object> valueExtractor = complexId == null ? ap -> id
+				: ap -> complexId.getPropertyPathAccessor(id).getProperty(ap.getRequiredPersistentPropertyPath());
 
-			context.getAggregatePath(entity).getTableInfo().idColumnInfos().forEach((ap, ci) -> {
-				Object idValue = accessor.getProperty(ap.getRequiredPersistentPropertyPath());
-
-				addConvertedPropertyValue( //
+		context.getAggregatePath(entity).getTableInfo().idColumnInfos() //
+				.forEach((ap, ci) -> addConvertedPropertyValue( //
 						parameterSource, //
 						ap.getRequiredLeafProperty(), //
-						idValue, //
+						valueExtractor.apply(ap), //
 						ci.name() //
-				);
-			});
-		} else {
-
-			addConvertedPropertyValue( //
-					parameterSource, //
-					singleIdProperty, //
-					id, //
-					singleIdProperty.getColumnName() //
-			);
-		}
+				));
 		return parameterSource;
 	}
 
@@ -161,32 +151,26 @@ public class SqlParametersFactory {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
-		RelationalPersistentEntity<?> entity = context.getPersistentEntity(domainType);
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(domainType);
 		RelationalPersistentProperty singleIdProperty = entity.getRequiredIdProperty();
+		RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
+		AggregatePath.ColumnInfos idColumnInfos = context.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
-		if (singleIdProperty.isEntity()) {
+		BiFunction<Object, AggregatePath, Object> valueExtractor = complexId == null ? (id, ap) -> id
+				: (id, ap) -> complexId.getPropertyPathAccessor(id).getProperty(ap.getRequiredPersistentPropertyPath());
 
-			RelationalPersistentEntity<?> complexId = context.getPersistentEntity(singleIdProperty);
+		List<Object[]> parameterValues = new ArrayList<>();
+		for (Object id : ids) {
 
-			AggregatePath.ColumnInfos idColumnInfos = context.getAggregatePath(entity).getTableInfo().idColumnInfos();
-
-			List<Object[]> parameterValues = new ArrayList<>();
-			for (Object id : ids) {
-
-				PersistentPropertyPathAccessor<Object> accessor = complexId.getPropertyPathAccessor(id);
-
-				List<Object> tupleList = new ArrayList<>();
-				idColumnInfos.forEach((ap, ci) -> {
-					tupleList.add(accessor.getProperty(ap.getRequiredPersistentPropertyPath()));
-				});
-				parameterValues.add(tupleList.toArray(new Object[0]));
-			}
-
-			parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, parameterValues);
-		} else {
-			addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
-					ids);
+			List<Object> tupleList = new ArrayList<>();
+			idColumnInfos.forEach((ap, ci) -> {
+				tupleList.add(valueExtractor.apply(id, ap));
+			});
+			parameterValues.add(tupleList.toArray(new Object[0]));
 		}
+
+		parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, parameterValues);
+
 		return parameterSource;
 	}
 

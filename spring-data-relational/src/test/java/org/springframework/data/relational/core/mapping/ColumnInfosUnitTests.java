@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,16 @@ import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Unit tests for the construction of {@link org.springframework.data.relational.core.mapping.AggregatePath.ColumnInfos}
- * 
+ *
  * @author Jens Schauder
  */
 class ColumnInfosUnitTests {
 
+	static final Table TABLE = Table.create("dummy");
 	static final SqlIdentifier ID = SqlIdentifier.quoted("ID");
 	RelationalMappingContext context = new RelationalMappingContext();
 
@@ -45,9 +47,7 @@ class ColumnInfosUnitTests {
 		assertThat(columnInfos.isEmpty()).isTrue();
 		assertThrows(NoSuchElementException.class, columnInfos::any);
 		assertThrows(IllegalStateException.class, columnInfos::unique);
-		assertThat(columnInfos.toList(ci -> {
-			throw new IllegalStateException("This should never get called");
-		})).isEmpty();
+		assertThat(columnInfos.toColumnList(TABLE)).isEmpty();
 	}
 
 	@Test // GH-574
@@ -58,21 +58,21 @@ class ColumnInfosUnitTests {
 		assertThat(columnInfos.isEmpty()).isFalse();
 		assertThat(columnInfos.any().name()).isEqualTo(ID);
 		assertThat(columnInfos.unique().name()).isEqualTo(ID);
-		assertThat(columnInfos.toList(ci -> ci.name())).containsExactly(ID);
+		assertThat(columnInfos.toColumnList(TABLE)).containsExactly(TABLE.column(ID));
 	}
 
 	@Test // GH-574
 	void multiElementColumnInfos() {
 
-		AggregatePath.ColumnInfos columnInfos = basePath(DummyEntityWithCompositeId.class).getTableInfo().idColumnInfos();
+		AggregatePath.ColumnInfos columnInfos = basePath(WithCompositeId.class).getTableInfo().idColumnInfos();
 
 		assertThat(columnInfos.isEmpty()).isFalse();
 		assertThat(columnInfos.any().name()).isEqualTo(SqlIdentifier.quoted("ONE"));
 		assertThrows(IllegalStateException.class, columnInfos::unique);
-		assertThat(columnInfos.toList(ci -> ci.name())) //
+		assertThat(columnInfos.toColumnList(TABLE)) //
 				.containsExactly( //
-						SqlIdentifier.quoted("ONE"), //
-						SqlIdentifier.quoted("TWO") //
+						TABLE.column(SqlIdentifier.quoted("ONE")), //
+						TABLE.column(SqlIdentifier.quoted("TWO")) //
 				);
 
 		List<String> collector = new ArrayList<>();
@@ -97,6 +97,6 @@ class ColumnInfosUnitTests {
 	record CompositeId(String one, String two) {
 	}
 
-	record DummyEntityWithCompositeId(@Id @Embedded.Nullable CompositeId id, String name) {
+	record WithCompositeId(@Id @Embedded.Nullable CompositeId id, String name) {
 	}
 }
