@@ -644,7 +644,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 *
 		 */
 		public void add(AggregatePath path, ColumnInfo columnInfo) {
-			columnInfoMap.put(path.substract(basePath), columnInfo);
+			columnInfoMap.put(path.subtract(basePath), columnInfo);
 		}
 		/**
 		 * Build the final {@link ColumnInfos} instance.
@@ -657,11 +657,11 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	}
 
 	/**
-	 * Substract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath} from the beginning of {@literal this}.
+	 * Subtract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath} from the beginning of {@literal this}.
 	 * @param basePath the path to be removed.
 	 * @return an AggregatePath that ends like the original {@literal AggregatePath} but has {@literal basePath} removed from the beginning.
 	 */
 	@Nullable
-	AggregatePath substract(@Nullable AggregatePath basePath);
+	AggregatePath subtract(@Nullable AggregatePath basePath);
 
 }

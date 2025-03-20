@@ -229,7 +229,7 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	@Nullable
-	public AggregatePath substract(@Nullable AggregatePath basePath) {
+	public AggregatePath subtract(@Nullable AggregatePath basePath) {
 
 		if (basePath == null || basePath.isRoot()) {
 			return this;
@@ -244,7 +244,7 @@ class DefaultAggregatePath implements AggregatePath {
 			if (tail == null) {
 				return null;
 			}
-			return tail.substract(basePath.getTail());
+			return tail.subtract(basePath.getTail());
 		}
 
 		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
