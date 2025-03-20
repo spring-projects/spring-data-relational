@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentLruCache;
@@ -229,7 +228,7 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	@Nullable
-	public AggregatePath substract(@Nullable AggregatePath basePath) {
+	public AggregatePath subtract(@Nullable AggregatePath basePath) {
 
 		if (basePath == null || basePath.isRoot()) {
 			return this;
@@ -244,7 +243,7 @@ class DefaultAggregatePath implements AggregatePath {
 			if (tail == null) {
 				return null;
 			}
-			return tail.substract(basePath.getTail());
+			return tail.subtract(basePath.getTail());
 		}
 
 		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
@@ -301,11 +300,6 @@ class DefaultAggregatePath implements AggregatePath {
 		return "AggregatePath["
 				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
 				+ ((isRoot()) ? "/" : path.toDotPath());
-	}
-
-	@Override
-	public int compareTo(@NonNull AggregatePath other) {
-		return toDotPath().compareTo(other.toDotPath());
 	}
 
 	private static class AggregatePathIterator implements Iterator<AggregatePath> {

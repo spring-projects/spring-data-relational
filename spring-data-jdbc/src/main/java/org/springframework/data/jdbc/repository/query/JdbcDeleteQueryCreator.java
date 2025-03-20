@@ -29,9 +29,17 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhere;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -89,13 +97,10 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SqlContext sqlContext = new SqlContext();
-
 		Condition condition = criteria == null ? null
 				: queryMapper.getMappedObject(parameterSource, criteria, table, entity);
 
-		List<Column> idColumns = context.getAggregatePath(entity).getTableInfo().idColumnInfos()
-				.toList(ci -> table.column(ci.name()));
+		List<Column> idColumns = context.getAggregatePath(entity).getTableInfo().idColumnInfos().toColumnList(table);
 
 		// create select criteria query for subselect
 		SelectWhere selectBuilder = StatementBuilder.select(idColumns).from(table);
@@ -128,26 +133,24 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 			AggregatePath aggregatePath = context.getAggregatePath(path);
 
-			// prevent duplication on recursive call
-			if (path.getLength() > 1 && !aggregatePath.getParentPath().isEmbedded()) {
+			if (aggregatePath.isEmbedded()) {
 				continue;
 			}
 
-			if (aggregatePath.isEntity() && !aggregatePath.isEmbedded()) {
+			if (aggregatePath.isEntity()) {
 
 				SqlContext sqlContext = new SqlContext();
 
-				// MariaDB prior to 11.6 does not  support aliases for delete statements
+				// MariaDB prior to 11.6 does not support aliases for delete statements
 				Table table = sqlContext.getUnaliasedTable(aggregatePath);
 
-				List<Column> reverseColumns = aggregatePath.getTableInfo().reverseColumnInfos()
-						.toList(ci -> table.column(ci.name()));
-				Expression expression = TupleExpression.maybeWrap(reverseColumns);
+				List<Column> reverseColumns = aggregatePath.getTableInfo().backReferenceColumnInfos().toColumnList(table);
+				Expression expression = Expressions.of(reverseColumns);
 
 				Condition inCondition = Conditions.in(expression, parentSelect);
 
 				List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
-						.toList(ci -> table.column(ci.name()));
+						.toColumnList(table);
 
 				Select select = StatementBuilder.select( //
 						parentIdColumns //

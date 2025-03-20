@@ -18,9 +18,7 @@ package org.springframework.data.jdbc.core;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
-import java.util.Optional;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -244,8 +242,9 @@ public class CompositeIdAggregateTemplateHsqlIntegrationTests {
 						new EmbeddedPk(23L, "x"), "alpha" //
 				));
 
-		Query projectingQuery = Query.empty().columns( "embeddedPk.two", "name");
-		SimpleEntityWithEmbeddedPk projected = template.findOne(projectingQuery, SimpleEntityWithEmbeddedPk.class).orElseThrow();
+		Query projectingQuery = Query.empty().columns("embeddedPk.two", "name");
+		SimpleEntityWithEmbeddedPk projected = template.findOne(projectingQuery, SimpleEntityWithEmbeddedPk.class)
+				.orElseThrow();
 
 		// Projection still does a full select, otherwise one would be null.
 		// See https://github.com/spring-projects/spring-data-relational/issues/1821

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
@@ -36,9 +39,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.test.StepVerifier;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for repositories of entities with a composite id.
@@ -103,7 +103,7 @@ public class CompositeIdRepositoryIntegrationTests {
 	void findAllById() {
 		repository.findById(new CompositeId(42, "HBAR")) //
 				.as(StepVerifier::create) //
-				.consumeNextWith(actual ->{
+				.consumeNextWith(actual -> {
 					assertThat(actual.name).isEqualTo("Walter");
 				}).verifyComplete();
 	}

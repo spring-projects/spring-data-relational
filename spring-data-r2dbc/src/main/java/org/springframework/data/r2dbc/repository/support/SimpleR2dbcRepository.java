@@ -377,7 +377,8 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 			idEntity.doWithProperties(new PropertyHandler<RelationalPersistentProperty>() {
 				@Override
 				public void doWithPersistentProperty(RelationalPersistentProperty persistentProperty) {
-					criteriaHolder[0] = criteriaHolder [0].and(persistentProperty.getName()).is(accessor.getProperty(persistentProperty));
+					criteriaHolder[0] = criteriaHolder[0].and(persistentProperty.getName())
+							.is(accessor.getProperty(persistentProperty));
 				}
 			});
 			criteria = criteriaHolder[0];

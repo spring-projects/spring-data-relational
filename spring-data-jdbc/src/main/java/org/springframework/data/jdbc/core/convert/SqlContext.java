@@ -66,10 +66,11 @@ class SqlContext {
 	 * 
 	 * @param path must not be null.
 	 * @return a {@literal Column} that is part of the effective primary key for the given path.
+	 * @since 4.0
 	 */
 	Column getAnyReverseColumn(AggregatePath path) {
 
-		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().reverseColumnInfos().any();
+		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().backReferenceColumnInfos().any();
 		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 }
