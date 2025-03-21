@@ -716,17 +716,11 @@ class SqlGeneratorUnitTests {
 		assertSoftly(softly -> {
 
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
-			softly.assertThat(join.columns()).extracting( //
-					pair -> pair.getFirst().getTable(), //
-					pair -> pair.getFirst().getName(), //
-					pair -> pair.getSecond().getTable().getName(), //
-					pair -> pair.getSecond().getName() //
-			).contains(tuple( //
-					join.joinTable(), //
-					SqlIdentifier.quoted("DUMMY_ENTITY"), //
-					SqlIdentifier.quoted("DUMMY_ENTITY"), //
-					SqlIdentifier.quoted("id1") //
-			));
+			softly.assertThat(join.condition())
+					.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("DUMMY_ENTITY"), join.joinTable())
+							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("id1"),
+									org.springframework.data.relational.core.sql.Table.create(SqlIdentifier.quoted("DUMMY_ENTITY")))));
+
 		});
 	}
 
@@ -754,17 +748,13 @@ class SqlGeneratorUnitTests {
 
 		assertSoftly(softly -> {
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.quoted("SECOND_LEVEL_REFERENCED_ENTITY"));
-			softly.assertThat(join.columns()).extracting( //
-					pair -> pair.getFirst().getTable(), //
-					pair -> pair.getFirst().getName(), //
-					pair -> pair.getSecond().getTable().getName(), //
-					pair -> pair.getSecond().getName() //
-			).contains(tuple( //
-					join.joinTable(), //
-					SqlIdentifier.quoted("REFERENCED_ENTITY"), //
-					SqlIdentifier.quoted("REFERENCED_ENTITY"), //
-					SqlIdentifier.quoted("X_L1ID") //
-			));
+			softly.assertThat(join.condition())
+					.isEqualTo(org.springframework.data.relational.core.sql.Column
+							.create(SqlIdentifier.quoted("REFERENCED_ENTITY"), join.joinTable())
+							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("X_L1ID"),
+									org.springframework.data.relational.core.sql.Table.create("REFERENCED_ENTITY")
+											.as(SqlIdentifier.quoted("ref")))));
+
 		});
 	}
 
@@ -779,18 +769,13 @@ class SqlGeneratorUnitTests {
 			softly.assertThat(joinTable.getName()).isEqualTo(SqlIdentifier.quoted("NO_ID_CHILD"));
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
 			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo(SqlIdentifier.quoted("child"));
+			softly.assertThat(join.condition())
+					.isEqualTo(org.springframework.data.relational.core.sql.Column
+							.create(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"), join.joinTable())
+							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("X_ID"),
+									org.springframework.data.relational.core.sql.Table
+											.create(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD")))));
 
-			softly.assertThat(join.columns()).extracting( //
-					pair -> pair.getFirst().getTable(), //
-					pair -> pair.getFirst().getName(), //
-					pair -> pair.getSecond().getTable().getName(), //
-					pair -> pair.getSecond().getName() //
-			).contains(tuple( //
-					join.joinTable(), //
-					SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"), //
-					SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"), //
-					SqlIdentifier.quoted("X_ID") //
-			));
 		});
 	}
 

@@ -34,6 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
@@ -445,17 +446,18 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		assertSoftly(softly -> {
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
-			softly.assertThat(join.columns()).extracting( //
-					pair -> pair.getFirst().getTable(), //
-					pair -> pair.getFirst().getName(), //
-					pair -> pair.getSecond().getTable().getName(), //
-					pair -> pair.getSecond().getName() //
-			).contains(tuple( //
-					join.joinTable(), //
-					SqlIdentifier.unquoted("dummy_entity2"), //
-					SqlIdentifier.unquoted("dummy_entity2"), //
-					SqlIdentifier.unquoted("id") //
-			));
+//			softly.assertThat(join.columns()).extracting( //
+//					pair -> pair.getFirst().getTable(), //
+//					pair -> pair.getFirst().getName(), //
+//					pair -> pair.getSecond().getTable().getName(), //
+//					pair -> pair.getSecond().getName() //
+//			).contains(tuple( //
+//					join.joinTable(), //
+//					SqlIdentifier.unquoted("dummy_entity2"), //
+//					SqlIdentifier.unquoted("dummy_entity2"), //
+//					SqlIdentifier.unquoted("id") //
+//			));
+			softly.assertThat(join.condition()).isEqualTo(org.springframework.data.relational.core.sql.Column.create("dummy_entity2", join.joinTable()).isEqualTo(org.springframework.data.relational.core.sql.Column.create("id", org.springframework.data.relational.core.sql.Table.create("dummy_entity2"))));
 		});
 	}
 

@@ -608,13 +608,7 @@ class SqlGenerator {
 
 		for (Join join : joinTables) {
 
-			Condition condition = null;
-			for (Pair<Column, Column> columnPair : join.columns) {
-				Comparison elementalCondition = columnPair.getFirst().isEqualTo(columnPair.getSecond());
-				condition = condition == null ? elementalCondition : condition.and(elementalCondition);
-			}
-
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(Objects.requireNonNull(condition));
+			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.condition);
 		}
 		return baseSelect;
 	}
@@ -696,15 +690,19 @@ class SqlGenerator {
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 		AggregatePath.ColumnInfos idColumnInfos = idDefiningParentPath.getTableInfo().idColumnInfos();
 
-		List<Pair<Column, Column>> joinConditions = new ArrayList<>();
+		final Condition[] joinCondition = { null };
 		backRefColumnInfos.forEach((ap, ci) -> {
-			joinConditions.add(Pair.of(currentTable.column(ci.name()), parentTable.column(idColumnInfos.get(ap).name())));
+
+			Condition elementalCondition = currentTable.column(ci.name())
+					.isEqualTo(parentTable.column(idColumnInfos.get(ap).name()));
+			joinCondition[0] = joinCondition[0] == null ? elementalCondition : joinCondition[0].and(elementalCondition);
 		});
 
 		return new Join( //
 				currentTable, //
-				joinConditions //
+				joinCondition[0] //
 		);
+
 	}
 
 	private String createFindAllInListSql() {
@@ -1153,7 +1151,7 @@ class SqlGenerator {
 	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
-	record Join(Table joinTable, List<Pair<Column, Column>> columns) {
+	record Join(Table joinTable, Condition condition) {
 	}
 
 	/**
