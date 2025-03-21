@@ -50,16 +50,17 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Christopher Klein
  * @author Marcin Grzejszczak
+ * @author Mikhail Polivakha
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
-	private final RelationalMappingContext context;
-	private final JdbcConverter converter;
-	private final ApplicationEventPublisher publisher;
-	private final DataAccessStrategy accessStrategy;
-	private final NamedParameterJdbcOperations operations;
-	private final Dialect dialect;
-	private @Nullable BeanFactory beanFactory;
+	protected final RelationalMappingContext context;
+	protected final JdbcConverter converter;
+	protected final ApplicationEventPublisher publisher;
+	protected final DataAccessStrategy accessStrategy;
+	protected final NamedParameterJdbcOperations operations;
+	protected final Dialect dialect;
+	protected @Nullable BeanFactory beanFactory;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;

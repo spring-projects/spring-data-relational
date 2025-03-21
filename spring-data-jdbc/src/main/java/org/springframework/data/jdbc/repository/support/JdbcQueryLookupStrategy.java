@@ -56,7 +56,7 @@ import org.springframework.util.Assert;
  * @author Christopher Klein
  * @author Mikhail Polivakha
  */
-abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
+public abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
@@ -68,7 +68,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	private final NamedParameterJdbcOperations operations;
 	protected final ValueExpressionDelegate delegate;
 
-	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+	protected JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			ValueExpressionDelegate delegate) {
@@ -109,10 +109,10 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				ValueExpressionDelegate delegate) {
 
-			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations,
-					delegate);
+			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
 
-            this.rowMapperFactory = new DefaultRowMapperFactory(getMappingContext(), getConverter(), getQueryMappingConfiguration(), getCallbacks(), getPublisher());
+			this.rowMapperFactory = new DefaultRowMapperFactory(getMappingContext(), getConverter(),
+					getQueryMappingConfiguration(), getCallbacks(), getPublisher());
 		}
 
 		@Override
@@ -270,23 +270,23 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		};
 	}
 
-	JdbcConverter getConverter() {
+	protected JdbcConverter getConverter() {
 		return converter;
 	}
 
-	NamedParameterJdbcOperations getOperations() {
+	protected NamedParameterJdbcOperations getOperations() {
 		return operations;
 	}
 
-    QueryMappingConfiguration getQueryMappingConfiguration() {
-        return queryMappingConfiguration;
-    }
+	QueryMappingConfiguration getQueryMappingConfiguration() {
+		return queryMappingConfiguration;
+	}
 
-    EntityCallbacks getCallbacks() {
-        return callbacks;
-    }
+	EntityCallbacks getCallbacks() {
+		return callbacks;
+	}
 
-    ApplicationEventPublisher getPublisher() {
-        return publisher;
-    }
+	ApplicationEventPublisher getPublisher() {
+		return publisher;
+	}
 }

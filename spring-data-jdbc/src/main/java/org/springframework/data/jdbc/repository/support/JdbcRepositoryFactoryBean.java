@@ -48,19 +48,20 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Chirag Tailor
+ * @author Mikhail Polivakha
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
 
-	private ApplicationEventPublisher publisher;
-	private BeanFactory beanFactory;
-	private RelationalMappingContext mappingContext;
-	private JdbcConverter converter;
-	private DataAccessStrategy dataAccessStrategy;
-	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
-	private NamedParameterJdbcOperations operations;
-	private EntityCallbacks entityCallbacks;
-	private Dialect dialect;
+	protected ApplicationEventPublisher publisher;
+	protected BeanFactory beanFactory;
+	protected RelationalMappingContext mappingContext;
+	protected JdbcConverter converter;
+	protected DataAccessStrategy dataAccessStrategy;
+	protected QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+	protected NamedParameterJdbcOperations operations;
+	protected EntityCallbacks entityCallbacks;
+	protected Dialect dialect;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.

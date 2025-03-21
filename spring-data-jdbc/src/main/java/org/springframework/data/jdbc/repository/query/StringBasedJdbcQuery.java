@@ -275,7 +275,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			Object value = accessor.getBindableValue(bindableParameter.getIndex());
 			String parameterName = bindableParameter.getName()
 					.orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
-			JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters()
+			JdbcParameter parameter = getQueryMethod().getParameters()
 					.getParameter(bindableParameter.getIndex());
 
 			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(), parameter);
@@ -292,7 +292,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	private JdbcValue writeValue(@Nullable Object value, TypeInformation<?> typeInformation,
-			JdbcParameters.JdbcParameter parameter) {
+			JdbcParameter parameter) {
 
 		if (value == null) {
 			return JdbcValue.of(value, parameter.getSqlType());
@@ -349,7 +349,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return jdbcValue;
 	}
 
-	private JdbcValue writeArrayValue(JdbcParameters.JdbcParameter parameter, Object array,
+	private JdbcValue writeArrayValue(JdbcParameter parameter, Object array,
 			TypeInformation<?> nestedElementType) {
 
 		int length = Array.getLength(array);
