@@ -21,6 +21,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import static org.springframework.util.Assert.*;
+
 /**
  * Callback for generating ID via the database sequence. By default, it is registered as a bean in
  * {@link AbstractJdbcConfiguration}
@@ -123,7 +125,7 @@ public class IdGeneratingBeforeSaveCallback implements BeforeSaveCallback<Object
 
 		String sql = dialect.getIdGeneration().createSequenceQuery(s);
 		Long sequenceValue = operations.queryForObject(sql, Map.of(), Long.class);
-		Assert.state(sequenceValue != null, () -> "No sequence value found for " + s);
+		state(sequenceValue != null, () -> "No sequence value found for " + s);
 		return sequenceValue;
 	}
 }

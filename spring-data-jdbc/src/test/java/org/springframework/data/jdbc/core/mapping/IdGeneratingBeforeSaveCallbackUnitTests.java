@@ -25,7 +25,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  *
  * @author Mikhail Polivakha
  */
-class IdGeneratingBeforeSaveCallbackTest {
+class IdGeneratingBeforeSaveCallbackUnitTests {
 
 	@Test // GH-1923
 	void mySqlDialectSequenceGenerationIsNotSupported() {
@@ -76,7 +76,7 @@ class IdGeneratingBeforeSaveCallbackTest {
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 		long generatedId = 112L;
-		when(operations.queryForObject(anyString(), anyMap(), any(RowMapper.class))).thenReturn(generatedId);
+		when(operations.queryForObject(anyString(), anyMap(), any(Class.class))).thenReturn(generatedId);
 
 		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(mySqlDialect,
 				operations, converter);
@@ -101,7 +101,7 @@ class IdGeneratingBeforeSaveCallbackTest {
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 		long generatedId = 112L;
-		when(operations.queryForObject(anyString(), anyMap(), any(RowMapper.class))).thenReturn(generatedId);
+		when(operations.queryForObject(anyString(), anyMap(), any(Class.class))).thenReturn(generatedId);
 
 		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(mySqlDialect,
 				operations, converter);
