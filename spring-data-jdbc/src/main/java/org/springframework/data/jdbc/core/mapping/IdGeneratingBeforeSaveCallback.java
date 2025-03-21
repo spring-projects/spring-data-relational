@@ -54,26 +54,7 @@ public class IdGeneratingBeforeSaveCallback implements BeforeSaveCallback<Object
 				.getRequiredPersistentEntity(aggregate.getClass());
 		Optional<SqlIdentifier> idSequence = persistentEntity.getIdSequence();
 
-		if (dialect.getIdGeneration().sequencesSupported()) {
-
-			if (persistentEntity.hasIdProperty()) {
-
-				PersistentPropertyAccessor<Object> accessor = persistentEntity.getPropertyAccessor(aggregate);
-
-				idSequence.map(this::querySequence).ifPresent(idValue -> {
-					RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-					if (idProperty.isEmbedded()) {
-
-						setEmbeddedIdValue(persistentEntity, idProperty, aggregate, idValue, accessor);
-
-					} else {
-						accessor.setProperty(idProperty, idValue);
-					}
-
-				});
-				return accessor.getBean();
-			}
-		} else {
+		if (!dialect.getIdGeneration().sequencesSupported()) {
 			if (idSequence.isPresent()) {
 				LOG.warn(
 						"""
@@ -82,9 +63,27 @@ public class IdGeneratingBeforeSaveCallback implements BeforeSaveCallback<Object
 								"""
 								.formatted(aggregate.getClass().getName()));
 			}
+			return aggregate;
 		}
 
-		return aggregate;
+		if (!persistentEntity.hasIdProperty()) {
+			return aggregate;
+		}
+
+		PersistentPropertyAccessor<Object> accessor = persistentEntity.getPropertyAccessor(aggregate);
+
+		idSequence.map(this::querySequence).ifPresent(idValue -> {
+			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
+			if (idProperty.isEmbedded()) {
+
+				setEmbeddedIdValue(persistentEntity, idProperty, aggregate, idValue, accessor);
+
+			} else {
+				accessor.setProperty(idProperty, idValue);
+			}
+
+		});
+		return accessor.getBean();
 	}
 
 	private void setEmbeddedIdValue(RelationalPersistentEntity<?> persistentEntity,
