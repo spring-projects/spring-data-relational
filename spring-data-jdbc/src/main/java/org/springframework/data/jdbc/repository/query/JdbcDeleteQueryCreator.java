@@ -89,8 +89,6 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SqlContext sqlContext = new SqlContext();
-
 		Condition condition = criteria == null ? null
 				: queryMapper.getMappedObject(parameterSource, criteria, table, entity);
 
