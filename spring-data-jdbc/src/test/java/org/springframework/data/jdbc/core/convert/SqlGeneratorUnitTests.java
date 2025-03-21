@@ -50,6 +50,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -84,6 +85,22 @@ class SqlGeneratorUnitTests {
 		throw new UnsupportedOperationException();
 	});
 	private SqlGenerator sqlGenerator;
+
+	static Comparison equalsCondition(Table parentTable, SqlIdentifier parentId, Table joinedTable,
+			SqlIdentifier joinedColumn) {
+		return org.springframework.data.relational.core.sql.Column.create(joinedColumn, joinedTable)
+				.isEqualTo(org.springframework.data.relational.core.sql.Column.create(parentId, parentTable));
+	}
+
+	static Comparison equalsCondition(SqlIdentifier parentTable, SqlIdentifier parentId, Table joinedTable,
+			SqlIdentifier joinedColumn) {
+		return equalsCondition(Table.create(parentTable), parentId, joinedTable, joinedColumn);
+	}
+
+	static Comparison equalsCondition(String parentTable, String parentId, Table joinedTable, String joinedColumn) {
+		return equalsCondition(SqlIdentifier.unquoted(parentTable), SqlIdentifier.unquoted(parentId), joinedTable,
+				SqlIdentifier.unquoted(joinedColumn));
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -716,10 +733,8 @@ class SqlGeneratorUnitTests {
 		assertSoftly(softly -> {
 
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
-			softly.assertThat(join.condition())
-					.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("DUMMY_ENTITY"), join.joinTable())
-							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("id1"),
-									org.springframework.data.relational.core.sql.Table.create(SqlIdentifier.quoted("DUMMY_ENTITY")))));
+			softly.assertThat(join.condition()).isEqualTo(equalsCondition(SqlIdentifier.quoted("DUMMY_ENTITY"),
+					SqlIdentifier.quoted("id1"), join.joinTable(), SqlIdentifier.quoted("DUMMY_ENTITY")));
 
 		});
 	}
@@ -749,11 +764,8 @@ class SqlGeneratorUnitTests {
 		assertSoftly(softly -> {
 			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.quoted("SECOND_LEVEL_REFERENCED_ENTITY"));
 			softly.assertThat(join.condition())
-					.isEqualTo(org.springframework.data.relational.core.sql.Column
-							.create(SqlIdentifier.quoted("REFERENCED_ENTITY"), join.joinTable())
-							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("X_L1ID"),
-									org.springframework.data.relational.core.sql.Table.create("REFERENCED_ENTITY")
-											.as(SqlIdentifier.quoted("ref")))));
+					.isEqualTo(equalsCondition(Table.create("REFERENCED_ENTITY").as(SqlIdentifier.quoted("ref")),
+							SqlIdentifier.quoted("X_L1ID"), join.joinTable(), SqlIdentifier.quoted("REFERENCED_ENTITY")));
 
 		});
 	}
@@ -769,13 +781,8 @@ class SqlGeneratorUnitTests {
 			softly.assertThat(joinTable.getName()).isEqualTo(SqlIdentifier.quoted("NO_ID_CHILD"));
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
 			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo(SqlIdentifier.quoted("child"));
-			softly.assertThat(join.condition())
-					.isEqualTo(org.springframework.data.relational.core.sql.Column
-							.create(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"), join.joinTable())
-							.isEqualTo(org.springframework.data.relational.core.sql.Column.create(SqlIdentifier.quoted("X_ID"),
-									org.springframework.data.relational.core.sql.Table
-											.create(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD")))));
-
+			softly.assertThat(join.condition()).isEqualTo(equalsCondition(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"),
+					SqlIdentifier.quoted("X_ID"), join.joinTable(), SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD")));
 		});
 	}
 
