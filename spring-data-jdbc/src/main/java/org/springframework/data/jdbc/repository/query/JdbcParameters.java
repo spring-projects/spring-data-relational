@@ -15,22 +15,19 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import java.sql.SQLType;
 import java.util.List;
+import java.util.function.Function;
 
 import org.springframework.core.MethodParameter;
-import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
-import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.repository.query.RelationalParameters;
-import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.relational.repository.query.RelationalParameters.RelationalParameter;
 import org.springframework.data.repository.query.ParametersSource;
-import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Custom extension of {@link RelationalParameters}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 3.2.6
  */
 public class JdbcParameters extends RelationalParameters {
@@ -41,8 +38,17 @@ public class JdbcParameters extends RelationalParameters {
 	 * @param parametersSource must not be {@literal null}.
 	 */
 	public JdbcParameters(ParametersSource parametersSource) {
-		super(parametersSource,
-				methodParameter -> new JdbcParameter(methodParameter, parametersSource.getDomainTypeInformation()));
+		this(parametersSource, methodParameter -> new JdbcParameter(methodParameter, parametersSource.getDomainTypeInformation()));
+	}
+
+	/**
+	 * Creates a new {@link JdbcParameters} instance from the given {@link ParametersSource} and function
+	 * of turning the {@link MethodParameter} into {@link RelationalParameter}.
+	 *
+	 * @param parametersSource must not be {@literal null}.
+	 */
+	public JdbcParameters(ParametersSource parametersSource, Function<MethodParameter, RelationalParameter> parameterFactory) {
+		super(parametersSource, parameterFactory);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -61,39 +67,4 @@ public class JdbcParameters extends RelationalParameters {
 		return new JdbcParameters((List) parameters);
 	}
 
-	/**
-	 * Custom {@link Parameter} implementation.
-	 *
-	 * @author Mark Paluch
-	 * @author Chirag Tailor
-	 */
-	public static class JdbcParameter extends RelationalParameter {
-
-		private final SQLType sqlType;
-		private final Lazy<SQLType> actualSqlType;
-
-		/**
-		 * Creates a new {@link RelationalParameter}.
-		 *
-		 * @param parameter must not be {@literal null}.
-		 */
-		JdbcParameter(MethodParameter parameter, TypeInformation<?> domainType) {
-			super(parameter, domainType);
-
-			TypeInformation<?> typeInformation = getTypeInformation();
-
-			sqlType = JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getType()));
-
-			actualSqlType = Lazy.of(() -> JdbcUtil
-					.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getActualType().getType())));
-		}
-
-		public SQLType getSqlType() {
-			return sqlType;
-		}
-
-		public SQLType getActualSqlType() {
-			return actualSqlType.get();
-		}
-	}
 }
