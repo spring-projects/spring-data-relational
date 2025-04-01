@@ -23,6 +23,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -58,7 +59,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
-	private final Dialect dialect;
+	private final JdbcDialect dialect;
 	private @Nullable BeanFactory beanFactory;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
@@ -75,8 +76,39 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
+	@Deprecated(forRemoval = true, since = "4.0")
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
+			NamedParameterJdbcOperations operations) {
+
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		Assert.state(dialect instanceof JdbcDialect, "Dialect must be an instance of the JdbcDialect");
+
+		this.publisher = publisher;
+		this.context = context;
+		this.converter = converter;
+		this.dialect = (JdbcDialect) dialect;
+		this.accessStrategy = dataAccessStrategy;
+		this.operations = operations;
+	}
+
+	/**
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
+	 * {@link RelationalMappingContext} and {@link ApplicationEventPublisher}.
+	 *
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param publisher must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 */
+	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
+			JdbcConverter converter, JdbcDialect dialect, ApplicationEventPublisher publisher,
 			NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
