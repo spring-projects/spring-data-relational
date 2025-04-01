@@ -66,6 +66,7 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 	public static class RelationalParameter extends Parameter {
 
 		private final TypeInformation<?> typeInformation;
+		private final MethodParameter methodParameter;
 
 		/**
 		 * Creates a new {@link RelationalParameter}.
@@ -75,7 +76,7 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 		protected RelationalParameter(MethodParameter parameter, TypeInformation<?> domainType) {
 			super(parameter, domainType);
 			this.typeInformation = TypeInformation.fromMethodParameter(parameter);
-
+			this.methodParameter = parameter;
 		}
 
 		public ResolvableType getResolvableType() {
@@ -84,6 +85,10 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 
 		public TypeInformation<?> getTypeInformation() {
 			return typeInformation;
+		}
+
+		public MethodParameter getMethodParameter() {
+			return methodParameter;
 		}
 	}
 }
