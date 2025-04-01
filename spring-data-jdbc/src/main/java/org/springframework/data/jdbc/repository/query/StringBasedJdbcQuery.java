@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
+import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.ResultProcessingConverter;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -27,14 +27,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.expression.ValueEvaluationContext;
-import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -42,11 +38,8 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
-import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
@@ -80,8 +73,7 @@ import org.springframework.util.ObjectUtils;
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or use the javac flag -parameters";
-	private final static String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing";
-	private static final Log LOG = LogFactory.getLog(StringBasedJdbcQuery.class);
+	private final static String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing. Offending method: ";
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
@@ -90,43 +82,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final CachedResultSetExtractorFactory cachedResultSetExtractorFactory;
 	private final ValueExpressionDelegate delegate;
-
-	/**
-	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapper}.
-	 *
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
-	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
-	 * @deprecated since 3.4, use the constructors accepting {@link ValueExpressionDelegate} instead.
-	 */
-	@Deprecated(since = "3.4")
-	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod.getRequiredQuery(), queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper,
-				converter, evaluationContextProvider);
-	}
-
-	/**
-	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
-	 *
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
-	 * @param rowMapperFactory must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param evaluationContextProvider must not be {@literal null}.
-	 * @since 2.3
-	 * @deprecated use alternative constructor
-	 */
-	@Deprecated(since = "3.4")
-	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter,
-				evaluationContextProvider);
-	}
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -191,33 +146,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		this.query = query;
 
 		if (queryMethod.hasLockMode()) {
-			LOG.warn(LOCKING_IS_NOT_SUPPORTED);
+			throw new UnsupportedOperationException(LOCKING_IS_NOT_SUPPORTED + queryMethod);
 		}
 		this.parsedQuery = rewriter.parse(this.query);
 		this.delegate = delegate;
-	}
-
-	/**
-	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
-	 *
-	 * @param query must not be {@literal null} or empty.
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
-	 * @param rowMapperFactory must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param evaluationContextProvider must not be {@literal null}.
-	 * @since 3.4
-	 * @deprecated since 3.4, use the constructors accepting {@link ValueExpressionDelegate} instead.
-	 */
-	@Deprecated(since = "3.4")
-	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(query, queryMethod, operations, rowMapperFactory, converter, new CachingValueExpressionDelegate(
-				new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), rootObject -> evaluationContextProvider
-						.getEvaluationContext(queryMethod.getParameters(), new Object[] { rootObject })),
-				ValueExpressionParser.create()));
 	}
 
 	@Override
