@@ -20,15 +20,22 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
+import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.sql.SQLType;
+import java.sql.Types;
 import java.util.Properties;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.jdbc.core.dialect.DefaultSqlTypeResolver;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.jdbc.core.dialect.SqlType;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -43,6 +50,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Moises Cisneros
  * @author Mark Paluch
  * @author Diego Krupitza
+ * @author Mikhail Polivakha
  */
 public class JdbcQueryMethodUnitTests {
 
@@ -66,6 +74,8 @@ public class JdbcQueryMethodUnitTests {
 		namedQueries = new PropertiesBasedNamedQueries(properties);
 
 		metadata = mock(RepositoryMetadata.class);
+		when(metadata.getDomainTypeInformation()).then(invocationOnMock -> TypeInformation.of(Object.class));
+
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 		doReturn(TypeInformation.of(String.class)).when(metadata).getReturnType(any(Method.class));
 	}
@@ -76,6 +86,31 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethod");
 
 		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY);
+	}
+
+	@Test // DATAJDBC-165
+	public void testSqlTypeResolver() throws NoSuchMethodException {
+
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod(
+				"findUserTestMethod",
+				new DefaultSqlTypeResolver(),
+				Integer.class, String.class, Integer[].class
+		);
+
+		JdbcParameters parameters = queryMethod.getParameters();
+
+		SQLType first = parameters.getParameter(0).getSqlType();
+		SQLType second = parameters.getParameter(1).getSqlType();
+		SQLType thirdActual = parameters.getParameter(2).getActualSqlType();
+
+		Assertions.assertThat(first.getName()).isEqualTo(JDBCType.TINYINT.getName());
+		Assertions.assertThat(first.getVendorTypeNumber()).isEqualTo(Types.TINYINT);
+
+		Assertions.assertThat(second.getName()).isEqualTo(JDBCType.VARCHAR.getName());
+		Assertions.assertThat(second.getVendorTypeNumber()).isEqualTo(Types.VARCHAR);
+
+		Assertions.assertThat(thirdActual.getName()).isEqualTo(JDBCType.SMALLINT.getName());
+		Assertions.assertThat(thirdActual.getVendorTypeNumber()).isEqualTo(Types.SMALLINT);
 	}
 
 	@Test // DATAJDBC-165
@@ -100,12 +135,6 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethodWithNameAndValue");
 		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY2);
 
-	}
-
-	private JdbcQueryMethod createJdbcQueryMethod(String methodName) throws NoSuchMethodException {
-
-		Method method = JdbcQueryMethodUnitTests.class.getDeclaredMethod(methodName);
-		return new JdbcQueryMethod(method, metadata, mock(ProjectionFactory.class), namedQueries, mappingContext);
 	}
 
 	@Test // DATAJDBC-234
@@ -148,9 +177,26 @@ public class JdbcQueryMethodUnitTests {
 		assertThat(queryMethodWithWriteLock.lookupLockAnnotation()).isEmpty();
 	}
 
+	private JdbcQueryMethod createJdbcQueryMethod(String methodName) throws NoSuchMethodException {
+		return createJdbcQueryMethod(methodName, new DefaultSqlTypeResolver());
+	}
+
+	private JdbcQueryMethod createJdbcQueryMethod(String methodName, SqlTypeResolver sqlTypeResolver, Class<?>... args) throws NoSuchMethodException {
+
+		Method method = JdbcQueryMethodUnitTests.class.getDeclaredMethod(methodName, args);
+		return new JdbcQueryMethod(method, metadata, mock(ProjectionFactory.class), namedQueries, mappingContext, sqlTypeResolver);
+	}
+
 	@Lock(LockMode.PESSIMISTIC_WRITE)
 	@Query
 	private void queryMethodWithWriteLock() {}
+
+	@Query
+	private void findUserTestMethod(
+			@SqlType(name = "TINYINT", vendorTypeNumber = Types.TINYINT) Integer age,
+			String name,
+			@SqlType(name = "SMALLINT", vendorTypeNumber = Types.SMALLINT) Integer[] statuses
+	) {}
 
 	@Lock(LockMode.PESSIMISTIC_READ)
 	@Query

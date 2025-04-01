@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -64,7 +65,7 @@ class JdbcRepositoryFactoryBeanUnitTests {
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher publisher;
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
-	@Mock Dialect dialect;
+	@Mock JdbcDialect dialect;
 
 	private RelationalMappingContext mappingContext;
 

@@ -86,13 +86,13 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
+	 * and {@link RowMapperFactory}.
 	 *
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
+	 * @param queryMethod      must not be {@literal null}.
+	 * @param operations       must not be {@literal null}.
 	 * @param rowMapperFactory must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param delegate must not be {@literal null}.
+	 * @param converter        must not be {@literal null}.
+	 * @param delegate         must not be {@literal null}.
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
@@ -105,12 +105,12 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
 	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
 	 *
-	 * @param query must not be {@literal null} or empty.
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
+	 * @param query            must not be {@literal null} or empty.
+	 * @param queryMethod      must not be {@literal null}.
+	 * @param operations       must not be {@literal null}.
 	 * @param rowMapperFactory must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param delegate must not be {@literal null}.
+	 * @param converter        must not be {@literal null}.
+	 * @param delegate         must not be {@literal null}.
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
@@ -378,7 +378,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	@Deprecated(since = "3.4")
-	public void setBeanFactory(BeanFactory beanFactory) {}
+	public void setBeanFactory(BeanFactory beanFactory) {
+	}
 
 	class CachedRowMapperFactory {
 
@@ -437,19 +438,20 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			String resultSetExtractorRef = getQueryMethod().getResultSetExtractorRef();
 			Class<? extends ResultSetExtractor> resultSetExtractorClass = getQueryMethod().getResultSetExtractorClass();
 
-			if (!ObjectUtils.isEmpty(resultSetExtractorRef)
-					&& !isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
+			if (!ObjectUtils.isEmpty(resultSetExtractorRef) && !isUnconfigured(resultSetExtractorClass,
+					ResultSetExtractor.class)) {
 				throw new IllegalArgumentException(
 						"Invalid ResultSetExtractor configuration. Configure either one but not both via @Query(resultSetExtractorRef = …, resultSetExtractorClass = …) for query method "
 								+ getQueryMethod());
 			}
 
-			this.configuredResultSetExtractor = !ObjectUtils.isEmpty(resultSetExtractorRef)
-					|| !isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class);
+			this.configuredResultSetExtractor =
+					!ObjectUtils.isEmpty(resultSetExtractorRef) || !isUnconfigured(resultSetExtractorClass,
+							ResultSetExtractor.class);
 
-			this.rowMapperConstructor = resultSetExtractorClass != null
-					? ClassUtils.getConstructorIfAvailable(resultSetExtractorClass, RowMapper.class)
-					: null;
+			this.rowMapperConstructor = resultSetExtractorClass != null ?
+					ClassUtils.getConstructorIfAvailable(resultSetExtractorClass, RowMapper.class) :
+					null;
 			this.constructor = resultSetExtractorClass != null ? findPrimaryConstructor(resultSetExtractorClass) : null;
 			this.resultSetExtractorFactory = rowMapper -> {
 
