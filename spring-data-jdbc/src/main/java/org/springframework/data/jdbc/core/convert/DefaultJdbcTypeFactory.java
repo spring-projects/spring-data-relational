@@ -48,25 +48,6 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 	 * Creates a new {@link DefaultJdbcTypeFactory}.
 	 *
 	 * @param operations must not be {@literal null}.
-	 * @since 2.3
-	 * @deprecated use
-	 *             {@link #DefaultJdbcTypeFactory(JdbcOperations, org.springframework.data.jdbc.core.dialect.JdbcArrayColumns)}
-	 *             instead.
-	 */
-	@Deprecated(forRemoval = true, since = "3.5")
-	public DefaultJdbcTypeFactory(JdbcOperations operations, JdbcArrayColumns arrayColumns) {
-
-		Assert.notNull(operations, "JdbcOperations must not be null");
-		Assert.notNull(arrayColumns, "JdbcArrayColumns must not be null");
-
-		this.operations = operations;
-		this.arrayColumns = arrayColumns;
-	}
-
-	/**
-	 * Creates a new {@link DefaultJdbcTypeFactory}.
-	 *
-	 * @param operations must not be {@literal null}.
 	 * @since 3.5
 	 */
 	public DefaultJdbcTypeFactory(JdbcOperations operations,
