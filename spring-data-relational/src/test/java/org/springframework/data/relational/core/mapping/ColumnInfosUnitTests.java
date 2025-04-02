@@ -64,7 +64,7 @@ class ColumnInfosUnitTests {
 	@Test // GH-574
 	void multiElementColumnInfos() {
 
-		AggregatePath.ColumnInfos columnInfos = basePath(DummyEntityWithCompositeId.class).getTableInfo().idColumnInfos();
+		AggregatePath.ColumnInfos columnInfos = basePath(WithCompositeId.class).getTableInfo().idColumnInfos();
 
 		assertThat(columnInfos.isEmpty()).isFalse();
 		assertThat(columnInfos.any().name()).isEqualTo(SqlIdentifier.quoted("ONE"));
@@ -97,6 +97,6 @@ class ColumnInfosUnitTests {
 	record CompositeId(String one, String two) {
 	}
 
-	record DummyEntityWithCompositeId(@Id @Embedded.Nullable CompositeId id, String name) {
+	record WithCompositeId(@Id @Embedded.Nullable CompositeId id, String name) {
 	}
 }
