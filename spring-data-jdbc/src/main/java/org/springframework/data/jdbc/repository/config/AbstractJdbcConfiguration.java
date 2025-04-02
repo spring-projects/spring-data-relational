@@ -129,11 +129,11 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
-		JdbcMappingContext mappingContext,
-		NamedParameterJdbcOperations operations,
-		Dialect dialect
+			JdbcMappingContext mappingContext,
+			NamedParameterJdbcOperations operations,
+			Dialect dialect, RelationalConverter converter
 	) {
-		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
+		return new IdGeneratingBeforeSaveCallback(dialect, operations, converter);
 	}
 
 	/**
