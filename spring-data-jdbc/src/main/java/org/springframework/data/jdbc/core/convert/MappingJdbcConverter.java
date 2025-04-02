@@ -390,6 +390,9 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		private Identifier constructIdentifier(AggregatePath aggregatePath) {
 
+			JdbcIdentifierBuilder.forBackReferences(MappingJdbcConverter.this, aggregatePath, )
+
+
 			Identifier identifierToUse = this.identifier;
 			AggregatePath idDefiningParentPath = aggregatePath.getIdDefiningParentPath();
 
