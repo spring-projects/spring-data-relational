@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.query;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.data.relational.core.dialect.condition.DialectCriteriaCondition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -135,12 +134,6 @@ public interface CriteriaDefinition {
 	 */
 	Combinator getCombinator();
 
-    /**
-     * @return {@link DialectCriteriaCondition} used in this criteria
-     */
-    @Nullable
-    DialectCriteriaCondition getDialectCriteriaCondition();
-
 	enum Combinator {
 		INITIAL, AND, OR;
 	}
@@ -148,7 +141,7 @@ public interface CriteriaDefinition {
 	enum Comparator {
 		INITIAL(""), EQ("="), NEQ("!="), BETWEEN("BETWEEN"), NOT_BETWEEN("NOT BETWEEN"), LT("<"), LTE("<="), GT(">"), GTE(
 				">="), IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), LIKE(
-						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
+						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE"), ARRAY_CONTAINS("@>");
 
 		private final String comparator;
 

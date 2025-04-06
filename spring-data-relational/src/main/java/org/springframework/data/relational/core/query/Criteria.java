@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.relational.core.dialect.condition.DialectCriteriaCondition;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Pair;
@@ -59,7 +58,7 @@ import org.springframework.util.Assert;
  */
 public class Criteria implements CriteriaDefinition {
 
-	static final Criteria EMPTY = new Criteria(SqlIdentifier.EMPTY, Comparator.INITIAL, null, null);
+	static final Criteria EMPTY = new Criteria(SqlIdentifier.EMPTY, Comparator.INITIAL, null);
 
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
@@ -70,25 +69,17 @@ public class Criteria implements CriteriaDefinition {
 	private final @Nullable Object value;
 	private final boolean ignoreCase;
 
-    private final DialectCriteriaCondition dialectCriteriaCondition;
-
-	private Criteria(SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, DialectCriteriaCondition dialectCriteriaCondition) {
-		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false, dialectCriteriaCondition);
+	public Criteria(SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, DialectCriteriaCondition dialectCriteriaCondition) {
-		this(previous, combinator, group, column, comparator, value, false, dialectCriteriaCondition);
+			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
+		this(previous, combinator, group, column, comparator, value, false);
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase,
-            @Nullable DialectCriteriaCondition dialectCriteriaCondition) {
-
-        Assert.state(
-          (dialectCriteriaCondition != null && comparator == null) || (dialectCriteriaCondition == null && comparator != null),
-          "Either DialectCriteriaCondition or Comparator should be specified for this criteria, but not both"
-        );
+			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
@@ -97,7 +88,6 @@ public class Criteria implements CriteriaDefinition {
 		this.comparator = comparator;
 		this.value = value;
 		this.ignoreCase = ignoreCase;
-        this.dialectCriteriaCondition = dialectCriteriaCondition;
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group) {
@@ -109,7 +99,6 @@ public class Criteria implements CriteriaDefinition {
 		this.comparator = null;
 		this.value = null;
 		this.ignoreCase = false;
-        this.dialectCriteriaCondition = null;
 	}
 
 	/**
@@ -181,8 +170,8 @@ public class Criteria implements CriteriaDefinition {
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
 			@Override
-			protected Criteria createCriteria(Comparator comparator, @Nullable Object value, DialectCriteriaCondition dialectCriteriaCondition) {
-				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value, dialectCriteriaCondition);
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
+				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
 	}
@@ -228,8 +217,8 @@ public class Criteria implements CriteriaDefinition {
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
 			@Override
-			protected Criteria createCriteria(Comparator comparator, @Nullable Object value, DialectCriteriaCondition dialectCriteriaCondition) {
-				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value, dialectCriteriaCondition);
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
+				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
 	}
@@ -271,7 +260,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria ignoreCase(boolean ignoreCase) {
 		if (this.ignoreCase != ignoreCase) {
-			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase, dialectCriteriaCondition);
+			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase);
 		}
 		return this;
 	}
@@ -340,7 +329,7 @@ public class Criteria implements CriteriaDefinition {
 	/**
 	 * @return {@literal true} if this {@link Criteria} is empty.
 	 */
-    @Override
+	@Override
 	public boolean isGroup() {
 		return !this.group.isEmpty();
 	}
@@ -348,17 +337,12 @@ public class Criteria implements CriteriaDefinition {
 	/**
 	 * @return {@link Combinator} to combine this criteria with a previous one.
 	 */
-    @Override
+	@Override
 	public Combinator getCombinator() {
 		return combinator;
 	}
 
-    @Override
-    public DialectCriteriaCondition getDialectCriteriaCondition() {
-        return dialectCriteriaCondition;
-    }
-
-    @Override
+	@Override
 	public List<CriteriaDefinition> getGroup() {
 		return group;
 	}
@@ -495,16 +479,8 @@ public class Criteria implements CriteriaDefinition {
 			return;
 		}
 
-        stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ');
-
-        DialectCriteriaCondition dialectCriteriaCondition = criteria.getDialectCriteriaCondition();
-
-        if (dialectCriteriaCondition != null) {
-            stringBuilder.append(dialectCriteriaCondition.render());
-            return;
-        }
-
-        stringBuilder.append(criteria.getComparator().getComparator());
+		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
+				.append(criteria.getComparator().getComparator());
 
 		switch (criteria.getComparator()) {
 			case BETWEEN:
@@ -540,6 +516,10 @@ public class Criteria implements CriteriaDefinition {
 			StringJoiner joiner = new StringJoiner(", ");
 			((Collection<?>) value).forEach(o -> joiner.add(renderValue(o)));
 			return joiner.toString();
+		}
+
+		if (value instanceof CriteriaLiteral literal) {
+			return literal.getLiteral();
 		}
 
 		if (value != null) {
@@ -681,38 +661,11 @@ public class Criteria implements CriteriaDefinition {
 		 */
 		Criteria isFalse();
 
-        /**
-         * Creates a {@link Criteria} using custom {@link DialectCriteriaCondition}. This API primarily exists
-         * to handle conditions in WHERE clause that are specific to particular RDBMS vendor.
-         * <p>
-         * There are some predefined vendor-specific conditions in the {@link org.springframework.data.relational.core.dialect.condition}
-         * package. For instance, an example of usage is:
-         * <p>
-         * <pre class="code">
-         *    Criteria criteria = Criteria
-         *        .where("tags")
-         *        .satisfies(Postgres.arrayContains("computers", "electronics"))
-         * </pre>
-         *
-         * This will yield the following SQL:
-         * <p>
-         * <pre class="code">
-         *     tags @> ARRAY['computers','electronics']::text[]
-         * </pre>
-         *
-         * In the sample above, the assumption is that the 'tags' column is of an 'ARRAY TEXT' or 'ARRAY VARCHAR' PostgreSQL type.
-         * <p>
-         * If there is no appropriate {@link DialectCriteriaCondition} built-in, please, consider to file an issue, and in the meantime,
-         * consider to write your own {@link DialectCriteriaCondition}, like this (case insensitive regexp-match in PostgreSQL):
-         * <p>
-         * <pre class="code">
-         *
-         * </pre>
-         *
-         * @see org.springframework.data.relational.core.dialect.condition.Postgres
-         * @return a new {@link Criteria} object
-         */
-        Criteria satisfies(DialectCriteriaCondition condition);
+	}
+
+	static interface CriteriaLiteral {
+
+		String getLiteral();
 	}
 
 	/**
@@ -731,7 +684,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.EQ, value, null);
+			return createCriteria(Comparator.EQ, value);
 		}
 
 		@Override
@@ -739,7 +692,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.NEQ, value, null);
+			return createCriteria(Comparator.NEQ, value);
 		}
 
 		@Override
@@ -753,7 +706,7 @@ public class Criteria implements CriteriaDefinition {
 						"You can only pass in one argument of type " + values[1].getClass().getName());
 			}
 
-			return createCriteria(Comparator.IN, Arrays.asList(values), null);
+			return createCriteria(Comparator.IN, Arrays.asList(values));
 		}
 
 		@Override
@@ -762,7 +715,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(values, "Values must not be null");
 			Assert.noNullElements(values.toArray(), "Values must not contain a null value");
 
-			return createCriteria(Comparator.IN, values, null);
+			return createCriteria(Comparator.IN, values);
 		}
 
 		@Override
@@ -776,7 +729,7 @@ public class Criteria implements CriteriaDefinition {
 						"You can only pass in one argument of type " + values[1].getClass().getName());
 			}
 
-			return createCriteria(Comparator.NOT_IN, Arrays.asList(values), null);
+			return createCriteria(Comparator.NOT_IN, Arrays.asList(values));
 		}
 
 		@Override
@@ -785,7 +738,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(values, "Values must not be null");
 			Assert.noNullElements(values.toArray(), "Values must not contain a null value");
 
-			return createCriteria(Comparator.NOT_IN, values, null);
+			return createCriteria(Comparator.NOT_IN, values);
 		}
 
 		@Override
@@ -794,7 +747,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(begin, "Begin value must not be null");
 			Assert.notNull(end, "End value must not be null");
 
-			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end), null);
+			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
 		}
 
 		@Override
@@ -803,7 +756,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(begin, "Begin value must not be null");
 			Assert.notNull(end, "End value must not be null");
 
-			return createCriteria(Comparator.NOT_BETWEEN, Pair.of(begin, end), null);
+			return createCriteria(Comparator.NOT_BETWEEN, Pair.of(begin, end));
 		}
 
 		@Override
@@ -811,7 +764,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.LT, value, null);
+			return createCriteria(Comparator.LT, value);
 		}
 
 		@Override
@@ -819,7 +772,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.LTE, value, null);
+			return createCriteria(Comparator.LTE, value);
 		}
 
 		@Override
@@ -827,7 +780,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.GT, value, null);
+			return createCriteria(Comparator.GT, value);
 		}
 
 		@Override
@@ -835,7 +788,7 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.GTE, value, null);
+			return createCriteria(Comparator.GTE, value);
 		}
 
 		@Override
@@ -843,42 +796,37 @@ public class Criteria implements CriteriaDefinition {
 
 			Assert.notNull(value, "Value must not be null");
 
-			return createCriteria(Comparator.LIKE, value, null);
+			return createCriteria(Comparator.LIKE, value);
 		}
 
 		@Override
 		public Criteria notLike(Object value) {
 			Assert.notNull(value, "Value must not be null");
-			return createCriteria(Comparator.NOT_LIKE, value, null);
+			return createCriteria(Comparator.NOT_LIKE, value);
 		}
 
 		@Override
 		public Criteria isNull() {
-			return createCriteria(Comparator.IS_NULL, null, null);
+			return createCriteria(Comparator.IS_NULL, null);
 		}
 
 		@Override
 		public Criteria isNotNull() {
-			return createCriteria(Comparator.IS_NOT_NULL, null, null);
+			return createCriteria(Comparator.IS_NOT_NULL, null);
 		}
 
 		@Override
 		public Criteria isTrue() {
-			return createCriteria(Comparator.IS_TRUE, true, null);
+			return createCriteria(Comparator.IS_TRUE, true);
 		}
 
 		@Override
 		public Criteria isFalse() {
-			return createCriteria(Comparator.IS_FALSE, false, null);
+			return createCriteria(Comparator.IS_FALSE, false);
 		}
 
-        @Override
-        public Criteria satisfies(DialectCriteriaCondition condition) {
-            return createCriteria(null, null, condition);
-        }
-
-        protected Criteria createCriteria(@Nullable Comparator comparator, @Nullable Object value, DialectCriteriaCondition dialectCriteriaCondition) {
-			return new Criteria(this.property, comparator, value, dialectCriteriaCondition);
+        protected Criteria createCriteria(@Nullable Comparator comparator, @Nullable Object value) {
+			return new Criteria(this.property, comparator, value);
 		}
 	}
 }

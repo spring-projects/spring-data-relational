@@ -21,8 +21,8 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 
 import java.util.Arrays;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.relational.core.dialect.condition.Postgres;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
@@ -100,22 +100,22 @@ class CriteriaUnitTests {
 	@Test // DATAJDBC-513
 	void andChainedCriteriaWithDialectCriteriaCondition() {
 
-		Criteria criteria = where("foo").is("bar").and("baz").satisfies(Postgres.arrayContains("first", "second"));
+		Criteria criteria = where("foo").is("bar").and(Postgres.array("baz").contains("first", "second"));
+		var previous = criteria.getPrevious();
 
-		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("baz"));
-		assertThat(criteria.getComparator()).isNull();
-		assertThat(criteria.getValue()).isNull();
-		assertThat(criteria.getPrevious()).isNotNull();
-		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
-		assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.quoted("baz"));
+			softAssertions.assertThat(criteria.getComparator()).isNull();
+			softAssertions.assertThat(criteria.getValue()).isNull();
+			softAssertions.assertThat(criteria.getPrevious()).isNotNull();
+			softAssertions.assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+			softAssertions.assertThat(criteria.toString()).isEqualTo("foo = 'bar' AND (baz @> ARRAY['first','second'])");
 
-		criteria = criteria.getPrevious();
-
-		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
-		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
-		assertThat(criteria.getValue()).isEqualTo("bar");
-
-        criteria.toString().equals("foo = 'bar' AND baz @> ARRAY['first','second']::text[]");
+			softAssertions.assertThat(previous.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+			softAssertions.assertThat(previous.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+			softAssertions.assertThat(previous.getValue()).isEqualTo("bar");
+			softAssertions.assertThat(previous.toString()).isEqualTo("foo = 'bar'");
+		});
 	}
 
 	@Test // DATAJDBC-513
@@ -142,22 +142,21 @@ class CriteriaUnitTests {
 	@Test // DATAJDBC-1953
 	void andGroupedCriteriaWithDialectCriteriaCondition() {
 
-		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or("bar").satisfies(Postgres.arrayContains("electronics")));
-		Criteria criteria = grouped;
+		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or(Postgres.array("bar").contains("electronics")));
+		Criteria previous = grouped.getPrevious();
 
-		assertThat(criteria.isGroup()).isTrue();
-		assertThat(criteria.getGroup()).hasSize(1);
-		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("bar"));
-		assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(grouped.isGroup()).isTrue();
+			softAssertions.assertThat(grouped.getGroup()).hasSize(1);
+			softAssertions.assertThat(grouped.getGroup().get(0).getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("\"bar\""));
+			softAssertions.assertThat(grouped.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+			softAssertions.assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR (bar @> ARRAY['electronics']))");
 
-		criteria = criteria.getPrevious();
-
-		assertThat(criteria).isNotNull();
-		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
-		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
-		assertThat(criteria.getValue()).isEqualTo("bar");
-
-		assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR bar @> ARRAY['electronics']::text[])");
+			softAssertions.assertThat(previous).isNotNull();
+			softAssertions.assertThat(previous.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+			softAssertions.assertThat(previous.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+			softAssertions.assertThat(previous.getValue()).isEqualTo("bar");
+		});
 	}
 
 	@Test // DATAJDBC-513
@@ -226,27 +225,20 @@ class CriteriaUnitTests {
 	@Test // DATAJDBC-1953
 	void shouldBuildSimplePredefinedDialectCriteriaCondition() {
 
-		Criteria criteria = where("foo").satisfies(Postgres.arrayContains(1, 2, 3));
+		Object[] values = { 1, 2, 3 };
+		Criteria criteria = Postgres.array("foo").contains(values);
 
-		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
-		assertThat(criteria.getComparator()).isNull();
-		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
-		assertThat(criteria.getValue()).isNull();
-
-        assertThat(criteria.toString()).isEqualTo("foo @> ARRAY[1,2,3]");
-	}
-
-	@Test // DATAJDBC-1953
-	void shouldBuildSimpleCustomDialectCriteriaCondition() {
-
-		Criteria criteria = where("foo").satisfies(() -> "~* '*.example.*'");
-
-		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
-		assertThat(criteria.getComparator()).isNull();
-		assertThat(criteria.getDialectCriteriaCondition()).isNotNull();
-		assertThat(criteria.getValue()).isNull();
-
-        assertThat(criteria.toString()).isEqualTo("foo ~* '*.example.*'");
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.quoted("foo"));
+			softAssertions.assertThat(criteria.getComparator()).isEqualTo(Comparator.ARRAY_CONTAINS);
+			softAssertions.assertThat(criteria.getValue()).isInstanceOf(CriteriaLiteral.class);
+			softAssertions
+					.assertThat(criteria.getValue())
+					.asInstanceOf(InstanceOfAssertFactories.type(CriteriaLiteral.class))
+					.extracting(CriteriaLiteral::getLiteral)
+					.isEqualTo("ARRAY[1,2,3]");
+			softAssertions.assertThat(criteria.toString()).isEqualTo("foo @> ARRAY[1,2,3]");
+		});
 	}
 
 	@Test // DATAJDBC-513
