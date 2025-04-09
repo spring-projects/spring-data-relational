@@ -36,4 +36,4 @@ CREATE TABLE PrimitiveIdSeq (
     NAME VARCHAR2(100)
 );
 
-CREATE SEQUENCE primitive_seq_seq START WITH 1;
+CREATE SEQUENCE "primitive_seq_seq" START WITH 1;

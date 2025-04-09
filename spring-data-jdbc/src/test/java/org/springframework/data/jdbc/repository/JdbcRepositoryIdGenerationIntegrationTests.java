@@ -38,15 +38,17 @@ import org.springframework.data.domain.Persistable;
 import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.ListCrudRepository;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
@@ -59,6 +61,7 @@ import org.springframework.test.context.jdbc.Sql;
 @IntegrationTest
 class JdbcRepositoryIdGenerationIntegrationTests {
 
+	@Autowired NamedParameterJdbcOperations operations;
 	@Autowired ReadOnlyIdEntityRepository readOnlyIdRepository;
 	@Autowired PrimitiveIdEntityRepository primitiveIdRepository;
 	@Autowired ImmutableWithManualIdEntityRepository immutableWithManualIdEntityRepository;
@@ -123,8 +126,10 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-2003
-	@Sql(statements = "INSERT INTO SimpleSeq(id, name) VALUES(1, 'initial value');")
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
 	void testUpdateAggregateWithSequence() {
+
+		operations.getJdbcOperations().update("INSERT INTO SimpleSeq(id, name) VALUES(1, 'initial value')");
 
 		SimpleSeq entity = new SimpleSeq();
 		entity.id = 1L;
@@ -137,8 +142,8 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		assertThat(afterCallback.join().id).isEqualTo(1L);
 	}
 
-	@Test
-	// DATAJDBC-2003
+	@Test // DATAJDBC-2003
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
 	void testInsertPersistableAggregateWithSequenceClientIdIsFavored() {
 
 		long initialId = 1L;
@@ -153,6 +158,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-2003
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
 	void testInsertAggregateWithSequenceAndUnsetPrimitiveId() {
 
 		PrimitiveIdSeq entity = new PrimitiveIdSeq();
