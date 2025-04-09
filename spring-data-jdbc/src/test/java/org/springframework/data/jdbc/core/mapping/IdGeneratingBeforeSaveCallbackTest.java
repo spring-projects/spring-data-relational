@@ -1,111 +1,171 @@
+/*
+ * Copyright 2024-2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.jdbc.core.mapping;
 
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import org.assertj.core.api.Assertions;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Sequence;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
  * Unit tests for {@link IdGeneratingBeforeSaveCallback}
  *
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
+@MockitoSettings(strictness = Strictness.LENIENT)
 class IdGeneratingBeforeSaveCallbackTest {
 
-    @Test // GH-1923
-    void mySqlDialectsequenceGenerationIsNotSupported() {
+	@Mock NamedParameterJdbcOperations operations;
+	RelationalMappingContext relationalMappingContext;
 
-		RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
-        MySqlDialect mySqlDialect = new MySqlDialect(IdentifierProcessing.NONE);
-        NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+	@BeforeEach
+	void setUp() {
 
-        IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
+		relationalMappingContext = new RelationalMappingContext();
+		relationalMappingContext.setSimpleTypeHolder(new SimpleTypeHolder(PostgresDialect.INSTANCE.simpleTypes(), true));
+	}
 
-        NoSequenceEntity entity = new NoSequenceEntity();
+	@Test // GH-1923
+	void sequenceGenerationIsNotSupported() {
 
-        Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
+		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-        Assertions.assertThat(processed).isSameAs(entity);
-        Assertions.assertThat(processed).usingRecursiveComparison().isEqualTo(entity);
-    }
+		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext,
+				MySqlDialect.INSTANCE, operations);
 
-    @Test // GH-1923
-    void entityIsNotMarkedWithTargetSequence() {
+		EntityWithSequence processed = (EntityWithSequence) subject.onBeforeSave(new EntityWithSequence(),
+				MutableAggregateChange.forSave(new EntityWithSequence()));
 
-		RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
-        PostgresDialect mySqlDialect = PostgresDialect.INSTANCE;
-        NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+		assertThat(processed.id).isNull();
+	}
 
-        IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
+	@Test // GH-1923
+	void entityIsNotMarkedWithTargetSequence() {
 
-        NoSequenceEntity entity = new NoSequenceEntity();
+		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext,
+				MySqlDialect.INSTANCE, operations);
 
-        Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
+		NoSequenceEntity processed = (NoSequenceEntity) subject.onBeforeSave(new NoSequenceEntity(),
+				MutableAggregateChange.forSave(new NoSequenceEntity()));
 
-        Assertions.assertThat(processed).isSameAs(entity);
-        Assertions.assertThat(processed).usingRecursiveComparison().isEqualTo(entity);
-    }
+		assertThat(processed.id).isNull();
+	}
 
-    @Test // GH-1923
-    void entityIdIsPopulatedFromSequence() {
+	@Test // GH-1923
+	void entityIdIsPopulatedFromSequence() {
 
-        RelationalMappingContext relationalMappingContext = new RelationalMappingContext();
-        relationalMappingContext.getRequiredPersistentEntity(EntityWithSequence.class);
+		long generatedId = 112L;
+		when(operations.queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+				.thenReturn(generatedId);
 
-        PostgresDialect mySqlDialect = PostgresDialect.INSTANCE;
-        NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext,
+				PostgresDialect.INSTANCE, operations);
 
-        long generatedId = 112L;
-        when(operations.queryForObject(anyString(), anyMap(), any(RowMapper.class))).thenReturn(generatedId);
+		EntityWithSequence processed = (EntityWithSequence) subject.onBeforeSave(new EntityWithSequence(),
+				MutableAggregateChange.forSave(new EntityWithSequence()));
 
-        IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext, mySqlDialect, operations);
+		assertThat(processed.getId()).isEqualTo(generatedId);
+	}
 
-        EntityWithSequence entity = new EntityWithSequence();
+	@Test // GH-2003
+	void appliesIntegerConversion() {
 
-        Object processed = subject.onBeforeSave(entity, MutableAggregateChange.forSave(entity));
+		long generatedId = 112L;
+		when(operations.queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+				.thenReturn(generatedId);
 
-        Assertions.assertThat(processed).isSameAs(entity);
-        Assertions
-          .assertThat(processed)
-          .usingRecursiveComparison()
-          .ignoringFields("id")
-          .isEqualTo(entity);
-        Assertions.assertThat(entity.getId()).isEqualTo(generatedId);
-    }
+		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext,
+				PostgresDialect.INSTANCE, operations);
 
-    @Table
-    static class NoSequenceEntity {
+		EntityWithIntSequence processed = (EntityWithIntSequence) subject.onBeforeSave(new EntityWithIntSequence(),
+				MutableAggregateChange.forSave(new EntityWithIntSequence()));
 
-        @Id
-        private Long id;
-        private Long name;
-    }
+		assertThat(processed.id).isEqualTo(112);
+	}
 
-    @Table
-    static class EntityWithSequence {
+	@Test // GH-2003
+	void assignsUuidValues() {
 
-        @Id
-        @Sequence(value = "id_seq", schema = "public")
-        private Long id;
+		UUID generatedId = UUID.randomUUID();
+		when(operations.queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+				.thenReturn(generatedId);
 
-        private Long name;
+		IdGeneratingBeforeSaveCallback subject = new IdGeneratingBeforeSaveCallback(relationalMappingContext,
+				PostgresDialect.INSTANCE, operations);
 
-        public Long getId() {
-            return id;
-        }
-    }
+		EntityWithUuidSequence processed = (EntityWithUuidSequence) subject.onBeforeSave(new EntityWithUuidSequence(),
+				MutableAggregateChange.forSave(new EntityWithUuidSequence()));
+
+		assertThat(processed.id).isEqualTo(generatedId);
+	}
+
+	@Table
+	static class NoSequenceEntity {
+
+		@Id private Long id;
+		private Long name;
+	}
+
+	@Table
+	static class EntityWithSequence {
+
+		@Id
+		@Sequence(value = "id_seq", schema = "public") private Long id;
+
+		private Long name;
+
+		public Long getId() {
+			return id;
+		}
+	}
+
+	@Table
+	static class EntityWithIntSequence {
+
+		@Id
+		@Sequence(value = "id_seq") private int id;
+
+	}
+
+	@Table
+	static class EntityWithUuidSequence {
+
+		@Id
+		@Sequence(value = "id_seq") private UUID id;
+
+	}
 }

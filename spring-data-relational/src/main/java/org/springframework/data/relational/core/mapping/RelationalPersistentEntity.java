@@ -57,6 +57,8 @@ public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T
 
 	/**
 	 * @return the target sequence that should be used for id generation
+	 * @since 3.5
 	 */
 	Optional<SqlIdentifier> getIdSequence();
+
 }

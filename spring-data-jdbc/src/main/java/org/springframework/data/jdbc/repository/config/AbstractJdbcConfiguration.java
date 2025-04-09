@@ -126,13 +126,11 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
 	 *
 	 * @return must not be {@literal null}.
+	 * @since 3.5
 	 */
 	@Bean
-	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
-		JdbcMappingContext mappingContext,
-		NamedParameterJdbcOperations operations,
-		Dialect dialect
-	) {
+	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
+			NamedParameterJdbcOperations operations, Dialect dialect) {
 		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
 	}
 
@@ -224,8 +222,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
-				new SqlParametersFactory(context, jdbcConverter),
-				new InsertStrategyFactory(operations, dialect));
+				new SqlParametersFactory(context, jdbcConverter), new InsertStrategyFactory(operations, dialect));
 
 		return factory.create();
 	}

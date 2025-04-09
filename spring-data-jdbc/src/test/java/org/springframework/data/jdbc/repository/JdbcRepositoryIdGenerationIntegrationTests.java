@@ -15,14 +15,16 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -52,31 +54,21 @@ import org.springframework.test.context.jdbc.Sql;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
 @IntegrationTest
 class JdbcRepositoryIdGenerationIntegrationTests {
 
-	@Autowired
-	ReadOnlyIdEntityRepository readOnlyIdRepository;
-	@Autowired
-	PrimitiveIdEntityRepository primitiveIdRepository;
-	@Autowired
-	ImmutableWithManualIdEntityRepository immutableWithManualIdEntityRepository;
+	@Autowired ReadOnlyIdEntityRepository readOnlyIdRepository;
+	@Autowired PrimitiveIdEntityRepository primitiveIdRepository;
+	@Autowired ImmutableWithManualIdEntityRepository immutableWithManualIdEntityRepository;
 
-	@Autowired
-	SimpleSeqRepository simpleSeqRepository;
+	@Autowired SimpleSeqRepository simpleSeqRepository;
+	@Autowired PersistableSeqRepository persistableSeqRepository;
+	@Autowired PrimitiveIdSeqRepository primitiveIdSeqRepository;
+	@Autowired IdGeneratingBeforeSaveCallback idGeneratingCallback;
 
-	@Autowired
-	PersistableSeqRepository persistableSeqRepository;
-
-	@Autowired
-	PrimitiveIdSeqRepository primitiveIdSeqRepository;
-
-	@Autowired
-	IdGeneratingBeforeSaveCallback idGeneratingCallback;
-
-	@Test
-		// DATAJDBC-98
+	@Test // DATAJDBC-98
 	void idWithoutSetterGetsSet() {
 
 		ReadOnlyIdEntity entity = readOnlyIdRepository.save(new ReadOnlyIdEntity(null, "Entity Name"));
@@ -90,8 +82,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		});
 	}
 
-	@Test
-		// DATAJDBC-98
+	@Test // DATAJDBC-98
 	void primitiveIdGetsSet() {
 
 		PrimitiveIdEntity entity = new PrimitiveIdEntity();
@@ -108,8 +99,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		});
 	}
 
-	@Test
-		// DATAJDBC-393
+	@Test // DATAJDBC-393
 	void manuallyGeneratedId() {
 
 		ImmutableWithManualIdEntity entity = new ImmutableWithManualIdEntity(null, "immutable");
@@ -120,8 +110,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		assertThat(immutableWithManualIdEntityRepository.findAll()).hasSize(1);
 	}
 
-	@Test
-		// DATAJDBC-393
+	@Test // DATAJDBC-393
 	void manuallyGeneratedIdForSaveAll() {
 
 		ImmutableWithManualIdEntity one = new ImmutableWithManualIdEntity(null, "one");
@@ -140,76 +129,68 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		SimpleSeq entity = new SimpleSeq();
 		entity.id = 1L;
 		entity.name = "New name";
-		AtomicReference<SimpleSeq> afterCallback = mockIdGeneratingCallback(entity);
+		CompletableFuture<SimpleSeq> afterCallback = mockIdGeneratingCallback(entity);
 
 		SimpleSeq updated = simpleSeqRepository.save(entity);
 
 		assertThat(updated.id).isEqualTo(1L);
-		assertThat(afterCallback.get()).isSameAs(entity);
-		assertThat(afterCallback.get().id).isEqualTo(1L);
+		assertThat(afterCallback.join().id).isEqualTo(1L);
 	}
 
 	@Test
-		// DATAJDBC-2003
+	// DATAJDBC-2003
 	void testInsertPersistableAggregateWithSequenceClientIdIsFavored() {
 
 		long initialId = 1L;
 		PersistableSeq entityWithSeq = PersistableSeq.createNew(initialId, "name");
-		AtomicReference<PersistableSeq> afterCallback = mockIdGeneratingCallback(entityWithSeq);
+		CompletableFuture<PersistableSeq> afterCallback = mockIdGeneratingCallback(entityWithSeq);
 
 		PersistableSeq saved = persistableSeqRepository.save(entityWithSeq);
 
 		// We do not expect the SELECT next value from sequence in case we're doing an INSERT with ID provided by the client
 		assertThat(saved.getId()).isEqualTo(initialId);
-		assertThat(afterCallback.get()).isSameAs(entityWithSeq);
+		assertThat(afterCallback.join().id).isEqualTo(initialId);
 	}
 
-	@Test
-		// DATAJDBC-2003
+	@Test // DATAJDBC-2003
 	void testInsertAggregateWithSequenceAndUnsetPrimitiveId() {
 
 		PrimitiveIdSeq entity = new PrimitiveIdSeq();
 		entity.name = "some name";
-		AtomicReference<PrimitiveIdSeq> afterCallback = mockIdGeneratingCallback(entity);
+		CompletableFuture<PrimitiveIdSeq> afterCallback = mockIdGeneratingCallback(entity);
 
 		PrimitiveIdSeq saved = primitiveIdSeqRepository.save(entity);
 
 		// 1. Select from sequence
 		// 2. Actual INSERT
-		assertThat(afterCallback.get().id).isEqualTo(1L);
+		assertThat(afterCallback.join().id).isEqualTo(1L);
 		assertThat(saved.id).isEqualTo(1L); // sequence starts with 1
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> AtomicReference<T> mockIdGeneratingCallback(T entity) {
-		AtomicReference<T> afterCallback = new AtomicReference<>();
-		Mockito
-				.doAnswer(invocationOnMock -> {
-					afterCallback.set((T) invocationOnMock.callRealMethod());
-					return afterCallback.get();
-				})
-				.when(idGeneratingCallback)
-				.onBeforeSave(Mockito.eq(entity), Mockito.any(MutableAggregateChange.class));
-		return afterCallback;
+	private <T> CompletableFuture<T> mockIdGeneratingCallback(T entity) {
+
+		CompletableFuture<T> future = new CompletableFuture<>();
+
+		Mockito.doAnswer(invocationOnMock -> {
+			future.complete((T) invocationOnMock.callRealMethod());
+			return future.join();
+		}).when(idGeneratingCallback).onBeforeSave(Mockito.eq(entity), Mockito.any(MutableAggregateChange.class));
+
+		return future;
 	}
 
-	interface PrimitiveIdEntityRepository extends ListCrudRepository<PrimitiveIdEntity, Long> {
-	}
+	interface PrimitiveIdEntityRepository extends ListCrudRepository<PrimitiveIdEntity, Long> {}
 
-	interface ReadOnlyIdEntityRepository extends ListCrudRepository<ReadOnlyIdEntity, Long> {
-	}
+	interface ReadOnlyIdEntityRepository extends ListCrudRepository<ReadOnlyIdEntity, Long> {}
 
-	interface ImmutableWithManualIdEntityRepository extends ListCrudRepository<ImmutableWithManualIdEntity, Long> {
-	}
+	interface ImmutableWithManualIdEntityRepository extends ListCrudRepository<ImmutableWithManualIdEntity, Long> {}
 
-	interface SimpleSeqRepository extends ListCrudRepository<SimpleSeq, Long> {
-	}
+	interface SimpleSeqRepository extends ListCrudRepository<SimpleSeq, Long> {}
 
-	interface PersistableSeqRepository extends ListCrudRepository<PersistableSeq, Long> {
-	}
+	interface PersistableSeqRepository extends ListCrudRepository<PersistableSeq, Long> {}
 
-	interface PrimitiveIdSeqRepository extends ListCrudRepository<PrimitiveIdSeq, Long> {
-	}
+	interface PrimitiveIdSeqRepository extends ListCrudRepository<PrimitiveIdSeq, Long> {}
 
 	record ReadOnlyIdEntity(@Id Long id, String name) {
 	}
@@ -217,8 +198,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	static class SimpleSeq {
 
 		@Id
-		@Sequence(value = "simple_seq_seq")
-		private Long id;
+		@Sequence(value = "simple_seq_seq") private Long id;
 
 		private String name;
 	}
@@ -226,17 +206,14 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	static class PersistableSeq implements Persistable<Long> {
 
 		@Id
-		@Sequence(value = "persistable_seq_seq")
-		private Long id;
+		@Sequence(value = "persistable_seq_seq") private Long id;
 
 		private String name;
 
-		@Transient
-		private boolean isNew;
+		@Transient private boolean isNew;
 
 		@PersistenceCreator
-		public PersistableSeq() {
-		}
+		public PersistableSeq() {}
 
 		public PersistableSeq(Long id, String name, boolean isNew) {
 			this.id = id;
@@ -262,8 +239,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	static class PrimitiveIdSeq {
 
 		@Id
-		@Sequence(value = "primitive_seq_seq")
-		private long id;
+		@Sequence(value = "primitive_seq_seq") private long id;
 
 		private String name;
 
@@ -271,8 +247,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 
 	static class PrimitiveIdEntity {
 
-		@Id
-		private long id;
+		@Id private long id;
 		String name;
 
 		public long getId() {
@@ -300,11 +275,11 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		public ImmutableWithManualIdEntity withId(Long id) {
-			return this.id == id ? this : new ImmutableWithManualIdEntity(id, this.name);
+			return Objects.equals(this.id, id) ? this : new ImmutableWithManualIdEntity(id, this.name);
 		}
 
 		public ImmutableWithManualIdEntity withName(String name) {
-			return this.name == name ? this : new ImmutableWithManualIdEntity(this.id, name);
+			return Objects.equals(this.name, name) ? this : new ImmutableWithManualIdEntity(this.id, name);
 		}
 	}
 
