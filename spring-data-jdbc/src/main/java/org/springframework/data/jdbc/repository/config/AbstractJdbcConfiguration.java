@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -38,7 +39,6 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -121,7 +121,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	}
 
 	/**
-	 * Creates a {@link IdGeneratingBeforeSaveCallback} bean using the configured
+	 * Creates a {@link IdGeneratingEntityCallback} bean using the configured
 	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions, RelationalManagedTypes)} and
 	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
 	 *
@@ -129,9 +129,9 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @since 3.5
 	 */
 	@Bean
-	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
+	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
 			NamedParameterJdbcOperations operations, Dialect dialect) {
-		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
+		return new IdGeneratingEntityCallback(mappingContext, dialect, operations);
 	}
 
 	/**

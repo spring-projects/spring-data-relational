@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -40,14 +41,15 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
  * @author Kurt Niemi
+ * @author Mark Paluch
  */
-public class BasicRelationalPersistentPropertyUnitTests {
+class BasicRelationalPersistentPropertyUnitTests {
 
-	RelationalMappingContext context = new RelationalMappingContext();
-	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+	private RelationalMappingContext context = new RelationalMappingContext();
+	private RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-106
-	public void detectsAnnotatedColumnName() {
+	void detectsAnnotatedColumnName() {
 
 		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo(quoted("dummy_name"));
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
@@ -55,7 +57,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	@Test // DATAJDBC-218
-	public void detectsAnnotatedColumnAndKeyName() {
+	void detectsAnnotatedColumnAndKeyName() {
 
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty("someList");
 
@@ -91,7 +93,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	@Test // DATAJDBC-111
-	public void detectsEmbeddedEntity() {
+	void detectsEmbeddedEntity() {
 
 		final RelationalPersistentEntity<?> requiredPersistentEntity = context
 				.getRequiredPersistentEntity(DummyEntity.class);
@@ -120,7 +122,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	@Test // DATAJDBC-259
-	public void classificationOfCollectionLikeProperties() {
+	void classificationOfCollectionLikeProperties() {
 
 		RelationalPersistentProperty listOfString = entity.getRequiredPersistentProperty("listOfString");
 		RelationalPersistentProperty arrayOfString = entity.getRequiredPersistentProperty("arrayOfString");
@@ -150,11 +152,45 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
-	@SuppressWarnings("unused")
-	private static class DummyEntity {
+	@Test // GH-1923
+	void entityWithNoSequence() {
 
-		@Id
-		private final Long id;
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertThat(entity.getRequiredIdProperty().getSequence()).isNull();
+	}
+
+	@Test // GH-1923
+	void determineSequenceName() {
+
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(EntityWithSequence.class);
+
+		assertThat(persistentEntity.getRequiredIdProperty().getSequence()).isEqualTo(SqlIdentifier.quoted("my_seq"));
+	}
+
+	@Test // GH-1923
+	void determineSequenceNameFromValue() {
+
+		RelationalPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(EntityWithSequenceValueAlias.class);
+
+		assertThat(persistentEntity.getRequiredIdProperty().getSequence()).isEqualTo(SqlIdentifier.quoted("my_seq"));
+	}
+
+	@Test // GH-1923
+	void determineSequenceNameWithSchemaSpecified() {
+
+		RelationalPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(EntityWithSequenceAndSchema.class);
+
+		assertThat(persistentEntity.getRequiredIdProperty().getSequence())
+				.isEqualTo(SqlIdentifier.from(SqlIdentifier.quoted("public"), SqlIdentifier.quoted("my_seq")));
+	}
+
+	@SuppressWarnings("unused")
+	static class DummyEntity {
+
+		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
@@ -166,8 +202,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final OtherEntity[] arrayOfEntity;
 
 		@MappedCollection(idColumn = "dummy_column_name",
-				keyColumn = "dummy_key_column_name")
-		private List<Integer> someList;
+				keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
@@ -177,17 +212,14 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		public static String littleBobbyTablesValue = "--; DROP ALL TABLES;--";
 		@Column(value = "#{T(org.springframework.data.relational.core.mapping."
 				+ "BasicRelationalPersistentPropertyUnitTests$DummyEntity"
-				+ ").spelExpression1Value}")
-		private String spelExpression1;
+				+ ").spelExpression1Value}") private String spelExpression1;
 
 		@Column(value = "#{T(org.springframework.data.relational.core.mapping."
 				+ "BasicRelationalPersistentPropertyUnitTests$DummyEntity"
-				+ ").littleBobbyTablesValue}")
-		private String littleBobbyTables;
+				+ ").littleBobbyTablesValue}") private String littleBobbyTables;
 
 		@Column(
-				value = "--; DROP ALL TABLES;--")
-		private String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
+				value = "--; DROP ALL TABLES;--") private String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
 
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddableEntity embeddableEntity;
@@ -195,7 +227,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix") EmbeddableEntity prefixedEmbeddableEntity;
 
-		public DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime, List<String> listOfString, String[] arrayOfString, List<OtherEntity> listOfEntity, OtherEntity[] arrayOfEntity) {
+		public DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime,
+				List<String> listOfString, String[] arrayOfString, List<OtherEntity> listOfEntity,
+				OtherEntity[] arrayOfEntity) {
 			this.id = id;
 			this.someEnum = someEnum;
 			this.localDateTime = localDateTime;
@@ -219,59 +253,59 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			return null;
 		}
 
-		public Long getId() {
+		Long getId() {
 			return this.id;
 		}
 
-		public SomeEnum getSomeEnum() {
+		SomeEnum getSomeEnum() {
 			return this.someEnum;
 		}
 
-		public ZonedDateTime getZonedDateTime() {
+		ZonedDateTime getZonedDateTime() {
 			return this.zonedDateTime;
 		}
 
-		public List<String> getListOfString() {
+		List<String> getListOfString() {
 			return this.listOfString;
 		}
 
-		public String[] getArrayOfString() {
+		String[] getArrayOfString() {
 			return this.arrayOfString;
 		}
 
-		public List<OtherEntity> getListOfEntity() {
+		List<OtherEntity> getListOfEntity() {
 			return this.listOfEntity;
 		}
 
-		public OtherEntity[] getArrayOfEntity() {
+		OtherEntity[] getArrayOfEntity() {
 			return this.arrayOfEntity;
 		}
 
-		public List<Integer> getSomeList() {
+		List<Integer> getSomeList() {
 			return this.someList;
 		}
 
-		public String getName() {
+		String getName() {
 			return this.name;
 		}
 
-		public String getSpelExpression1() {
+		String getSpelExpression1() {
 			return this.spelExpression1;
 		}
 
-		public String getLittleBobbyTables() {
+		String getLittleBobbyTables() {
 			return this.littleBobbyTables;
 		}
 
-		public String getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot() {
+		String getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot() {
 			return this.poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
 		}
 
-		public EmbeddableEntity getEmbeddableEntity() {
+		EmbeddableEntity getEmbeddableEntity() {
 			return this.embeddableEntity;
 		}
 
-		public EmbeddableEntity getPrefixedEmbeddableEntity() {
+		EmbeddableEntity getPrefixedEmbeddableEntity() {
 			return this.prefixedEmbeddableEntity;
 		}
 
@@ -291,7 +325,8 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			this.littleBobbyTables = littleBobbyTables;
 		}
 
-		public void setPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot(String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot) {
+		public void setPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot(
+				String poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot) {
 			this.poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot;
 		}
 
@@ -304,16 +339,21 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
-			if (!(o instanceof DummyEntity)) return false;
+			if (o == this)
+				return true;
+			if (!(o instanceof DummyEntity))
+				return false;
 			final DummyEntity other = (DummyEntity) o;
-			if (!other.canEqual((Object) this)) return false;
+			if (!other.canEqual((Object) this))
+				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+				return false;
 			final Object this$someEnum = this.getSomeEnum();
 			final Object other$someEnum = other.getSomeEnum();
-			if (this$someEnum == null ? other$someEnum != null : !this$someEnum.equals(other$someEnum)) return false;
+			if (this$someEnum == null ? other$someEnum != null : !this$someEnum.equals(other$someEnum))
+				return false;
 			final Object this$localDateTime = this.getLocalDateTime();
 			final Object other$localDateTime = other.getLocalDateTime();
 			if (this$localDateTime == null ? other$localDateTime != null : !this$localDateTime.equals(other$localDateTime))
@@ -326,42 +366,55 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			final Object other$listOfString = other.getListOfString();
 			if (this$listOfString == null ? other$listOfString != null : !this$listOfString.equals(other$listOfString))
 				return false;
-			if (!java.util.Arrays.deepEquals(this.getArrayOfString(), other.getArrayOfString())) return false;
+			if (!java.util.Arrays.deepEquals(this.getArrayOfString(), other.getArrayOfString()))
+				return false;
 			final Object this$listOfEntity = this.getListOfEntity();
 			final Object other$listOfEntity = other.getListOfEntity();
 			if (this$listOfEntity == null ? other$listOfEntity != null : !this$listOfEntity.equals(other$listOfEntity))
 				return false;
-			if (!java.util.Arrays.deepEquals(this.getArrayOfEntity(), other.getArrayOfEntity())) return false;
+			if (!java.util.Arrays.deepEquals(this.getArrayOfEntity(), other.getArrayOfEntity()))
+				return false;
 			final Object this$someList = this.getSomeList();
 			final Object other$someList = other.getSomeList();
-			if (this$someList == null ? other$someList != null : !this$someList.equals(other$someList)) return false;
+			if (this$someList == null ? other$someList != null : !this$someList.equals(other$someList))
+				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+				return false;
 			final Object this$spelExpression1 = this.getSpelExpression1();
 			final Object other$spelExpression1 = other.getSpelExpression1();
-			if (this$spelExpression1 == null ? other$spelExpression1 != null : !this$spelExpression1.equals(other$spelExpression1))
+			if (this$spelExpression1 == null ? other$spelExpression1 != null
+					: !this$spelExpression1.equals(other$spelExpression1))
 				return false;
 			final Object this$littleBobbyTables = this.getLittleBobbyTables();
 			final Object other$littleBobbyTables = other.getLittleBobbyTables();
-			if (this$littleBobbyTables == null ? other$littleBobbyTables != null : !this$littleBobbyTables.equals(other$littleBobbyTables))
+			if (this$littleBobbyTables == null ? other$littleBobbyTables != null
+					: !this$littleBobbyTables.equals(other$littleBobbyTables))
 				return false;
-			final Object this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = this.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
-			final Object other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = other.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
-			if (this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot == null ? other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot != null : !this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot.equals(other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
+			final Object this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = this
+					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
+			final Object other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = other
+					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
+			if (this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot == null
+					? other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot != null
+					: !this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot
+							.equals(other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
 				return false;
 			final Object this$embeddableEntity = this.getEmbeddableEntity();
 			final Object other$embeddableEntity = other.getEmbeddableEntity();
-			if (this$embeddableEntity == null ? other$embeddableEntity != null : !this$embeddableEntity.equals(other$embeddableEntity))
+			if (this$embeddableEntity == null ? other$embeddableEntity != null
+					: !this$embeddableEntity.equals(other$embeddableEntity))
 				return false;
 			final Object this$prefixedEmbeddableEntity = this.getPrefixedEmbeddableEntity();
 			final Object other$prefixedEmbeddableEntity = other.getPrefixedEmbeddableEntity();
-			if (this$prefixedEmbeddableEntity == null ? other$prefixedEmbeddableEntity != null : !this$prefixedEmbeddableEntity.equals(other$prefixedEmbeddableEntity))
+			if (this$prefixedEmbeddableEntity == null ? other$prefixedEmbeddableEntity != null
+					: !this$prefixedEmbeddableEntity.equals(other$prefixedEmbeddableEntity))
 				return false;
 			return true;
 		}
 
-		protected boolean canEqual(final Object other) {
+		boolean canEqual(final Object other) {
 			return other instanceof DummyEntity;
 		}
 
@@ -390,8 +443,10 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			result = result * PRIME + ($spelExpression1 == null ? 43 : $spelExpression1.hashCode());
 			final Object $littleBobbyTables = this.getLittleBobbyTables();
 			result = result * PRIME + ($littleBobbyTables == null ? 43 : $littleBobbyTables.hashCode());
-			final Object $poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = this.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
-			result = result * PRIME + ($poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot == null ? 43 : $poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot.hashCode());
+			final Object $poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = this
+					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
+			result = result * PRIME + ($poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot == null ? 43
+					: $poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot.hashCode());
 			final Object $embeddableEntity = this.getEmbeddableEntity();
 			result = result * PRIME + ($embeddableEntity == null ? 43 : $embeddableEntity.hashCode());
 			final Object $prefixedEmbeddableEntity = this.getPrefixedEmbeddableEntity();
@@ -400,11 +455,20 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		}
 
 		public String toString() {
-			return "BasicRelationalPersistentPropertyUnitTests.DummyEntity(id=" + this.getId() + ", someEnum=" + this.getSomeEnum() + ", localDateTime=" + this.getLocalDateTime() + ", zonedDateTime=" + this.getZonedDateTime() + ", listOfString=" + this.getListOfString() + ", arrayOfString=" + java.util.Arrays.deepToString(this.getArrayOfString()) + ", listOfEntity=" + this.getListOfEntity() + ", arrayOfEntity=" + java.util.Arrays.deepToString(this.getArrayOfEntity()) + ", someList=" + this.getSomeList() + ", name=" + this.getName() + ", spelExpression1=" + this.getSpelExpression1() + ", littleBobbyTables=" + this.getLittleBobbyTables() + ", poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot=" + this.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot() + ", embeddableEntity=" + this.getEmbeddableEntity() + ", prefixedEmbeddableEntity=" + this.getPrefixedEmbeddableEntity() + ")";
+			return "BasicRelationalPersistentPropertyUnitTests.DummyEntity(id=" + this.getId() + ", someEnum="
+					+ this.getSomeEnum() + ", localDateTime=" + this.getLocalDateTime() + ", zonedDateTime="
+					+ this.getZonedDateTime() + ", listOfString=" + this.getListOfString() + ", arrayOfString="
+					+ java.util.Arrays.deepToString(this.getArrayOfString()) + ", listOfEntity=" + this.getListOfEntity()
+					+ ", arrayOfEntity=" + java.util.Arrays.deepToString(this.getArrayOfEntity()) + ", someList="
+					+ this.getSomeList() + ", name=" + this.getName() + ", spelExpression1=" + this.getSpelExpression1()
+					+ ", littleBobbyTables=" + this.getLittleBobbyTables()
+					+ ", poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot="
+					+ this.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot() + ", embeddableEntity="
+					+ this.getEmbeddableEntity() + ", prefixedEmbeddableEntity=" + this.getPrefixedEmbeddableEntity() + ")";
 		}
 	}
 
-	static class WithMappedCollection {
+	private static class WithMappedCollection {
 
 		@MappedCollection(idColumn = "#{'id_col'}", keyColumn = "#{'key_col'}") private List<Integer> someList;
 	}
@@ -422,15 +486,18 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			this.embeddedTest = embeddedTest;
 		}
 
-		public String getEmbeddedTest() {
+		String getEmbeddedTest() {
 			return this.embeddedTest;
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
-			if (!(o instanceof EmbeddableEntity)) return false;
+			if (o == this)
+				return true;
+			if (!(o instanceof EmbeddableEntity))
+				return false;
 			final EmbeddableEntity other = (EmbeddableEntity) o;
-			if (!other.canEqual((Object) this)) return false;
+			if (!other.canEqual((Object) this))
+				return false;
 			final Object this$embeddedTest = this.getEmbeddedTest();
 			final Object other$embeddedTest = other.getEmbeddedTest();
 			if (this$embeddedTest == null ? other$embeddedTest != null : !this$embeddedTest.equals(other$embeddedTest))
@@ -438,7 +505,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 			return true;
 		}
 
-		protected boolean canEqual(final Object other) {
+		boolean canEqual(final Object other) {
 			return other instanceof EmbeddableEntity;
 		}
 
@@ -457,4 +524,24 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}
+
+	@Table("entity_with_sequence")
+	static class EntityWithSequence {
+		@Id
+		@Sequence(sequence = "my_seq") Long id;
+	}
+
+	@Table("entity_with_sequence_value_alias")
+	static class EntityWithSequenceValueAlias {
+		@Id
+		@Column("myId")
+		@Sequence(value = "my_seq") Long id;
+	}
+
+	@Table("entity_with_sequence_and_schema")
+	static class EntityWithSequenceAndSchema {
+		@Id
+		@Column("myId")
+		@Sequence(sequence = "my_seq", schema = "public") Long id;
+	}
 }

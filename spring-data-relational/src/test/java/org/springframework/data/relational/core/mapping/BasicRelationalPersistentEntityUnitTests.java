@@ -58,42 +58,6 @@ class BasicRelationalPersistentEntityUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
 	}
 
-	@Test // GH-1923
-	void entityWithNoSequence() {
-
-		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(DummySubEntity.class);
-
-		assertThat(entity.getIdSequence()).isEmpty();
-	}
-
-	@Test // GH-1923
-	void determineSequenceName() {
-
-		RelationalPersistentEntity<?> persistentEntity = mappingContext
-				.getRequiredPersistentEntity(EntityWithSequence.class);
-
-		assertThat(persistentEntity.getIdSequence()).contains(SqlIdentifier.quoted("my_seq"));
-	}
-
-	@Test // GH-1923
-	void determineSequenceNameFromValue() {
-
-		RelationalPersistentEntity<?> persistentEntity = mappingContext
-				.getRequiredPersistentEntity(EntityWithSequenceValueAlias.class);
-
-		assertThat(persistentEntity.getIdSequence()).contains(SqlIdentifier.quoted("my_seq"));
-	}
-
-	@Test // GH-1923
-	void determineSequenceNameWithSchemaSpecified() {
-
-		RelationalPersistentEntity<?> persistentEntity = mappingContext
-				.getRequiredPersistentEntity(EntityWithSequenceAndSchema.class);
-
-		assertThat(persistentEntity.getIdSequence())
-				.contains(SqlIdentifier.from(SqlIdentifier.quoted("public"), SqlIdentifier.quoted("my_seq")));
-	}
-
 	@Test // DATAJDBC-294
 	void considerIdColumnName() {
 
@@ -237,26 +201,6 @@ class BasicRelationalPersistentEntityUnitTests {
 	static class DummySubEntity {
 		@Id
 		@Column("renamedId") Long id;
-	}
-
-	@Table("entity_with_sequence")
-	static class EntityWithSequence {
-		@Id
-		@Sequence(sequence = "my_seq") Long id;
-	}
-
-	@Table("entity_with_sequence_value_alias")
-	static class EntityWithSequenceValueAlias {
-		@Id
-		@Column("myId")
-		@Sequence(value = "my_seq") Long id;
-	}
-
-	@Table("entity_with_sequence_and_schema")
-	static class EntityWithSequenceAndSchema {
-		@Id
-		@Column("myId")
-		@Sequence(sequence = "my_seq", schema = "public") Long id;
 	}
 
 	@Table()

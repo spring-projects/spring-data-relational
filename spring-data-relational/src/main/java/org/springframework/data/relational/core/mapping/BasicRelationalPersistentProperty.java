@@ -52,12 +52,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<SqlIdentifier> columnName;
 	private final boolean hasExplicitColumnName;
 	private final @Nullable Expression columnNameExpression;
+	private final SqlIdentifier sequence;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final @Nullable Expression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
-
 	private final String embeddedPrefix;
+
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
 	private ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
@@ -80,7 +81,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
 		this.isEmbedded = isAnnotationPresent(Embedded.class);
-
 		this.embeddedPrefix = Optional.ofNullable(findAnnotation(Embedded.class)) //
 				.map(Embedded::prefix) //
 				.orElse("");
@@ -125,6 +125,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			this.columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
 			this.columnNameExpression = null;
 		}
+
+		this.sequence = determineSequenceName();
 
 		if (collectionIdColumnName == null) {
 			collectionIdColumnName = Lazy.of(Optional.empty());
@@ -269,8 +271,34 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return findAnnotation(InsertOnlyProperty.class) != null;
 	}
 
+	@Nullable
+	@Override
+	public SqlIdentifier getSequence() {
+		return this.sequence;
+	}
+
 	private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
+	}
+
+	private @Nullable SqlIdentifier determineSequenceName() {
+
+		if (isAnnotationPresent(Sequence.class)) {
+
+			Sequence annotation = getRequiredAnnotation(Sequence.class);
+
+			String sequence = annotation.sequence();
+			String schema = annotation.schema();
+
+			SqlIdentifier sequenceIdentifier = SqlIdentifier.quoted(sequence);
+			if (StringUtils.hasText(schema)) {
+				sequenceIdentifier = SqlIdentifier.from(SqlIdentifier.quoted(schema), sequenceIdentifier);
+			}
+
+			return sequenceIdentifier;
+		} else {
+			return null;
+		}
 	}
 
 }

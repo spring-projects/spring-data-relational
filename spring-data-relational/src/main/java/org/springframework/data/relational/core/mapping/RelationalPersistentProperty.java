@@ -25,6 +25,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
 
@@ -94,4 +95,20 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @since 3.0
 	 */
 	boolean isInsertOnly();
+
+	/**
+	 * @return the target sequence that should be used for value generation.
+	 * @since 3.5
+	 */
+	@Nullable
+	SqlIdentifier getSequence();
+
+	/**
+	 * @return {@literal true} if the property is associated with a sequence; {@literal false} otherwise.
+	 * @since 3.5
+	 */
+	default boolean hasSequence() {
+		return getSequence() != null;
+	}
+
 }

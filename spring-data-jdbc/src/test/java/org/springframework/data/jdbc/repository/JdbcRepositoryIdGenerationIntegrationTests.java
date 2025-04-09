@@ -35,7 +35,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
-import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
+import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.jdbc.testing.IntegrationTest;
@@ -66,7 +66,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	@Autowired SimpleSeqRepository simpleSeqRepository;
 	@Autowired PersistableSeqRepository persistableSeqRepository;
 	@Autowired PrimitiveIdSeqRepository primitiveIdSeqRepository;
-	@Autowired IdGeneratingBeforeSaveCallback idGeneratingCallback;
+	@Autowired IdGeneratingEntityCallback idGeneratingCallback;
 
 	@Test // DATAJDBC-98
 	void idWithoutSetterGetsSet() {

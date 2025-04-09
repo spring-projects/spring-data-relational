@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mockito.Mockito;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,7 +38,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
@@ -45,7 +45,6 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -182,15 +181,15 @@ public class TestConfiguration {
 	}
 
 	/**
-	 * Creates a {@link IdGeneratingBeforeSaveCallback} bean using the configured
+	 * Creates a {@link IdGeneratingEntityCallback} bean using the configured
 	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
 	 *
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
+	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
 			NamedParameterJdbcOperations operations, Dialect dialect) {
-		return Mockito.spy(new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations));
+		return Mockito.spy(new IdGeneratingEntityCallback(mappingContext, dialect, operations));
 	}
 
 	@Bean

@@ -105,6 +105,12 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 		return delegate.isInsertOnly();
 	}
 
+	@Nullable
+	@Override
+	public SqlIdentifier getSequence() {
+		return delegate.getSequence();
+	}
+
 	@Override
 	public String getName() {
 		return delegate.getName();
