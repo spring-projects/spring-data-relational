@@ -73,7 +73,7 @@ import org.springframework.util.ObjectUtils;
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters; Use @Param for query method parameters, or use the javac flag -parameters";
-	private final static String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing. Offending method: ";
+	private static final String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing. Offending method: ";
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
@@ -457,6 +457,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	@Nullable
 	static <T> Constructor<T> findPrimaryConstructor(Class<T> clazz) {
+
 		try {
 			return clazz.getDeclaredConstructor();
 		} catch (NoSuchMethodException ex) {

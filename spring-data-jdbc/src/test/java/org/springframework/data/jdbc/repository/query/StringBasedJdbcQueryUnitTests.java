@@ -53,6 +53,8 @@ import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -252,7 +254,7 @@ class StringBasedJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = createMethod("sliceAll", Pageable.class);
 
 		assertThatThrownBy(
-				() -> new StringBasedJdbcQuery(queryMethod, operations,  result -> defaultRowMapper, converter, delegate))
+				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
 				.isInstanceOf(UnsupportedOperationException.class)
 				.hasMessageContaining("Slice queries are not supported using string-based queries");
 	}
@@ -272,6 +274,16 @@ class StringBasedJdbcQueryUnitTests {
 	void limitNotSupported() {
 
 		JdbcQueryMethod queryMethod = createMethod("unsupportedLimitQuery", String.class, Limit.class);
+
+		assertThatThrownBy(
+				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
+				.isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test // GH-2023
+	void lockNotSupported() {
+
+		JdbcQueryMethod queryMethod = createMethod("unsupportedWithLock", Long.class);
 
 		assertThatThrownBy(
 				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
@@ -355,10 +367,12 @@ class StringBasedJdbcQueryUnitTests {
 		List<EvaluationContextExtension> list = new ArrayList<>();
 		list.add(new MyEvaluationContextProvider());
 
-		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), list);
+		QueryMethodValueEvaluationContextAccessor accessor = new QueryMethodValueEvaluationContextAccessor(
+				new StandardEnvironment(), list);
 		this.delegate = new ValueExpressionDelegate(accessor, ValueExpressionParser.create());
 
-		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate);
+		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter,
+				delegate);
 
 		ArgumentCaptor<SqlParameterSource> paramSource = ArgumentCaptor.forClass(SqlParameterSource.class);
 		ArgumentCaptor<String> query = ArgumentCaptor.forClass(String.class);
@@ -401,8 +415,8 @@ class StringBasedJdbcQueryUnitTests {
 							mock(RelationResolver.class))
 					: this.converter;
 
-			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method.getDeclaredQuery(), method, operations, result -> mock(RowMapper.class),
-					converter, delegate);
+			StringBasedJdbcQuery query = new StringBasedJdbcQuery(method.getDeclaredQuery(), method, operations,
+					result -> mock(RowMapper.class), converter, delegate);
 
 			query.execute(arguments);
 
@@ -438,7 +452,8 @@ class StringBasedJdbcQueryUnitTests {
 	}
 
 	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod, String preparedReference, Object value) {
-		return new StringBasedJdbcQuery(queryMethod, operations, new StubRowMapperFactory(preparedReference, value), converter, delegate);
+		return new StringBasedJdbcQuery(queryMethod, operations, new StubRowMapperFactory(preparedReference, value),
+				converter, delegate);
 	}
 
 	interface MyRepository extends Repository<Object, Long> {
@@ -505,6 +520,10 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query("select count(1) from person where (firstname, lastname) in (:tuples)")
 		Object findByListOfTuples(@Param("tuples") List<Object[]> tuples);
+
+		@Lock(value = LockMode.PESSIMISTIC_READ)
+		@Query("SELECT * FROM person WHERE id = :id")
+		DummyEntity unsupportedWithLock(Long id);
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
