@@ -633,7 +633,7 @@ class StringBasedJdbcQueryUnitTests {
 		}
 	}
 
-	private class StubRowMapperFactory implements AbstractJdbcQuery.RowMapperFactory {
+	private class StubRowMapperFactory implements RowMapperFactory {
 
 		private final String preparedReference;
 		private final Object value;
@@ -643,7 +643,6 @@ class StringBasedJdbcQueryUnitTests {
 			this.value = value;
 		}
 
-		@Override
 		public RowMapper<Object> create(Class<?> result) {
 			return defaultRowMapper;
 		}
@@ -654,7 +653,7 @@ class StringBasedJdbcQueryUnitTests {
 			if (preparedReference.equals(reference)) {
 				return (RowMapper<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.getRowMapper(reference);
+			return RowMapperFactory.super.getRowMapper(reference);
 		}
 
 		@Override
@@ -663,7 +662,7 @@ class StringBasedJdbcQueryUnitTests {
 			if (preparedReference.equals(reference)) {
 				return (ResultSetExtractor<Object>) value;
 			}
-			return AbstractJdbcQuery.RowMapperFactory.super.getResultSetExtractor(reference);
+			return RowMapperFactory.super.getResultSetExtractor(reference);
 		}
 	}
 }

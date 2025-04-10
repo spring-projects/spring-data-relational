@@ -83,7 +83,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final static String LOCKING_IS_NOT_SUPPORTED = "Currently, @Lock is supported only on derived queries. In other words, for queries created with @Query, the locking condition specified with @Lock does nothing";
 	private static final Log LOG = LogFactory.getLog(StringBasedJdbcQuery.class);
 	private final JdbcConverter converter;
-	private final RowMapperFactory rowMapperFactory;
+	private final org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory;
 	private final ValueExpressionQueryRewriter.ParsedQuery parsedQuery;
 	private final String query;
 
@@ -110,7 +110,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
+	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
 	 *
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
@@ -122,7 +122,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 */
 	@Deprecated(since = "3.4")
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter,
 				evaluationContextProvider);
@@ -130,7 +130,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
+	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
 	 *
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
@@ -140,13 +140,13 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
 		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter, delegate);
 	}
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
+	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
 	 *
 	 * @param query must not be {@literal null} or empty.
 	 * @param queryMethod must not be {@literal null}.
@@ -157,7 +157,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
 		super(queryMethod, operations);
 		Assert.hasText(query, "Query must not be null or empty");
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
@@ -199,7 +199,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapperFactory}.
+	 * and {@link org.springframework.data.jdbc.repository.query.RowMapperFactory}.
 	 *
 	 * @param query must not be {@literal null} or empty.
 	 * @param queryMethod must not be {@literal null}.
@@ -212,7 +212,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 */
 	@Deprecated(since = "3.4")
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 		this(query, queryMethod, operations, rowMapperFactory, converter, new CachingValueExpressionDelegate(
 				new QueryMethodValueEvaluationContextAccessor(new StandardEnvironment(), rootObject -> evaluationContextProvider
@@ -386,7 +386,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			ResultProcessingConverter converter = new ResultProcessingConverter(resultProcessor,
 					this.converter.getMappingContext(), this.converter.getEntityInstantiators());
-			return new ConvertingRowMapper<>(rowMapperToUse, converter);
+			return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(rowMapperToUse, converter);
 		}
 
 		return cachedRowMapperFactory.getRowMapper();

@@ -153,60 +153,25 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 * Factory to create a {@link RowMapper} for a given class.
 	 *
 	 * @since 2.3
+	 * @deprecated Use {@link org.springframework.data.jdbc.repository.query.RowMapperFactory} instead
 	 */
-	public interface RowMapperFactory {
-
-		/**
-		 * Create a {@link RowMapper} based on the expected return type passed in as an argument.
-		 *
-		 * @param result must not be {@code null}.
-		 * @return a {@code RowMapper} producing instances of {@code result}.
-		 */
-		RowMapper<Object> create(Class<?> result);
-
-		/**
-		 * Obtain a {@code RowMapper} from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
-		 *
-		 * @param reference must not be {@code null}.
-		 * @since 3.4
-		 */
-		default RowMapper<Object> getRowMapper(String reference) {
-			throw new UnsupportedOperationException("getRowMapper is not supported");
-		}
-
-		/**
-		 * Obtain a {@code ResultSetExtractor} from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
-		 *
-		 * @param reference must not be {@code null}.
-		 * @since 3.4
-		 */
-		default ResultSetExtractor<Object> getResultSetExtractor(String reference) {
-			throw new UnsupportedOperationException("getResultSetExtractor is not supported");
-		}
-	}
+	@Deprecated(forRemoval = true, since = "3.4.4")
+	public interface RowMapperFactory extends org.springframework.data.jdbc.repository.query.RowMapperFactory { }
 
 	/**
 	 * Delegating {@link RowMapper} that reads a row into {@code T} and converts it afterwards into {@code Object}.
 	 *
 	 * @param <T>
 	 * @since 2.3
+	 * @deprecated use {@link org.springframework.data.jdbc.repository.query.ConvertingRowMapper} instead
 	 */
-	protected static class ConvertingRowMapper<T> implements RowMapper<Object> {
+	@Deprecated(forRemoval = true, since = "3.4.4")
+	protected static class ConvertingRowMapper<T> extends
+			org.springframework.data.jdbc.repository.query.ConvertingRowMapper {
 
-		private final RowMapper<T> delegate;
-		private final Converter<Object, Object> converter;
-
+		@SuppressWarnings("unchecked")
 		public ConvertingRowMapper(RowMapper<T> delegate, Converter<Object, Object> converter) {
-			this.delegate = delegate;
-			this.converter = converter;
-		}
-
-		@Override
-		public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-
-			T object = delegate.mapRow(rs, rowNum);
-
-			return object == null ? null : converter.convert(object);
+			super((RowMapper<Object>) delegate, converter);
 		}
 	}
 }
