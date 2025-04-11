@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public interface CriteriaDefinition {
@@ -96,6 +97,12 @@ public interface CriteriaDefinition {
 	 */
 	@Nullable
 	Comparator getComparator();
+
+	/**
+	 * @return {@link ExtendedComparator}.
+	 */
+	@Nullable
+	ExtendedComparator getExtendedComparator();
 
 	/**
 	 * @return the comparison value. Can be {@literal null}.

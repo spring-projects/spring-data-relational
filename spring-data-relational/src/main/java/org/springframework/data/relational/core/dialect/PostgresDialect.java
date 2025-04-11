@@ -57,6 +57,7 @@ public class PostgresDialect extends AbstractDialect {
 
 	private IdentifierProcessing identifierProcessing = IdentifierProcessing.create(Quoting.ANSI,
 			LetterCasing.LOWER_CASE);
+
 	private IdGeneration idGeneration = new IdGeneration() {
 
 		@Override

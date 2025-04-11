@@ -21,6 +21,7 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 
 import java.util.Arrays;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -30,6 +31,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Roman Chigvintsev
+ * @author Mikhail Polivakha
  */
 class CriteriaUnitTests {
 
@@ -96,6 +98,27 @@ class CriteriaUnitTests {
 	}
 
 	@Test // DATAJDBC-513
+	void andChainedCriteriaWithDialectCriteriaCondition() {
+
+		Criteria criteria = where("foo").is("bar").and(Postgres.array("baz").contains("first", "second"));
+		var previous = criteria.getPrevious();
+
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.quoted("baz"));
+			softAssertions.assertThat(criteria.getComparator()).isNull();
+			softAssertions.assertThat(criteria.getValue()).isNull();
+			softAssertions.assertThat(criteria.getPrevious()).isNotNull();
+			softAssertions.assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+			softAssertions.assertThat(criteria.toString()).isEqualTo("foo = 'bar' AND (baz @> ARRAY['first','second'])");
+
+			softAssertions.assertThat(previous.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+			softAssertions.assertThat(previous.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+			softAssertions.assertThat(previous.getValue()).isEqualTo("bar");
+			softAssertions.assertThat(previous.toString()).isEqualTo("foo = 'bar'");
+		});
+	}
+
+	@Test // DATAJDBC-513
 	void andGroupedCriteria() {
 
 		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or("bar").isNotNull());
@@ -114,6 +137,26 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 
 		assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR bar IS NOT NULL)");
+	}
+
+	@Test // DATAJDBC-1953
+	void andGroupedCriteriaWithDialectCriteriaCondition() {
+
+		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or(Postgres.array("bar").contains("electronics")));
+		Criteria previous = grouped.getPrevious();
+
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(grouped.isGroup()).isTrue();
+			softAssertions.assertThat(grouped.getGroup()).hasSize(1);
+			softAssertions.assertThat(grouped.getGroup().get(0).getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("\"bar\""));
+			softAssertions.assertThat(grouped.getCombinator()).isEqualTo(Criteria.Combinator.AND);
+			softAssertions.assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR (bar @> ARRAY['electronics']))");
+
+			softAssertions.assertThat(previous).isNotNull();
+			softAssertions.assertThat(previous.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+			softAssertions.assertThat(previous.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
+			softAssertions.assertThat(previous.getValue()).isEqualTo("bar");
+		});
 	}
 
 	@Test // DATAJDBC-513
@@ -177,6 +220,25 @@ class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.NEQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
+	}
+
+	@Test // DATAJDBC-1953
+	void shouldBuildSimplePredefinedDialectCriteriaCondition() {
+
+		Object[] values = { 1, 2, 3 };
+		Criteria criteria = Postgres.array("foo").contains(values);
+
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.quoted("foo"));
+			softAssertions.assertThat(criteria.getComparator()).isNull();
+			softAssertions.assertThat(criteria.getValue()).isInstanceOf(CriteriaLiteral.class);
+			softAssertions
+					.assertThat(criteria.getValue())
+					.asInstanceOf(InstanceOfAssertFactories.type(CriteriaLiteral.class))
+					.extracting(CriteriaLiteral::getLiteral)
+					.isEqualTo("ARRAY[1,2,3]");
+			softAssertions.assertThat(criteria.toString()).isEqualTo("foo @> ARRAY[1,2,3]");
+		});
 	}
 
 	@Test // DATAJDBC-513
