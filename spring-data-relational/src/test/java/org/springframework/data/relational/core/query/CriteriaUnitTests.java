@@ -230,7 +230,7 @@ class CriteriaUnitTests {
 
 		assertSoftly(softAssertions -> {
 			softAssertions.assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.quoted("foo"));
-			softAssertions.assertThat(criteria.getComparator()).isEqualTo(Comparator.ARRAY_CONTAINS);
+			softAssertions.assertThat(criteria.getComparator()).isNull();
 			softAssertions.assertThat(criteria.getValue()).isInstanceOf(CriteriaLiteral.class);
 			softAssertions
 					.assertThat(criteria.getValue())

@@ -66,26 +66,32 @@ public class Criteria implements CriteriaDefinition {
 
 	private final @Nullable SqlIdentifier column;
 	private final @Nullable Comparator comparator;
+	private final @Nullable ExtendedComparator extendedComparator;
 	private final @Nullable Object value;
 	private final boolean ignoreCase;
 
-	public Criteria(SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
-		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
+	Criteria(SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, null, value, false);
+	}
+
+	Criteria(SqlIdentifier column, ExtendedComparator extendedComparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), column, null, extendedComparator, value, false);
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
-		this(previous, combinator, group, column, comparator, value, false);
+		this(previous, combinator, group, column, comparator, null, value, false);
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
+			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable ExtendedComparator extendedComparator, @Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
 		this.group = group;
 		this.column = column;
 		this.comparator = comparator;
+		this.extendedComparator = extendedComparator;
 		this.value = value;
 		this.ignoreCase = ignoreCase;
 	}
@@ -97,6 +103,7 @@ public class Criteria implements CriteriaDefinition {
 		this.group = group;
 		this.column = null;
 		this.comparator = null;
+		this.extendedComparator = null;
 		this.value = null;
 		this.ignoreCase = false;
 	}
@@ -260,7 +267,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria ignoreCase(boolean ignoreCase) {
 		if (this.ignoreCase != ignoreCase) {
-			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase);
+			return new Criteria(previous, combinator, group, column, comparator, extendedComparator, value, ignoreCase);
 		}
 		return this;
 	}
@@ -363,6 +370,11 @@ public class Criteria implements CriteriaDefinition {
 		return comparator;
 	}
 
+	@Override
+	public ExtendedComparator getExtendedComparator() {
+		return extendedComparator;
+	}
+
 	/**
 	 * @return the comparison value. Can be {@literal null}.
 	 */
@@ -408,12 +420,13 @@ public class Criteria implements CriteriaDefinition {
 				&& Objects.equals(group, criteria.group) //
 				&& Objects.equals(column, criteria.column) //
 				&& comparator == criteria.comparator //
+				&& extendedComparator == criteria.extendedComparator //
 				&& Objects.equals(value, criteria.value);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(previous, combinator, group, column, comparator, value, ignoreCase);
+		return Objects.hash(previous, combinator, group, column, comparator, extendedComparator, value, ignoreCase);
 	}
 
 	private void unroll(CriteriaDefinition criteria, StringBuilder stringBuilder) {
@@ -479,29 +492,35 @@ public class Criteria implements CriteriaDefinition {
 			return;
 		}
 
-		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
-				.append(criteria.getComparator().getComparator());
+		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ');
 
-		switch (criteria.getComparator()) {
-			case BETWEEN:
-			case NOT_BETWEEN:
-				Pair<Object, Object> pair = (Pair<Object, Object>) criteria.getValue();
-				stringBuilder.append(' ').append(pair.getFirst()).append(" AND ").append(pair.getSecond());
-				break;
+		if (criteria.getExtendedComparator() != null) {
+			stringBuilder.append(criteria.getExtendedComparator().operator()).append(' ').append(renderValue(criteria.getValue()));
+		} else {
 
-			case IS_NULL:
-			case IS_NOT_NULL:
-			case IS_TRUE:
-			case IS_FALSE:
-				break;
+			stringBuilder.append(criteria.getComparator().getComparator());
 
-			case IN:
-			case NOT_IN:
-				stringBuilder.append(" (").append(renderValue(criteria.getValue())).append(')');
-				break;
+			switch (criteria.getComparator()) {
+				case BETWEEN:
+				case NOT_BETWEEN:
+					Pair<Object, Object> pair = (Pair<Object, Object>) criteria.getValue();
+					stringBuilder.append(' ').append(pair.getFirst()).append(" AND ").append(pair.getSecond());
+					break;
 
-			default:
-				stringBuilder.append(' ').append(renderValue(criteria.getValue()));
+				case IS_NULL:
+				case IS_NOT_NULL:
+				case IS_TRUE:
+				case IS_FALSE:
+					break;
+
+				case IN:
+				case NOT_IN:
+					stringBuilder.append(" (").append(renderValue(criteria.getValue())).append(')');
+					break;
+
+				default:
+					stringBuilder.append(' ').append(renderValue(criteria.getValue()));
+			}
 		}
 	}
 

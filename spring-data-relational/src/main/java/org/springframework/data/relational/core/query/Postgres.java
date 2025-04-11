@@ -16,15 +16,13 @@
 
 package org.springframework.data.relational.core.query;
 
-import static org.springframework.data.relational.core.query.Criteria.*;
+import static org.springframework.data.relational.core.query.Criteria.CriteriaLiteral;
 
 import java.sql.JDBCType;
 import java.util.StringJoiner;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.core.ResolvableType;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
 /**
@@ -64,10 +62,11 @@ public class Postgres {
 
 		@NotNull
 		@Override
-		public Criteria contains(Object... values) {
+		public Criteria
+		contains(Object... values) {
 			Assert.notNull(values, "values array cannot be null");
 
-			return new Criteria(SqlIdentifier.quoted(arrayColumnName), CriteriaDefinition.Comparator.ARRAY_CONTAINS, new CriteriaLiteral() {
+			return new Criteria(SqlIdentifier.quoted(arrayColumnName), ExtendedComparator.PostgresExtendedContains.INSTANCE, new CriteriaLiteral() {
 
 				@Override
 				public String getLiteral() {

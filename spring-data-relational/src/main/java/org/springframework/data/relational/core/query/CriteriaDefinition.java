@@ -99,6 +99,12 @@ public interface CriteriaDefinition {
 	Comparator getComparator();
 
 	/**
+	 * @return {@link ExtendedComparator}.
+	 */
+	@Nullable
+	ExtendedComparator getExtendedComparator();
+
+	/**
 	 * @return the comparison value. Can be {@literal null}.
 	 */
 	@Nullable
@@ -141,7 +147,7 @@ public interface CriteriaDefinition {
 	enum Comparator {
 		INITIAL(""), EQ("="), NEQ("!="), BETWEEN("BETWEEN"), NOT_BETWEEN("NOT BETWEEN"), LT("<"), LTE("<="), GT(">"), GTE(
 				">="), IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), LIKE(
-						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE"), ARRAY_CONTAINS("@>");
+						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
 
 		private final String comparator;
 
