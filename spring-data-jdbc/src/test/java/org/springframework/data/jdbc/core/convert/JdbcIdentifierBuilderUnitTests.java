@@ -21,14 +21,17 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
  * Unit tests for the {@link JdbcIdentifierBuilder}.
@@ -47,7 +50,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		@Test // DATAJDBC-326
 		void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
-			Identifier identifier = JdbcIdentifierBuilder.forBackReferences(converter, getPath("child"), "eins").build();
+			Identifier identifier = JdbcIdentifierBuilder.forBackReferences(converter, getPath("child"), getValueProvider("eins", getPath("child"), converter)).build();
 
 			assertThat(identifier.getParts()) //
 					.extracting("name", "value", "targetType") //
@@ -62,7 +65,7 @@ public class JdbcIdentifierBuilderUnitTests {
 			AggregatePath path = getPath("children");
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, path, "parent-eins") //
+					.forBackReferences(converter, path, getValueProvider("parent-eins", path, converter)) //
 					.withQualifier(path, "map-key-eins") //
 					.build();
 
@@ -80,7 +83,7 @@ public class JdbcIdentifierBuilderUnitTests {
 			AggregatePath path = getPath("moreChildren");
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, path, "parent-eins") //
+					.forBackReferences(converter, path, getValueProvider("parent-eins", path, converter)) //
 					.withQualifier(path, "list-index-eins") //
 					.build();
 
@@ -96,7 +99,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		void backreferenceAcrossEmbeddable() {
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, getPath("embeddable.child"), "parent-eins") //
+					.forBackReferences(converter, getPath("embeddable.child"), getValueProvider("parent-eins", getPath("embeddable.child"), converter)) //
 					.build();
 
 			assertThat(identifier.getParts()) //
@@ -110,7 +113,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		void backreferenceAcrossNoId() {
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, getPath("noId.child"), "parent-eins") //
+					.forBackReferences(converter, getPath("noId.child"), getValueProvider("parent-eins", getPath("noId.child"), converter)) //
 					.build();
 
 			assertThat(identifier.getParts()) //
@@ -125,6 +128,24 @@ public class JdbcIdentifierBuilderUnitTests {
 		}
 	}
 
+	/**
+	 * copied from JdbcAggregateChangeExecutionContext
+	 */
+	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
+
+		RelationalPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
+
+		Function<AggregatePath, Object> valueProvider = ap -> {
+			if (entity == null) {
+				return idValue;
+			} else {
+				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+			}
+		};
+		return valueProvider;
+	}
+
 	@Nested
 	class WithCompositeId {
 
@@ -136,7 +157,7 @@ public class JdbcIdentifierBuilderUnitTests {
 			AggregatePath path = getPath("children");
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, path, exampleId) //
+					.forBackReferences(converter, path, getValueProvider(exampleId, path, converter)) //
 					.build();
 
 			assertThat(identifier.getParts()) //

@@ -120,7 +120,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		assertThat(newRoot.list.get(0).id).isEqualTo(24L);
 	}
 
-	@Test // GH-537
+	@Test
+		// GH-537
 	void populatesIdsIfNecessaryForAllRootsThatWereProcessed() {
 
 		DummyEntity root1 = new DummyEntity().withId(123L);
@@ -151,7 +152,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-			@Nullable Object key) {
+									@Nullable Object key) {
 
 		return new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
 				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
@@ -166,7 +167,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	}
 
 	Identifier createBackRef(long value) {
-		return JdbcIdentifierBuilder.forBackReferences(converter, toAggregatePath("content"), value).build();
+		return JdbcIdentifierBuilder.forBackReferences(converter, toAggregatePath("content"), JdbcAggregateChangeExecutionContext.getValueProvider(value, toAggregatePath("content"), converter)).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
