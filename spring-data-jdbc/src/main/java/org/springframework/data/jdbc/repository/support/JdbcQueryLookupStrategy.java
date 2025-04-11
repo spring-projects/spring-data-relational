@@ -264,7 +264,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 */
 	JdbcQueryMethod getJdbcQueryMethod(Method method, RepositoryMetadata repositoryMetadata,
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
-		return new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries, getMappingContext());
+		return new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries, getMappingContext(), getDialect().getSqlTypeResolver());
 	}
 
 	/**

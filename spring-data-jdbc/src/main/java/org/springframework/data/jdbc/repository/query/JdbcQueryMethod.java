@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +25,8 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.dialect.DefaultSqlTypeResolver;
+import org.springframework.data.relational.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.Lock;
@@ -31,9 +34,11 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
@@ -52,6 +57,7 @@ import org.springframework.util.StringUtils;
  * @author Hebert Coelho
  * @author Diego Krupitza
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class JdbcQueryMethod extends QueryMethod {
 
@@ -62,10 +68,19 @@ public class JdbcQueryMethod extends QueryMethod {
 	private @Nullable RelationalEntityMetadata<?> metadata;
 	private final boolean modifyingQuery;
 
+	private final SqlTypeResolver sqlTypeResolver;
+
 	// TODO: Remove NamedQueries and put it into JdbcQueryLookupStrategy
 	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 			NamedQueries namedQueries,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
+		this(method, metadata, factory, namedQueries, mappingContext, DefaultSqlTypeResolver.INSTANCE);
+	}
+
+	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
+			NamedQueries namedQueries,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
+			SqlTypeResolver sqlTypeResolver) {
 
 		super(method, metadata, factory);
 		this.namedQueries = namedQueries;
@@ -73,11 +88,13 @@ public class JdbcQueryMethod extends QueryMethod {
 		this.mappingContext = mappingContext;
 		this.annotationCache = new ConcurrentReferenceHashMap<>();
 		this.modifyingQuery = AnnotationUtils.findAnnotation(method, Modifying.class) != null;
+		this.sqlTypeResolver = sqlTypeResolver;
 	}
 
+	// SqlTypeResolver has to be wrapped, becuase the createParameters() is invoked in the parents constructor before child initialization
 	@Override
 	protected Parameters<?, ?> createParameters(ParametersSource parametersSource) {
-		return new JdbcParameters(parametersSource);
+		return new JdbcParameters(parametersSource, Lazy.of(() -> this.sqlTypeResolver));
 	}
 
 	@Override

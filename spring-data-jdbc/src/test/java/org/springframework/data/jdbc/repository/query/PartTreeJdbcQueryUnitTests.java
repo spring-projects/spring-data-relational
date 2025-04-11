@@ -19,7 +19,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -35,14 +41,17 @@ import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.query.JdbcParameters.JdbcParameter;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.dialect.H2Dialect;
+import org.springframework.data.relational.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
@@ -610,6 +619,18 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getQuery()).isEqualTo(expectedSql);
 	}
 
+	@Test // DATAJDBC-2020
+	public void testCustomSqlTypeResolverApplied() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAgeIn", new TestSqlTypeResolver(), String.class, Collection.class);
+
+		JdbcParameter firstNameParam = queryMethod.getParameters().getParameter(0);
+		JdbcParameter agesInParam = queryMethod.getParameters().getParameter(1);
+
+		assertThat(firstNameParam.getSqlType()).isEqualTo(JDBCType.CLOB);
+		assertThat(agesInParam.getActualSqlType()).isEqualTo(JDBCType.TINYINT);
+	}
+
 	@Test // DATAJDBC-318
 	public void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
 
@@ -679,6 +700,12 @@ public class PartTreeJdbcQueryUnitTests {
 				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
 	}
 
+	private JdbcQueryMethod getQueryMethod(String methodName, SqlTypeResolver sqlTypeResolver, Class<?>... parameterTypes) throws Exception {
+		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext, sqlTypeResolver);
+	}
+
 	private RelationalParametersParameterAccessor getAccessor(JdbcQueryMethod queryMethod, Object[] values) {
 		return new RelationalParametersParameterAccessor(queryMethod, values);
 	}
@@ -695,6 +722,8 @@ public class PartTreeJdbcQueryUnitTests {
 		List<User> findAllByFirstName(String firstName);
 
 		List<User> findAllByHated(Hobby hobby);
+
+		List<User> findAllByFirstNameAndAgeIn(String firstName, Collection<Integer> ages);
 
 		List<User> findAllByHatedName(String name);
 
@@ -773,6 +802,35 @@ public class PartTreeJdbcQueryUnitTests {
 		User findByAnotherEmbeddedList(Object list);
 
 		long countByFirstName(String name);
+	}
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MySqlType { }
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MyActualSqlType { }
+
+	static class TestSqlTypeResolver implements SqlTypeResolver {
+
+		@Override
+		public SQLType resolveSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MySqlType.class)) {
+				return JDBCType.CLOB;
+			} else {
+				return null;
+			}
+		}
+
+		@Override
+		public SQLType resolveActualSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MyActualSqlType.class)) {
+				return JDBCType.TINYINT;
+			} else {
+				return null;
+			}
+		}
 	}
 
 	@Table("users")
