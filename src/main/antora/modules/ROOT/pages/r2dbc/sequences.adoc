@@ -1,0 +1,46 @@
+[[r2dbc.sequences]]
+= Sequences Support
+
+Since Spring Data R2DBC 3.5, properties that are annotated with `@Id` and thus represent
+an Id property can additionally be annotated with `@Sequence`. This signals, that the Id property
+value would be fetched from the configured sequence during an `INSERT` statement. By default,
+without `@Sequence`, the identity column is assumed. Consider the following entity.
+
+.Entity with Id generation from sequence
+[source,java]
+----
+@Table
+class MyEntity {
+
+    @Id
+    @Sequence(
+        sequence = "my_seq",
+        schema = "public"
+    )
+    private Long id;
+
+    private String name;
+}
+----
+
+When persisting this entity, before the SQL `INSERT` Spring Data will issue an additional `SELECT`
+statement to fetch the next value from the sequence. For instance, for PostgreSQL the query, issued by
+Spring Data, would look like this:
+
+.Select for next sequence value in PostgreSQL
+[source,sql]
+----
+SELECT nextval('public.my_seq');
+----
+
+The fetched Id would later be included in the `VALUES` list during an insert:
+
+.Insert statement enriched with Id value
+[source,sql]
+----
+INSERT INTO "my_entity"("id", "name") VALUES(?, ?);
+----
+
+For now, the sequence support is provided for almost every dialect supported by Spring Data R2DBC.
+The only exception is MySQL, since MySQL does not have sequences as such.
+
