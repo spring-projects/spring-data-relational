@@ -186,11 +186,11 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
 		PersistentPropertyAccessor<?> propertyAccessor = entity.getPropertyAccessor(source);
 
-		writeProperties(sink, entity, propertyAccessor, entity.isNew(source));
+		writeProperties(sink, entity, propertyAccessor);
 	}
 
 	private void writeProperties(OutboundRow sink, RelationalPersistentEntity<?> entity,
-			PersistentPropertyAccessor<?> accessor, boolean isNew) {
+			PersistentPropertyAccessor<?> accessor) {
 
 		for (RelationalPersistentProperty property : entity) {
 
@@ -213,15 +213,14 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			}
 
 			if (getConversions().isSimpleType(value.getClass())) {
-				writeSimpleInternal(sink, value, isNew, property);
+				writeSimpleInternal(sink, value, property);
 			} else {
-				writePropertyInternal(sink, value, isNew, property);
+				writePropertyInternal(sink, value, property);
 			}
 		}
 	}
 
-	private void writeSimpleInternal(OutboundRow sink, Object value, boolean isNew,
-			RelationalPersistentProperty property) {
+	private void writeSimpleInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
 
 		Object result = getPotentiallyConvertedSimpleWrite(value);
 
@@ -229,8 +228,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 				Parameter.fromOrEmpty(result, getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
-	private void writePropertyInternal(OutboundRow sink, Object value, boolean isNew,
-			RelationalPersistentProperty property) {
+	private void writePropertyInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
 
 		TypeInformation<?> valueType = TypeInformation.of(value.getClass());
 
@@ -239,7 +237,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			if (valueType.getActualType() != null && valueType.getRequiredActualType().isCollectionLike()) {
 
 				// pass-thru nested collections
-				writeSimpleInternal(sink, value, isNew, property);
+				writeSimpleInternal(sink, value, property);
 				return;
 			}
 
@@ -310,7 +308,6 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 		if (customTarget.isPresent()) {
 			return customTarget.get();
-
 		}
 
 		if (type.isEnum()) {
