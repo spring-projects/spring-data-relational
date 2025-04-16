@@ -283,7 +283,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 			SqlIdentifier tableAlias = tableOwner.isRoot() ? null : AggregatePathTableUtils.constructTableAlias(tableOwner);
 
-			ColumnInfos reverseColumnInfos = computeReverseColumnInfo(path);
+			ColumnInfos backReferenceColumnInfos = computeBackReferenceColumnInfos(path);
 
 			ColumnInfo qualifierColumnInfo = null;
 			if (!path.isRoot()) {
@@ -301,7 +301,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 			ColumnInfos idColumnInfos = computeIdColumnInfos(tableOwner, leafEntity);
 
-			return new TableInfo(qualifiedTableName, tableAlias, reverseColumnInfos, qualifierColumnInfo, qualifierColumnType,
+			return new TableInfo(qualifiedTableName, tableAlias, backReferenceColumnInfos, qualifierColumnInfo, qualifierColumnType,
 					idColumnInfos);
 
 		}
@@ -331,7 +331,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			}
 		}
 
-		private static ColumnInfos computeReverseColumnInfo(AggregatePath path) {
+		private static ColumnInfos computeBackReferenceColumnInfos(AggregatePath path) {
 
 			AggregatePath tableOwner = AggregatePathTraversal.getTableOwningPath(path);
 
@@ -386,19 +386,43 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		}
 
+		@Override
+		public ColumnInfos backReferenceColumnInfos() {
+			return backReferenceColumnInfos;
+		}
+
+		/**
+		 * Returns the unique {@link ColumnInfo} referencing the parent table, if such exists.
+		 *
+		 * @return guaranteed not to be {@literal null}.
+		 * @throws IllegalStateException if there is not exactly one back referencing column.
+		 * @deprecated since there might be more than one reverse column instead. Use {@link #backReferenceColumnInfos()} instead.
+		 */
 		@Deprecated(forRemoval = true)
 		public ColumnInfo reverseColumnInfo() {
 			return backReferenceColumnInfos.unique();
 		}
 
+		/**
+		 * The id columns of the underlying table.
+		 * <p>
+		 * These might be:
+		 * <ul><li>the columns representing the id of the entity in question.
+		 * </li><li> the columns representing the id of a parent entity, which _owns_ the table. Note that this case also covers the first case.
+		 * </li><li> or the backReferenceColumns.
+		 * </li></ul>
+		 *
+		 * @return ColumnInfos representing the effective id of this entity. Guaranteed not to be {@literal null}.
+		 */
 		public ColumnInfos effectiveIdColumnInfos() {
 			return backReferenceColumnInfos.columnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
 		}
 	}
 
 	/**
-	 * @param name  The name of the column used to represent this property in the database.
-	 * @param alias The alias for the column used to represent this property in the database.
+	 * @param name  the name of the column used to represent this property in the database.
+	 * @param alias the alias for the column used to represent this property in the database.
+	 * @since 3.2
 	 */
 	record ColumnInfo(SqlIdentifier name, SqlIdentifier alias) {
 
@@ -431,7 +455,8 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * ids and references to such ids.
 	 *
 	 * @author Jens Schauder
-	 **/
+	 * @since 3.5
+	 */
 	class ColumnInfos {
 
 		private final AggregatePath basePath;
