@@ -29,13 +29,13 @@ import org.springframework.data.relational.core.dialect.DefaultSqlTypeResolver;
  * Serves as a hint to the {@link DefaultSqlTypeResolver}, that signals the {@link java.sql.SQLType} to be used.
  * The arguments of this annotation are identical to the methods on {@link java.sql.SQLType} interface, expect for
  * the {@link SQLType#getVendor()}, which is absent, because it typically does not matter as such for the underlying
- * JDBC drivers. For examples of usage, take a look onto {@link DefaultSqlTypeResolver}.
+ * JDBC drivers. The examples of usage, can be found in javadoc of {@link DefaultSqlTypeResolver}.
  *
  * @see DefaultSqlTypeResolver
  * @author Mikhail Polivakha
  */
 @Documented
-@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+@Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SqlType {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,24 @@
 
 package org.springframework.data.relational.core.dialect;
 
-import java.lang.reflect.AnnotatedParameterizedType;
-import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Parameter;
 import java.sql.SQLType;
 
-import org.springframework.core.MethodParameter;
-import org.springframework.data.relational.repository.query.SqlType;
 import org.springframework.data.relational.repository.query.RelationalParameters;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.relational.repository.query.SqlType;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link SqlTypeResolver}. Capable to resolve the {@link SqlType} annotation
- * on the {@link java.lang.annotation.ElementType#TYPE_USE}, like this:
+ * on the {@link java.lang.annotation.ElementType#PARAMETER method parameters}, like this:
  * <p>
  * <pre class="code">
  * List<User> findByAge(&#64;SqlType(name = "TINYINT", vendorTypeNumber = Types.TINYINT) byte age);
  * </pre>
  *
- * Or, if the intention is to specify the actual {@link SQLType}, then the following needs to be done:
+ * Qualification of the actual {@link SQLType} (the sql type of the component), then the following needs to be done:
  * <pre class="code">
- * List<User> findByAgeIn(List<&#64;SqlType(name = "TINYINT", vendorTypeNumber = Types.TINYINT) Integer> age);
+ * List<User> findByAgeIn(&#64;SqlType(name = "TINYINT", vendorTypeNumber = Types.TINYINT) Integer[] age);
  * </pre>
  *
  * @author Mikhail Polivakha
@@ -50,46 +45,21 @@ public class DefaultSqlTypeResolver implements SqlTypeResolver {
 	@Override
 	@Nullable
 	public SQLType resolveSqlType(RelationalParameters.RelationalParameter relationalParameter) {
-		SqlType parameterAnnotation = relationalParameter.getMethodParameter().getParameterAnnotation(SqlType.class);
-
-		if (parameterAnnotation != null) {
-			return new AnnotationBasedSqlType(parameterAnnotation);
-		} else {
-			return null;
-		}
+		return resolveInternally(relationalParameter);
 	}
 
 	@Override
 	@Nullable
 	public SQLType resolveActualSqlType(RelationalParameters.RelationalParameter relationalParameter) {
-		MethodParameter methodParameter = relationalParameter.getMethodParameter();
-
-		TypeInformation<?> typeOfParameter = TypeInformation.of(methodParameter.getParameterType());
-
-		if (typeOfParameter.isCollectionLike()) {
-			Parameter parameter = methodParameter.getParameter();
-			AnnotatedType annotatedType = parameter.getAnnotatedType();
-
-			if (annotatedType instanceof AnnotatedParameterizedType parameterizedType) {
-				return searchForGenericTypeUseAnnotation(parameterizedType);
-			}
-		}
-
-		return null;
+		return resolveInternally(relationalParameter);
 	}
 
-	@Nullable
-	private static AnnotationBasedSqlType searchForGenericTypeUseAnnotation(AnnotatedParameterizedType parameterizedType) {
-		AnnotatedType[] annotatedArguments = parameterizedType.getAnnotatedActualTypeArguments();
+	private static AnnotationBasedSqlType resolveInternally(
+			RelationalParameters.RelationalParameter relationalParameter) {
+		SqlType parameterAnnotation = relationalParameter.getMethodParameter().getParameterAnnotation(SqlType.class);
 
-		if (annotatedArguments.length != 1) {
-			return null;
-		}
-
-		SqlType typeUseSqlTypeAnnotation = annotatedArguments[0].getAnnotation(SqlType.class);
-
-		if (typeUseSqlTypeAnnotation != null) {
-			return new AnnotationBasedSqlType(typeUseSqlTypeAnnotation);
+		if (parameterAnnotation != null) {
+			return new AnnotationBasedSqlType(parameterAnnotation);
 		} else {
 			return null;
 		}

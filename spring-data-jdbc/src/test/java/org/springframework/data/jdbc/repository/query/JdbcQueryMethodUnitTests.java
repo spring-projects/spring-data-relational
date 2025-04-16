@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
@@ -95,7 +96,7 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = createJdbcQueryMethod(
 				"findUserTestMethod",
 				new DefaultSqlTypeResolver(),
-				Integer.class, String.class, List.class
+				Integer.class, String.class, Integer[].class
 		);
 
 		JdbcParameters parameters = queryMethod.getParameters();
@@ -196,7 +197,7 @@ public class JdbcQueryMethodUnitTests {
 	private void findUserTestMethod(
 			@SqlType(name = "TINYINT", vendorTypeNumber = Types.TINYINT) Integer age,
 			String name,
-			List<@SqlType(name = "SMALLINT", vendorTypeNumber = Types.SMALLINT) Integer> statuses
+			@SqlType(name = "SMALLINT", vendorTypeNumber = Types.SMALLINT) Integer[] statuses
 	) {}
 
 	@Lock(LockMode.PESSIMISTIC_READ)
