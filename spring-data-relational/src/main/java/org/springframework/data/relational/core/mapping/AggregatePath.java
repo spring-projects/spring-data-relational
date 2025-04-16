@@ -40,9 +40,9 @@ import org.springframework.util.Assert;
  * Represents a path within an aggregate starting from the aggregate root. The path can be iterated from the leaf to its
  * root.
  *
- * @since 3.2
  * @author Jens Schauder
  * @author Mark Paluch
+ * @since 3.2
  */
 public interface AggregatePath extends Iterable<AggregatePath>, Comparable<AggregatePath> {
 
@@ -242,42 +242,36 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
 	 *
 	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}. TODO: throws
-	 *         NoSuchElementException: No value present for empty paths
+	 * NoSuchElementException: No value present for empty paths
 	 */
 	AggregatePath getIdDefiningParentPath();
 
+	/**
+	 * The path resulting from removing the first element of the {@link AggregatePath}.
+	 *
+	 * @return {@literal null} for any {@link AggregatePath} having less than two elements.
+	 * @since 3.5.0
+	 */
 	@Nullable
 	AggregatePath getTail();
 
+	/**
+	 * Information about a table underlying an entity.
+	 *
+	 * @param qualifiedTableName       the fully qualified name of the table this path is tied to or of the longest ancestor path that is actually
+	 *                                 tied to a table. Must not be {@literal null}.
+	 * @param tableAlias               the alias used for the table on which this path is based. May be {@literal null}.
+	 * @param backReferenceColumnInfos information about the columns used to reference back to the owning entity. Must not be {@literal null}. Since 3.5.
+	 * @param qualifierColumnInfo      the column used for the list index or map key of the leaf property of this path. May be {@literal null}.
+	 * @param qualifierColumnType      the type of the qualifier column of the leaf property of this path or {@literal null} if this is not applicable. May be {@literal null}.
+	 * @param idColumnInfos            the column name of the id column of the ancestor path that represents an actual table. Must not be {@literal null}.
+	 */
 	record TableInfo(
-
-			/*
-			 * The fully qualified name of the table this path is tied to or of the longest ancestor path that is actually
-			 * tied to a table.
-			 */
 			SqlIdentifier qualifiedTableName,
-
-			/*
-			 * The alias used for the table on which this path is based.
-			 */
 			@Nullable SqlIdentifier tableAlias,
-
-			ColumnInfos reverseColumnInfos,
-
-			/*
-			 * The column used for the list index or map key of the leaf property of this path.
-			 */
+			ColumnInfos backReferenceColumnInfos,
 			@Nullable ColumnInfo qualifierColumnInfo,
-
-			/*
-			 * The type of the qualifier column of the leaf property of this path or {@literal null} if this is not
-			 * applicable.
-			 */
 			@Nullable Class<?> qualifierColumnType,
-
-			/*
-			 * The column name of the id column of the ancestor path that represents an actual table.
-			 */
 			ColumnInfos idColumnInfos) {
 
 		static TableInfo of(AggregatePath path) {
@@ -313,7 +307,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		}
 
 		private static ColumnInfos computeIdColumnInfos(AggregatePath tableOwner,
-				RelationalPersistentEntity<?> leafEntity) {
+														RelationalPersistentEntity<?> leafEntity) {
 
 			ColumnInfos idColumnInfos = ColumnInfos.empty(tableOwner);
 			if (!leafEntity.hasIdProperty()) {
@@ -394,16 +388,16 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		@Deprecated(forRemoval = true)
 		public ColumnInfo reverseColumnInfo() {
-			return reverseColumnInfos.unique();
+			return backReferenceColumnInfos.unique();
 		}
 
 		public ColumnInfos effectiveIdColumnInfos() {
-			return reverseColumnInfos.columnInfos.isEmpty() ? idColumnInfos : reverseColumnInfos;
+			return backReferenceColumnInfos.columnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
 		}
 	}
 
 	/**
-	 * @param name The name of the column used to represent this property in the database.
+	 * @param name  The name of the column used to represent this property in the database.
 	 * @param alias The alias for the column used to represent this property in the database.
 	 */
 	record ColumnInfo(SqlIdentifier name, SqlIdentifier alias) {
@@ -415,7 +409,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * @param path the path to the {@literal ColumnInfo} for.
 		 * @return the {@link ColumnInfo}.
 		 * @throws IllegalArgumentException if the path is {@link #isRoot()}, {@link #isEmbedded()} or
-		 *           {@link #isMultiValued()}.
+		 *                                  {@link #isMultiValued()}.
 		 */
 		static ColumnInfo of(AggregatePath path) {
 
@@ -435,7 +429,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * A group of {@link ColumnInfo} values referenced by there respective {@link AggregatePath}. It is used in a similar
 	 * way as {@literal ColumnInfo} when one needs to consider more than a single column. This is relevant for composite
 	 * ids and references to such ids.
-	 * 
+	 *
 	 * @author Jens Schauder
 	 **/
 	class ColumnInfos {
@@ -445,9 +439,9 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Creates a new ColumnInfos instances based on the arguments.
-		 * 
-		 * @param basePath The path on which all other paths in the other argument are based on. For the typical case of a
-		 *          composite id, this would be the path to the composite ids.
+		 *
+		 * @param basePath    The path on which all other paths in the other argument are based on. For the typical case of a
+		 *                    composite id, this would be the path to the composite ids.
 		 * @param columnInfos A map, mapping {@literal AggregatePath} instances to the respective {@literal ColumnInfo}
 		 */
 		private ColumnInfos(AggregatePath basePath, Map<AggregatePath, ColumnInfo> columnInfos) {
@@ -482,7 +476,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Any of the contained {@link ColumnInfo} instances.
-		 * 
+		 *
 		 * @return a {@link ColumnInfo} instance.
 		 * @throws java.util.NoSuchElementException if no instance is available.
 		 */
@@ -494,7 +488,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Checks if {@literal this} instance is empty, i.e. does not contain any {@link ColumnInfo} instance.
-		 * 
+		 *
 		 * @return {@literal true} iff the collection of {@literal ColumnInfo} is empty.
 		 */
 		public boolean isEmpty() {
@@ -503,10 +497,10 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Applies a function to all the {@link ColumnInfo} instances and returns the result in a list.
-		 * 
+		 *
 		 * @param mapper the function to be applied
+		 * @param <T>    the type returned by {@literal mapper} and contained in the resulting {@literal List}
 		 * @return the list of results from mapper.
-		 * @param <T> the type returned by {@literal mapper} and contained in the resulting {@literal List}
 		 */
 		public <T> List<T> toList(Function<ColumnInfo, T> mapper) {
 			return columnInfos.values().stream().map(mapper).toList();
@@ -520,13 +514,13 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * {@link BinaryOperator combiner} is called with the current state (or initial {@code identity}) and the
 		 * accumulated {@code T} state to combine both into a single return value.
 		 *
-		 * @param identity the identity (initial) value for the combiner function.
+		 * @param identity    the identity (initial) value for the combiner function.
 		 * @param accumulator an associative, non-interfering (free of side effects), stateless function for incorporating
-		 *          an additional element into a result.
-		 * @param combiner an associative, non-interfering, stateless function for combining two values, which must be
-		 *          compatible with the {@code accumulator} function.
+		 *                    an additional element into a result.
+		 * @param combiner    an associative, non-interfering, stateless function for combining two values, which must be
+		 *                    compatible with the {@code accumulator} function.
+		 * @param <T>         type of the result.
 		 * @return result of the function.
-		 * @param <T> type of the result.
 		 * @since 3.5
 		 */
 		public <T> T reduce(T identity, BiFunction<AggregatePath, ColumnInfo, T> accumulator, BinaryOperator<T> combiner) {
@@ -544,7 +538,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Calls the consumer for each pair of {@link AggregatePath} and {@literal ColumnInfo}.
-		 * 
+		 *
 		 * @param consumer the function to call.
 		 */
 		public void forEach(BiConsumer<AggregatePath, ColumnInfo> consumer) {
@@ -567,7 +561,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Gets the {@link ColumnInfo} for the provided {@link AggregatePath}
-		 * 
+		 *
 		 * @param path for which to return the {@literal ColumnInfo}
 		 * @return {@literal ColumnInfo} for the given path.
 		 */
@@ -577,7 +571,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		/**
 		 * Constructs an {@link AggregatePath} from the {@literal basePath} and the provided argument.
-		 * 
+		 *
 		 * @param ap {@literal AggregatePath} to be appended to the {@literal basePath}.
 		 * @return the combined (@literal AggregatePath}
 		 */
@@ -597,7 +591,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 	/**
 	 * A builder for {@link ColumnInfos} instances.
-	 * 
+	 *
 	 * @author Jens Schauder
 	 */
 	class ColumInfosBuilder {
@@ -617,8 +611,8 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		/**
 		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
 		 *
-		 * @param path referencing the {@literal ColumnInfo}.
-		 * @param name of the column.
+		 * @param path  referencing the {@literal ColumnInfo}.
+		 * @param name  of the column.
 		 * @param alias alias for the column.
 		 */
 		void add(AggregatePath path, SqlIdentifier name, SqlIdentifier alias) {
@@ -629,8 +623,8 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
 		 *
 		 * @param property referencing the {@literal ColumnInfo}.
-		 * @param name of the column.
-		 * @param alias alias for the column.
+		 * @param name     of the column.
+		 * @param alias    alias for the column.
 		 */
 		public void add(RelationalPersistentProperty property, SqlIdentifier name, SqlIdentifier alias) {
 			add(basePath.append(property), name, alias);
@@ -639,15 +633,16 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		/**
 		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
 		 *
-		 * @param path the path referencing the {@literal ColumnInfo}
+		 * @param path       the path referencing the {@literal ColumnInfo}
 		 * @param columnInfo the {@literal ColumnInfo} added.
-		 *
 		 */
 		public void add(AggregatePath path, ColumnInfo columnInfo) {
 			columnInfoMap.put(path.subtract(basePath), columnInfo);
 		}
+
 		/**
 		 * Build the final {@link ColumnInfos} instance.
+		 *
 		 * @return a {@literal ColumnInfos} instance containing all the added {@link ColumnInfo} instances.
 		 */
 		ColumnInfos build() {
@@ -658,6 +653,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 	/**
 	 * Subtract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath} from the beginning of {@literal this}.
+	 *
 	 * @param basePath the path to be removed.
 	 * @return an AggregatePath that ends like the original {@literal AggregatePath} but has {@literal basePath} removed from the beginning.
 	 */

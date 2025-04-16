@@ -170,7 +170,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		Expression count = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowCountAlias) //
 				: AnalyticFunction.create("count", Expressions.just("*")) //
 						.partitionBy( //
-								basePath.getTableInfo().reverseColumnInfos().toList( //
+								basePath.getTableInfo().backReferenceColumnInfos().toList( //
 										ci -> table.column(ci.name()) //
 								) //
 						).as(rowCountAlias);
@@ -182,7 +182,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		if (!basePath.isRoot()) {
 
 			backReferenceAlias = aliases.getBackReferenceAlias(basePath);
-			columns.add(table.column(basePath.getTableInfo().reverseColumnInfos().unique().name()).as(backReferenceAlias));
+			columns.add(table.column(basePath.getTableInfo().backReferenceColumnInfos().unique().name()).as(backReferenceAlias));
 
 			keyAlias = aliases.getKeyAlias(basePath);
 			Expression keyExpression = basePath.isQualified()
@@ -242,7 +242,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	private static AnalyticFunction createRowNumberExpression(AggregatePath basePath, Table table,
 			String rowNumberAlias) {
-		AggregatePath.ColumnInfos reverseColumnInfos = basePath.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos reverseColumnInfos = basePath.getTableInfo().backReferenceColumnInfos();
 		return AnalyticFunction.create("row_number") //
 				.partitionBy(reverseColumnInfos.toList(ci -> table.column(ci.name()))) //
 				.orderBy(reverseColumnInfos.toList(ci -> table.column(ci.name()))) //

@@ -325,7 +325,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
-		List<Column> reverseColumns = path.getTableInfo().reverseColumnInfos().toList(ci -> currentTable.column(ci.name()));
+		List<Column> reverseColumns = path.getTableInfo().backReferenceColumnInfos().toList(ci -> currentTable.column(ci.name()));
 		List<Column> idColumns = idDefiningParentPath.getTableInfo().idColumnInfos()
 				.toList(ci -> parentTable.column(ci.name()));
 		return new Join( //

@@ -65,7 +65,7 @@ public class JdbcIdentifierBuilder {
 		// references and possibly keys, that form an id
 		if (idDefiningParentPath.hasIdProperty()) {
 
-			AggregatePath.ColumnInfos infos = path.getTableInfo().reverseColumnInfos();
+			AggregatePath.ColumnInfos infos = path.getTableInfo().backReferenceColumnInfos();
 			identifierToUse = infos.reduce(Identifier.empty(), (ap, ci) -> {
 
 				RelationalPersistentProperty property = ap.getRequiredLeafProperty();

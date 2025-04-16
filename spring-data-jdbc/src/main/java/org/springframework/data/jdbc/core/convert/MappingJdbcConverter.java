@@ -408,7 +408,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					return delegate.hasValue(toUse);
 				}
 
-				return delegate.hasValue(aggregatePath.getTableInfo().reverseColumnInfos().any().alias());
+				return delegate.hasValue(aggregatePath.getTableInfo().backReferenceColumnInfos().any().alias());
 			}
 
 			return delegate.hasValue(aggregatePath);
@@ -434,7 +434,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					return delegate.hasValue(toUse);
 				}
 
-				return delegate.hasValue(aggregatePath.getTableInfo().reverseColumnInfos().any().alias());
+				return delegate.hasValue(aggregatePath.getTableInfo().backReferenceColumnInfos().any().alias());
 			}
 
 			return delegate.hasNonEmptyValue(aggregatePath);

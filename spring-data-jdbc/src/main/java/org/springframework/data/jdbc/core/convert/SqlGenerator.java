@@ -35,7 +35,6 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -684,7 +683,7 @@ class SqlGenerator {
 		}
 
 		Table currentTable = sqlContext.getTable(path);
-		AggregatePath.ColumnInfos backRefColumnInfos = path.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos backRefColumnInfos = path.getTableInfo().backReferenceColumnInfos();
 
 		AggregatePath idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
@@ -840,7 +839,7 @@ class SqlGenerator {
 		Delete delete;
 
 		Map<AggregatePath, Column> columns = new TreeMap<>();
-		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().reverseColumnInfos();
+		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().backReferenceColumnInfos();
 		columnInfos.forEach((ag, ci) -> columns.put(ag, table.column(ci.name())));
 
 		if (isFirstNonRoot(path)) {

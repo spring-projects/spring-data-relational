@@ -147,7 +147,7 @@ class DefaultAggregatePathUnitTests {
 	void reverseColumnNames() {
 
 		assertSoftly(softly -> {
-			softly.assertThat(path(CompoundIdEntity.class, "second").getTableInfo().reverseColumnInfos().toList(x -> x))
+			softly.assertThat(path(CompoundIdEntity.class, "second").getTableInfo().backReferenceColumnInfos().toList(x -> x))
 					.extracting(AggregatePath.ColumnInfo::name)
 					.containsExactlyInAnyOrder(quoted("COMPOUND_ID_ENTITY_ONE"), quoted("COMPOUND_ID_ENTITY_TWO"));
 

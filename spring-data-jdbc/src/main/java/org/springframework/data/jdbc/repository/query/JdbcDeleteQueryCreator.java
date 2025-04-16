@@ -138,7 +138,7 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 				// MariaDB prior to 11.6 does not  support aliases for delete statements
 				Table table = sqlContext.getUnaliasedTable(aggregatePath);
 
-				List<Column> reverseColumns = aggregatePath.getTableInfo().reverseColumnInfos()
+				List<Column> reverseColumns = aggregatePath.getTableInfo().backReferenceColumnInfos()
 						.toList(ci -> table.column(ci.name()));
 				Expression expression = TupleExpression.maybeWrap(reverseColumns);
 
