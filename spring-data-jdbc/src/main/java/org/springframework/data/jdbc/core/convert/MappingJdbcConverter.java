@@ -220,7 +220,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return true;
 		}
 
-		if (value instanceof AggregateReference aggregateReference) {
+		if (value instanceof AggregateReference<?, ?> aggregateReference) {
 			return canWriteAsJdbcValue(aggregateReference.getId());
 		}
 
@@ -361,24 +361,9 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 				if (property.isCollectionLike() || property.isMap()) {
 
-					Identifier identifierToUse = this.identifier;
-					AggregatePath idDefiningParentPath = aggregatePath.getIdDefiningParentPath();
+					Identifier identifier = JdbcIdentifierBuilder.forBackReference(MappingJdbcConverter.this, aggregatePath, this.identifier, getWrappedValueProvider(delegate::getValue, aggregatePath));
 
-					// note that the idDefiningParentPath might not itself have an id property, but have a combination of back
-					// references and possibly keys, that form an id
-					if (idDefiningParentPath.hasIdProperty()) {
-
-						RelationalPersistentProperty identifier = idDefiningParentPath.getRequiredIdProperty();
-						AggregatePath idPath = idDefiningParentPath.append(identifier);
-						Object value = delegate.getValue(idPath);
-
-						Assert.state(value != null, "Identifier value must not be null at this point");
-
-						identifierToUse = Identifier.of(aggregatePath.getTableInfo().reverseColumnInfo().name(), value,
-								identifier.getActualType());
-					}
-
-					Iterable<Object> allByPath = relationResolver.findAllByPath(identifierToUse,
+					Iterable<Object> allByPath = relationResolver.findAllByPath(identifier,
 							aggregatePath.getRequiredPersistentPropertyPath());
 
 					if (property.isCollectionLike()) {
@@ -423,7 +408,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					return delegate.hasValue(toUse);
 				}
 
-				return delegate.hasValue(aggregatePath.getTableInfo().reverseColumnInfo().alias());
+				return delegate.hasValue(aggregatePath.getTableInfo().backReferenceColumnInfos().any().alias());
 			}
 
 			return delegate.hasValue(aggregatePath);
@@ -449,7 +434,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					return delegate.hasValue(toUse);
 				}
 
-				return delegate.hasValue(aggregatePath.getTableInfo().reverseColumnInfo().alias());
+				return delegate.hasValue(aggregatePath.getTableInfo().backReferenceColumnInfos().any().alias());
 			}
 
 			return delegate.hasNonEmptyValue(aggregatePath);
@@ -463,6 +448,22 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 					(ResolvingConversionContext) context, identifier);
 		}
 	}
+
+	private static Function<AggregatePath, Object> getWrappedValueProvider(Function<AggregatePath, Object> valueProvider, AggregatePath aggregatePath) {
+
+		AggregatePath idDefiningParentPath = aggregatePath.getIdDefiningParentPath();
+
+		if (!idDefiningParentPath.hasIdProperty()) {
+			return ap -> {
+				throw new IllegalStateException("This should never happen");
+			};
+		}
+
+		RelationalPersistentProperty idProperty = idDefiningParentPath.getRequiredIdProperty();
+		AggregatePath idPath = idProperty.isEntity() ? idDefiningParentPath.append(idProperty) : idDefiningParentPath;
+		return ap -> valueProvider.apply(idPath.append(ap));
+	}
+
 
 	/**
 	 * Marker object to indicate that the property value provider should resolve relations.

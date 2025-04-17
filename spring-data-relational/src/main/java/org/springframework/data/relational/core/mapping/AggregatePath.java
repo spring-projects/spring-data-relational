@@ -16,12 +16,22 @@
 
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -30,11 +40,11 @@ import org.springframework.util.Assert;
  * Represents a path within an aggregate starting from the aggregate root. The path can be iterated from the leaf to its
  * root.
  *
- * @since 3.2
  * @author Jens Schauder
  * @author Mark Paluch
+ * @since 3.2
  */
-public interface AggregatePath extends Iterable<AggregatePath> {
+public interface AggregatePath extends Iterable<AggregatePath>, Comparable<AggregatePath> {
 
 	/**
 	 * Returns the path that has the same beginning but is one segment shorter than this path.
@@ -51,6 +61,15 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 	 * @return Guaranteed to be not {@literal null}.
 	 */
 	AggregatePath append(RelationalPersistentProperty property);
+
+	/**
+	 * Creates a new path by extending the current path by the path passed as an argument.
+	 *
+	 * @param path must not be {@literal null}.
+	 * @return Guaranteed to be not {@literal null}.
+	 * @since 3.5
+	 */
+	AggregatePath append(AggregatePath path);
 
 	/**
 	 * @return {@literal true} if this is a root path for the underlying type.
@@ -223,46 +242,37 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
 	 *
 	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}. TODO: throws
-	 *         NoSuchElementException: No value present for empty paths
+	 * NoSuchElementException: No value present for empty paths
 	 */
 	AggregatePath getIdDefiningParentPath();
 
+	/**
+	 * The path resulting from removing the first element of the {@link AggregatePath}.
+	 *
+	 * @return {@literal null} for any {@link AggregatePath} having less than two elements.
+	 * @since 3.5.0
+	 */
+	@Nullable
+	AggregatePath getTail();
+
+	/**
+	 * Information about a table underlying an entity.
+	 *
+	 * @param qualifiedTableName       the fully qualified name of the table this path is tied to or of the longest ancestor path that is actually
+	 *                                 tied to a table. Must not be {@literal null}.
+	 * @param tableAlias               the alias used for the table on which this path is based. May be {@literal null}.
+	 * @param backReferenceColumnInfos information about the columns used to reference back to the owning entity. Must not be {@literal null}. Since 3.5.
+	 * @param qualifierColumnInfo      the column used for the list index or map key of the leaf property of this path. May be {@literal null}.
+	 * @param qualifierColumnType      the type of the qualifier column of the leaf property of this path or {@literal null} if this is not applicable. May be {@literal null}.
+	 * @param idColumnInfos            the column name of the id column of the ancestor path that represents an actual table. Must not be {@literal null}.
+	 */
 	record TableInfo(
-
-			/*
-			 * The fully qualified name of the table this path is tied to or of the longest ancestor path that is actually
-			 * tied to a table.
-			 */
 			SqlIdentifier qualifiedTableName,
-
-			/*
-			 * The alias used for the table on which this path is based.
-			 */
 			@Nullable SqlIdentifier tableAlias,
-
-			ColumnInfo reverseColumnInfo,
-
-			/*
-			 * The column used for the list index or map key of the leaf property of this path.
-			 */
+			ColumnInfos backReferenceColumnInfos,
 			@Nullable ColumnInfo qualifierColumnInfo,
-
-			/*
-			 * The type of the qualifier column of the leaf property of this path or {@literal null} if this is not
-			 * applicable.
-			 */
 			@Nullable Class<?> qualifierColumnType,
-
-			/*
-			 * The column name of the id column of the ancestor path that represents an actual table.
-			 */
-			SqlIdentifier idColumnName,
-
-			/*
-			 * If the table owning ancestor has an id the column name of that id property is returned. Otherwise the reverse
-			 * column is returned.
-			 */
-			SqlIdentifier effectiveIdColumnName) {
+			ColumnInfos idColumnInfos) {
 
 		static TableInfo of(AggregatePath path) {
 
@@ -273,18 +283,7 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 
 			SqlIdentifier tableAlias = tableOwner.isRoot() ? null : AggregatePathTableUtils.constructTableAlias(tableOwner);
 
-			ColumnInfo reverseColumnInfo = null;
-			if (!tableOwner.isRoot()) {
-
-				AggregatePath idDefiningParentPath = tableOwner.getIdDefiningParentPath();
-				RelationalPersistentProperty leafProperty = tableOwner.getRequiredLeafProperty();
-
-				SqlIdentifier reverseColumnName = leafProperty
-						.getReverseColumnName(idDefiningParentPath.getRequiredLeafEntity());
-
-				reverseColumnInfo = new ColumnInfo(reverseColumnName,
-						AggregatePathTableUtils.prefixWithTableAlias(path, reverseColumnName));
-			}
+			ColumnInfos backReferenceColumnInfos = computeBackReferenceColumnInfos(path);
 
 			ColumnInfo qualifierColumnInfo = null;
 			if (!path.isRoot()) {
@@ -300,30 +299,141 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 				qualifierColumnType = path.getRequiredLeafProperty().getQualifierColumnType();
 			}
 
-			SqlIdentifier idColumnName = leafEntity.hasIdProperty() ? leafEntity.getIdColumn() : null;
+			ColumnInfos idColumnInfos = computeIdColumnInfos(tableOwner, leafEntity);
 
-			SqlIdentifier effectiveIdColumnName = tableOwner.isRoot() ? idColumnName : reverseColumnInfo.name();
+			return new TableInfo(qualifiedTableName, tableAlias, backReferenceColumnInfos, qualifierColumnInfo, qualifierColumnType,
+					idColumnInfos);
 
-			return new TableInfo(qualifiedTableName, tableAlias, reverseColumnInfo, qualifierColumnInfo, qualifierColumnType,
-					idColumnName, effectiveIdColumnName);
+		}
 
+		private static ColumnInfos computeIdColumnInfos(AggregatePath tableOwner,
+														RelationalPersistentEntity<?> leafEntity) {
+
+			ColumnInfos idColumnInfos = ColumnInfos.empty(tableOwner);
+			if (!leafEntity.hasIdProperty()) {
+				return idColumnInfos;
+			}
+
+			RelationalPersistentProperty idProperty = leafEntity.getRequiredIdProperty();
+			AggregatePath idPath = tableOwner.append(idProperty);
+
+			if (idProperty.isEntity()) {
+				ColumInfosBuilder ciBuilder = new ColumInfosBuilder(idPath);
+				idPath.getRequiredLeafEntity().doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
+					AggregatePath idElementPath = idPath.append(p);
+					ciBuilder.add(idElementPath, ColumnInfo.of(idElementPath));
+				});
+				return ciBuilder.build();
+			} else {
+				ColumInfosBuilder ciBuilder = new ColumInfosBuilder(idPath.getParentPath());
+				ciBuilder.add(idPath, ColumnInfo.of(idPath));
+				return ciBuilder.build();
+			}
+		}
+
+		private static ColumnInfos computeBackReferenceColumnInfos(AggregatePath path) {
+
+			AggregatePath tableOwner = AggregatePathTraversal.getTableOwningPath(path);
+
+			if (tableOwner.isRoot()) {
+				return ColumnInfos.empty(tableOwner);
+			}
+
+			AggregatePath idDefiningParentPath = tableOwner.getIdDefiningParentPath();
+			RelationalPersistentProperty leafProperty = tableOwner.getRequiredLeafProperty();
+
+			RelationalPersistentProperty idProperty = idDefiningParentPath.getLeafEntity().getIdProperty();
+
+			if (idProperty != null) {
+				if (idProperty.isEntity()) {
+
+					AggregatePath idBasePath = idDefiningParentPath.append(idProperty);
+					ColumInfosBuilder ciBuilder = new ColumInfosBuilder(idBasePath);
+
+					RelationalPersistentEntity<?> idEntity = idBasePath.getRequiredLeafEntity();
+					idEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
+						AggregatePath idElementPath = idBasePath.append(p);
+						SqlIdentifier name = idElementPath.getColumnInfo().name();
+						name = name.transform(n -> idDefiningParentPath.getTableInfo().qualifiedTableName.getReference() + "_" + n);
+
+						ciBuilder.add(idElementPath, name, name);
+					});
+
+					return ciBuilder.build();
+
+				} else {
+
+					ColumInfosBuilder ciBuilder = new ColumInfosBuilder(idDefiningParentPath);
+					SqlIdentifier reverseColumnName = leafProperty
+							.getReverseColumnName(idDefiningParentPath.getRequiredLeafEntity());
+
+					ciBuilder.add(idProperty, reverseColumnName,
+							AggregatePathTableUtils.prefixWithTableAlias(path, reverseColumnName));
+
+					return ciBuilder.build();
+				}
+			} else {
+
+				ColumInfosBuilder ciBuilder = new ColumInfosBuilder(idDefiningParentPath);
+				SqlIdentifier reverseColumnName = leafProperty
+						.getReverseColumnName(idDefiningParentPath.getRequiredLeafEntity());
+
+				ciBuilder.add(idDefiningParentPath, reverseColumnName,
+						AggregatePathTableUtils.prefixWithTableAlias(path, reverseColumnName));
+
+				return ciBuilder.build();
+			}
+
+		}
+
+		@Override
+		public ColumnInfos backReferenceColumnInfos() {
+			return backReferenceColumnInfos;
+		}
+
+		/**
+		 * Returns the unique {@link ColumnInfo} referencing the parent table, if such exists.
+		 *
+		 * @return guaranteed not to be {@literal null}.
+		 * @throws IllegalStateException if there is not exactly one back referencing column.
+		 * @deprecated since there might be more than one reverse column instead. Use {@link #backReferenceColumnInfos()} instead.
+		 */
+		@Deprecated(forRemoval = true)
+		public ColumnInfo reverseColumnInfo() {
+			return backReferenceColumnInfos.unique();
+		}
+
+		/**
+		 * The id columns of the underlying table.
+		 * <p>
+		 * These might be:
+		 * <ul><li>the columns representing the id of the entity in question.
+		 * </li><li> the columns representing the id of a parent entity, which _owns_ the table. Note that this case also covers the first case.
+		 * </li><li> or the backReferenceColumns.
+		 * </li></ul>
+		 *
+		 * @return ColumnInfos representing the effective id of this entity. Guaranteed not to be {@literal null}.
+		 */
+		public ColumnInfos effectiveIdColumnInfos() {
+			return backReferenceColumnInfos.columnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
 		}
 	}
 
-	record ColumnInfo(
-
-			/* The name of the column used to represent this property in the database. */
-			SqlIdentifier name, /* The alias for the column used to represent this property in the database. */
-			SqlIdentifier alias) {
+	/**
+	 * @param name  the name of the column used to represent this property in the database.
+	 * @param alias the alias for the column used to represent this property in the database.
+	 * @since 3.2
+	 */
+	record ColumnInfo(SqlIdentifier name, SqlIdentifier alias) {
 
 		/**
 		 * Create a {@link ColumnInfo} from an aggregate path. ColumnInfo can be created for simple type single-value
 		 * properties only.
 		 *
-		 * @param path
+		 * @param path the path to the {@literal ColumnInfo} for.
 		 * @return the {@link ColumnInfo}.
 		 * @throws IllegalArgumentException if the path is {@link #isRoot()}, {@link #isEmbedded()} or
-		 *           {@link #isMultiValued()}.
+		 *                                  {@link #isMultiValued()}.
 		 */
 		static ColumnInfo of(AggregatePath path) {
 
@@ -338,4 +448,241 @@ public interface AggregatePath extends Iterable<AggregatePath> {
 			return new ColumnInfo(columnName, AggregatePathTableUtils.prefixWithTableAlias(path, columnName));
 		}
 	}
+
+	/**
+	 * A group of {@link ColumnInfo} values referenced by there respective {@link AggregatePath}. It is used in a similar
+	 * way as {@literal ColumnInfo} when one needs to consider more than a single column. This is relevant for composite
+	 * ids and references to such ids.
+	 *
+	 * @author Jens Schauder
+	 * @since 3.5
+	 */
+	class ColumnInfos {
+
+		private final AggregatePath basePath;
+		private final Map<AggregatePath, ColumnInfo> columnInfos;
+
+		/**
+		 * Creates a new ColumnInfos instances based on the arguments.
+		 *
+		 * @param basePath    The path on which all other paths in the other argument are based on. For the typical case of a
+		 *                    composite id, this would be the path to the composite ids.
+		 * @param columnInfos A map, mapping {@literal AggregatePath} instances to the respective {@literal ColumnInfo}
+		 */
+		private ColumnInfos(AggregatePath basePath, Map<AggregatePath, ColumnInfo> columnInfos) {
+
+			this.basePath = basePath;
+			this.columnInfos = columnInfos;
+		}
+
+		/**
+		 * An empty {@literal ColumnInfos} instance with a fixed base path. Useful as a base when collecting
+		 * {@link ColumnInfo} instances into an {@literal ColumnInfos} instance.
+		 *
+		 * @param basePath The path on which paths in the {@literal ColumnInfos} or derived objects will be based on.
+		 * @return an empty instance save the {@literal basePath}.
+		 */
+		public static ColumnInfos empty(AggregatePath basePath) {
+			return new ColumnInfos(basePath, new HashMap<>());
+		}
+
+		/**
+		 * If this instance contains exactly one {@link ColumnInfo} it will be returned.
+		 *
+		 * @return the unique {@literal ColumnInfo} if present.
+		 * @throws IllegalStateException if the number of contained {@literal ColumnInfo} instances is not exactly 1.
+		 */
+		public ColumnInfo unique() {
+
+			Collection<ColumnInfo> values = columnInfos.values();
+			Assert.state(values.size() == 1, "ColumnInfo is not unique");
+			return values.iterator().next();
+		}
+
+		/**
+		 * Any of the contained {@link ColumnInfo} instances.
+		 *
+		 * @return a {@link ColumnInfo} instance.
+		 * @throws java.util.NoSuchElementException if no instance is available.
+		 */
+		public ColumnInfo any() {
+
+			Collection<ColumnInfo> values = columnInfos.values();
+			return values.iterator().next();
+		}
+
+		/**
+		 * Checks if {@literal this} instance is empty, i.e. does not contain any {@link ColumnInfo} instance.
+		 *
+		 * @return {@literal true} iff the collection of {@literal ColumnInfo} is empty.
+		 */
+		public boolean isEmpty() {
+			return columnInfos.isEmpty();
+		}
+
+		/**
+		 * Applies a function to all the {@link ColumnInfo} instances and returns the result in a list.
+		 *
+		 * @param mapper the function to be applied
+		 * @param <T>    the type returned by {@literal mapper} and contained in the resulting {@literal List}
+		 * @return the list of results from mapper.
+		 */
+		public <T> List<T> toList(Function<ColumnInfo, T> mapper) {
+			return columnInfos.values().stream().map(mapper).toList();
+		}
+
+		/**
+		 * Performs a {@link Stream#reduce(Object, BiFunction, BinaryOperator)} on {@link ColumnInfo} and
+		 * {@link AggregatePath} to reduce the results into a single {@code T} return value.
+		 * <p>
+		 * If {@code ColumnInfos} is empty, then {@code identity} is returned. Without invoking {@code combiner}. The
+		 * {@link BinaryOperator combiner} is called with the current state (or initial {@code identity}) and the
+		 * accumulated {@code T} state to combine both into a single return value.
+		 *
+		 * @param identity    the identity (initial) value for the combiner function.
+		 * @param accumulator an associative, non-interfering (free of side effects), stateless function for incorporating
+		 *                    an additional element into a result.
+		 * @param combiner    an associative, non-interfering, stateless function for combining two values, which must be
+		 *                    compatible with the {@code accumulator} function.
+		 * @param <T>         type of the result.
+		 * @return result of the function.
+		 * @since 3.5
+		 */
+		public <T> T reduce(T identity, BiFunction<AggregatePath, ColumnInfo, T> accumulator, BinaryOperator<T> combiner) {
+
+			T result = identity;
+
+			for (Map.Entry<AggregatePath, ColumnInfo> entry : columnInfos.entrySet()) {
+
+				T mapped = accumulator.apply(entry.getKey(), entry.getValue());
+				result = combiner.apply(result, mapped);
+			}
+
+			return result;
+		}
+
+		/**
+		 * Calls the consumer for each pair of {@link AggregatePath} and {@literal ColumnInfo}.
+		 *
+		 * @param consumer the function to call.
+		 */
+		public void forEach(BiConsumer<AggregatePath, ColumnInfo> consumer) {
+			columnInfos.forEach(consumer);
+		}
+
+		/**
+		 * Calls the {@literal mapper} for each pair one pair of {@link AggregatePath} and {@link ColumnInfo}, if there is
+		 * any.
+		 *
+		 * @param mapper the function to call.
+		 * @return the result of the mapper
+		 * @throws java.util.NoSuchElementException if this {@literal ColumnInfo} is empty.
+		 */
+		public <T> T any(BiFunction<AggregatePath, ColumnInfo, T> mapper) {
+
+			Map.Entry<AggregatePath, ColumnInfo> any = columnInfos.entrySet().iterator().next();
+			return mapper.apply(any.getKey(), any.getValue());
+		}
+
+		/**
+		 * Gets the {@link ColumnInfo} for the provided {@link AggregatePath}
+		 *
+		 * @param path for which to return the {@literal ColumnInfo}
+		 * @return {@literal ColumnInfo} for the given path.
+		 */
+		public ColumnInfo get(AggregatePath path) {
+			return columnInfos.get(path);
+		}
+
+		/**
+		 * Constructs an {@link AggregatePath} from the {@literal basePath} and the provided argument.
+		 *
+		 * @param ap {@literal AggregatePath} to be appended to the {@literal basePath}.
+		 * @return the combined (@literal AggregatePath}
+		 */
+		public AggregatePath fullPath(AggregatePath ap) {
+			return basePath.append(ap);
+		}
+
+		/**
+		 * Number of {@literal ColumnInfo} elements in this instance.
+		 *
+		 * @return the size of the collection of {@literal ColumnInfo}.
+		 */
+		public int size() {
+			return columnInfos.size();
+		}
+	}
+
+	/**
+	 * A builder for {@link ColumnInfos} instances.
+	 *
+	 * @author Jens Schauder
+	 */
+	class ColumInfosBuilder {
+		private final AggregatePath basePath;
+
+		private final Map<AggregatePath, ColumnInfo> columnInfoMap = new TreeMap<>();
+
+		/**
+		 * Start construction with just the {@literal basePath} which all other paths are build upon.
+		 *
+		 * @param basePath must not be null.
+		 */
+		public ColumInfosBuilder(AggregatePath basePath) {
+			this.basePath = basePath;
+		}
+
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param path  referencing the {@literal ColumnInfo}.
+		 * @param name  of the column.
+		 * @param alias alias for the column.
+		 */
+		void add(AggregatePath path, SqlIdentifier name, SqlIdentifier alias) {
+			add(path, new ColumnInfo(name, alias));
+		}
+
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param property referencing the {@literal ColumnInfo}.
+		 * @param name     of the column.
+		 * @param alias    alias for the column.
+		 */
+		public void add(RelationalPersistentProperty property, SqlIdentifier name, SqlIdentifier alias) {
+			add(basePath.append(property), name, alias);
+		}
+
+		/**
+		 * Adds a {@link ColumnInfo} to the {@link ColumnInfos} under construction.
+		 *
+		 * @param path       the path referencing the {@literal ColumnInfo}
+		 * @param columnInfo the {@literal ColumnInfo} added.
+		 */
+		public void add(AggregatePath path, ColumnInfo columnInfo) {
+			columnInfoMap.put(path.subtract(basePath), columnInfo);
+		}
+
+		/**
+		 * Build the final {@link ColumnInfos} instance.
+		 *
+		 * @return a {@literal ColumnInfos} instance containing all the added {@link ColumnInfo} instances.
+		 */
+		ColumnInfos build() {
+			return new ColumnInfos(basePath, columnInfoMap);
+		}
+
+	}
+
+	/**
+	 * Subtract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath} from the beginning of {@literal this}.
+	 *
+	 * @param basePath the path to be removed.
+	 * @return an AggregatePath that ends like the original {@literal AggregatePath} but has {@literal basePath} removed from the beginning.
+	 */
+	@Nullable
+	AggregatePath subtract(@Nullable AggregatePath basePath);
+
 }

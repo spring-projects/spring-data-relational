@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
@@ -34,6 +35,7 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -43,7 +45,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  *
  * @author Chirag Tailor
  */
-class SqlParametersFactoryTest {
+class SqlParametersFactoryUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
@@ -51,20 +53,20 @@ class SqlParametersFactoryTest {
 	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
 	@Test // DATAJDBC-412
-	public void considersConfiguredWriteConverterForIdValueObjects_onRead() {
+	void considersConfiguredWriteConverterForIdValueObjects_onRead() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
 				singletonList(IdValueToStringConverter.INSTANCE));
 
 		String rawId = "batman";
 		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forQueryById(new IdValue(rawId),
-				WithValueObjectId.class, SqlGenerator.ID_SQL_PARAMETER);
+				WithValueObjectId.class);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(rawId);
 	}
 
 	@Test // DATAJDBC-349
-	public void considersConfiguredWriteConverterForIdValueObjectsWhichReferencedInOneToManyRelationship() {
+	void considersConfiguredWriteConverterForIdValueObjectsWhichReferencedInOneToManyRelationship() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
 				singletonList(IdValueToStringConverter.INSTANCE));
@@ -85,8 +87,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
 	}
 
-	@Test
-	// DATAJDBC-146
+	@Test // DATAJDBC-146
 	void identifiersGetAddedAsParameters() {
 
 		long id = 4711L;
@@ -100,8 +101,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("reference")).isEqualTo(reference);
 	}
 
-	@Test
-	// DATAJDBC-146
+	@Test // DATAJDBC-146
 	void additionalIdentifierForIdDoesNotLeadToDuplicateParameters() {
 
 		long id = 4711L;
@@ -113,8 +113,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(id);
 	}
 
-	@Test
-	// DATAJDBC-235
+	@Test // DATAJDBC-235
 	void considersConfiguredWriteConverter() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -128,8 +127,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("flag")).isEqualTo("T");
 	}
 
-	@Test
-	// DATAJDBC-412
+	@Test // DATAJDBC-412
 	void considersConfiguredWriteConverterForIdValueObjects_onWrite() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -146,8 +144,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(value);
 	}
 
-	@Test
-	// GH-1405
+	@Test // GH-1405
 	void parameterNamesGetSanitized() {
 
 		WithIllegalCharacters entity = new WithIllegalCharacters(23L, "aValue");
@@ -160,6 +157,22 @@ class SqlParametersFactoryTest {
 
 		assertThat(sqlParameterSource.getValue("i.d")).isNull();
 		assertThat(sqlParameterSource.getValue("val&ue")).isNull();
+	}
+
+	@Test // GH-574
+	void parametersForInsertForEmbeddedWrappedId() {
+
+		SingleEmbeddedIdEntity entity = new SingleEmbeddedIdEntity(new WrappedPk(23L), "alpha");
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(entity, SingleEmbeddedIdEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(parameterSource.getParameterNames()).containsExactlyInAnyOrder("id", "name");
+			softly.assertThat(parameterSource.getValue("id")).isEqualTo(23L);
+			softly.assertThat(parameterSource.getValue("name")).isEqualTo("alpha");
+		});
 	}
 
 	@WritingConverter
@@ -299,6 +312,17 @@ class SqlParametersFactoryTest {
 
 		MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(converters), new DefaultJdbcTypeFactory(mock(JdbcOperations.class)));
+		context.setSimpleTypeHolder(converter.getConversions().getSimpleTypeHolder());
+
 		return new SqlParametersFactory(context, converter);
+	}
+
+	private record WrappedPk(Long id) {
+	}
+
+	private record SingleEmbeddedIdEntity( //
+			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
+			String name //
+	) {
 	}
 }

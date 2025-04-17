@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
@@ -72,19 +73,16 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
-				insert.getIdValueSource());
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(), insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
 	<T> void executeBatchInsertRoot(DbAction.BatchInsertRoot<T> batchInsertRoot) {
 
 		List<DbAction.InsertRoot<T>> inserts = batchInsertRoot.getActions();
-		List<InsertSubject<T>> insertSubjects = inserts.stream()
-				.map(insert -> InsertSubject.describedBy(insert.getEntity(), Identifier.empty())).collect(Collectors.toList());
+		List<InsertSubject<T>> insertSubjects = inserts.stream().map(insert -> InsertSubject.describedBy(insert.getEntity(), Identifier.empty())).collect(Collectors.toList());
 
-		Object[] ids = accessStrategy.insert(insertSubjects, batchInsertRoot.getEntityType(),
-				batchInsertRoot.getBatchValue());
+		Object[] ids = accessStrategy.insert(insertSubjects, batchInsertRoot.getEntityType(), batchInsertRoot.getBatchValue());
 
 		for (int i = 0; i < inserts.size(); i++) {
 			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
@@ -94,17 +92,14 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys,
-				insert.getIdValueSource());
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys, insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
 	<T> void executeBatchInsert(DbAction.BatchInsert<T> batchInsert) {
 
 		List<DbAction.Insert<T>> inserts = batchInsert.getActions();
-		List<InsertSubject<T>> insertSubjects = inserts.stream()
-				.map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter)))
-				.collect(Collectors.toList());
+		List<InsertSubject<T>> insertSubjects = inserts.stream().map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter))).collect(Collectors.toList());
 
 		Object[] ids = accessStrategy.insert(insertSubjects, batchInsert.getEntityType(), batchInsert.getBatchValue());
 
@@ -176,20 +171,34 @@ class JdbcAggregateChangeExecutionContext {
 		Object id = getParentId(action);
 
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()), id);
+				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()),
+						getValueProvider(id, context.getAggregatePath(action.getPropertyPath()), converter));
 
-		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
-				.entrySet()) {
+		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
 			identifier = identifier.withQualifier(context.getAggregatePath(qualifier.getKey()), qualifier.getValue());
 		}
 
 		return identifier.build();
 	}
 
+	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
+
+		RelationalPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
+
+		Function<AggregatePath, Object> valueProvider = ap -> {
+			if (entity == null) {
+				return idValue;
+			} else {
+				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+			}
+		};
+		return valueProvider;
+	}
+
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
 
-		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action,
-				context.getAggregatePath(action.getPropertyPath()).getIdDefiningParentPath());
+		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, context.getAggregatePath(action.getPropertyPath()).getIdDefiningParentPath());
 
 		return getPotentialGeneratedIdFrom(idOwningAction);
 	}
@@ -198,8 +207,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		if (!(action instanceof DbAction.WithDependingOn<?> withDependingOn)) {
 
-			Assert.state(idPath.isRoot(),
-					"When the id path is not empty the id providing action should be of type WithDependingOn");
+			Assert.state(idPath.isRoot(), "When the id path is not empty the id providing action should be of type WithDependingOn");
 
 			return action;
 		}
@@ -267,20 +275,16 @@ class JdbcAggregateChangeExecutionContext {
 
 				if (newEntity != action.getEntity()) {
 
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				} else if (insert.getPropertyPath().getLeafProperty().isCollectionLike()) {
 
-					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				}
 			}
 		}
 
 		if (roots.isEmpty()) {
-			throw new IllegalStateException(
-					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed",
-							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+			throw new IllegalStateException(String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed", DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
 		}
 
 		Collections.reverse(roots);
@@ -289,23 +293,19 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,
-			StagedValues cascadingValues) {
+	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId, StagedValues cascadingValues) {
 
 		S originalEntity = action.getEntity();
 
-		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context
-				.getRequiredPersistentEntity(action.getEntityType());
-		PersistentPropertyPathAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity,
-				originalEntity);
+		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context.getRequiredPersistentEntity(action.getEntityType());
+		PersistentPropertyPathAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
 
 		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 
 		// set values of changed immutables referenced by this entity
-		cascadingValues.forEachPath(action, (persistentPropertyPath, o) -> propertyAccessor
-				.setProperty(getRelativePath(action, persistentPropertyPath), o));
+		cascadingValues.forEachPath(action, (persistentPropertyPath, o) -> propertyAccessor.setProperty(getRelativePath(action, persistentPropertyPath), o));
 
 		return propertyAccessor.getBean();
 	}
@@ -337,8 +337,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
 
-			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+			throw new IncorrectUpdateSemanticsDataAccessException(String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
 		}
 	}
 
@@ -359,8 +358,7 @@ class JdbcAggregateChangeExecutionContext {
 	 */
 	private static class StagedValues {
 
-		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
-				ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
+		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE, ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
 
 		Map<DbAction, Map<PersistentPropertyPath, StagedValue>> values = new HashMap<>();
 
@@ -368,12 +366,12 @@ class JdbcAggregateChangeExecutionContext {
 		 * Adds a value that needs to be set in an entity higher up in the tree of entities in the aggregate. If the
 		 * attribute to be set is multivalued this method expects only a single element.
 		 *
-		 * @param action The action responsible for persisting the entity that needs the added value set. Must not be
-		 *          {@literal null}.
-		 * @param path The path to the property in which to set the value. Must not be {@literal null}.
+		 * @param action    The action responsible for persisting the entity that needs the added value set. Must not be
+		 *                  {@literal null}.
+		 * @param path      The path to the property in which to set the value. Must not be {@literal null}.
 		 * @param qualifier If {@code path} is a qualified multivalued properties this parameter contains the qualifier. May
-		 *          be {@literal null}.
-		 * @param value The value to be set. Must not be {@literal null}.
+		 *                  be {@literal null}.
+		 * @param value     The value to be set. Must not be {@literal null}.
 		 */
 		void stage(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
 
@@ -386,11 +384,9 @@ class JdbcAggregateChangeExecutionContext {
 
 			MultiValueAggregator<T> aggregator = getAggregatorFor(path);
 
-			Map<PersistentPropertyPath, StagedValue> valuesForPath = this.values.computeIfAbsent(action,
-					dbAction -> new HashMap<>());
+			Map<PersistentPropertyPath, StagedValue> valuesForPath = this.values.computeIfAbsent(action, dbAction -> new HashMap<>());
 
-			StagedValue stagedValue = valuesForPath.computeIfAbsent(path,
-					persistentPropertyPath -> new StagedValue(aggregator.createEmptyInstance()));
+			StagedValue stagedValue = valuesForPath.computeIfAbsent(path, persistentPropertyPath -> new StagedValue(aggregator.createEmptyInstance()));
 			T currentValue = (T) stagedValue.value;
 
 			stagedValue.value = aggregator.add(currentValue, qualifier, value);
@@ -430,7 +426,8 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	private static class StagedValue {
-		@Nullable Object value;
+		@Nullable
+		Object value;
 		boolean isStaged;
 
 		public StagedValue(@Nullable Object value) {

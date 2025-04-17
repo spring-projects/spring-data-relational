@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.jdbc.core.JdbcAggregateChangeExecutionContext.*;
 import static org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder.*;
 
 import java.util.ArrayList;
@@ -257,7 +258,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	Identifier createBackRef(long value) {
-		return forBackReferences(converter, toAggregatePath("content"), value).build();
+		return forBackReferences(converter, toAggregatePath("content"), getValueProvider(value, toAggregatePath("content"), converter)).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
