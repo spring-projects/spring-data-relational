@@ -147,4 +147,13 @@ public interface Dialect {
 	default boolean supportsSingleQueryLoading() {
 		return true;
 	}
+
+	/**
+	 * Returns a {@link SqlTypeResolver} of this dialect.
+	 *
+	 * @since 4.0
+	 */
+	default SqlTypeResolver getSqlTypeResolver() {
+		return DefaultSqlTypeResolver.INSTANCE;
+	}
 }
