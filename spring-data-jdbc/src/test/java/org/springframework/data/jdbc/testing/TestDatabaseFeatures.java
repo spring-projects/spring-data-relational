@@ -62,12 +62,12 @@ public class TestDatabaseFeatures {
 
 	private void supportsArrays() {
 
-		assumeThat(database).isNotIn(Database.MySql, Database.MariaDb, Database.SqlServer, Database.Db2, Database.Oracle);
+		assumeThat(database).isNotIn(Database.MySql, Database.MariaDb, Database.SqlServer, Database.Db2, Database.Oracle, Database.GaussDB);
 	}
 
 	private void supportsNanosecondPrecision() {
 
-		assumeThat(database).isNotIn(Database.MySql, Database.PostgreSql, Database.MariaDb, Database.SqlServer);
+		assumeThat(database).isNotIn(Database.MySql, Database.PostgreSql, Database.MariaDb, Database.SqlServer, Database.GaussDB);
 	}
 
 	private void supportsMultiDimensionalArrays() {
@@ -93,7 +93,7 @@ public class TestDatabaseFeatures {
 	}
 
 	public enum Database {
-		Hsql, H2, MySql, MariaDb, PostgreSql, SqlServer("microsoft"), Db2, Oracle;
+		Hsql, H2, MySql, MariaDb, PostgreSql, SqlServer("microsoft"), Db2, Oracle, GaussDB;
 
 		private final String identification;
 
