@@ -138,6 +138,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.huaweicloud.gaussdb</groupId>
+			<artifactId>gaussdbjdbc</artifactId>
+			<version>${gaussdb.version}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
 			<groupId>org.mariadb.jdbc</groupId>
 			<artifactId>mariadb-java-client</artifactId>
 			<version>${mariadb-java-client.version}</version>
@@ -310,6 +317,37 @@
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>gaussdb</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>gaussdb-test</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude/>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>gaussdb</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
 							</execution>

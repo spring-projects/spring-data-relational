@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcGaussDBDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
@@ -139,7 +140,9 @@ public class DialectResolver {
 			if (name.contains("oracle")) {
 				return OracleDialect.INSTANCE;
 			}
-
+			if (name.contains("gaussdb")) {
+				return JdbcGaussDBDialect.INSTANCE;
+			}
 			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name));
 			return null;
 		}

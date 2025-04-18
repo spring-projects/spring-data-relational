@@ -25,7 +25,7 @@ import java.util.Locale;
  */
 public enum DatabaseType {
 
-	DB2, HSQL, H2, MARIADB, MYSQL, ORACLE, POSTGRES, SQL_SERVER("mssql");
+	DB2, HSQL, H2, MARIADB, MYSQL, ORACLE, POSTGRES, SQL_SERVER("mssql"), GAUSSDB;
 
 	private final String profile;
 
