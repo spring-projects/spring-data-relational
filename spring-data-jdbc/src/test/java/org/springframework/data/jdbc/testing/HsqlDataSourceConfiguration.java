@@ -30,7 +30,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
  * @author Oliver Gierke
  */
 @Configuration(proxyBeanMethods = false)
-@Profile({ "hsql", "!h2 && !mysql && !mariadb && !postgres && !oracle && !db2 && !mssql" })
+@Profile({ "hsql", "!h2 && !mysql && !mariadb && !postgres && !oracle && !db2 && !mssql && !gaussdb" })
 class HsqlDataSourceConfiguration {
 
 	private final TestClass testClass;
