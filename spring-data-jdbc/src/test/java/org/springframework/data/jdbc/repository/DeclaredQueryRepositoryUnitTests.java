@@ -16,8 +16,11 @@
 
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -30,11 +33,11 @@ import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
@@ -93,7 +96,7 @@ public class DeclaredQueryRepositoryUnitTests {
 
 	private @NotNull <T extends CrudRepository> T repository(Class<T> repositoryInterface) {
 
-		Dialect dialect = HsqlDbDialect.INSTANCE;
+		Dialect dialect = JdbcHsqlDbDialect.INSTANCE;
 
 		RelationalMappingContext context = new JdbcMappingContext();
 

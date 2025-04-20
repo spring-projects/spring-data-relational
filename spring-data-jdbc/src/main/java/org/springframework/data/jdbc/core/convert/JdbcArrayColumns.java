@@ -88,12 +88,5 @@ public interface JdbcArrayColumns extends ArrayColumns {
 		public boolean isSupported() {
 			return true;
 		}
-
-		@Override
-		public String getArrayTypeName(SQLType jdbcType) {
-			return jdbcType.getName();
-		}
-
 	}
-
 }

@@ -29,14 +29,15 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcMariaDbDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcOracleDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.H2Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
-import org.springframework.data.relational.core.dialect.MariaDbDialect;
-import org.springframework.data.relational.core.dialect.OracleDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -50,6 +51,7 @@ import org.springframework.util.StringUtils;
  * available {@link JdbcDialectProvider extensions}.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  * @see Dialect
  * @see SpringFactoriesLoader
@@ -109,23 +111,23 @@ public class DialectResolver {
 		}
 
 		@Nullable
-		private static Dialect getDialect(Connection connection) throws SQLException {
+		private static JdbcDialect getDialect(Connection connection) throws SQLException {
 
 			DatabaseMetaData metaData = connection.getMetaData();
 
 			String name = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
 
 			if (name.contains("hsql")) {
-				return HsqlDbDialect.INSTANCE;
+				return JdbcHsqlDbDialect.INSTANCE;
 			}
 			if (name.contains("h2")) {
-				return H2Dialect.INSTANCE;
+				return JdbcH2Dialect.INSTANCE;
 			}
 			if (name.contains("mysql")) {
 				return new JdbcMySqlDialect(getIdentifierProcessing(metaData));
 			}
 			if (name.contains("mariadb")) {
-				return new MariaDbDialect(getIdentifierProcessing(metaData));
+				return new JdbcMariaDbDialect(getIdentifierProcessing(metaData));
 			}
 			if (name.contains("postgresql")) {
 				return JdbcPostgresDialect.INSTANCE;
@@ -137,7 +139,7 @@ public class DialectResolver {
 				return JdbcDb2Dialect.INSTANCE;
 			}
 			if (name.contains("oracle")) {
-				return OracleDialect.INSTANCE;
+				return JdbcOracleDialect.INSTANCE;
 			}
 
 			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name));

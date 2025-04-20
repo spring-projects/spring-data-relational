@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
@@ -38,12 +39,12 @@ public class NonQuotingDialect extends AbstractDialect implements Dialect {
 
 	@Override
 	public LimitClause limit() {
-		return HsqlDbDialect.INSTANCE.limit();
+		return JdbcHsqlDbDialect.INSTANCE.limit();
 	}
 
 	@Override
 	public LockClause lock() {
-		return HsqlDbDialect.INSTANCE.lock();
+		return JdbcHsqlDbDialect.INSTANCE.lock();
 	}
 
 	@Override

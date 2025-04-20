@@ -34,7 +34,11 @@ public class SqlServerDialect extends AbstractDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.SqlServerDialect} or
+	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect}.
 	 */
+	@Deprecated(forRemoval = true)
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
 	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing

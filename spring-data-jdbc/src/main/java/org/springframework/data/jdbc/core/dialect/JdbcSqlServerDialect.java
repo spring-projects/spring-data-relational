@@ -35,7 +35,7 @@ import org.springframework.data.relational.core.dialect.SqlServerDialect;
  * @author Mikhail Polivakha
  * @since 2.3
  */
-public class JdbcSqlServerDialect extends SqlServerDialect {
+public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialect {
 
 	public static JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
 

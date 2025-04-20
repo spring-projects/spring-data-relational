@@ -35,7 +35,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldNotSupportArrays() {
 
-		ArrayColumns arrayColumns = MySqlDialect.INSTANCE.getArraySupport();
+		ArrayColumns arrayColumns = new MySqlDialect().getArraySupport();
 
 		assertThat(arrayColumns.isSupported()).isFalse();
 	}
@@ -43,7 +43,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderLimit() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = new MySqlDialect().limit();
 
 		assertThat(limit.getClausePosition()).isEqualTo(LimitClause.Position.AFTER_ORDER_BY);
 		assertThat(limit.getLimit(10)).isEqualTo("LIMIT 10");
@@ -52,7 +52,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = new MySqlDialect().limit();
 
 		assertThat(limit.getOffset(10)).isEqualTo("LIMIT 10, 18446744073709551615");
 	}
@@ -60,7 +60,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderLimitOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = new MySqlDialect().limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("LIMIT 10, 20");
 	}
@@ -68,7 +68,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldQuoteIdentifiersUsingBackticks() {
 
-		String abcQuoted = MySqlDialect.INSTANCE.getIdentifierProcessing().quote("abc");
+		String abcQuoted = new MySqlDialect().getIdentifierProcessing().quote("abc");
 
 		assertThat(abcQuoted).isEqualTo("`abc`");
 	}
@@ -76,7 +76,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-498
 	public void shouldRenderLock() {
 
-		LockClause lock = MySqlDialect.INSTANCE.lock();
+		LockClause lock = new MySqlDialect().lock();
 		From from = mock(From.class);
 
 		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE, from))).isEqualTo("FOR UPDATE");

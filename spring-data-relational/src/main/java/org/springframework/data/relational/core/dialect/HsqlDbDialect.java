@@ -26,6 +26,10 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public class HsqlDbDialect extends AbstractDialect {
 
+	/**
+	 * @deprecated use the {@code org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect} directly.
+	 */
+	@Deprecated(forRemoval = true)
 	public static final HsqlDbDialect INSTANCE = new HsqlDbDialect();
 
 	protected HsqlDbDialect() {}

@@ -32,7 +32,10 @@ public class Db2Dialect extends AbstractDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use the {@code org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect} directly.
 	 */
+	@Deprecated(forRemoval = true)
 	public static final Db2Dialect INSTANCE = new Db2Dialect();
 
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {
@@ -43,6 +46,7 @@ public class Db2Dialect extends AbstractDialect {
 
 		@Override
 		public String createSequenceQuery(SqlIdentifier sequenceName) {
+
 			/*
 			 * This workaround (non-ANSI SQL way of querying sequence) exists for the same reasons it exists for {@link HsqlDbDialect}
 			 *
