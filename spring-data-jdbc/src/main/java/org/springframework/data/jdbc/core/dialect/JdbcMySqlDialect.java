@@ -38,9 +38,12 @@ import org.springframework.lang.NonNull;
  *
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @author Mikhail Polivakha
  * @since 2.3
  */
-public class JdbcMySqlDialect extends MySqlDialect {
+public class JdbcMySqlDialect extends MySqlDialect implements JdbcDialect {
+
+	public static JdbcMySqlDialect INSTANCE = new JdbcMySqlDialect();
 
 	public JdbcMySqlDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);

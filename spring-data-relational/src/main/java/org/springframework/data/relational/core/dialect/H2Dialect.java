@@ -38,8 +38,13 @@ public class H2Dialect extends AbstractDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.H2Dialect} or
+	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcH2Dialect}.
 	 */
+	@Deprecated(forRemoval = true)
 	public static final H2Dialect INSTANCE = new H2Dialect();
+
 	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing.create(Quoting.ANSI,
 			LetterCasing.UPPER_CASE);
 	private static final IdGeneration ID_GENERATION = IdGeneration.create(IDENTIFIER_PROCESSING);
@@ -86,7 +91,7 @@ public class H2Dialect extends AbstractDialect {
 		return ARRAY_COLUMNS;
 	}
 
-	static class H2ArrayColumns implements ArrayColumns {
+	protected static class H2ArrayColumns implements ArrayColumns {
 
 		@Override
 		public boolean isSupported() {

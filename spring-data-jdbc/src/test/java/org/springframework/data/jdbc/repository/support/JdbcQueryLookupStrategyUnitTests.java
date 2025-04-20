@@ -30,6 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -138,7 +139,7 @@ class JdbcQueryLookupStrategyUnitTests {
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
 		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
+				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
 
 		assertThat(queryLookupStrategy).isInstanceOf(expectedClass);
 	}
@@ -158,7 +159,7 @@ class JdbcQueryLookupStrategyUnitTests {
 			QueryMappingConfiguration mappingConfiguration) {
 
 		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
+				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);

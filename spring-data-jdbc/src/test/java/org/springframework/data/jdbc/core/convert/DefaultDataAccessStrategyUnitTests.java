@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -58,7 +59,7 @@ class DefaultDataAccessStrategyUnitTests {
 	void before() {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
-		Dialect dialect = HsqlDbDialect.INSTANCE;
+		Dialect dialect = JdbcHsqlDbDialect.INSTANCE;
 		converter = new MappingJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations));
 		accessStrategy = new DataAccessStrategyFactory( //

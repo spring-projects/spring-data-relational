@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static java.util.Arrays.*;
+import static java.util.Arrays.asList;
 
 import java.util.Collection;
 
@@ -35,7 +35,11 @@ public class OracleDialect extends AnsiDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.OracleDialect} or
+	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcOracleDialect}.
 	 */
+	@Deprecated(forRemoval = true)
 	public static final OracleDialect INSTANCE = new OracleDialect();
 
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.data.jdbc.core.dialect;
 
 import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
-import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 
 /**
- * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC specific functionality.
+ * JDBC specific H2 Dialect.
  *
- * @author Jens Schauder
  * @author Mikhail Polivakha
- * @since 2.3
  */
-public interface JdbcDialect extends Dialect {
+public class JdbcH2Dialect extends H2Dialect implements JdbcDialect {
 
-	/**
-	 * Returns the JDBC specific array support object that describes how array-typed columns are supported by this
-	 * dialect.
-	 *
-	 * @return the JDBC specific array support object that describes how array-typed columns are supported by this
-	 *         dialect.
-	 */
-	default JdbcArrayColumns getArraySupport() {
-		return JdbcArrayColumns.Unsupported.INSTANCE;
+	public static JdbcH2Dialect INSTANCE = new JdbcH2Dialect();
+
+	@Override
+	public JdbcArrayColumns getArraySupport() {
+		return new JdbcH2ArrayColumns();
 	}
+
+	public static class JdbcH2ArrayColumns extends H2ArrayColumns implements JdbcArrayColumns { }
 }

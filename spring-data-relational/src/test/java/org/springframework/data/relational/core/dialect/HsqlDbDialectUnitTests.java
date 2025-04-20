@@ -15,13 +15,13 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for the {@link HsqlDbDialect}.
@@ -34,7 +34,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldNotSupportArrays() {
 
-		ArrayColumns arrayColumns = HsqlDbDialect.INSTANCE.getArraySupport();
+		ArrayColumns arrayColumns = new HsqlDbDialect().getArraySupport();
 
 		assertThat(arrayColumns.isSupported()).isFalse();
 	}
@@ -42,7 +42,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldRenderLimit() {
 
-		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
+		LimitClause limit = new HsqlDbDialect().limit();
 
 		assertThat(limit.getClausePosition()).isEqualTo(LimitClause.Position.AFTER_ORDER_BY);
 		assertThat(limit.getLimit(10)).isEqualTo("LIMIT 10");
@@ -51,7 +51,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldRenderOffset() {
 
-		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
+		LimitClause limit = new HsqlDbDialect().limit();
 
 		assertThat(limit.getOffset(10)).isEqualTo("OFFSET 10");
 	}
@@ -59,7 +59,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldRenderLimitOffset() {
 
-		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
+		LimitClause limit = new HsqlDbDialect().limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("OFFSET 10 LIMIT 20");
 	}
@@ -67,7 +67,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldQuoteIdentifiersUsingBackticks() {
 
-		String abcQuoted = HsqlDbDialect.INSTANCE.getIdentifierProcessing().quote("abc");
+		String abcQuoted = new HsqlDbDialect().getIdentifierProcessing().quote("abc");
 
 		assertThat(abcQuoted).isEqualTo("\"abc\"");
 	}
@@ -75,7 +75,7 @@ public class HsqlDbDialectUnitTests {
 	@Test // DATAJDBC-498
 	public void shouldRenderLock() {
 
-		LockClause limit = HsqlDbDialect.INSTANCE.lock();
+		LockClause limit = new HsqlDbDialect().lock();
 		From from = mock(From.class);
 		LockOptions lockOptions = new LockOptions(LockMode.PESSIMISTIC_WRITE, from);
 

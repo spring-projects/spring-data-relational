@@ -15,9 +15,7 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static org.assertj.core.api.Assertions.*;
-
-import junit.framework.AssertionFailedError;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -31,17 +29,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * Tests the integration with Mybatis.
@@ -119,7 +119,7 @@ public class MyBatisHsqlIntegrationTests {
 				SqlSession sqlSession, EmbeddedDatabase db) {
 
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
-					new NamedParameterJdbcTemplate(db), sqlSession, HsqlDbDialect.INSTANCE);
+					new NamedParameterJdbcTemplate(db), sqlSession, JdbcHsqlDbDialect.INSTANCE);
 		}
 	}
 }

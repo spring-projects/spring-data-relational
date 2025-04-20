@@ -49,13 +49,17 @@ public class PostgresDialect extends AbstractDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.PostgresDialect} or
+	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect}.
 	 */
+	@Deprecated(forRemoval = true)
 	public static final PostgresDialect INSTANCE = new PostgresDialect();
 
 	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UUID.class, URL.class, URI.class, InetAddress.class,
 			Map.class);
 
-	private IdentifierProcessing identifierProcessing = IdentifierProcessing.create(Quoting.ANSI,
+	private static final IdentifierProcessing identifierProcessing = IdentifierProcessing.create(Quoting.ANSI,
 			LetterCasing.LOWER_CASE);
 
 	private IdGeneration idGeneration = new IdGeneration() {

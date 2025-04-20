@@ -36,7 +36,7 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  */
 public class MySqlDialectRenderingUnitTests {
 
-	private final RenderContextFactory factory = new RenderContextFactory(MySqlDialect.INSTANCE);
+	private final RenderContextFactory factory = new RenderContextFactory(new MySqlDialect());
 
 	@BeforeEach
 	public void before() {

@@ -43,7 +43,11 @@ public class MySqlDialect extends AbstractDialect {
 
 	/**
 	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.MySqlDialect} or
+	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect}
 	 */
+	@Deprecated(forRemoval = true)
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
 
 	private final IdentifierProcessing identifierProcessing;
