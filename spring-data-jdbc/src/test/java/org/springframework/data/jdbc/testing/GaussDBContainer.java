@@ -33,12 +33,11 @@ public class GaussDBContainer<SELF extends GaussDBContainer<SELF>> extends JdbcD
 
     public static final String NAME = "gaussdb";
 
-    public static final String IMAGE = "opengauss/opengauss";
+    public static final String IMAGE = "enmotech/opengauss-lite";
 
-    public static final String DEFAULT_TAG = "latest";
+    public static final String DEFAULT_TAG = "5.0.3";
 
-    private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("opengauss/opengauss")
-        .asCompatibleSubstituteFor("gaussdb");
+    private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse(IMAGE);
 
     public static final Integer GaussDB_PORT = 8000;
 
@@ -54,10 +53,6 @@ public class GaussDBContainer<SELF extends GaussDBContainer<SELF>> extends JdbcD
 
     public GaussDBContainer() {
         this(DEFAULT_IMAGE_NAME.withTag(DEFAULT_TAG));
-    }
-
-    public GaussDBContainer(final String dockerImageName) {
-        this(DockerImageName.parse(dockerImageName));
     }
 
     public GaussDBContainer(final DockerImageName dockerImageName) {
