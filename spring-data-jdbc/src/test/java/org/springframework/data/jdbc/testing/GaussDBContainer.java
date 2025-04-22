@@ -33,9 +33,9 @@ public class GaussDBContainer<SELF extends GaussDBContainer<SELF>> extends JdbcD
 
     public static final String NAME = "gaussdb";
 
-    public static final String IMAGE = "enmotech/opengauss-lite";
+    public static final String IMAGE = "opengauss/opengauss";
 
-    public static final String DEFAULT_TAG = "5.0.3";
+    public static final String DEFAULT_TAG = "7.0.0-RC1.B023";
 
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse(IMAGE);
 
