@@ -11,6 +11,7 @@ target/
 *.graphml
 package-lock.json
 .mvn/.develocity
+.mvn/maven.config
 
 build/
 node_modules
