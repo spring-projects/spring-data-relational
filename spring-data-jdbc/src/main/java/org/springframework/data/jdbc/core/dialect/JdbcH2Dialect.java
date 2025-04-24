@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.jdbc.core.dialect;
 
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 
 /**
- * JDBC specific H2 Dialect.
+ * JDBC-specific H2 Dialect.
  *
  * @author Mikhail Polivakha
+ * @since 3.5
  */
 public class JdbcH2Dialect extends H2Dialect implements JdbcDialect {
 
-	public static JdbcH2Dialect INSTANCE = new JdbcH2Dialect();
+	public static final JdbcH2Dialect INSTANCE = new JdbcH2Dialect();
+
+	private static final JdbcArrayColumns ARRAY_COLUMNS = new JdbcArrayColumnsAdapter(H2ArrayColumns.INSTANCE);
 
 	@Override
 	public JdbcArrayColumns getArraySupport() {
-		return new JdbcH2ArrayColumns();
+		return ARRAY_COLUMNS;
 	}
 
-	public static class JdbcH2ArrayColumns extends H2ArrayColumns implements JdbcArrayColumns { }
 }

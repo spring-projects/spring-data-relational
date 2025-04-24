@@ -35,7 +35,7 @@ import org.springframework.data.relational.core.dialect.Db2Dialect;
  */
 public class JdbcDb2Dialect extends Db2Dialect implements JdbcDialect {
 
-	public static JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
+	public static final JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
 
 	protected JdbcDb2Dialect() {}
 

@@ -33,7 +33,6 @@ import java.util.function.Consumer;
 
 import org.postgresql.core.Oid;
 import org.postgresql.jdbc.TypeInfoCache;
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.util.ClassUtils;
 

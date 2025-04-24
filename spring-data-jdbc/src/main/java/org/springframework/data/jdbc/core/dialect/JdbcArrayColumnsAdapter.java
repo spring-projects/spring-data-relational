@@ -15,19 +15,24 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
-import org.springframework.data.relational.core.dialect.MariaDbDialect;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.dialect.ArrayColumns;
 
 /**
- * JDBC-specific MariaDb Dialect.
+ * Adapter for {@link ArrayColumns} to be exported as {@link JdbcArrayColumns}.
  *
- * @author Mikhail Polivakha
+ * @author Mark Paluch
  * @since 3.5
  */
-public class JdbcMariaDbDialect extends MariaDbDialect implements JdbcDialect {
+record JdbcArrayColumnsAdapter(ArrayColumns arrayColumns) implements JdbcArrayColumns {
 
-	public JdbcMariaDbDialect(IdentifierProcessing identifierProcessing) {
-		super(identifierProcessing);
+	@Override
+	public boolean isSupported() {
+		return arrayColumns.isSupported();
+	}
+
+	@Override
+	public Class<?> getArrayType(Class<?> userType) {
+		return arrayColumns.getArrayType(userType);
 	}
 
 }

@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -169,7 +170,8 @@ public class TestConfiguration {
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 
-		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ?
+		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect
+				?
 				((JdbcDialect) dialect).getArraySupport() :
 				JdbcArrayColumns.DefaultSupport.INSTANCE;
 
