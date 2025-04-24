@@ -37,7 +37,7 @@ import org.springframework.data.relational.core.dialect.SqlServerDialect;
  */
 public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialect {
 
-	public static JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
+	public static final JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
 
 	@Override
 	public Collection<Object> getConverters() {
@@ -69,4 +69,5 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 			return source.getOffsetDateTime().toInstant();
 		}
 	}
+
 }

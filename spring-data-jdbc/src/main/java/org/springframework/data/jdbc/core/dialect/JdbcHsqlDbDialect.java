@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.jdbc.core.dialect;
 
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 
 /**
- * JDBC specific HsqlDB Dialect.
+ * JDBC-specific HsqlDB Dialect.
  *
  * @author Mikhail Polivakha
+ * @since 3.5
  */
 public class JdbcHsqlDbDialect extends HsqlDbDialect implements JdbcDialect {
 
-	public static JdbcHsqlDbDialect INSTANCE = new JdbcHsqlDbDialect();
+	public static final JdbcHsqlDbDialect INSTANCE = new JdbcHsqlDbDialect();
+
+	@Override
+	public JdbcArrayColumns getArraySupport() {
+		return JdbcArrayColumns.DefaultSupport.INSTANCE;
+	}
+
 }

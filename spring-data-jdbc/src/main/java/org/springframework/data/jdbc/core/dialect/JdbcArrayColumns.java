@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.convert;
+package org.springframework.data.jdbc.core.dialect;
 
 import java.sql.SQLType;
 
@@ -21,15 +21,13 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 
 /**
- * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC-specific functionality.
+ * {@link ArrayColumns} that offer JDBC-specific functionality.
  *
  * @author Jens Schauder
  * @author Mark Paluch
- * @since 2.3
- * @deprecated since 3.5, replacement moved to {@link org.springframework.data.jdbc.core.dialect.JdbcArrayColumns}.
+ * @since 3.5
  */
-@Deprecated(forRemoval = true)
-public interface JdbcArrayColumns extends org.springframework.data.jdbc.core.dialect.JdbcArrayColumns {
+public interface JdbcArrayColumns extends ArrayColumns {
 
 	@Override
 	default Class<?> getArrayType(Class<?> userType) {

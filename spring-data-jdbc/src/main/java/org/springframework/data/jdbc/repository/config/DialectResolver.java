@@ -16,34 +16,14 @@
 package org.springframework.data.jdbc.repository.config;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
-import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
-import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcMariaDbDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcOracleDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
-import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.util.Optionals;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 
 /**
  * Resolves a {@link Dialect}. Resolution typically uses {@link JdbcOperations} to obtain and inspect a
@@ -55,13 +35,11 @@ import org.springframework.util.StringUtils;
  * @since 2.0
  * @see Dialect
  * @see SpringFactoriesLoader
+ * @deprecated since 3.5, replacement {@link org.springframework.data.jdbc.core.dialect.DialectResolver} was moved to
+ *             the {@link org.springframework.data.jdbc.core.dialect} package.
  */
+@Deprecated(since = "3.5", forRemoval = true)
 public class DialectResolver {
-
-	private static final Log LOG = LogFactory.getLog(DialectResolver.class);
-
-	private static final List<JdbcDialectProvider> DETECTORS = SpringFactoriesLoader
-			.loadFactories(JdbcDialectProvider.class, DialectResolver.class.getClassLoader());
 
 	// utility constructor.
 	private DialectResolver() {}
@@ -74,14 +52,8 @@ public class DialectResolver {
 	 *         {@link DataSource}.
 	 * @throws NoDialectException if no {@link Dialect} can be found.
 	 */
-	public static Dialect getDialect(JdbcOperations operations) {
-
-		return DETECTORS.stream() //
-				.map(it -> it.getDialect(operations)) //
-				.flatMap(Optionals::toStream) //
-				.findFirst() //
-				.orElseThrow(() -> new NoDialectException(
-						String.format("Cannot determine a dialect for %s; Please provide a Dialect", operations)));
+	public static JdbcDialect getDialect(JdbcOperations operations) {
+		return org.springframework.data.jdbc.core.dialect.DialectResolver.getDialect(operations);
 	}
 
 	/**
@@ -90,8 +62,12 @@ public class DialectResolver {
 	 *
 	 * @author Jens Schauder
 	 * @see org.springframework.core.io.support.SpringFactoriesLoader
+	 * @deprecated since 3.5, replacement {@link org.springframework.data.jdbc.core.dialect.DialectResolver} was moved to
+	 *             the {@link org.springframework.data.jdbc.core.dialect} package.
 	 */
-	public interface JdbcDialectProvider {
+	@Deprecated(since = "3.5", forRemoval = true)
+	public interface JdbcDialectProvider
+			extends org.springframework.data.jdbc.core.dialect.DialectResolver.JdbcDialectProvider {
 
 		/**
 		 * Returns a {@link Dialect} for a {@link DataSource}.
@@ -103,79 +79,18 @@ public class DialectResolver {
 		Optional<Dialect> getDialect(JdbcOperations operations);
 	}
 
-	static public class DefaultDialectProvider implements JdbcDialectProvider {
+	@Deprecated(since = "3.5", forRemoval = true)
+	static public class DefaultDialectProvider extends
+			org.springframework.data.jdbc.core.dialect.DialectResolver.DefaultDialectProvider implements JdbcDialectProvider {
 
-		@Override
-		public Optional<Dialect> getDialect(JdbcOperations operations) {
-			return Optional.ofNullable(operations.execute((ConnectionCallback<Dialect>) DefaultDialectProvider::getDialect));
-		}
-
-		@Nullable
-		private static JdbcDialect getDialect(Connection connection) throws SQLException {
-
-			DatabaseMetaData metaData = connection.getMetaData();
-
-			String name = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
-
-			if (name.contains("hsql")) {
-				return JdbcHsqlDbDialect.INSTANCE;
-			}
-			if (name.contains("h2")) {
-				return JdbcH2Dialect.INSTANCE;
-			}
-			if (name.contains("mysql")) {
-				return new JdbcMySqlDialect(getIdentifierProcessing(metaData));
-			}
-			if (name.contains("mariadb")) {
-				return new JdbcMariaDbDialect(getIdentifierProcessing(metaData));
-			}
-			if (name.contains("postgresql")) {
-				return JdbcPostgresDialect.INSTANCE;
-			}
-			if (name.contains("microsoft")) {
-				return JdbcSqlServerDialect.INSTANCE;
-			}
-			if (name.contains("db2")) {
-				return JdbcDb2Dialect.INSTANCE;
-			}
-			if (name.contains("oracle")) {
-				return JdbcOracleDialect.INSTANCE;
-			}
-
-			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name));
-			return null;
-		}
-
-		private static IdentifierProcessing getIdentifierProcessing(DatabaseMetaData metaData) throws SQLException {
-
-			// getIdentifierQuoteString() returns a space " " if identifier quoting is not
-			// supported.
-			String quoteString = metaData.getIdentifierQuoteString();
-			IdentifierProcessing.Quoting quoting = StringUtils.hasText(quoteString)
-					? new IdentifierProcessing.Quoting(quoteString)
-					: IdentifierProcessing.Quoting.NONE;
-
-			IdentifierProcessing.LetterCasing letterCasing;
-			// IdentifierProcessing tries to mimic the behavior of unquoted identifiers for their quoted variants.
-			if (metaData.supportsMixedCaseIdentifiers()) {
-				letterCasing = IdentifierProcessing.LetterCasing.AS_IS;
-			} else if (metaData.storesUpperCaseIdentifiers()) {
-				letterCasing = IdentifierProcessing.LetterCasing.UPPER_CASE;
-			} else if (metaData.storesLowerCaseIdentifiers()) {
-				letterCasing = IdentifierProcessing.LetterCasing.LOWER_CASE;
-			} else { // this shouldn't happen since one of the previous cases should be true.
-				// But if it does happen, we go with the ANSI default.
-				letterCasing = IdentifierProcessing.LetterCasing.UPPER_CASE;
-			}
-
-			return IdentifierProcessing.create(quoting, letterCasing);
-		}
 	}
 
 	/**
 	 * Exception thrown when {@link DialectResolver} cannot resolve a {@link Dialect}.
 	 */
-	public static class NoDialectException extends NonTransientDataAccessException {
+	@Deprecated(since = "3.5", forRemoval = true)
+	public static class NoDialectException
+			extends org.springframework.data.jdbc.core.dialect.DialectResolver.NoDialectException {
 
 		/**
 		 * Constructor for NoDialectFoundException.

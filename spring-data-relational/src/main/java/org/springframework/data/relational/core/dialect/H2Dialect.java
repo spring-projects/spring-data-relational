@@ -49,8 +49,6 @@ public class H2Dialect extends AbstractDialect {
 			LetterCasing.UPPER_CASE);
 	private static final IdGeneration ID_GENERATION = IdGeneration.create(IDENTIFIER_PROCESSING);
 
-	protected H2Dialect() {}
-
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override
@@ -74,7 +72,7 @@ public class H2Dialect extends AbstractDialect {
 		}
 	};
 
-	private final H2ArrayColumns ARRAY_COLUMNS = new H2ArrayColumns();
+	protected H2Dialect() {}
 
 	@Override
 	public LimitClause limit() {
@@ -88,10 +86,12 @@ public class H2Dialect extends AbstractDialect {
 
 	@Override
 	public ArrayColumns getArraySupport() {
-		return ARRAY_COLUMNS;
+		return H2ArrayColumns.INSTANCE;
 	}
 
 	protected static class H2ArrayColumns implements ArrayColumns {
+
+		public static final H2ArrayColumns INSTANCE = new H2ArrayColumns();
 
 		@Override
 		public boolean isSupported() {

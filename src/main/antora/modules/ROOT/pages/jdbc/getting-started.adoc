@@ -158,13 +158,13 @@ Alternatively, you can implement your own `Dialect`.
 
 [TIP]
 ====
-Dialects are resolved by javadoc:org.springframework.data.jdbc.repository.config.DialectResolver[] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
-+ You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core.dialect.JdbcDialect[] by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+Dialects are resolved by javadoc:org.springframework.data.jdbc.core.dialect.DialectResolver[] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
++ You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core.dialect.JdbcDialect[] by registering a class that implements `org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
 
 . Implement your own `Dialect`.
 . Implement a `JdbcDialectProvider` returning the `Dialect`.
 . Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
-`org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider=<fully qualified name of your JdbcDialectProvider>`
+`org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider`=<fully qualified name of your JdbcDialectProvider>`
 ====

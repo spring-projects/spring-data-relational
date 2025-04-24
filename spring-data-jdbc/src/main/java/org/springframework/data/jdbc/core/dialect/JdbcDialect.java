@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.relational.core.dialect.Dialect;
 
 /**
@@ -37,4 +36,5 @@ public interface JdbcDialect extends Dialect {
 	default JdbcArrayColumns getArraySupport() {
 		return JdbcArrayColumns.Unsupported.INSTANCE;
 	}
+
 }

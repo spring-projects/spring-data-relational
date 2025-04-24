@@ -70,8 +70,6 @@ public class AnsiDialect extends AbstractDialect {
 		}
 	};
 
-	private final ArrayColumns ARRAY_COLUMNS = ObjectArrayColumns.INSTANCE;
-
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
@@ -84,7 +82,7 @@ public class AnsiDialect extends AbstractDialect {
 
 	@Override
 	public ArrayColumns getArraySupport() {
-		return ARRAY_COLUMNS;
+		return ObjectArrayColumns.INSTANCE;
 	}
 
 	@Override

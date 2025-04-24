@@ -16,24 +16,23 @@
 
 package org.springframework.data.jdbc.core.dialect;
 
-import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
-import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.ObjectArrayColumns;
 import org.springframework.data.relational.core.dialect.OracleDialect;
 
 /**
- * JDBC specific Oracle Dialect.
+ * JDBC-specific Oracle Dialect.
  *
  * @author Mikhail Polivakha
  */
 public class JdbcOracleDialect extends OracleDialect implements JdbcDialect {
 
-	public static JdbcOracleDialect INSTANCE = new JdbcOracleDialect();
+	public static final JdbcOracleDialect INSTANCE = new JdbcOracleDialect();
+
+	private static final JdbcArrayColumns ARRAY_COLUMNS = new JdbcArrayColumnsAdapter(ObjectArrayColumns.INSTANCE);
 
 	@Override
 	public JdbcArrayColumns getArraySupport() {
-		return new JdbcOracleArrayColumns();
+		return ARRAY_COLUMNS;
 	}
 
-	public static class JdbcOracleArrayColumns extends ObjectArrayColumns implements JdbcArrayColumns { }
 }
