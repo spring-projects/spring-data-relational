@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.convert;
+package org.springframework.data.r2dbc.convert;
+
+import reactor.core.publisher.Mono;
 
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.conversion.MutableAggregateChange;
-import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
 /**
@@ -38,34 +41,35 @@ public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
 	private final SequenceEntityCallbackDelegate delegate;
 
 	public IdGeneratingEntityCallback(
-			MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context, Dialect dialect,
-			NamedParameterJdbcOperations operations) {
+			MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			R2dbcDialect dialect,
+			DatabaseClient databaseClient) {
 
 		this.context = context;
-		this.delegate = new SequenceEntityCallbackDelegate(dialect, operations);
+		this.delegate = new SequenceEntityCallbackDelegate(dialect, databaseClient);
 	}
 
 	@Override
-	public Object onBeforeSave(Object aggregate, MutableAggregateChange<Object> aggregateChange) {
+	public Mono<Object> onBeforeSave(Object entity, OutboundRow row, SqlIdentifier table) {
 
-		Assert.notNull(aggregate, "Aggregate must not be null");
+		Assert.notNull(entity, "Entity must not be null");
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(aggregate.getClass());
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(entity.getClass());
 
-		if (!entity.hasIdProperty()) {
-			return aggregate;
+		if (!persistentEntity.hasIdProperty()) {
+			return Mono.just(entity);
 		}
 
-		RelationalPersistentProperty property = entity.getRequiredIdProperty();
-		PersistentPropertyAccessor<Object> accessor = entity.getPropertyAccessor(aggregate);
+		RelationalPersistentProperty property = persistentEntity.getRequiredIdProperty();
+		PersistentPropertyAccessor<Object> accessor = persistentEntity.getPropertyAccessor(entity);
 
-		if (!entity.isNew(aggregate) || delegate.hasValue(property, accessor) || !property.hasSequence()) {
-			return aggregate;
+		if (!persistentEntity.isNew(entity) || delegate.hasValue(property, accessor) || !property.hasSequence()) {
+			return Mono.just(entity);
 		}
 
-		delegate.generateSequenceValue(property, accessor);
+		Mono<Object> idGenerator = delegate.generateSequenceValue(property, row, accessor);
 
-		return accessor.getBean();
+		return idGenerator.defaultIfEmpty(entity);
 	}
 
 }

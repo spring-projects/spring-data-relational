@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package org.springframework.data.r2dbc.core.mapping;
+package org.springframework.data.r2dbc.convert;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.function.BiFunction;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.reactivestreams.Publisher;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -36,73 +37,70 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 /**
- * Unit tests for {@link IdGeneratingBeforeSaveCallback}.
+ * Unit tests for {@link IdGeneratingEntityCallback}.
  *
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
-class IdGeneratingBeforeSaveCallbackTest {
+class IdGeneratingEntityCallbackTest {
+
+	R2dbcMappingContext r2dbcMappingContext = new R2dbcMappingContext();
+	DatabaseClient databaseClient = mock(DatabaseClient.class, RETURNS_DEEP_STUBS);
 
 	@Test
 	void testIdGenerationIsNotSupported() {
-		R2dbcMappingContext r2dbcMappingContext = new R2dbcMappingContext();
-		r2dbcMappingContext.getPersistentEntity(SimpleEntity.class);
-		MySqlDialect dialect = MySqlDialect.INSTANCE;
-		DatabaseClient databaseClient = mock(DatabaseClient.class);
 
-		IdGeneratingBeforeSaveCallback callback = new IdGeneratingBeforeSaveCallback(r2dbcMappingContext, dialect,
+		MySqlDialect dialect = MySqlDialect.INSTANCE;
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
 				databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		SimpleEntity entity = new SimpleEntity();
-		Publisher<Object> publisher = callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity"));
+		callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity")).as(StepVerifier::create)
+				.expectNext(entity).verifyComplete();
 
-		StepVerifier.create(publisher).expectNext(entity).expectComplete().verify();
 		assertThat(row).hasSize(1); // id is not added
 	}
 
 	@Test
 	void testEntityIsNotAnnotatedWithSequence() {
-		R2dbcMappingContext r2dbcMappingContext = new R2dbcMappingContext();
-		r2dbcMappingContext.getPersistentEntity(SimpleEntity.class);
-		PostgresDialect dialect = PostgresDialect.INSTANCE;
-		DatabaseClient databaseClient = mock(DatabaseClient.class);
 
-		IdGeneratingBeforeSaveCallback callback = new IdGeneratingBeforeSaveCallback(r2dbcMappingContext, dialect,
+		PostgresDialect dialect = PostgresDialect.INSTANCE;
+
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
 				databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		SimpleEntity entity = new SimpleEntity();
-		Publisher<Object> publisher = callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity"));
 
-		StepVerifier.create(publisher).expectNext(entity).expectComplete().verify();
+		callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity")).as(StepVerifier::create)
+				.expectNext(entity).verifyComplete();
+
 		assertThat(row).hasSize(1); // id is not added
 	}
 
 	@Test
 	void testIdGeneratedFromSequenceHappyPath() {
-		R2dbcMappingContext r2dbcMappingContext = new R2dbcMappingContext();
-		r2dbcMappingContext.getPersistentEntity(WithSequence.class);
+
 		PostgresDialect dialect = PostgresDialect.INSTANCE;
-		DatabaseClient databaseClient = mock(DatabaseClient.class, RETURNS_DEEP_STUBS);
 		long generatedId = 1L;
 
 		when(databaseClient.sql(Mockito.anyString()).map(Mockito.any(BiFunction.class)).one()).thenReturn(
 				Mono.just(generatedId));
 
-		IdGeneratingBeforeSaveCallback callback = new IdGeneratingBeforeSaveCallback(r2dbcMappingContext, dialect,
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
 				databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		WithSequence entity = new WithSequence();
-		Publisher<Object> publisher = callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity"));
 
-		StepVerifier.create(publisher).expectNext(entity).expectComplete().verify();
+		callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity")).as(StepVerifier::create)
+				.expectNext(entity).verifyComplete();
+
 		assertThat(row).hasSize(2)
 				.containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(generatedId));
+		assertThat(entity.id).isEqualTo(generatedId);
 	}
 
 	static class SimpleEntity {

@@ -1,4 +1,4 @@
-[[r2dbc.sequences]]
+[[jdbc.sequences]]
 = Sequence Support
 
 include::partial$sequences.adoc[]

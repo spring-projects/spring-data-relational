@@ -33,13 +33,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
+import org.springframework.data.r2dbc.convert.IdGeneratingEntityCallback;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -185,14 +185,16 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	}
 
 	/**
-	 * Register a {@link IdGeneratingBeforeSaveCallback} using
+	 * Register a {@link IdGeneratingEntityCallback} using
 	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)} and
-	 * {@link #databaseClient()}
+	 * {@link #databaseClient()}.
+	 *
+	 * @since 3.5
 	 */
 	@Bean
-	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
+	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(
 			RelationalMappingContext relationalMappingContext, DatabaseClient databaseClient) {
-		return new IdGeneratingBeforeSaveCallback(relationalMappingContext, getDialect(lookupConnectionFactory()),
+		return new IdGeneratingEntityCallback(relationalMappingContext, getDialect(lookupConnectionFactory()),
 				databaseClient);
 	}
 
