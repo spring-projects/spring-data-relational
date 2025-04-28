@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import java.util.Optional;
-
 import org.springframework.data.mapping.model.MutablePersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -55,8 +53,4 @@ public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T
 	 */
 	SqlIdentifier getIdColumn();
 
-	/**
-	 * @return the target sequence that should be used for id generation
-	 */
-	Optional<SqlIdentifier> getIdSequence();
 }

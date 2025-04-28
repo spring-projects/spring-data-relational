@@ -23,6 +23,8 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mockito.Mockito;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +38,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.core.mapping.IdGeneratingBeforeSaveCallback;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
@@ -44,7 +45,6 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -68,6 +68,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Christoph Strobl
  * @author Chirag Tailor
  * @author Christopher Klein
+ * @author Mikhail Polivakha
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -76,24 +77,25 @@ public class TestConfiguration {
 	public static final String PROFILE_SINGLE_QUERY_LOADING = "singleQueryLoading";
 	public static final String PROFILE_NO_SINGLE_QUERY_LOADING = "!" + PROFILE_SINGLE_QUERY_LOADING;
 
-	@Autowired DataSource dataSource;
-	@Autowired BeanFactory beanFactory;
-	@Autowired ApplicationEventPublisher publisher;
-	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
+	@Autowired
+	DataSource dataSource;
+	@Autowired
+	BeanFactory beanFactory;
+	@Autowired
+	ApplicationEventPublisher publisher;
+	@Autowired(required = false)
+	SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
-			List<EntityCallback<?>> callbacks,
-			List<EvaluationContextExtension> evaulationContextExtensions) {
+			List<EntityCallback<?>> callbacks, List<EvaluationContextExtension> evaulationContextExtensions) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, namedParameterJdbcTemplate());
 
-		factory.setEntityCallbacks(
-				EntityCallbacks.create(callbacks.toArray(new EntityCallback[0]))
-		);
+		factory.setEntityCallbacks(EntityCallbacks.create(callbacks.toArray(new EntityCallback[0])));
 
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 
@@ -118,22 +120,24 @@ public class TestConfiguration {
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect) {
 
-		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter,
-				template, new SqlParametersFactory(context, converter),
-				new InsertStrategyFactory(template, dialect)).create();
+		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
+				new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect)).create();
 	}
 
 	@Bean("jdbcMappingContext")
 	@Profile(PROFILE_NO_SINGLE_QUERY_LOADING)
-	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
+			CustomConversions conversions) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 		return mappingContext;
 	}
+
 	@Bean("jdbcMappingContext")
 	@Profile(PROFILE_SINGLE_QUERY_LOADING)
-	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
+	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
+			CustomConversions conversions) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
@@ -144,8 +148,9 @@ public class TestConfiguration {
 	@Bean
 	CustomConversions jdbcCustomConversions(Dialect dialect) {
 
-		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
-				: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ?
+				JdbcSimpleTypes.HOLDER :
+				new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
 
 		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
 				Collections.emptyList());
@@ -164,8 +169,9 @@ public class TestConfiguration {
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 
-		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
-				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ?
+				((JdbcDialect) dialect).getArraySupport() :
+				JdbcArrayColumns.DefaultSupport.INSTANCE;
 
 		return new MappingJdbcConverter( //
 				mappingContext, //
@@ -175,18 +181,15 @@ public class TestConfiguration {
 	}
 
 	/**
-	 * Creates a {@link IdGeneratingBeforeSaveCallback} bean using the configured
+	 * Creates a {@link IdGeneratingEntityCallback} bean using the configured
 	 * {@link #jdbcDialect(NamedParameterJdbcOperations)}.
 	 *
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	public IdGeneratingBeforeSaveCallback idGeneratingBeforeSaveCallback(
-			JdbcMappingContext mappingContext,
-			NamedParameterJdbcOperations operations,
-			Dialect dialect
-	) {
-		return new IdGeneratingBeforeSaveCallback(mappingContext, dialect, operations);
+	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
+			NamedParameterJdbcOperations operations, Dialect dialect) {
+		return Mockito.spy(new IdGeneratingEntityCallback(mappingContext, dialect, operations));
 	}
 
 	@Bean

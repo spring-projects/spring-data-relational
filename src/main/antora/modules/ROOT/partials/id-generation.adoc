@@ -1,14 +1,15 @@
 [[entity-persistence.id-generation]]
 == ID Generation
 
-Spring Data uses the identifer property to identify entities.
+Spring Data uses identifier properties to identify entities.
+That is, looking these up or creating statements targeting a particular row.
 The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
 
 When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
-If you annotate the id additionally with `@Sequence` a database sequence will be used to obtain values for the id.
+If you annotate the identifier property additionally with `@Sequence` a database sequence will be used to obtain values for the id if the underlying `Dialect` supports sequences.
 
-Otherwise Spring Data does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
+Otherwise, Spring Data does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
 That is `0` for primitive types and `null` if the identifier property uses a numeric wrapper type such as `Long`.
 
 xref:repositories/core-concepts.adoc#is-new-state-detection[Entity State Detection] explains in detail the strategies to detect whether an entity is new or whether it is expected to exist in your database.

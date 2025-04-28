@@ -63,7 +63,7 @@ public interface IdGeneration {
 	/**
 	 * Provides for a given id {@link SqlIdentifier} the String that is to be used for registering interest in the
 	 * generated value of that column.
-	 * 
+	 *
 	 * @param id {@link SqlIdentifier} representing a column for which a generated value is to be obtained.
 	 * @return a String representing that column in the way expected by the JDBC driver.
 	 * @since 3.3
@@ -107,6 +107,6 @@ public interface IdGeneration {
 	}
 
 	static String createSequenceQuery(String nameString) {
-		return "SELECT NEXT VALUE FOR" + nameString;
+		return "SELECT NEXT VALUE FOR " + nameString;
 	}
 }

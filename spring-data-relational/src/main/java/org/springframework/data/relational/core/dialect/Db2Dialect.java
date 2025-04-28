@@ -42,11 +42,6 @@ public class Db2Dialect extends AbstractDialect {
 		}
 
 		@Override
-		public boolean sequencesSupported() {
-			return true;
-		}
-
-		@Override
 		public String createSequenceQuery(SqlIdentifier sequenceName) {
 			/*
 			 * This workaround (non-ANSI SQL way of querying sequence) exists for the same reasons it exists for {@link HsqlDbDialect}

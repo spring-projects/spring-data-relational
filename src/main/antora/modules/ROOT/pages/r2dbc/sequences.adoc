@@ -1,0 +1,4 @@
+[[r2dbc.sequences]]
+= Sequence Support
+
+include::partial$sequences.adoc[]

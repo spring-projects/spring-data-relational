@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.dialect;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -152,7 +151,7 @@ public class MySqlDialect extends AbstractDialect {
 			}
 
 			@Override
-			public String createSequenceQuery(@NotNull SqlIdentifier sequenceName) {
+			public String createSequenceQuery(SqlIdentifier sequenceName) {
 				throw new UnsupportedOperationException(
 						"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket"
 								.formatted(this.getClass().getSimpleName()));

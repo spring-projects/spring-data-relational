@@ -17,8 +17,6 @@ package org.springframework.data.relational.core.mapping;
 
 import java.util.Optional;
 
-import org.springframework.core.annotation.MergedAnnotation;
-import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
@@ -47,9 +45,6 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 	private final Lazy<SqlIdentifier> tableName;
 	private final @Nullable Expression tableNameExpression;
-
-	private final Lazy<SqlIdentifier> idSequenceName;
-
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
 	private final @Nullable Expression schemaNameExpression;
 	private final ExpressionEvaluator expressionEvaluator;
@@ -91,8 +86,6 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 			this.schemaName = defaultSchema;
 			this.schemaNameExpression = null;
 		}
-
-		this.idSequenceName = Lazy.of(this::determineSequenceName);
 	}
 
 	/**
@@ -166,37 +159,8 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	}
 
 	@Override
-	public Optional<SqlIdentifier> getIdSequence() {
-		return idSequenceName.getOptional();
-	}
-
-	@Override
 	public String toString() {
 		return String.format("BasicRelationalPersistentEntity<%s>", getType());
 	}
 
-	private @Nullable SqlIdentifier determineSequenceName() {
-
-		RelationalPersistentProperty idProperty = getIdProperty();
-
-		if (idProperty != null && idProperty.isAnnotationPresent(Sequence.class)) {
-
-			Sequence requiredAnnotation = idProperty.getRequiredAnnotation(Sequence.class);
-
-			MergedAnnotation<Sequence> targetSequence = MergedAnnotations.from(requiredAnnotation)
-					.get(Sequence.class);
-
-			String sequence = targetSequence.getString("sequence");
-			String schema = targetSequence.getString("schema");
-
-			SqlIdentifier sequenceIdentifier = SqlIdentifier.quoted(sequence);
-			if (StringUtils.hasText(schema)) {
-				sequenceIdentifier = SqlIdentifier.from(SqlIdentifier.quoted(schema), sequenceIdentifier);
-			}
-
-			return sequenceIdentifier;
-		} else {
-			return null;
-		}
-	}
 }

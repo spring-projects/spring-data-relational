@@ -49,12 +49,13 @@ public enum IdValueSource {
 	 */
 	public static <T> IdValueSource forInstance(Object instance, RelationalPersistentEntity<T> persistentEntity) {
 
-		if (persistentEntity.getIdSequence().isPresent()) {
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+
+		if (idProperty != null && idProperty.hasSequence()) {
 			return IdValueSource.PROVIDED;
 		}
 
 		Object idValue = persistentEntity.getIdentifierAccessor(instance).getIdentifier();
-		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 		if (idProperty == null) {
 			return IdValueSource.NONE;
 		}

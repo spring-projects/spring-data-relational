@@ -528,15 +528,15 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			return;
 		}
 
-		SqlIdentifier columnName = idProperty.getColumnName();
-		Parameter parameter = outboundRow.get(columnName);
+		SqlIdentifier idColumnName = idProperty.getColumnName();
+		Parameter parameter = outboundRow.get(idColumnName);
 
-		if (shouldSkipIdValue(parameter, idProperty)) {
-			outboundRow.remove(columnName);
+		if (shouldSkipIdValue(parameter)) {
+			outboundRow.remove(idColumnName);
 		}
 	}
 
-	private boolean shouldSkipIdValue(@Nullable Parameter value, RelationalPersistentProperty property) {
+	private boolean shouldSkipIdValue(@Nullable Parameter value) {
 
 		if (value == null || value.getValue() == null) {
 			return true;

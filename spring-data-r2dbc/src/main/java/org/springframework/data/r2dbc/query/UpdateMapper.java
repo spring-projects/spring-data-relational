@@ -83,7 +83,7 @@ public class UpdateMapper extends QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundAssignments}.
 	 */
-	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ? extends Object> assignments,
+	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ?> assignments,
 			Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(markers, "BindMarkers must not be null");
