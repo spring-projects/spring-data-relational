@@ -82,7 +82,7 @@ public class ParameterMetadataProviderUnitTests {
 	static class RelationalQueryMethod extends QueryMethod {
 
 		public RelationalQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
-			super(method, metadata, factory);
+			super(method, metadata, factory, RelationalParameters::new);
 		}
 	}
 

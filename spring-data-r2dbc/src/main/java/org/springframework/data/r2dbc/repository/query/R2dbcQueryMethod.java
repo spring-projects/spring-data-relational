@@ -83,7 +83,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	public R2dbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
 
-		super(method, metadata, projectionFactory);
+		super(method, metadata, projectionFactory, RelationalParameters::new);
 
 		Assert.notNull(mappingContext, "MappingContext must not be null");
 
@@ -121,11 +121,6 @@ public class R2dbcQueryMethod extends QueryMethod {
 		this.isCollectionQuery = Lazy.of(() -> (!(isPageQuery() || isSliceQuery())
 				&& ReactiveWrappers.isMultiValueType(metadata.getReturnType(method).getType())) || super.isCollectionQuery());
 		this.lock = Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(method, Lock.class));
-	}
-
-	@Override
-	protected RelationalParameters createParameters(ParametersSource parametersSource) {
-		return new RelationalParameters(parametersSource);
 	}
 
 	/* (non-Javadoc)
