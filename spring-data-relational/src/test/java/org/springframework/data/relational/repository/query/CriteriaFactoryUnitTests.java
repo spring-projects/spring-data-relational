@@ -78,7 +78,7 @@ public class CriteriaFactoryUnitTests {
 			throw new RuntimeException(e);
 		}
 		return new QueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
-				new SpelAwareProxyProjectionFactory());
+				new SpelAwareProxyProjectionFactory(), RelationalParameters::new);
 	}
 
 	private RelationalParametersParameterAccessor getAccessor(QueryMethod queryMethod, Object... values) {

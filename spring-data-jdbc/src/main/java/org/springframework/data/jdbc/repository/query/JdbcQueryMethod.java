@@ -67,17 +67,12 @@ public class JdbcQueryMethod extends QueryMethod {
 			NamedQueries namedQueries,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
 
-		super(method, metadata, factory);
+		super(method, metadata, factory, JdbcParameters::new);
 		this.namedQueries = namedQueries;
 		this.method = method;
 		this.mappingContext = mappingContext;
 		this.annotationCache = new ConcurrentReferenceHashMap<>();
 		this.modifyingQuery = AnnotationUtils.findAnnotation(method, Modifying.class) != null;
-	}
-
-	@Override
-	protected Parameters<?, ?> createParameters(ParametersSource parametersSource) {
-		return new JdbcParameters(parametersSource);
 	}
 
 	@Override
