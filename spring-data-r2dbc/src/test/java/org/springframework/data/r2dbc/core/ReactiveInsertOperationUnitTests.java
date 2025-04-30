@@ -109,7 +109,7 @@ public class ReactiveInsertOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-		assertThat(statement.getSql()).isEqualTo("INSERT INTO the_table (\"THE_NAME\") VALUES ($1)");
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO \"the_table\" (\"THE_NAME\") VALUES ($1)");
 	}
 
 	static class Person {
