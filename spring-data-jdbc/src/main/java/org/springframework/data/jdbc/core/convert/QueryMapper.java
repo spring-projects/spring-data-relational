@@ -638,6 +638,7 @@ public class QueryMapper {
 		do {
 			uniqueName = name + (counter++);
 		} while (values.containsKey(uniqueName));
+
 		return uniqueName;
 	}
 
