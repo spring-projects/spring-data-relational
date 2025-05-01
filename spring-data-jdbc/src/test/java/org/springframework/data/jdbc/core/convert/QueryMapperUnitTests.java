@@ -46,6 +46,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Fedorov
  */
 public class QueryMapperUnitTests {
 
