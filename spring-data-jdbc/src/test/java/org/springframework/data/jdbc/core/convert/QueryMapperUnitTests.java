@@ -121,7 +121,7 @@ public class QueryMapperUnitTests {
 		Condition condition = map(criteria);
 
 		assertThat(condition).hasToString(
-				"(person.\"NAME\" = ?[:name]) AND (person.\"NAME\" = ?[:name1] OR person.age < ?[:age] OR (person.\"NAME\" != ?[:name2] AND person.age > ?[:age1]))");
+				"(person.\"NAME\" = ?[:name]) AND (person.\"NAME\" = ?[:name1] OR person.age < ?[:age] OR (person.\"NAME\" != ?[:name3] AND person.age > ?[:age4]))");
 	}
 
 	@Test // DATAJDBC-318
