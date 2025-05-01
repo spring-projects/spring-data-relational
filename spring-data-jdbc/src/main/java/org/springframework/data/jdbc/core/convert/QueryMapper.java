@@ -53,6 +53,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Yan Qiang
+ * @author Mikhail Fedorov
  * @since 3.0
  */
 public class QueryMapper {
@@ -632,7 +633,7 @@ public class QueryMapper {
 			return name;
 		}
 
-		int counter = 1;
+		int counter = values.size();
 		String uniqueName;
 
 		do {
