@@ -625,16 +625,19 @@ public class QueryMapper {
 	}
 
 	private static String getUniqueName(MapSqlParameterSource parameterSource, String name) {
-		Map<String, Object> parameters = parameterSource.getValues();
-		Object existingName = parameters.get(name);
-		if (existingName == null) {
+
+		Map<String, Object> values = parameterSource.getValues();
+
+		if (!values.containsKey(name)) {
 			return name;
 		}
-		int counter = parameters.size();
+
+		int counter = values.size();
 		String uniqueName;
+
 		do {
 			uniqueName = name + (counter++);
-		} while (parameters.containsKey(uniqueName));
+		} while (values.containsKey(uniqueName));
 		return uniqueName;
 	}
 
