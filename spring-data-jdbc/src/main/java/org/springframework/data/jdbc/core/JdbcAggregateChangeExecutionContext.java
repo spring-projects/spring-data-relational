@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
@@ -176,7 +177,8 @@ class JdbcAggregateChangeExecutionContext {
 		Object id = getParentId(action);
 
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()), id);
+				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()),
+						getValueProvider(id, context.getAggregatePath(action.getPropertyPath()), converter));
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
 				.entrySet()) {
@@ -184,6 +186,22 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		return identifier.build();
+	}
+
+	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
+
+		RelationalPersistentEntity<?> entity = converter.getMappingContext()
+				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
+
+		Function<AggregatePath, Object> valueProvider = ap -> {
+			if (entity == null) {
+				return idValue;
+			} else {
+				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+			}
+		};
+		return valueProvider;
 	}
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
@@ -267,12 +285,10 @@ class JdbcAggregateChangeExecutionContext {
 
 				if (newEntity != action.getEntity()) {
 
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				} else if (insert.getPropertyPath().getLeafProperty().isCollectionLike()) {
 
-					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				}
 			}
 		}
@@ -359,8 +375,8 @@ class JdbcAggregateChangeExecutionContext {
 	 */
 	private static class StagedValues {
 
-		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
-				ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
+		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE,
+				MapAggregator.INSTANCE, ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
 
 		Map<DbAction, Map<PersistentPropertyPath, StagedValue>> values = new HashMap<>();
 

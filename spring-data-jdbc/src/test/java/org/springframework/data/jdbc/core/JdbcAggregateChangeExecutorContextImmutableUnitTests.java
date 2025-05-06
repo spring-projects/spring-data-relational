@@ -120,7 +120,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		assertThat(newRoot.list.get(0).id).isEqualTo(24L);
 	}
 
-	@Test // GH-537
+	@Test
+	// GH-537
 	void populatesIdsIfNecessaryForAllRootsThatWereProcessed() {
 
 		DummyEntity root1 = new DummyEntity().withId(123L);
@@ -166,7 +167,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	}
 
 	Identifier createBackRef(long value) {
-		return JdbcIdentifierBuilder.forBackReferences(converter, toAggregatePath("content"), value).build();
+		return JdbcIdentifierBuilder.forBackReferences(converter, toAggregatePath("content"),
+				JdbcAggregateChangeExecutionContext.getValueProvider(value, toAggregatePath("content"), converter)).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
@@ -180,10 +182,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	private static final class DummyEntity {
 
-		@Id
-		private final Long id;
-		@Version
-		private final long version;
+		@Id private final Long id;
+		@Version private final long version;
 
 		private final Content content;
 
@@ -221,14 +221,16 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final DummyEntity other))
 				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
 			if (!Objects.equals(this$id, other$id))
 				return false;
-			if (this.getVersion() != other.getVersion()) return false;
+			if (this.getVersion() != other.getVersion())
+				return false;
 			final Object this$content = this.getContent();
 			final Object other$content = other.getContent();
 			if (!Objects.equals(this$content, other$content))
@@ -253,7 +255,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		}
 
 		public String toString() {
-			return "JdbcAggregateChangeExecutorContextImmutableUnitTests.DummyEntity(id=" + this.getId() + ", version=" + this.getVersion() + ", content=" + this.getContent() + ", list=" + this.getList() + ")";
+			return "JdbcAggregateChangeExecutorContextImmutableUnitTests.DummyEntity(id=" + this.getId() + ", version="
+					+ this.getVersion() + ", content=" + this.getContent() + ", list=" + this.getList() + ")";
 		}
 
 		public DummyEntity withId(Long id) {
@@ -274,8 +277,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	}
 
 	private static final class Content {
-		@Id
-		private final Long id;
+		@Id private final Long id;
 
 		Content() {
 			id = null;
@@ -290,7 +292,8 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final Content other))
 				return false;
 			final Object this$id = this.getId();

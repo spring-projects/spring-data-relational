@@ -97,6 +97,20 @@ class DefaultAggregatePath implements AggregatePath {
 		return nestedCache.get(property);
 	}
 
+	@Override
+	public AggregatePath append(AggregatePath path) {
+
+		if (path.isRoot()) {
+			return this;
+		}
+
+		RelationalPersistentProperty baseProperty = path.getRequiredBaseProperty();
+		AggregatePath appended = append(baseProperty);
+		AggregatePath tail = path.getTail();
+		return tail == null ? appended : appended.append(tail);
+
+	}
+
 	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
@@ -194,6 +208,47 @@ class DefaultAggregatePath implements AggregatePath {
 		return AggregatePathTraversal.getIdDefiningPath(this);
 	}
 
+	@Override
+	public AggregatePath getTail() {
+
+		if (getLength() <= 2) {
+			return null;
+		}
+
+		AggregatePath tail = null;
+		for (RelationalPersistentProperty prop : this.path) {
+			if (tail == null) {
+				tail = context.getAggregatePath(context.getPersistentEntity(prop));
+			} else {
+				tail = tail.append(prop);
+			}
+		}
+		return tail;
+	}
+
+	@Override
+	@Nullable
+	public AggregatePath subtract(@Nullable AggregatePath basePath) {
+
+		if (basePath == null || basePath.isRoot()) {
+			return this;
+		}
+
+		if (this.isRoot()) {
+			throw new IllegalStateException("Can't subtract from root path");
+		}
+
+		if (basePath.getRequiredBaseProperty().equals(getRequiredBaseProperty())) {
+			AggregatePath tail = this.getTail();
+			if (tail == null) {
+				return null;
+			}
+			return tail.subtract(basePath.getTail());
+		}
+
+		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
+	}
+
 	/**
 	 * Finds and returns the longest path with ich identical or an ancestor to the current path and maps directly to a
 	 * table.
@@ -239,7 +294,6 @@ class DefaultAggregatePath implements AggregatePath {
 	public int hashCode() {
 		return Objects.hash(context, rootType, path);
 	}
-
 
 	@Override
 	public String toString() {
