@@ -15,16 +15,16 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * A builder for {@link AggregatePath.ColumnInfos} instances.
  *
  * @author Jens Schauder
- * @since 3.5
+ * @since 4.0
  */
 class ColumInfosBuilder {
 
@@ -43,8 +43,8 @@ class ColumInfosBuilder {
 	/**
 	 * Adds a {@link AggregatePath.ColumnInfo} to the {@link AggregatePath.ColumnInfos} under construction.
 	 *
-	 * @param path  referencing the {@literal ColumnInfo}.
-	 * @param name  of the column.
+	 * @param path referencing the {@literal ColumnInfo}.
+	 * @param name of the column.
 	 * @param alias alias for the column.
 	 */
 	void add(AggregatePath path, SqlIdentifier name, SqlIdentifier alias) {
@@ -55,8 +55,8 @@ class ColumInfosBuilder {
 	 * Adds a {@link AggregatePath.ColumnInfo} to the {@link AggregatePath.ColumnInfos} under construction.
 	 *
 	 * @param property referencing the {@literal ColumnInfo}.
-	 * @param name     of the column.
-	 * @param alias    alias for the column.
+	 * @param name of the column.
+	 * @param alias alias for the column.
 	 */
 	void add(RelationalPersistentProperty property, SqlIdentifier name, SqlIdentifier alias) {
 		add(basePath.append(property), name, alias);
@@ -65,7 +65,7 @@ class ColumInfosBuilder {
 	/**
 	 * Adds a {@link AggregatePath.ColumnInfo} to the {@link AggregatePath.ColumnInfos} under construction.
 	 *
-	 * @param path       the path referencing the {@literal ColumnInfo}
+	 * @param path the path referencing the {@literal ColumnInfo}
 	 * @param columnInfo the {@literal ColumnInfo} added.
 	 */
 	void add(AggregatePath path, AggregatePath.ColumnInfo columnInfo) {

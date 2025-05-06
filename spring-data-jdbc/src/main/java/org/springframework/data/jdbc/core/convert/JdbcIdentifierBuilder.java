@@ -42,20 +42,24 @@ public class JdbcIdentifierBuilder {
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	// gets called during insert. value contains the id from an insert of the parent
-	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path, Function<AggregatePath, Object> valueProvider) {
+	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, AggregatePath path,
+			Function<AggregatePath, Object> valueProvider) {
 
 		return new JdbcIdentifierBuilder(forBackReference(converter, path, Identifier.empty(), valueProvider));
 	}
 
 	/**
-	 * @param converter         used for determining the column types to be used for different properties. Must not be {@literal null}.
-	 * @param path              the path for which needs to back reference an id. Must not be {@literal null}.
-	 * @param defaultIdentifier Identifier to be used as a default when no backreference can be constructed. Must not be {@literal null}.
-	 * @param valueProvider     provides values for the {@link Identifier} based on an {@link AggregatePath}. Must not be {@literal null}.
+	 * @param converter used for determining the column types to be used for different properties. Must not be
+	 *          {@literal null}.
+	 * @param path the path for which needs to back reference an id. Must not be {@literal null}.
+	 * @param defaultIdentifier Identifier to be used as a default when no backreference can be constructed. Must not be
+	 *          {@literal null}.
+	 * @param valueProvider provides values for the {@link Identifier} based on an {@link AggregatePath}. Must not be
+	 *          {@literal null}.
 	 * @return Guaranteed not to be {@literal null}.
 	 */
-	public static Identifier forBackReference(JdbcConverter converter, AggregatePath path, Identifier defaultIdentifier, Function<AggregatePath, Object> valueProvider) {
+	public static Identifier forBackReference(JdbcConverter converter, AggregatePath path, Identifier defaultIdentifier,
+			Function<AggregatePath, Object> valueProvider) {
 
 		Identifier identifierToUse = defaultIdentifier;
 
@@ -69,19 +73,17 @@ public class JdbcIdentifierBuilder {
 			identifierToUse = infos.reduce(Identifier.empty(), (ap, ci) -> {
 
 				RelationalPersistentProperty property = ap.getRequiredLeafProperty();
-				return Identifier.of(ci.name(), valueProvider.apply(ap),
-						converter.getColumnType(property));
+				return Identifier.of(ci.name(), valueProvider.apply(ap), converter.getColumnType(property));
 			}, Identifier::withPart);
 		}
 
 		return identifierToUse;
 	}
 
-
 	/**
 	 * Adds a qualifier to the identifier to build. A qualifier is a map key or a list index.
 	 *
-	 * @param path  path to the map that gets qualified by {@code value}. Must not be {@literal null}.
+	 * @param path path to the map that gets qualified by {@code value}. Must not be {@literal null}.
 	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
 	 * @return this builder. Guaranteed to be not {@literal null}.
 	 */
@@ -91,8 +93,7 @@ public class JdbcIdentifierBuilder {
 		Assert.notNull(value, "Value must not be null");
 
 		AggregatePath.TableInfo tableInfo = path.getTableInfo();
-		identifier = identifier.withPart(tableInfo.qualifierColumnInfo().name(), value,
-				tableInfo.qualifierColumnType());
+		identifier = identifier.withPart(tableInfo.qualifierColumnInfo().name(), value, tableInfo.qualifierColumnType());
 
 		return this;
 	}

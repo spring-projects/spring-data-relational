@@ -15,12 +15,22 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.function.Consumer;
+
 import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.api.SoftAssertionsProvider;
 
-import java.util.function.Consumer;
-
+/**
+ * Soft assertions for {@link AggregatePath} instances.
+ *
+ * @author Jens Schauder
+ * @since 4.0
+ */
 public class AggregatePathSoftAssertions extends SoftAssertions {
+
+	/**
+	 * Entry point for assertions. The default {@literal assertThat} can't be used, since it collides with {@link SoftAssertions#assertThat(Iterable)}
+	 */
 	public AggregatePathAssertions assertAggregatePath(AggregatePath actual) {
 		return proxy(AggregatePathAssertions.class, AggregatePath.class, actual);
 	}

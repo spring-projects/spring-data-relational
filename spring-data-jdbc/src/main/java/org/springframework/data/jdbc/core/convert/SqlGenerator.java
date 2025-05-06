@@ -113,7 +113,15 @@ public class SqlGenerator {
 		this.dialect = dialect;
 	}
 
-
+	/**
+	 * Create a basic select structure with all the necessary joins
+	 * 
+	 * @param table the table to base the select on
+	 * @param pathFilter a filter for excluding paths from the select. All paths for which the filter returns
+	 *          {@literal true} will be skipped when determining columns to select.
+	 * @return A select structure suitable for constructing more specialized selects by adding conditions.
+	 * @since 4.0
+	 */
 	public SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter) {
 		return createSelectBuilder(table, pathFilter, Collections.emptyList());
 	}

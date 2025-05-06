@@ -62,7 +62,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 	 * @param partitionBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is partitioned by the given expressions, overwriting any expression
 	 *         previously present.
-	 * @since 3.5
+	 * @since 4.0
 	 */
 	public AnalyticFunction partitionBy(Collection<? extends Expression> partitionBy) {
 		return partitionBy(partitionBy.toArray(new Expression[0]));
@@ -85,7 +85,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 	 * @param orderBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
 	 *         previously present.
-	 * @since 3.5
+	 * @since 4.0
 	 */
 	public AnalyticFunction orderBy(Collection<? extends Expression> orderBy) {
 		return orderBy(orderBy.toArray(new Expression[0]));

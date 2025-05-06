@@ -66,14 +66,14 @@ public abstract class Expressions {
 	/**
 	 * Creates an {@link Expression} based on the provided list of {@link Column}s.
 	 * <p>
-	 * If the list contains only a single column, this method returns that column directly
-	 * as the resulting {@link Expression}. Otherwise, it creates and returns a
-	 * {@link TupleExpression} that represents multiple columns as a single expression.
+	 * If the list contains only a single column, this method returns that column directly as the resulting
+	 * {@link Expression}. Otherwise, it creates and returns a {@link TupleExpression} that represents multiple columns as
+	 * a single expression.
 	 *
-	 * @param columns the list of {@link Column}s to include in the expression;
-	 *                must not be {@literal null}.
-	 * @return an {@link Expression} corresponding to the input columns: either a single column or a {@link TupleExpression} for multiple columns.
-	 * @since 3.5
+	 * @param columns the list of {@link Column}s to include in the expression; must not be {@literal null}.
+	 * @return an {@link Expression} corresponding to the input columns: either a single column or a
+	 *         {@link TupleExpression} for multiple columns.
+	 * @since 4.0
 	 */
 	public static Expression of(List<Column> columns) {
 
@@ -84,8 +84,7 @@ public abstract class Expressions {
 	}
 
 	// Utility constructor.
-	private Expressions() {
-	}
+	private Expressions() {}
 
 	static public class SimpleExpression extends AbstractSegment implements Expression {
 

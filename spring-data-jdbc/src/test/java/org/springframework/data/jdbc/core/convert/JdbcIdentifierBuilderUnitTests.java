@@ -50,7 +50,9 @@ public class JdbcIdentifierBuilderUnitTests {
 		@Test // DATAJDBC-326
 		void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
-			Identifier identifier = JdbcIdentifierBuilder.forBackReferences(converter, getPath("child"), getValueProvider("eins", getPath("child"), converter)).build();
+			Identifier identifier = JdbcIdentifierBuilder
+					.forBackReferences(converter, getPath("child"), getValueProvider("eins", getPath("child"), converter))
+					.build();
 
 			assertThat(identifier.getParts()) //
 					.extracting("name", "value", "targetType") //
@@ -99,7 +101,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		void backreferenceAcrossEmbeddable() {
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, getPath("embeddable.child"), getValueProvider("parent-eins", getPath("embeddable.child"), converter)) //
+					.forBackReferences(converter, getPath("embeddable.child"),
+							getValueProvider("parent-eins", getPath("embeddable.child"), converter)) //
 					.build();
 
 			assertThat(identifier.getParts()) //
@@ -113,7 +116,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		void backreferenceAcrossNoId() {
 
 			Identifier identifier = JdbcIdentifierBuilder //
-					.forBackReferences(converter, getPath("noId.child"), getValueProvider("parent-eins", getPath("noId.child"), converter)) //
+					.forBackReferences(converter, getPath("noId.child"),
+							getValueProvider("parent-eins", getPath("noId.child"), converter)) //
 					.build();
 
 			assertThat(identifier.getParts()) //
@@ -133,7 +137,8 @@ public class JdbcIdentifierBuilderUnitTests {
 	 */
 	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
 
-		RelationalPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
+		RelationalPersistentEntity<?> entity = converter.getMappingContext()
+				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
 
 		Function<AggregatePath, Object> valueProvider = ap -> {
 			if (entity == null) {

@@ -33,7 +33,6 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -71,7 +70,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 *
 	 * @param path must not be {@literal null}.
 	 * @return Guaranteed to be not {@literal null}.
-	 * @since 3.5
+	 * @since 4.0
 	 */
 	AggregatePath append(AggregatePath path);
 
@@ -254,7 +253,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * The path resulting from removing the first element of the {@link AggregatePath}.
 	 *
 	 * @return {@literal null} for any {@link AggregatePath} having less than two elements.
-	 * @since 3.5.0
+	 * @since 4.0
 	 */
 	@Nullable
 	AggregatePath getTail();
@@ -266,6 +265,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * @param basePath the path to be removed.
 	 * @return an AggregatePath that ends like the original {@literal AggregatePath} but has {@literal basePath} removed
 	 *         from the beginning.
+	 * @since 4.0
 	 */
 	@Nullable
 	AggregatePath subtract(@Nullable AggregatePath basePath);
@@ -279,9 +279,10 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * @param other the {@code AggregatePath} to compare to. Must not be {@literal null}.
 	 * @return a negative integer, zero, or a positive integer as this object's path is less than, equal to, or greater
 	 *         than the specified object's path.
+	 * @since 4.0
 	 */
 	@Override
-	default int compareTo(@NonNull AggregatePath other) {
+	default int compareTo(AggregatePath other) {
 		return toDotPath().compareTo(other.toDotPath());
 	}
 
@@ -475,7 +476,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * ids and references to such ids.
 	 *
 	 * @author Jens Schauder
-	 * @since 3.5
+	 * @since 4.0
 	 */
 	class ColumnInfos {
 

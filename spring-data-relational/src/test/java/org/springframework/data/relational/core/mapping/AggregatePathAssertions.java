@@ -17,9 +17,19 @@ package org.springframework.data.relational.core.mapping;
 
 import org.assertj.core.api.AbstractAssert;
 
+/**
+ * Custom AssertJ assertions for {@link AggregatePath} instances
+ * 
+ * @author Jens Schauder
+ * @since 4.0
+ */
 public class AggregatePathAssertions extends AbstractAssert<AggregatePathAssertions, AggregatePath> {
 
-	// Constructor for initializing with an AggregatePath instance
+	/**
+	 * Constructor taking the actual {@link AggregatePath} to assert over.
+	 * 
+	 * @param actual
+	 */
 	public AggregatePathAssertions(AggregatePath actual) {
 		super(actual, AggregatePathAssertions.class);
 	}
@@ -32,7 +42,8 @@ public class AggregatePathAssertions extends AbstractAssert<AggregatePathAsserti
 	}
 
 	/**
-	 * Example custom assertion method: Asserts that the AggregatePath has a specific property.
+	 * Assertion method comparing the path of the actual AggregatePath with the provided String representation of a path
+	 * in dot notation. Note that the assertion does not test the root entity type of the AggregatePath.
 	 */
 	public AggregatePathAssertions hasPath(String expectedPath) {
 		isNotNull();
@@ -43,6 +54,9 @@ public class AggregatePathAssertions extends AbstractAssert<AggregatePathAsserti
 		return this;
 	}
 
+	/**
+	 * assertion testing if the actual path is a root path.
+	 */
 	public AggregatePathAssertions isRoot() {
 		isNotNull();
 
@@ -52,6 +66,9 @@ public class AggregatePathAssertions extends AbstractAssert<AggregatePathAsserti
 		return this;
 	}
 
+	/**
+	 * assertion testing if the actual path is NOT a root path.
+	 */
 	public AggregatePathAssertions isNotRoot() {
 		isNotNull();
 
@@ -60,17 +77,4 @@ public class AggregatePathAssertions extends AbstractAssert<AggregatePathAsserti
 		}
 		return this;
 	}
-
-	/**
-	 * Example custom assertion method: Validates the depth of the path.
-	 */
-	public AggregatePathAssertions hasLength(int expectedLength) {
-		isNotNull();
-
-		if (actual.getLength() != expectedLength) {
-			failWithMessage("Expected path length to be <%d> but was <%d>", expectedLength, actual.getLength());
-		}
-		return this;
-	}
-
 }

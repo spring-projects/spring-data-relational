@@ -28,7 +28,7 @@ import java.util.List;
  * </pre>
  *
  * @author Jens Schauder
- * @since 3.5
+ * @since 4.0
  */
 public class TupleExpression extends AbstractSegment implements Expression {
 

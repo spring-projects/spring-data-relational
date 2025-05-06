@@ -106,7 +106,7 @@ public final class Identifier {
 	 * @param identifier the identifier to append.
 	 * @return the {@link Identifier} containing all existing keys and the key part for {@code name}, {@code value}, and a
 	 *         {@link Class target type}.
-	 * @since 3.5
+	 * @since 4.0
 	 */
 	public Identifier withPart(Identifier identifier) {
 
@@ -206,7 +206,6 @@ public final class Identifier {
 
 		return null;
 	}
-
 
 	/**
 	 * A single value of an Identifier consisting of the column name, the value and the target type which is to be used to

@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentLruCache;

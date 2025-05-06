@@ -295,10 +295,8 @@ class SqlGeneratorEmbeddedUnitTests {
 			softly.assertThat(sql).startsWith("SELECT") //
 					.contains(" LEFT OUTER JOIN other_entity other ") //
 					.contains(" ON ") //
-					.contains(
-							" other.with_embedded_id_and_reference_one = with_embedded_id_and_reference.one ") //
-					.contains(
-							" other.with_embedded_id_and_reference_two = with_embedded_id_and_reference.two ") //
+					.contains(" other.with_embedded_id_and_reference_one = with_embedded_id_and_reference.one ") //
+					.contains(" other.with_embedded_id_and_reference_two = with_embedded_id_and_reference.two ") //
 					.contains(" WHERE ") //
 					.contains("with_embedded_id_and_reference.one = :one") //
 					.contains("with_embedded_id_and_reference.two = :two");
