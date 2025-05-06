@@ -34,6 +34,7 @@ import org.springframework.data.repository.query.parser.Part;
  * Unit tests for {@link CriteriaFactory}.
  *
  * @author Mark Paluch
+ * @author Daeho Kwon
  */
 public class CriteriaFactoryUnitTests {
 

@@ -52,6 +52,7 @@ import org.springframework.util.StringUtils;
  * @author Hebert Coelho
  * @author Diego Krupitza
  * @author Mark Paluch
+ * @author Daeho Kwon
  */
 public class JdbcQueryMethod extends QueryMethod {
 

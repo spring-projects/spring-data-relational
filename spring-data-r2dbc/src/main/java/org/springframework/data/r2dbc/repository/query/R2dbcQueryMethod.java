@@ -55,6 +55,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @author Stephen Cohen
  * @author Diego Krupitza
+ * @author Daeho Kwon
  */
 public class R2dbcQueryMethod extends QueryMethod {
 

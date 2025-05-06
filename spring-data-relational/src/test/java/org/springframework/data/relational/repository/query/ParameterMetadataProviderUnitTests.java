@@ -35,6 +35,7 @@ import org.springframework.data.repository.query.parser.PartTree;
  * Unit tests for {@link ParameterMetadataProvider}.
  *
  * @author Mark Paluch
+ * @author Daeho Kwon
  */
 public class ParameterMetadataProviderUnitTests {
 
