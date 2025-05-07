@@ -85,7 +85,7 @@ public class DialectResolver {
 		return Stream.concat(LEGACY_DETECTORS.stream(), DETECTORS.stream()) //
 				.map(it -> it.getDialect(operations)) //
 				.flatMap(Optionals::toStream) //
-				.map(it -> it instanceof JdbcDialect ? (JdbcDialect) it : new JdbcDialectAdapter(it)).findFirst() //
+				.map(it -> it instanceof JdbcDialect jd ? jd : new JdbcDialectAdapter(it)).findFirst() //
 				.orElseThrow(() -> new NoDialectException(
 						String.format("Cannot determine a dialect for %s; Please provide a Dialect", operations)));
 	}

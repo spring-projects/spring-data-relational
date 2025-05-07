@@ -15,11 +15,10 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
@@ -56,7 +55,8 @@ class IdGeneratingEntityCallbackTest {
 	void setUp() {
 
 		relationalMappingContext = new RelationalMappingContext();
-		relationalMappingContext.setSimpleTypeHolder(new SimpleTypeHolder(JdbcPostgresDialect.INSTANCE.simpleTypes(), true));
+		relationalMappingContext
+				.setSimpleTypeHolder(new SimpleTypeHolder(JdbcPostgresDialect.INSTANCE.simpleTypes(), true));
 	}
 
 	@Test // GH-1923
