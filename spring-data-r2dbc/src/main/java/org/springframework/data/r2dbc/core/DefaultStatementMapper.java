@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -25,6 +26,7 @@ import org.springframework.data.r2dbc.query.BoundAssignments;
 import org.springframework.data.r2dbc.query.BoundCondition;
 import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -53,7 +55,7 @@ class DefaultStatementMapper implements StatementMapper {
 	private final RenderContext renderContext;
 	private final UpdateMapper updateMapper;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
-
+	private boolean forceQuote;
 	DefaultStatementMapper(R2dbcDialect dialect, R2dbcConverter converter) {
 
 		RenderContextFactory factory = new RenderContextFactory(dialect);
@@ -62,6 +64,9 @@ class DefaultStatementMapper implements StatementMapper {
 		this.renderContext = factory.createRenderContext();
 		this.updateMapper = new UpdateMapper(dialect, converter);
 		this.mappingContext = converter.getMappingContext();
+		if(mappingContext instanceof RelationalMappingContext relationalMappingContext){
+			 forceQuote = relationalMappingContext.isForceQuote();
+		}
 	}
 
 	DefaultStatementMapper(R2dbcDialect dialect, RenderContext renderContext, UpdateMapper updateMapper,
@@ -70,6 +75,9 @@ class DefaultStatementMapper implements StatementMapper {
 		this.renderContext = renderContext;
 		this.updateMapper = updateMapper;
 		this.mappingContext = mappingContext;
+		if(mappingContext instanceof RelationalMappingContext relationalMappingContext){
+			forceQuote = relationalMappingContext.isForceQuote();
+		}
 	}
 
 	@Override
@@ -90,7 +98,8 @@ class DefaultStatementMapper implements StatementMapper {
 	private PreparedOperation<Select> getMappedObject(SelectSpec selectSpec,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Table table = selectSpec.getTable();
+		String tableName = selectSpec.getTable().getName().getReference();
+		Table table = getTable(tableName);
 		SelectBuilder.SelectAndFrom selectAndFrom = StatementBuilder.select(getSelectList(selectSpec, entity));
 
 		if (selectSpec.isDistinct()) {
@@ -158,7 +167,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(toSql(insertSpec.getTable()));
+		Table table = getTable(insertSpec.getTable().getReference());
 
 		BoundAssignments boundAssignments = this.updateMapper.getMappedObject(bindMarkers, insertSpec.getAssignments(),
 				table, entity);
@@ -191,7 +200,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(toSql(updateSpec.getTable()));
+		Table table = getTable(updateSpec.getTable().getReference());
 
 		if (updateSpec.getUpdate() == null || updateSpec.getUpdate().getAssignments().isEmpty()) {
 			throw new IllegalArgumentException("UPDATE contains no assignments");
@@ -210,7 +219,6 @@ class DefaultStatementMapper implements StatementMapper {
 
 		CriteriaDefinition criteria = updateSpec.getCriteria();
 		if (criteria != null && !criteria.isEmpty()) {
-
 			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, criteria, table, entity);
 
 			bindings = bindings.and(boundCondition.getBindings());
@@ -220,6 +228,10 @@ class DefaultStatementMapper implements StatementMapper {
 		}
 
 		return new DefaultPreparedOperation<>(update, this.renderContext, bindings);
+	}
+
+	private Table getTable(String tableName) {
+		return forceQuote ? Table.create(SqlIdentifier.quoted(tableName)) : Table.create(SqlIdentifier.unquoted(tableName));
 	}
 
 	@Override
@@ -236,7 +248,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(toSql(deleteSpec.getTable()));
+		Table table = getTable(deleteSpec.getTable().getReference());
 
 		DeleteBuilder.DeleteWhere deleteBuilder = StatementBuilder.delete(table);
 

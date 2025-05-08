@@ -95,8 +95,10 @@ public class R2dbcEntityTemplateUnitTests {
 		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, new MoneyConverter(),
 				new RowConverter(), new RowDocumentConverter(), new PkConverter());
 
+		R2dbcMappingContext context = new R2dbcMappingContext();
+		context.setForceQuote(false);
 		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE,
-				new MappingR2dbcConverter(new R2dbcMappingContext(), conversions));
+				new MappingR2dbcConverter(context, conversions));
 	}
 
 	@Test // GH-220

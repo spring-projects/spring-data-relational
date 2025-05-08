@@ -67,7 +67,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM person");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM \"person\"");
 	}
 
 	@Test // gh-410
@@ -104,7 +104,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
@@ -125,7 +125,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM other_table WHERE other_table.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM other_table WHERE other_table.\"THE_NAME\" = $1");
 	}
 
 	static class Person {
