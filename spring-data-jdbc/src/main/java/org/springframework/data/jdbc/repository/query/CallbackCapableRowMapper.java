@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,35 +25,41 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
- * Delegating {@link RowMapper} implementation that applies post-processing logic
- * after the {@link RowMapper#mapRow(ResultSet, int)}. In particular, it emits the
- * {@link AfterConvertEvent} event and invokes the {@link AfterConvertCallback} callbacks.
+ * Delegating {@link RowMapper} implementation that applies post-processing logic after the
+ * {@link RowMapper#mapRow(ResultSet, int)}. In particular, it emits the {@link AfterConvertEvent} event and invokes the
+ * {@link AfterConvertCallback} callbacks.
  *
  * @author Mark Paluch
  * @author Mikhail Polivakha
+ * @since 4.0
  */
 public class CallbackCapableRowMapper<T> extends AbstractDelegatingRowMapper<T> {
 
-    private final ApplicationEventPublisher publisher;
-    private final @Nullable EntityCallbacks callbacks;
+	private final ApplicationEventPublisher publisher;
+	private final @Nullable EntityCallbacks callbacks;
 
-    public CallbackCapableRowMapper(RowMapper<T> delegate, ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks) {
-        super(delegate);
-        this.publisher = publisher;
-        this.callbacks = callbacks;
-    }
+	public CallbackCapableRowMapper(RowMapper<T> delegate, ApplicationEventPublisher publisher,
+			@Nullable EntityCallbacks callbacks) {
 
-    @Override
-    public T postProcessMapping(@Nullable T object) {
-        if (object != null) {
+		super(delegate);
 
-            publisher.publishEvent(new AfterConvertEvent<>(object));
+		this.publisher = publisher;
+		this.callbacks = callbacks;
+	}
 
-            if (callbacks != null) {
-                return callbacks.callback(AfterConvertCallback.class, object);
-            }
+	@Override
+	@Nullable
+	public T postProcessMapping(@Nullable T object) {
 
-        }
-        return object;
-    }
+		if (object != null) {
+
+			publisher.publishEvent(new AfterConvertEvent<>(object));
+
+			if (callbacks != null) {
+				return callbacks.callback(AfterConvertCallback.class, object);
+			}
+
+		}
+		return object;
+	}
 }

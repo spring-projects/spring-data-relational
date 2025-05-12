@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,32 +23,38 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Abstract {@link RowMapper} that delegates the actual mapping logic to a {@link AbstractDelegatingRowMapper#delegate delegate}
+ * Abstract {@link RowMapper} that delegates the actual mapping logic to a {@link AbstractDelegatingRowMapper#delegate
+ * delegate}
  *
  * @author Mikhail Polivakha
+ * @since 4.0
  */
 public abstract class AbstractDelegatingRowMapper<T> implements RowMapper<T> {
 
-    private final RowMapper<T> delegate;
+	private final RowMapper<T> delegate;
 
-    protected AbstractDelegatingRowMapper(RowMapper<T> delegate) {
-        Assert.notNull(delegate, "Delegating RowMapper cannot be null");
+	protected AbstractDelegatingRowMapper(RowMapper<T> delegate) {
 
-        this.delegate = delegate;
-    }
+		Assert.notNull(delegate, "Delegating RowMapper cannot be null");
 
-    @Override
-    public T mapRow(ResultSet rs, int rowNum) throws SQLException {
-        T intermediate = delegate.mapRow(rs, rowNum);
-        return postProcessMapping(intermediate);
-    }
+		this.delegate = delegate;
+	}
 
-    /**
-     * The post-processing callback for implementations.
-     *
-     * @return the mapped entity after applying post-processing logic
-     */
-    protected T postProcessMapping(@Nullable T object) {
-        return object;
-    }
+	@Override
+	@Nullable
+	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+		T intermediate = delegate.mapRow(rs, rowNum);
+		return postProcessMapping(intermediate);
+	}
+
+	/**
+	 * The post-processing callback for implementations.
+	 *
+	 * @return the mapped entity after applying post-processing logic
+	 */
+	@Nullable
+	protected T postProcessMapping(@Nullable T object) {
+		return object;
+	}
 }

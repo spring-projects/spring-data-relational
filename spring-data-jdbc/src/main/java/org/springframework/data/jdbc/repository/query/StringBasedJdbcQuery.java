@@ -95,7 +95,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			ValueExpressionDelegate delegate) {
 		this(queryMethod.getRequiredQuery(), queryMethod, operations, rowMapperFactory, converter, delegate);
 	}
 
@@ -112,7 +113,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @since 3.4
 	 */
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter, ValueExpressionDelegate delegate) {
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			ValueExpressionDelegate delegate) {
 		super(queryMethod, operations);
 		Assert.hasText(query, "Query must not be null or empty");
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");

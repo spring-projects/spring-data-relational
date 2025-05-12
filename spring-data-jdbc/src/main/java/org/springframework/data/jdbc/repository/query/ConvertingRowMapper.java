@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,26 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
- * Delegating {@link RowMapper} that reads a row into {@code T} and converts it afterwards into {@code Object}.
+ * Delegating {@link RowMapper} that reads a row into {@code T} and converts it afterward into {@code Object}.
  *
  * @author Mark Paluch
  * @author Mikhail Polivakha
- *
- * @since 2.3
+ * @since 4.0
  */
 public class ConvertingRowMapper extends AbstractDelegatingRowMapper<Object> {
 
-    private final Converter<Object, Object> converter;
+	private final Converter<Object, Object> converter;
 
-    public ConvertingRowMapper(RowMapper<Object> delegate, Converter<Object, Object> converter) {
-        super(delegate);
-        this.converter = converter;
-    }
+	public ConvertingRowMapper(RowMapper<Object> delegate, Converter<Object, Object> converter) {
 
-    @Override
-    public Object postProcessMapping(@Nullable Object object) {
-        return object != null ? converter.convert(object) : null;
-    }
+		super(delegate);
+
+		this.converter = converter;
+	}
+
+	@Override
+	@Nullable
+	public Object postProcessMapping(@Nullable Object object) {
+		return object != null ? converter.convert(object) : null;
+	}
 }

@@ -97,7 +97,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	 * @since 2.3
 	 */
 	public PartTreeJdbcQuery(RelationalMappingContext context, JdbcQueryMethod queryMethod, Dialect dialect,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
 
 		super(queryMethod, operations);
 
@@ -160,13 +161,13 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryExecution<?> queryExecution = getJdbcQueryExecution(extractor, rowMapper);
 
 		if (getQueryMethod().isSliceQuery()) {
-			//noinspection unchecked
+			// noinspection unchecked
 			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable());
 		}
 
 		if (getQueryMethod().isPageQuery()) {
 
-			//noinspection unchecked
+			// noinspection unchecked
 			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable(),
 					() -> {
 
@@ -291,7 +292,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Lazy<RowMapper<?>> rowMapper;
 		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
 
-		public CachedRowMapperFactory(PartTree tree, org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, RelationalConverter converter,
+		public CachedRowMapperFactory(PartTree tree,
+				org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, RelationalConverter converter,
 				ResultProcessor defaultResultProcessor) {
 
 			this.rowMapperFunction = processor -> {
@@ -301,8 +303,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
-						resultProcessingConverter);
+				return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(
+						rowMapperFactory.create(processor.getReturnedType().getDomainType()), resultProcessingConverter);
 			};
 
 			this.rowMapper = Lazy.of(() -> this.rowMapperFunction.apply(defaultResultProcessor));

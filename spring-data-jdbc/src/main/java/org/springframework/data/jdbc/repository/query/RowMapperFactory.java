@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,36 +23,35 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author Jens Schauder
  * @author Mikhail Polivakha
- *
- * @since 2.3
+ * @since 4.0
  */
 public interface RowMapperFactory {
 
-    /**
-     * Obtain a {@link RowMapper} based on the expected return type passed in as an argument.
-     *
-     * @param result must not be {@code null}.
-     * @return a {@code RowMapper} producing instances of {@code result}.
-     */
-    RowMapper<Object> create(Class<?> result);
+	/**
+	 * Obtain a {@link RowMapper} based on the expected return type passed in as an argument.
+	 *
+	 * @param result must not be {@code null}.
+	 * @return a {@code RowMapper} producing instances of {@code result}.
+	 */
+	RowMapper<Object> create(Class<?> result);
 
-    /**
-     * Obtain a {@link RowMapper}  from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
-     *
-     * @param reference must not be {@code null}.
-     * @since 3.4
-     */
-    default RowMapper<Object> getRowMapper(String reference) {
-        throw new UnsupportedOperationException("getRowMapper by reference is not supported");
-    }
+	/**
+	 * Obtain a {@link RowMapper} from some other source, typically a
+	 * {@link org.springframework.beans.factory.BeanFactory}.
+	 *
+	 * @param reference must not be {@code null}.
+	 */
+	default RowMapper<Object> getRowMapper(String reference) {
+		throw new UnsupportedOperationException("getRowMapper by reference is not supported");
+	}
 
-    /**
-     * Obtain a {@code ResultSetExtractor} from some other source, typically a {@link org.springframework.beans.factory.BeanFactory}.
-     *
-     * @param reference must not be {@code null}.
-     * @since 3.4
-     */
-    default ResultSetExtractor<Object> getResultSetExtractor(String reference) {
-        throw new UnsupportedOperationException("getResultSetExtractor by reference is not supported");
-    }
+	/**
+	 * Obtain a {@code ResultSetExtractor} from some other source, typically a
+	 * {@link org.springframework.beans.factory.BeanFactory}.
+	 *
+	 * @param reference must not be {@code null}.
+	 */
+	default ResultSetExtractor<Object> getResultSetExtractor(String reference) {
+		throw new UnsupportedOperationException("getResultSetExtractor by reference is not supported");
+	}
 }
