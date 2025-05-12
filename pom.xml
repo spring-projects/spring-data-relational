@@ -39,7 +39,7 @@
 		<mssql.version>12.10.0.jre11</mssql.version>
 		<mysql-connector-java.version>9.2.0</mysql-connector-java.version>
 		<postgresql.version>42.7.5</postgresql.version>
-		<oracle.version>23.7.0.25.01</oracle.version>
+		<oracle.version>23.8.0.25.04</oracle.version>
 
 		<!-- R2DBC driver dependencies-->
 		<r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
