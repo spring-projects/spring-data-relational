@@ -107,9 +107,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation information) {
 
-		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType(),
-				information);
-
+		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType());
 		return getTargetRepositoryViaReflection(information, entityInformation, operations, this.converter);
 	}
 
@@ -119,16 +117,10 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		return Optional.of(new R2dbcQueryLookupStrategy(operations, new CachingValueExpressionDelegate(valueExpressionDelegate), converter, dataAccessStrategy));
 	}
 
+	@Override
 	public <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
-		return getEntityInformation(domainClass, null);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass,
-			@Nullable RepositoryInformation information) {
 
 		RelationalPersistentEntity<?> entity = this.mappingContext.getRequiredPersistentEntity(domainClass);
-
 		return new MappingRelationalEntityInformation<>((RelationalPersistentEntity<T>) entity);
 	}
 
