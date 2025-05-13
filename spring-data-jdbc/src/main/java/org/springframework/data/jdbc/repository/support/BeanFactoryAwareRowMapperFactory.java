@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.repository.support;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.DefaultRowMapperFactory;
 import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.mapping.callback.EntityCallbacks;
