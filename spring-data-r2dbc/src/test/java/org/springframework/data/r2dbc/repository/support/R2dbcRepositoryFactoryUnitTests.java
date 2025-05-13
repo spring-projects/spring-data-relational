@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
@@ -60,7 +61,8 @@ public class R2dbcRepositoryFactoryUnitTests {
 	public void usesMappingRelationalEntityInformationIfMappingContextSet() {
 
 		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
-		RelationalEntityInformation<Person, Long> entityInformation = factory.getEntityInformation(Person.class);
+		RelationalEntityInformation<?, ?> entityInformation = factory
+				.getEntityInformation(AbstractRepositoryMetadata.getMetadata(MyPersonRepository.class));
 
 		assertThat(entityInformation).isInstanceOf(MappingRelationalEntityInformation.class);
 	}

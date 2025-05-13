@@ -27,10 +27,10 @@ import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.data.relational.repository.query.RelationalEntityInformation;
+import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -104,13 +104,12 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
+	public RelationalEntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(aClass);
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(metadata.getDomainType());
 
-		return (EntityInformation<T, ID>) new PersistentEntityInformation<>(entity);
+		return new MappingRelationalEntityInformation<>(entity);
 	}
 
 	@Override

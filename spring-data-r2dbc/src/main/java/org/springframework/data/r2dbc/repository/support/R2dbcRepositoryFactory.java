@@ -104,7 +104,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation information) {
 
-		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType());
+		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information);
+
 		return getTargetRepositoryViaReflection(information, entityInformation, operations, this.converter);
 	}
 
@@ -116,10 +117,11 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	}
 
 	@Override
-	public <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+	public RelationalEntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
 
-		RelationalPersistentEntity<?> entity = this.mappingContext.getRequiredPersistentEntity(domainClass);
-		return new MappingRelationalEntityInformation<>((RelationalPersistentEntity<T>) entity);
+		RelationalPersistentEntity<?> entity = this.mappingContext.getRequiredPersistentEntity(metadata.getDomainType());
+
+		return new MappingRelationalEntityInformation<>(entity);
 	}
 
 	/**
