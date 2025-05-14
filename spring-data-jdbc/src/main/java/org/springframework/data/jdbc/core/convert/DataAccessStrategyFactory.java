@@ -15,10 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.Optional;
-
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

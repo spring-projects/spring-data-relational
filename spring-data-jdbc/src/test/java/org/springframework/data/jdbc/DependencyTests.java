@@ -61,10 +61,10 @@ public class DependencyTests {
 
 		JavaClasses importedClasses = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
 				.importPackages( //
-						"org.springframework.data.jdbc", // Spring Data Relational
+						"org.springframework.data.jdbc", // Spring Data JDBC
 						"org.springframework.data.relational", // Spring Data Relational
 						"org.springframework.data" // Spring Data Commons
-				)
+				).that(onlySpringData()) //
 				.that(ignore(AuditingHandlerBeanDefinitionParser.class)) //
 				.that(ignorePackage("org.springframework.data.aot.hint")) // ignoring aot, since it causes cycles in commons
 				.that(ignorePackage("org.springframework.data.aot")); // ignoring aot, since it causes cycles in commons

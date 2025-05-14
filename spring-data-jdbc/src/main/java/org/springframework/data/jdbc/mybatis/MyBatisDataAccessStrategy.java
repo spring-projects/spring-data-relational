@@ -32,7 +32,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -77,8 +76,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
-			Dialect dialect, QueryMappingConfiguration queryMappingConfiguration) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession, Dialect dialect,
+			QueryMappingConfiguration queryMappingConfiguration) {
 		return createCombinedAccessStrategy(context, converter, operations, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE,
 				dialect, queryMappingConfiguration);
 	}

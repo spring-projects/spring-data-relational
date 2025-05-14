@@ -28,9 +28,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
- * This {@link RowMapperFactory} implementation extends the {@link DefaultRowMapperFactory}
- * by adding the capabilities to load {@link RowMapper} or {@link ResultSetExtractor} beans by
- * their names in {@link BeanFactory}.
+ * This {@link RowMapperFactory} implementation extends the {@link DefaultRowMapperFactory} by adding the capabilities
+ * to load {@link RowMapper} or {@link ResultSetExtractor} beans by their names in {@link BeanFactory}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -39,38 +38,36 @@ import org.springframework.lang.Nullable;
 @SuppressWarnings("unchecked")
 public class BeanFactoryAwareRowMapperFactory extends DefaultRowMapperFactory {
 
-    private final @Nullable BeanFactory beanFactory;
+	private final @Nullable BeanFactory beanFactory;
 
-    public BeanFactoryAwareRowMapperFactory(
-      RelationalMappingContext context,
-      JdbcConverter converter,
-      QueryMappingConfiguration queryMappingConfiguration,
-      EntityCallbacks entityCallbacks,
-      ApplicationEventPublisher publisher,
-      @Nullable BeanFactory beanFactory
-    ) {
-        super(context, converter, queryMappingConfiguration, entityCallbacks, publisher);
+	public BeanFactoryAwareRowMapperFactory(RelationalMappingContext context, JdbcConverter converter,
+			QueryMappingConfiguration queryMappingConfiguration, EntityCallbacks entityCallbacks,
+			ApplicationEventPublisher publisher, @Nullable BeanFactory beanFactory) {
 
-        this.beanFactory = beanFactory;
-    }
+		super(context, converter, queryMappingConfiguration, entityCallbacks, publisher);
 
-    @Override
-    public RowMapper<Object> getRowMapper(String reference) {
-        if (beanFactory == null) {
-            throw new IllegalStateException(
-              "Cannot resolve RowMapper bean reference '" + reference + "'; BeanFactory is not configured.");
-        }
+		this.beanFactory = beanFactory;
+	}
 
-        return beanFactory.getBean(reference, RowMapper.class);
-    }
+	@Override
+	public RowMapper<Object> getRowMapper(String reference) {
 
-    @Override
-    public ResultSetExtractor<Object> getResultSetExtractor(String reference) {
-        if (beanFactory == null) {
-            throw new IllegalStateException(
-              "Cannot resolve ResultSetExtractor bean reference '" + reference + "'; BeanFactory is not configured.");
-        }
+		if (beanFactory == null) {
+			throw new IllegalStateException(
+					"Cannot resolve RowMapper bean reference '" + reference + "'; BeanFactory is not configured.");
+		}
 
-        return beanFactory.getBean(reference, ResultSetExtractor.class);
-    }
+		return beanFactory.getBean(reference, RowMapper.class);
+	}
+
+	@Override
+	public ResultSetExtractor<Object> getResultSetExtractor(String reference) {
+
+		if (beanFactory == null) {
+			throw new IllegalStateException(
+					"Cannot resolve ResultSetExtractor bean reference '" + reference + "'; BeanFactory is not configured.");
+		}
+
+		return beanFactory.getBean(reference, ResultSetExtractor.class);
+	}
 }

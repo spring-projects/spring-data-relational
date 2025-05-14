@@ -61,7 +61,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	static class Config {
 
 		@Bean
-        QueryMappingConfiguration mappers() {
+		QueryMappingConfiguration mappers() {
 			return new DefaultQueryMappingConfiguration();
 		}
 

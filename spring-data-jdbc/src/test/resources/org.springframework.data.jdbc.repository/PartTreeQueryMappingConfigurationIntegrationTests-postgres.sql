@@ -1,2 +1,6 @@
 DROP TABLE car;
-CREATE TABLE car ( id SERIAL PRIMARY KEY, model VARCHAR(100));
+CREATE TABLE car
+(
+    id    SERIAL PRIMARY KEY,
+    model VARCHAR(100)
+);

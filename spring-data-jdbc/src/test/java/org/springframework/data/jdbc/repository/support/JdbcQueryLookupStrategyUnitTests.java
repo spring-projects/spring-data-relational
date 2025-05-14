@@ -30,13 +30,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -123,9 +122,9 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		assertThatThrownBy(
 				() -> getRepositoryQuery(QueryLookupStrategy.Key.USE_DECLARED_QUERY, "findByName", mappingConfiguration))
-						.isInstanceOf(IllegalStateException.class)
-						.hasMessageContaining("Did neither find a NamedQuery nor an annotated query for method")
-						.hasMessageContaining("findByName");
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Did neither find a NamedQuery nor an annotated query for method")
+				.hasMessageContaining("findByName");
 	}
 
 	@ParameterizedTest

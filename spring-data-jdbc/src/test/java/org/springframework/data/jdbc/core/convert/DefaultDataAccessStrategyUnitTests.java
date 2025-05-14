@@ -67,8 +67,9 @@ class DefaultDataAccessStrategyUnitTests {
 				converter, //
 				namedJdbcOperations, //
 				sqlParametersFactory, //
-				insertStrategyFactory,
-				QueryMappingConfiguration.EMPTY).create();
+				insertStrategyFactory, //
+				QueryMappingConfiguration.EMPTY //
+		).create();
 
 		relationResolver.setDelegate(accessStrategy);
 

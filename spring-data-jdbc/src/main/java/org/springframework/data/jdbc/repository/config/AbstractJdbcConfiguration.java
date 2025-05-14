@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -42,7 +41,6 @@ import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -229,8 +227,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
 				new SqlParametersFactory(context, jdbcConverter), new InsertStrategyFactory(operations, dialect),
-				this.queryMappingConfiguration
-		);
+				this.queryMappingConfiguration);
 
 		return factory.create();
 	}
@@ -254,7 +251,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		this.applicationContext = applicationContext;
 	}
 
-	public void setQueryMappingConfiguration(Optional<QueryMappingConfiguration> queryMappingConfiguration) throws BeansException {
+	public void setQueryMappingConfiguration(Optional<QueryMappingConfiguration> queryMappingConfiguration)
+			throws BeansException {
 		this.queryMappingConfiguration = queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY);
 	}
 

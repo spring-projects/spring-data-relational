@@ -73,7 +73,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final NamedParameterJdbcOperations operations;
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
-
 	private final QueryMappingConfiguration queryMappingConfiguration;
 
 	/**
@@ -451,6 +450,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> RowMapper<? extends T> getRowMapper(Class<T> domainType) {
+
 		RowMapper<? extends T> targetRowMapper;
 
 		if ((targetRowMapper = queryMappingConfiguration.getRowMapper(domainType)) != null) {

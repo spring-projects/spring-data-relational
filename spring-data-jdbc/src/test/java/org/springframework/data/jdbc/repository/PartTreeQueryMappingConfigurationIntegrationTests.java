@@ -31,92 +31,91 @@ import org.springframework.jdbc.core.RowMapper;
 @IntegrationTest
 public class PartTreeQueryMappingConfigurationIntegrationTests {
 
-    @Configuration
-    @Import(TestConfiguration.class)
-    @EnableJdbcRepositories(
-      considerNestedRepositories = true,
-      includeFilters = @ComponentScan.Filter(value = CarRepository.class, type = FilterType.ASSIGNABLE_TYPE))
-    static class Config {
+	@Configuration
+	@Import(TestConfiguration.class)
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(value = CarRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+	static class Config {
 
-        @Bean
-        QueryMappingConfiguration mappers(@Qualifier("CustomRowMapperBean") CustomRowMapperBean rowMapperBean) {
-            return new DefaultQueryMappingConfiguration().registerRowMapper(Car.class, rowMapperBean);
-        }
+		@Bean
+		QueryMappingConfiguration mappers(@Qualifier("CustomRowMapperBean") CustomRowMapperBean rowMapperBean) {
+			return new DefaultQueryMappingConfiguration().registerRowMapper(Car.class, rowMapperBean);
+		}
 
-        @Bean(value = "CustomRowMapperBean")
-        public CustomRowMapperBean rowMapperBean() {
-            return new CustomRowMapperBean();
-        }
-    }
+		@Bean(value = "CustomRowMapperBean")
+		public CustomRowMapperBean rowMapperBean() {
+			return new CustomRowMapperBean();
+		}
+	}
 
-    @Autowired
-    private CarRepository carRepository;
+	@Autowired private CarRepository carRepository;
 
-    @Test // DATAJDBC-1006
-    void testCustomQueryMappingConfiguration_predefinedPartTreeQuery() {
+	@Test // DATAJDBC-1006
+	void testCustomQueryMappingConfiguration_predefinedPartTreeQuery() {
 
-        // given
-        Car saved = carRepository.save(new Car(null, "test-model"));
+		// given
+		Car saved = carRepository.save(new Car(null, "test-model"));
 
-        // when
-        Optional<Car> found = carRepository.findById(saved.getId());
+		// when
+		Optional<Car> found = carRepository.findById(saved.getId());
 
-        // then
-        Assertions.assertThat(found).isPresent().hasValueSatisfying(car -> Assertions.assertThat(car.getModel()).isEqualTo("STUB"));
-    }
+		// then
+		Assertions.assertThat(found).isPresent()
+				.hasValueSatisfying(car -> Assertions.assertThat(car.getModel()).isEqualTo("STUB"));
+	}
 
-    @Test // DATAJDBC-1006
-    void testCustomQueryMappingConfiguration_customPartTreeQuery() {
+	@Test // DATAJDBC-1006
+	void testCustomQueryMappingConfiguration_customPartTreeQuery() {
 
-        // given
-        Car saved = carRepository.save(new Car(null, "test-model"));
+		// given
+		Car saved = carRepository.save(new Car(null, "test-model"));
 
-        // when
-        Optional<Car> found = carRepository.findOneByModel("test-model");
+		// when
+		Optional<Car> found = carRepository.findOneByModel("test-model");
 
-        // then
-        Assertions.assertThat(found).isPresent().hasValueSatisfying(car -> Assertions.assertThat(car.getModel()).isEqualTo("STUB"));
-    }
+		// then
+		Assertions.assertThat(found).isPresent()
+				.hasValueSatisfying(car -> Assertions.assertThat(car.getModel()).isEqualTo("STUB"));
+	}
 
-    public static class CustomRowMapperBean implements RowMapper<Car> {
+	public static class CustomRowMapperBean implements RowMapper<Car> {
 
-        @Override
-        public Car mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new Car(rs.getLong("id"), "STUB");
-        }
-    }
+		@Override
+		public Car mapRow(ResultSet rs, int rowNum) throws SQLException {
+			return new Car(rs.getLong("id"), "STUB");
+		}
+	}
 
-    interface CarRepository extends CrudRepository<Car, Long> {
+	interface CarRepository extends CrudRepository<Car, Long> {
 
-        Optional<Car> findOneByModel(String model);
-    }
+		Optional<Car> findOneByModel(String model);
+	}
 
-    public static class Car {
+	public static class Car {
 
-        @Id
-        private Long id;
-        private String model;
+		@Id private Long id;
+		private String model;
 
-        public Car(Long id, String model) {
-            this.id = id;
-            this.model = model;
-        }
+		public Car(Long id, String model) {
+			this.id = id;
+			this.model = model;
+		}
 
-        public Long getId() {
-            return this.id;
-        }
+		public Long getId() {
+			return this.id;
+		}
 
-        public String getModel() {
-            return this.model;
-        }
+		public String getModel() {
+			return this.model;
+		}
 
-        public void setId(Long id) {
-            this.id = id;
-        }
+		public void setId(Long id) {
+			this.id = id;
+		}
 
-        public void setModel(String model) {
-            this.model = model;
-        }
-    }
+		public void setModel(String model) {
+			this.model = model;
+		}
+	}
 
 }

@@ -24,7 +24,6 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mockito.Mockito;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,7 +40,6 @@ import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
@@ -79,14 +77,10 @@ public class TestConfiguration {
 	public static final String PROFILE_SINGLE_QUERY_LOADING = "singleQueryLoading";
 	public static final String PROFILE_NO_SINGLE_QUERY_LOADING = "!" + PROFILE_SINGLE_QUERY_LOADING;
 
-	@Autowired
-	DataSource dataSource;
-	@Autowired
-	BeanFactory beanFactory;
-	@Autowired
-	ApplicationEventPublisher publisher;
-	@Autowired(required = false)
-	SqlSessionFactory sqlSessionFactory;
+	@Autowired DataSource dataSource;
+	@Autowired BeanFactory beanFactory;
+	@Autowired ApplicationEventPublisher publisher;
+	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
@@ -122,7 +116,8 @@ public class TestConfiguration {
 			JdbcConverter converter, Dialect dialect, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
 
 		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
-				new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect), queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY)).create();
+				new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect),
+				queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY)).create();
 	}
 
 	@Bean("jdbcMappingContext")
@@ -149,9 +144,8 @@ public class TestConfiguration {
 	@Bean
 	CustomConversions jdbcCustomConversions(Dialect dialect) {
 
-		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ?
-				JdbcSimpleTypes.HOLDER :
-				new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
+				: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
 
 		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
 				Collections.emptyList());
@@ -171,9 +165,8 @@ public class TestConfiguration {
 			Dialect dialect) {
 
 		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect
-				?
-				((JdbcDialect) dialect).getArraySupport() :
-				JdbcArrayColumns.DefaultSupport.INSTANCE;
+				? ((JdbcDialect) dialect).getArraySupport()
+				: JdbcArrayColumns.DefaultSupport.INSTANCE;
 
 		return new MappingJdbcConverter( //
 				mappingContext, //
