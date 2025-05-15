@@ -119,7 +119,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the proper
 	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
 	 * functionality of the {@link DefaultDataAccessStrategy} which one normally still wants. Use
-	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy, Dialect)}
+	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy, Dialect, QueryMappingConfiguration)}
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.

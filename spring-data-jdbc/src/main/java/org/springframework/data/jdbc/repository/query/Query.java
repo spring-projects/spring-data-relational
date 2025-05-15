@@ -26,10 +26,11 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
+ * <p>
  * Annotation to provide SQL statements that will get used for executing the method. The SQL statement may contain named
  * parameters as supported by {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Those
  * parameters will get bound to the arguments of the annotated method.
- * <p>
+ * </p><p>
  * You can also specify the way to extract data from {@link java.sql.ResultSet}. There are 4 attribute of this
  * annotation you can set to do that:
  * <p>
