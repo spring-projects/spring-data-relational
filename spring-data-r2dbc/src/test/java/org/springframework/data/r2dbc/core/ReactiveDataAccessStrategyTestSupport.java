@@ -38,6 +38,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 

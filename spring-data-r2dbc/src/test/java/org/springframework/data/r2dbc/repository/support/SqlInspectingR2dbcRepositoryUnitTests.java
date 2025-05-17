@@ -77,7 +77,7 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
 
-		assertThat(statement.getSql()).isEqualTo("select * from PERSONx");
+		assertThat(statement.getSql()).isEqualTo("select * from \"PERSON\"x");
 	}
 
 	private static boolean isSelect(String sql) {

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -31,6 +32,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -64,6 +66,7 @@ public class QueryMapper {
 	private final R2dbcConverter converter;
 	private final R2dbcDialect dialect;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final boolean forceQuote;
 
 	/**
 	 * Creates a new {@link QueryMapper} with the given {@link R2dbcConverter}.
@@ -80,6 +83,11 @@ public class QueryMapper {
 		this.converter = converter;
 		this.dialect = dialect;
 		this.mappingContext = (MappingContext) converter.getMappingContext();
+		if(mappingContext instanceof RelationalMappingContext relationalMappingContext){
+			forceQuote = relationalMappingContext.isForceQuote();
+		}else {
+			forceQuote= false;
+		}
 	}
 
 	/**
@@ -107,7 +115,7 @@ public class QueryMapper {
 	public List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
 
 		List<OrderByField> mappedOrder = new ArrayList<>();
-
+		table = getTable(table);
 		for (Sort.Order order : sort) {
 
 			SqlSort.validate(order);
@@ -120,13 +128,23 @@ public class QueryMapper {
 		return mappedOrder;
 	}
 
+	 Table getTable(Table table) {
+		String tableName = table.getName().getReference();
+		table = Table.create(forceQuote? SqlIdentifier.quoted(tableName):SqlIdentifier.unquoted(tableName));
+		return table;
+	}
+
 	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
 
 		if (order instanceof SqlSort.SqlOrder sqlOrder && sqlOrder.isUnsafe()) {
 			return OrderByField.from(Expressions.just(sqlOrder.getProperty()));
 		}
+		boolean forceQuote = false;
+		if(this.mappingContext instanceof RelationalMappingContext relationalMappingContext){
+			forceQuote = relationalMappingContext.isForceQuote();
+		}
 
-		Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
+		Field field = createPropertyField(entity, forceQuote ? SqlIdentifier.quoted(order.getProperty()) : SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
 		return OrderByField.from(table.column(field.getMappedColumnName()));
 	}
 

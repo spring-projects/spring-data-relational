@@ -77,7 +77,7 @@ public class ReactiveSelectOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql())
-				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 10 OFFSET 20");
+				.isEqualTo("SELECT \"person\".* FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1 LIMIT 10 OFFSET 20");
 	}
 
 	@Test // GH-220
@@ -101,7 +101,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.THE_NAME FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT \"person\".\"THE_NAME\" FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1");
 	}
 
 	@Test // GH-220, GH-1690
@@ -125,7 +125,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.id, person.a_different_name FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT \"person\".\"id\", \"person\".\"a_different_name\" FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1");
 	}
 
 	@Test // GH-220
@@ -149,7 +149,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT the_table.* FROM the_table WHERE the_table.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT \"the_table\".* FROM \"the_table\" WHERE \"the_table\".\"THE_NAME\" = $1");
 	}
 
 	@Test // GH-220
@@ -172,7 +172,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+		assertThat(statement.getSql()).isEqualTo("SELECT \"person\".* FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-220
@@ -195,7 +195,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 2");
+		assertThat(statement.getSql()).isEqualTo("SELECT \"person\".* FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1 LIMIT 2");
 	}
 
 	@Test // GH-220
@@ -218,7 +218,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-220
@@ -241,7 +241,7 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1");
 	}
 
 	@Test // GH-1652

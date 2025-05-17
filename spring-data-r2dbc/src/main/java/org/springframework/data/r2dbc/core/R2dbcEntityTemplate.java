@@ -19,6 +19,8 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Statement;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -354,6 +356,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			Class<T> returnType, Function<? super Statement, ? extends Statement> filterFunction) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
+		boolean forceQuote = false;
+		if(this.mappingContext instanceof RelationalMappingContext relationalMappingContext){
+			 forceQuote = relationalMappingContext.isForceQuote();
+		}
+		tableName = forceQuote ? SqlIdentifier.quoted(tableName.getReference()): SqlIdentifier.unquoted(tableName.getReference());
 
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
@@ -548,9 +555,16 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.InsertSpec insert = mapper.createInsert(tableName);
 
 		for (SqlIdentifier column : outboundRow.keySet()) {
+
 			Parameter settableValue = outboundRow.get(column);
 			if (settableValue.hasValue()) {
-				insert = insert.withColumn(column, settableValue);
+				boolean forceQuote = false;
+				if(this.mappingContext instanceof R2dbcMappingContext r2dbcMappingContext){
+					 forceQuote = r2dbcMappingContext.isForceQuote();
+				}
+
+
+				insert = insert.withColumn(forceQuote? SqlIdentifier.quoted(column.getReference()): column, settableValue);
 			}
 		}
 
