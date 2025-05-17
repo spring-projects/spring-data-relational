@@ -28,7 +28,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * An SQL dialect for Oracle.
  *
  * @author Jens Schauder
- * @author Mikahil Polivakha
+ * @author Mikhail Polivakha
  * @since 2.1
  */
 public class OracleDialect extends AnsiDialect {
