@@ -67,7 +67,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
-	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
+	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"role\".\"USERS\" AS \"ROLE_USERS\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
 	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USERS\" = \"users\".\"ID\"";
 	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
 
@@ -669,6 +669,18 @@ class PartTreeJdbcQueryUnitTests {
 				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
+	@Test // GH-2059
+	void selectByConvertedValue() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findByRole", Role.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		ParametrizedQuery query = jdbcQuery.createQuery((getAccessor(queryMethod, new Object[] { new Role("admin") })),
+				returnedType);
+
+		assertThat(query.getQuery())
+				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"ROLE\" = :role");
+	}
+
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return new PartTreeJdbcQuery(mappingContext, queryMethod, JdbcH2Dialect.INSTANCE, converter,
 				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
@@ -774,6 +786,8 @@ class PartTreeJdbcQueryUnitTests {
 		User findByAnotherEmbeddedList(Object list);
 
 		long countByFirstName(String name);
+
+		User findByRole(Role role);
 	}
 
 	@Table("users")
@@ -793,6 +807,8 @@ class PartTreeJdbcQueryUnitTests {
 		Hobby hated;
 
 		AggregateReference<Hobby, String> hobbyReference;
+
+		Role role;
 	}
 
 	record Address(String street, String city) {
@@ -809,7 +825,7 @@ class PartTreeJdbcQueryUnitTests {
 	}
 
 	@WritingConverter
-	static class Role2String implements Converter<Role, String >{
+	static class Role2String implements Converter<Role, String> {
 
 		@Override
 		public String convert(Role source) {
