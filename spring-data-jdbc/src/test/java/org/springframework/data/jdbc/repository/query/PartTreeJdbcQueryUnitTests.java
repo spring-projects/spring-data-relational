@@ -29,7 +29,9 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
@@ -801,5 +803,17 @@ class PartTreeJdbcQueryUnitTests {
 
 	static class Hobby {
 		@Id String name;
+	}
+
+	record Role(String name) {
+	}
+
+	@WritingConverter
+	static class Role2String implements Converter<Role, String >{
+
+		@Override
+		public String convert(Role source) {
+			return source.name();
+		}
 	}
 }
