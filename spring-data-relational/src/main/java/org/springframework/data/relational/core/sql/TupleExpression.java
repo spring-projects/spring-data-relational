@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.relational.core.sql;
 
 import static java.util.stream.Collectors.*;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
- * A tuple as used in conditions like
+ * A tuple as used for {@code IN} predicates. For example:
  *
- * <pre>
+ * <pre class="code">
  *   WHERE (one, two) IN (select x, y from some_table)
  * </pre>
  *
@@ -32,24 +32,36 @@ import java.util.List;
  */
 public class TupleExpression extends AbstractSegment implements Expression {
 
-	private final List<? extends Expression> expressions;
+	private final Collection<? extends Expression> expressions;
 
-	private static Segment[] children(List<? extends Expression> expressions) {
+	private static Segment[] children(Collection<? extends Expression> expressions) {
 		return expressions.toArray(new Segment[0]);
 	}
 
-	TupleExpression(List<? extends Expression> expressions) {
+	TupleExpression(Collection<? extends Expression> expressions) {
 
 		super(children(expressions));
 
 		this.expressions = expressions;
 	}
 
+	/**
+	 * Creates a {@link TupleExpression} from the given expressions.
+	 *
+	 * @param expressions must not be {@literal null} or empty.
+	 * @return the new {@link TupleExpression}.
+	 */
 	public static TupleExpression create(Expression... expressions) {
 		return new TupleExpression(List.of(expressions));
 	}
 
-	public static TupleExpression create(List<? extends Expression> expressions) {
+	/**
+	 * Creates a {@link TupleExpression} from the given expressions.
+	 *
+	 * @param expressions must not be {@literal null} or empty.
+	 * @return the new {@link TupleExpression}.
+	 */
+	public static TupleExpression create(Collection<? extends Expression> expressions) {
 		return new TupleExpression(expressions);
 	}
 

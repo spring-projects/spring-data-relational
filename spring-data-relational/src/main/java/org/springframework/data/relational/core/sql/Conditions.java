@@ -46,6 +46,16 @@ public abstract class Conditions {
 	}
 
 	/**
+	 * Empty {@link Condition} that can be used to indicate that no condition is present.
+	 *
+	 * @return empty (unrestricted) condition.
+	 * @since 4.0
+	 */
+	public static Condition unrestricted() {
+		return Unrestricted.INSTANCE;
+	}
+
+	/**
 	 * Creates a nested {@link Condition} that is enclosed with parentheses. Useful to combine {@code AND} and {@code OR}
 	 * statements.
 	 *
@@ -317,4 +327,5 @@ public abstract class Conditions {
 
 	// Utility constructor.
 	private Conditions() {}
+
 }

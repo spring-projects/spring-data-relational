@@ -149,8 +149,8 @@ public class RelationalMappingContext
 
 	/**
 	 * @return iff single query loading is enabled.
-	 * @see #setSingleQueryLoadingEnabled(boolean)
 	 * @since 3.2
+	 * @see #setSingleQueryLoadingEnabled(boolean)
 	 */
 	public boolean isSingleQueryLoadingEnabled() {
 		return singleQueryLoadingEnabled;

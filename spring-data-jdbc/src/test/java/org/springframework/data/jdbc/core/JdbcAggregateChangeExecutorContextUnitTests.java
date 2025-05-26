@@ -259,7 +259,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 	Identifier createBackRef(long value) {
 		return forBackReferences(converter, toAggregatePath("content"),
-				getValueProvider(value, toAggregatePath("content"), converter)).build();
+				getIdMapper(value, toAggregatePath("content"), converter)).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

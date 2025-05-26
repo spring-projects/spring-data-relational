@@ -38,7 +38,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  *
  * @author Jens Schauder
  */
-public class JdbcIdentifierBuilderUnitTests {
+class JdbcIdentifierBuilderUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {

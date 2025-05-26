@@ -17,10 +17,10 @@ package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -46,7 +46,7 @@ import org.springframework.lang.Nullable;
  */
 class SqlGeneratorEmbeddedUnitTests {
 
-	private final RelationalMappingContext context = new JdbcMappingContext();
+	private RelationalMappingContext context = new JdbcMappingContext();
 	private JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
@@ -65,25 +65,22 @@ class SqlGeneratorEmbeddedUnitTests {
 
 	@Test // DATAJDBC-111
 	void findOne() {
-		final String sql = sqlGenerator.getFindOne();
+		String sql = sqlGenerator.getFindOne();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity.id1 AS id1") //
-					.contains("dummy_entity.test AS test") //
-					.contains("dummy_entity.attr1 AS attr1") //
-					.contains("dummy_entity.attr2 AS attr2") //
-					.contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
-					.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
-					.contains("dummy_entity.prefix_test AS prefix_test") //
-					.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
-					.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
-					.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
-					.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
-					.contains("WHERE dummy_entity.id1 = :id") //
-					.doesNotContain("JOIN").doesNotContain("embeddable"); //
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("dummy_entity.id1 AS id1") //
+				.contains("dummy_entity.test AS test") //
+				.contains("dummy_entity.attr1 AS attr1") //
+				.contains("dummy_entity.attr2 AS attr2") //
+				.contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
+				.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
+				.contains("dummy_entity.prefix_test AS prefix_test") //
+				.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
+				.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
+				.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
+				.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
+				.contains("WHERE dummy_entity.id1 = :id") //
+				.doesNotContain("JOIN").doesNotContain("embeddable"); //
 	}
 
 	@Test // GH-574
@@ -93,13 +90,10 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getFindOne();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("with_wrapped_id.name AS name") //
-					.contains("with_wrapped_id.id") //
-					.contains("WHERE with_wrapped_id.id = :id");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("with_wrapped_id.name AS name") //
+				.contains("with_wrapped_id.id") //
+				.contains("WHERE with_wrapped_id.id = :id");
 	}
 
 	@Test // GH-574
@@ -109,16 +103,13 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getFindOne();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("with_embedded_id.name AS name") //
-					.contains("with_embedded_id.one") //
-					.contains("with_embedded_id.two") //
-					.contains(" WHERE ") //
-					.contains("with_embedded_id.one = :one") //
-					.contains("with_embedded_id.two = :two");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("with_embedded_id.name AS name") //
+				.contains("with_embedded_id.one") //
+				.contains("with_embedded_id.two") //
+				.contains(" WHERE ") //
+				.contains("with_embedded_id.one = :one") //
+				.contains("with_embedded_id.two = :two");
 	}
 
 	@Test // GH-574
@@ -128,13 +119,10 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getDeleteById();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("DELETE") //
-					.contains(" WHERE ") //
-					.contains("with_embedded_id.one = :one") //
-					.contains("with_embedded_id.two = :two");
-		});
+		assertThat(sql).startsWith("DELETE") //
+				.contains(" WHERE ") //
+				.contains("with_embedded_id.one = :one") //
+				.contains("with_embedded_id.two = :two");
 	}
 
 	@Test // GH-574
@@ -144,12 +132,9 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getDeleteByIdIn();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("DELETE") //
-					.contains(" WHERE ") //
-					.contains("(with_embedded_id.one, with_embedded_id.two) IN (:ids)");
-		});
+		assertThat(sql).startsWith("DELETE") //
+				.contains(" WHERE ") //
+				.contains("(with_embedded_id.one, with_embedded_id.two) IN (:ids)");
 	}
 
 	@Test // GH-574
@@ -161,12 +146,9 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.createDeleteByPath(path);
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
-					.contains("other_entity.with_embedded_id_and_reference_one = :one") //
-					.contains("other_entity.with_embedded_id_and_reference_two = :two");
-		});
+		assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
+				.contains("other_entity.with_embedded_id_and_reference_one = :one") //
+				.contains("other_entity.with_embedded_id_and_reference_two = :two");
 	}
 
 	@Test // GH-574
@@ -178,13 +160,10 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.createDeleteInByPath(path);
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
-					.contains(" WHERE ") //
-					.contains(
-							"(other_entity.with_embedded_id_and_reference_one, other_entity.with_embedded_id_and_reference_two) IN (:ids)");
-		});
+		assertThat(sql).startsWith("DELETE FROM other_entity WHERE") //
+				.contains(" WHERE ") //
+				.contains(
+						"(other_entity.with_embedded_id_and_reference_one, other_entity.with_embedded_id_and_reference_two) IN (:ids)");
 	}
 
 	@Test // GH-574
@@ -194,13 +173,10 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getUpdate();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("UPDATE") //
-					.contains(" WHERE ") //
-					.contains("with_embedded_id.one = :one") //
-					.contains("with_embedded_id.two = :two");
-		});
+		assertThat(sql).startsWith("UPDATE") //
+				.contains(" WHERE ") //
+				.contains("with_embedded_id.one = :one") //
+				.contains("with_embedded_id.two = :two");
 	}
 
 	@Test // GH-574
@@ -210,36 +186,30 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getExists();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT COUNT") //
-					.contains(" WHERE ") //
-					.contains("with_embedded_id.one = :one") //
-					.contains("with_embedded_id.two = :two");
-		});
+		assertThat(sql).startsWith("SELECT COUNT") //
+				.contains(" WHERE ") //
+				.contains("with_embedded_id.one = :one") //
+				.contains("with_embedded_id.two = :two");
 	}
 
 	@Test // DATAJDBC-111
 	void findAll() {
-		final String sql = sqlGenerator.getFindAll();
+		String sql = sqlGenerator.getFindAll();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity.id1 AS id1") //
-					.contains("dummy_entity.test AS test") //
-					.contains("dummy_entity.attr1 AS attr1") //
-					.contains("dummy_entity.attr2 AS attr2") //
-					.contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
-					.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
-					.contains("dummy_entity.prefix_test AS prefix_test") //
-					.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
-					.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
-					.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
-					.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
-					.doesNotContain("JOIN") //
-					.doesNotContain("embeddable");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("dummy_entity.id1 AS id1") //
+				.contains("dummy_entity.test AS test") //
+				.contains("dummy_entity.attr1 AS attr1") //
+				.contains("dummy_entity.attr2 AS attr2") //
+				.contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
+				.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
+				.contains("dummy_entity.prefix_test AS prefix_test") //
+				.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
+				.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
+				.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
+				.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
+				.doesNotContain("JOIN") //
+				.doesNotContain("embeddable");
 	}
 
 	@Test // DATAJDBC-111
@@ -247,23 +217,20 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getFindAllInList();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("dummy_entity.id1 AS id1") //
-					.contains("dummy_entity.test AS test") //
-					.contains("dummy_entity.attr1 AS attr1") //
-					.contains("dummy_entity.attr2 AS attr2").contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
-					.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
-					.contains("dummy_entity.prefix_test AS prefix_test") //
-					.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
-					.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
-					.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
-					.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
-					.contains("WHERE dummy_entity.id1 IN (:ids)") //
-					.doesNotContain("JOIN") //
-					.doesNotContain("embeddable");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("dummy_entity.id1 AS id1") //
+				.contains("dummy_entity.test AS test") //
+				.contains("dummy_entity.attr1 AS attr1") //
+				.contains("dummy_entity.attr2 AS attr2").contains("dummy_entity.prefix2_attr1 AS prefix2_attr1") //
+				.contains("dummy_entity.prefix2_attr2 AS prefix2_attr2") //
+				.contains("dummy_entity.prefix_test AS prefix_test") //
+				.contains("dummy_entity.prefix_attr1 AS prefix_attr1") //
+				.contains("dummy_entity.prefix_attr2 AS prefix_attr2") //
+				.contains("dummy_entity.prefix_prefix2_attr1 AS prefix_prefix2_attr1") //
+				.contains("dummy_entity.prefix_prefix2_attr2 AS prefix_prefix2_attr2") //
+				.contains("WHERE dummy_entity.id1 IN (:ids)") //
+				.doesNotContain("JOIN") //
+				.doesNotContain("embeddable");
 	}
 
 	@Test // GH-574
@@ -273,14 +240,11 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getFindAllInList();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains("with_embedded_id.name AS name") //
-					.contains("with_embedded_id.one") //
-					.contains("with_embedded_id.two") //
-					.contains(" WHERE (with_embedded_id.one, with_embedded_id.two) IN (:ids)");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains("with_embedded_id.name AS name") //
+				.contains("with_embedded_id.one") //
+				.contains("with_embedded_id.two") //
+				.contains(" WHERE (with_embedded_id.one, with_embedded_id.two) IN (:ids)");
 	}
 
 	@Test // GH-574
@@ -290,61 +254,52 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		String sql = sqlGenerator.getFindOne();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql).startsWith("SELECT") //
-					.contains(" LEFT OUTER JOIN other_entity other ") //
-					.contains(" ON ") //
-					.contains(" other.with_embedded_id_and_reference_one = with_embedded_id_and_reference.one ") //
-					.contains(" other.with_embedded_id_and_reference_two = with_embedded_id_and_reference.two ") //
-					.contains(" WHERE ") //
-					.contains("with_embedded_id_and_reference.one = :one") //
-					.contains("with_embedded_id_and_reference.two = :two");
-		});
+		assertThat(sql).startsWith("SELECT") //
+				.contains(" LEFT OUTER JOIN other_entity other ") //
+				.contains(" ON ") //
+				.contains(" other.with_embedded_id_and_reference_one = with_embedded_id_and_reference.one ") //
+				.contains(" other.with_embedded_id_and_reference_two = with_embedded_id_and_reference.two ") //
+				.contains(" WHERE ") //
+				.contains("with_embedded_id_and_reference.one = :one") //
+				.contains("with_embedded_id_and_reference.two = :two");
 	}
 
 	@Test // DATAJDBC-111
 	void insert() {
-		final String sql = sqlGenerator.getInsert(emptySet());
+		String sql = sqlGenerator.getInsert(emptySet());
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql) //
-					.startsWith("INSERT INTO") //
-					.contains("dummy_entity") //
-					.contains(":test") //
-					.contains(":attr1") //
-					.contains(":attr2") //
-					.contains(":prefix2_attr1") //
-					.contains(":prefix2_attr2") //
-					.contains(":prefix_test") //
-					.contains(":prefix_attr1") //
-					.contains(":prefix_attr2") //
-					.contains(":prefix_prefix2_attr1") //
-					.contains(":prefix_prefix2_attr2");
-		});
+		assertThat(sql) //
+				.startsWith("INSERT INTO") //
+				.contains("dummy_entity") //
+				.contains(":test") //
+				.contains(":attr1") //
+				.contains(":attr2") //
+				.contains(":prefix2_attr1") //
+				.contains(":prefix2_attr2") //
+				.contains(":prefix_test") //
+				.contains(":prefix_attr1") //
+				.contains(":prefix_attr2") //
+				.contains(":prefix_prefix2_attr1") //
+				.contains(":prefix_prefix2_attr2");
 	}
 
 	@Test // DATAJDBC-111
 	void update() {
-		final String sql = sqlGenerator.getUpdate();
+		String sql = sqlGenerator.getUpdate();
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(sql) //
-					.startsWith("UPDATE") //
-					.contains("dummy_entity") //
-					.contains("test = :test") //
-					.contains("attr1 = :attr1") //
-					.contains("attr2 = :attr2") //
-					.contains("prefix2_attr1 = :prefix2_attr1") //
-					.contains("prefix2_attr2 = :prefix2_attr2") //
-					.contains("prefix_test = :prefix_test") //
-					.contains("prefix_attr1 = :prefix_attr1") //
-					.contains("prefix_attr2 = :prefix_attr2") //
-					.contains("prefix_prefix2_attr1 = :prefix_prefix2_attr1") //
-					.contains("prefix_prefix2_attr2 = :prefix_prefix2_attr2");
-		});
+		assertThat(sql) //
+				.startsWith("UPDATE") //
+				.contains("dummy_entity") //
+				.contains("test = :test") //
+				.contains("attr1 = :attr1") //
+				.contains("attr2 = :attr2") //
+				.contains("prefix2_attr1 = :prefix2_attr1") //
+				.contains("prefix2_attr2 = :prefix2_attr2") //
+				.contains("prefix_test = :prefix_test") //
+				.contains("prefix_attr1 = :prefix_attr1") //
+				.contains("prefix_attr2 = :prefix_attr2") //
+				.contains("prefix_prefix2_attr1 = :prefix_prefix2_attr1") //
+				.contains("prefix_prefix2_attr2 = :prefix_prefix2_attr2");
 	}
 
 	@Test // DATAJDBC-340
@@ -352,7 +307,7 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		sqlGenerator = createSqlGenerator(DummyEntity2.class);
 
-		final String sql = sqlGenerator
+		String sql = sqlGenerator
 				.createDeleteByPath(PersistentPropertyPathTestUtils.getPath("embedded.other", DummyEntity2.class, context));
 
 		assertThat(sql).isEqualTo("DELETE FROM other_entity WHERE other_entity.dummy_entity2 = :id");
@@ -441,11 +396,9 @@ class SqlGeneratorEmbeddedUnitTests {
 
 		SqlGenerator.Join join = generateJoin("embedded.other", DummyEntity2.class);
 
-		assertSoftly(softly -> {
-			softly.assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
-			softly.assertThat(join.condition())
-					.isEqualTo(SqlGeneratorUnitTests.equalsCondition("dummy_entity2", "id", join.joinTable(), "dummy_entity2"));
-		});
+		assertThat(join.joinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
+		assertThat(join.condition())
+				.isEqualTo(SqlGeneratorUnitTests.equalsCondition("dummy_entity2", "id", join.joinTable(), "dummy_entity2"));
 	}
 
 	@Test // DATAJDBC-340

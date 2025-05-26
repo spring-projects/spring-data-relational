@@ -45,7 +45,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
-public class CompositeIdAggregateTemplateHsqlIntegrationTests {
+class CompositeIdAggregateTemplateHsqlIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired private NamedParameterJdbcOperations namedParameterJdbcTemplate;

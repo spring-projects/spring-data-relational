@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -45,6 +46,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -108,7 +110,7 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 		// create delete relation queries
 		List<Delete> deleteChain = new ArrayList<>();
-		deleteRelations(deleteChain, entity, select);
+		deleteRelations(entity, select, deleteChain::add);
 
 		// crate delete query
 		DeleteWhere deleteBuilder = StatementBuilder.delete(table);
@@ -126,41 +128,39 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		return queries;
 	}
 
-	private void deleteRelations(List<Delete> deleteChain, RelationalPersistentEntity<?> entity, Select parentSelect) {
+	private void deleteRelations(RelationalPersistentEntity<?> entity, Select parentSelect,
+			Consumer<Delete> deleteConsumer) {
 
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+				.findPersistentPropertyPaths(entity.getType(), Predicates.isTrue())) {
 
 			AggregatePath aggregatePath = context.getAggregatePath(path);
 
-			if (aggregatePath.isEmbedded()) {
+			if (aggregatePath.isEmbedded() || !aggregatePath.isEntity()) {
 				continue;
 			}
 
-			if (aggregatePath.isEntity()) {
+			SqlContext sqlContext = new SqlContext();
 
-				SqlContext sqlContext = new SqlContext();
+			// MariaDB prior to 11.6 does not support aliases for delete statements
+			Table table = sqlContext.getUnaliasedTable(aggregatePath);
 
-				// MariaDB prior to 11.6 does not support aliases for delete statements
-				Table table = sqlContext.getUnaliasedTable(aggregatePath);
+			List<Column> reverseColumns = aggregatePath.getTableInfo().backReferenceColumnInfos().toColumnList(table);
+			Expression expression = Expressions.of(reverseColumns);
 
-				List<Column> reverseColumns = aggregatePath.getTableInfo().backReferenceColumnInfos().toColumnList(table);
-				Expression expression = Expressions.of(reverseColumns);
+			Condition inCondition = Conditions.in(expression, parentSelect);
 
-				Condition inCondition = Conditions.in(expression, parentSelect);
+			List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
+					.toColumnList(table);
 
-				List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
-						.toColumnList(table);
+			Select select = StatementBuilder.select( //
+					parentIdColumns //
+			).from(table) //
+					.where(inCondition) //
+					.build();
+			deleteRelations(aggregatePath.getLeafEntity(), select, deleteConsumer);
 
-				Select select = StatementBuilder.select( //
-						parentIdColumns //
-				).from(table) //
-						.where(inCondition) //
-						.build();
-				deleteRelations(deleteChain, aggregatePath.getLeafEntity(), select);
-
-				deleteChain.add(StatementBuilder.delete(table).where(inCondition).build());
-			}
+			deleteConsumer.accept(StatementBuilder.delete(table).where(inCondition).build());
 		}
 	}
 }

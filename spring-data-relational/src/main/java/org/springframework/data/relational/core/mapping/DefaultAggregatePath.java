@@ -209,6 +209,7 @@ class DefaultAggregatePath implements AggregatePath {
 	}
 
 	@Override
+	@Nullable
 	public AggregatePath getTail() {
 
 		if (getLength() <= 2) {
@@ -247,16 +248,6 @@ class DefaultAggregatePath implements AggregatePath {
 		}
 
 		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
-	}
-
-	/**
-	 * Finds and returns the longest path with ich identical or an ancestor to the current path and maps directly to a
-	 * table.
-	 *
-	 * @return a path. Guaranteed to be not {@literal null}.
-	 */
-	private AggregatePath getTableOwningAncestor() {
-		return AggregatePathTraversal.getTableOwningPath(this);
 	}
 
 	/**

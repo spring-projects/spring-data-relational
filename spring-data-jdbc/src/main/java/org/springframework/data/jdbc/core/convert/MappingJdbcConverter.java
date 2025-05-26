@@ -454,15 +454,9 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			AggregatePath aggregatePath) {
 
 		AggregatePath idDefiningParentPath = aggregatePath.getIdDefiningParentPath();
-
-		if (!idDefiningParentPath.hasIdProperty()) {
-			return ap -> {
-				throw new IllegalStateException("This should never happen");
-			};
-		}
-
 		RelationalPersistentProperty idProperty = idDefiningParentPath.getRequiredIdProperty();
 		AggregatePath idPath = idProperty.isEntity() ? idDefiningParentPath.append(idProperty) : idDefiningParentPath;
+
 		return ap -> valueProvider.apply(idPath.append(ap));
 	}
 

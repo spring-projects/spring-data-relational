@@ -15,14 +15,22 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 /**
+ * Traversal methods for {@link AggregatePath} to find paths that define the ID or own the table.
+ *
  * @author Mark Paluch
+ * @since 3.2
  */
 public class AggregatePathTraversal {
 
+	/**
+	 * Get the path that defines the identifier of the aggregate.
+	 *
+	 * @param aggregatePath
+	 * @return
+	 */
 	public static AggregatePath getIdDefiningPath(AggregatePath aggregatePath) {
 
 		Predicate<AggregatePath> idDefiningPathFilter = ap -> !ap.equals(aggregatePath)
@@ -30,18 +38,25 @@ public class AggregatePathTraversal {
 
 		AggregatePath result = aggregatePath.filter(idDefiningPathFilter);
 		if (result == null) {
-			throw new NoSuchElementException();
+			throw new IllegalStateException(
+					"No identifier associated within this aggregate path: %s".formatted(aggregatePath));
 		}
 		return result;
 	}
 
+	/**
+	 * Get the path that owns the table of the aggregate.
+	 *
+	 * @param aggregatePath
+	 * @return
+	 */
 	public static AggregatePath getTableOwningPath(AggregatePath aggregatePath) {
 
 		Predicate<AggregatePath> tableOwningPathFilter = ap -> ap.isEntity() && !ap.isEmbedded();
 
 		AggregatePath result = aggregatePath.filter(tableOwningPathFilter);
 		if (result == null) {
-			throw new NoSuchElementException();
+			throw new IllegalStateException("No table associated within this aggregate path: %s".formatted(aggregatePath));
 		}
 		return result;
 	}
