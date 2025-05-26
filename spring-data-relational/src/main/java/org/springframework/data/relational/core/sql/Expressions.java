@@ -22,10 +22,10 @@ import java.util.List;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see SQL
  * @see Conditions
  * @see Functions
- * @since 1.1
  */
 public abstract class Expressions {
 

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -118,7 +119,7 @@ public class SqlGenerator {
 
 	/**
 	 * Create a basic select structure with all the necessary joins
-	 * 
+	 *
 	 * @param table the table to base the select on
 	 * @param pathFilter a filter for excluding paths from the select. All paths for which the filter returns
 	 *          {@literal true} will be skipped when determining columns to select.
@@ -188,6 +189,8 @@ public class SqlGenerator {
 		Table subSelectTable = Table.create(parentPathTableInfo.qualifiedTableName());
 
 		Map<AggregatePath, Column> selectFilterColumns = new TreeMap<>();
+
+		// TODO: cannot we simply pass on the columnInfos?
 		parentPathTableInfo.effectiveIdColumnInfos().forEach( //
 				(ap, ci) -> //
 				selectFilterColumns.put(ap, subSelectTable.column(ci.name())) //
@@ -471,6 +474,8 @@ public class SqlGenerator {
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		// TODO: When deleting by path, why do we expect the where-value to be id and not named after the path?
+		// See SqlGeneratorEmbeddedUnitTests.deleteByPath
 		return createDeleteByPathAndCriteria(mappingContext.getAggregatePath(path), this::equalityCondition);
 	}
 
@@ -490,12 +495,10 @@ public class SqlGenerator {
 	 */
 	private Condition inCondition(Map<AggregatePath, Column> columnMap) {
 
-		List<Column> columns = List.copyOf(columnMap.values());
+		Collection<Column> columns = columnMap.values();
 
-		if (columns.size() == 1) {
-			return Conditions.in(columns.get(0), getBindMarker(IDS_SQL_PARAMETER));
-		}
-		return Conditions.in(TupleExpression.create(columns), getBindMarker(IDS_SQL_PARAMETER));
+		return Conditions.in(columns.size() == 1 ? columns.iterator().next() : TupleExpression.create(columns),
+				getBindMarker(IDS_SQL_PARAMETER));
 	}
 
 	/**
@@ -504,17 +507,13 @@ public class SqlGenerator {
 	 */
 	private Condition equalityCondition(Map<AggregatePath, Column> columnMap) {
 
+		Assert.isTrue(!columnMap.isEmpty(), "Column map must not be empty");
+
 		AggregatePath.ColumnInfos idColumnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
-		Condition result = null;
-		for (Map.Entry<AggregatePath, Column> entry : columnMap.entrySet()) {
-			BindMarker bindMarker = getBindMarker(idColumnInfos.get(entry.getKey()).name());
-			Comparison singleCondition = entry.getValue().isEqualTo(bindMarker);
-
-			result = result == null ? singleCondition : result.and(singleCondition);
-		}
-		Assert.state(result != null, "We need at least one condition");
-		return result;
+		return createPredicate(columnMap, (aggregatePath, column) -> {
+			return column.isEqualTo(getBindMarker(idColumnInfos.get(aggregatePath).name()));
+		});
 	}
 
 	/**
@@ -522,11 +521,20 @@ public class SqlGenerator {
 	 * {@literal <column-a> IS NOT NULL AND <column-b> IS NOT NULL ... }
 	 */
 	private Condition isNotNullCondition(Map<AggregatePath, Column> columnMap) {
+		return createPredicate(columnMap, (aggregatePath, column) -> column.isNotNull());
+	}
+
+	/**
+	 * Constructs a function for constructing where a condition. The where condition will be of the form
+	 * {@literal <column-a> IS NOT NULL AND <column-b> IS NOT NULL ... }
+	 */
+	private static Condition createPredicate(Map<AggregatePath, Column> columnMap,
+			BiFunction<AggregatePath, Column, Condition> conditionFunction) {
 
 		Condition result = null;
-		for (Column column : columnMap.values()) {
-			Condition singleCondition = column.isNotNull();
+		for (Map.Entry<AggregatePath, Column> entry : columnMap.entrySet()) {
 
+			Condition singleCondition = conditionFunction.apply(entry.getKey(), entry.getValue());
 			result = result == null ? singleCondition : result.and(singleCondition);
 		}
 		Assert.state(result != null, "We need at least one condition");
@@ -534,14 +542,19 @@ public class SqlGenerator {
 	}
 
 	private String createFindOneSql() {
-
 		return render(selectBuilder().where(equalityIdWhereCondition()).build());
 	}
 
 	private Condition equalityIdWhereCondition() {
+		return equalityIdWhereCondition(getIdColumns());
+	}
+
+	private Condition equalityIdWhereCondition(Iterable<Column> columns) {
+
+		Assert.isTrue(columns.iterator().hasNext(), "Identifier columns must not be empty");
 
 		Condition aggregate = null;
-		for (Column column : getIdColumns()) {
+		for (Column column : columns) {
 
 			Comparison condition = column.isEqualTo(getBindMarker(column.getName()));
 			aggregate = aggregate == null ? condition : aggregate.and(condition);
@@ -766,19 +779,13 @@ public class SqlGenerator {
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 		AggregatePath.ColumnInfos idColumnInfos = idDefiningParentPath.getTableInfo().idColumnInfos();
 
-		final Condition[] joinCondition = { null };
-		backRefColumnInfos.forEach((ap, ci) -> {
+		Condition joinCondition = backRefColumnInfos.reduce(Conditions.unrestricted(), (aggregatePath, columnInfo) -> {
 
-			Condition elementalCondition = currentTable.column(ci.name())
-					.isEqualTo(parentTable.column(idColumnInfos.get(ap).name()));
-			joinCondition[0] = joinCondition[0] == null ? elementalCondition : joinCondition[0].and(elementalCondition);
-		});
+			return currentTable.column(columnInfo.name())
+					.isEqualTo(parentTable.column(idColumnInfos.get(aggregatePath).name()));
+		}, Condition::and);
 
-		return new Join( //
-				currentTable, //
-				joinCondition[0] //
-		);
-
+		return new Join(currentTable, joinCondition);
 	}
 
 	private String createFindAllInListSql() {
@@ -917,6 +924,8 @@ public class SqlGenerator {
 
 		Map<AggregatePath, Column> columns = new TreeMap<>();
 		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().backReferenceColumnInfos();
+
+		// TODO: cannot we simply pass on the columnInfos?
 		columnInfos.forEach((ag, ci) -> columns.put(ag, table.column(ci.name())));
 
 		if (isFirstNonRoot(path)) {
@@ -970,6 +979,10 @@ public class SqlGenerator {
 	 */
 	private Column getSingleNonNullColumn() {
 
+		// getColumn() is slightly different from the code in any(…). Why?
+		// AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
+		// return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
+
 		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 		return columnInfos.any((ap, ci) -> sqlContext.getTable(columnInfos.fullPath(ap)).column(ci.name()).as(ci.alias()));
 	}
@@ -977,10 +990,9 @@ public class SqlGenerator {
 	private List<Column> getIdColumns() {
 
 		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
-		List<Column> result = new ArrayList<>(columnInfos.size());
-		columnInfos.forEach((ap, ci) -> result.add(sqlContext.getColumn(columnInfos.fullPath(ap))));
 
-		return result;
+		return columnInfos
+				.toColumnList((aggregatePath, columnInfo) -> sqlContext.getColumn(columnInfos.fullPath(aggregatePath)));
 	}
 
 	private Column getVersionColumn() {

@@ -168,7 +168,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	Identifier createBackRef(long value) {
 		return JdbcIdentifierBuilder.forBackReferences(converter, toAggregatePath("content"),
-				JdbcAggregateChangeExecutionContext.getValueProvider(value, toAggregatePath("content"), converter)).build();
+				JdbcAggregateChangeExecutionContext.getIdMapper(value, toAggregatePath("content"), converter)).build();
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

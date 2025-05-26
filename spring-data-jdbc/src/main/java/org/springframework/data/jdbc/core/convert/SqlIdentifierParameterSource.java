@@ -35,8 +35,8 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
-	private final Set<SqlIdentifier> identifiers = new HashSet<>();
-	private final Map<String, Object> namesToValues = new HashMap<>();
+	private final Set<SqlIdentifier> identifiers = new HashSet<>(16, 1f);
+	private final Map<String, Object> namesToValues = new HashMap<>(16, 1f);
 
 	@Override
 	public boolean hasValue(String paramName) {
@@ -73,7 +73,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
 		for (SqlIdentifier identifier : others.getIdentifiers()) {
 
-			String name = BindParameterNameSanitizer.sanitize( identifier.getReference());
+			String name = BindParameterNameSanitizer.sanitize(identifier.getReference());
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
 	}

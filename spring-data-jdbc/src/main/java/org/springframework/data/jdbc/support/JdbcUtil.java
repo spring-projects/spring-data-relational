@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.jdbc.support.JdbcUtils;
-import org.springframework.util.Assert;
+import org.springframework.util.ConcurrentLruCache;
 
 /**
  * Contains methods dealing with the quirks of JDBC, independent of any Entity, Aggregate or Repository abstraction.
@@ -58,7 +58,10 @@ public final class JdbcUtil {
 			return getName();
 		}
 	};
+
 	private static final Map<Class<?>, SQLType> sqlTypeMappings = new HashMap<>();
+	private static ConcurrentLruCache<Class<?>, SQLType> sqlTypeCache = new ConcurrentLruCache<>(64,
+			JdbcUtil::doGetSqlType);
 
 	static {
 
@@ -97,9 +100,10 @@ public final class JdbcUtil {
 	 * @return a matching {@link SQLType} or {@link #TYPE_UNKNOWN}.
 	 */
 	public static SQLType targetSqlTypeFor(Class<?> type) {
+		return sqlTypeCache.get(type);
+	}
 
-		Assert.notNull(type, "Type must not be null");
-
+	private static SQLType doGetSqlType(Class<?> type) {
 		return sqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //
 				.findFirst() //

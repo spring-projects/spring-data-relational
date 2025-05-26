@@ -138,6 +138,17 @@ class SelectRendererUnitTests {
 				.isEqualTo("SELECT emp.name AS my_emp_name FROM employee emp ORDER BY my_emp_name ASC");
 	}
 
+	@Test // GH-574
+	void shouldNotRenderEmptyCondition() {
+
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(Conditions.unrestricted()).build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT foo.bar FROM foo");
+	}
+
 	@Test // DATAJDBC-309
 	void shouldRenderIsNull() {
 
@@ -574,6 +585,20 @@ class SelectRendererUnitTests {
 
 			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
 					+ "JOIN department ON employee.department_id = department.id");
+		}
+
+		@Test // GH-574
+		void shouldRenderSimpleJoinWithUnrestrictedCondition() {
+
+			Table employee = SQL.table("employee");
+			Table department = SQL.table("department");
+
+			Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+					.join(department).on(Conditions.unrestricted()) //
+					.build();
+
+			assertThat(SqlRenderer.toString(select))
+					.isEqualTo("SELECT employee.id, department.name FROM employee " + "JOIN department");
 		}
 
 		@Test // DATAJDBC-340

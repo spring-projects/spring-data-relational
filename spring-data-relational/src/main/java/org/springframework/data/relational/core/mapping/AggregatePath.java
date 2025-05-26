@@ -16,6 +16,7 @@
 
 package org.springframework.data.relational.core.mapping;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -244,8 +245,9 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	/**
 	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
 	 *
-	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}. TODO: throws
-	 *         NoSuchElementException: No value present for empty paths
+	 * @return a path that starts just as this path but is shorter. Guaranteed to be not {@literal null}.
+	 * @throws IllegalStateException if the current path is not a {@link #isRoot() root} path or if there is no identifier
+	 *           associated.
 	 */
 	AggregatePath getIdDefiningParentPath();
 
@@ -476,13 +478,14 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 * ids and references to such ids.
 	 *
 	 * @author Jens Schauder
+	 * @author Mark Paluch
 	 * @since 4.0
 	 */
 	class ColumnInfos {
 
 		private final AggregatePath basePath;
 		private final Map<AggregatePath, ColumnInfo> columnInfos;
-		private final Map<Table, List<Column>> columnCache = new HashMap<>();
+		private final Map<Table, List<Column>> columnCache;
 
 		/**
 		 * Creates a new ColumnInfos instances based on the arguments.
@@ -495,6 +498,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 			this.basePath = basePath;
 			this.columnInfos = columnInfos;
+			this.columnCache = new HashMap<>(columnInfos.size(), 1f);
 		}
 
 		/**
@@ -534,15 +538,6 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		}
 
 		/**
-		 * Checks if {@literal this} instance is empty, i.e. does not contain any {@link ColumnInfo} instance.
-		 *
-		 * @return {@literal true} iff the collection of {@literal ColumnInfo} is empty.
-		 */
-		public boolean isEmpty() {
-			return columnInfos.isEmpty();
-		}
-
-		/**
 		 * Converts the given {@link Table} into a list of {@link Column}s. This method retrieves and caches the list of
 		 * columns for the specified table. If the columns are not already cached, it computes the list by mapping
 		 * {@code columnInfos} to their corresponding {@link Column} in the provided table and then stores the result in the
@@ -556,6 +551,21 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 			return columnCache.computeIfAbsent(table,
 					t -> columnInfos.values().stream().map(columnInfo -> t.column(columnInfo.name)).toList());
+		}
+
+		/**
+		 * Creates a {@link List} of {@link Column} instances by applying the provided mapping function to each
+		 * {@link AggregatePath} and {@link ColumnInfo}.
+		 *
+		 * @param mappingFunction function to map {@link AggregatePath} and {@link ColumnInfo} to a {@link Column}.
+		 * @return a list of {@link Column}s.
+		 * @since 4.0
+		 */
+		public List<Column> toColumnList(BiFunction<AggregatePath, ColumnInfo, Column> mappingFunction) {
+
+			List<Column> result = new ArrayList<>(columnInfos.size());
+			columnInfos.forEach((ap, ci) -> result.add(mappingFunction.apply(ap, ci)));
+			return result;
 		}
 
 		/**
@@ -573,7 +583,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 *          compatible with the {@code accumulator} function.
 		 * @param <T> type of the result.
 		 * @return result of the function.
-		 * @since 3.5
+		 * @since 4.0
 		 */
 		public <T> T reduce(T identity, BiFunction<AggregatePath, ColumnInfo, T> accumulator, BinaryOperator<T> combiner) {
 
@@ -629,6 +639,24 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 */
 		public AggregatePath fullPath(AggregatePath ap) {
 			return basePath.append(ap);
+		}
+
+		/**
+		 * Return an {@link Iterable} of {@link AggregatePath} associated with this column infos.
+		 *
+		 * @return
+		 */
+		public Iterable<AggregatePath> paths() {
+			return columnInfos.keySet();
+		}
+
+		/**
+		 * Checks if {@literal this} instance is empty, i.e. does not contain any {@link ColumnInfo} instance.
+		 *
+		 * @return {@literal true} iff the collection of {@literal ColumnInfo} is empty.
+		 */
+		public boolean isEmpty() {
+			return columnInfos.isEmpty();
 		}
 
 		/**

@@ -15,7 +15,16 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -176,9 +185,9 @@ class JdbcAggregateChangeExecutionContext {
 
 		Object id = getParentId(action);
 
+		AggregatePath aggregatePath = context.getAggregatePath(action.getPropertyPath());
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()),
-						getValueProvider(id, context.getAggregatePath(action.getPropertyPath()), converter));
+				.forBackReferences(converter, aggregatePath, getIdMapper(id, aggregatePath, converter));
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
 				.entrySet()) {
@@ -188,20 +197,17 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier.build();
 	}
 
-	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
+	static Function<AggregatePath, Object> getIdMapper(Object idValue, AggregatePath path, JdbcConverter converter) {
 
 		RelationalPersistentEntity<?> entity = converter.getMappingContext()
-				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
+				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty());
 
-		Function<AggregatePath, Object> valueProvider = ap -> {
-			if (entity == null) {
-				return idValue;
-			} else {
-				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
-				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
-			}
-		};
-		return valueProvider;
+		if (entity == null) {
+			return aggregatePath -> idValue;
+		}
+
+		PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+		return aggregatePath -> propertyPathAccessor.getProperty(aggregatePath.getRequiredPersistentPropertyPath());
 	}
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
