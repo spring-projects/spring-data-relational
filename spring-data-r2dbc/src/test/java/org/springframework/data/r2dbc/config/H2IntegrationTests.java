@@ -42,6 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration test for {@link DatabaseClient} and repositories using H2.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -56,7 +57,7 @@ class H2IntegrationTests {
 	void before() {
 
 		try {
-			jdbc.execute("DROP TABLE legoset");
+			jdbc.execute("DROP TABLE \"legoset\"");
 		} catch (DataAccessException e) {}
 		jdbc.execute(H2TestSupport.CREATE_TABLE_LEGOSET);
 	}
@@ -64,9 +65,9 @@ class H2IntegrationTests {
 	@Test // gh-109
 	void shouldSelectCountWithDatabaseClient() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
-		databaseClient.sql("SELECT COUNT(*) FROM legoset") //
+		databaseClient.sql("SELECT COUNT(*) FROM \"legoset\"") //
 				.map(it -> it.get(0, Long.class)) //
 				.all() //
 				.as(StepVerifier::create) //
@@ -77,7 +78,7 @@ class H2IntegrationTests {
 	@Test // gh-109
 	void shouldSelectCountWithRepository() {
 
-		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
 		repository.selectCount() //
 				.as(StepVerifier::create) //
@@ -99,7 +100,7 @@ class H2IntegrationTests {
 
 	interface H2Repository extends ReactiveCrudRepository<LegoSet, Integer> {
 
-		@Query("SELECT COUNT(*) FROM legoset")
+		@Query("SELECT COUNT(*) FROM \"legoset\"")
 		Mono<Long> selectCount();
 	}
 

@@ -15,11 +15,21 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,19 +47,11 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests for {@link MappingR2dbcConverter}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MappingR2dbcConverterUnitTests {
 
@@ -78,11 +80,11 @@ public class MappingR2dbcConverterUnitTests {
 		LocalDateTime localDateTime = LocalDateTime.now();
 		converter.write(new Person("id", "Walter", "White", instant, localDateTime), row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty("id", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("firstname"), Parameter.fromOrEmpty("Walter", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("lastname"), Parameter.fromOrEmpty("White", String.class));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("instant"), Parameter.from(instant));
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("local_date_time"), Parameter.from(localDateTime));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("ID"), Parameter.fromOrEmpty("id", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("FIRSTNAME"), Parameter.fromOrEmpty("Walter", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("LASTNAME"), Parameter.fromOrEmpty("White", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("INSTANT"), Parameter.from(instant));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("LOCAL_DATE_TIME"), Parameter.from(localDateTime));
 	}
 
 	@Test // gh-41
@@ -122,7 +124,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("nested"), Parameter.from("map"));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("NESTED"), Parameter.from("map"));
 	}
 
 	@Test // gh-59
@@ -143,7 +145,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameter.from("Mint"));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("CONDITION"), Parameter.from("Mint"));
 	}
 
 	@Test // gh-59
@@ -153,7 +155,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), Parameter.fromOrEmpty(null, String.class));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("CONDITION"), Parameter.fromOrEmpty(null, String.class));
 	}
 
 	@Test // gh-59
@@ -215,7 +217,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(new WithPrimitiveId(1), row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty(1L, Long.TYPE));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("ID"), Parameter.fromOrEmpty(1L, Long.TYPE));
 	}
 
 	@Test // gh-59
@@ -257,12 +259,11 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(entity, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(42L));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("ID"), Parameter.from(42L));
 	}
 
 	static class Person {
-		@Id
-		String id;
+		@Id String id;
 		String firstname, lastname;
 		Instant instant;
 		LocalDateTime localDateTime;
@@ -298,8 +299,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	static class WithEnum {
-		@Id
-		String id;
+		@Id String id;
 		Condition condition;
 
 		public WithEnum(String id, Condition condition) {
@@ -313,8 +313,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	static class PersonWithConversions {
-		@Id
-		String id;
+		@Id String id;
 		Map<String, String> nested;
 		NonMappableEntity unsupported;
 
@@ -325,8 +324,7 @@ public class MappingR2dbcConverterUnitTests {
 		}
 	}
 
-	record WithPrimitiveId (
-		@Id long id){
+	record WithPrimitiveId(@Id long id) {
 	}
 
 	static class CustomConversionPerson {

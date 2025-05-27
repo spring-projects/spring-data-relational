@@ -21,7 +21,6 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
@@ -33,6 +32,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link SimpleR2dbcRepository} against Postgres.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -52,6 +52,11 @@ public class PostgresSimpleR2dbcRepositoryIntegrationTests extends AbstractSimpl
 	@Override
 	protected DataSource createDataSource() {
 		return PostgresTestSupport.createDataSource(database);
+	}
+
+	@Override
+	protected String getDropTableStatement() {
+		return PostgresTestSupport.DROP_TABLE_LEGOSET;
 	}
 
 	@Override

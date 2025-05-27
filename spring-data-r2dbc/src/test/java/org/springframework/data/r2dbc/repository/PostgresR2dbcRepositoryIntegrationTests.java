@@ -31,7 +31,6 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -72,9 +71,8 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(
-					classes = { PostgresLegoSetRepository.class, WithJsonRepository.class, WithHStoreRepository.class, WithIdFromSequenceRepository.class },
-					type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = { PostgresLegoSetRepository.class, WithJsonRepository.class,
+					WithHStoreRepository.class, WithIdFromSequenceRepository.class }, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -112,8 +110,18 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	}
 
 	@Override
+	protected String getDropTableStatement() {
+		return PostgresTestSupport.DROP_TABLE_LEGOSET;
+	}
+
+	@Override
 	protected String getCreateTableStatement() {
 		return PostgresTestSupport.CREATE_TABLE_LEGOSET + ";CREATE SEQUENCE IF NOT EXISTS person_seq;";
+	}
+
+	@Override
+	protected String getCountQuery() {
+		return PostgresTestSupport.COUNT_FROM_LEGOSET;
 	}
 
 	@Override
@@ -229,8 +237,7 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 	static class WithJson {
 
-		@Id
-		Long id;
+		@Id Long id;
 
 		Json jsonValue;
 
@@ -247,8 +254,7 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	static class WithIdFromSequence {
 
 		@Id
-		@Sequence(sequence = "target_sequence")
-		Long id;
+		@Sequence(sequence = "target_sequence") Long id;
 
 		String name;
 
@@ -265,8 +271,7 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	@Table("with_hstore")
 	static class WithHStore {
 
-		@Id
-		Long id;
+		@Id Long id;
 
 		Map<String, String> hstoreValue;
 

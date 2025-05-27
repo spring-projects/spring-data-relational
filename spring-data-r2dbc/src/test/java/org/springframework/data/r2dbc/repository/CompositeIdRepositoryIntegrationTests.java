@@ -68,17 +68,17 @@ public class CompositeIdRepositoryIntegrationTests {
 		this.jdbc = new JdbcTemplate(createDataSource());
 
 		try {
-			this.jdbc.execute("DROP TABLE with_composite_id");
+			this.jdbc.execute("DROP TABLE \"with_composite_id\"");
 		} catch (DataAccessException e) {}
 
 		this.jdbc.execute("""
-				CREATE TABLE with_composite_id (
+				CREATE TABLE \"with_composite_id\" (
 				    one int,
 				    two varchar(255),
 				    name varchar(255),
 				    primary key (one, two))""");
-		this.jdbc.execute("INSERT INTO with_composite_id VALUES (42, 'HBAR','Walter')");
-		this.jdbc.execute("INSERT INTO with_composite_id VALUES (23, '2PI','Jesse')");
+		this.jdbc.execute("INSERT INTO \"with_composite_id\" VALUES (42, 'HBAR','Walter')");
+		this.jdbc.execute("INSERT INTO \"with_composite_id\" VALUES (23, '2PI','Jesse')");
 	}
 
 	/**

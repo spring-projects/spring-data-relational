@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -43,6 +42,7 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  *
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Jens Schauder
  */
 public class UpdateMapperUnitTests {
 
@@ -60,7 +60,7 @@ public class UpdateMapperUnitTests {
 		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).containsEntry(SqlIdentifier.unquoted("another_name"), SQL.bindMarker("$1"));
+		assertThat(assignments).containsEntry(SqlIdentifier.quoted("another_name"), SQL.bindMarker("$1"));
 	}
 
 	@Test // gh-64
@@ -73,7 +73,7 @@ public class UpdateMapperUnitTests {
 		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).containsEntry(SqlIdentifier.unquoted("another_name"), SQL.bindMarker("$1"));
+		assertThat(assignments).containsEntry(SqlIdentifier.quoted("another_name"), SQL.bindMarker("$1"));
 
 		mapped.getBindings().apply(bindTarget);
 		verify(bindTarget).bindNull(0, String.class);
@@ -87,7 +87,7 @@ public class UpdateMapperUnitTests {
 		BoundAssignments mapped = map(update);
 
 		assertThat(mapped.getAssignments()).hasSize(1);
-		assertThat(mapped.getAssignments().get(0).toString()).isEqualTo("person.another_name = NULL");
+		assertThat(mapped.getAssignments().get(0).toString()).isEqualTo("person.\"another_name\" = NULL");
 
 		mapped.getBindings().apply(bindTarget);
 		verifyNoInteractions(bindTarget);

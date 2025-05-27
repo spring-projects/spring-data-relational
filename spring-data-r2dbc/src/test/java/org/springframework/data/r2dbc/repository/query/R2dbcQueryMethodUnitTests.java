@@ -18,8 +18,6 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 
 import kotlin.Unit;
-import org.springframework.data.relational.repository.Lock;
-import org.springframework.data.relational.core.sql.LockMode;
 import reactor.core.publisher.Mono;
 
 import java.lang.annotation.Retention;
@@ -29,7 +27,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +36,9 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -50,6 +49,7 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  * @author Mark Paluch
  * @author Stephen Cohen
  * @author Diego Krupitza
+ * @author Jens Schauder
  */
 class R2dbcQueryMethodUnitTests {
 
@@ -67,7 +67,7 @@ class R2dbcQueryMethodUnitTests {
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Contact.class);
-		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.unquoted("contact"));
+		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.quoted("CONTACT"));
 	}
 
 	@Test // gh-235
@@ -93,7 +93,7 @@ class R2dbcQueryMethodUnitTests {
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Address.class);
-		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.unquoted("contact"));
+		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.quoted("CONTACT"));
 	}
 
 	@Test

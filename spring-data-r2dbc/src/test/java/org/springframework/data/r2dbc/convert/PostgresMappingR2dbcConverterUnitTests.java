@@ -49,6 +49,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Postgres-specific unit tests for {@link MappingR2dbcConverter}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 class PostgresMappingR2dbcConverterUnitTests {
 
@@ -79,7 +80,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(person, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("json_value"), Parameter.from(person.jsonValue));
+		assertThat(row).containsEntry(SqlIdentifier.quoted("JSON_VALUE"), Parameter.from(person.jsonValue));
 	}
 
 	@Test // gh-453
@@ -127,24 +128,18 @@ class PostgresMappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(object, row);
 
-		Parameter parameter = row.get(SqlIdentifier.unquoted("holder"));
+		Parameter parameter = row.get(SqlIdentifier.quoted("HOLDER"));
 		assertThat(parameter).isNotNull();
 		assertThat(parameter.getValue()).isInstanceOf(Json.class);
 	}
 
-	record JsonPerson(
-			@Id Long id,
-			Json jsonValue) {
+	record JsonPerson(@Id Long id, Json jsonValue) {
 	}
 
-	record ConvertedJson(
-			@Id Long id,
-			String jsonString,
-			byte[] jsonBytes) {
+	record ConvertedJson(@Id Long id, String jsonString, byte[] jsonBytes) {
 	}
 
-	record WithJsonHolder(
-			JsonHolder holder) {
+	record WithJsonHolder(JsonHolder holder) {
 	}
 
 	@ReadingConverter

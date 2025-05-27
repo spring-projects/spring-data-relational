@@ -72,8 +72,18 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 	}
 
 	@Override
+	protected String getDropTableStatement() {
+		return SqlServerTestSupport.DROP_TABLE_LEGOSET;
+	}
+
+	@Override
 	protected String getCreateTableStatement() {
 		return SqlServerTestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
+	}
+
+	@Override
+	protected String getCountQuery() {
+		return SqlServerTestSupport.COUNT_FROM_LEGOSET;
 	}
 
 	@Override

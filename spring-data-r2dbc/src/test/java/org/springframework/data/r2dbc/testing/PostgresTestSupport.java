@@ -46,6 +46,10 @@ public class PostgresTestSupport {
 			+ "    cert        bytea NULL\n" //
 			+ ");";
 
+	public static final String DROP_TABLE_LEGOSET = "DROP TABLE legoset";
+
+	public static final String COUNT_FROM_LEGOSET = "SELECT count(*) AS count FROM legoset";
+
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
 			+ "    id          serial CONSTRAINT id1 PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //

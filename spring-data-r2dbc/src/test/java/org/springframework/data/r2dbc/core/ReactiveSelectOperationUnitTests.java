@@ -28,7 +28,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -40,9 +39,12 @@ import org.springframework.r2dbc.core.DatabaseClient;
  *
  * @author Mark Paluch
  * @author Mikhail Polivakha
+ * @author Jens Schauder
  */
 public class ReactiveSelectOperationUnitTests {
 
+	public static final String FROM_PERSON = "FROM \"person\" ";
+	public static final String WHERE_NAME = "WHERE \"person\".\"THE_NAME\" = $1";
 	private DatabaseClient client;
 	private R2dbcEntityTemplate entityTemplate;
 	private StatementRecorder recorder;
@@ -60,8 +62,7 @@ public class ReactiveSelectOperationUnitTests {
 	void shouldSelectAll() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -77,15 +78,14 @@ public class ReactiveSelectOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql())
-				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 10 OFFSET 20");
+				.isEqualTo("SELECT \"person\".* " + FROM_PERSON + "WHERE \"person\".\"THE_NAME\" = $1 LIMIT 10 OFFSET 20");
 	}
 
 	@Test // GH-220
 	void shouldSelectAs() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -101,7 +101,8 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.THE_NAME FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT \"person\".\"THE_NAME\" " + FROM_PERSON + WHERE_NAME);
 	}
 
 	@Test // GH-220, GH-1690
@@ -125,15 +126,15 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.id, person.a_different_name FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo(
+				"SELECT \"person\".\"id\", \"person\".\"a_different_name\" " + FROM_PERSON + WHERE_NAME);
 	}
 
 	@Test // GH-220
 	void shouldSelectFromTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder().rowMetadata(metadata)
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -149,15 +150,14 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT the_table.* FROM the_table WHERE the_table.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT the_table.* FROM the_table WHERE the_table.\"THE_NAME\" = $1");
 	}
 
 	@Test // GH-220
 	void shouldSelectFirst() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder().rowMetadata(metadata)
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -172,15 +172,15 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT \"person\".* " + FROM_PERSON + "WHERE \"person\".\"THE_NAME\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-220
 	void shouldSelectOne() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -195,15 +195,15 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 LIMIT 2");
+		assertThat(statement.getSql())
+				.isEqualTo("SELECT \"person\".* " + FROM_PERSON + "WHERE \"person\".\"THE_NAME\" = $1 LIMIT 2");
 	}
 
 	@Test // GH-220
 	void shouldSelectExists() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
@@ -218,15 +218,14 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT 1 FROM person WHERE person.THE_NAME = $1 LIMIT 1");
+		assertThat(statement.getSql()).isEqualTo("SELECT 1 " + FROM_PERSON + "WHERE \"person\".\"THE_NAME\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-220
 	void shouldSelectCount() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, Long.class, 1L).metadata(metadata).build()).build();
 
@@ -241,18 +240,16 @@ public class ReactiveSelectOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(*) " + FROM_PERSON + WHERE_NAME);
 	}
 
 	@Test // GH-1652
 	void shouldConsiderFetchSize() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
-				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build())
-				.build();
+				.row(MockRow.builder().identified("id", Object.class, "Walter").metadata(metadata).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 

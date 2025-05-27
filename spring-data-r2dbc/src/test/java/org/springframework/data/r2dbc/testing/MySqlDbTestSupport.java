@@ -39,27 +39,16 @@ public class MySqlDbTestSupport {
 
 	private static ExternalDatabase testContainerDatabase;
 
-	public static final String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
-			+ "    id          integer PRIMARY KEY,\n" //
-			+ "    name        varchar(255) NOT NULL,\n" //
-			+ "    manual      integer NULL\n," //
-			+ "    cert        varbinary(255) NULL\n" //
-			+ ") ENGINE=InnoDB;";
+	public static final String DROP_TABLE_LEGOSET = "DROP TABLE `legoset`";
 
-	public static final String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
+	public static final String COUNT_FROM_LEGOSET = "SELECT count(*) AS count FROM `legoset`";
+
+	public static final String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE `legoset` (\n" //
 			+ "    id          integer AUTO_INCREMENT PRIMARY KEY,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    flag        boolean NOT NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";
-
-	public static final String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE `LegoSet` (\n" //
-			+ "    `Id`          integer AUTO_INCREMENT PRIMARY KEY,\n" //
-			+ "    `Name`        varchar(255) NOT NULL,\n" //
-			+ "    `Manual`      integer NULL\n" //
-			+ ") ENGINE=InnoDB;";
-
-	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE `LegoSet`";
 
 	/**
 	 * Returns a database either hosted locally at {@code localhost:3306/mysql} or running inside Docker.

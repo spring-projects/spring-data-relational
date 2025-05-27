@@ -15,7 +15,19 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,22 +48,13 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against H2.
  *
  * @author Mark Paluch
  * @author Zsombor Gegesy
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -63,7 +66,8 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = {H2LegoSetRepository.class, IdOnlyEntityRepository.class}, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = { H2LegoSetRepository.class, IdOnlyEntityRepository.class },
+					type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -94,8 +98,18 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Override
+	protected String getDropTableStatement() {
+		return H2TestSupport.DROP_TABLE_LEGOSET;
+	}
+
+	@Override
 	protected String getCreateTableStatement() {
 		return H2TestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
+	}
+
+	@Override
+	protected String getCountQuery() {
+		return H2TestSupport.COUNT_FROM_LEGOSET;
 	}
 
 	@Override
@@ -157,12 +171,11 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 		this.jdbc.execute("CREATE TABLE ID_ONLY(id serial CONSTRAINT id_only_pk PRIMARY KEY)");
 
-		IdOnlyEntity entity1 = new IdOnlyEntity();
-		idOnlyEntityRepository.saveAll(Collections.singletonList(entity1))
-			.as(StepVerifier::create) //
-			.consumeNextWith( actual -> {
-				assertThat(actual.getId()).isNotNull();
-			}).verifyComplete();
+		IdOnly entity1 = new IdOnly();
+		idOnlyEntityRepository.saveAll(Collections.singletonList(entity1)).as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.getId()).isNotNull();
+				}).verifyComplete();
 	}
 
 	@Test // gh-519
@@ -178,47 +191,45 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 		Mono<Buildable> findByName(String name);
 
-		@Query("SELECT MAX(manual) FROM legoset WHERE name = :name")
+		@Query("SELECT MAX(manual) FROM \"legoset\" WHERE name = :name")
 		Mono<Integer> findMax(String name);
 
 		@Override
-		@Query("SELECT name FROM legoset")
+		@Query("SELECT name FROM \"legoset\"")
 		Flux<Named> findAsProjection();
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE manual = :manual")
+		@Query("SELECT * FROM \"legoset\" WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
 
 		@Override
-		@Query("SELECT id FROM legoset")
+		@Query("SELECT id FROM \"legoset\"")
 		Flux<Integer> findAllIds();
 
-		@Query("UPDATE legoset set manual = :manual")
+		@Query("UPDATE \"legoset\" set manual = :manual")
 		@Modifying
 		Mono<Long> updateManual(int manual);
 
-		@Query("UPDATE legoset set manual = :manual")
+		@Query("UPDATE \"legoset\" set manual = :manual")
 		@Modifying
 		Mono<Boolean> updateManualAndReturnBoolean(int manual);
 
-		@Query("UPDATE legoset set manual = :manual")
+		@Query("UPDATE \"legoset\" set manual = :manual")
 		@Modifying
 		Mono<Void> updateManualAndReturnNothing(int manual);
 
-		@Query("UPDATE legoset set manual = :manual")
+		@Query("UPDATE \"legoset\" set manual = :manual")
 		@Modifying
 		Mono<Double> updateManualAndReturnDouble(int manual);
 	}
 
-	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnlyEntity, Integer> {}
+	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnly, Integer> {}
 
-	@Table("id_only")
-	static class IdOnlyEntity {
-		@Id
-		Integer id;
+	@Table()
+	static class IdOnly {
+		@Id Integer id;
 
-		public IdOnlyEntity() {
-		}
+		public IdOnly() {}
 
 		public Integer getId() {
 			return this.id;

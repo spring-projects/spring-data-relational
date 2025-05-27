@@ -39,6 +39,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against MariaDB.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -69,8 +70,18 @@ public class MariaDbR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposit
 	}
 
 	@Override
+	protected String getDropTableStatement() {
+		return MariaDbTestSupport.DROP_TABLE_LEGOSET;
+	}
+
+	@Override
 	protected String getCreateTableStatement() {
 		return MariaDbTestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
+	}
+
+	@Override
+	protected String getCountQuery() {
+		return MariaDbTestSupport.COUNT_FROM_LEGOSET;
 	}
 
 	@Override
@@ -81,15 +92,27 @@ public class MariaDbR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposit
 	interface MySqlLegoSetRepository extends LegoSetRepository {
 
 		@Override
-		@Query("SELECT name FROM legoset")
+		@Query("SELECT name FROM `legoset`")
 		Flux<Named> findAsProjection();
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE manual = :manual")
+		@Query("SELECT * FROM `legoset` WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
 
 		@Override
-		@Query("SELECT id FROM legoset")
+		@Query("SELECT id FROM `legoset`")
 		Flux<Integer> findAllIds();
+
+		@Override
+		@Query("SELECT name from `legoset`")
+		Flux<LegoDto> findAsDtoProjection();
+
+		@Override
+		@Query("DELETE from `legoset`")
+		Mono<Integer> deleteAllAndReturnCount();
+
+		@Override
+		@Query("DELETE from `legoset` where manual = :manual")
+		Mono<Void> deleteAllByManual(int manual);
 	}
 }
