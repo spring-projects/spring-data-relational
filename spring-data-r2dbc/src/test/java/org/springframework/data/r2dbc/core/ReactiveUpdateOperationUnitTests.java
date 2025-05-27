@@ -24,9 +24,9 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Update;
@@ -37,6 +37,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Unit test for {@link ReactiveUpdateOperation}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class ReactiveUpdateOperationUnitTests {
 
@@ -51,6 +52,8 @@ public class ReactiveUpdateOperationUnitTests {
 		client = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
 		entityTemplate = new R2dbcEntityTemplate(client, new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
+		((R2dbcMappingContext) entityTemplate.getDataAccessStrategy().getConverter().getMappingContext())
+				.setForceQuote(false);
 	}
 
 	@Test // gh-410

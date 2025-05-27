@@ -34,11 +34,13 @@ import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.OutboundRowAssert;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * MySQL-specific unit tests for {@link MappingR2dbcConverter}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 class MySqlMappingR2dbcConverterUnitTests {
 
@@ -68,8 +70,9 @@ class MySqlMappingR2dbcConverterUnitTests {
 
 		converter.write(object, row);
 
-		OutboundRowAssert.assertThat(row).containsColumnWithValue("flag1", (byte) 1).containsColumnWithValue("flag2",
-				(byte) 0);
+		OutboundRowAssert.assertThat(row) //
+				.containsColumnWithValue(SqlIdentifier.quoted("FLAG1"), (byte) 1) //
+				.containsColumnWithValue(SqlIdentifier.quoted("FLAG2"), (byte) 0);
 	}
 
 	@Test // gh-589
@@ -96,7 +99,7 @@ class MySqlMappingR2dbcConverterUnitTests {
 
 		converter.write(object, row);
 
-		OutboundRowAssert.assertThat(row).containsColumnWithValue("state", (byte) 3);
+		OutboundRowAssert.assertThat(row).containsColumnWithValue(SqlIdentifier.quoted("STATE"), (byte) 3);
 	}
 
 	record BooleanMapping(
@@ -104,10 +107,7 @@ class MySqlMappingR2dbcConverterUnitTests {
 			Integer id, boolean flag1, boolean flag2) {
 	}
 
-	record WithByte (
-
-		Integer id,
-		byte state){
+	record WithByte(Integer id, byte state) {
 	}
 
 }

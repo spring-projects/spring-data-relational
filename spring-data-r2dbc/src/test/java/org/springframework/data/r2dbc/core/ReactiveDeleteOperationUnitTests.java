@@ -24,9 +24,9 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -50,6 +50,8 @@ public class ReactiveDeleteOperationUnitTests {
 		client = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
 		entityTemplate = new R2dbcEntityTemplate(client, new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
+		((R2dbcMappingContext) entityTemplate.getDataAccessStrategy().getConverter().getMappingContext())
+				.setForceQuote(false);
 	}
 
 	@Test // gh-410

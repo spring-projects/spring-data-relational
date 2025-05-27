@@ -15,7 +15,20 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,31 +40,26 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against H2.
  *
  * @author Mark Paluch
  * @author Zsombor Gegesy
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -63,13 +71,25 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = {H2LegoSetRepository.class, IdOnlyEntityRepository.class}, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = { H2LegoSetRepository.class, IdOnlyEntityRepository.class },
+					type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
+		}
+
+		@Override
+		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+
+			R2dbcMappingContext context = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
+			context.setForceQuote(false);
+
+			return context;
 		}
 
 		@Bean
@@ -158,11 +178,10 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		this.jdbc.execute("CREATE TABLE ID_ONLY(id serial CONSTRAINT id_only_pk PRIMARY KEY)");
 
 		IdOnlyEntity entity1 = new IdOnlyEntity();
-		idOnlyEntityRepository.saveAll(Collections.singletonList(entity1))
-			.as(StepVerifier::create) //
-			.consumeNextWith( actual -> {
-				assertThat(actual.getId()).isNotNull();
-			}).verifyComplete();
+		idOnlyEntityRepository.saveAll(Collections.singletonList(entity1)).as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.getId()).isNotNull();
+				}).verifyComplete();
 	}
 
 	@Test // gh-519
@@ -214,11 +233,9 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 	@Table("id_only")
 	static class IdOnlyEntity {
-		@Id
-		Integer id;
+		@Id Integer id;
 
-		public IdOnlyEntity() {
-		}
+		public IdOnlyEntity() {}
 
 		public Integer getId() {
 			return this.id;

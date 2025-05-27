@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.test.StepVerifier;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,9 +34,13 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -60,6 +66,16 @@ public class CompositeIdRepositoryIntegrationTests {
 			return H2TestSupport.createConnectionFactory();
 		}
 
+		@Override
+		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+
+			R2dbcMappingContext context = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
+			context.setForceQuote(false);
+
+			return context;
+		}
 	}
 
 	@BeforeEach

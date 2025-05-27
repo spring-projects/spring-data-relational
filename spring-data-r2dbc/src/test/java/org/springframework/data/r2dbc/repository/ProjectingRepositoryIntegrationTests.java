@@ -22,12 +22,13 @@ import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -35,8 +36,12 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -47,24 +52,33 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests projections.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 public class ProjectingRepositoryIntegrationTests {
 
-	@Autowired
-	private ImmutableObjectRepository repository;
+	@Autowired private ImmutableObjectRepository repository;
 	private JdbcTemplate jdbc;
 
 	@Configuration
-	@EnableR2dbcRepositories(
-			includeFilters = @ComponentScan.Filter(value = ImmutableObjectRepository.class, type = FilterType.ASSIGNABLE_TYPE),
-			considerNestedRepositories = true)
+	@EnableR2dbcRepositories(includeFilters = @ComponentScan.Filter(value = ImmutableObjectRepository.class,
+			type = FilterType.ASSIGNABLE_TYPE), considerNestedRepositories = true)
 	static class TestConfiguration extends AbstractR2dbcConfiguration {
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
 		}
 
+		@Override
+		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+
+			R2dbcMappingContext context = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
+			context.setForceQuote(false);
+
+			return context;
+		}
 	}
 
 	@BeforeEach
@@ -74,9 +88,7 @@ public class ProjectingRepositoryIntegrationTests {
 
 		try {
 			this.jdbc.execute("DROP TABLE immutable_non_null");
-		}
-		catch (DataAccessException e) {
-		}
+		} catch (DataAccessException e) {}
 
 		this.jdbc.execute("CREATE TABLE immutable_non_null (id serial PRIMARY KEY, name varchar(255), email varchar(255))");
 		this.jdbc.execute("INSERT INTO immutable_non_null VALUES (42, 'Walter', 'heisenberg@the-white-family.com')");
@@ -101,7 +113,7 @@ public class ProjectingRepositoryIntegrationTests {
 	}
 
 	@Test
-		// GH-1687
+	// GH-1687
 	void shouldApplyProjectionDirectly() {
 
 		repository.findProjectionByEmail("heisenberg@the-white-family.com") //
@@ -112,7 +124,7 @@ public class ProjectingRepositoryIntegrationTests {
 	}
 
 	@Test
-		// GH-1687
+	// GH-1687
 	void shouldApplyEntityQueryProjectionDirectly() {
 
 		repository.findAllByEmail("heisenberg@the-white-family.com") //
@@ -134,8 +146,7 @@ public class ProjectingRepositoryIntegrationTests {
 	@Table("immutable_non_null")
 	static class ImmutableNonNullEntity implements Person {
 
-		final @Nullable
-		@Id Integer id;
+		final @Nullable @Id Integer id;
 		final String name;
 		final String email;
 

@@ -15,11 +15,21 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,19 +47,11 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests for {@link MappingR2dbcConverter}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MappingR2dbcConverterUnitTests {
 
@@ -65,7 +67,7 @@ public class MappingR2dbcConverterUnitTests {
 						StringToSimplePersonConverter.INSTANCE));
 
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
-
+		mappingContext.setForceQuote(false);
 		converter = new MappingR2dbcConverter(mappingContext, conversions);
 	}
 
@@ -261,8 +263,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	static class Person {
-		@Id
-		String id;
+		@Id String id;
 		String firstname, lastname;
 		Instant instant;
 		LocalDateTime localDateTime;
@@ -298,8 +299,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	static class WithEnum {
-		@Id
-		String id;
+		@Id String id;
 		Condition condition;
 
 		public WithEnum(String id, Condition condition) {
@@ -313,8 +313,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	static class PersonWithConversions {
-		@Id
-		String id;
+		@Id String id;
 		Map<String, String> nested;
 		NonMappableEntity unsupported;
 
@@ -325,8 +324,7 @@ public class MappingR2dbcConverterUnitTests {
 		}
 	}
 
-	record WithPrimitiveId (
-		@Id long id){
+	record WithPrimitiveId(@Id long id) {
 	}
 
 	static class CustomConversionPerson {

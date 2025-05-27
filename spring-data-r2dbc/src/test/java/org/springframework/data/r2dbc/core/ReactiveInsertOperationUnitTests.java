@@ -26,9 +26,9 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -52,14 +52,15 @@ public class ReactiveInsertOperationUnitTests {
 		client = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
 		entityTemplate = new R2dbcEntityTemplate(client, new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
+		((R2dbcMappingContext) entityTemplate.getDataAccessStrategy().getConverter().getMappingContext())
+				.setForceQuote(false);
 	}
 
 	@Test // gh-220
 	void shouldInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
@@ -87,8 +88,7 @@ public class ReactiveInsertOperationUnitTests {
 	void shouldUpdateInTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
