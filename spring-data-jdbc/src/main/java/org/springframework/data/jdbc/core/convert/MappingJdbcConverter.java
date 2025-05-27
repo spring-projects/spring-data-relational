@@ -27,10 +27,7 @@ import java.util.function.Function;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.convert.ConversionException;
-import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -39,7 +36,6 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
-import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.ObjectPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -177,8 +173,33 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return componentColumnType;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
-	protected Object readTechnologyType(Object value) {
+	@Nullable
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
+
+		if (null == value) {
+			return null;
+		}
+
+		TypeInformation<?> originalTargetType = targetType;
+		value = readJdbcArray(value);
+		targetType = determineNestedTargetType(targetType);
+
+		return readToAggregateReference(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
+	}
+
+	/**
+	 * Unwrap a Jdbc array, if such a value is provided
+	 */
+	private Object readJdbcArray(Object value) {
 
 		if (value instanceof Array array) {
 			try {
@@ -191,8 +212,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return value;
 	}
 
-	@Override
-	protected TypeInformation<?> determineModuleReadTarget(TypeInformation<?> ultimateTargetType) {
+	/**
+	 * Determine the id type of an {@link AggregateReference} that the rest of the conversion infrastructure needs to use
+	 * as a conversion target.
+	 */
+	private TypeInformation<?> determineNestedTargetType(TypeInformation<?> ultimateTargetType) {
 
 		if (AggregateReference.class.isAssignableFrom(ultimateTargetType.getType())) {
 			// the id type of a AggregateReference
@@ -201,8 +225,10 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return ultimateTargetType;
 	}
 
-	@Override
-	protected Object readModuleType(Object value, TypeInformation<?> targetType) {
+	/**
+	 * Convert value to an {@link AggregateReference} if that is specified by the parameter targetType.
+	 */
+	private Object readToAggregateReference(Object value, TypeInformation<?> targetType) {
 
 		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
 			return AggregateReference.to(value);

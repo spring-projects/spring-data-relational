@@ -622,9 +622,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	}
 
 	/**
-	 * Read and convert a single value that is comming from a database to the {@literal targetType} expected by the domain
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
 	 * model.
-	 * 
+	 *
 	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
 	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
 	 * @return
@@ -637,49 +637,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return null;
 		}
 
-		TypeInformation<?> originalTargetType = targetType;
-		value = readTechnologyType(value);
-		targetType = determineModuleReadTarget(targetType);
-
-		return readModuleType(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
-	}
-
-	/**
-	 * Convert a read value using module dependent special conversions. Spring Data JDBC for example uses this to
-	 * implement the conversion of AggregateReferences. There is no guarantee that the value is converted to the exact
-	 * required TypeInformation, nor that it is converted at all.
-	 * 
-	 * @param value the value read from the database. Must not be {@literal null}.
-	 * @param targetType the type to which the value should get converted if possible. Must not be {@literal null}.
-	 * @return a potentially converted value.
-	 */
-	protected Object readModuleType(Object value, TypeInformation<?> targetType) {
-		return value;
-	}
-
-	/**
-	 * Read technology specific values into objects that then can be fed in the normal conversion process for reading. An
-	 * example are the conversion of JDBCs {@literal Array} type to normal java arrays.
-	 * 
-	 * @param value a value read from the database
-	 * @return a preprocessed value suitable for technology-agnostic further processing.
-	 */
-	protected Object readTechnologyType(Object value) {
-		return value;
-	}
-
-	/**
-	 * When type is a type that has special support, this returns the type a value should be converted to before the
-	 * conversion to the special type happens. For example if type is AggregateReference this method returns the second
-	 * parameter type of AggregateReference, in order to allow conversions to handle that type.
-	 *
-	 * @param ultimateTargetType ultimate target type to be returned by the conversion process. Must not be
-	 *          {@literal null}.
-	 * @return a type that can be converted to the ultimate target type by module specific handling. Must not be
-	 *         {@literal null}.
-	 */
-	protected TypeInformation<?> determineModuleReadTarget(TypeInformation<?> ultimateTargetType) {
-		return ultimateTargetType;
+		return getPotentiallyConvertedSimpleRead(value, targetType);
 	}
 
 	/**
