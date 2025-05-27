@@ -33,9 +33,12 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.convert.EnumWriteSupport;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.StatementMapper.InsertSpec;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -45,14 +48,34 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessStrategyTestSupport {
 
-	private final ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-			Arrays.asList(DurationToIntervalConverter.INSTANCE, IntervalToDurationConverter.INSTANCE));
+	private R2dbcMappingContext context;
+	private final ReactiveDataAccessStrategy strategy;
+
+	{
+		context = new R2dbcMappingContext();
+		context.setForceQuote(false);
+
+		DefaultReactiveDataAccessStrategy strategy1 = createReactiveDataAccessStrategy(DurationToIntervalConverter.INSTANCE,
+				IntervalToDurationConverter.INSTANCE);
+		strategy = strategy1;
+	}
+
+	private DefaultReactiveDataAccessStrategy createReactiveDataAccessStrategy(Object... converters) {
+		R2dbcCustomConversions customConversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, converters);
+
+		MappingR2dbcConverter converter = new MappingR2dbcConverter(context, customConversions);
+		DefaultReactiveDataAccessStrategy strategy1 = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				converter);
+		return strategy1;
+	}
 
 	@Override
 	protected ReactiveDataAccessStrategy getStrategy() {
+
 		return strategy;
 	}
 
@@ -98,8 +121,6 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-139
 	void shouldConvertToArray() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
-
 		WithArray withArray = new WithArray();
 		withArray.stringArray = new String[] { "hello", "world" };
 		withArray.stringList = Arrays.asList("hello", "world");
@@ -113,8 +134,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-139
 	void shouldApplyCustomConversion() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+		DefaultReactiveDataAccessStrategy strategy = createReactiveDataAccessStrategy(MyObjectsToStringConverter.INSTANCE);
 
 		WithConversion withConversion = new WithConversion();
 		withConversion.myObjects = Arrays.asList(new MyObject("one"), new MyObject("two"));
@@ -127,8 +147,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-139
 	void shouldApplyCustomConversionForNull() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+		DefaultReactiveDataAccessStrategy strategy = createReactiveDataAccessStrategy(MyObjectsToStringConverter.INSTANCE);
 
 		WithConversion withConversion = new WithConversion();
 		withConversion.myObjects = null;
@@ -152,8 +171,6 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-252, gh-593
 	void shouldConvertCollectionOfEnumToString() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
-
 		WithEnumCollections withEnums = new WithEnumCollections();
 		withEnums.enumSet = EnumSet.of(MyEnum.ONE, MyEnum.TWO);
 		withEnums.enumList = Arrays.asList(MyEnum.ONE, MyEnum.TWO);
@@ -170,8 +187,6 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-593
 	void shouldCorrectlyWriteConvertedEnumNullValues() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
-
 		WithEnumCollections withEnums = new WithEnumCollections();
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
@@ -184,8 +199,6 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 	@Test // gh-1544
 	void shouldCorrectlyWriteConvertedEmptyEnumCollections() {
-
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
 
 		WithEnumCollections withEnums = new WithEnumCollections();
 		withEnums.enumArray = new MyEnum[0];
@@ -203,8 +216,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-593
 	void shouldConvertCollectionOfEnumNatively() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(new MyEnumSupport()));
+		DefaultReactiveDataAccessStrategy strategy = createReactiveDataAccessStrategy(new MyEnumSupport());
 
 		WithEnumCollections withEnums = new WithEnumCollections();
 		withEnums.enumSet = EnumSet.of(MyEnum.ONE, MyEnum.TWO);
@@ -222,8 +234,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Test // gh-593
 	void shouldCorrectlyWriteNativeEnumNullValues() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(new MyEnumSupport()));
+		DefaultReactiveDataAccessStrategy strategy = createReactiveDataAccessStrategy(new MyEnumSupport());
 
 		WithEnumCollections withEnums = new WithEnumCollections();
 

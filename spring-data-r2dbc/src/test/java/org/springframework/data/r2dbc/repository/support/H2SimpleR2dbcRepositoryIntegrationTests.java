@@ -15,7 +15,16 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.test.StepVerifier;
+
+import java.util.Map;
+import java.util.Optional;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,26 +34,25 @@ import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository} against H2.
  *
  * @author Mark Paluch
  * @author Greg Turnquist
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -60,6 +68,17 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
+		}
+
+		@Override
+		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+
+			R2dbcMappingContext context = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
+			context.setForceQuote(false);
+
+			return context;
 		}
 	}
 
@@ -119,8 +138,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 
 	static class AlwaysNew implements Persistable<Long> {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 
 		public AlwaysNew(Long id, String name) {

@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -43,12 +42,17 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  *
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Jens Schauder
  */
 public class UpdateMapperUnitTests {
 
 	private final R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
 	private final UpdateMapper mapper = new UpdateMapper(PostgresDialect.INSTANCE, converter);
 	private final BindTarget bindTarget = mock(BindTarget.class);
+
+	{
+		((R2dbcMappingContext) converter.getMappingContext()).setForceQuote(false);
+	}
 
 	@Test // gh-64
 	void shouldMapFieldNamesInUpdate() {

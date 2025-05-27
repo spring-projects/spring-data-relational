@@ -16,15 +16,21 @@
 package org.springframework.data.r2dbc.core;
 
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 
 /**
  * {@link SqlServerDialect} specific tests for {@link ReactiveDataAccessStrategy}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class SqlServerReactiveDataAccessStrategyTests extends ReactiveDataAccessStrategyTestSupport {
 
 	private final ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(SqlServerDialect.INSTANCE);
+
+	{
+		((R2dbcMappingContext) strategy.getConverter().getMappingContext()).setForceQuote(false);
+	}
 
 	@Override
 	protected ReactiveDataAccessStrategy getStrategy() {

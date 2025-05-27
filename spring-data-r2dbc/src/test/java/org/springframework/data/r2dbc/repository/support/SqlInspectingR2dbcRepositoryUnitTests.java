@@ -32,7 +32,6 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.H2Dialect;
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -47,16 +46,21 @@ import org.springframework.r2dbc.core.DatabaseClient;
 @ExtendWith(MockitoExtension.class)
 public class SqlInspectingR2dbcRepositoryUnitTests {
 
-	R2dbcConverter r2dbcConverter = new MappingR2dbcConverter(new R2dbcMappingContext());
+	R2dbcMappingContext context;
+	R2dbcConverter r2dbcConverter;
 
 	DatabaseClient databaseClient;
 	StatementRecorder recorder = StatementRecorder.newInstance();
-	ReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(H2Dialect.INSTANCE);
-
+	ReactiveDataAccessStrategy dataAccessStrategy;
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	public void before() {
+
+		context = new R2dbcMappingContext();
+		context.setForceQuote(false);
+		r2dbcConverter = new MappingR2dbcConverter(context);
+		dataAccessStrategy = new DefaultReactiveDataAccessStrategy(H2Dialect.INSTANCE, r2dbcConverter);
 
 		databaseClient = DatabaseClient.builder().connectionFactory(recorder)
 				.bindMarkers(H2Dialect.INSTANCE.getBindMarkersFactory()).build();
@@ -75,7 +79,8 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 
 		repository.findBySpel().block(Duration.ofMillis(100));
 
-		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
+		StatementRecorder.RecordedStatement statement = recorder
+				.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
 
 		assertThat(statement.getSql()).isEqualTo("select * from PERSONx");
 	}
