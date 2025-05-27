@@ -1,7 +1,7 @@
 The `RelationalConverter` can use metadata to drive the mapping of objects to rows.
 The following annotations are available:
 
-* `@Embedded`: an entity with this annotation will be mapped to the table of the parent entity, instead of a separate table.
+* `@Embedded`: a property with this annotation will be mapped to the table of the parent entity, instead of a separate table.
 Allows to specify if the resulting columns should have a common prefix.
 If all columns resulting from such an entity are `null` either the annotated entity will be `null` or _empty_, i.e. all of its properties will be `null`, depending on the value of `@Embedded.onEmpty()`
 May be combined with `@Id` to form a composite id.
@@ -32,5 +32,3 @@ However, this is not recommended, since it may cause problems with other tools.
 The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
 The initially stored value is `zero` (`one` for primitive types).
 The version gets incremented automatically on every update.
-
-

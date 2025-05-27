@@ -26,6 +26,7 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.lang.Nullable;
@@ -235,7 +236,7 @@ abstract class RowDocumentExtractorSupport {
 
 				AggregatePath path = basePath.append(property);
 
-				if (property.isEntity() && !property.isEmbedded() && (property.isCollectionLike() || property.isQualified())) {
+				if (RelationalPredicates.isRelation(property) && (property.isCollectionLike() || property.isQualified())) {
 
 					readerState.put(property, new ContainerSink<>(aggregateContext, property, path));
 					continue;

@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
@@ -257,12 +258,14 @@ public class SqlParametersFactory {
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
+
 		persistentEntity.doWithAll(property -> {
 
 			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
 			}
-			if (property.isEntity() && !property.isEmbedded()) {
+
+			if (RelationalPredicates.isRelation(property)) {
 				return;
 			}
 

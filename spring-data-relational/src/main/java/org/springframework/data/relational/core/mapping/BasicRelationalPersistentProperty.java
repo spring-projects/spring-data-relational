@@ -250,7 +250,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public boolean isEmbedded() {
-		return isEmbedded;
+		return isEmbedded || (isIdProperty() && isEntity());
 	}
 
 	@Override
@@ -263,7 +263,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		Embedded findAnnotation = findAnnotation(Embedded.class);
 
-		return findAnnotation != null && OnEmpty.USE_EMPTY.equals(findAnnotation.onEmpty());
+		return (findAnnotation != null && OnEmpty.USE_EMPTY.equals(findAnnotation.onEmpty()))
+				|| (isIdProperty() && isEntity());
 	}
 
 	@Override

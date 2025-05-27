@@ -255,7 +255,7 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 	}
 
 	private record SimpleEntity( //
-			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
+			@Id WrappedPk wrappedPk, //
 			String name //
 	) {
 	}
@@ -272,7 +272,7 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 	}
 
 	private record SimpleEntityWithEmbeddedPk( //
-			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) EmbeddedPk embeddedPk, //
+			@Id EmbeddedPk embeddedPk, //
 			String name //
 	) {
 	}

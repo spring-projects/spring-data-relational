@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -68,7 +69,7 @@ record Tables(List<Table> tables) {
 
 					for (RelationalPersistentProperty property : entity) {
 
-						if (property.isEntity() && !property.isEmbedded()) {
+						if (RelationalPredicates.isRelation(property)) {
 							foreignKeyMetadataList.add(createForeignKeyMetadata(entity, property, context, sqlTypeMapping));
 							continue;
 						}
