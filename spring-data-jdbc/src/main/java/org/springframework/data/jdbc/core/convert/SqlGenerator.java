@@ -15,7 +15,16 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -38,7 +47,6 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.Pair;
 import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
@@ -123,11 +131,11 @@ public class SqlGenerator {
 	 * @param table the table to base the select on
 	 * @param pathFilter a filter for excluding paths from the select. All paths for which the filter returns
 	 *          {@literal true} will be skipped when determining columns to select.
-	 * @return A select structure suitable for constructing more specialized selects by adding conditions.
+	 * @return a select structure suitable for constructing more specialized selects by adding conditions.
 	 * @since 4.0
 	 */
 	public SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter) {
-		return createSelectBuilder(table, pathFilter, Collections.emptyList());
+		return createSelectBuilder(table, pathFilter, Collections.emptyList(), Query.empty());
 	}
 
 	/**
@@ -188,13 +196,7 @@ public class SqlGenerator {
 		AggregatePath.TableInfo parentPathTableInfo = parentPath.getTableInfo();
 		Table subSelectTable = Table.create(parentPathTableInfo.qualifiedTableName());
 
-		Map<AggregatePath, Column> selectFilterColumns = new TreeMap<>();
-
-		// TODO: cannot we simply pass on the columnInfos?
-		parentPathTableInfo.effectiveIdColumnInfos().forEach( //
-				(ap, ci) -> //
-				selectFilterColumns.put(ap, subSelectTable.column(ci.name())) //
-		);
+		Map<AggregatePath, Column> selectFilterColumns = parentPathTableInfo.effectiveIdColumnInfos().toMap(subSelectTable);
 
 		Condition innerCondition;
 
@@ -609,29 +611,24 @@ public class SqlGenerator {
 	}
 
 	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns, Query query) {
-
-		return createSelectBuilder(getTable(), ap -> false, keyColumns);
+		return createSelectBuilder(getTable(), ap -> false, keyColumns, query);
 	}
 
 	private SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter,
-			Collection<SqlIdentifier> keyColumns) {
+			Collection<SqlIdentifier> keyColumns, Query query) {
 
 		Projection projection = getProjection(pathFilter, keyColumns, query, table);
 		SelectBuilder.SelectJoin baseSelect = StatementBuilder.select(projection.columns()).from(table);
 
-		return (SelectBuilder.SelectWhere) addJoins(baseSelect, joinTables);
+		return (SelectBuilder.SelectWhere) addJoins(baseSelect, projection.joins());
 	}
 
-	private static SelectBuilder.SelectJoin addJoins(SelectBuilder.SelectJoin baseSelect, List<Join> joinTables) {
-
-		for (Join join : projection.joins()) {
-
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.condition);
-		}
-		return baseSelect;
+	private static SelectBuilder.SelectJoin addJoins(SelectBuilder.SelectJoin baseSelect, Joins joins) {
+		return joins.reduce(baseSelect, (join, select) -> select.leftOuterJoin(join.joinTable).on(join.condition));
 	}
 
-	private Projection getProjection(Predicate<AggregatePath> pathFilter, Collection<SqlIdentifier> keyColumns, Query query, Table table) {
+	private Projection getProjection(Predicate<AggregatePath> pathFilter, Collection<SqlIdentifier> keyColumns,
+			Query query, Table table) {
 
 		Set<Expression> columns = new LinkedHashSet<>();
 		Set<Join> joins = new LinkedHashSet<>();
@@ -642,7 +639,7 @@ public class SqlGenerator {
 				AggregatePath aggregatePath = mappingContext.getAggregatePath(
 						mappingContext.getPersistentPropertyPath(columnName.getReference(), entity.getTypeInformation()));
 
-				includeColumnAndJoin(aggregatePath, joins, columns);
+				includeColumnAndJoin(aggregatePath, pathFilter, joins, columns);
 			} catch (InvalidPersistentPropertyPath e) {
 				columns.add(Column.create(columnName, table));
 			}
@@ -656,10 +653,10 @@ public class SqlGenerator {
 				AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
 
 				if (pathFilter.test(aggregatePath)) {
-				continue;
-			}
+					continue;
+				}
 
-				includeColumnAndJoin(aggregatePath, joins, columns);
+				includeColumnAndJoin(aggregatePath, pathFilter, joins, columns);
 			}
 		}
 
@@ -667,11 +664,29 @@ public class SqlGenerator {
 			columns.add(table.column(keyColumn).as(keyColumn));
 		}
 
-		return new Projection(columns, joins);
+		return new Projection(columns, Joins.of(joins));
 	}
 
-	private void includeColumnAndJoin(AggregatePath aggregatePath, Collection<Join> joins,
-			Collection<Expression> columns) {
+	private void includeColumnAndJoin(AggregatePath aggregatePath, Predicate<AggregatePath> pathFilter,
+			Collection<Join> joins, Collection<Expression> columns) {
+
+		if (aggregatePath.isEmbedded()) {
+
+			RelationalPersistentEntity<?> entity = aggregatePath.getRequiredLeafEntity();
+
+			for (RelationalPersistentProperty property : entity) {
+
+				AggregatePath nested = aggregatePath.append(property);
+
+				if (pathFilter.test(nested)) {
+					continue;
+				}
+
+				includeColumnAndJoin(nested, pathFilter, joins, columns);
+			}
+
+			return;
+		}
 
 		joins.addAll(getJoins(aggregatePath));
 
@@ -687,7 +702,24 @@ public class SqlGenerator {
 	 * @param columns
 	 * @param joins
 	 */
-	record Projection(Set<Expression> columns, Set<Join> joins) {
+	record Projection(Collection<Expression> columns, Joins joins) {
+
+	}
+
+	record Joins(Collection<Join> joins) {
+
+		public static Joins of(Collection<Join> joins) {
+			return new Joins(joins);
+		}
+
+		public <T> T reduce(T identity, BiFunction<Join, T, T> accumulator) {
+
+			T result = identity;
+			for (Join join : joins) {
+				result = accumulator.apply(join, result);
+			}
+			return result;
+		}
 	}
 
 	private SelectBuilder.SelectOrdered selectBuilder(Collection<SqlIdentifier> keyColumns, Sort sort,
@@ -922,11 +954,8 @@ public class SqlGenerator {
 				.from(table);
 		Delete delete;
 
-		Map<AggregatePath, Column> columns = new TreeMap<>();
 		AggregatePath.ColumnInfos columnInfos = path.getTableInfo().backReferenceColumnInfos();
-
-		// TODO: cannot we simply pass on the columnInfos?
-		columnInfos.forEach((ag, ci) -> columns.put(ag, table.column(ci.name())));
+		Map<AggregatePath, Column> columns = columnInfos.toMap(table);
 
 		if (isFirstNonRoot(path)) {
 
@@ -978,22 +1007,19 @@ public class SqlGenerator {
 	 * @return a single column of the primary key to be used in places where one need something not null to be selected.
 	 */
 	private Column getSingleNonNullColumn() {
-
-		// getColumn() is slightly different from the code in any(…). Why?
-		// AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
-		// return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
-
-		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
-		return columnInfos.any((ap, ci) -> sqlContext.getColumn(ap));
+		return doGetColumn(AggregatePath.ColumnInfos::any);
 	}
 
 	private List<Column> getIdColumns() {
+		return doGetColumn(AggregatePath.ColumnInfos::toColumnList);
+	}
+
+	private <T> T doGetColumn(
+			BiFunction<AggregatePath.ColumnInfos, BiFunction<AggregatePath, AggregatePath.ColumnInfo, Column>, T> columnListFunction) {
 
 		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
-		// sqlcontext.getColumn (vs sqlContext.getTable
-		return columnInfos
-				.toColumnList((aggregatePath, columnInfo) -> sqlContext.getColumn(aggregatePath));
+		return columnListFunction.apply(columnInfos, (aggregatePath, columnInfo) -> sqlContext.getColumn(aggregatePath));
 	}
 
 	private Column getVersionColumn() {
@@ -1164,7 +1190,7 @@ public class SqlGenerator {
 			}
 		}
 
-		return addJoins(baseSelect, joins);
+		return addJoins(baseSelect, Joins.of(joins));
 	}
 
 	/**
@@ -1199,7 +1225,7 @@ public class SqlGenerator {
 				joins.add(join);
 			}
 		}
-		return addJoins(baseSelect, joins);
+		return addJoins(baseSelect, Joins.of(joins));
 	}
 
 	private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,
