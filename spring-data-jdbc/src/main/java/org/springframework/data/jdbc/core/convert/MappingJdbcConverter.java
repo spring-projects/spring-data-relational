@@ -27,7 +27,11 @@ import java.util.function.Function;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.convert.ConversionException;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -35,6 +39,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
+import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.ObjectPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -179,8 +184,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			try {
 				return array.getArray();
 			} catch (SQLException e) {
-				LOG.info("Failed to extract a value of type %s from an Array; Attempting to use standard conversions", e);
-
+				throw new FailedToAccessJdbcArrayException(e);
 			}
 		}
 
@@ -299,6 +303,12 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		return super.newValueProvider(documentAccessor, evaluator, context);
+	}
+
+	private static class FailedToAccessJdbcArrayException extends NonTransientDataAccessException {
+		public FailedToAccessJdbcArrayException(SQLException e) {
+			super("Failed to read array", e);
+		}
 	}
 
 	/**
