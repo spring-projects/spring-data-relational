@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -50,11 +51,22 @@ import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
+import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
+import org.springframework.data.relational.core.mapping.event.AfterDeleteCallback;
+import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.data.util.Streamable;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -175,7 +187,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> saveAll(Iterable<T> instances) {
-		return doInBatch(instances, (first) -> (second -> changeCreatorSelectorForSave(first).apply(second)));
+		return saveInBatch(instances, instance -> changeCreatorSelectorForSave(instance));
 	}
 
 	/**
@@ -196,7 +208,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> insertAll(Iterable<T> instances) {
-		return doInBatch(instances, (__) -> (entity -> createInsertChange(prepareVersionForInsert(entity))));
+		return doInBatch(instances, entity -> createInsertChange(prepareVersionForInsert(entity)));
 	}
 
 	/**
@@ -217,10 +229,28 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	@Override
 	public <T> List<T> updateAll(Iterable<T> instances) {
-		return doInBatch(instances, (__) -> (entity -> createUpdateChange(prepareVersionForUpdate(entity))));
+		return doInBatch(instances, entity -> createUpdateChange(prepareVersionForUpdate(entity)));
 	}
 
-	private <T> List<T> doInBatch(Iterable<T> instances,Function<T, Function<T, RootAggregateChange<T>>> changeCreatorFunction) {
+	private <T> List<T> saveInBatch(Iterable<T> instances, Function<T, AggregateChangeCreator<T>> changes) {
+
+		Assert.notNull(instances, "Aggregate instances must not be null");
+
+		if (!instances.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
+
+		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
+
+		for (T instance : instances) {
+			verifyIdProperty(instance);
+			entityAndChangeCreators.add(new EntityAndChangeCreator<>(instance, changes.apply(instance)));
+		}
+
+		return performSaveAll(entityAndChangeCreators);
+	}
+
+	private <T> List<T> doInBatch(Iterable<T> instances, AggregateChangeCreator<T> changeCreatorFunction) {
 
 		Assert.notNull(instances, "Aggregate instances must not be null");
 
@@ -231,7 +261,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		List<EntityAndChangeCreator<T>> entityAndChangeCreators = new ArrayList<>();
 		for (T instance : instances) {
 			verifyIdProperty(instance);
-			entityAndChangeCreators.add(new EntityAndChangeCreator<T>(instance, changeCreatorFunction.apply(instance)));
+			entityAndChangeCreators.add(new EntityAndChangeCreator<T>(instance, changeCreatorFunction));
 		}
 		return performSaveAll(entityAndChangeCreators);
 	}
@@ -484,7 +514,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		T aggregateRoot = triggerBeforeConvert(instance.entity);
 
-		RootAggregateChange<T> change = instance.changeCreator.apply(aggregateRoot);
+		RootAggregateChange<T> change = instance.changeCreator.createAggregateChange(aggregateRoot);
 
 		aggregateRoot = triggerBeforeSave(change.getRoot(), change);
 
@@ -542,7 +572,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return results;
 	}
 
-	private <T> Function<T, RootAggregateChange<T>> changeCreatorSelectorForSave(T instance) {
+	private <T> AggregateChangeCreator<T> changeCreatorSelectorForSave(T instance) {
 
 		return context.getRequiredPersistentEntity(instance.getClass()).isNew(instance)
 				? entity -> createInsertChange(prepareVersionForInsert(entity))
@@ -681,6 +711,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private record EntityAndPreviousVersion<T> (T entity, @Nullable Number version) {
 	}
 
-	private record EntityAndChangeCreator<T> (T entity, Function<T, RootAggregateChange<T>> changeCreator) {
+	private record EntityAndChangeCreator<T> (T entity, AggregateChangeCreator<T> changeCreator) {
+	}
+
+	private interface AggregateChangeCreator<T> extends Function<T, RootAggregateChange<T>> {
+
+		default RootAggregateChange<T> createAggregateChange(T instance) {
+			return this.apply(instance);
+		}
 	}
 }
