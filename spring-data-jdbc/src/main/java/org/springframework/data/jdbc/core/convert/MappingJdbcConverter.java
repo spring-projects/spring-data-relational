@@ -465,7 +465,17 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		RelationalPersistentProperty idProperty = idDefiningParentPath.getRequiredIdProperty();
 		AggregatePath idPath = idProperty.isEntity() ? idDefiningParentPath.append(idProperty) : idDefiningParentPath;
 
-		return ap -> valueProvider.apply(idPath.append(ap));
+		return ap -> valueProvider.apply(smartAppend(idPath, ap));
+	}
+
+	private static AggregatePath smartAppend(AggregatePath base, AggregatePath suffix) {
+
+		RelationalPersistentEntity<?> owner = suffix.getRequiredBaseProperty().getOwner();
+		if (owner.equals(base.getRequiredLeafEntity())) {
+			return base.append(suffix);
+		} else {
+			return smartAppend(base, suffix.getTail());
+		}
 	}
 
 	/**

@@ -69,7 +69,7 @@ class ColumInfosBuilder {
 	 * @param columnInfo the {@literal ColumnInfo} added.
 	 */
 	void add(AggregatePath path, AggregatePath.ColumnInfo columnInfo) {
-		columnInfoMap.put(path.subtract(basePath), columnInfo);
+		columnInfoMap.put(path, columnInfo);
 	}
 
 	/**
@@ -78,7 +78,7 @@ class ColumInfosBuilder {
 	 * @return a {@literal ColumnInfos} instance containing all the added {@link AggregatePath.ColumnInfo} instances.
 	 */
 	AggregatePath.ColumnInfos build() {
-		return new AggregatePath.ColumnInfos(basePath, columnInfoMap);
+		return new AggregatePath.ColumnInfos(columnInfoMap);
 	}
 
 }
