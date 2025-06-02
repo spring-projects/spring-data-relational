@@ -984,15 +984,16 @@ public class SqlGenerator {
 		// return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 
 		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
-		return columnInfos.any((ap, ci) -> sqlContext.getTable(columnInfos.fullPath(ap)).column(ci.name()).as(ci.alias()));
+		return columnInfos.any((ap, ci) -> sqlContext.getColumn(ap));
 	}
 
 	private List<Column> getIdColumns() {
 
 		AggregatePath.ColumnInfos columnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
+		// sqlcontext.getColumn (vs sqlContext.getTable
 		return columnInfos
-				.toColumnList((aggregatePath, columnInfo) -> sqlContext.getColumn(columnInfos.fullPath(aggregatePath)));
+				.toColumnList((aggregatePath, columnInfo) -> sqlContext.getColumn(aggregatePath));
 	}
 
 	private Column getVersionColumn() {

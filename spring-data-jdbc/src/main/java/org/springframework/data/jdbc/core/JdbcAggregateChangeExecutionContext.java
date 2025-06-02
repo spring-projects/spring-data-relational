@@ -199,15 +199,16 @@ class JdbcAggregateChangeExecutionContext {
 
 	static Function<AggregatePath, Object> getIdMapper(Object idValue, AggregatePath path, JdbcConverter converter) {
 
+		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
 		RelationalPersistentEntity<?> entity = converter.getMappingContext()
-				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty());
+				.getPersistentEntity(idProperty);
 
 		if (entity == null) {
 			return aggregatePath -> idValue;
 		}
 
 		PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
-		return aggregatePath -> propertyPathAccessor.getProperty(aggregatePath.getRequiredPersistentPropertyPath());
+		return aggregatePath -> propertyPathAccessor.getProperty(aggregatePath.getSubPathBasedOn(idProperty.getActualType()).getRequiredPersistentPropertyPath());
 	}
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {

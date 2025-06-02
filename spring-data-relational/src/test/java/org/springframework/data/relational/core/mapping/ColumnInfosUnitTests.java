@@ -41,7 +41,7 @@ class ColumnInfosUnitTests {
 	@Test // GH-574
 	void emptyColumnInfos() {
 
-		AggregatePath.ColumnInfos columnInfos = AggregatePath.ColumnInfos.empty(basePath(DummyEntity.class));
+		AggregatePath.ColumnInfos columnInfos = AggregatePath.ColumnInfos.empty();
 
 		assertThat(columnInfos.isEmpty()).isTrue();
 		assertThrows(NoSuchElementException.class, columnInfos::any);
@@ -76,10 +76,7 @@ class ColumnInfosUnitTests {
 
 		List<String> collector = new ArrayList<>();
 		columnInfos.forEach((ap, ci) -> collector.add(ap.toDotPath() + "+" + ci.name()));
-		assertThat(collector).containsExactly("one+\"ONE\"", "two+\"TWO\"");
-
-		columnInfos.get(getPath(CompositeId.class, "one"));
-
+		assertThat(collector).containsExactly("id.one+\"ONE\"", "id.two+\"TWO\"");
 	}
 
 	private AggregatePath getPath(Class<?> type, String name) {

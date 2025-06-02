@@ -144,6 +144,8 @@ class JdbcIdentifierBuilderUnitTests {
 			if (entity == null) {
 				return idValue;
 			} else {
+
+				ap = ap.getTail();
 				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
 				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
 			}

@@ -250,6 +250,24 @@ class DefaultAggregatePath implements AggregatePath {
 		throw new IllegalStateException("Can't subtract [%s] from [%s]".formatted(basePath, this));
 	}
 
+	@Override
+	public AggregatePath getSubPathBasedOn(Class<?> baseType) {
+
+		if (isRoot()) {
+			if (rootType.getType() != baseType) {
+				throw new IllegalStateException("No matching path found for [%s]".formatted(baseType));
+			}
+			return this;
+		}
+
+		RelationalPersistentEntity<?> owner = getRequiredBaseProperty().getOwner();
+		if (owner.getType() == baseType) {
+			return this;
+		}
+		
+		return getTail().getSubPathBasedOn(baseType);
+	}
+
 	/**
 	 * Creates an {@link Iterator} that iterates over the current path and all ancestors. It will start with the current
 	 * path, followed by its parent until ending with the root.

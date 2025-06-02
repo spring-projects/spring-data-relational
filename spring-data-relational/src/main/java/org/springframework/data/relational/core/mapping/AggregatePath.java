@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -288,6 +289,8 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		return toDotPath().compareTo(other.toDotPath());
 	}
 
+	AggregatePath getSubPathBasedOn(Class<?> baseType);
+
 	/**
 	 * Information about a table underlying an entity.
 	 *
@@ -342,7 +345,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		private static ColumnInfos computeIdColumnInfos(AggregatePath tableOwner,
 				RelationalPersistentEntity<?> leafEntity) {
 
-			ColumnInfos idColumnInfos = ColumnInfos.empty(tableOwner);
+			ColumnInfos idColumnInfos = ColumnInfos.empty();
 			if (!leafEntity.hasIdProperty()) {
 				return idColumnInfos;
 			}
@@ -369,7 +372,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			AggregatePath tableOwner = AggregatePathTraversal.getTableOwningPath(path);
 
 			if (tableOwner.isRoot()) {
-				return ColumnInfos.empty(tableOwner);
+				return ColumnInfos.empty();
 			}
 
 			AggregatePath idDefiningParentPath = tableOwner.getIdDefiningParentPath();
@@ -438,7 +441,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * @return ColumnInfos representing the effective id of this entity. Guaranteed not to be {@literal null}.
 		 */
 		public ColumnInfos effectiveIdColumnInfos() {
-			return backReferenceColumnInfos.columnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
+			return backReferenceColumnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
 		}
 	}
 
@@ -483,21 +486,18 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 */
 	class ColumnInfos {
 
-		private final AggregatePath basePath;
 		private final Map<AggregatePath, ColumnInfo> columnInfos;
 		private final Map<Table, List<Column>> columnCache;
 
 		/**
 		 * Creates a new ColumnInfos instances based on the arguments.
 		 *
-		 * @param basePath The path on which all other paths in the other argument are based on. For the typical case of a
-		 *          composite id, this would be the path to the composite ids.
 		 * @param columnInfos A map, mapping {@literal AggregatePath} instances to the respective {@literal ColumnInfo}
 		 */
-		ColumnInfos(AggregatePath basePath, Map<AggregatePath, ColumnInfo> columnInfos) {
+		ColumnInfos(Map<AggregatePath, ColumnInfo> columnInfos) {
 
-			this.basePath = basePath;
-			this.columnInfos = columnInfos;
+			this.columnInfos = new TreeMap<>();
+			this.columnInfos.putAll(columnInfos);
 			this.columnCache = new HashMap<>(columnInfos.size(), 1f);
 		}
 
@@ -505,11 +505,10 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * An empty {@literal ColumnInfos} instance with a fixed base path. Useful as a base when collecting
 		 * {@link ColumnInfo} instances into an {@literal ColumnInfos} instance.
 		 *
-		 * @param basePath The path on which paths in the {@literal ColumnInfos} or derived objects will be based on.
 		 * @return an empty instance save the {@literal basePath}.
 		 */
-		public static ColumnInfos empty(AggregatePath basePath) {
-			return new ColumnInfos(basePath, new HashMap<>());
+		public static ColumnInfos empty() {
+			return new ColumnInfos(new HashMap<>());
 		}
 
 		/**
@@ -549,8 +548,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 */
 		public List<Column> toColumnList(Table table) {
 
-			return columnCache.computeIfAbsent(table,
-					t -> columnInfos.values().stream().map(columnInfo -> t.column(columnInfo.name)).toList());
+			return columnCache.computeIfAbsent(table, t -> toColumnList((__, ci) -> t.column(ci.name)));
 		}
 
 		/**
@@ -608,6 +606,15 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		}
 
 		/**
+		 * Calls the consumer for each pair of {@link AggregatePath} and {@literal ColumnInfo}.
+		 *
+		 * @param consumer the function to call.
+		 */
+		public void forEachLong(BiConsumer<AggregatePath, ColumnInfo> consumer) {
+			columnInfos.forEach(consumer);
+		}
+
+		/**
 		 * Calls the {@literal mapper} for each pair one pair of {@link AggregatePath} and {@link ColumnInfo}, if there is
 		 * any.
 		 *
@@ -629,16 +636,6 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 */
 		public ColumnInfo get(AggregatePath path) {
 			return columnInfos.get(path);
-		}
-
-		/**
-		 * Constructs an {@link AggregatePath} from the {@literal basePath} and the provided argument.
-		 *
-		 * @param ap {@literal AggregatePath} to be appended to the {@literal basePath}.
-		 * @return the combined (@literal AggregatePath}
-		 */
-		public AggregatePath fullPath(AggregatePath ap) {
-			return basePath.append(ap);
 		}
 
 		/**
@@ -668,5 +665,4 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			return columnInfos.size();
 		}
 	}
-
 }
