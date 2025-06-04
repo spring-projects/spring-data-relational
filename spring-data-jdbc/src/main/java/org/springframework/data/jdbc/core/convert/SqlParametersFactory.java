@@ -189,9 +189,7 @@ public class SqlParametersFactory {
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
 			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
-		JdbcValue jdbcValue = value != null
-				? converter.writeJdbcValue(value, javaType, sqlType)
-				: JdbcValue.of(null, JDBCType.NULL);
+		JdbcValue jdbcValue = converter.writeJdbcValue(value, javaType, sqlType);
 
 		parameterSource.addValue( //
 				paramName, //

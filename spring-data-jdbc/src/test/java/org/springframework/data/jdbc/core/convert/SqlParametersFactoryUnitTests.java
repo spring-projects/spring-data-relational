@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategyUnitTests.*;
 
 import java.sql.JDBCType;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -173,7 +174,7 @@ class SqlParametersFactoryUnitTests {
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isEqualTo(DummyEnum.ONE.name());
-		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(1111);
+		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(Types.OTHER);
 	}
 
 	@Test // GH-1935
@@ -187,8 +188,8 @@ class SqlParametersFactoryUnitTests {
 				Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
-		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(JDBCType.NULL.getVendorTypeNumber());
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isNull();
+		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(Types.NULL);
 	}
 
 	@Test // GH-1935
@@ -201,7 +202,7 @@ class SqlParametersFactoryUnitTests {
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isEqualTo(DummyEnum.ONE.name());
-		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(12);
+		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(Types.VARCHAR);
 
 	}
 

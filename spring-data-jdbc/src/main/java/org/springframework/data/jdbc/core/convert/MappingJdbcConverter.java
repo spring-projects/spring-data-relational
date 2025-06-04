@@ -31,6 +31,7 @@ import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.dialect.NullTypeStrategy;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -73,6 +74,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 	private final JdbcTypeFactory typeFactory;
 	private final RelationResolver relationResolver;
+	private final NullTypeStrategy nullTypeStrategy;
 
 	/**
 	 * Creates a new {@link MappingJdbcConverter} given {@link MappingContext} and a {@link JdbcTypeFactory#unsupported()
@@ -84,15 +86,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 */
 	public MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver) {
-
-		super(context, new JdbcCustomConversions());
-
-		Assert.notNull(relationResolver, "RelationResolver must not be null");
-
-		this.typeFactory = JdbcTypeFactory.unsupported();
-		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
+		this(context, relationResolver, new JdbcCustomConversions(), JdbcTypeFactory.unsupported(), NullTypeStrategy.DEFAULT);
 	}
 
 	/**
@@ -105,13 +99,20 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	public MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver,
 								CustomConversions conversions, JdbcTypeFactory typeFactory) {
 
+		this(context, relationResolver, conversions, typeFactory, NullTypeStrategy.DEFAULT);
+	}
+
+	public MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory, NullTypeStrategy nullTypeStrategy) {
+
 		super(context, conversions);
 
 		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
+		Assert.notNull(nullTypeStrategy, "NullTypeStrategy must not be null");
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
+		this.nullTypeStrategy = nullTypeStrategy;
 
 		registerAggregateReferenceConverters();
 	}
@@ -250,7 +251,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return result;
 		}
 
-		if (convertedValue == null || !convertedValue.getClass().isArray()) {
+		if (convertedValue == null ) {
+			return JdbcValue.of(null, nullTypeStrategy.getNullType(sqlType));
+		}
+
+		if (!convertedValue.getClass().isArray()) {
 			return JdbcValue.of(convertedValue, sqlType);
 		}
 
