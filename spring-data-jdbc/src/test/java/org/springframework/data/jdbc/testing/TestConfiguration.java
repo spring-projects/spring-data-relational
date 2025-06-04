@@ -22,9 +22,7 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -77,9 +75,7 @@ public class TestConfiguration {
 	public static final String PROFILE_NO_SINGLE_QUERY_LOADING = "!" + PROFILE_SINGLE_QUERY_LOADING;
 
 	@Autowired DataSource dataSource;
-	@Autowired BeanFactory beanFactory;
 	@Autowired ApplicationEventPublisher publisher;
-	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
