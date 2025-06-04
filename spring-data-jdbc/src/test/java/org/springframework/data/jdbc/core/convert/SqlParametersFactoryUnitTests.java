@@ -46,7 +46,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * @author Chirag Tailor
  * @author Sergey Korotaev
  */
-class SqlParametersFactoryTest {
+class SqlParametersFactoryUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationResolver relationResolver = mock(RelationResolver.class);
@@ -88,8 +88,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
 	}
 
-	@Test
-	// DATAJDBC-146
+	@Test // DATAJDBC-146
 	void identifiersGetAddedAsParameters() {
 
 		long id = 4711L;
@@ -103,8 +102,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("reference")).isEqualTo(reference);
 	}
 
-	@Test
-	// DATAJDBC-146
+	@Test // DATAJDBC-146
 	void additionalIdentifierForIdDoesNotLeadToDuplicateParameters() {
 
 		long id = 4711L;
@@ -116,8 +114,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(id);
 	}
 
-	@Test
-	// DATAJDBC-235
+	@Test // DATAJDBC-235
 	void considersConfiguredWriteConverter() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -131,8 +128,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("flag")).isEqualTo("T");
 	}
 
-	@Test
-	// DATAJDBC-412
+	@Test // DATAJDBC-412
 	void considersConfiguredWriteConverterForIdValueObjects_onWrite() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
@@ -149,8 +145,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("value")).isEqualTo(value);
 	}
 
-	@Test
-	// GH-1405
+	@Test // GH-1405
 	void parameterNamesGetSanitized() {
 
 		WithIllegalCharacters entity = new WithIllegalCharacters(23L, "aValue");
@@ -165,8 +160,7 @@ class SqlParametersFactoryTest {
 		assertThat(sqlParameterSource.getValue("val&ue")).isNull();
 	}
 
-	@Test
-	// GH-1935
+	@Test // GH-1935
 	void enumParameterIsNotNullReturnCorrectSqlTypeFromConverter() {
 
 		WithEnumEntity entity = new WithEnumEntity(23L, DummyEnum.ONE);
@@ -174,38 +168,36 @@ class SqlParametersFactoryTest {
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
 				singletonList(WritingEnumConverter.INSTANCE));
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity,
-				WithEnumEntity.class, Identifier.empty(), IdValueSource.PROVIDED);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithEnumEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isEqualTo(DummyEnum.ONE.name());
 		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(1111);
 	}
 
-	@Test
-	// GH-1935
+	@Test // GH-1935
 	void enumParameterIsNullReturnCorrectSqlTypeFromConverter() {
 		WithEnumEntity entity = new WithEnumEntity(23L, null);
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
 				singletonList(WritingEnumConverter.INSTANCE));
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity,
-				WithEnumEntity.class, Identifier.empty(), IdValueSource.PROVIDED);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithEnumEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(JDBCType.NULL.getVendorTypeNumber());
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isNull();
 	}
 
-	@Test
-	// GH-1935
+	@Test // GH-1935
 	void enumParameterIsNotNullReturnCorrectSqlTypeWithoutConverter() {
 
 		WithEnumEntity entity = new WithEnumEntity(23L, DummyEnum.ONE);
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity,
-				WithEnumEntity.class, Identifier.empty(), IdValueSource.PROVIDED);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithEnumEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getValue("dummy_enum")).isEqualTo(DummyEnum.ONE.name());
@@ -213,14 +205,13 @@ class SqlParametersFactoryTest {
 
 	}
 
-	@Test
-	// GH-1935
+	@Test // GH-1935
 	void enumParameterIsNullReturnCorrectSqlTypeWithoutConverter() {
 
 		WithEnumEntity entity = new WithEnumEntity(23L, null);
 
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity,
-				WithEnumEntity.class, Identifier.empty(), IdValueSource.PROVIDED);
+		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forInsert(entity, WithEnumEntity.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
 
 		assertThat(sqlParameterSource.getValue("id")).isEqualTo(23L);
 		assertThat(sqlParameterSource.getSqlType("dummy_enum")).isEqualTo(JDBCType.NULL.getVendorTypeNumber());
@@ -291,7 +282,7 @@ class SqlParametersFactoryTest {
 		}
 
 		public String toString() {
-			return "SqlParametersFactoryTest.IdValue(id=" + this.getId() + ")";
+			return "SqlParametersFactoryUnitTests.IdValue(id=" + this.getId() + ")";
 		}
 	}
 
