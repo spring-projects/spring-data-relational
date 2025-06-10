@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -50,6 +51,8 @@ class IdGeneratingEntityCallbackTest {
 
 	@Mock NamedParameterJdbcOperations operations;
 	RelationalMappingContext relationalMappingContext;
+	private JdbcMySqlDialect mySqlDialect = new JdbcMySqlDialect(
+			IdentifierProcessing.create(new IdentifierProcessing.Quoting("`"), IdentifierProcessing.LetterCasing.LOWER_CASE));
 
 	@BeforeEach
 	void setUp() {
@@ -64,8 +67,8 @@ class IdGeneratingEntityCallbackTest {
 
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-		IdGeneratingEntityCallback subject = new IdGeneratingEntityCallback(relationalMappingContext,
-				JdbcMySqlDialect.INSTANCE, operations);
+		IdGeneratingEntityCallback subject = new IdGeneratingEntityCallback(relationalMappingContext, mySqlDialect,
+				operations);
 
 		EntityWithSequence processed = (EntityWithSequence) subject.onBeforeSave(new EntityWithSequence(),
 				MutableAggregateChange.forSave(new EntityWithSequence()));
@@ -76,8 +79,8 @@ class IdGeneratingEntityCallbackTest {
 	@Test // GH-1923
 	void entityIsNotMarkedWithTargetSequence() {
 
-		IdGeneratingEntityCallback subject = new IdGeneratingEntityCallback(relationalMappingContext,
-				JdbcMySqlDialect.INSTANCE, operations);
+		IdGeneratingEntityCallback subject = new IdGeneratingEntityCallback(relationalMappingContext, mySqlDialect,
+				operations);
 
 		NoSequenceEntity processed = (NoSequenceEntity) subject.onBeforeSave(new NoSequenceEntity(),
 				MutableAggregateChange.forSave(new NoSequenceEntity()));

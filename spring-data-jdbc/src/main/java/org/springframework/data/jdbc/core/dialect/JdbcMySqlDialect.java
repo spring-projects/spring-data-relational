@@ -42,7 +42,17 @@ import org.springframework.lang.NonNull;
  */
 public class JdbcMySqlDialect extends MySqlDialect implements JdbcDialect {
 
-	public static final JdbcMySqlDialect INSTANCE = new JdbcMySqlDialect();
+	/**
+	 * Predefined instance of the {@literal JdbcMySqlDialect}.
+	 *
+	 * @deprecated Use the constructor instead. There is no one correct MySqlDialect, since the behaviour of MySql depends
+	 *             on various configuration options. See
+	 * 
+	 *             <pre>
+	 * <a href="https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html">Identifier Case Sensitivity</a>
+	 *             </pre>
+	 */
+	@Deprecated(forRemoval = true, since = "4.0") public static final JdbcMySqlDialect INSTANCE = new JdbcMySqlDialect();
 
 	public JdbcMySqlDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);

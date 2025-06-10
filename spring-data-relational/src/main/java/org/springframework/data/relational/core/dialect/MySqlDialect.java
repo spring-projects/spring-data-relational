@@ -37,18 +37,26 @@ public class MySqlDialect extends AbstractDialect {
 
 	/**
 	 * MySQL defaults for {@link IdentifierProcessing}.
+	 * 
+	 * @deprecated Construct your own {@link IdentifierProcessing}. There is no one standard identifier processing for
+	 *             MySql.See
+	 * 
+	 *             <pre>
+	 * 	  <a href=
+	"https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html">Identifier Case Sensitivity</a>
+	 *             </pre>
 	 */
-	public static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing.create(new Quoting("`"),
-			LetterCasing.LOWER_CASE);
+	@Deprecated(forRemoval = true,
+			since = "4.0") public static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing
+					.create(new Quoting("`"), LetterCasing.LOWER_CASE);
 
 	/**
 	 * Singleton instance.
 	 *
 	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.MySqlDialect} or
-	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect}
+	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect}
 	 */
-	@Deprecated(forRemoval = true)
-	public static final MySqlDialect INSTANCE = new MySqlDialect();
+	@Deprecated(forRemoval = true) public static final MySqlDialect INSTANCE = new MySqlDialect();
 
 	private final IdentifierProcessing identifierProcessing;
 
