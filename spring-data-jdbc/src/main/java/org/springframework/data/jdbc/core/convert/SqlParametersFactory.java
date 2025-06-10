@@ -17,22 +17,25 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.SQLType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Creates the {@link SqlIdentifierParameterSource} for various SQL operations, dialect identifier processing rules and
@@ -41,9 +44,11 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  * @since 2.4
  */
 public class SqlParametersFactory {
+
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 
@@ -78,9 +83,17 @@ public class SqlParametersFactory {
 
 		if (IdValueSource.PROVIDED.equals(idValueSource)) {
 
-			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-			Object idValue = persistentEntity.getIdentifierAccessor(instance).getRequiredIdentifier();
-			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			PersistentPropertyPathAccessor<T> propertyPathAccessor = persistentEntity.getPropertyPathAccessor(instance);
+
+			AggregatePath.ColumnInfos columnInfos = context.getAggregatePath(persistentEntity).getTableInfo().idColumnInfos();
+
+			//  fullPath: because we use the result with a PropertyPathAccessor
+			columnInfos.forEachLong((ap, __) -> {
+				Object idValue = propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+				RelationalPersistentProperty idProperty = ap.getRequiredLeafProperty();
+				addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			});
+
 		}
 		return parameterSource;
 	}
@@ -104,21 +117,25 @@ public class SqlParametersFactory {
 	 *
 	 * @param id the entity id. Must not be {@code null}.
 	 * @param domainType the type of the instance. Must not be {@code null}.
-	 * @param name the name to be used for the id parameter.
 	 * @return the {@link SqlIdentifierParameterSource} for the query. Guaranteed to not be {@code null}.
 	 * @since 2.4
 	 */
-	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType, SqlIdentifier name) {
+	<T> SqlIdentifierParameterSource forQueryById(Object id, Class<T> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
+		return doWithIdentifiers(domainType, (columns, idProperty, complexId) -> {
 
-		addConvertedPropertyValue( //
-				parameterSource, //
-				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
-				id, //
-				name //
-		);
-		return parameterSource;
+			SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
+			BiFunction<Object, AggregatePath, Object> valueExtractor = getIdMapper(complexId);
+
+			columns.forEach((ap, ci) -> addConvertedPropertyValue( //
+					parameterSource, //
+					ap.getRequiredLeafProperty(), //
+					valueExtractor.apply(id, ap), //
+					ci.name() //
+			));
+
+			return parameterSource;
+		});
 	}
 
 	/**
@@ -131,12 +148,44 @@ public class SqlParametersFactory {
 	 */
 	<T> SqlIdentifierParameterSource forQueryByIds(Iterable<?> ids, Class<T> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
+		return doWithIdentifiers(domainType, (columns, idProperty, complexId) -> {
 
-		addConvertedPropertyValuesAsList(parameterSource, getRequiredPersistentEntity(domainType).getRequiredIdProperty(),
-				ids);
+			SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
 
-		return parameterSource;
+			BiFunction<Object, AggregatePath, Object> valueExtractor = getIdMapper(complexId);
+
+			List<Object[]> parameterValues = new ArrayList<>(ids instanceof Collection<?> c ? c.size() : 16);
+			for (Object id : ids) {
+
+				Object[] tupleList = new Object[columns.size()];
+
+				int i = 0;
+				for (AggregatePath path : columns.paths()) {
+					tupleList[i++] = valueExtractor.apply(id, path);
+				}
+
+				parameterValues.add(tupleList);
+			}
+
+			parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, parameterValues);
+			return parameterSource;
+		});
+	}
+
+	private <T> T doWithIdentifiers(Class<?> domainType, IdentifierCallback<T> callback) {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(domainType);
+		RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
+		RelationalPersistentEntity<?> complexId = context.getPersistentEntity(idProperty);
+		AggregatePath.ColumnInfos columns = context.getAggregatePath(entity).getTableInfo().idColumnInfos();
+
+		return callback.doWithIdentifiers(columns, idProperty, complexId);
+	}
+
+	interface IdentifierCallback<T> {
+
+		T doWithIdentifiers(AggregatePath.ColumnInfos columns, RelationalPersistentProperty idProperty,
+				RelationalPersistentEntity<?> complexId);
 	}
 
 	/**
@@ -156,19 +205,17 @@ public class SqlParametersFactory {
 		return parameterSource;
 	}
 
-	/**
-	 * Utility to create {@link Predicate}s.
-	 */
-	static class Predicates {
+	private BiFunction<Object, AggregatePath, Object> getIdMapper(@Nullable RelationalPersistentEntity<?> complexId) {
 
-		/**
-		 * Include all {@link Predicate} returning {@literal false} to never skip a property.
-		 *
-		 * @return the include all {@link Predicate}.
-		 */
-		static Predicate<RelationalPersistentProperty> includeAll() {
-			return it -> false;
+		if (complexId == null) {
+			return (id, aggregatePath) -> id;
 		}
+
+		return (id, aggregatePath) -> {
+
+			PersistentPropertyAccessor<Object> accessor = complexId.getPropertyAccessor(id);
+			return accessor.getProperty(aggregatePath.getRequiredLeafProperty());
+		};
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
@@ -199,28 +246,6 @@ public class SqlParametersFactory {
 				jdbcValue.getJdbcType().getVendorTypeNumber());
 	}
 
-	private void addConvertedPropertyValuesAsList(SqlIdentifierParameterSource parameterSource,
-			RelationalPersistentProperty property, Iterable<?> values) {
-
-		List<Object> convertedIds = new ArrayList<>();
-		JdbcValue jdbcValue = null;
-		for (Object id : values) {
-
-			Class<?> columnType = converter.getColumnType(property);
-			SQLType sqlType = converter.getTargetSqlType(property);
-
-			jdbcValue = converter.writeJdbcValue(id, columnType, sqlType);
-			convertedIds.add(jdbcValue.getValue());
-		}
-
-		Assert.state(jdbcValue != null, "JdbcValue must be not null at this point; Please report this as a bug");
-
-		SQLType jdbcType = jdbcValue.getJdbcType();
-		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
-
-		parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, convertedIds, typeNumber);
-	}
-
 	@SuppressWarnings("unchecked")
 	private <S> RelationalPersistentEntity<S> getRequiredPersistentEntity(Class<S> domainType) {
 		return (RelationalPersistentEntity<S>) context.getRequiredPersistentEntity(domainType);
@@ -235,12 +260,14 @@ public class SqlParametersFactory {
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
+
 		persistentEntity.doWithAll(property -> {
 
 			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
 			}
-			if (property.isEntity() && !property.isEmbedded()) {
+
+			if (RelationalPredicates.isRelation(property)) {
 				return;
 			}
 

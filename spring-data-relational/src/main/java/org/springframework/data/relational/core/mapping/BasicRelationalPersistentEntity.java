@@ -154,6 +154,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	}
 
 	@Override
+	@Deprecated(forRemoval = true)
 	public SqlIdentifier getIdColumn() {
 		return getRequiredIdProperty().getColumnName();
 	}

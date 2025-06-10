@@ -17,12 +17,11 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
-import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -31,10 +30,13 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhere;
 import org.springframework.data.relational.core.sql.StatementBuilder;
@@ -44,13 +46,14 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Implementation of {@link RelationalQueryCreator} that creates {@link List} of deletion {@link ParametrizedQuery}
- * from a {@link PartTree}.
+ * Implementation of {@link RelationalQueryCreator} that creates {@link List} of deletion {@link ParametrizedQuery} from
+ * a {@link PartTree}.
  *
  * @author Yunyoung LEE
  * @author Nikita Konev
@@ -96,18 +99,18 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SqlContext sqlContext = new SqlContext(entity);
-
 		Condition condition = criteria == null ? null
 				: queryMapper.getMappedObject(parameterSource, criteria, table, entity);
 
+		List<Column> idColumns = context.getAggregatePath(entity).getTableInfo().idColumnInfos().toColumnList(table);
+
 		// create select criteria query for subselect
-		SelectWhere selectBuilder = StatementBuilder.select(sqlContext.getIdColumn()).from(table);
+		SelectWhere selectBuilder = StatementBuilder.select(idColumns).from(table);
 		Select select = condition == null ? selectBuilder.build() : selectBuilder.where(condition).build();
 
 		// create delete relation queries
 		List<Delete> deleteChain = new ArrayList<>();
-		deleteRelations(deleteChain, entity, select);
+		deleteRelations(entity, select, deleteChain::add);
 
 		// crate delete query
 		DeleteWhere deleteBuilder = StatementBuilder.delete(table);
@@ -125,34 +128,39 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 		return queries;
 	}
 
-	private void deleteRelations(List<Delete> deleteChain, RelationalPersistentEntity<?> entity, Select parentSelect) {
+	private void deleteRelations(RelationalPersistentEntity<?> entity, Select parentSelect,
+			Consumer<Delete> deleteConsumer) {
 
 		for (PersistentPropertyPath<RelationalPersistentProperty> path : context
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+				.findPersistentPropertyPaths(entity.getType(), Predicates.isTrue())) {
 
 			AggregatePath aggregatePath = context.getAggregatePath(path);
 
-			// prevent duplication on recursive call
-			if (path.getLength() > 1 && !aggregatePath.getParentPath().isEmbedded()) {
+			if (aggregatePath.isEmbedded() || !aggregatePath.isEntity()) {
 				continue;
 			}
 
-			if (aggregatePath.isEntity() && !aggregatePath.isEmbedded()) {
+			SqlContext sqlContext = new SqlContext();
 
-				SqlContext sqlContext = new SqlContext(aggregatePath.getLeafEntity());
+			// MariaDB prior to 11.6 does not support aliases for delete statements
+			Table table = sqlContext.getUnaliasedTable(aggregatePath);
 
-				Condition inCondition = Conditions
-						.in(sqlContext.getTable().column(aggregatePath.getTableInfo().reverseColumnInfo().name()), parentSelect);
+			List<Column> reverseColumns = aggregatePath.getTableInfo().backReferenceColumnInfos().toColumnList(table);
+			Expression expression = Expressions.of(reverseColumns);
 
-				Select select = StatementBuilder.select( //
-						sqlContext.getTable().column(aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnName()) //
-				).from(sqlContext.getTable()) //
-						.where(inCondition) //
-						.build();
-				deleteRelations(deleteChain, aggregatePath.getLeafEntity(), select);
+			Condition inCondition = Conditions.in(expression, parentSelect);
 
-				deleteChain.add(StatementBuilder.delete(sqlContext.getTable()).where(inCondition).build());
-			}
+			List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
+					.toColumnList(table);
+
+			Select select = StatementBuilder.select( //
+					parentIdColumns //
+			).from(table) //
+					.where(inCondition) //
+					.build();
+			deleteRelations(aggregatePath.getLeafEntity(), select, deleteConsumer);
+
+			deleteConsumer.accept(StatementBuilder.delete(table).where(inCondition).build());
 		}
 	}
 }

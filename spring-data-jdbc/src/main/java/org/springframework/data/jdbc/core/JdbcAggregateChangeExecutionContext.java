@@ -15,8 +15,18 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
@@ -175,8 +185,9 @@ class JdbcAggregateChangeExecutionContext {
 
 		Object id = getParentId(action);
 
+		AggregatePath aggregatePath = context.getAggregatePath(action.getPropertyPath());
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, context.getAggregatePath(action.getPropertyPath()), id);
+				.forBackReferences(converter, aggregatePath, getIdMapper(id, aggregatePath, converter));
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
 				.entrySet()) {
@@ -184,6 +195,20 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		return identifier.build();
+	}
+
+	static Function<AggregatePath, Object> getIdMapper(Object idValue, AggregatePath path, JdbcConverter converter) {
+
+		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
+		RelationalPersistentEntity<?> entity = converter.getMappingContext()
+				.getPersistentEntity(idProperty);
+
+		if (entity == null) {
+			return aggregatePath -> idValue;
+		}
+
+		PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+		return aggregatePath -> propertyPathAccessor.getProperty(aggregatePath.getSubPathBasedOn(idProperty.getActualType()).getRequiredPersistentPropertyPath());
 	}
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
@@ -267,12 +292,10 @@ class JdbcAggregateChangeExecutionContext {
 
 				if (newEntity != action.getEntity()) {
 
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				} else if (insert.getPropertyPath().getLeafProperty().isCollectionLike()) {
 
-					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifierValue, newEntity);
+					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
 				}
 			}
 		}
@@ -359,8 +382,8 @@ class JdbcAggregateChangeExecutionContext {
 	 */
 	private static class StagedValues {
 
-		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
-				ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
+		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE,
+				MapAggregator.INSTANCE, ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
 
 		Map<DbAction, Map<PersistentPropertyPath, StagedValue>> values = new HashMap<>();
 

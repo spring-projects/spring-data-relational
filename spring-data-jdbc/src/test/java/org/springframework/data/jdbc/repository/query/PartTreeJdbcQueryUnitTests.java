@@ -40,6 +40,7 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.Nullable;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -66,8 +67,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
-	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
-	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USERS\" = \"users\".\"ID\"";
+	private static final String ALL_FIELDS = "\"users\".\"AGE\" AS \"AGE\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"users\".\"ID\" AS \"ID\", \"users\".\"SUB_ID\" AS \"SUB_ID\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
+	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USERS_ID\" = \"users\".\"ID\" AND \"hated\".\"USERS_SUB_ID\" = \"users\".\"SUB_ID\"";
 	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
 
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
@@ -779,7 +780,8 @@ public class PartTreeJdbcQueryUnitTests {
 	@Table("users")
 	static class User {
 
-		@Id Long id;
+		@Id
+		@Nullable UserId id;
 		String firstName;
 		String lastName;
 		Date dateOfBirth;
@@ -787,12 +789,15 @@ public class PartTreeJdbcQueryUnitTests {
 		Boolean active;
 
 		@Embedded(prefix = "user_", onEmpty = Embedded.OnEmpty.USE_NULL) Address address;
-		@Embedded.Nullable AnotherEmbedded anotherEmbedded;
+		@Nullable AnotherEmbedded anotherEmbedded;
 
 		List<Hobby> hobbies;
 		Hobby hated;
 
 		AggregateReference<Hobby, String> hobbyReference;
+	}
+
+	record UserId(Long id, String subId) {
 	}
 
 	record Address(String street, String city) {

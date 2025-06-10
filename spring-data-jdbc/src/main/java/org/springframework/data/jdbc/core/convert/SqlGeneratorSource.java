@@ -56,7 +56,7 @@ public class SqlGeneratorSource {
 		return dialect;
 	}
 
-	SqlGenerator getSqlGenerator(Class<?> domainType) {
+	public SqlGenerator getSqlGenerator(Class<?> domainType) {
 
 		return CACHE.computeIfAbsent(domainType,
 				t -> new SqlGenerator(context, converter, context.getRequiredPersistentEntity(t), dialect));

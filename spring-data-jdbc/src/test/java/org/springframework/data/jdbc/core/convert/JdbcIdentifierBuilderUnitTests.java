@@ -21,109 +21,193 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
  * Unit tests for the {@link JdbcIdentifierBuilder}.
  *
  * @author Jens Schauder
  */
-public class JdbcIdentifierBuilderUnitTests {
+class JdbcIdentifierBuilderUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 
-	@Test // DATAJDBC-326
-	public void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
+	@Nested
+	class WithSimpleId {
+		@Test // DATAJDBC-326
+		void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
-		Identifier identifier = JdbcIdentifierBuilder.forBackReferences(converter, getPath("child"), "eins").build();
+			Identifier identifier = JdbcIdentifierBuilder
+					.forBackReferences(converter, getPath("child"), getValueProvider("eins", getPath("child"), converter))
+					.build();
 
-		assertThat(identifier.getParts()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactly( //
-						tuple(quoted("DUMMY_ENTITY"), "eins", UUID.class) //
-				);
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactly( //
+							tuple(quoted("DUMMY_ENTITY"), "eins", UUID.class) //
+					);
+		}
+
+		@Test // DATAJDBC-326
+		void qualifiersForMaps() {
+
+			AggregatePath path = getPath("children");
+
+			Identifier identifier = JdbcIdentifierBuilder //
+					.forBackReferences(converter, path, getValueProvider("parent-eins", path, converter)) //
+					.withQualifier(path, "map-key-eins") //
+					.build();
+
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactlyInAnyOrder( //
+							tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
+							tuple(quoted("DUMMY_ENTITY_KEY"), "map-key-eins", String.class) //
+					);
+		}
+
+		@Test // DATAJDBC-326
+		void qualifiersForLists() {
+
+			AggregatePath path = getPath("moreChildren");
+
+			Identifier identifier = JdbcIdentifierBuilder //
+					.forBackReferences(converter, path, getValueProvider("parent-eins", path, converter)) //
+					.withQualifier(path, "list-index-eins") //
+					.build();
+
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactlyInAnyOrder( //
+							tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
+							tuple(quoted("DUMMY_ENTITY_KEY"), "list-index-eins", Integer.class) //
+					);
+		}
+
+		@Test // DATAJDBC-326
+		void backreferenceAcrossEmbeddable() {
+
+			Identifier identifier = JdbcIdentifierBuilder //
+					.forBackReferences(converter, getPath("embeddable.child"),
+							getValueProvider("parent-eins", getPath("embeddable.child"), converter)) //
+					.build();
+
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactly( //
+							tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
+					);
+		}
+
+		@Test // DATAJDBC-326
+		void backreferenceAcrossNoId() {
+
+			Identifier identifier = JdbcIdentifierBuilder //
+					.forBackReferences(converter, getPath("noId.child"),
+							getValueProvider("parent-eins", getPath("noId.child"), converter)) //
+					.build();
+
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactly( //
+							tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
+					);
+		}
+
+		private AggregatePath getPath(String dotPath) {
+			return JdbcIdentifierBuilderUnitTests.this.getPath(dotPath, DummyEntity.class);
+		}
 	}
 
-	@Test // DATAJDBC-326
-	public void qualifiersForMaps() {
+	/**
+	 * copied from JdbcAggregateChangeExecutionContext
+	 */
+	static Function<AggregatePath, Object> getValueProvider(Object idValue, AggregatePath path, JdbcConverter converter) {
 
-		AggregatePath path = getPath("children");
+		RelationalPersistentEntity<?> entity = converter.getMappingContext()
+				.getPersistentEntity(path.getIdDefiningParentPath().getRequiredIdProperty().getType());
 
-		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, path, "parent-eins") //
-				.withQualifier(path, "map-key-eins") //
-				.build();
+		Function<AggregatePath, Object> valueProvider = ap -> {
+			if (entity == null) {
+				return idValue;
+			} else {
 
-		assertThat(identifier.getParts()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactlyInAnyOrder( //
-						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
-						tuple(quoted("DUMMY_ENTITY_KEY"), "map-key-eins", String.class) //
-				);
+				ap = ap.getTail();
+				PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
+				return propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
+			}
+		};
+		return valueProvider;
 	}
 
-	@Test // DATAJDBC-326
-	public void qualifiersForLists() {
+	@Nested
+	class WithCompositeId {
 
-		AggregatePath path = getPath("moreChildren");
+		CompositeId exampleId = new CompositeId("parent-eins", 23);
 
-		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, path, "parent-eins") //
-				.withQualifier(path, "list-index-eins") //
-				.build();
+		@Test // GH-574
+		void forBackReferences() {
 
-		assertThat(identifier.getParts()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactlyInAnyOrder( //
-						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
-						tuple(quoted("DUMMY_ENTITY_KEY"), "list-index-eins", Integer.class) //
-				);
+			AggregatePath path = getPath("children");
+
+			Identifier identifier = JdbcIdentifierBuilder //
+					.forBackReferences(converter, path, getValueProvider(exampleId, path, converter)) //
+					.build();
+
+			assertThat(identifier.getParts()) //
+					.extracting("name", "value", "targetType") //
+					.containsExactlyInAnyOrder( //
+							tuple(quoted("DUMMY_ENTITY_WITH_COMPOSITE_ID_ONE"), exampleId.one, String.class), //
+							tuple(quoted("DUMMY_ENTITY_WITH_COMPOSITE_ID_TWO"), exampleId.two, Integer.class) //
+					);
+		}
+
+		private AggregatePath getPath(String dotPath) {
+			return JdbcIdentifierBuilderUnitTests.this.getPath(dotPath, DummyEntityWithCompositeId.class);
+		}
 	}
 
-	@Test // DATAJDBC-326
-	public void backreferenceAcrossEmbeddable() {
-
-		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, getPath("embeddable.child"), "parent-eins") //
-				.build();
-
-		assertThat(identifier.getParts()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactly( //
-						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
-				);
-	}
-
-	@Test // DATAJDBC-326
-	public void backreferenceAcrossNoId() {
-
-		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(converter, getPath("noId.child"), "parent-eins") //
-				.build();
-
-		assertThat(identifier.getParts()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactly( //
-						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
-				);
-	}
-
-	private AggregatePath getPath(String dotPath) {
-		return context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(dotPath, DummyEntity.class, context));
+	private AggregatePath getPath(String dotPath, Class<?> entityType) {
+		return context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(dotPath, entityType, context));
 	}
 
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
 		@Id UUID id;
+		String one;
+		Long two;
+		Child child;
+
+		Map<String, Child> children;
+
+		List<Child> moreChildren;
+
+		Embeddable embeddable;
+
+		NoId noId;
+	}
+
+	record CompositeId(String one, Integer two) {
+	}
+
+	static class DummyEntityWithCompositeId {
+
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL)
+		@Id CompositeId id;
 		String one;
 		Long two;
 		Child child;

@@ -77,8 +77,12 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 
 			if (hasSeenCondition) {
 
-				joinClause.append(" ON ");
-				joinClause.append(conditionVisitor.getRenderedPart());
+				CharSequence renderedPart = conditionVisitor.getRenderedPart();
+
+				if (!renderedPart.isEmpty()) {
+					joinClause.append(" ON ");
+					joinClause.append(renderedPart);
+				}
 
 				hasSeenCondition = false;
 			}

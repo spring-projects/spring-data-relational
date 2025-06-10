@@ -27,6 +27,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -61,7 +62,7 @@ class WritingContext<T> {
 		this.aggregateChange = aggregateChange;
 		this.rootIdValueSource = IdValueSource.forInstance(root,
 				context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
-		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded()) //
+		this.paths = context.findPersistentPropertyPaths(entityType, RelationalPredicates::isRelation) //
 				.filter(ppp -> context.getAggregatePath(ppp).isWritable()).toList();
 	}
 

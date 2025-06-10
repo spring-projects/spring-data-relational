@@ -29,6 +29,14 @@ abstract class BindParameterNameSanitizer {
 	private static final Pattern parameterPattern = Pattern.compile("\\W");
 
 	static String sanitize(String rawName) {
-		return parameterPattern.matcher(rawName).replaceAll("");
+
+		for (int i = 0; i < rawName.length(); i++) {
+			char c = rawName.charAt(i);
+			if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_') {
+				return parameterPattern.matcher(rawName).replaceAll("");
+			}
+		}
+
+		return rawName;
 	}
 }

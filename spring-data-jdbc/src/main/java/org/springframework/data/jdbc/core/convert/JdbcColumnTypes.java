@@ -24,21 +24,28 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ConcurrentLruCache;
 
 /**
  * Utility that determines the necessary type conversions between Java types used in the domain model and types
  * compatible with JDBC drivers.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 2.0
  */
 public enum JdbcColumnTypes {
 
 	INSTANCE {
 
+		private final ConcurrentLruCache<Class<?>, Class<?>> cache = new ConcurrentLruCache<>(64, this::doResolve);
+
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Class<?> resolvePrimitiveType(Class<?> type) {
+			return cache.get(type);
+		}
 
+		private Class<?> doResolve(Class<?> type) {
 			return javaToDbType.entrySet().stream() //
 					.filter(e -> e.getKey().isAssignableFrom(type)) //
 					.map(e -> (Class<?>) e.getValue()) //

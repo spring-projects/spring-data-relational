@@ -24,6 +24,7 @@ import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -124,7 +125,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 	private void forAllTableRepresentingPaths(Class<?> entityType,
 			Consumer<PersistentPropertyPath<RelationalPersistentProperty>> pathConsumer) {
 
-		context.findPersistentPropertyPaths(entityType, property -> property.isEntity() && !property.isEmbedded()) //
+		context.findPersistentPropertyPaths(entityType, RelationalPredicates.isRelation()) //
 				.filter(path -> context.getAggregatePath(path).isWritable()) //
 				.forEach(pathConsumer);
 	}
