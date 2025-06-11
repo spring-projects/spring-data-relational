@@ -29,11 +29,9 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -54,7 +52,6 @@ import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
-import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -1375,20 +1372,20 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(enumMapOwners).containsExactly(enumMapOwner);
 	}
 
-	@Test //GH-2064
+	@Test // GH-2064
 	void saveAllBeforeConvertCallback() {
-		var first = new BeforeConvertCallbackForSaveBatch("first");
-		var second = new BeforeConvertCallbackForSaveBatch("second");
-		var third = new BeforeConvertCallbackForSaveBatch("third");
+
+		BeforeConvertCallbackForSaveBatch first = new BeforeConvertCallbackForSaveBatch("first");
+		BeforeConvertCallbackForSaveBatch second = new BeforeConvertCallbackForSaveBatch("second");
+		BeforeConvertCallbackForSaveBatch third = new BeforeConvertCallbackForSaveBatch("third");
 
 		template.saveAll(List.of(first, second, third));
 
-		var allEntriesInTable = template.findAll(BeforeConvertCallbackForSaveBatch.class);
+		List<BeforeConvertCallbackForSaveBatch> allEntriesInTable = template
+				.findAll(BeforeConvertCallbackForSaveBatch.class);
 
-		Assertions.assertThat(allEntriesInTable)
-				.hasSize(3)
-				.extracting(BeforeConvertCallbackForSaveBatch::getName)
-				.containsOnly("first", "second", "third");
+		assertThat(allEntriesInTable).hasSize(3).extracting(BeforeConvertCallbackForSaveBatch::getName)
+				.containsExactlyInAnyOrder("first", "second", "third");
 	}
 
 	@Test // GH-1684
@@ -2218,9 +2215,8 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			return id;
 		}
 
-		public BeforeConvertCallbackForSaveBatch setId(String id) {
+		public void setId(String id) {
 			this.id = id;
-			return this;
 		}
 
 		public String getName() {
@@ -2258,12 +2254,14 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	@Table
 	static class WithInsertOnly {
+
 		@Id Long id;
 		@InsertOnlyProperty String insertOnly;
 	}
 
 	@Table
 	static class MultipleCollections {
+
 		@Id Long id;
 		String name;
 		List<ListElement> listElements = new ArrayList<>();
