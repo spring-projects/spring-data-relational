@@ -42,6 +42,7 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	DerivedSqlIdentifier(String name, boolean quoted) {
 
 		Assert.hasText(name, "A database object must have at least on name part.");
+
 		this.name = name;
 		this.quoted = quoted;
 		this.toString = quoted ? toSql(IdentifierProcessing.ANSI) : this.name;

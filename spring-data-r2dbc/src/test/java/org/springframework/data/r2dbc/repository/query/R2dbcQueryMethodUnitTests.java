@@ -67,7 +67,7 @@ class R2dbcQueryMethodUnitTests {
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Contact.class);
-		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.unquoted("contact"));
+		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.quoted("CONTACT"));
 	}
 
 	@Test // gh-235
@@ -93,7 +93,7 @@ class R2dbcQueryMethodUnitTests {
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Address.class);
-		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.unquoted("contact"));
+		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.quoted("CONTACT"));
 	}
 
 	@Test

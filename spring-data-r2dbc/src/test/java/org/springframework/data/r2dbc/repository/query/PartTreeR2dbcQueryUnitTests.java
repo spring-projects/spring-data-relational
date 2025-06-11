@@ -77,9 +77,9 @@ import org.springframework.r2dbc.core.binding.BindTarget;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PartTreeR2dbcQueryUnitTests {
 
-	private static final String TABLE = "users";
-	private static final String[] ALL_FIELDS_ARRAY = new String[] { ".id", ".first_name", ".last_name", ".date_of_birth",
-			".age", ".active" };
+	private static final String TABLE = "\"users\"";
+	private static final String[] ALL_FIELDS_ARRAY = new String[] { ".\"id\"", ".\"first_name\"", ".\"last_name\"", ".\"date_of_birth\"",
+			".\"age\"", ".\"active\"" };
 	private static final String[] ALL_FIELDS_ARRAY_PREFIXED = Arrays.stream(ALL_FIELDS_ARRAY).map(f -> TABLE + f)
 			.toArray(String[]::new);
 	private static final String ALL_FIELDS = String.join(", ", ALL_FIELDS_ARRAY_PREFIXED);
@@ -121,7 +121,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1");
+				.where(TABLE + ".\"first_name\" = $1");
 	}
 
 	@Test // GH-282
@@ -134,7 +134,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name IS NULL");
+				.where(TABLE + ".\"first_name\" IS NULL");
 	}
 
 	@Test // GH-282
@@ -145,9 +145,9 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
 
 		PreparedOperationAssert.assertThat(query) //
-				.selects(TABLE + ".id") //
+				.selects(TABLE + ".\"id\"") //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1 LIMIT 1");
+				.where(TABLE + ".\"first_name\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-282
@@ -161,7 +161,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".last_name = $1 AND (" + TABLE + ".first_name = $2)");
+				.where(TABLE + ".\"last_name\" = $1 AND (" + TABLE + ".\"first_name\" = $2)");
 	}
 
 	@Test // GH-282
@@ -175,7 +175,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".last_name = $1 OR (" + TABLE + ".first_name = $2)");
+				.where(TABLE + ".\"last_name\" = $1 OR (" + TABLE + ".\"first_name\" = $2)");
 	}
 
 	@Test // GH-282, GH-349
@@ -191,7 +191,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".date_of_birth BETWEEN $1 AND $2");
+				.where(TABLE + ".\"date_of_birth\" BETWEEN $1 AND $2");
 
 		BindTarget bindTarget = mock(BindTarget.class);
 		preparedOperation.bindTo(bindTarget);
@@ -211,7 +211,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age < $1");
+				.where(TABLE + ".\"age\" < $1");
 	}
 
 	@Test // GH-282
@@ -225,7 +225,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age <= $1");
+				.where(TABLE + ".\"age\" <= $1");
 	}
 
 	@Test // GH-282
@@ -239,7 +239,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age > $1");
+				.where(TABLE + ".\"age\" > $1");
 	}
 
 	@Test // GH-282
@@ -253,7 +253,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age >= $1");
+				.where(TABLE + ".\"age\" >= $1");
 	}
 
 	@Test // GH-282
@@ -267,7 +267,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".date_of_birth > $1");
+				.where(TABLE + ".\"date_of_birth\" > $1");
 	}
 
 	@Test // GH-282
@@ -280,7 +280,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".date_of_birth < $1");
+				.where(TABLE + ".\"date_of_birth\" < $1");
 	}
 
 	@Test // GH-282
@@ -294,7 +294,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age IS NULL");
+				.where(TABLE + ".\"age\" IS NULL");
 	}
 
 	@Test // GH-282
@@ -308,7 +308,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age IS NOT NULL");
+				.where(TABLE + ".\"age\" IS NOT NULL");
 	}
 
 	@Test // GH-282
@@ -322,7 +322,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name LIKE $1");
+				.where(TABLE + ".\"first_name\" LIKE $1");
 	}
 
 	@Test // GH-282
@@ -336,7 +336,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name NOT LIKE $1");
+				.where(TABLE + ".\"first_name\" NOT LIKE $1");
 	}
 
 	@Test // GH-282
@@ -350,7 +350,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name LIKE $1");
+				.where(TABLE + ".\"first_name\" LIKE $1");
 	}
 
 	@Test // GH-282
@@ -377,7 +377,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name LIKE $1");
+				.where(TABLE + ".\"first_name\" LIKE $1");
 	}
 
 	@Test // GH-282
@@ -404,7 +404,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name LIKE $1");
+				.where(TABLE + ".\"first_name\" LIKE $1");
 	}
 
 	@Test // GH-282
@@ -431,7 +431,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name NOT LIKE $1");
+				.where(TABLE + ".\"first_name\" NOT LIKE $1");
 	}
 
 	@Test // GH-282
@@ -457,8 +457,8 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age = $1") //
-				.orderBy("users.last_name DESC");
+				.where(TABLE + ".\"age\" = $1") //
+				.orderBy("\"users\".\"last_name\" DESC");
 	}
 
 	@Test // GH-282
@@ -472,8 +472,8 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age = $1") //
-				.orderBy("users.last_name ASC");
+				.where(TABLE + ".\"age\" = $1") //
+				.orderBy("\"users\".\"last_name\" ASC");
 	}
 
 	@Test // GH-282
@@ -487,7 +487,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".last_name != $1");
+				.where(TABLE + ".\"last_name\" != $1");
 	}
 
 	@Test // GH-282
@@ -502,7 +502,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age IN ($1)");
+				.where(TABLE + ".\"age\" IN ($1)");
 	}
 
 	@Test // GH-282
@@ -517,7 +517,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".age NOT IN ($1)");
+				.where(TABLE + ".\"age\" NOT IN ($1)");
 	}
 
 	@Test // GH-282, GH-698
@@ -531,7 +531,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".active = $1");
+				.where(TABLE + ".\"active\" = $1");
 	}
 
 	@Test // GH-282, GH-698
@@ -545,7 +545,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".active = $1");
+				.where(TABLE + ".\"active\" = $1");
 	}
 
 	@Test // GH-282
@@ -559,7 +559,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where("UPPER(" + TABLE + ".first_name) = UPPER($1)");
+				.where("UPPER(" + TABLE + ".\"first_name\") = UPPER($1)");
 	}
 
 	@Test // GH-282
@@ -608,7 +608,7 @@ class PartTreeR2dbcQueryUnitTests {
 
 		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, "foo", Sort.by("foobar"));
 		PreparedOperationAssert.assertThat(preparedOperation) //
-				.orderBy("users.foobar ASC");
+				.orderBy("\"users\".foobar ASC");
 
 		preparedOperation = createQuery(queryMethod, r2dbcQuery, "foo", SqlSort.unsafe(Direction.ASC, "sum(foobar)"));
 		PreparedOperationAssert.assertThat(preparedOperation) //
@@ -636,7 +636,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1 LIMIT 3");
+				.where(TABLE + ".\"first_name\" = $1 LIMIT 3");
 	}
 
 	@Test // GH-282
@@ -650,7 +650,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.selects(ALL_FIELDS_ARRAY_PREFIXED) //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1 LIMIT 1");
+				.where(TABLE + ".\"first_name\" = $1 LIMIT 1");
 	}
 
 	@Test // GH-341
@@ -664,7 +664,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(preparedOperation) //
 				.deletes() //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1");
+				.where(TABLE + ".\"first_name\" = $1");
 	}
 
 	@Test // GH-344
@@ -675,7 +675,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, "John");
 
 		PreparedOperationAssert.assertThat(preparedOperation) //
-				.selectsDistinct(TABLE + ".first_name", TABLE + ".foo") //
+				.selectsDistinct(TABLE + ".\"first_name\"", TABLE + ".foo") //
 				.from(TABLE);
 
 	}
@@ -688,7 +688,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery);
 
 		PreparedOperationAssert.assertThat(preparedOperation) //
-				.selects("users.id", "users.first_name", "users.last_name", "users.date_of_birth", "users.age", "users.active") //
+				.selects("\"users\".\"id\"", "\"users\".\"first_name\"", "\"users\".\"last_name\"", "\"users\".\"date_of_birth\"", "\"users\".\"age\"", "\"users\".\"active\"") //
 				.from(TABLE);
 	}
 
@@ -701,7 +701,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, 42);
 
 		PreparedOperationAssert.assertThat(preparedOperation) //
-				.selects("users.id", "users.first_name", "users.last_name", "users.date_of_birth", "users.age", "users.active") //
+				.selects("\"users\".\"id\"", "\"users\".\"first_name\"", "\"users\".\"last_name\"", "\"users\".\"date_of_birth\"", "\"users\".\"age\"", "\"users\".\"active\"") //
 				.from(TABLE);
 	}
 
@@ -713,9 +713,9 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
 
 		PreparedOperationAssert.assertThat(query) //
-				.selects("COUNT(users.id)") //
+				.selects("COUNT(\"users\".\"id\")") //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1");
+				.where(TABLE + ".\"first_name\" = $1");
 	}
 
 	@Test // GH-1041
@@ -730,9 +730,9 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, firstname, lastname);
 
 		PreparedOperationAssert.assertThat(query) //
-				.selects("users.id", "users.first_name", "users.last_name", "users.date_of_birth", "users.age", "users.active") //
+				.selects("\"users\".\"id\"", "\"users\".\"first_name\"", "\"users\".\"last_name\"", "\"users\".\"date_of_birth\"", "\"users\".\"age\"", "\"users\".\"active\"") //
 				.from(TABLE) //
-				.where("users.first_name = $1 AND (users.last_name = $2) FOR UPDATE OF users");
+				.where("\"users\".\"first_name\" = $1 AND (\"users\".\"last_name\" = $2) FOR UPDATE OF \"users\"");
 	}
 
 	@Test // GH-1041
@@ -747,9 +747,9 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, firstname, age);
 
 		PreparedOperationAssert.assertThat(query) //
-				.selects("users.id", "users.first_name", "users.last_name", "users.date_of_birth", "users.age", "users.active") //
+				.selects("\"users\".\"id\"", "\"users\".\"first_name\"", "\"users\".\"last_name\"", "\"users\".\"date_of_birth\"", "\"users\".\"age\"", "\"users\".\"active\"") //
 				.from(TABLE) //
-				.where("users.first_name = $1 AND (users.age = $2) FOR SHARE OF users");
+				.where("\"users\".\"first_name\" = $1 AND (\"users\".\"age\" = $2) FOR SHARE OF \"users\"");
 	}
 
 	@Test // GH-1285
@@ -776,7 +776,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(query) //
 				.selects("COUNT(1)") //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1");
+				.where(TABLE + ".\"first_name\" = $1");
 	}
 
 	@Test // GH-1310
@@ -789,7 +789,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperationAssert.assertThat(query) //
 				.selects("1") //
 				.from(TABLE) //
-				.where(TABLE + ".first_name = $1 LIMIT 1");
+				.where(TABLE + ".\"first_name\" = $1 LIMIT 1");
 	}
 
 	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,

@@ -32,7 +32,7 @@ public class R2dbcMappingContext extends RelationalMappingContext {
 	 * Create a new {@link R2dbcMappingContext}.
 	 */
 	public R2dbcMappingContext() {
-		setForceQuote(false);
+		setForceQuote(true);
 	}
 
 	/**
@@ -41,8 +41,10 @@ public class R2dbcMappingContext extends RelationalMappingContext {
 	 * @param namingStrategy must not be {@literal null}.
 	 */
 	public R2dbcMappingContext(NamingStrategy namingStrategy) {
+
 		super(namingStrategy);
-		setForceQuote(false);
+
+		setForceQuote(true);
 	}
 
 	@Override

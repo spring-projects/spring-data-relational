@@ -606,7 +606,7 @@ class SelectRendererUnitTests {
 
 		String rendered = SqlRenderer.create(new RenderContextFactory(PostgresDialect.INSTANCE).createRenderContext())
 				.render(select);
-		assertThat(rendered).isEqualTo("SELECT User.name FROM User LIMIT 3 OFFSET 6 FOR UPDATE OF User");
+		assertThat(rendered).isEqualTo("SELECT user.name FROM user LIMIT 3 OFFSET 6 FOR UPDATE OF user");
 	}
 
 	@Test // GH-1007
