@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -36,10 +37,10 @@ import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -539,27 +540,26 @@ class SqlGenerator {
 		Set<Expression> columns = new LinkedHashSet<>();
 		Set<Join> joins = new LinkedHashSet<>();
 
-		if (!CollectionUtils.isEmpty(query.getColumns())) {
-			for (SqlIdentifier columnName : query.getColumns()) {
+		for (SqlIdentifier columnName : query.getColumns()) {
 
-				String columnNameString = columnName.getReference();
-				RelationalPersistentProperty property = entity.getPersistentProperty(columnNameString);
-				if (property != null) {
+			try {
+				AggregatePath aggregatePath = mappingContext.getAggregatePath(
+						mappingContext.getPersistentPropertyPath(columnName.getReference(), entity.getTypeInformation()));
 
-					AggregatePath aggregatePath = mappingContext.getAggregatePath(
-							mappingContext.getPersistentPropertyPath(columnNameString, entity.getTypeInformation()));
-					gatherColumn(aggregatePath, joins, columns);
-				} else {
-					columns.add(Column.create(columnName, table));
-				}
+				includeColumnAndJoin(aggregatePath, joins, columns);
+			} catch (InvalidPersistentPropertyPath e) {
+				columns.add(Column.create(columnName, table));
 			}
-		} else {
+		}
+
+		if (columns.isEmpty()) {
+
 			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
-					.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+					.findPersistentPropertyPaths(entity.getType(), Predicates.isTrue())) {
 
 				AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
 
-				gatherColumn(aggregatePath, joins, columns);
+				includeColumnAndJoin(aggregatePath, joins, columns);
 			}
 		}
 
@@ -570,7 +570,8 @@ class SqlGenerator {
 		return new Projection(columns, joins);
 	}
 
-	private void gatherColumn(AggregatePath aggregatePath, Set<Join> joins, Set<Expression> columns) {
+	private void includeColumnAndJoin(AggregatePath aggregatePath, Collection<Join> joins,
+			Collection<Expression> columns) {
 
 		joins.addAll(getJoins(aggregatePath));
 
@@ -639,10 +640,7 @@ class SqlGenerator {
 			// Simple entities without id include there backreference as a synthetic id in order to distinguish null entities
 			// from entities with only null values.
 
-			if (path.isQualified() //
-					|| path.isCollectionLike() //
-					|| path.hasIdProperty() //
-			) {
+			if (path.isQualified() || path.isCollectionLike() || path.hasIdProperty()) {
 				return null;
 			}
 
