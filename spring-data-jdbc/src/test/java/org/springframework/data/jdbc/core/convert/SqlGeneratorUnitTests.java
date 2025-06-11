@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -399,7 +400,7 @@ class SqlGeneratorUnitTests {
 
 		assertThat(sql).contains( //
 				"SELECT", //
-				"ref.id1 AS id1, ref.content AS x_content", //
+				"ref.x_content AS ref_x_content", //
 				"FROM dummy_entity", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
 	}
