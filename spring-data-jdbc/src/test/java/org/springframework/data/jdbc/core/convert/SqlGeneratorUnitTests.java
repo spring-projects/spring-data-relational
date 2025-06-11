@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -376,6 +377,32 @@ class SqlGeneratorUnitTests {
 				"SELECT dummy_entity.id1 AS id1, dummy_entity.alpha, dummy_entity.beta, dummy_entity.gamma", //
 				"FROM dummy_entity" //
 		);
+	}
+
+	@Test // GH-1803
+	void selectingSetContentSelectsAllColumns() {
+
+		Query query = Query.empty().columns("elements.content");
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name"//
+		);
+	}
+
+	@Test // GH-1803
+	void selectByQueryWithMappedColumnPathsRendersCorrectSelection() {
+
+		Query query = Query.empty().columns("ref.content");
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"SELECT", //
+				"ref.id1 AS id1, ref.content AS x_content", //
+				"FROM dummy_entity", //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
 	}
 
 	@Test // GH-1919
