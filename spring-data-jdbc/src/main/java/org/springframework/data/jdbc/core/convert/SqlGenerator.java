@@ -572,11 +572,7 @@ class SqlGenerator {
 
 	private void includeColumnAndJoin(AggregatePath aggregatePath, Set<Join> joins, Set<Expression> columns) {
 
-		// add a join if necessary
-		Join join = getJoin(aggregatePath);
-		if (join != null) {
-			joins.add(join);
-		}
+		joins.addAll(getJoins(aggregatePath));
 
 		Column column = getColumn(aggregatePath);
 		if (column != null) {
@@ -653,9 +649,24 @@ class SqlGenerator {
 		return sqlContext.getColumn(path);
 	}
 
+	List<Join> getJoins(AggregatePath path) {
+
+		List<Join> joins = new ArrayList<>();
+		while (!path.isRoot()) {
+			Join join = getJoin(path);
+			if (join != null) {
+				joins.add(join);
+			}
+
+			path = path.getParentPath();
+		}
+		return joins;
+	}
+
 	@Nullable
 	Join getJoin(AggregatePath path) {
 
+		// TODO: This doesn't handle paths with length > 1 correctly
 		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
 			return null;
 		}
