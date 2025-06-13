@@ -27,9 +27,8 @@ import java.util.function.Function;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.converter.ConverterRegistry;
+import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -80,7 +79,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * {@link #MappingJdbcConverter(RelationalMappingContext, RelationResolver, CustomConversions, JdbcTypeFactory)}
 	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
-	 * @param context          must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 */
 	public MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver) {
@@ -91,19 +90,17 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = JdbcTypeFactory.unsupported();
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
 	}
 
 	/**
 	 * Creates a new {@link MappingJdbcConverter} given {@link MappingContext}.
 	 *
-	 * @param context          must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
-	 * @param typeFactory      must not be {@literal null}
+	 * @param typeFactory must not be {@literal null}
 	 */
 	public MappingJdbcConverter(RelationalMappingContext context, RelationResolver relationResolver,
-								CustomConversions conversions, JdbcTypeFactory typeFactory) {
+			CustomConversions conversions, JdbcTypeFactory typeFactory) {
 
 		super(context, conversions);
 
@@ -112,14 +109,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
-	}
-
-	private void registerAggregateReferenceConverters() {
-
-		ConverterRegistry registry = (ConverterRegistry) getConversionService();
-		AggregateReferenceConverters.getConvertersToRegister(getConversionService()).forEach(registry::addConverter);
 	}
 
 	@Nullable
@@ -184,34 +173,78 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return componentColumnType;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
 	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
-		if (value == null) {
-			return value;
-		}
-
-		if (value instanceof Array array) {
-			try {
-				return super.readValue(array.getArray(), type);
-			} catch (SQLException | ConverterNotFoundException e) {
-				LOG.info("Failed to extract a value of type %s from an Array; Attempting to use standard conversions", e);
-			}
-		}
-
-		return super.readValue(value, type);
-	}
-
-	@Override
-	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (value == null) {
+		if (null == value) {
 			return null;
 		}
 
-		return super.writeValue(value, type);
+		TypeInformation<?> originalTargetType = targetType;
+		value = readJdbcArray(value);
+		targetType = determineNestedTargetType(targetType);
+
+		return readToAggregateReference(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
+	}
+
+	/**
+	 * Unwrap a Jdbc array, if such a value is provided
+	 */
+	private Object readJdbcArray(Object value) {
+
+		if (value instanceof Array array) {
+			try {
+				return array.getArray();
+			} catch (SQLException e) {
+				throw new FailedToAccessJdbcArrayException(e);
+			}
+		}
+
+		return value;
+	}
+
+	/**
+	 * Determine the id type of an {@link AggregateReference} that the rest of the conversion infrastructure needs to use
+	 * as a conversion target.
+	 */
+	private TypeInformation<?> determineNestedTargetType(TypeInformation<?> ultimateTargetType) {
+
+		if (AggregateReference.class.isAssignableFrom(ultimateTargetType.getType())) {
+			// the id type of a AggregateReference
+			return ultimateTargetType.getTypeArguments().get(1);
+		}
+		return ultimateTargetType;
+	}
+
+	/**
+	 * Convert value to an {@link AggregateReference} if that is specified by the parameter targetType.
+	 */
+	private Object readToAggregateReference(Object value, TypeInformation<?> targetType) {
+
+		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
+			return AggregateReference.to(value);
+		}
+		return value;
+	}
+
+	@Nullable
+	@Override
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
+
+		if (value instanceof AggregateReference<?, ?> aggregateReference) {
+			return writeValue(aggregateReference.getId(), type);
+		}
+
+		return super.getPotentiallyConvertedSimpleWrite(value, type);
 	}
 
 	private boolean canWriteAsJdbcValue(@Nullable Object value) {
@@ -285,7 +318,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 	@Override
 	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
-															   ValueExpressionEvaluator evaluator, ConversionContext context) {
+			ValueExpressionEvaluator evaluator, ConversionContext context) {
 
 		if (context instanceof ResolvingConversionContext rcc) {
 
@@ -296,6 +329,12 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		return super.newValueProvider(documentAccessor, evaluator, context);
+	}
+
+	private static class FailedToAccessJdbcArrayException extends NonTransientDataAccessException {
+		public FailedToAccessJdbcArrayException(SQLException e) {
+			super("Failed to read array", e);
+		}
 	}
 
 	/**
@@ -314,7 +353,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		private final Identifier identifier;
 
 		private ResolvingRelationalPropertyValueProvider(AggregatePathValueProvider delegate, RowDocumentAccessor accessor,
-														 ResolvingConversionContext context, Identifier identifier) {
+				ResolvingConversionContext context, Identifier identifier) {
 
 			AggregatePath path = context.aggregatePath();
 
@@ -323,7 +362,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			this.context = context;
 			this.identifier = path.isEntity()
 					? potentiallyAppendIdentifier(identifier, path.getRequiredLeafEntity(),
-					property -> delegate.getValue(path.append(property)))
+							property -> delegate.getValue(path.append(property)))
 					: identifier;
 		}
 
@@ -331,7 +370,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		 * Conditionally append the identifier if the entity has an identifier property.
 		 */
 		static Identifier potentiallyAppendIdentifier(Identifier base, RelationalPersistentEntity<?> entity,
-													  Function<RelationalPersistentProperty, Object> getter) {
+				Function<RelationalPersistentProperty, Object> getter) {
 
 			if (entity.hasIdProperty()) {
 
@@ -460,7 +499,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 			return context == this.context ? this
 					: new ResolvingRelationalPropertyValueProvider(delegate.withContext(context), accessor,
-					(ResolvingConversionContext) context, identifier);
+							(ResolvingConversionContext) context, identifier);
 		}
 	}
 
@@ -472,7 +511,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * @param identifier
 	 */
 	private record ResolvingConversionContext(ConversionContext delegate, AggregatePath aggregatePath,
-											  Identifier identifier) implements ConversionContext {
+			Identifier identifier) implements ConversionContext {
 
 		@Override
 		public <S> S convert(Object source, TypeInformation<? extends S> typeHint) {

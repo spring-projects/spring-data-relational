@@ -32,7 +32,7 @@ import org.springframework.data.util.TypeInformation;
  *
  * @author Jens Schauder
  */
-public class BasicRelationalConverterAggregateReferenceUnitTests {
+class MappingJdbcConverterAggregateReferenceUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
@@ -40,7 +40,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-221
-	public void convertsToAggregateReference() {
+	void convertsToAggregateReference() {
 
 		final RelationalPersistentProperty property = entity.getRequiredPersistentProperty("reference");
 
@@ -51,7 +51,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 	}
 
 	@Test // DATAJDBC-221
-	public void convertsFromAggregateReference() {
+	void convertsFromAggregateReference() {
 
 		final RelationalPersistentProperty property = entity.getRequiredPersistentProperty("reference");
 
