@@ -18,11 +18,17 @@ package org.springframework.data.jdbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -50,11 +56,14 @@ import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.query.JdbcParameters.JdbcParameter;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -81,6 +90,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Chirag Tailor
  * @author Christopher Klein
  * @author Marcin Grzejszczak
+ * @author Mikhail Polivakha
  */
 class StringBasedJdbcQueryUnitTests {
 
@@ -285,9 +295,25 @@ class StringBasedJdbcQueryUnitTests {
 
 		JdbcQueryMethod queryMethod = createMethod("unsupportedWithLock", Long.class);
 
-		assertThatThrownBy(
-				() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter, delegate))
-				.isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, result -> defaultRowMapper, converter,
+				delegate)).isInstanceOf(UnsupportedOperationException.class);
+	}
+
+	@Test // GH-2020
+	void testCustomSqlTypeResolution() {
+
+		JdbcQueryMethod queryMethod = createMethod("findByWithSqlTypeResolver", new TestSqlTypResolver(), Integer.class, Integer[].class);
+
+		StringBasedJdbcQuery stringBasedJdbcQuery = new StringBasedJdbcQuery(queryMethod, operations,
+				result -> defaultRowMapper, converter, delegate);
+
+		JdbcParameters parameters = stringBasedJdbcQuery.getQueryMethod().getParameters();
+
+		JdbcParameter tinyInt = parameters.getParameter(0);
+		JdbcParameter smallIntActual = parameters.getParameter(1);
+
+		assertThat(tinyInt.getSqlType()).isEqualTo(JDBCType.TINYINT);
+		assertThat(smallIntActual.getActualSqlType()).isEqualTo(JDBCType.SMALLINT);
 	}
 
 	@Test // GH-1212
@@ -447,6 +473,13 @@ class StringBasedJdbcQueryUnitTests {
 				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), this.context);
 	}
 
+	private JdbcQueryMethod createMethod(String methodName, SqlTypeResolver sqlTypeResolver, Class<?>... paramTypes) {
+
+		Method method = ReflectionUtils.findMethod(MyRepository.class, methodName, paramTypes);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(MyRepository.class),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), this.context, sqlTypeResolver);
+	}
+
 	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return createQuery(queryMethod, null, null);
 	}
@@ -512,6 +545,9 @@ class StringBasedJdbcQueryUnitTests {
 		@Query(value = "some sql statement")
 		List<Object> findByListContainer(ListContainer value);
 
+		@Query(value = "SELECT * FROM my_table WHERE t = ? AND f IN (?)")
+		List<Object> findByWithSqlTypeResolver(@MySqlType Integer tinyInt, @MyActualSqlType Integer[] smallInt);
+
 		@Query("SELECT * FROM table WHERE c = :#{myext.testValue} AND c2 = :#{myext.doSomething()}")
 		Object findBySpelExpression(Object object);
 
@@ -524,6 +560,35 @@ class StringBasedJdbcQueryUnitTests {
 		@Lock(value = LockMode.PESSIMISTIC_READ)
 		@Query("SELECT * FROM person WHERE id = :id")
 		DummyEntity unsupportedWithLock(Long id);
+	}
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MySqlType { }
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MyActualSqlType { }
+
+	static class TestSqlTypResolver implements SqlTypeResolver {
+
+		@Override
+		public SQLType resolveSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MySqlType.class)) {
+				return JDBCType.TINYINT;
+			} else {
+				return null;
+			}
+		}
+
+		@Override
+		public SQLType resolveActualSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MyActualSqlType.class)) {
+				return JDBCType.SMALLINT;
+			} else {
+				return null;
+			}
+		}
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
