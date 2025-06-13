@@ -70,4 +70,14 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 		}
 	}
 
+
+	/**
+	 * SQL Server does not support {@link java.sql.JDBCType#NULL}. Therefore it uses {@link NullTypeStrategy#NOOP}.
+	 *
+	 * @since 4.0
+	 */
+	@Override
+	public NullTypeStrategy getNullTypeStrategy() {
+		return NullTypeStrategy.NOOP;
+	}
 }

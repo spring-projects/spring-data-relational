@@ -66,4 +66,14 @@ public class JdbcDb2Dialect extends Db2Dialect implements JdbcDialect {
 			return Timestamp.from(source.toInstant());
 		}
 	}
+
+	/**
+	 * DB2 does not support {@link java.sql.JDBCType#NULL}. Therefore it uses {@link NullTypeStrategy#NOOP}.
+	 *
+	 * @since 4.0
+	 */
+	@Override
+	public NullTypeStrategy getNullTypeStrategy() {
+		return NullTypeStrategy.NOOP;
+	}
 }

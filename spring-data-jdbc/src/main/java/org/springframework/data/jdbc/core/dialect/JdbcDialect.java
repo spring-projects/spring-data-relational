@@ -37,4 +37,15 @@ public interface JdbcDialect extends Dialect {
 		return JdbcArrayColumns.Unsupported.INSTANCE;
 	}
 
+	/**
+	 * Determines how to handle the  {@link java.sql.JDBCType} of {@literal null} values.
+	 *
+	 * The default is suitable for all databases supporting {@link java.sql.JDBCType#NULL}.
+	 *
+	 * @return a strategy to handle the {@link java.sql.JDBCType} of {@literal null} values. Guaranteed not to be null.
+	 * @since 4.0
+	 */
+	default NullTypeStrategy getNullTypeStrategy() {
+		return NullTypeStrategy.DEFAULT;
+	}
 }

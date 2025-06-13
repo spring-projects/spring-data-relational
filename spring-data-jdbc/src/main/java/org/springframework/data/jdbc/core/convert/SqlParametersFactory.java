@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Chirag Tailor
  * @author Mikhail Polivakha
+ * @author Sergey Korotaev
  * @since 2.4
  */
 public class SqlParametersFactory {
@@ -187,11 +189,7 @@ public class SqlParametersFactory {
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
 			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
-		JdbcValue jdbcValue = converter.writeJdbcValue( //
-				value, //
-				javaType, //
-				sqlType //
-		);
+		JdbcValue jdbcValue = converter.writeJdbcValue(value, javaType, sqlType);
 
 		parameterSource.addValue( //
 				paramName, //
