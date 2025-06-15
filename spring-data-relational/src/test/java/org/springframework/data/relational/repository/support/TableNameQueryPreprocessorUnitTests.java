@@ -36,11 +36,11 @@ class TableNameQueryPreprocessorUnitTests {
 
 			softly.assertThat(preprocessor.transform("someString")).isEqualTo("someString");
 			softly.assertThat(preprocessor.transform("someString#{#tableName}restOfString"))
-					.isEqualTo("someString\"some_table_name\"restOfString");
+					.isEqualTo("someString\"SOME_TABLE_NAME\"restOfString");
 			softly.assertThat(preprocessor.transform("select from #{#tableName} where x = :#{#some other spel}"))
-					.isEqualTo("select from \"some_table_name\" where x = :#{#some other spel}");
+					.isEqualTo("select from \"SOME_TABLE_NAME\" where x = :#{#some other spel}");
 			softly.assertThat(preprocessor.transform("select from #{#qualifiedTableName}"))
-					.isEqualTo("select from \"qualified_table_name\"");
+					.isEqualTo("select from \"QUALIFIED_TABLE_NAME\"");
 		});
 	}
 }

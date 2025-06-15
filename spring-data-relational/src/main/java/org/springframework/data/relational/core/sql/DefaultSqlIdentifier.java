@@ -63,10 +63,11 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	public String toSql(IdentifierProcessing processing) {
 
 		// using a local copy of volatile this.sqlName to ensure thread safety.
-		CachedSqlName sqlName = this.sqlName;
+		DefaultSqlIdentifier.CachedSqlName sqlName = this.sqlName;
 		if (sqlName == null || sqlName.processing != processing) {
 
-			this.sqlName = sqlName = new CachedSqlName(processing, quoted ? processing.quote(name) : name);
+			String normalized = processing.standardizeLetterCase(name);
+			this.sqlName = sqlName = new CachedSqlName(processing, quoted ? processing.quote(normalized) : normalized);
 			return sqlName.sqlName();
 		}
 

@@ -68,7 +68,7 @@ public class PostgresDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT FOO.* FROM FOO");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo");
 	}
 
 	@Test // DATAJDBC-278

@@ -185,7 +185,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		toSave.readOnlyField = "readonly";
 		toSave.readOnlyArrayField = "readonly_array".getBytes();
 
-		assertThat(getStrategy().getOutboundRow(toSave)).containsOnlyKeys(SqlIdentifier.unquoted("writable_field"));
+		assertThat(getStrategy().getOutboundRow(toSave)).containsOnlyKeys(SqlIdentifier.quoted("writable_field"));
 	}
 
 	private <T> void testType(BiConsumer<PrimitiveTypes, T> setter, Function<PrimitiveTypes, T> getter, T testValue,
@@ -201,7 +201,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		PrimitiveTypes toSave = new PrimitiveTypes();
 		setter.accept(toSave, testValue);
 
-		assertThat(strategy.getOutboundRow(toSave)).containsEntry(SqlIdentifier.unquoted(fieldname),
+		assertThat(strategy.getOutboundRow(toSave)).containsEntry(SqlIdentifier.quoted(fieldname),
 				Parameter.from(testValue));
 
 		when(rowMock.get(fieldname)).thenReturn(testValue);
