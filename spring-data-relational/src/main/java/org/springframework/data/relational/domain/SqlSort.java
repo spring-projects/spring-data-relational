@@ -84,7 +84,7 @@ public class SqlSort extends Sort {
 
 		if (!predicate.test(property)) {
 			throw new IllegalArgumentException(
-					"order fields that are not marked as unsafe must only consist of digits, letter, '.', '_', and '\'. If you want to sort by arbitrary expressions please use RelationalSort.unsafe. Note that such expressions become part of SQL statements and therefore need to be sanatized to prevent SQL injection attacks.");
+					"order fields that are not marked as unsafe must only consist of digits, letter, '.', '_', and '\'. If you want to sort by arbitrary expressions please use RelationalSort.unsafe. Note that such expressions become part of SQL statements and therefore need to be sanitized to prevent SQL injection attacks.");
 		}
 	}
 
