@@ -55,7 +55,7 @@ import org.springframework.util.Assert;
 class JdbcAggregateChangeExecutionContext {
 
 	private static final String UPDATE_FAILED = "Failed to update entity [%s]; Id [%s] not found in database";
-	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]; The entity was updated since it was rea or it isn't in the database at all";
+	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]; The entity was updated since it was read or it isn't in the database at all";
 
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
