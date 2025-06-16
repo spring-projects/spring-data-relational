@@ -56,21 +56,21 @@ class SqlContext {
 	}
 
 	Column getColumn(AggregatePath path) {
-
-		AggregatePath.ColumnInfo columnInfo = path.getColumnInfo();
-		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
+		return getAliasedColumn(path, path.getColumnInfo());
 	}
 
 	/**
 	 * A token reverse column, used in selects to identify, if an entity is present or {@literal null}.
-	 * 
+	 *
 	 * @param path must not be null.
 	 * @return a {@literal Column} that is part of the effective primary key for the given path.
 	 * @since 4.0
 	 */
 	Column getAnyReverseColumn(AggregatePath path) {
+		return getAliasedColumn(path, path.getTableInfo().backReferenceColumnInfos().any());
+	}
 
-		AggregatePath.ColumnInfo columnInfo = path.getTableInfo().backReferenceColumnInfos().any();
+	private Column getAliasedColumn(AggregatePath path, AggregatePath.ColumnInfo columnInfo) {
 		return getTable(path).column(columnInfo.name()).as(columnInfo.alias());
 	}
 }

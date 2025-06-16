@@ -29,6 +29,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
@@ -38,11 +39,11 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
-import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.Nullable;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -67,23 +68,38 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
-	private static final String ALL_FIELDS = "\"users\".\"AGE\" AS \"AGE\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"users\".\"ID\" AS \"ID\", \"users\".\"SUB_ID\" AS \"SUB_ID\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
 	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USERS_ID\" = \"users\".\"ID\" AND \"hated\".\"USERS_SUB_ID\" = \"users\".\"SUB_ID\"";
-	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
 
-	JdbcMappingContext mappingContext = new JdbcMappingContext();
-	JdbcConverter converter = new MappingJdbcConverter(mappingContext, mock(RelationResolver.class));
-	ReturnedType returnedType = mock(ReturnedType.class);
+	private JdbcMappingContext mappingContext = new JdbcMappingContext();
+	private JdbcConverter converter = new MappingJdbcConverter(mappingContext, mock(RelationResolver.class));
+	private ReturnedType returnedType = mock(ReturnedType.class);
+
+	private org.springframework.data.relational.core.sql.Table users = org.springframework.data.relational.core.sql.Table
+			.create("users");
+
+	private org.springframework.data.relational.core.sql.Table hobby = org.springframework.data.relational.core.sql.Table
+			.create("hobby").as("hated");
+	private List<Column> columns = List.of(users.column("ID"), //
+			users.column("SUB_ID"), //
+			users.column("AGE"), //
+			users.column("ACTIVE"), //
+			users.column("USER_STREET"), //
+			users.column("USER_CITY"), //
+			users.column("LAST_NAME"), //
+			users.column("FIRST_NAME"), //
+			users.column("DATE_OF_BIRTH"), //
+			users.column("HOBBY_REFERENCE"), //
+			hobby.column("NAME").as("HATED_NAME"));
 
 	@Test // DATAJDBC-318
-	public void shouldFailForQueryByReference() throws Exception {
+	void shouldFailForQueryByReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHated", Hobby.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // GH-922
-	public void createQueryByAggregateReference() throws Exception {
+	void createQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbyReference", Hobby.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -91,13 +107,9 @@ public class PartTreeJdbcQueryUnitTests {
 		hobby.name = "twentythree";
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { hobby }), returnedType);
 
-		assertSoftly(softly -> {
-
-			softly.assertThat(query.getQuery())
-					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
-
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
-		});
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference")
+				.hasBindValue("hobby_reference", "twentythree");
 	}
 
 	@Test // GH-922
@@ -115,8 +127,7 @@ public class PartTreeJdbcQueryUnitTests {
 
 			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
 
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo(firstname);
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("last_name")).isEqualTo(lastname);
+			QueryAssert.assertThat(query).hasBindValue("first_name", firstname).hasBindValue("last_name", lastname);
 		});
 	}
 
@@ -136,27 +147,26 @@ public class PartTreeJdbcQueryUnitTests {
 			// this is also for update since h2 dialect does not distinguish between lockmodes
 			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
 
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo(firstname);
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("age")).isEqualTo(age);
+			QueryAssert.assertThat(query).hasBindValue("first_name", firstname).hasBindValue("age", age);
 		});
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldFailForQueryByList() throws Exception {
+	void shouldFailForQueryByList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbies", Object.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldFailForQueryByEmbeddedList() throws Exception {
+	void shouldFailForQueryByEmbeddedList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // GH-922
-	public void createQueryForQueryByAggregateReference() throws Exception {
+	void createQueryForQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaReferenceByHobbyReference", AggregateReference.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -165,15 +175,14 @@ public class PartTreeJdbcQueryUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(query.getQuery())
-					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
-
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
+			QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+					.contains(" WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference")
+					.hasBindValue("hobby_reference", "twentythree");
 		});
 	}
 
 	@Test // GH-922
-	public void createQueryForQueryByAggregateReferenceId() throws Exception {
+	void createQueryForQueryByAggregateReferenceId() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaIdByHobbyReference", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -182,25 +191,25 @@ public class PartTreeJdbcQueryUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(query.getQuery())
-					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
-
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("hobby_reference")).isEqualTo("twentythree");
+			QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+					.contains(" WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference")
+					.hasBindValue("hobby_reference", "twentythree");
 		});
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttribute() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }), returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
 	@Test // GH-971
-	public void createsQueryToFindAllEntitiesByProjectionAttribute() throws Exception {
+	void createsQueryToFindAllEntitiesByProjectionAttribute() throws Exception {
 
 		when(returnedType.needsCustomConstruction()).thenReturn(true);
 		when(returnedType.getInputProperties()).thenReturn(Collections.singletonList("firstName"));
@@ -214,17 +223,18 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryWithIsNullCondition() throws Exception {
+	void createsQueryWithIsNullCondition() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery((getAccessor(queryMethod, new Object[] { null })), returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" IS NULL");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" IS NULL");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryWithLimitForExistsProjection() throws Exception {
+	void createsQueryWithLimitForExistsProjection() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("existsByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -235,31 +245,31 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByTwoStringAttributes() throws Exception {
+	void createsQueryToFindAllEntitiesByTwoStringAttributes() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameAndFirstName", String.class, String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "Doe", "John" }),
 				returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"LAST_NAME\" = :last_name AND (" + TABLE
-				+ ".\"FIRST_NAME\" = :first_name)");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" = :last_name AND (" + TABLE + ".\"FIRST_NAME\" = :first_name)");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByOneOfTwoStringAttributes() throws Exception {
+	void createsQueryToFindAllEntitiesByOneOfTwoStringAttributes() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameOrFirstName", String.class, String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "Doe", "John" }),
 				returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"LAST_NAME\" = :last_name OR (" + TABLE
-				+ ".\"FIRST_NAME\" = :first_name)");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" = :last_name OR (" + TABLE + ".\"FIRST_NAME\" = :first_name)");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
+	void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBetween", Date.class, Date.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -270,251 +280,261 @@ public class PartTreeJdbcQueryUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(query.getQuery())
-					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" BETWEEN :date_of_birth AND :date_of_birth1");
-
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("date_of_birth")).isEqualTo(from);
-			softly.assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("date_of_birth1")).isEqualTo(to);
+			QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+					.contains(" WHERE " + TABLE + ".\"DATE_OF_BIRTH\" BETWEEN :date_of_birth AND :date_of_birth1")
+					.hasBindValue("date_of_birth", from).hasBindValue("date_of_birth1", to);
 		});
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeLessThan() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeLessThan() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThan", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" < :age");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns).contains(" WHERE " + TABLE + ".\"AGE\" < :age");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeLessThanEqual() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeLessThanEqual() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThanEqual", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" <= :age");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" <= :age");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThan() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThan() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThan", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" > :age");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns).contains(" WHERE " + TABLE + ".\"AGE\" > :age");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThanEqual() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThanEqual() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThanEqual", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" >= :age");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" >= :age");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByDateAttributeAfter() throws Exception {
+	void createsQueryToFindAllEntitiesByDateAttributeAfter() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthAfter", Date.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date() });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" > :date_of_birth");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"DATE_OF_BIRTH\" > :date_of_birth");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByDateAttributeBefore() throws Exception {
+	void createsQueryToFindAllEntitiesByDateAttributeBefore() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBefore", Date.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date() });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" < :date_of_birth");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"DATE_OF_BIRTH\" < :date_of_birth");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeIsNull() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeIsNull() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNull");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" IS NULL");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" IS NULL");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeIsNotNull() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeIsNotNull() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNotNull");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" IS NOT NULL");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeLike() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeLike() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameLike", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "%John%" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeNotLike() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeNotLike() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotLike", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "%John%" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeStartingWith() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeStartingWith() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Jo" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
 	}
 
 	@Test // DATAJDBC-318
-	public void appendsLikeOperatorParameterWithPercentSymbolForStartingWithQuery() throws Exception {
+	void appendsLikeOperatorParameterWithPercentSymbolForStartingWithQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Jo" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("Jo%");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "Jo%");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeEndingWith() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeEndingWith() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "hn" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%hn");
 	}
 
 	@Test // DATAJDBC-318
-	public void prependsLikeOperatorParameterWithPercentSymbolForEndingWithQuery() throws Exception {
+	void prependsLikeOperatorParameterWithPercentSymbolForEndingWithQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "hn" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%hn");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%hn");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeContaining() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeContaining() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
 	@Test // DATAJDBC-318
-	public void wrapsLikeOperatorParameterWithPercentSymbolsForContainingQuery() throws Exception {
+	void wrapsLikeOperatorParameterWithPercentSymbolsForContainingQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%oh%");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeNotContaining() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeNotContaining() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
 	@Test // DATAJDBC-318
-	public void wrapsLikeOperatorParameterWithPercentSymbolsForNotContainingQuery() throws Exception {
+	void wrapsLikeOperatorParameterWithPercentSymbolsForNotContainingQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("first_name")).isEqualTo("%oh%");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeWithDescendingOrderingByStringAttribute()
-			throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeWithDescendingOrderingByStringAttribute() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameDesc", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 123 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeWithAscendingOrderingByStringAttribute() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeWithAscendingOrderingByStringAttribute() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameAsc", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 123 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeNot() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeNot() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameNot", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Doe" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"LAST_NAME\" != :last_name");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" != :last_name");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeIn() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeIn() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIn", Collection.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -522,56 +542,60 @@ public class PartTreeJdbcQueryUnitTests {
 				new Object[] { Collections.singleton(25) });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" IN (:age)");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" IN (:age)");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByIntegerAttributeNotIn() throws Exception {
+	void createsQueryToFindAllEntitiesByIntegerAttributeNotIn() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeNotIn", Collection.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
 				new Object[] { Collections.singleton(25) });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" NOT IN (:age)");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"AGE\" NOT IN (:age)");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
+	void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = :active");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
+	void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = :active");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindAllEntitiesByStringAttributeIgnoringCase() throws Exception {
+	void createsQueryToFindAllEntitiesByStringAttributeIgnoringCase() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameIgnoreCase", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE UPPER(" + TABLE + ".\"FIRST_NAME\") = UPPER(:first_name)");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE UPPER(" + TABLE + ".\"FIRST_NAME\") = UPPER(:first_name)");
 	}
 
 	@Test // DATAJDBC-318
-	public void throwsExceptionWhenIgnoringCaseIsImpossible() throws Exception {
+	void throwsExceptionWhenIgnoringCaseIsImpossible() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByIdIgnoringCase", Long.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -581,7 +605,7 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void throwsExceptionWhenConditionKeywordIsUnsupported() throws Exception {
+	void throwsExceptionWhenConditionKeywordIsUnsupported() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByIdIsEmpty");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -591,7 +615,7 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void throwsExceptionWhenInvalidNumberOfParameterIsGiven() throws Exception {
+	void throwsExceptionWhenInvalidNumberOfParameterIsGiven() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -601,31 +625,31 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryWithLimitToFindEntitiesByStringAttribute() throws Exception {
+	void createsQueryWithLimitToFindEntitiesByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findTop3ByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		String expectedSql = BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 3";
-		assertThat(query.getQuery()).isEqualTo(expectedSql);
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 3");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
+	void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findFirstByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		String expectedSql = BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 1";
-		assertThat(query.getQuery()).isEqualTo(expectedSql);
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 1");
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryByEmbeddedObject() throws Exception {
+	void createsQueryByEmbeddedObject() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAddress", Address.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -636,7 +660,8 @@ public class PartTreeJdbcQueryUnitTests {
 		String actualSql = query.getQuery();
 
 		assertThat(actualSql) //
-				.startsWith(BASE_SELECT + " WHERE (" + TABLE + ".\"USER_") //
+				.contains(JOIN_CLAUSE) //
+				.contains(" WHERE (" + TABLE + ".\"USER_") //
 				.endsWith(")") //
 				.contains(TABLE + ".\"USER_STREET\" = :user_street", //
 						" AND ", //
@@ -646,21 +671,19 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void createsQueryByEmbeddedProperty() throws Exception {
+	void createsQueryByEmbeddedProperty() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAddressStreet", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Hello" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		String expectedSql = BASE_SELECT + " WHERE " + TABLE + ".\"USER_STREET\" = :user_street";
-
-		assertThat(query.getQuery()).isEqualTo(expectedSql);
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_street")).isEqualTo("Hello");
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"USER_STREET\" = :user_street").hasBindValue("user_street", "Hello");
 	}
 
 	@Test // DATAJDBC-534
-	public void createsQueryForCountProjection() throws Exception {
+	void createsQueryForCountProjection() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);

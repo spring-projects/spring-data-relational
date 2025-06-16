@@ -537,6 +537,22 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		}
 
 		/**
+		 * Create a {@link Map} of {@link AggregatePath} to {@link Column} using the given {@link Table} as column source.
+		 *
+		 * @param table
+		 * @return a {@link Map} of {@link AggregatePath} to {@link Column}s.
+		 * @since 4.0
+		 */
+		public Map<AggregatePath, Column> toMap(Table table) {
+
+			Map<AggregatePath, Column> columns = new TreeMap<>();
+
+			columnInfos.forEach((ag, ci) -> columns.put(ag, table.column(ci.name())));
+
+			return columns;
+		}
+
+		/**
 		 * Converts the given {@link Table} into a list of {@link Column}s. This method retrieves and caches the list of
 		 * columns for the specified table. If the columns are not already cached, it computes the list by mapping
 		 * {@code columnInfos} to their corresponding {@link Column} in the provided table and then stores the result in the
@@ -547,7 +563,6 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 *         {@literal null}.
 		 */
 		public List<Column> toColumnList(Table table) {
-
 			return columnCache.computeIfAbsent(table, t -> toColumnList((__, ci) -> t.column(ci.name)));
 		}
 
@@ -606,15 +621,6 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		}
 
 		/**
-		 * Calls the consumer for each pair of {@link AggregatePath} and {@literal ColumnInfo}.
-		 *
-		 * @param consumer the function to call.
-		 */
-		public void forEachLong(BiConsumer<AggregatePath, ColumnInfo> consumer) {
-			columnInfos.forEach(consumer);
-		}
-
-		/**
 		 * Calls the {@literal mapper} for each pair one pair of {@link AggregatePath} and {@link ColumnInfo}, if there is
 		 * any.
 		 *
@@ -664,5 +670,6 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		public int size() {
 			return columnInfos.size();
 		}
+
 	}
 }

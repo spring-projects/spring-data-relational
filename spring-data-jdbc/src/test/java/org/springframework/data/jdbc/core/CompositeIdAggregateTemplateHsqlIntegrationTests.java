@@ -237,7 +237,7 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 	@Test // GH-574
 	void projectByCompositeIdParts() {
 
-		SimpleEntityWithEmbeddedPk alpha = template.insert( //
+		template.insert( //
 				new SimpleEntityWithEmbeddedPk( //
 						new EmbeddedPk(23L, "x"), "alpha" //
 				));
@@ -246,8 +246,11 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 		SimpleEntityWithEmbeddedPk projected = template.findOne(projectingQuery, SimpleEntityWithEmbeddedPk.class)
 				.orElseThrow();
 
-		// Projection still does a full select, otherwise one would be null.
-		// See https://github.com/spring-projects/spring-data-relational/issues/1821
+		assertThat(projected).isEqualTo(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(null, "x"), "alpha"));
+
+		projectingQuery = Query.empty().columns("embeddedPk", "name");
+		projected = template.findOne(projectingQuery, SimpleEntityWithEmbeddedPk.class).orElseThrow();
+
 		assertThat(projected).isEqualTo(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "alpha"));
 	}
 
