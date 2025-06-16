@@ -21,8 +21,8 @@ import static org.springframework.data.r2dbc.testing.Assertions.*;
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
@@ -50,8 +50,11 @@ public class ReactiveDataAccessStrategyTests {
 
 		UUID value = UUID.randomUUID();
 
-		assertThat(strategy.getBindValue(Parameter.from(value))).isEqualTo(Parameter.from(value.toString()));
-		assertThat(strategy.getBindValue(Parameter.from(Condition.New))).isEqualTo(Parameter.from("New"));
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(strategy.getBindValue(Parameter.from(value))).isEqualTo(Parameter.from(value.toString()));
+			softly.assertThat(strategy.getBindValue(Parameter.from(Condition.New))).isEqualTo(Parameter.from("New"));
+		});
 	}
 
 	@Test // gh-305
