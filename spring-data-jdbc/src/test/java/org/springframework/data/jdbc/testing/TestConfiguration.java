@@ -22,9 +22,7 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,7 +34,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.*;
-import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -78,9 +75,7 @@ public class TestConfiguration {
 	public static final String PROFILE_NO_SINGLE_QUERY_LOADING = "!" + PROFILE_SINGLE_QUERY_LOADING;
 
 	@Autowired DataSource dataSource;
-	@Autowired BeanFactory beanFactory;
 	@Autowired ApplicationEventPublisher publisher;
-	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
@@ -162,17 +157,15 @@ public class TestConfiguration {
 	@Bean
 	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-			Dialect dialect) {
+			JdbcDialect dialect) {
 
-		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect
-				? ((JdbcDialect) dialect).getArraySupport()
-				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect.getArraySupport();
 
 		return new MappingJdbcConverter( //
 				mappingContext, //
 				relationResolver, //
 				conversions, //
-				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns));
+				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns), dialect.getNullTypeStrategy());
 	}
 
 	/**
@@ -188,7 +181,7 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+	JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
 

@@ -147,14 +147,12 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
-			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
+			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, JdbcDialect dialect) {
 
-		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect jd
-				? jd.getArraySupport()
-				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect.getArraySupport();
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
 
-		return new MappingJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory);
+		return new MappingJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory, dialect.getNullTypeStrategy());
 	}
 
 	/**
@@ -222,7 +220,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
-			JdbcMappingContext context, Dialect dialect) {
+			JdbcMappingContext context, JdbcDialect dialect) {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
 		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
@@ -242,7 +240,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 *           cannot be determined.
 	 */
 	@Bean
-	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+	public JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
 
