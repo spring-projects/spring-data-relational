@@ -19,7 +19,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.sql.JDBCType;
+import java.sql.SQLType;
+import java.sql.Types;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -36,15 +43,19 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.query.JdbcParameters.JdbcParameter;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.dialect.H2Dialect;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
+import org.springframework.data.relational.repository.query.SqlType;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -99,7 +110,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // GH-922
+	@Test
+		// GH-922
 	void createQueryWithPessimisticWriteLock() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndLastName", String.class, String.class);
@@ -119,7 +131,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // GH-922
+	@Test
+		// GH-922
 	void createQueryWithPessimisticReadLock() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAge", String.class, Integer.class);
@@ -208,8 +221,9 @@ public class PartTreeJdbcQueryUnitTests {
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }), returnedType);
 
-		assertThat(query.getQuery()).isEqualTo("SELECT " + TABLE + ".\"FIRST_NAME\" AS \"FIRST_NAME\" FROM \"users\""
-				+ " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+		assertThat(query.getQuery()).isEqualTo(
+				"SELECT " + TABLE + ".\"FIRST_NAME\" AS \"FIRST_NAME\" FROM \"users\"" + " WHERE " + TABLE
+						+ ".\"FIRST_NAME\" = :first_name");
 	}
 
 	@Test // DATAJDBC-318
@@ -487,8 +501,8 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 123 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
+		assertThat(query.getQuery()).isEqualTo(
+				BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
 	}
 
 	@Test // DATAJDBC-318
@@ -498,8 +512,8 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 123 });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
+		assertThat(query.getQuery()).isEqualTo(
+				BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
 	}
 
 	@Test // DATAJDBC-318
@@ -565,8 +579,8 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE UPPER(" + TABLE + ".\"FIRST_NAME\") = UPPER(:first_name)");
+		assertThat(query.getQuery()).isEqualTo(
+				BASE_SELECT + " WHERE UPPER(" + TABLE + ".\"FIRST_NAME\") = UPPER(:first_name)");
 	}
 
 	@Test // DATAJDBC-318
@@ -575,8 +589,8 @@ public class PartTreeJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = getQueryMethod("findByIdIgnoringCase", Long.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 
-		assertThatIllegalStateException()
-				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { 1L }), returnedType));
+		assertThatIllegalStateException().isThrownBy(
+				() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { 1L }), returnedType));
 	}
 
 	@Test // DATAJDBC-318
@@ -585,8 +599,8 @@ public class PartTreeJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByIdIsEmpty");
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
 	}
 
 	@Test // DATAJDBC-318
@@ -595,8 +609,8 @@ public class PartTreeJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
+		assertThatIllegalArgumentException().isThrownBy(
+				() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
 	}
 
 	@Test // DATAJDBC-318
@@ -609,6 +623,20 @@ public class PartTreeJdbcQueryUnitTests {
 
 		String expectedSql = BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 3";
 		assertThat(query.getQuery()).isEqualTo(expectedSql);
+	}
+
+	@Test // DATAJDBC-2020
+	public void testCustomSqlTypeResolverApplied() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAgeIn", new TestSqlTypeResolver(), String.class, Integer[].class);
+
+		JdbcParameter firstNameParam = queryMethod.getParameters().getParameter(0);
+		JdbcParameter agesInParam = queryMethod.getParameters().getParameter(1);
+
+		assertThat(firstNameParam.getSqlType().getName()).isEqualTo(JDBCType.CLOB.name());
+		assertThat(firstNameParam.getSqlType().getVendorTypeNumber()).isEqualTo(JDBCType.CLOB.getVendorTypeNumber());
+		assertThat(agesInParam.getActualSqlType().getName()).isEqualTo(JDBCType.TINYINT.name());
+		assertThat(agesInParam.getActualSqlType().getVendorTypeNumber()).isEqualTo(JDBCType.TINYINT.getVendorTypeNumber());
 	}
 
 	@Test // DATAJDBC-318
@@ -665,8 +693,8 @@ public class PartTreeJdbcQueryUnitTests {
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery((getAccessor(queryMethod, new Object[] { "John" })), returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+		assertThat(query.getQuery()).isEqualTo(
+				"SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
@@ -678,6 +706,14 @@ public class PartTreeJdbcQueryUnitTests {
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
 				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
+	}
+
+	private JdbcQueryMethod getQueryMethod(String methodName, SqlTypeResolver sqlTypeResolver, Class<?>... parameterTypes)
+			throws Exception {
+		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext,
+				sqlTypeResolver);
 	}
 
 	private RelationalParametersParameterAccessor getAccessor(JdbcQueryMethod queryMethod, Object[] values) {
@@ -696,6 +732,10 @@ public class PartTreeJdbcQueryUnitTests {
 		List<User> findAllByFirstName(String firstName);
 
 		List<User> findAllByHated(Hobby hobby);
+
+		List<User> findAllByFirstNameAndAgeIn( //
+				@MySqlType String firstName, //
+				@MyActualSqlType Integer[] ages);
 
 		List<User> findAllByHatedName(String name);
 
@@ -776,18 +816,52 @@ public class PartTreeJdbcQueryUnitTests {
 		long countByFirstName(String name);
 	}
 
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MySqlType {
+	}
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface MyActualSqlType {
+	}
+
+	static class TestSqlTypeResolver implements SqlTypeResolver {
+
+		@Override
+		public SQLType resolveSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MySqlType.class)) {
+				return JDBCType.CLOB;
+			} else {
+				return null;
+			}
+		}
+
+		@Override
+		public SQLType resolveActualSqlType(RelationalParameters.RelationalParameter relationalParameter) {
+			if (relationalParameter.getMethodParameter().hasParameterAnnotation(MyActualSqlType.class)) {
+				return JDBCType.TINYINT;
+			} else {
+				return null;
+			}
+		}
+	}
+
 	@Table("users")
 	static class User {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String firstName;
 		String lastName;
 		Date dateOfBirth;
 		Integer age;
 		Boolean active;
 
-		@Embedded(prefix = "user_", onEmpty = Embedded.OnEmpty.USE_NULL) Address address;
-		@Embedded.Nullable AnotherEmbedded anotherEmbedded;
+		@Embedded(prefix = "user_", onEmpty = Embedded.OnEmpty.USE_NULL)
+		Address address;
+		@Embedded.Nullable
+		AnotherEmbedded anotherEmbedded;
 
 		List<Hobby> hobbies;
 		Hobby hated;
@@ -802,6 +876,7 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	static class Hobby {
-		@Id String name;
+		@Id
+		String name;
 	}
 }

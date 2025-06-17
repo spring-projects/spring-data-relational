@@ -21,28 +21,47 @@ import java.util.List;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.jdbc.core.dialect.DefaultSqlTypeResolver;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.Assert;
 
 /**
  * Custom extension of {@link RelationalParameters}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 3.2.6
  */
 public class JdbcParameters extends RelationalParameters {
 
 	/**
-	 * Creates a new {@link JdbcParameters} instance from the given {@link ParametersSource}.
+	 * Creates a new {@link JdbcParameters} instance from the given {@link ParametersSource}. Uses the {@link DefaultSqlTypeResolver}.
 	 *
 	 * @param parametersSource must not be {@literal null}.
 	 */
 	public JdbcParameters(ParametersSource parametersSource) {
 		super(parametersSource,
-				methodParameter -> new JdbcParameter(methodParameter, parametersSource.getDomainTypeInformation()));
+				methodParameter -> new JdbcParameter(methodParameter, parametersSource.getDomainTypeInformation(),
+						DefaultSqlTypeResolver.INSTANCE));
+	}
+
+	/**
+	 * Creates a new {@link JdbcParameters} instance from the given {@link ParametersSource} and given {@link SqlTypeResolver}.
+	 *
+	 * @param parametersSource must not be {@literal null}.
+	 * @param sqlTypeResolver must not be {@literal null}.
+	 */
+	public JdbcParameters(ParametersSource parametersSource, SqlTypeResolver sqlTypeResolver) {
+		super(parametersSource,
+				methodParameter -> new JdbcParameter(methodParameter, parametersSource.getDomainTypeInformation(), sqlTypeResolver));
+
+		Assert.notNull(sqlTypeResolver, "SqlTypeResolver must not be null");
+		Assert.notNull(parametersSource, "ParametersSource must not be null");
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -69,7 +88,7 @@ public class JdbcParameters extends RelationalParameters {
 	 */
 	public static class JdbcParameter extends RelationalParameter {
 
-		private final SQLType sqlType;
+		private final Lazy<SQLType> sqlType;
 		private final Lazy<SQLType> actualSqlType;
 
 		/**
@@ -77,19 +96,34 @@ public class JdbcParameters extends RelationalParameters {
 		 *
 		 * @param parameter must not be {@literal null}.
 		 */
-		JdbcParameter(MethodParameter parameter, TypeInformation<?> domainType) {
+		JdbcParameter(MethodParameter parameter, TypeInformation<?> domainType, SqlTypeResolver sqlTypeResolver) {
 			super(parameter, domainType);
 
 			TypeInformation<?> typeInformation = getTypeInformation();
 
-			sqlType = JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getType()));
+			sqlType = Lazy.of(() -> {
+				SQLType resolvedSqlType = sqlTypeResolver.resolveSqlType(this);
 
-			actualSqlType = Lazy.of(() -> JdbcUtil
-					.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getActualType().getType())));
+				if (resolvedSqlType == null) {
+					return JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getType()));
+				} else {
+					return resolvedSqlType;
+				}
+			});
+
+			actualSqlType = Lazy.of(() -> {
+				SQLType resolvedActualSqlType = sqlTypeResolver.resolveActualSqlType(this);
+
+				if (resolvedActualSqlType == null) {
+					return JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getActualType().getType()));
+				} else {
+					return resolvedActualSqlType;
+				}
+			});
 		}
 
 		public SQLType getSqlType() {
-			return sqlType;
+			return sqlType.get();
 		}
 
 		public SQLType getActualSqlType() {
