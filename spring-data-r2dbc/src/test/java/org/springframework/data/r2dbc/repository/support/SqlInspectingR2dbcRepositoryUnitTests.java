@@ -85,7 +85,7 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 	}
 
 	interface MyPersonRepository extends Repository<Person, Long> {
-		@Query("select * from #{#tableName +'x'}")
+		@Query("select * from #{#tableName + 'x'}")
 		Mono<Person> findBySpel();
 	}
 

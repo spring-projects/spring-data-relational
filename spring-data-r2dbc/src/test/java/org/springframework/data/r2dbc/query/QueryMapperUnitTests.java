@@ -113,7 +113,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("((person.name = ?[$1]))");
+		assertThat(bindings.getCondition()).hasToString("((person.\"NAME\" = ?[$1]))");
 	}
 
 	@Test // gh-289
@@ -133,8 +133,10 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
+		// name is a property and therefore gets the normal quoting behaviour.
+		// age is not a property and terefore gets used as is.
 		assertThat(bindings.getCondition()).hasToString(
-				"(person.name = ?[$1]) AND (person.name = ?[$2] OR person.age < ?[$3] OR (person.name != ?[$4] AND person.age > ?[$5]))");
+				"(person.\"NAME\" = ?[$1]) AND (person.\"NAME\" = ?[$2] OR person.age < ?[$3] OR (person.\"NAME\" != ?[$4] AND person.age > ?[$5]))");
 	}
 
 	@Test // gh-289
@@ -150,7 +152,7 @@ class QueryMapperUnitTests {
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition())
-				.hasToString("person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3])");
+				.hasToString("person.\"NAME\" = ?[$1] AND (person.\"NAME\" = ?[$2] OR person.age < ?[$3])");
 	}
 
 	@Test // gh-383
@@ -160,13 +162,13 @@ class QueryMapperUnitTests {
 				.or("age").lessThan(49));
 
 		assertThat(map(criteria).getCondition())
-				.hasToString("(person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3]))");
+				.hasToString("(person.\"NAME\" = ?[$1] AND (person.\"NAME\" = ?[$2] OR person.age < ?[$3]))");
 
 		criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
 				.or("age").lessThan(49), Criteria.where("foo").is("bar"));
 
 		assertThat(map(criteria).getCondition())
-				.hasToString("(person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3]) AND (person.foo = ?[$4]))");
+				.hasToString("(person.\"NAME\" = ?[$1] AND (person.\"NAME\" = ?[$2] OR person.age < ?[$3]) AND (person.foo = ?[$4]))");
 	}
 
 	@Test // gh-64
@@ -176,7 +178,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" = ?[$1]");
 
 		bindings.getBindings().apply(bindTarget);
 		verify(bindTarget).bind(0, "foo");
@@ -218,7 +220,7 @@ class QueryMapperUnitTests {
 		Expression mappedObject = mapper.getMappedObject(table.column("alternative").as("my_aliased_col"),
 				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
-		assertThat(mappedObject).hasToString("my_aliased_table.another_name AS my_aliased_col");
+		assertThat(mappedObject).hasToString("my_aliased_table.\"another_name\" AS my_aliased_col");
 	}
 
 	@Test // gh-300
@@ -229,7 +231,7 @@ class QueryMapperUnitTests {
 		Expression mappedObject = mapper.getMappedObject(Functions.count(table.column("alternative")),
 				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
-		assertThat(mappedObject).hasToString("COUNT(my_aliased_table.another_name)");
+		assertThat(mappedObject).hasToString("COUNT(my_aliased_table.\"another_name\")");
 	}
 
 	@Test // gh-300
@@ -260,7 +262,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" = ?[$1]");
 
 		bindings.getBindings().apply(bindTarget);
 		verify(bindTarget).bindNull(0, Integer.class);
@@ -273,7 +275,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.another_name = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"another_name\" = ?[$1]");
 	}
 
 	@Test // gh-64
@@ -283,7 +285,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name = ?[$1] AND person.bar = ?[$2]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" = ?[$1] AND person.bar = ?[$2]");
 
 		bindings.getBindings().apply(bindTarget);
 		verify(bindTarget).bind(0, "foo");
@@ -297,7 +299,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name = ?[$1] OR person.bar = ?[$2]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" = ?[$1] OR person.bar = ?[$2]");
 	}
 
 	@Test // gh-64
@@ -311,7 +313,7 @@ class QueryMapperUnitTests {
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition()).hasToString(
-				"person.name = ?[$1] AND person.name IS NOT NULL OR person.bar = ?[$2] AND person.anotherOne = ?[$3]");
+				"person.\"NAME\" = ?[$1] AND person.\"NAME\" IS NOT NULL OR person.bar = ?[$2] AND person.anotherOne = ?[$3]");
 	}
 
 	@Test // gh-64
@@ -321,7 +323,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name != ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" != ?[$1]");
 	}
 
 	@Test // gh-64
@@ -331,7 +333,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name IS NULL");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" IS NULL");
 	}
 
 	@Test // gh-64
@@ -341,7 +343,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name IS NOT NULL");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" IS NOT NULL");
 	}
 
 	@Test // gh-64
@@ -351,7 +353,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name IN (?[$1], ?[$2], ?[$3])");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" IN (?[$1], ?[$2], ?[$3])");
 	}
 
 	@Test // gh-64, gh-177
@@ -361,7 +363,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name NOT IN (?[$1], ?[$2], ?[$3])");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" NOT IN (?[$1], ?[$2], ?[$3])");
 	}
 
 	@Test
@@ -374,7 +376,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name NOT IN (?[$1], ?[$2], ?[$3])");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" NOT IN (?[$1], ?[$2], ?[$3])");
 	}
 
 	@Test // gh-64
@@ -384,7 +386,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name > ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" > ?[$1]");
 	}
 
 	@Test // gh-64
@@ -394,7 +396,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name >= ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" >= ?[$1]");
 	}
 
 	@Test // gh-64
@@ -404,7 +406,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name < ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" < ?[$1]");
 	}
 
 	@Test // gh-64
@@ -414,7 +416,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name <= ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" <= ?[$1]");
 	}
 
 	@Test // gh-64
@@ -424,7 +426,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.name LIKE ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"NAME\" LIKE ?[$1]");
 	}
 
 	@Test // GH-1507
@@ -493,7 +495,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.enum_value IN (?[$1], ?[$2])");
+		assertThat(bindings.getCondition()).hasToString("person.\"ENUM_VALUE\" IN (?[$1], ?[$2])");
 	}
 
 	@Test // gh-733
@@ -503,7 +505,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.state = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"STATE\" = ?[$1]");
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo(false);
 	}
 
@@ -515,7 +517,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.state = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"STATE\" = ?[$1]");
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo((byte) 1);
 	}
 
@@ -526,7 +528,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.json_node = ?[$1]");
+		assertThat(bindings.getCondition()).hasToString("person.\"JSON_NODE\" = ?[$1]");
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
 	}
 
@@ -537,7 +539,7 @@ class QueryMapperUnitTests {
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition()).hasToString("person.json_node IN (?[$1], ?[$2])");
+		assertThat(bindings.getCondition()).hasToString("person.\"JSON_NODE\" IN (?[$1], ?[$2])");
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
 	}
 

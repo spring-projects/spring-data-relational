@@ -34,6 +34,7 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
+import org.springframework.util.Assert;
 
 /**
  * An SQL dialect for Postgres.
@@ -102,7 +103,7 @@ public class PostgresDialect extends AbstractDialect {
 		return LIMIT_CLAUSE;
 	}
 
-	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause(this.getIdentifierProcessing());
+	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause();
 
 	@Override
 	public LockClause lock() {
@@ -121,12 +122,6 @@ public class PostgresDialect extends AbstractDialect {
 
 	static class PostgresLockClause implements LockClause {
 
-		private final IdentifierProcessing identifierProcessing;
-
-		PostgresLockClause(IdentifierProcessing identifierProcessing) {
-			this.identifierProcessing = identifierProcessing;
-		}
-
 		@Override
 		public String getLock(LockOptions lockOptions) {
 
@@ -144,7 +139,7 @@ public class PostgresDialect extends AbstractDialect {
 			}
 
 			// without schema
-			String tableName = last.toSql(this.identifierProcessing);
+			String tableName = last.toSql(PostgresDialect.identifierProcessing);
 
 			return switch (lockOptions.getLockMode()) {
 				case PESSIMISTIC_WRITE -> "FOR UPDATE OF " + tableName;
