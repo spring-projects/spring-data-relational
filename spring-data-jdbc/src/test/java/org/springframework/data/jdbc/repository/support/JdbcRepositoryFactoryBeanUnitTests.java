@@ -78,9 +78,14 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
 
-		ObjectProvider<DataAccessStrategy> provider = mock(ObjectProvider.class);
-		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(provider);
-		when(provider.getIfAvailable(any()))
+		ObjectProvider<DataAccessStrategy> dataAccessStrategyObjectProvider = mock(ObjectProvider.class);
+		ObjectProvider<QueryMappingConfiguration> queryMappingConfigurationObjectProvider = mock(ObjectProvider.class);
+		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(dataAccessStrategyObjectProvider);
+		when(beanFactory.getBeanProvider(QueryMappingConfiguration.class)).thenReturn(queryMappingConfigurationObjectProvider);
+		when(beanFactory.getBean(RelationalMappingContext.class)).thenReturn(mappingContext);
+		when(dataAccessStrategyObjectProvider.getIfAvailable(any()))
+				.then((Answer<?>) invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
+		when(queryMappingConfigurationObjectProvider.getIfAvailable(any()))
 				.then((Answer<?>) invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
 	}
 
@@ -114,7 +119,6 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	@Test // DATAJDBC-155
 	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
-		factoryBean.setMappingContext(mappingContext);
 		factoryBean.setConverter(new MappingJdbcConverter(mappingContext, dataAccessStrategy));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
@@ -126,6 +130,8 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 				.isInstanceOf(DefaultDataAccessStrategy.class);
 		assertThat(ReflectionTestUtils.getField(factoryBean, "queryMappingConfiguration"))
 				.isEqualTo(QueryMappingConfiguration.EMPTY);
+		assertThat(ReflectionTestUtils.getField(factoryBean, "mappingContext"))
+				.isEqualTo(mappingContext);
 	}
 
 	private static class DummyEntity {

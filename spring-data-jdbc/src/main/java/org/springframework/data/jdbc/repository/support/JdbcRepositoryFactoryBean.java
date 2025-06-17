@@ -16,9 +16,7 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
-
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -49,6 +47,7 @@ import org.springframework.util.Assert;
  * @author Hebert Coelho
  * @author Chirag Tailor
  * @author Mikhail Polivakha
+ * @author Sergey Korotaev
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
@@ -58,7 +57,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private RelationalMappingContext mappingContext;
 	private JdbcConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
-	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+	private QueryMappingConfiguration queryMappingConfiguration;
 	private NamedParameterJdbcOperations operations;
 	private EntityCallbacks entityCallbacks;
 	private Dialect dialect;
@@ -124,7 +123,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 * @param queryMappingConfiguration can be {@literal null}. {@link #afterPropertiesSet()} defaults to
 	 *          {@link QueryMappingConfiguration#EMPTY} if {@literal null}.
 	 */
-	@Autowired(required = false)
 	public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
 
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
@@ -157,8 +155,13 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Override
 	public void afterPropertiesSet() {
 
-		Assert.state(this.mappingContext != null, "MappingContext is required and must not be null");
 		Assert.state(this.converter != null, "RelationalConverter is required and must not be null");
+
+		if (mappingContext == null) {
+			Assert.state(beanFactory != null, "If no MappingContext are set a BeanFactory must be available");
+
+			this.mappingContext = beanFactory.getBean(RelationalMappingContext.class);
+		}
 
 		if (this.operations == null) {
 
@@ -168,7 +171,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		}
 
 		if (this.queryMappingConfiguration == null) {
-			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+			Assert.state(beanFactory != null, "If no QueryMappingConfiguration are set a BeanFactory must be available");
+
+			this.queryMappingConfiguration = beanFactory.getBeanProvider(QueryMappingConfiguration.class)
+					.getIfAvailable(() -> QueryMappingConfiguration.EMPTY);
 		}
 
 		if (this.dataAccessStrategy == null) {
