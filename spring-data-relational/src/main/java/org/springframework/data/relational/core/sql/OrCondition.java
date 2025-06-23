@@ -24,7 +24,7 @@ package org.springframework.data.relational.core.sql;
  */
 public class OrCondition extends MultipleCondition {
 
-	OrCondition(Condition... conditions) {
+	OrCondition(Expression... conditions) {
 		super(" OR ", conditions);
 	}
 }

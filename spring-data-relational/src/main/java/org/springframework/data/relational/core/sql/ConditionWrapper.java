@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,24 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
- *
  * @author Mark Paluch
- * @since 1.1
- * @see Condition#and(Condition)
  */
-public class AndCondition extends MultipleCondition {
+class ConditionWrapper extends AbstractSegment implements Condition {
 
-	AndCondition(Expression... conditions) {
-		super(" AND ", conditions);
+	private final Expression expression;
+
+	public ConditionWrapper(Expression expression) {
+		super(expression);
+		this.expression = expression;
 	}
+
+	public static Condition of(Expression other) {
+
+		if (other instanceof Condition c) {
+			return c;
+		}
+
+		return new ConditionWrapper(other);
+	}
+
 }

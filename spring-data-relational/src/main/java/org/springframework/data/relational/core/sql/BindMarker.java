@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.util.ObjectUtils;
+
 /**
  * Bind marker/parameter placeholder used to construct prepared statements with parameter substitution.
  *
@@ -22,6 +24,18 @@ package org.springframework.data.relational.core.sql;
  * @since 1.1
  */
 public class BindMarker extends AbstractSegment implements Expression {
+
+	public static BindMarker named(String name) {
+		return new NamedBindMarker(name);
+	}
+
+	public static BindMarker indexed(int index) {
+		return new IndexedBindMarker("" + index, index);
+	}
+
+	public static BindMarker indexed(String name, int index) {
+		return new IndexedBindMarker(name, index);
+	}
 
 	@Override
 	public String toString() {
@@ -42,8 +56,64 @@ public class BindMarker extends AbstractSegment implements Expression {
 		}
 
 		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof NamedBindMarker that)) {
+				return false;
+			}
+			if (!super.equals(o)) {
+				return false;
+			}
+			return ObjectUtils.nullSafeEquals(name, that.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode() * 31 + ObjectUtils.nullSafeHash(name);
+		}
+
+		@Override
 		public String toString() {
 			return "?[" + name + "]";
+		}
+	}
+
+	static class IndexedBindMarker extends BindMarker implements Named {
+
+		private final int index;
+		private final String name;
+
+		IndexedBindMarker(String name, int index) {
+			this.name = name;
+			this.index = index;
+		}
+
+		@Override
+		public SqlIdentifier getName() {
+			return SqlIdentifier.unquoted(name);
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof IndexedBindMarker that)) {
+				return false;
+			}
+			if (!super.equals(o)) {
+				return false;
+			}
+			if (index != that.index) {
+				return false;
+			}
+			return ObjectUtils.nullSafeEquals(name, that.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return super.hashCode() * 31 + ObjectUtils.nullSafeHash(index, name);
+		}
+
+		@Override
+		public String toString() {
+			return "?" + index;
 		}
 	}
 }

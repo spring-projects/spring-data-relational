@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.query;
 
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
- *
  * @author Mark Paluch
- * @since 1.1
- * @see Condition#and(Condition)
  */
-public class AndCondition extends MultipleCondition {
+public interface Bindings {
 
-	AndCondition(Expression... conditions) {
-		super(" AND ", conditions);
-	}
+	String bind(Object values);
+
 }

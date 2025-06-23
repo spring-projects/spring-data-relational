@@ -65,16 +65,16 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 			return new IsNullVisitor(context, builder::append);
 		}
 
-		if (segment instanceof Between) {
-			return new BetweenVisitor((Between) segment, context, builder::append);
+		if (segment instanceof Between between) {
+			return new BetweenVisitor(between, context, builder::append);
 		}
 
-		if (segment instanceof Comparison) {
-			return new ComparisonVisitor(context, (Comparison) segment, builder::append);
+		if (segment instanceof OperatorExpression oe) {
+			return new OperatorExpressionVisitor(context, oe, builder::append);
 		}
 
-		if (segment instanceof Like) {
-			return new LikeVisitor((Like) segment, context, builder::append);
+		if (segment instanceof Like like) {
+			return new LikeVisitor(like, context, builder::append);
 		}
 
 		if (segment instanceof In) {
@@ -86,8 +86,8 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 			}
 		}
 
-		if (segment instanceof NestedCondition) {
-			return new NestedConditionVisitor(context, builder::append);
+		if (segment instanceof NestedExpression) {
+			return new NestedExpressionVisitor(context, builder::append);
 		}
 
 		if (segment instanceof ConstantCondition) {

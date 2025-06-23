@@ -426,6 +426,17 @@ public interface SelectBuilder {
 		/**
 		 * Apply a {@code WHERE} clause.
 		 *
+		 * @param expression the {@code WHERE} condition expression.
+		 * @return {@code this} builder.
+		 * @since 4.0
+		 * @see Where
+		 * @see Expression
+		 */
+		SelectWhereAndOr where(Expression expression);
+
+		/**
+		 * Apply a {@code WHERE} clause.
+		 *
 		 * @param condition the {@code WHERE} condition.
 		 * @return {@code this} builder.
 		 * @see Where
@@ -446,7 +457,7 @@ public interface SelectBuilder {
 		 * @return {@code this} builder.
 		 * @see Condition#and(Condition)
 		 */
-		SelectWhereAndOr and(Condition condition);
+		SelectWhereAndOr and(Expression condition);
 
 		/**
 		 * Combine the previous {@code WHERE} {@link Condition} using {@code OR}.
@@ -455,7 +466,7 @@ public interface SelectBuilder {
 		 * @return {@code this} builder.
 		 * @see Condition#or(Condition)
 		 */
-		SelectWhereAndOr or(Condition condition);
+		SelectWhereAndOr or(Expression condition);
 	}
 
 	/**

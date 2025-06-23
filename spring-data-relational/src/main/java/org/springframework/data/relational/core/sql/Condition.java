@@ -28,20 +28,20 @@ public interface Condition extends Segment, Expression {
 	/**
 	 * Combine another {@link Condition} using {@code AND}.
 	 *
-	 * @param other the other {@link Condition}.
+	 * @param other the other {@link Expression condition}.
 	 * @return the combined {@link Condition}.
 	 */
-	default Condition and(Condition other) {
+	default Condition and(Expression other) {
 		return new AndCondition(this, other);
 	}
 
 	/**
 	 * Combine another {@link Condition} using {@code OR}.
 	 *
-	 * @param other the other {@link Condition}.
+	 * @param other the other {@link Expression condition}.
 	 * @return the combined {@link Condition}.
 	 */
-	default Condition or(Condition other) {
+	default Condition or(Expression other) {
 		return new OrCondition(this, other);
 	}
 

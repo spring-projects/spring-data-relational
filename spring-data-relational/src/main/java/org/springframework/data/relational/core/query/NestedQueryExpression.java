@@ -13,30 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.query;
+
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 
 /**
- * Unrestricted condition. Any condition combined with this condition will yield the other condition.
- *
  * @author Mark Paluch
- * @since 4.0
  */
-enum Unrestricted implements Condition {
+class NestedQueryExpression implements QueryExpression {
 
-	INSTANCE;
+	private final QueryExpression expression;
 
-	@Override
-	public Condition and(Expression other) {
-		return ConditionWrapper.of(other);
+	public NestedQueryExpression(QueryExpression expression) {
+		this.expression = expression;
 	}
 
 	@Override
-	public Condition or(Expression other) {
-		return ConditionWrapper.of(other);
+	public QueryExpression nest() {
+		return this;
 	}
 
 	@Override
-	public Condition not() {
-		return Disjunct.INSTANCE;
+	public QueryRenderContext contextualize(QueryRenderContext context) {
+		return expression.contextualize(context);
 	}
+
+	@Override
+	public Expression render(QueryRenderContext context) {
+		return Expressions.nest(expression.render(context));
+	}
+
 }

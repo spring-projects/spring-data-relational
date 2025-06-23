@@ -85,6 +85,9 @@ public interface CriteriaDefinition {
 
 	List<CriteriaDefinition> getGroup();
 
+	@Nullable
+	QueryExpression getExpression();
+
 	/**
 	 * @return the column/property name.
 	 */

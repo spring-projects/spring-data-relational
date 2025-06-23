@@ -23,9 +23,9 @@ package org.springframework.data.relational.core.sql;
  */
 public class Where extends AbstractSegment {
 
-	private final Condition condition;
+	private final Expression condition;
 
-	Where(Condition condition) {
+	Where(Expression condition) {
 
 		super(condition);
 

@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.query;
 
+import static org.springframework.data.relational.core.query.CriteriaDefinition.Comparator.*;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,26 +65,38 @@ public class Criteria implements CriteriaDefinition {
 	private final Combinator combinator;
 	private final List<CriteriaDefinition> group;
 
+	private final @Nullable QueryExpression queryExpression;
 	private final @Nullable SqlIdentifier column;
 	private final @Nullable Comparator comparator;
 	private final @Nullable Object value;
 	private final boolean ignoreCase;
 
-	private Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
-		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
+	protected Criteria(QueryExpression expression) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), expression, null, null, null, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+	protected Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), null, column, comparator, value, false);
+	}
+
+	protected Criteria(QueryExpression queryExpression, SqlIdentifier column, Comparator comparator,
+			@Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), queryExpression, column, comparator, value, false);
+	}
+
+	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
-		this(previous, combinator, group, column, comparator, value, false);
+		this(previous, combinator, group, null, column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
+	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+			@Nullable QueryExpression queryExpression, @Nullable SqlIdentifier column, @Nullable Comparator comparator,
+			@Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
 		this.group = group;
+		this.queryExpression = queryExpression;
 		this.column = column;
 		this.comparator = comparator;
 		this.value = value;
@@ -92,6 +106,7 @@ public class Criteria implements CriteriaDefinition {
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group) {
 
 		this.previous = previous;
+		this.queryExpression = null;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
 		this.group = group;
 		this.column = null;
@@ -259,7 +274,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria ignoreCase(boolean ignoreCase) {
 		if (this.ignoreCase != ignoreCase) {
-			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase);
+			return new Criteria(previous, combinator, group, queryExpression, column, comparator, value, ignoreCase);
 		}
 		return this;
 	}
@@ -342,6 +357,12 @@ public class Criteria implements CriteriaDefinition {
 	@Override
 	public List<CriteriaDefinition> getGroup() {
 		return group;
+	}
+
+	@Nullable
+	@Override
+	public QueryExpression getExpression() {
+		return queryExpression;
 	}
 
 	/**
@@ -658,11 +679,11 @@ public class Criteria implements CriteriaDefinition {
 	/**
 	 * Default {@link CriteriaStep} implementation.
 	 */
-	static class DefaultCriteriaStep implements CriteriaStep {
+	protected static class DefaultCriteriaStep implements CriteriaStep {
 
 		private final SqlIdentifier property;
 
-		DefaultCriteriaStep(SqlIdentifier property) {
+		protected DefaultCriteriaStep(SqlIdentifier property) {
 			this.property = property;
 		}
 
@@ -734,7 +755,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(begin, "Begin value must not be null");
 			Assert.notNull(end, "End value must not be null");
 
-			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
+			return createCriteria(BETWEEN, Pair.of(begin, end));
 		}
 
 		@Override

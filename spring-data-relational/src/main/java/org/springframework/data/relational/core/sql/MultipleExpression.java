@@ -20,33 +20,34 @@ import java.util.List;
 import java.util.StringJoiner;
 
 /**
- * Wrapper for multiple {@link Condition}s.
+ * Wrapper for multiple {@link Expression}s.
  *
+ * @author Mark Paluch
  * @author Jens Schauder
- * @since 1.1
+ * @since 4.0
  */
-public abstract class MultipleCondition extends AbstractSegment implements Condition {
+public abstract class MultipleExpression extends AbstractSegment {
 
-	private final List<Expression> conditions;
+	private final List<Expression> expressions;
 	private final String delimiter;
 
-	MultipleCondition(String delimiter, Expression... conditions) {
+	MultipleExpression(String delimiter, Expression... expressions) {
 
-		super(conditions);
+		super(expressions);
 
 		this.delimiter = delimiter;
-		this.conditions = Arrays.asList(conditions);
+		this.expressions = Arrays.asList(expressions);
 	}
 
-	public List<Expression> getConditions() {
-		return conditions;
+	public List<Expression> getExpressions() {
+		return expressions;
 	}
 
 	@Override
 	public String toString() {
 
 		StringJoiner joiner = new StringJoiner(delimiter);
-		conditions.forEach(c -> joiner.add(c.toString()));
+		expressions.forEach(c -> joiner.add(c.toString()));
 		return joiner.toString();
 	}
 }
