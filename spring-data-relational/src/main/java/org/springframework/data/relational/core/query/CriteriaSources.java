@@ -22,7 +22,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  */
 class CriteriaSources {
-	public static final record DotPath(String name) implements CriteriaSource {
+	public static final record Column(String name) implements CriteriaSource {
 
 		@Override
 		public QueryRenderContext contextualize(QueryRenderContext context) {

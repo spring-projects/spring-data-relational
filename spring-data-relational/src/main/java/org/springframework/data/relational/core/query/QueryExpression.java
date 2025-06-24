@@ -41,6 +41,8 @@ public interface QueryExpression {
 		return new NestedQueryExpression(this);
 	}
 
+	// TODO: get type?
+
 	// TODO: Used to determine the inner-most context.
 	default QueryRenderContext contextualize(QueryRenderContext context) {
 		return context;
@@ -78,6 +80,7 @@ public interface QueryExpression {
 		// only available after contextualization
 		Expression getColumnName();
 
+		// TODO: we should have a bind method that performs JSON serialization.
 		BindMarker bind(Object value);
 
 		BindMarker bind(String name, Object value);

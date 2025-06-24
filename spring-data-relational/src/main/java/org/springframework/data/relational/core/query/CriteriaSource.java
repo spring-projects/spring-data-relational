@@ -22,8 +22,8 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public interface CriteriaSource extends QueryExpression {
 
-	static CriteriaSource ofDotPath(String name) {
-		return new CriteriaSources.DotPath(name);
+	static CriteriaSource ofColumn(String name) {
+		return new CriteriaSources.Column(name);
 	}
 
 	static CriteriaSource of(SqlIdentifier identifier) {

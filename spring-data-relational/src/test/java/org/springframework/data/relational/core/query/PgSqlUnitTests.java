@@ -17,6 +17,8 @@ package org.springframework.data.relational.core.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.data.domain.Vector;
@@ -47,7 +49,7 @@ class PgSqlUnitTests {
 		// distanceOf("embedding").l2()
 
 		Criteria embedding = PgSql
-				.where("embedding", it -> it.distanceTo(Vector.of(1, 2, 3), PgSql.VectorSearchFunctions.Distances::cosine))
+				.where("embedding", it -> it.distanceTo(Vector.of(1, 2, 3), PgSql.VectorSearchOperators.Distances::cosine))
 				.lessThan(0.8);
 
 		String sql = toSql(embedding);
@@ -66,9 +68,8 @@ class PgSqlUnitTests {
 	}
 
 	@Test
-	void containsArray() {
+	void jsonContainsAll() {
 
-		// SqlIdentifier to refer to columns?
 		Criteria arrayContains = PgSql.where("tags").json().containsAll("electronics", "gaming");
 
 		String sql = toSql(arrayContains);
@@ -77,10 +78,42 @@ class PgSqlUnitTests {
 	}
 
 	@Test
+	void toJsonEquals() {
+
+		QueryExpression json = PgSql.json().jsonOf(Map.of("foo", "bar"));
+		Criteria arrayContains = PgSql.where(json, it -> it.json().index(1)).is("bar");
+
+		String sql = toSql(arrayContains);
+
+		assertThat(sql).contains(":p0::json -> :p1 = :p2");
+	}
+
+	@Test
+	void arrayOverlapsColumn() {
+
+		Criteria arrayContains = PgSql.where("tags").arrays().overlaps("country");
+
+		String sql = toSql(arrayContains);
+
+		assertThat(sql).contains("with_embedding.tags && with_embedding.country");
+	}
+
+	@Test
+	void arrayConcatColumnsAndContains() {
+
+		Criteria arrayContains = PgSql.where("tags", it -> it.array().concatWith("other_tags")).arrays().contains("1", "2",
+				"3");
+
+		String sql = toSql(arrayContains);
+
+		assertThat(sql).contains("with_embedding.tags || with_embedding.other_tags @> array[:p0, :p1, :p2]");
+	}
+
+	@Test
 	void shouldRenderSourceFunction() {
 
 		// SqlIdentifier to refer to columns?
-		Criteria arrayContains = PgSql.where(PgSql.function("array_ndims", CriteriaSource.ofDotPath("someArray")))
+		Criteria arrayContains = PgSql.where(PgSql.function("array_ndims", CriteriaSource.ofColumn("someArray")))
 				.greaterThan(2);
 
 		String sql = toSql(arrayContains);
@@ -91,7 +124,8 @@ class PgSqlUnitTests {
 	@Test
 	void arrayContains() {
 
-		Criteria someArrayContains = PgSql.where("someArray").contains(PgSql.arrays().arrayOf("electronics", "gaming"));
+		Criteria someArrayContains = PgSql.where("someArray").arrays()
+				.contains(PgSql.arrays().arrayOf("electronics", "gaming"));
 
 		String sql = toSql(someArrayContains);
 

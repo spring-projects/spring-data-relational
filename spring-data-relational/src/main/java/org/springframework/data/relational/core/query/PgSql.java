@@ -16,10 +16,16 @@
 package org.springframework.data.relational.core.query;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.data.domain.ScoringFunction;
 import org.springframework.data.domain.Vector;
+import org.springframework.data.relational.core.query.PgSqlImpl.ValuesExpression;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * @author Mark Paluch
@@ -65,10 +71,9 @@ public final class PgSql {
 	 * @return
 	 */
 	public static PgCriteria.PostgresCriteriaStep where(String column,
-			Function<Functions, QueryExpression> wrappingFunction) {
+			Function<Operators, QueryExpression> wrappingFunction) {
 
-		PgSqlImpl.DefaultFunctions functions = new PgSqlImpl.DefaultFunctions(new CriteriaSources.DotPath(column));
-		return where(wrappingFunction.apply(functions));
+		return where(new CriteriaSources.Column(column), wrappingFunction);
 	}
 
 	/**
@@ -82,12 +87,54 @@ public final class PgSql {
 		return new PgSqlImpl.DefaultPostgresCriteriaStep(expression);
 	}
 
+	/**
+	 * Entry point for creating a {@link PgCriteria.PostgresCriteriaStep} for the given {@link QueryExpression} that shall
+	 * be wrapped by a wrapping function to process the column contents before its use in a downstream condition or
+	 * expression.
+	 *
+	 * @param expression
+	 * @param wrappingFunction
+	 * @return
+	 */
+	public static PgCriteria.PostgresCriteriaStep where(QueryExpression expression,
+			Function<Operators, QueryExpression> wrappingFunction) {
+
+		PgSqlImpl.DefaultOperators functions = new PgSqlImpl.DefaultOperators(expression);
+		return where(wrappingFunction.apply(functions));
+	}
+
+	/**
+	 * Entrypoint for array functions.
+	 *
+	 * @return
+	 */
 	public static ArrayFunctions arrays() {
 
 		return new ArrayFunctions() {
 			@Override
 			public QueryExpression arrayOf(Object... values) {
 				return new PgSqlImpl.ArrayExpression(Arrays.asList(values));
+			}
+		};
+	}
+
+	/**
+	 * Entrypoint for JSON functions.
+	 *
+	 * @return
+	 */
+	public static JsonFunctions json() {
+
+		return new JsonFunctions() {
+
+			@Override
+			public QueryExpression jsonOf(Map<String, Object> jsonObject) {
+				return new PgSqlImpl.JsonExpression(jsonObject, "json");
+			}
+
+			@Override
+			public QueryExpression jsonbOf(Map<String, Object> jsonObject) {
+				return new PgSqlImpl.JsonExpression(jsonObject, "jsonb");
 			}
 		};
 	}
@@ -102,33 +149,149 @@ public final class PgSql {
 			super(source);
 		}
 
+		protected PgCriteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+				@Nullable QueryExpression queryExpression, @Nullable Comparator comparator, @Nullable Object value) {
+			super(previous, combinator, group, queryExpression, null, comparator, value);
+		}
+
+		protected PgCriteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+				@Nullable QueryExpression queryExpression, @Nullable Comparator comparator, @Nullable Object value,
+				boolean ignoreCase) {
+			super(previous, combinator, group, queryExpression, null, comparator, value, ignoreCase);
+		}
+
+		@Override
+		public PgCriteria.PostgresCriteriaStep and(String column) {
+
+			Assert.hasText(column, "Column name must not be null or empty");
+
+			return and(CriteriaSource.ofColumn(column));
+		}
+
+		@Override
+		public PgCriteria.PostgresCriteriaStep and(QueryExpression expression) {
+
+			Assert.notNull(expression, "Query expression must not be null");
+
+			return createStep(expression, Combinator.AND);
+		}
+
+		@Override
+		public PgCriteria.PostgresCriteriaStep or(String column) {
+
+			Assert.hasText(column, "Column name must not be null or empty");
+
+			return or(CriteriaSource.ofColumn(column));
+		}
+
+		@Override
+		public PgCriteria.PostgresCriteriaStep or(QueryExpression expression) {
+
+			Assert.notNull(expression, "Query expression must not be null");
+
+			return createStep(expression, Combinator.OR);
+		}
+
+		private PgSqlImpl.DefaultPostgresCriteriaStep createStep(QueryExpression expression, Combinator combinator) {
+
+			return new PgSqlImpl.DefaultPostgresCriteriaStep(expression) {
+
+				@Override
+				protected PgCriteria createCriteria(Comparator comparator, @Nullable Object value) {
+					return new PgCriteria(PgCriteria.this, combinator, Collections.emptyList(), expression, comparator, value);
+				}
+
+				@Override
+				protected PgCriteria createCriteria(QueryExpression queryExpression) {
+					return new PgCriteria(PgCriteria.this, combinator, Collections.emptyList(), expression, null, null);
+				}
+			};
+		}
+
+		/**
+		 * Interface providing a fluent API builder methods to build a {@link Criteria}.
+		 */
 		public interface PostgresCriteriaStep extends CriteriaStep {
 
 			/**
-			 * {@code ?} operator for JSONB containment.
+			 * Array criteria steps.
 			 *
-			 * @param value
 			 * @return
 			 */
-			PgCriteria exists(Object value);
+			PostgresArrayCriteriaStep arrays();
 
 			/**
-			 * {@code @>} operator for JSONB containment.
+			 * JSON criteria steps.
 			 *
-			 * @param value
 			 * @return
 			 */
-			PgCriteria contains(Object value);
-
-			/**
-			 * {@code &&} operator for array containment.
-			 *
-			 * @param value
-			 * @return
-			 */
-			PgCriteria overlaps(Object value);
-
 			PostgresJsonCriteriaStep json();
+
+		}
+
+		/**
+		 * Fluent Postgres-specific Array criteria API providing access to Array operators and functions.
+		 */
+		public interface PostgresArrayCriteriaStep {
+
+			/**
+			 * Does the first array contain the second, that is, does each element appearing in the second array equal some
+			 * element of the first array using {@code @>}.
+			 *
+			 * @param expression
+			 * @return
+			 */
+			PgCriteria contains(QueryExpression expression);
+
+			/**
+			 * Does the first array contain the second, that is, does each element appearing in the second array equal some
+			 * element of the first array using {@code @>}.
+			 *
+			 * @param column
+			 * @property
+			 */
+			default PgCriteria contains(String column) {
+				return contains(CriteriaSource.ofColumn(column));
+			}
+
+			/**
+			 * Does the first array contain {@code values}, that is, does each element appearing in the second array equal
+			 * some element of the first array using {@code @>}.
+			 *
+			 * @param values
+			 * @property
+			 */
+			default PgCriteria contains(Object... values) {
+				return contains(PgSqlImpl.ArrayExpression.expressionOrWrap(values));
+			}
+
+			/**
+			 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+			 *
+			 * @param expression
+			 * @return
+			 */
+			PgCriteria overlaps(QueryExpression expression);
+
+			/**
+			 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+			 *
+			 * @param column
+			 * @return
+			 */
+			default PgCriteria overlaps(String column) {
+				return overlaps(CriteriaSource.ofColumn(column));
+			}
+
+			/**
+			 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+			 *
+			 * @param values
+			 * @property
+			 */
+			default PgCriteria overlaps(Object... values) {
+				return overlaps(PgSqlImpl.ArrayExpression.expressionOrWrap(values));
+			}
 
 		}
 
@@ -137,17 +300,45 @@ public final class PgSql {
 		 */
 		public interface PostgresJsonCriteriaStep {
 
-			PgCriteria contains(String field);
+			default PgCriteria exists(String column) {
+				return exists(CriteriaSource.ofColumn(column));
+			}
+
+			/**
+			 * {@code ?} operator for JSONB containment.
+			 *
+			 * @param expression
+			 * @return
+			 */
+			PgCriteria exists(QueryExpression expression);
+
+			/**
+			 * {@code ?} operator for JSONB containment.
+			 *
+			 * @param value
+			 * @return
+			 */
+			default PgCriteria exists(Object value) {
+				return exists(new PgSqlImpl.ValueExpression(value));
+			}
+
+			default PgCriteria contains(String field) {
+				return contains(CriteriaSource.ofColumn(field));
+			}
 
 			PgCriteria contains(Object value);
 
+			default PgCriteria containsAll(Object... values) {
+				return containsAll(Arrays.asList(values));
+			}
+
 			PgCriteria containsAll(Iterable<Object> values);
 
-			PgCriteria containsAll(Object... values);
+			default PgCriteria containsAny(Object... values) {
+				return containsAny(Arrays.asList(values));
+			}
 
 			PgCriteria containsAny(Iterable<Object> values);
-
-			PgCriteria containsAny(Object... values);
 
 			// @?
 			PgCriteria jsonPathMatches(String jsonPath);
@@ -159,21 +350,66 @@ public final class PgSql {
 	}
 
 	/**
-	 * Entrypoint for Postgres-specific functions.
+	 * Postgres-specific Array functions for querying array data.
 	 */
-	public interface Functions extends VectorSearchFunctions, JsonFunctions {
+	public interface ArrayFunctions {
 
 		/**
-		 * Returns a {@link JsonFunctions} object providing access to JSON functions.
+		 * Constructs an {@code ARRAY[…]} expression from the given values.
+		 *
+		 * @param values
+		 * @return an expression that represents a Postgres array of the given values.
 		 */
-		default JsonFunctions json() {
+		QueryExpression arrayOf(Object... values);
+
+	}
+
+	/**
+	 * Postgres-specific JSON functions for querying JSON data.
+	 */
+	public interface JsonFunctions {
+
+		/**
+		 * Constructs an {@code JSON} value from the given {@code jsonObject}.
+		 *
+		 * @param jsonObject
+		 * @return a JSONB value that represents the given JSON object.
+		 */
+		QueryExpression jsonOf(Map<String, Object> jsonObject);
+
+		/**
+		 * Constructs an {@code JSONB} value from the given {@code jsonObject}.
+		 *
+		 * @param jsonObject
+		 * @return a JSONB value that represents the given JSON object.
+		 */
+		QueryExpression jsonbOf(Map<String, Object> jsonObject);
+
+	}
+
+	/**
+	 * Entrypoint for Postgres-specific functions.
+	 */
+	public interface Operators extends ArrayOperators, JsonOperators, VectorSearchOperators {
+
+		/**
+		 * Returns a {@link ArrayOperators} object providing access to array functions.
+		 */
+		default ArrayOperators array() {
 			return this;
 		}
 
 		/**
-		 * Returns a {@link VectorSearchFunctions} object providing access to pgvector functions.
+		 * Returns a {@link JsonOperators} object providing access to JSON functions.
 		 */
-		default VectorSearchFunctions vector() {
+		default JsonOperators json() {
+			return this;
+		}
+
+		/**
+		 * Returns a {@link VectorSearchOperators} object providing access to pgvector functions.
+		 */
+		default VectorSearchOperators vector() {
 			return this;
 		}
 
@@ -182,7 +418,7 @@ public final class PgSql {
 	/**
 	 * pgvector-specific functions for Postgres Vector Search.
 	 */
-	public interface VectorSearchFunctions {
+	public interface VectorSearchOperators {
 
 		/**
 		 * Calculates the distance to the given vector using the specified distance function.
@@ -237,24 +473,9 @@ public final class PgSql {
 	}
 
 	/**
-	 * Postgres-specific Array functions for querying array data.
-	 */
-	public interface ArrayFunctions {
-
-		/**
-		 * Constructs an {@code ARRAY[…]} expression from the given values.
-		 *
-		 * @param values
-		 * @return an expression that represents a Postgres array of the given values.
-		 */
-		QueryExpression arrayOf(Object... values);
-
-	}
-
-	/**
 	 * Postgres-specific JSON functions for querying JSON data.
 	 */
-	public interface JsonFunctions {
+	public interface JsonOperators {
 
 		/**
 		 * Creates an index expression to extract a value from a JSON array at the given {@code index} using the arrow
@@ -273,6 +494,102 @@ public final class PgSql {
 		 * @return an expression that extracts the value using the specified {@code field}.
 		 */
 		PostgresQueryExpression field(String field);
+	}
+
+	/**
+	 * Postgres-specific Array operators.
+	 */
+	public interface ArrayOperators {
+
+		/**
+		 * Does the first array contain the second, that is, does each element appearing in the second array equal some
+		 * element of the first array using {@code @>}.
+		 *
+		 * @param expression
+		 * @return
+		 */
+		PostgresQueryExpression contains(QueryExpression expression);
+
+		/**
+		 * Does the first array contain the second, that is, does each element appearing in the second array equal some
+		 * element of the first array using {@code @>}.
+		 *
+		 * @param column
+		 * @property
+		 */
+		default PostgresQueryExpression contains(String column) {
+			return contains(CriteriaSource.ofColumn(column));
+		}
+
+		/**
+		 * Does the first array contain {@code values}, that is, does each element appearing in the second array equal some
+		 * element of the first array using {@code @>}.
+		 *
+		 * @param values
+		 * @property
+		 */
+		default PostgresQueryExpression contains(Object... values) {
+			return contains(ValuesExpression.oneOrMany(values));
+		}
+
+		/**
+		 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+		 *
+		 * @param expression
+		 * @return
+		 */
+		PostgresQueryExpression overlaps(QueryExpression expression);
+
+		/**
+		 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+		 *
+		 * @param column
+		 * @return
+		 */
+		default PostgresQueryExpression overlaps(String column) {
+			return overlaps(CriteriaSource.ofColumn(column));
+		}
+
+		/**
+		 * Do the arrays overlap, that is, have any elements in common using {@code &&}.
+		 *
+		 * @param values
+		 * @property
+		 */
+		default PostgresQueryExpression overlaps(Object... values) {
+			return overlaps(ValuesExpression.oneOrMany(values));
+		}
+
+		/**
+		 * Concatenates this the current array with the given {@code expression} representing the array concatenation
+		 * operator.
+		 *
+		 * @param expression
+		 * @return
+		 */
+		PostgresQueryExpression concatWith(QueryExpression expression);
+
+		/**
+		 * Concatenates this the current array with the given {@code property} representing the array concatenation
+		 * operator.
+		 *
+		 * @param column
+		 * @return
+		 */
+		default PostgresQueryExpression concatWith(String column) {
+			return concatWith(CriteriaSource.ofColumn(column));
+		}
+
+		/**
+		 * Concatenates this the current array with the given {@code values} representing the array concatenation operator.
+		 *
+		 * @param values
+		 * @property
+		 */
+		default PostgresQueryExpression concatWith(Object... values) {
+			return concatWith(ValuesExpression.oneOrMany(values));
+		}
+
 	}
 
 	/**
