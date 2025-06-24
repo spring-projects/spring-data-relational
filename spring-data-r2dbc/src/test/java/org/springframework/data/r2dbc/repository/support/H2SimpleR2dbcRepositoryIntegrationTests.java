@@ -15,7 +15,15 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.test.StepVerifier;
+
+import java.util.Map;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +41,6 @@ import org.springframework.data.relational.repository.query.RelationalEntityInfo
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository} against H2.
@@ -66,6 +68,11 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 	@Override
 	protected DataSource createDataSource() {
 		return H2TestSupport.createDataSource();
+	}
+
+	@Override
+	protected String getDropTableStatement() {
+		return H2TestSupport.DROP_TABLE_LEGOSET;
 	}
 
 	@Override
@@ -113,14 +120,13 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 				.verifyErrorSatisfies(actual -> {
 
 					assertThat(actual).isInstanceOf(TransientDataAccessException.class)
-							.hasMessage("Failed to update table [legoset]; Row with Id [9999] does not exist");
+							.hasMessage("Failed to update table [\"legoset\"]; Row with Id [9999] does not exist");
 				});
 	}
 
 	static class AlwaysNew implements Persistable<Long> {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 
 		public AlwaysNew(Long id, String name) {

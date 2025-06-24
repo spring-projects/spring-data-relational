@@ -57,6 +57,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  * @author Mark Paluch
  * @author Manousos Mathioudakis
  * @author Diego Krupitza
+ * @author Jens Schauder
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -74,11 +75,13 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		this.jdbc = createJdbcTemplate(createDataSource());
 
 		try {
-			this.jdbc.execute("DROP TABLE legoset");
+			this.jdbc.execute(getDropTableStatement());
 		} catch (DataAccessException e) {}
 
 		this.jdbc.execute(getCreateTableStatement());
 	}
+
+	abstract protected String getDropTableStatement();
 
 	/**
 	 * Creates a {@link DataSource} to be used in this test.
@@ -254,9 +257,11 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.then().as(StepVerifier::create) //
 				.verifyComplete();
 
-		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
-		assertThat(getCount(count)).satisfies(numberOf(1));
+		int count = jdbc.queryForObject(getCountQuery(), Integer.class);
+		assertThat(count).isEqualTo(1);
 	}
+
+	abstract protected String getCountQuery();
 
 	@Test // GH-335
 	void shouldFindByPageable() {
@@ -327,19 +332,17 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
 		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13, false);
 
-		Mono<Map<String, Object>> transactional = repository.save(legoSet1) //
-				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset")).as(rxtx::transactional);
+		Mono<Integer> transactional = repository.save(legoSet1) //
+				.map(it -> jdbc.queryForObject(getCountQuery(), Integer.class)).as(rxtx::transactional);
 
-		Mono<Map<String, Object>> nonTransactional = repository.save(legoSet2) //
-				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset"));
+		Mono<Integer> nonTransactional = repository.save(legoSet2) //
+				.map(it -> jdbc.queryForObject(getCountQuery(), Integer.class));
 
-		transactional.as(StepVerifier::create).assertNext(actual -> assertThat(getCount(actual)).satisfies(numberOf(0)))
-				.verifyComplete();
-		nonTransactional.as(StepVerifier::create).assertNext(actual -> assertThat(getCount(actual)).satisfies(numberOf(2)))
-				.verifyComplete();
+		transactional.as(StepVerifier::create).assertNext(actual -> assertThat(actual).isEqualTo(0)).verifyComplete();
+		nonTransactional.as(StepVerifier::create).assertNext(actual -> assertThat(actual).isEqualTo(2)).verifyComplete();
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
-		assertThat(getCount(map)).satisfies(numberOf(2));
+		Integer count = jdbc.queryForObject(getCountQuery(), Integer.class);
+		assertThat(count).isEqualTo(2);
 	}
 
 	@Test // GH-363
@@ -422,16 +425,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	private static Object getCount(Map<String, Object> map) {
-		return map.getOrDefault("count", map.get("COUNT"));
-	}
-
-	private Condition<? super Object> numberOf(int expected) {
-		return new Condition<>(it -> {
-			return it instanceof Number && ((Number) it).intValue() == expected;
-		}, "Number  %d", expected);
-	}
-
 	@NoRepositoryBean
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
 
@@ -453,7 +446,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		<T> Flux<T> findBy(Class<T> theClass);
 
-		@Query("SELECT name from legoset")
+		@Query("SELECT name from \"legoset\"")
 		Flux<LegoDto> findAsDtoProjection();
 
 		Flux<Named> findDistinctBy();
@@ -465,11 +458,11 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<Void> deleteAllBy();
 
 		@Modifying
-		@Query("DELETE from legoset where manual = :manual")
+		@Query("DELETE from \"legoset\" where manual = :manual")
 		Mono<Void> deleteAllByManual(int manual);
 
 		@Modifying
-		@Query("DELETE from legoset")
+		@Query("DELETE from \"legoset\"")
 		Mono<Integer> deleteAllAndReturnCount();
 
 		Mono<Integer> countByNameContains(String namePart);
@@ -502,8 +495,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 			this.flag = flag;
 		}
 
-		public LegoSet() {
-		}
+		public LegoSet() {}
 
 		@Override
 		public String getName() {
@@ -532,15 +524,13 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	static class Lego {
-		@Id
-		Integer id;
+		@Id Integer id;
 
 		public Lego(Integer id) {
 			this.id = id;
 		}
 
-		public Lego() {
-		}
+		public Lego() {}
 
 		public Integer getId() {
 			return this.id;
@@ -569,7 +559,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		}
 
 		public boolean equals(final Object o) {
-			if (o == this) return true;
+			if (o == this)
+				return true;
 			if (!(o instanceof final LegoDto other))
 				return false;
 			final Object this$name = this.getName();
@@ -592,7 +583,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		}
 
 		public String toString() {
-			return "AbstractR2dbcRepositoryIntegrationTests.LegoDto(name=" + this.getName() + ", unknown=" + this.getUnknown() + ")";
+			return "AbstractR2dbcRepositoryIntegrationTests.LegoDto(name=" + this.getName() + ", unknown=" + this.getUnknown()
+					+ ")";
 		}
 	}
 

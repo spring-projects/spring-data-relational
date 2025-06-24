@@ -25,7 +25,6 @@ import org.assertj.core.error.BasicErrorMessageFactory;
 import org.assertj.core.error.ShouldBeEmpty;
 import org.assertj.core.error.ShouldContain;
 import org.assertj.core.error.ShouldNotBeEmpty;
-
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
@@ -56,7 +55,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	 * @see SqlIdentifier#unquoted(String)
 	 */
 	public OutboundRowAssert containsColumn(String identifier) {
-		return containsColumn(SqlIdentifier.unquoted(identifier));
+		return containsColumn(SqlIdentifier.quoted(identifier));
 	}
 
 	/**
@@ -131,7 +130,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	 * @see SqlIdentifier#unquoted(String)
 	 */
 	public OutboundRowAssert containsColumnWithValue(String identifier, Object value) {
-		return containsColumnWithValue(SqlIdentifier.unquoted(identifier), value);
+		return containsColumnWithValue(SqlIdentifier.quoted(identifier), value);
 	}
 
 	/**
@@ -163,7 +162,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	 * @see SqlIdentifier#unquoted(String)
 	 */
 	public OutboundRowAssert containsColumns(String... identifier) {
-		return containsColumns(Arrays.stream(identifier).map(SqlIdentifier::unquoted).toArray(SqlIdentifier[]::new));
+		return containsColumns(Arrays.stream(identifier).map(SqlIdentifier::quoted).toArray(SqlIdentifier[]::new));
 	}
 
 	/**
@@ -223,7 +222,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 	 * @return a new assertions object.
 	 */
 	public ParameterAssert withColumn(String identifier) {
-		return withColumn(SqlIdentifier.unquoted(identifier));
+		return withColumn(SqlIdentifier.quoted(identifier));
 	}
 
 	/**
@@ -326,7 +325,7 @@ public class OutboundRowAssert extends AbstractMapAssert<OutboundRowAssert, Outb
 			if (!this.actual.getType().equals(type)) {
 				failWithMessage(new BasicErrorMessageFactory(
 						"Expecting\n" + "  <%s>\n" + "to be instance of:\n" + "  <%s>\n" + "but was not", actual.getType(), type)
-								.create());
+						.create());
 			}
 
 			return this;

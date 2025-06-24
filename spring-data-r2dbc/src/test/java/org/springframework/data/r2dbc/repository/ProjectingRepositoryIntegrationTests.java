@@ -73,13 +73,13 @@ public class ProjectingRepositoryIntegrationTests {
 		this.jdbc = new JdbcTemplate(createDataSource());
 
 		try {
-			this.jdbc.execute("DROP TABLE immutable_non_null");
+			this.jdbc.execute("DROP TABLE \"immutable_non_null\"");
 		}
 		catch (DataAccessException e) {
 		}
 
-		this.jdbc.execute("CREATE TABLE immutable_non_null (id serial PRIMARY KEY, name varchar(255), email varchar(255))");
-		this.jdbc.execute("INSERT INTO immutable_non_null VALUES (42, 'Walter', 'heisenberg@the-white-family.com')");
+		this.jdbc.execute("CREATE TABLE \"immutable_non_null\" (id serial PRIMARY KEY, name varchar(255), email varchar(255))");
+		this.jdbc.execute("INSERT INTO \"immutable_non_null\" VALUES (42, 'Walter', 'heisenberg@the-white-family.com')");
 	}
 
 	/**

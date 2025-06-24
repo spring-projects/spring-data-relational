@@ -54,6 +54,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityInfo
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
@@ -76,6 +77,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	SimpleR2dbcRepository<LegoSet, Integer> repository;
 	SimpleR2dbcRepository<LegoSetWithNonScalarId, Integer> repositoryWithNonScalarId;
 	JdbcTemplate jdbc;
+	NamedParameterJdbcTemplate namedJdbc;
 
 	@BeforeEach
 	void before() {
@@ -96,10 +98,11 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 		try {
-			this.jdbc.execute("DROP TABLE legoset");
+			this.jdbc.execute(getDropTableStatement());
 		} catch (DataAccessException e) {}
 
 		this.jdbc.execute(getCreateTableStatement());
+		this.namedJdbc = new NamedParameterJdbcTemplate(jdbc);
 	}
 
 	/**
@@ -108,6 +111,11 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	 * @return the {@link DataSource} to be used in this test.
 	 */
 	protected abstract DataSource createDataSource();
+
+	/**
+	 * Returns teh DROP TABLE statement for {@code legoset} with properly quoted tablename
+	 */
+	abstract protected String getDropTableStatement();
 
 	/**
 	 * Returns the CREATE TABLE statement for table {@code legoset} with the following three columns:
@@ -146,7 +154,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.consumeNextWith(actual -> assertThat(actual.getVersion()).isEqualTo(0)) //
 				.verifyComplete();
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM \"legoset\"");
 		assertThat(map) //
 				.containsEntry("name", "SCHAUFELRADBAGGER") //
 				.containsEntry("manual", 12) //
@@ -164,7 +172,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.consumeNextWith(actual -> assertThat(actual.getVersion()).isEqualTo(1)) //
 				.verifyComplete();
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM \"legoset\"");
 		assertThat(map) //
 				.containsEntry("name", "SCHAUFELRADBAGGER") //
 				.containsEntry("manual", 12) //
@@ -175,8 +183,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldUpdateObject() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSet legoSet = new LegoSet(id, "SCHAUFELRADBAGGER", 12);
 		legoSet.setManual(14);
@@ -186,18 +194,22 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.expectNextCount(1) //
 				.verifyComplete();
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		Map<String, Object> map = selectLegoSetForMap();
 		assertThat(map) //
 				.containsEntry("name", "SCHAUFELRADBAGGER") //
 				.containsEntry("manual", 14) //
 				.containsKey("id");
 	}
 
+	private Map<String, Object> selectLegoSetForMap() {
+		return jdbc.queryForMap("SELECT * FROM \"legoset\"");
+	}
+
 	@Test // gh-93
 	void shouldUpdateVersionableObjectAndIncreaseVersion() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertIntoLegoSet("SCHAUFELRADBAGGER", 12, 42);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSetVersionable legoSet = new LegoSetVersionable(id, "SCHAUFELRADBAGGER", 12, 42);
 		legoSet.setManual(14);
@@ -209,7 +221,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 		assertThat(legoSet.getVersion()).isEqualTo(43);
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		Map<String, Object> map = selectLegoSetForMap();
 		assertThat(map) //
 				.containsEntry("name", "SCHAUFELRADBAGGER") //
 				.containsEntry("manual", 14) //
@@ -217,11 +229,16 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.containsKey("id");
 	}
 
+	private void insertIntoLegoSet(String name, int manualId, int version) {
+		jdbc.execute(
+				"INSERT INTO \"legoset\" (name, manual, version) VALUES('" + name + "', " + manualId + ", " + version + ")");
+	}
+
 	@Test // gh-93
 	void shouldFailWithOptimistickLockingWhenVersionDoesNotMatchOnUpdate() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		LegoSetVersionable legoSet = new LegoSetVersionable(id, "SCHAUFELRADBAGGER", 12, 0);
 
@@ -248,7 +265,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.expectNext(15) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = selectLegoSetCount();
 		assertThat(count).isEqualTo(4);
 	}
 
@@ -263,15 +280,15 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.expectNextCount(2) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM \"legoset\"", Integer.class);
 		assertThat(count).isEqualTo(2);
 	}
 
 	@Test
 	void shouldFindById() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		repository.findById(id) //
 				.as(StepVerifier::create) //
@@ -286,8 +303,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldExistsById() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		repository.existsById(id) //
 				.as(StepVerifier::create) //
@@ -303,8 +320,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldExistsByIdPublisher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		repository.existsById(Mono.just(id)) //
 				.as(StepVerifier::create) //
@@ -320,8 +337,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldFindByAll() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
 
 		repository.findAll() //
 				.map(LegoSet::getName) //
@@ -334,10 +351,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-407
 	void shouldFindAllWithSort() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 15)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		repository.findAll(Sort.by("manual").ascending()) //
 				.map(LegoSet::getName) //
@@ -354,10 +371,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldFindAllByIdUsingIterable() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
 
-		List<Integer> ids = jdbc.queryForList("SELECT id FROM legoset", Integer.class);
+		List<Integer> ids = jdbc.queryForList("SELECT id FROM \"legoset\"", Integer.class);
 
 		repository.findAllById(ids) //
 				.map(LegoSet::getName) //
@@ -372,10 +389,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldFindAllByIdUsingPublisher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
 
-		List<Integer> ids = jdbc.queryForList("SELECT id FROM legoset", Integer.class);
+		List<Integer> ids = jdbc.queryForList("SELECT id FROM \"legoset\"", Integer.class);
 
 		repository.findAllById(Flux.fromIterable(ids)) //
 				.map(LegoSet::getName) //
@@ -395,8 +412,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.expectNext(0L) //
 				.verifyComplete();
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
 
 		repository.count() //
 				.as(StepVerifier::create) //
@@ -407,36 +424,36 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	void shouldDeleteById() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		repository.deleteById(id) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = selectLegoSetCount();
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test
 	void shouldDeleteByIdPublisher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		repository.deleteById(Mono.just(id)) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = selectLegoSetCount();
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test
 	void shouldDelete() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		LegoSet legoSet = new LegoSet(id, "SCHAUFELRADBAGGER", 12);
 
@@ -444,15 +461,15 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM \"legoset\"", Integer.class);
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test
 	void shouldDeleteAllUsingIterable() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		LegoSet legoSet = new LegoSet(id, "SCHAUFELRADBAGGER", 12);
 
@@ -460,15 +477,15 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM \"legoset\"", Integer.class);
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test
 	void shouldDeleteAllUsingPublisher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSet legoSet = new LegoSet(id, "SCHAUFELRADBAGGER", 12);
 
@@ -476,29 +493,29 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = selectLegoSetCount();
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test // gh-498
 	void shouldDeleteAllById() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		repository.deleteAllById(Collections.singletonList(id)) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		Integer count = selectLegoSetCount();
 		assertThat(count).isEqualTo(0);
 	}
 
 	@Test // gh-538
 	void shouldSelectByExampleUsingId() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setId(id);
@@ -514,8 +531,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingName() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setName("SCHAUFELRADBAGGER");
@@ -531,8 +548,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingManual() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		insertLegoset("SCHAUFELRADBAGGER", 12);
+		Integer id = getSelectIdFromSingleLegoset();
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setManual(12);
@@ -548,10 +565,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingGlobalStringMatcher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -589,10 +606,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleUsingFieldLevelStringMatcher() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		insertLegoset("Moon space base", 12);
+		insertLegoset("Mars space base", 13);
+		insertLegoset("Moon construction kit", 14);
+		insertLegoset("Mars construction kit", 15);
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -633,10 +650,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleIgnoringCase() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -664,10 +681,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldFailSelectByExampleWhenUsingRegEx() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 
@@ -701,10 +718,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleIncludingNull() {
 
-		jdbc.execute("INSERT INTO legoset (name, extra, manual) VALUES('Moon space base', 'base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, extra, manual) VALUES( 'Mars space base', 'base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		insertLegoset("Moon space base", "base", 12);
+		insertLegoset("Mars space base", "base", 13);
+		insertLegoset("Moon construction kit", 14);
+		insertLegoset("Mars construction kit", 15);
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setExtra("base");
@@ -721,10 +738,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldSelectByExampleWithAnyMatching() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon space base', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars space base', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Moon construction kit', 14)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('Mars construction kit', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon space base', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars space base', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Moon construction kit', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('Mars construction kit', 15)");
 
 		LegoSet legoSet = new LegoSet();
 		legoSet.setName("Moon space base");
@@ -742,8 +759,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldCountByExampleUsingId() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setId(id);
@@ -759,8 +776,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-538
 	void shouldCheckExistenceByExampleUsingId() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
 
 		LegoSetWithNonScalarId legoSet = new LegoSetWithNonScalarId();
 		legoSet.setId(id);
@@ -776,10 +793,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldReturnFirstResult() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 15)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 15)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setName("FORSCHUNGSSCHIFF");
@@ -795,10 +812,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldReturnOneResult() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setName("FORSCHUNGSSCHIFF");
@@ -821,10 +838,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldReturnAll() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -838,10 +855,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-1609
 	void findByScrollPosition() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -868,10 +885,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldApplySortAll() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -894,10 +911,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldApplyProjection() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setName("FORSCHUNGSSCHIFF");
@@ -914,10 +931,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldApplyProjectionAs() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setName("FORSCHUNGSSCHIFF");
@@ -933,10 +950,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldApplyPagination() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -965,10 +982,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldCount() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -990,9 +1007,9 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // GH-663
 	void findByShouldReportExists() {
 
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
-		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO \"legoset\" (name, manual) VALUES('RALLYEAUTO', 14)");
 
 		LegoSet probe = new LegoSet();
 		probe.setManual(13);
@@ -1009,6 +1026,22 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.as(StepVerifier::create) //
 				.expectNext(false) //
 				.verifyComplete();
+	}
+
+	private Integer selectLegoSetCount() {
+		return jdbc.queryForObject("SELECT COUNT(*) FROM \"legoset\"", Integer.class);
+	}
+
+	private Integer getSelectIdFromSingleLegoset() {
+		return jdbc.queryForObject("SELECT id FROM \"legoset\"", Integer.class);
+	}
+
+	private void insertLegoset(String name, int manualId) {
+		jdbc.update("INSERT INTO \"legoset\" (name, manual) VALUES(?, ?)", name, manualId);
+	}
+
+	private void insertLegoset(String name, String extra, int manualId) {
+		jdbc.update("INSERT INTO \"legoset\" (name, extra, manual) VALUES(?, ?, ?)", name, extra, manualId);
 	}
 
 	@Table("legoset")

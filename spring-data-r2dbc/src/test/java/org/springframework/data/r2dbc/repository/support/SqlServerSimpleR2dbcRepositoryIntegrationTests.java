@@ -33,6 +33,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link SimpleR2dbcRepository} against Microsoft SQL Server.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -53,6 +54,11 @@ public class SqlServerSimpleR2dbcRepositoryIntegrationTests extends AbstractSimp
 	@Override
 	protected DataSource createDataSource() {
 		return SqlServerTestSupport.createDataSource(database);
+	}
+
+	@Override
+	protected String getDropTableStatement() {
+		return SqlServerTestSupport.DROP_TABLE_LEGOSET;
 	}
 
 	@Override

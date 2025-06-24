@@ -24,7 +24,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -37,6 +36,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Unit test for {@link ReactiveUpdateOperation}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class ReactiveUpdateOperationUnitTests {
 
@@ -68,7 +68,7 @@ public class ReactiveUpdateOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("UPDATE \"person\" SET \"THE_NAME\" = $1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
 	}
 
@@ -87,7 +87,7 @@ public class ReactiveUpdateOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-		assertThat(statement.getSql()).isEqualTo("UPDATE table SET THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("UPDATE table SET \"THE_NAME\" = $1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
 	}
 
@@ -107,7 +107,8 @@ public class ReactiveUpdateOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
+		assertThat(statement.getSql())
+				.isEqualTo("UPDATE \"person\" SET \"THE_NAME\" = $1 WHERE \"person\".\"THE_NAME\" = $2");
 		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
 				Parameter.from("Walter"));
 	}
@@ -129,7 +130,8 @@ public class ReactiveUpdateOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
-		assertThat(statement.getSql()).isEqualTo("UPDATE the_table SET THE_NAME = $1 WHERE the_table.THE_NAME = $2");
+		assertThat(statement.getSql())
+				.isEqualTo("UPDATE the_table SET \"THE_NAME\" = $1 WHERE the_table.\"THE_NAME\" = $2");
 	}
 
 	static class Person {

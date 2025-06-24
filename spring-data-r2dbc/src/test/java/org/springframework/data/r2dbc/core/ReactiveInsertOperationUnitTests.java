@@ -26,7 +26,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -38,6 +37,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Unit test for {@link ReactiveInsertOperation}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class ReactiveInsertOperationUnitTests {
 
@@ -58,8 +58,7 @@ public class ReactiveInsertOperationUnitTests {
 	void shouldInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
@@ -79,7 +78,7 @@ public class ReactiveInsertOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME) VALUES ($1)");
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO \"person\" (\"THE_NAME\") VALUES ($1)");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
@@ -87,8 +86,7 @@ public class ReactiveInsertOperationUnitTests {
 	void shouldUpdateInTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
-				.build();
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()).build();
 		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
@@ -109,7 +107,7 @@ public class ReactiveInsertOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
-		assertThat(statement.getSql()).isEqualTo("INSERT INTO the_table (THE_NAME) VALUES ($1)");
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO the_table (\"THE_NAME\") VALUES ($1)");
 	}
 
 	static class Person {

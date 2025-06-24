@@ -32,7 +32,6 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.H2Dialect;
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -52,7 +51,6 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 	DatabaseClient databaseClient;
 	StatementRecorder recorder = StatementRecorder.newInstance();
 	ReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(H2Dialect.INSTANCE);
-
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
@@ -75,9 +73,10 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 
 		repository.findBySpel().block(Duration.ofMillis(100));
 
-		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
+		StatementRecorder.RecordedStatement statement = recorder
+				.getCreatedStatement(SqlInspectingR2dbcRepositoryUnitTests::isSelect);
 
-		assertThat(statement.getSql()).isEqualTo("select * from PERSONx");
+		assertThat(statement.getSql()).isEqualTo("select * from \"PERSON\"x");
 	}
 
 	private static boolean isSelect(String sql) {
@@ -85,7 +84,7 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 	}
 
 	interface MyPersonRepository extends Repository<Person, Long> {
-		@Query("select * from #{#tableName +'x'}")
+		@Query("select * from #{#tableName + 'x'}")
 		Mono<Person> findBySpel();
 	}
 

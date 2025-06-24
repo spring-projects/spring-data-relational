@@ -51,10 +51,9 @@ public class PostgresDialect extends AbstractDialect {
 	 * Singleton instance.
 	 *
 	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.PostgresDialect} or
-	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect}.
+	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect}.
 	 */
-	@Deprecated(forRemoval = true)
-	public static final PostgresDialect INSTANCE = new PostgresDialect();
+	@Deprecated(forRemoval = true) public static final PostgresDialect INSTANCE = new PostgresDialect();
 
 	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UUID.class, URL.class, URI.class, InetAddress.class,
 			Map.class);
@@ -102,7 +101,7 @@ public class PostgresDialect extends AbstractDialect {
 		return LIMIT_CLAUSE;
 	}
 
-	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause(this.getIdentifierProcessing());
+	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause();
 
 	@Override
 	public LockClause lock() {
@@ -121,12 +120,6 @@ public class PostgresDialect extends AbstractDialect {
 
 	static class PostgresLockClause implements LockClause {
 
-		private final IdentifierProcessing identifierProcessing;
-
-		PostgresLockClause(IdentifierProcessing identifierProcessing) {
-			this.identifierProcessing = identifierProcessing;
-		}
-
 		@Override
 		public String getLock(LockOptions lockOptions) {
 
@@ -144,7 +137,7 @@ public class PostgresDialect extends AbstractDialect {
 			}
 
 			// without schema
-			String tableName = last.toSql(this.identifierProcessing);
+			String tableName = last.toSql(PostgresDialect.identifierProcessing);
 
 			return switch (lockOptions.getLockMode()) {
 				case PESSIMISTIC_WRITE -> "FOR UPDATE OF " + tableName;

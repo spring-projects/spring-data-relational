@@ -36,6 +36,8 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  */
 public class SqlServerTestSupport {
 
+	public static final String DROP_TABLE_LEGOSET = "DROP TABLE `legoset`";
+	public static final String COUNT_FROM_LEGOSET = "SELECT count(*) AS count FROM [legoset]";
 	private static ExternalDatabase testContainerDatabase;
 
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //

@@ -38,6 +38,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 
@@ -46,6 +47,7 @@ import org.springframework.r2dbc.core.Parameter;
  *
  * @author Mark Paluch
  * @author Louis Morgan
+ * @author Jens Schauder
  */
 public abstract class ReactiveDataAccessStrategyTestSupport {
 
@@ -185,7 +187,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		toSave.readOnlyField = "readonly";
 		toSave.readOnlyArrayField = "readonly_array".getBytes();
 
-		assertThat(getStrategy().getOutboundRow(toSave)).containsOnlyKeys(SqlIdentifier.unquoted("writable_field"));
+		assertThat(getStrategy().getOutboundRow(toSave)).containsOnlyKeys(SqlIdentifier.quoted("WRITABLE_FIELD"));
 	}
 
 	private <T> void testType(BiConsumer<PrimitiveTypes, T> setter, Function<PrimitiveTypes, T> getter, T testValue,
@@ -201,8 +203,9 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		PrimitiveTypes toSave = new PrimitiveTypes();
 		setter.accept(toSave, testValue);
 
-		assertThat(strategy.getOutboundRow(toSave)).containsEntry(SqlIdentifier.unquoted(fieldname),
-				Parameter.from(testValue));
+		SqlIdentifier key = SqlIdentifier
+				.quoted(AnsiDialect.INSTANCE.getIdentifierProcessing().standardizeLetterCase(fieldname));
+		assertThat(strategy.getOutboundRow(toSave)).containsEntry(key, Parameter.from(testValue));
 
 		when(rowMock.get(fieldname)).thenReturn(testValue);
 

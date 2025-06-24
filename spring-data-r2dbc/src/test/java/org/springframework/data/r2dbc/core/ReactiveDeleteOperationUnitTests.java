@@ -24,7 +24,6 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
@@ -36,6 +35,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Unit test for {@link ReactiveDeleteOperation}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class ReactiveDeleteOperationUnitTests {
 
@@ -67,7 +67,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM person");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM \"person\"");
 	}
 
 	@Test // gh-410
@@ -104,7 +104,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM \"person\" WHERE \"person\".\"THE_NAME\" = $1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
@@ -125,7 +125,7 @@ public class ReactiveDeleteOperationUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
-		assertThat(statement.getSql()).isEqualTo("DELETE FROM other_table WHERE other_table.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM other_table WHERE other_table.\"THE_NAME\" = $1");
 	}
 
 	static class Person {

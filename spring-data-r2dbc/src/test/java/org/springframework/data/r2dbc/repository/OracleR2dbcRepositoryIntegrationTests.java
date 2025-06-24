@@ -73,8 +73,18 @@ public class OracleR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposito
 	}
 
 	@Override
+	protected String getDropTableStatement() {
+		return OracleTestSupport.DROP_TABLE_LEGOSET;
+	}
+
+	@Override
 	protected String getCreateTableStatement() {
 		return OracleTestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
+	}
+
+	@Override
+	protected String getCountQuery() {
+		return OracleTestSupport.COUNT_FROM_LEGOSET;
 	}
 
 	@Override
