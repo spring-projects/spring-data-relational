@@ -15,19 +15,29 @@
  */
 package org.springframework.data.relational.core.query;
 
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.data.relational.core.sql.BindMarker;
 
 /**
  * @author Mark Paluch
  */
-public interface CriteriaSource extends QueryExpression {
+class SimpleBindings implements Bindings {
 
-	static CriteriaSource ofColumn(String name) {
-		return new CriteriaSources.Column(name);
+	private final Map<BindMarker, Object> values = new LinkedHashMap<>();
+
+	@Override
+	public void bind(BindMarker bindMarker, Object value) {
+		values.put(bindMarker, value);
 	}
 
-	static CriteriaSource of(SqlIdentifier identifier) {
-		return new CriteriaSources.SqlIdentifierSource(identifier);
+	@Override
+	public void bind(BindMarker bindMarker, Object value, QueryExpression.ExpressionTypeContext typeContext) {
+		values.put(bindMarker, value);
 	}
 
+	public Map<BindMarker, Object> getValues() {
+		return values;
+	}
 }

@@ -15,35 +15,27 @@
  */
 package org.springframework.data.relational.core.query;
 
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.Nullable;
 
 /**
- * Query expression that nests another {@link QueryExpression}. This is used to ensure that the nested expression
- *
  * @author Mark Paluch
  */
-class NestedQueryExpression implements QueryExpression {
+record SimpleTypeContext(TypeInformation<?> type) implements QueryExpression.ExpressionTypeContext {
 
-	private final QueryExpression expression;
-
-	public NestedQueryExpression(QueryExpression expression) {
-		this.expression = expression;
-	}
+	public static SimpleTypeContext OBJECT = new SimpleTypeContext(TypeInformation.OBJECT);
+	public static SimpleTypeContext BOOL = new SimpleTypeContext(TypeInformation.of(Boolean.TYPE));
+	public static SimpleTypeContext STRING = new SimpleTypeContext(TypeInformation.of(String.class));
 
 	@Override
-	public QueryExpression nest() {
-		return this;
+	public TypeInformation<?> getTargetType() {
+		return type;
 	}
 
+	@Nullable
 	@Override
-	public ExpressionTypeContext getType(EvaluationContext context) {
-		return expression.getType(context);
+	public RelationalPersistentProperty getProperty() {
+		return null;
 	}
-
-	@Override
-	public Expression evaluate(EvaluationContext context) {
-		return Expressions.nest(expression.evaluate(context));
-	}
-
 }

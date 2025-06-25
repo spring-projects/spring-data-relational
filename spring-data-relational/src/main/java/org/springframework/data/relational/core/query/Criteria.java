@@ -169,7 +169,7 @@ public class Criteria implements CriteriaDefinition {
 
 		Assert.hasText(column, "Column name must not be null or empty");
 
-		return new DefaultCriteriaStep(CriteriaSource.ofColumn(column), SqlIdentifier.unquoted(column));
+		return new DefaultCriteriaStep(QueryExpression.column(column), SqlIdentifier.unquoted(column));
 	}
 
 	/**
@@ -183,7 +183,7 @@ public class Criteria implements CriteriaDefinition {
 		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
-		CriteriaSource lhs = CriteriaSource.ofColumn(column);
+		QueryExpression lhs = QueryExpression.column(column);
 		return new DefaultCriteriaStep(lhs, identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
@@ -250,7 +250,7 @@ public class Criteria implements CriteriaDefinition {
 		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
-		CriteriaSource lhs = CriteriaSource.ofColumn(column);
+		QueryExpression lhs = QueryExpression.column(column);
 		return new DefaultCriteriaStep(lhs, identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {

@@ -19,32 +19,51 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
+ * Utility class providing implementations of {@link CriteriaSource} for common sources such as columns and SQL
+ * identifiers.
+ *
  * @author Mark Paluch
+ * @since 4.0
  */
 class CriteriaSources {
-	public static final record Column(String name) implements CriteriaSource {
+
+	/**
+	 * A column name (or property path) reference.
+	 *
+	 * @param name
+	 */
+	public record Column(String name) implements QueryExpression {
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return context.withProperty(name);
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return context.getColumn(name);
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return context.getColumnName(name);
+		public Expression evaluate(EvaluationContext context) {
+			return context.getColumn(name).toExpression();
 		}
+
 	}
 
-	public static final record SqlIdentifierSource(SqlIdentifier identifier) implements CriteriaSource {
+	/**
+	 * A column or alias name.
+	 *
+	 * @param identifier
+	 */
+	public record SqlIdentifierSource(SqlIdentifier identifier) implements QueryExpression {
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return context.withProperty(identifier);
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return context.getColumn(identifier);
 		}
 
+
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return context.getColumnName(identifier);
+		public Expression evaluate(EvaluationContext context) {
+			return context.getColumn(identifier).toExpression();
 		}
+
 	}
+
 }

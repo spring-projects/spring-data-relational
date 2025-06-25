@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,9 @@ class PgSqlUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	MappingRelationalConverter converter = new MappingRelationalConverter(context);
 	Table table = Table.create("with_embedding");
-	SimpleQueryRenderContext renderContext = new SimpleQueryRenderContext(table, BindMarkersFactory.named(":", "p", 32),
+	SimpleBindings bindings = new SimpleBindings();
+	SimpleEvaluationContext renderContext = new SimpleEvaluationContext(table, BindMarkersFactory.named(":", "p", 32),
+			bindings,
 			converter, context.getRequiredPersistentEntity(WithEmbedding.class));
 
 	@Test
@@ -50,11 +53,12 @@ class PgSqlUnitTests {
 
 		Criteria embedding = PgSql
 				.where("embedding", it -> it.distanceTo(Vector.of(1, 2, 3), PgSql.VectorSearchOperators.Distances::cosine))
-				.lessThan(0.8);
+				.lessThan("0.8"); // converter converts to Number
 
 		String sql = toSql(embedding);
 
 		assertThat(sql).contains("with_embedding.the_embedding <=> :p0 < :p1");
+		assertThat(bindings.getValues()).containsValue(new BigDecimal("0.8"));
 	}
 
 	@Test
@@ -113,7 +117,7 @@ class PgSqlUnitTests {
 	void shouldRenderSourceFunction() {
 
 		// SqlIdentifier to refer to columns?
-		Criteria arrayContains = PgSql.where(PgSql.function("array_ndims", CriteriaSource.ofColumn("someArray")))
+		Criteria arrayContains = PgSql.where(PgSql.function("array_ndims", QueryExpression.column("someArray")))
 				.greaterThan(2);
 
 		String sql = toSql(arrayContains);
@@ -134,9 +138,7 @@ class PgSqlUnitTests {
 
 	private String toSql(Criteria criteria) {
 
-		QueryExpression.QueryRenderContext contextualized = criteria.getExpression().contextualize(renderContext);
-		Expression expression = criteria.getExpression().render(contextualized);
-
+		Expression expression = criteria.getExpression().evaluate(renderContext);
 		return SqlRenderer.toString(Select.builder().select(expression).from(table).where(expression).build());
 	}
 

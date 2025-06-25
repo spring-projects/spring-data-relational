@@ -165,7 +165,7 @@ public final class PgSql {
 
 			Assert.hasText(column, "Column name must not be null or empty");
 
-			return and(CriteriaSource.ofColumn(column));
+			return and(QueryExpression.column(column));
 		}
 
 		@Override
@@ -181,7 +181,7 @@ public final class PgSql {
 
 			Assert.hasText(column, "Column name must not be null or empty");
 
-			return or(CriteriaSource.ofColumn(column));
+			return or(QueryExpression.column(column));
 		}
 
 		@Override
@@ -251,7 +251,7 @@ public final class PgSql {
 			 * @property
 			 */
 			default PgCriteria contains(String column) {
-				return contains(CriteriaSource.ofColumn(column));
+				return contains(QueryExpression.column(column));
 			}
 
 			/**
@@ -280,7 +280,7 @@ public final class PgSql {
 			 * @return
 			 */
 			default PgCriteria overlaps(String column) {
-				return overlaps(CriteriaSource.ofColumn(column));
+				return overlaps(QueryExpression.column(column));
 			}
 
 			/**
@@ -301,7 +301,7 @@ public final class PgSql {
 		public interface PostgresJsonCriteriaStep {
 
 			default PgCriteria exists(String column) {
-				return exists(CriteriaSource.ofColumn(column));
+				return exists(QueryExpression.column(column));
 			}
 
 			/**
@@ -323,7 +323,7 @@ public final class PgSql {
 			}
 
 			default PgCriteria contains(String field) {
-				return contains(CriteriaSource.ofColumn(field));
+				return contains(QueryExpression.column(field));
 			}
 
 			PgCriteria contains(Object value);
@@ -518,7 +518,7 @@ public final class PgSql {
 		 * @property
 		 */
 		default PostgresQueryExpression contains(String column) {
-			return contains(CriteriaSource.ofColumn(column));
+			return contains(QueryExpression.column(column));
 		}
 
 		/**
@@ -547,7 +547,7 @@ public final class PgSql {
 		 * @return
 		 */
 		default PostgresQueryExpression overlaps(String column) {
-			return overlaps(CriteriaSource.ofColumn(column));
+			return overlaps(QueryExpression.column(column));
 		}
 
 		/**
@@ -577,7 +577,7 @@ public final class PgSql {
 		 * @return
 		 */
 		default PostgresQueryExpression concatWith(String column) {
-			return concatWith(CriteriaSource.ofColumn(column));
+			return concatWith(QueryExpression.column(column));
 		}
 
 		/**
@@ -604,7 +604,7 @@ public final class PgSql {
 		 * @return
 		 */
 		default PostgresQueryExpression as(String type) {
-			return new PgSqlImpl.AppendingPostgresExpression(this, "::" + type);
+			return PgSqlImpl.PgCastExpression.create(this, type);
 		}
 
 		/**

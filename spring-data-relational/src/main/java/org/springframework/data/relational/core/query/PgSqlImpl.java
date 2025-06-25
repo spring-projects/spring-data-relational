@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -48,7 +49,7 @@ class PgSqlImpl {
 			implements PgSql.PgCriteria.PostgresCriteriaStep {
 
 		protected DefaultPostgresCriteriaStep(String propertyName) {
-			this(CriteriaSource.ofColumn(propertyName));
+			this(QueryExpression.column(propertyName));
 		}
 
 		protected DefaultPostgresCriteriaStep(QueryExpression source) {
@@ -129,15 +130,15 @@ class PgSqlImpl {
 			QueryExpression rhs) implements PgSql.PostgresQueryExpression {
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return this.rhs.contextualize(this.lhs.contextualize(context));
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return ExpressionTypeContext.bool();
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 
-			Expression lhs = this.lhs.render(context);
-			Expression rhs = this.rhs.render(context);
+			Expression lhs = this.lhs.evaluate(context.withType(this.rhs));
+			Expression rhs = this.rhs.evaluate(context.withType(this.lhs));
 
 			return Comparison.create(lhs, operator, rhs);
 		}
@@ -147,7 +148,7 @@ class PgSqlImpl {
 	record ValueExpression(Object value) implements QueryExpression {
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 			return context.bind(value);
 		}
 	}
@@ -170,7 +171,7 @@ class PgSqlImpl {
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 
 			List<BindMarker> bindMarkers = new ArrayList<>();
 			for (Object value : this.values) {
@@ -184,18 +185,18 @@ class PgSqlImpl {
 	record FunctionExpression(String function, Iterable<Object> values) implements PgSql.PostgresQueryExpression {
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 			return SimpleFunction.create(function, createArgumentExpressions(values(), context));
 		}
 
-		private static List<Expression> createArgumentExpressions(Iterable<Object> values, QueryRenderContext context) {
+		private static List<Expression> createArgumentExpressions(Iterable<Object> values, EvaluationContext context) {
 
 			List<Expression> arguments = new ArrayList<>();
 			for (Object value : values) {
 				if (value == null) {
 					arguments.add(Expressions.just("NULL"));
 				} else if (value instanceof QueryExpression qe) {
-					arguments.add(qe.render(context));
+					arguments.add(qe.evaluate(context));
 				} else {
 					arguments.add(context.bind(value));
 				}
@@ -222,11 +223,15 @@ class PgSqlImpl {
 			}
 
 			return new ArrayExpression(values);
-
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return ExpressionTypeContext.object().asCollection();
+		}
+
+		@Override
+		public Expression evaluate(EvaluationContext context) {
 			return BaseFunction.create("array", "[", "]", FunctionExpression.createArgumentExpressions(values(), context));
 		}
 	}
@@ -234,7 +239,7 @@ class PgSqlImpl {
 	record JsonExpression(Map<String, Object> jsonObject, String type) implements QueryExpression {
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 			return new PostfixExpression(context.bind(jsonObject), Expressions.just("::" + type));
 		}
 	}
@@ -243,17 +248,19 @@ class PgSqlImpl {
 
 		@Override
 		public PgSql.PostgresQueryExpression contains(QueryExpression expression) {
-			return new ArrayOperator(source, "@>", expression);
+			return new ArrayOperator(source, "@>", expression,
+					ArrayOperator.just(QueryExpression.ExpressionTypeContext.bool()));
 		}
 
 		@Override
 		public PgSql.PostgresQueryExpression overlaps(QueryExpression expression) {
-			return new ArrayOperator(source, "&&", expression);
+			return new ArrayOperator(source, "&&", expression,
+					ArrayOperator.just(QueryExpression.ExpressionTypeContext.bool()));
 		}
 
 		@Override
 		public PgSql.PostgresQueryExpression concatWith(QueryExpression expression) {
-			return new ArrayOperator(source, "||", expression);
+			return new ArrayOperator(source, "||", expression, QueryExpression::getType);
 		}
 
 		@Override
@@ -277,16 +284,16 @@ class PgSqlImpl {
 			Vector vector) implements PgSql.PostgresQueryExpression {
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return source.contextualize(context);
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return ExpressionTypeContext.of(Number.class);
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
+		public Expression evaluate(EvaluationContext context) {
 
 			String operator = getOperator();
 
-			return OperatorExpression.create(source.render(context), operator, context.bind(vector));
+			return OperatorExpression.create(source.evaluate(context), operator, context.bind(vector));
 		}
 
 		private String getOperator() {
@@ -308,26 +315,37 @@ class PgSqlImpl {
 		private final QueryExpression lhs;
 		private final String operator;
 		private final QueryExpression rhs;
+		private final TypeFunction typeFunction;
 
-		public ArrayOperator(QueryExpression lhs, String operator, QueryExpression rhs) {
+		public ArrayOperator(QueryExpression lhs, String operator, QueryExpression rhs, TypeFunction typeFunction) {
 			this.lhs = lhs;
 			this.operator = operator;
 			this.rhs = rhs;
+			this.typeFunction = typeFunction;
+		}
+
+		static TypeFunction just(ExpressionTypeContext type) {
+			return (ex, context) -> type;
 		}
 
 		@Override
 		public PgSql.PostgresQueryExpression as(String type) {
-			return new AppendingPostgresExpression(this.nest(), "::" + type);
+			return PgCastExpression.create(this.nest(), type);
 		}
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return context;
+		public ExpressionTypeContext getType(EvaluationContext context) {
+
+			ExpressionTypeContext l = typeFunction.getType(lhs, context);
+			ExpressionTypeContext r = typeFunction.getType(rhs, context);
+
+			return l.getAssignableType(r);
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return OperatorExpression.create(lhs.render(context), operator, rhs.render(context));
+		public Expression evaluate(EvaluationContext context) {
+			return OperatorExpression.create(lhs.evaluate(context.withType(rhs)), operator,
+					rhs.evaluate(context.withType(lhs)));
 		}
 	}
 
@@ -369,31 +387,49 @@ class PgSqlImpl {
 
 		@Override
 		public PgSql.PostgresQueryExpression as(String type) {
-			return new AppendingPostgresExpression(this.nest(), "::" + type);
+			return new PgCastExpression(this.nest(), "::" + type, (it, ctx) -> TypeCast.getType(type));
 		}
 
 		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return source.contextualize(context);
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return asString ? ExpressionTypeContext.of(String.class) : ExpressionTypeContext.object();
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return OperatorExpression.create(source.render(context), baseOperator + (asString ? ">>" : ">"),
+		public Expression evaluate(EvaluationContext context) {
+			return OperatorExpression.create(source.evaluate(context), baseOperator + (asString ? ">>" : ">"),
 					context.bind(keyOrIndex));
 		}
 	}
 
-	record AppendingPostgresExpression(QueryExpression source, String appendix) implements PgSql.PostgresQueryExpression {
+	static class TypeCast {
 
-		@Override
-		public QueryRenderContext contextualize(QueryRenderContext context) {
-			return source.contextualize(context);
+		public static QueryExpression.ExpressionTypeContext getType(String type) {
+
+			return switch (type.toLowerCase(Locale.ROOT)) {
+				case "varchar", "text" -> QueryExpression.ExpressionTypeContext.string();
+				case "boolean" -> QueryExpression.ExpressionTypeContext.bool();
+				default -> QueryExpression.ExpressionTypeContext.object();
+			};
+
+		}
+	}
+
+	record PgCastExpression(QueryExpression source, String typeCast,
+			TypeFunction typeFunction) implements PgSql.PostgresQueryExpression {
+
+		static PgCastExpression create(QueryExpression source, String type) {
+			return new PgCastExpression(source, "::" + type, (it, context) -> TypeCast.getType(type));
 		}
 
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return new PostfixExpression(source.render(context), Expressions.just(appendix));
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return typeFunction.getType(source, context);
+		}
+
+		@Override
+		public Expression evaluate(EvaluationContext context) {
+			return new PostfixExpression(source.evaluate(context), Expressions.just(typeCast));
 		}
 	}
 
@@ -401,8 +437,13 @@ class PgSqlImpl {
 			Object keyOrIndex) implements PgSql.PostgresQueryExpression {
 
 		@Override
-		public Expression render(QueryRenderContext context) {
-			return new PostfixExpression(source.render(context), new ArrayIndexExpression(context.bind(keyOrIndex)));
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return source.getType(context).getActualType();
+		}
+
+		@Override
+		public Expression evaluate(EvaluationContext context) {
+			return new PostfixExpression(source.evaluate(context), new ArrayIndexExpression(context.bind(keyOrIndex)));
 		}
 	}
 

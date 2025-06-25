@@ -28,9 +28,11 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.BindMarker;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -39,100 +41,117 @@ import org.springframework.util.ClassUtils;
 /**
  * @author Mark Paluch
  */
-public class SimpleQueryRenderContext implements QueryExpression.QueryRenderContext {
+public class SimpleEvaluationContext implements QueryExpression.EvaluationContext {
 
 	private final Table table;
 	private final BindMarkers bindMarkers;
+	private final Bindings bindings;
 	private final RelationalConverter converter;
 	private final RelationalPersistentEntity<?> entity;
-	private final @Nullable Field field;
+	private final QueryExpression.ExpressionTypeContext type;
 
-	public SimpleQueryRenderContext(Table table, BindMarkersFactory bindMarkersFactory, RelationalConverter converter,
+	public SimpleEvaluationContext(Table table, BindMarkersFactory bindMarkersFactory, Bindings bindings,
+			RelationalConverter converter,
 			RelationalPersistentEntity<?> entity) {
 
 		this.table = table;
 		this.bindMarkers = bindMarkersFactory.create();
+		this.bindings = bindings;
 		this.converter = converter;
 		this.entity = entity;
-		this.field = null;
+		this.type = QueryExpression.ExpressionTypeContext.object();
 	}
 
-	public SimpleQueryRenderContext(Table table, BindMarkers bindMarkers, RelationalConverter converter,
-			RelationalPersistentEntity<?> entity, @Nullable Field field) {
+	public SimpleEvaluationContext(Table table, BindMarkers bindMarkers, Bindings bindings, RelationalConverter converter,
+			RelationalPersistentEntity<?> entity, QueryExpression.ExpressionTypeContext type) {
+
+		Assert.notNull(table, "Table must not be null");
+		Assert.notNull(type, "Type must not be null");
+
 		this.table = table;
 		this.bindMarkers = bindMarkers;
+		this.bindings = bindings;
 		this.converter = converter;
 		this.entity = entity;
-		this.field = field;
+		this.type = type;
 	}
 
-	Field createPropertyField(SqlIdentifier key) {
-		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, converter.getMappingContext());
+	public Bindings getBindings() {
+		return bindings;
 	}
 
-	Field createPropertyField(SqlIdentifier key,
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
-		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
-	}
-
-	@Override
-	public QueryExpression.QueryRenderContext withProperty(String dotPath) {
-		// todo: check RelationalMappingContext.isForceQuote() and use SqlIdentifier.quoted() if necessary
-		return new SimpleQueryRenderContext(table, bindMarkers, converter, entity,
-				createPropertyField(SqlIdentifier.unquoted(dotPath)));
+	private Field createPropertyField(SqlIdentifier key) {
+		return new MetadataBackedField(key, entity, converter.getMappingContext());
 	}
 
 	@Override
-	public QueryExpression.QueryRenderContext withProperty(SqlIdentifier identifier) {
-		return new SimpleQueryRenderContext(table, bindMarkers, converter, entity, createPropertyField(identifier));
+	public QueryExpression.MappedColumn getColumn(SqlIdentifier identifier) {
+
+		Field propertyField = createPropertyField(identifier);
+		return new DefaultMappedColumn(table, table.column(propertyField.getMappedColumnName()), propertyField);
+	}
+
+	// TODO: Some tables can come from a JOIN, see JDBC
+	@Override
+	public QueryExpression.MappedColumn getColumn(String column) {
+
+		Field propertyField = createPropertyField(SqlIdentifier.unquoted(column));
+		return new DefaultMappedColumn(table, table.column(propertyField.getMappedColumnName()), propertyField);
 	}
 
 	@Override
-	public Expression getColumnName(SqlIdentifier identifier) {
-
-		if (field == null) {
-			return withProperty(identifier).getColumnName();
-		}
-		return table.column(createPropertyField(identifier).getMappedColumnName());
-	}
-
-	@Override
-	public Expression getColumnName(String dotPath) {
-
-		if (field == null) {
-			return withProperty(dotPath).getColumnName();
-		}
-
-		return table.column(createPropertyField(SqlIdentifier.unquoted(dotPath)).getMappedColumnName());
+	public QueryExpression.EvaluationContext withType(QueryExpression.ExpressionTypeContext type) {
+		return new SimpleEvaluationContext(table, bindMarkers, bindings, converter, entity, type);
 	}
 
 	@Override
 	public BindMarker bind(Object value) {
 
-		// TODO
-		return bindMarkers.next();
+		BindMarker bindMarker = bindMarkers.next();
+
+		bindings.bind(bindMarker, converter.writeValue(value, type.getTargetType()));
+
+		return bindMarker;
 	}
 
 	@Override
 	public BindMarker bind(String name, Object value) {
 
-		// TODO
-		return bindMarkers.next(name);
+		BindMarker bindMarker = bindMarkers.next(name);
+
+		bindings.bind(bindMarker, converter.writeValue(value, type.getTargetType()));
+
+		return bindMarker;
 	}
 
-	@Override
-	public Object writeValue(Object value) {
-		return converter.writeValue(value, field == null ? TypeInformation.OBJECT : field.getTypeHint());
-	}
+	class DefaultMappedColumn implements QueryExpression.MappedColumn {
 
-	@Override
-	public Expression getColumnName() {
+		private final TableLike table;
+		private final Column column;
+		private final Field field;
 
-		if (field == null) {
-			throw new IllegalStateException("RenderContext not associated with a field. Call withProperty(…) first.");
+		DefaultMappedColumn(TableLike table, Column column, Field field) {
+			this.table = table;
+			this.column = column;
+			this.field = field;
 		}
 
-		return table.column(field.getMappedColumnName());
+		@Override
+		public Expression toExpression() {
+			return column;
+		}
+
+		@Override
+		public TypeInformation<?> getTargetType() {
+			return field.getTypeHint();
+		}
+
+		@Nullable
+		@Override
+		public RelationalPersistentProperty getProperty() {
+			return field.getProperty();
+		}
+
 	}
 
 	/**
@@ -164,6 +183,10 @@ public class SimpleQueryRenderContext implements QueryExpression.QueryRenderCont
 
 		public TypeInformation<?> getTypeHint() {
 			return TypeInformation.OBJECT;
+		}
+
+		public @Nullable RelationalPersistentProperty getProperty() {
+			return null;
 		}
 	}
 
@@ -277,6 +300,12 @@ public class SimpleQueryRenderContext implements QueryExpression.QueryRenderCont
 			}
 
 			return this.property.getTypeInformation();
+		}
+
+		@Nullable
+		@Override
+		public RelationalPersistentProperty getProperty() {
+			return this.property;
 		}
 	}
 }

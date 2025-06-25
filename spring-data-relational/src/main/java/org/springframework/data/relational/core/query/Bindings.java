@@ -15,11 +15,15 @@
  */
 package org.springframework.data.relational.core.query;
 
+import org.springframework.data.relational.core.sql.BindMarker;
+
 /**
  * @author Mark Paluch
  */
 public interface Bindings {
 
-	String bind(Object values);
+	void bind(BindMarker bindMarker, Object value);
+
+	void bind(BindMarker bindMarker, Object value, QueryExpression.ExpressionTypeContext typeContext);
 
 }
