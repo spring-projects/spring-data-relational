@@ -235,6 +235,10 @@ public interface QueryExpression {
 
 			return ExpressionTypeContext.object();
 		}
+
+		default boolean hasProperty() {
+			return getProperty() != null;
+		}
 	}
 
 	/**

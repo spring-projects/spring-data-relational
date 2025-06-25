@@ -293,7 +293,8 @@ class PgSqlImpl {
 
 			String operator = getOperator();
 
-			return OperatorExpression.create(source.evaluate(context), operator, context.bind(vector));
+			ExpressionTypeContext type = source.getType(context);
+			return OperatorExpression.create(source.evaluate(context), operator, context.withType(type).bind(vector));
 		}
 
 		private String getOperator() {
