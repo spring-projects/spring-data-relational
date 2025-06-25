@@ -49,7 +49,8 @@ class PgSqlUnitTests {
 
 	@Test
 	void distanceLessThan() {
-		// distanceOf("embedding").l2()
+
+		// where(distanceOf("embedding", vector).l2()).lessThan(…)
 
 		Criteria embedding = PgSql
 				.where("embedding", it -> it.distanceTo(Vector.of(1, 2, 3), PgSql.VectorSearchOperators.Distances::cosine))
@@ -74,7 +75,8 @@ class PgSqlUnitTests {
 	@Test
 	void jsonContainsAll() {
 
-		Criteria arrayContains = PgSql.where("tags").json().containsAll("electronics", "gaming");
+		Criteria jsonContains1 = PgSql.where("tags").json().containsAll("electronics", "gaming");
+		Criteria jsonContains2 = PgSql.where("tags").json(it -> it.containsAll("electronics", "gaming"));
 
 		String sql = toSql(arrayContains);
 
