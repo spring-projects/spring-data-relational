@@ -78,6 +78,12 @@ public interface QueryExpression {
 		return ExpressionTypeContext.object();
 	}
 
+	/**
+	 * Name hint for this expression. The hint can be a function or column name. Hints are used to provide more detail
+	 * context for e.g. bind markers.
+	 *
+	 * @return the name hint if applicable, or {@literal null} if no name hint is available.
+	 */
 	default @Nullable String getNameHint() {
 		return null;
 	}

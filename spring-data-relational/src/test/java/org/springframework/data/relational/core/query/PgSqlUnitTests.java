@@ -50,14 +50,18 @@ class PgSqlUnitTests {
 	@Test // GH-1953
 	void distanceLessThanTransformFunction() {
 
+		// TODO
 		// where(distanceOf("embedding", vector).l2()).lessThan(…)
 
-		Criteria embedding = PgSql
+		PgSql.PgCriteria embedding = PgSql
 				.where("embedding", it -> it.distanceTo(Vector.of(1, 2, 3), PgSql.VectorSearchOperators.Distances::cosine))
-				.lessThan("0.8"); // converter converts to Number
+				.lessThan("0.8");
+		// .and("some_json", it -> it.json().field("country")).is("Some Country");
 
 		String sql = toSql(embedding);
 
+		// assertThat(embedding).hasToString("embedding <=> '[1.0, 2.0, 3.0]' < 0.8 AND some_json -> 'country' = 'Some
+		// Country'");
 		assertThat(embedding).hasToString("embedding <=> '[1.0, 2.0, 3.0]' < 0.8");
 		assertThat(sql).contains("with_embedding.the_embedding <=> :p0 < :p1");
 		assertThat(bindings.getValues()).containsValue(new BigDecimal("0.8"));

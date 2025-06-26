@@ -103,6 +103,96 @@ class PgSqlImpl {
 		public PgSql.PgCriteria asBoolean() {
 			return createCriteria(DefaultPostgresQueryExpression.queryExpression(getLhs()).asBoolean());
 		}
+
+		@Override
+		public PgSql.PgCriteria is(Object value) {
+			return (PgSql.PgCriteria) super.is(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria not(Object value) {
+			return (PgSql.PgCriteria) super.not(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria in(Object... values) {
+			return (PgSql.PgCriteria) super.in(values);
+		}
+
+		@Override
+		public PgSql.PgCriteria in(Collection<?> values) {
+			return (PgSql.PgCriteria) super.in(values);
+		}
+
+		@Override
+		public PgSql.PgCriteria notIn(Object... values) {
+			return (PgSql.PgCriteria) super.notIn(values);
+		}
+
+		@Override
+		public PgSql.PgCriteria notIn(Collection<?> values) {
+			return (PgSql.PgCriteria) super.notIn(values);
+		}
+
+		@Override
+		public PgSql.PgCriteria between(Object begin, Object end) {
+			return (PgSql.PgCriteria) super.between(begin, end);
+		}
+
+		@Override
+		public PgSql.PgCriteria notBetween(Object begin, Object end) {
+			return (PgSql.PgCriteria) super.notBetween(begin, end);
+		}
+
+		@Override
+		public PgSql.PgCriteria lessThan(Object value) {
+			return (PgSql.PgCriteria) super.lessThan(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria lessThanOrEquals(Object value) {
+			return (PgSql.PgCriteria) super.lessThanOrEquals(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria greaterThan(Object value) {
+			return (PgSql.PgCriteria) super.greaterThan(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria greaterThanOrEquals(Object value) {
+			return (PgSql.PgCriteria) super.greaterThanOrEquals(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria like(Object value) {
+			return (PgSql.PgCriteria) super.like(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria notLike(Object value) {
+			return (PgSql.PgCriteria) super.notLike(value);
+		}
+
+		@Override
+		public PgSql.PgCriteria isNull() {
+			return (PgSql.PgCriteria) super.isNull();
+		}
+
+		@Override
+		public PgSql.PgCriteria isNotNull() {
+			return (PgSql.PgCriteria) super.isNotNull();
+		}
+
+		@Override
+		public PgSql.PgCriteria isTrue() {
+			return (PgSql.PgCriteria) super.isTrue();
+		}
+
+		@Override
+		public PgSql.PgCriteria isFalse() {
+			return (PgSql.PgCriteria) super.isFalse();
+		}
 	}
 
 	private record DefaultPostgresQueryExpression(QueryExpression source) implements PgSql.PostgresQueryExpression {

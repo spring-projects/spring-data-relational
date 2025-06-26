@@ -237,6 +237,13 @@ public final class PgSql {
 			return and(QueryExpression.column(column));
 		}
 
+		public PgCriteria.PostgresCriteriaStep and(String column, Function<Operators, QueryExpression> wrappingFunction) {
+
+			Assert.hasText(column, "Column name must not be null or empty");
+
+			return and(wrappingFunction.apply(new PgSqlImpl.DefaultOperators(QueryExpression.column(column))));
+		}
+
 		@Override
 		public PgCriteria.PostgresCriteriaStep and(QueryExpression expression) {
 
@@ -251,6 +258,13 @@ public final class PgSql {
 			Assert.hasText(column, "Column name must not be null or empty");
 
 			return or(QueryExpression.column(column));
+		}
+
+		public PgCriteria.PostgresCriteriaStep or(String column, Function<Operators, QueryExpression> wrappingFunction) {
+
+			Assert.hasText(column, "Column name must not be null or empty");
+
+			return or(wrappingFunction.apply(new PgSqlImpl.DefaultOperators(QueryExpression.column(column))));
 		}
 
 		@Override
@@ -302,6 +316,60 @@ public final class PgSql {
 			 * @return
 			 */
 			PgCriteria asBoolean();
+
+			@Override
+			PgCriteria is(Object value);
+
+			@Override
+			PgCriteria not(Object value);
+
+			@Override
+			PgCriteria in(Object... values);
+
+			@Override
+			PgCriteria in(Collection<?> values);
+
+			@Override
+			PgCriteria notIn(Object... values);
+
+			@Override
+			PgCriteria notIn(Collection<?> values);
+
+			@Override
+			PgCriteria between(Object begin, Object end);
+
+			@Override
+			PgCriteria notBetween(Object begin, Object end);
+
+			@Override
+			PgCriteria lessThan(Object value);
+
+			@Override
+			PgCriteria lessThanOrEquals(Object value);
+
+			@Override
+			PgCriteria greaterThan(Object value);
+
+			@Override
+			PgCriteria greaterThanOrEquals(Object value);
+
+			@Override
+			PgCriteria like(Object value);
+
+			@Override
+			PgCriteria notLike(Object value);
+
+			@Override
+			PgCriteria isNull();
+
+			@Override
+			PgCriteria isNotNull();
+
+			@Override
+			PgCriteria isTrue();
+
+			@Override
+			PgCriteria isFalse();
 		}
 
 		/**
