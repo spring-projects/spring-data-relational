@@ -25,7 +25,7 @@ import org.springframework.util.Assert;
  * <p>
  * The Statement Builder API is intended for framework usage to produce SQL required for framework operations.
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
@@ -63,7 +63,7 @@ public abstract class SQL {
 	 * @return a new {@link BindMarker}.
 	 */
 	public static BindMarker bindMarker() {
-		return new BindMarker();
+		return bindMarker("?");
 	}
 
 	/**

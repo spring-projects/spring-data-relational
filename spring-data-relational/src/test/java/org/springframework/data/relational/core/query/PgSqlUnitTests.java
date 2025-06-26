@@ -43,12 +43,12 @@ class PgSqlUnitTests {
 	MappingRelationalConverter converter = new MappingRelationalConverter(context);
 	Table table = Table.create("with_embedding");
 	SimpleBindings bindings = new SimpleBindings();
-	SimpleEvaluationContext renderContext = new SimpleEvaluationContext(table, BindMarkersFactory.named(":", "p", 32),
-			bindings,
-			converter, context.getRequiredPersistentEntity(WithEmbedding.class));
+	SimpleEvaluationContext renderContext = new SimpleEvaluationContext(table,
+			BindMarkersFactory.named(":", "p", 32).create(), bindings, converter,
+			context.getRequiredPersistentEntity(WithEmbedding.class));
 
-	@Test
-	void distanceLessThan() {
+	@Test // GH-1953
+	void distanceLessThanTransformFunction() {
 
 		// where(distanceOf("embedding", vector).l2()).lessThan(…)
 
@@ -58,11 +58,36 @@ class PgSqlUnitTests {
 
 		String sql = toSql(embedding);
 
+		assertThat(embedding).hasToString("embedding <=> '[1.0, 2.0, 3.0]' < 0.8");
 		assertThat(sql).contains("with_embedding.the_embedding <=> :p0 < :p1");
 		assertThat(bindings.getValues()).containsValue(new BigDecimal("0.8"));
 	}
 
-	@Test
+	@Test // GH-1953
+	void distanceLessThanDistanceStep() {
+
+		Criteria embedding = PgSql.where(PgSql.vectorSearch().distanceOf("embedding", Vector.of(1, 2, 3)).cosine())
+				.lessThan("0.8"); // converter converts to Number
+
+		String sql = toSql(embedding);
+
+		assertThat(embedding).hasToString("embedding <=> '[1.0, 2.0, 3.0]' < 0.8");
+		assertThat(sql).contains("with_embedding.the_embedding <=> :p0 < :p1");
+		assertThat(bindings.getValues()).containsValue(new BigDecimal("0.8"));
+	}
+
+	@Test // GH-1953
+	void castFieldToBoolean() {
+
+		Criteria booleanJsonFieldIsTrue = PgSql.where("properties", it -> it.field("active")).asBoolean();
+
+		String sql = toSql(booleanJsonFieldIsTrue);
+
+		assertThat(booleanJsonFieldIsTrue).hasToString("(properties -> 'active')::boolean");
+		assertThat(sql).contains("(with_embedding.properties -> :p0)::boolean");
+	}
+
+	@Test // GH-1953
 	void fieldIsActiveIsTrue() {
 
 		Criteria booleanJsonFieldIsTrue = PgSql.where("properties", it -> it.field("active").asBoolean()).isTrue();
@@ -72,18 +97,17 @@ class PgSqlUnitTests {
 		assertThat(sql).contains("(with_embedding.properties -> :p0)::boolean = :p1");
 	}
 
-	@Test
+	@Test // GH-1953
 	void jsonContainsAll() {
 
-		Criteria jsonContains1 = PgSql.where("tags").json().containsAll("electronics", "gaming");
-		Criteria jsonContains2 = PgSql.where("tags").json(it -> it.containsAll("electronics", "gaming"));
+		Criteria jsonContains = PgSql.where("tags").json(it -> it.containsAll("electronics", "gaming"));
 
-		String sql = toSql(arrayContains);
+		String sql = toSql(jsonContains);
 
 		assertThat(sql).contains("with_embedding.tags ?& array[:p0, :p1]");
 	}
 
-	@Test
+	@Test // GH-1953
 	void toJsonEquals() {
 
 		QueryExpression json = PgSql.json().jsonOf(Map.of("foo", "bar"));
@@ -94,7 +118,7 @@ class PgSqlUnitTests {
 		assertThat(sql).contains(":p0::json -> :p1 = :p2");
 	}
 
-	@Test
+	@Test // GH-1953
 	void arrayOverlapsColumn() {
 
 		Criteria arrayContains = PgSql.where("tags").arrays().overlaps("country");
@@ -104,7 +128,7 @@ class PgSqlUnitTests {
 		assertThat(sql).contains("with_embedding.tags && with_embedding.country");
 	}
 
-	@Test
+	@Test // GH-1953
 	void arrayConcatColumnsAndContains() {
 
 		Criteria arrayContains = PgSql.where("tags", it -> it.array().concatWith("other_tags")).arrays().contains("1", "2",
@@ -115,7 +139,7 @@ class PgSqlUnitTests {
 		assertThat(sql).contains("with_embedding.tags || with_embedding.other_tags @> array[:p0, :p1, :p2]");
 	}
 
-	@Test
+	@Test // GH-1953
 	void shouldRenderSourceFunction() {
 
 		// SqlIdentifier to refer to columns?
@@ -127,7 +151,7 @@ class PgSqlUnitTests {
 		assertThat(sql).contains("array_ndims(with_embedding.some_array) > :p0");
 	}
 
-	@Test
+	@Test // GH-1953
 	void arrayContains() {
 
 		Criteria someArrayContains = PgSql.where("someArray").arrays()

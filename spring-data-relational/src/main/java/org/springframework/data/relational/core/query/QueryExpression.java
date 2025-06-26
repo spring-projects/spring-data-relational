@@ -78,6 +78,10 @@ public interface QueryExpression {
 		return ExpressionTypeContext.object();
 	}
 
+	default @Nullable String getNameHint() {
+		return null;
+	}
+
 	/**
 	 * Evaluates this query expression into a SQL {@link Expression} that can be used in a query.
 	 * <p>

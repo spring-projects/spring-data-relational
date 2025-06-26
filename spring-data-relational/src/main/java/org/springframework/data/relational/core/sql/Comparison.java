@@ -29,17 +29,8 @@ import org.springframework.util.Assert;
  */
 public class Comparison extends OperatorExpression implements Condition {
 
-	private final Expression left;
-	private final String comparator;
-	private final Expression right;
-
 	private Comparison(Expression left, String comparator, Expression right) {
-
 		super(left, comparator, right);
-
-		this.left = left;
-		this.comparator = comparator;
-		this.right = right;
 	}
 
 	/**
@@ -83,12 +74,12 @@ public class Comparison extends OperatorExpression implements Condition {
 	@Override
 	public Condition not() {
 
-		if ("=".equals(comparator)) {
-			return new Comparison(left, "!=", right);
+		if ("=".equals(getOperator())) {
+			return new Comparison(getLeft(), "!=", getRight());
 		}
 
-		if ("!=".equals(comparator)) {
-			return new Comparison(left, "=", right);
+		if ("!=".equals(getOperator())) {
+			return new Comparison(getLeft(), "=", getRight());
 		}
 
 		return new Not(this);

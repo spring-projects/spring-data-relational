@@ -22,12 +22,9 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.binding.BindMarkers;
-import org.springframework.data.relational.core.binding.BindMarkersFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.BindMarker;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -39,55 +36,45 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
+ * Support class for {@link QueryExpression.EvaluationContext} implementations.
+ *
  * @author Mark Paluch
+ * @since 4.0
  */
-public class SimpleEvaluationContext implements QueryExpression.EvaluationContext {
+public abstract class EvaluationContextSupport implements QueryExpression.EvaluationContext {
 
 	private final Table table;
-	private final BindMarkers bindMarkers;
-	private final Bindings bindings;
 	private final RelationalConverter converter;
-	private final RelationalPersistentEntity<?> entity;
-	private final QueryExpression.ExpressionTypeContext type;
+	private final @Nullable RelationalPersistentEntity<?> entity;
 
-	public SimpleEvaluationContext(Table table, BindMarkersFactory bindMarkersFactory, Bindings bindings,
-			RelationalConverter converter,
-			RelationalPersistentEntity<?> entity) {
+	public EvaluationContextSupport(Table table, RelationalConverter converter,
+			@Nullable RelationalPersistentEntity<?> entity) {
 
 		this.table = table;
-		this.bindMarkers = bindMarkersFactory.create();
-		this.bindings = bindings;
 		this.converter = converter;
 		this.entity = entity;
-		this.type = QueryExpression.ExpressionTypeContext.object();
 	}
 
-	public SimpleEvaluationContext(Table table, BindMarkers bindMarkers, Bindings bindings, RelationalConverter converter,
-			RelationalPersistentEntity<?> entity, QueryExpression.ExpressionTypeContext type) {
+	protected EvaluationContextSupport(EvaluationContextSupport previous) {
 
-		Assert.notNull(table, "Table must not be null");
-		Assert.notNull(type, "Type must not be null");
-
-		this.table = table;
-		this.bindMarkers = bindMarkers;
-		this.bindings = bindings;
-		this.converter = converter;
-		this.entity = entity;
-		this.type = type;
+		this.table = previous.table;
+		this.converter = previous.converter;
+		this.entity = previous.entity;
 	}
 
-	public Bindings getBindings() {
-		return bindings;
+	protected RelationalConverter getConverter() {
+		return converter;
 	}
 
 	private Field createPropertyField(SqlIdentifier key) {
-		return new MetadataBackedField(key, entity, converter.getMappingContext());
+		return entity != null ? new MetadataBackedField(key, entity, converter.getMappingContext()) : new Field(key);
 	}
 
 	@Override
 	public QueryExpression.MappedColumn getColumn(SqlIdentifier identifier) {
 
 		Field propertyField = createPropertyField(identifier);
+		TableLike table = getTable(identifier);
 		return new DefaultMappedColumn(table, table.column(propertyField.getMappedColumnName()), propertyField);
 	}
 
@@ -96,35 +83,22 @@ public class SimpleEvaluationContext implements QueryExpression.EvaluationContex
 	public QueryExpression.MappedColumn getColumn(String column) {
 
 		Field propertyField = createPropertyField(SqlIdentifier.unquoted(column));
+		TableLike table = getTable(column);
 		return new DefaultMappedColumn(table, table.column(propertyField.getMappedColumnName()), propertyField);
 	}
 
-	@Override
-	public QueryExpression.EvaluationContext withType(QueryExpression.ExpressionTypeContext type) {
-		return new SimpleEvaluationContext(table, bindMarkers, bindings, converter, entity, type);
+	protected TableLike getTable(SqlIdentifier identifier) {
+		return table;
+	}
+
+	protected TableLike getTable(String column) {
+		return table;
 	}
 
 	@Override
-	public BindMarker bind(Object value) {
+	public abstract QueryExpression.EvaluationContext withType(QueryExpression.ExpressionTypeContext type);
 
-		BindMarker bindMarker = bindMarkers.next();
-
-		bindings.bind(bindMarker, converter.writeValue(value, type.getTargetType()));
-
-		return bindMarker;
-	}
-
-	@Override
-	public BindMarker bind(String name, Object value) {
-
-		BindMarker bindMarker = bindMarkers.next(name);
-
-		bindings.bind(bindMarker, converter.writeValue(value, type.getTargetType()));
-
-		return bindMarker;
-	}
-
-	class DefaultMappedColumn implements QueryExpression.MappedColumn {
+	static class DefaultMappedColumn implements QueryExpression.MappedColumn {
 
 		private final TableLike table;
 		private final Column column;

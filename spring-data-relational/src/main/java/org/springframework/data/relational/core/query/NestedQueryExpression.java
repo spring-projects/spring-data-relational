@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.query;
 
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.lang.Nullable;
 
 /**
  * Query expression that nests another {@link QueryExpression}. This is used to ensure that the nested expression
@@ -41,9 +42,19 @@ class NestedQueryExpression implements QueryExpression {
 		return expression.getType(context);
 	}
 
+	@Nullable
+	@Override
+	public String getNameHint() {
+		return expression.getNameHint();
+	}
+
 	@Override
 	public Expression evaluate(EvaluationContext context) {
 		return Expressions.nest(expression.evaluate(context));
 	}
 
+	@Override
+	public String toString() {
+		return "(" + expression + ")";
+	}
 }

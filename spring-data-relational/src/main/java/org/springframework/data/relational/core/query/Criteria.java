@@ -87,7 +87,7 @@ public class Criteria implements CriteriaDefinition {
 	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable QueryExpression queryExpression, @Nullable SqlIdentifier column, @Nullable Comparator comparator,
 			@Nullable Object value) {
-		this(previous, combinator, group, null, column, comparator, value, false);
+		this(previous, combinator, group, queryExpression, column, comparator, value, false);
 	}
 
 	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
@@ -370,6 +370,10 @@ public class Criteria implements CriteriaDefinition {
 			return false;
 		}
 
+		if (this.queryExpression != null) {
+			return false;
+		}
+
 		for (CriteriaDefinition criteria : group) {
 
 			if (!criteria.isEmpty()) {
@@ -537,7 +541,13 @@ public class Criteria implements CriteriaDefinition {
 			return;
 		}
 
-		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
+		stringBuilder.append(getLhs(criteria));
+
+		if (criteria.getComparator() == null) {
+			return;
+		}
+
+		stringBuilder.append(' ')
 				.append(criteria.getComparator().getComparator());
 
 		switch (criteria.getComparator()) {
@@ -561,6 +571,19 @@ public class Criteria implements CriteriaDefinition {
 			default:
 				stringBuilder.append(' ').append(renderValue(criteria.getValue()));
 		}
+	}
+
+	private static String getLhs(CriteriaDefinition criteria) {
+
+		if (criteria.hasExpression()) {
+			return criteria.getExpression().toString();
+		}
+
+		if (criteria.hasColumn()) {
+			return criteria.getColumn().toSql(IdentifierProcessing.NONE);
+		}
+
+		return "?";
 	}
 
 	private static String renderValue(@Nullable Object value) {

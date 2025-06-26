@@ -23,7 +23,7 @@ import org.springframework.util.ObjectUtils;
  * @author Mark Paluch
  * @since 1.1
  */
-public class BindMarker extends AbstractSegment implements Expression {
+public abstract class BindMarker extends AbstractSegment implements Expression {
 
 	public static BindMarker named(String name) {
 		return new NamedBindMarker(name);
@@ -36,6 +36,8 @@ public class BindMarker extends AbstractSegment implements Expression {
 	public static BindMarker indexed(String name, int index) {
 		return new IndexedBindMarker(name, index);
 	}
+
+	public abstract String getPlaceholder();
 
 	@Override
 	public String toString() {
@@ -53,6 +55,11 @@ public class BindMarker extends AbstractSegment implements Expression {
 		@Override
 		public SqlIdentifier getName() {
 			return SqlIdentifier.unquoted(name);
+		}
+
+		@Override
+		public String getPlaceholder() {
+			return name;
 		}
 
 		@Override
@@ -90,6 +97,11 @@ public class BindMarker extends AbstractSegment implements Expression {
 		@Override
 		public SqlIdentifier getName() {
 			return SqlIdentifier.unquoted(name);
+		}
+
+		@Override
+		public String getPlaceholder() {
+			return name;
 		}
 
 		@Override

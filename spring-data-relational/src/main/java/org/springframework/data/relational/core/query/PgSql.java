@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.query;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * Dialect-specific extension for the Postgres database dialect.
+ *
  * @author Mark Paluch
+ * @since 4.0
  */
 public final class PgSql {
 
@@ -58,7 +62,7 @@ public final class PgSql {
 	 * @return
 	 */
 	public static PgCriteria.PostgresCriteriaStep where(String column) {
-		return new PgSqlImpl.DefaultPostgresCriteriaStep(column);
+		return PgCriteria.where(column);
 	}
 
 	/**
@@ -72,8 +76,7 @@ public final class PgSql {
 	 */
 	public static PgCriteria.PostgresCriteriaStep where(String column,
 			Function<Operators, QueryExpression> wrappingFunction) {
-
-		return where(new CriteriaSources.Column(column), wrappingFunction);
+		return PgCriteria.where(column, wrappingFunction);
 	}
 
 	/**
@@ -84,7 +87,7 @@ public final class PgSql {
 	 * @return
 	 */
 	public static PgCriteria.PostgresCriteriaStep where(QueryExpression expression) {
-		return new PgSqlImpl.DefaultPostgresCriteriaStep(expression);
+		return PgCriteria.where(expression);
 	}
 
 	/**
@@ -98,9 +101,7 @@ public final class PgSql {
 	 */
 	public static PgCriteria.PostgresCriteriaStep where(QueryExpression expression,
 			Function<Operators, QueryExpression> wrappingFunction) {
-
-		PgSqlImpl.DefaultOperators functions = new PgSqlImpl.DefaultOperators(expression);
-		return where(wrappingFunction.apply(functions));
+		return PgCriteria.where(expression, wrappingFunction);
 	}
 
 	/**
@@ -139,6 +140,21 @@ public final class PgSql {
 		};
 	}
 
+	public static VectorSearchFunctions vectorSearch() {
+		return new VectorSearchFunctions() {
+			@Override
+			public VectorSearchDistanceStep distanceOf(String column, Vector vector) {
+				return new VectorSearchDistanceStep() {
+					@Override
+					public PostgresQueryExpression using(ScoringFunction scoringFunction) {
+						return new PgSqlImpl.DistanceFunction(QueryExpression.column(column), scoringFunction, vector);
+					}
+
+				};
+			}
+		};
+	}
+
 	/**
 	 * Postgres-specific {@link Criteria} implementation that provides access to Postgres-specific operators and
 	 * functions.
@@ -158,6 +174,59 @@ public final class PgSql {
 				@Nullable QueryExpression queryExpression, @Nullable Comparator comparator, @Nullable Object value,
 				boolean ignoreCase) {
 			super(previous, combinator, group, queryExpression, null, comparator, value, ignoreCase);
+		}
+
+		/**
+		 * Entry point for creating a {@link PgCriteria.PostgresCriteriaStep} for the given column (or property specified as
+		 * property path).
+		 *
+		 * @param column
+		 * @return
+		 */
+		public static PgCriteria.PostgresCriteriaStep where(String column) {
+			return new PgSqlImpl.DefaultPostgresCriteriaStep(column);
+		}
+
+		/**
+		 * Entry point for creating a {@link PgCriteria.PostgresCriteriaStep} for the given column (or property specified as
+		 * property path) that shall be wrapped by a wrapping function to process the column contents before its use in a
+		 * downstream condition or expression.
+		 *
+		 * @param column
+		 * @param wrappingFunction
+		 * @return
+		 */
+		public static PgCriteria.PostgresCriteriaStep where(String column,
+				Function<Operators, QueryExpression> wrappingFunction) {
+
+			return where(new CriteriaSources.Column(column), wrappingFunction);
+		}
+
+		/**
+		 * Entry point for creating a {@link PgCriteria.PostgresCriteriaStep} for the given {@link QueryExpression
+		 * expression}.
+		 *
+		 * @param expression
+		 * @return
+		 */
+		public static PgCriteria.PostgresCriteriaStep where(QueryExpression expression) {
+			return new PgSqlImpl.DefaultPostgresCriteriaStep(expression);
+		}
+
+		/**
+		 * Entry point for creating a {@link PgCriteria.PostgresCriteriaStep} for the given {@link QueryExpression} that
+		 * shall be wrapped by a wrapping function to process the column contents before its use in a downstream condition
+		 * or expression.
+		 *
+		 * @param expression
+		 * @param wrappingFunction
+		 * @return
+		 */
+		public static PgCriteria.PostgresCriteriaStep where(QueryExpression expression,
+				Function<Operators, QueryExpression> wrappingFunction) {
+
+			PgSqlImpl.DefaultOperators functions = new PgSqlImpl.DefaultOperators(expression);
+			return where(wrappingFunction.apply(functions));
 		}
 
 		@Override
@@ -225,8 +294,14 @@ public final class PgSql {
 			 *
 			 * @return
 			 */
-			PostgresJsonCriteriaStep json();
+			PgCriteria json(Function<PostgresJsonQueryExpression, QueryExpression> criteriaFunction);
 
+			/**
+			 * Consider the previous expression as expression evaluating a boolean result.
+			 *
+			 * @return
+			 */
+			PgCriteria asBoolean();
 		}
 
 		/**
@@ -300,12 +375,18 @@ public final class PgSql {
 		 */
 		public interface PostgresJsonCriteriaStep {
 
+			/**
+			 * {@code ?} operator for JSON exists.
+			 *
+			 * @param column
+			 * @return
+			 */
 			default PgCriteria exists(String column) {
 				return exists(QueryExpression.column(column));
 			}
 
 			/**
-			 * {@code ?} operator for JSONB containment.
+			 * {@code ?} operator for JSON exists.
 			 *
 			 * @param expression
 			 * @return
@@ -313,7 +394,7 @@ public final class PgSql {
 			PgCriteria exists(QueryExpression expression);
 
 			/**
-			 * {@code ?} operator for JSONB containment.
+			 * {@code ?} operator for JSON exists.
 			 *
 			 * @param value
 			 * @return
@@ -322,28 +403,74 @@ public final class PgSql {
 				return exists(new PgSqlImpl.ValueExpression(value));
 			}
 
+			/**
+			 * {@code ?|} operator for JSON contains.
+			 *
+			 * @param value
+			 * @return
+			 */
 			default PgCriteria contains(String field) {
 				return contains(QueryExpression.column(field));
 			}
 
+			/**
+			 * {@code ?|} operator for JSON contains.
+			 *
+			 * @param value
+			 * @return
+			 */
 			PgCriteria contains(Object value);
 
+			/**
+			 * {@code ?&} operator for JSON contains all.
+			 *
+			 * @param values
+			 * @return
+			 */
 			default PgCriteria containsAll(Object... values) {
 				return containsAll(Arrays.asList(values));
 			}
 
-			PgCriteria containsAll(Iterable<Object> values);
+			/**
+			 * {@code ?&} operator for JSON contains all.
+			 *
+			 * @param values
+			 * @return
+			 */
+			PgCriteria containsAll(Collection<Object> values);
 
+			/**
+			 * {@code ?|} operator for JSON contains any.
+			 *
+			 * @param values
+			 * @return
+			 */
 			default PgCriteria containsAny(Object... values) {
 				return containsAny(Arrays.asList(values));
 			}
 
-			PgCriteria containsAny(Iterable<Object> values);
+			/**
+			 * {@code ?|} operator for JSON contains any.
+			 *
+			 * @param values
+			 * @return
+			 */
+			PgCriteria containsAny(Collection<Object> values);
 
-			// @?
+			/**
+			 * Does JSON path return any item for the specified JSON value using the {@code @?} operator.
+			 *
+			 * @param jsonPath
+			 * @return
+			 */
 			PgCriteria jsonPathMatches(String jsonPath);
 
-			// @@
+			/**
+			 * Returns the result of a JSON path predicate check for the specified JSON value using the {@code @@} operator.
+			 *
+			 * @param jsonPath
+			 * @return
+			 */
 			PgCriteria jsonPath(String jsonPath);
 
 		}
@@ -385,6 +512,55 @@ public final class PgSql {
 		 */
 		QueryExpression jsonbOf(Map<String, Object> jsonObject);
 
+	}
+
+	/**
+	 * Postgres-specific Vector Search functions.
+	 */
+	public interface VectorSearchFunctions {
+
+		/**
+		 * Start building a Vector Search operator given a column and a reference {@link Vector}
+		 *
+		 * @param column
+		 * @param vector
+		 * @return
+		 */
+		VectorSearchDistanceStep distanceOf(String column, Vector vector);
+
+		interface VectorSearchDistanceStep {
+
+			default PostgresQueryExpression l2() {
+				return using(ScoringFunction.euclidean());
+			}
+
+			default PostgresQueryExpression innerProduct() {
+				return using(ScoringFunction.dotProduct());
+			}
+
+			default PostgresQueryExpression cosine() {
+				return using(ScoringFunction.cosine());
+			}
+
+			default PostgresQueryExpression l1() {
+				return using(of("<+>"));
+			}
+
+			default PostgresQueryExpression hamming() {
+				return using(of("<~>"));
+			}
+
+			default PostgresQueryExpression jaccard() {
+				return using(of("<%>"));
+			}
+
+			default ScoringFunction of(String operator) {
+				return () -> operator;
+			}
+
+			PostgresQueryExpression using(ScoringFunction scoringFunction);
+
+		}
 	}
 
 	/**
@@ -630,8 +806,8 @@ public final class PgSql {
 		 *
 		 * @return the casted expression.
 		 */
-		default PostgresQueryExpression asJson() {
-			return as("json");
+		default PostgresJsonQueryExpression asJson() {
+			return (PostgresJsonQueryExpression) as("json");
 		}
 
 		/**
@@ -639,8 +815,12 @@ public final class PgSql {
 		 *
 		 * @return the casted expression.
 		 */
-		default PostgresQueryExpression asJsonb() {
-			return as("jsonb");
+		default PostgresJsonQueryExpression asJsonb() {
+			return (PostgresJsonQueryExpression) as("jsonb");
+		}
+
+		default PostgresQueryExpression json(Function<PostgresJsonQueryExpression, PostgresQueryExpression> jsonFunction) {
+			return jsonFunction.apply((PostgresJsonQueryExpression) this);
 		}
 
 		/**
@@ -664,6 +844,91 @@ public final class PgSql {
 		default PostgresQueryExpression element(String key) {
 			return new PgSqlImpl.ArrayIndexPostgresExpression(this, key);
 		}
+
+	}
+
+	/**
+	 * JSON-specific query expression that allows to append Postgres-specific JSON operators and functions.
+	 */
+	public interface PostgresJsonQueryExpression {
+
+		/**
+		 * {@code ?} operator for JSON exists.
+		 *
+		 * @param expression
+		 * @return
+		 */
+		PostgresQueryExpression exists(QueryExpression expression);
+
+		/**
+		 * {@code ?} operator for JSON exists.
+		 *
+		 * @param value
+		 * @return
+		 */
+		default PostgresQueryExpression exists(Object value) {
+			return exists(new PgSqlImpl.ValueExpression(value));
+		}
+
+		/**
+		 * {@code ?|} operator for JSON contains.
+		 *
+		 * @param value
+		 * @return
+		 */
+		PostgresQueryExpression contains(Object value);
+
+		/**
+		 * {@code ?&} operator for JSON contains all.
+		 *
+		 * @param values
+		 * @return
+		 */
+		default PostgresQueryExpression containsAll(Object... values) {
+			return containsAll(Arrays.asList(values));
+		}
+
+		/**
+		 * {@code ?&} operator for JSON contains all.
+		 *
+		 * @param values
+		 * @return
+		 */
+		PostgresQueryExpression containsAll(Collection<Object> values);
+
+		/**
+		 * {@code ?|} operator for JSON contains any.
+		 *
+		 * @param values
+		 * @return
+		 */
+		default PostgresQueryExpression containsAny(Object... values) {
+			return containsAny(Arrays.asList(values));
+		}
+
+		/**
+		 * {@code ?|} operator for JSON contains any.
+		 *
+		 * @param values
+		 * @return
+		 */
+		PostgresQueryExpression containsAny(Collection<Object> values);
+
+		/**
+		 * Does JSON path return any item for the specified JSON value using the {@code @?} operator.
+		 *
+		 * @param jsonPath
+		 * @return
+		 */
+		PostgresQueryExpression jsonPathMatches(String jsonPath);
+
+		/**
+		 * Returns the result of a JSON path predicate check for the specified JSON value using the {@code @@} operator.
+		 *
+		 * @param jsonPath
+		 * @return
+		 */
+		PostgresQueryExpression jsonPath(String jsonPath);
 
 	}
 

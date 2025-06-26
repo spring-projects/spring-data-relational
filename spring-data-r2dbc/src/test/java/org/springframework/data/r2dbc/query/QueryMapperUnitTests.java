@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -37,6 +38,7 @@ import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.PgSql;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
@@ -45,6 +47,8 @@ import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
+import org.springframework.r2dbc.core.binding.Bindings;
+
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.node.TextNode;
 
@@ -539,6 +543,39 @@ class QueryMapperUnitTests {
 
 		assertThat(bindings.getCondition()).hasToString("person.json_node IN (?[$1], ?[$2])");
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
+	}
+
+	@Test // GH-1953
+	void shouldMapDialectCriteria() {
+
+		Criteria criteria = PgSql.PgCriteria.where("jsonNode").json(it -> it.exists("some_key"));
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.json_node ? [$1]");
+		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("some_key");
+	}
+
+	@Test // GH-1953
+	void shouldMapExtractedDialectCriteria() {
+
+		Criteria criteria = PgSql.PgCriteria.where("jsonNode", operators -> operators.json().index(1)).is("some_key");
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.json_node -> [$1] = [$2]");
+		assertThat(bindings.getBindings()).map(Bindings.Binding::getValue).containsExactly(1, "some_key");
+	}
+
+	@Test // GH-1953
+	void shouldMapSelfContainedExpression() {
+
+		Criteria criteria = PgSql.PgCriteria.where("jsonNode", operators -> operators.json().index(1)).asBoolean();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("(person.json_node -> [$1])::boolean");
+		assertThat(bindings.getBindings()).map(Bindings.Binding::getValue).containsExactly(1);
 	}
 
 	private BoundCondition map(Criteria criteria) {

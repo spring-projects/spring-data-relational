@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +26,7 @@ import java.util.function.Function;
 
 import org.springframework.data.domain.ScoringFunction;
 import org.springframework.data.domain.Vector;
+import org.springframework.data.relational.core.query.PgSql.PostgresJsonQueryExpression;
 import org.springframework.data.relational.core.sql.ArrayIndexExpression;
 import org.springframework.data.relational.core.sql.BaseFunction;
 import org.springframework.data.relational.core.sql.BindMarker;
@@ -35,7 +37,10 @@ import org.springframework.data.relational.core.sql.OperatorExpression;
 import org.springframework.data.relational.core.sql.PostfixExpression;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.TupleExpression;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Implementation of the Postgres dialect for criteria and query expressions.
@@ -90,39 +95,41 @@ class PgSqlImpl {
 		}
 
 		@Override
-		public PgSql.PgCriteria.PostgresJsonCriteriaStep json() {
-			return new PgSql.PgCriteria.PostgresJsonCriteriaStep() {
+		public PgSql.PgCriteria json(Function<PostgresJsonQueryExpression, QueryExpression> criteriaFunction) {
+			return createCriteria(criteriaFunction.apply(DefaultPostgresJsonQueryExpression.get(getLhs())));
+		}
 
-				@Override
-				public PgSql.PgCriteria exists(QueryExpression expression) {
-					return createCriteria("?", expression);
-				}
+		@Override
+		public PgSql.PgCriteria asBoolean() {
+			return createCriteria(DefaultPostgresQueryExpression.queryExpression(getLhs()).asBoolean());
+		}
+	}
 
-				@Override
-				public PgSql.PgCriteria contains(Object value) {
-					return createCriteria("@>", value);
-				}
+	private record DefaultPostgresQueryExpression(QueryExpression source) implements PgSql.PostgresQueryExpression {
 
-				@Override
-				public PgSql.PgCriteria containsAll(Iterable<Object> values) {
-					return createCriteria("?&", ArrayExpression.expressionOrWrap(values));
-				}
+		public static PgSql.PostgresQueryExpression queryExpression(QueryExpression source) {
+			return source instanceof PgSql.PostgresQueryExpression pq ? pq : new DefaultPostgresQueryExpression(source);
+		}
 
-				@Override
-				public PgSql.PgCriteria containsAny(Iterable<Object> values) {
-					return createCriteria("?|", ArrayExpression.expressionOrWrap(values));
-				}
+		@Override
+		public ExpressionTypeContext getType(EvaluationContext context) {
+			return source.getType(context);
+		}
 
-				@Override
-				public PgSql.PgCriteria jsonPathMatches(String jsonPath) {
-					return createCriteria("@?", new ValueExpression(jsonPath));
-				}
+		@Override
+		public Expression evaluate(EvaluationContext context) {
+			return source.evaluate(context);
+		}
 
-				@Override
-				public PgSql.PgCriteria jsonPath(String jsonPath) {
-					return createCriteria("@@", new ValueExpression(jsonPath));
-				}
-			};
+		@Nullable
+		@Override
+		public String getNameHint() {
+			return source.getNameHint();
+		}
+
+		@Override
+		public String toString() {
+			return source.toString();
 		}
 	}
 
@@ -143,6 +150,10 @@ class PgSqlImpl {
 			return Comparison.create(lhs, operator, rhs);
 		}
 
+		@Override
+		public String toString() {
+			return lhs() + " " + operator() + " " + rhs();
+		}
 	}
 
 	record ValueExpression(Object value) implements QueryExpression {
@@ -151,13 +162,18 @@ class PgSqlImpl {
 		public Expression evaluate(EvaluationContext context) {
 			return context.bind(value);
 		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.nullSafeToString(value);
+		}
 	}
 
 	static class ValuesExpression implements QueryExpression {
 
-		private final Iterable<Object> values;
+		private final Collection<Object> values;
 
-		public ValuesExpression(Iterable<Object> values) {
+		public ValuesExpression(Collection<Object> values) {
 			this.values = values;
 		}
 
@@ -180,13 +196,28 @@ class PgSqlImpl {
 
 			return TupleExpression.create(bindMarkers);
 		}
+
+		@Override
+		public String toString() {
+			return "(" + StringUtils.collectionToDelimitedString(values, ",") + ")";
+		}
 	}
 
-	record FunctionExpression(String function, Iterable<Object> values) implements PgSql.PostgresQueryExpression {
+	record FunctionExpression(String function, Collection<Object> values) implements PgSql.PostgresQueryExpression {
 
 		@Override
 		public Expression evaluate(EvaluationContext context) {
 			return SimpleFunction.create(function, createArgumentExpressions(values(), context));
+		}
+
+		@Override
+		public String getNameHint() {
+			return function;
+		}
+
+		@Override
+		public String toString() {
+			return function + "(" + StringUtils.collectionToDelimitedString(values, ",") + ")";
 		}
 
 		private static List<Expression> createArgumentExpressions(Iterable<Object> values, EvaluationContext context) {
@@ -205,13 +236,13 @@ class PgSqlImpl {
 		}
 	}
 
-	record ArrayExpression(Iterable<Object> values) implements QueryExpression {
+	record ArrayExpression(Collection<Object> values) implements QueryExpression {
 
 		public static QueryExpression expressionOrWrap(Object[] values) {
 			return expressionOrWrap(Arrays.asList(values));
 		}
 
-		public static QueryExpression expressionOrWrap(Iterable<Object> values) {
+		public static QueryExpression expressionOrWrap(Collection<Object> values) {
 
 			Iterator<Object> iterator = values.iterator();
 			if (iterator.hasNext()) {
@@ -233,6 +264,12 @@ class PgSqlImpl {
 		@Override
 		public Expression evaluate(EvaluationContext context) {
 			return BaseFunction.create("array", "[", "]", FunctionExpression.createArgumentExpressions(values(), context));
+		}
+
+		@NonNull
+		@Override
+		public String toString() {
+			return "array[" + StringUtils.collectionToDelimitedString(values, ",") + "]";
 		}
 	}
 
@@ -297,6 +334,19 @@ class PgSqlImpl {
 			return OperatorExpression.create(source.evaluate(context), operator, context.withType(type).bind(vector));
 		}
 
+		@Nullable
+		@Override
+		public String getNameHint() {
+			return source.getNameHint();
+		}
+
+		@Override
+		public String toString() {
+
+			String vector = ObjectUtils.nullSafeToString(vector().getSource()).replace("{", "[").replace("}", "]");
+			return source() + " " + getOperator() + " '" + vector + "'";
+		}
+
 		private String getOperator() {
 
 			if (scoringFunction == ScoringFunction.cosine()) {
@@ -311,19 +361,8 @@ class PgSqlImpl {
 		}
 	}
 
-	static class ArrayOperator implements PgSql.PostgresQueryExpression {
-
-		private final QueryExpression lhs;
-		private final String operator;
-		private final QueryExpression rhs;
-		private final TypeFunction typeFunction;
-
-		public ArrayOperator(QueryExpression lhs, String operator, QueryExpression rhs, TypeFunction typeFunction) {
-			this.lhs = lhs;
-			this.operator = operator;
-			this.rhs = rhs;
-			this.typeFunction = typeFunction;
-		}
+	record ArrayOperator(QueryExpression lhs, String operator, QueryExpression rhs,
+			TypeFunction typeFunction) implements PgSql.PostgresQueryExpression {
 
 		static TypeFunction just(ExpressionTypeContext type) {
 			return (ex, context) -> type;
@@ -347,6 +386,60 @@ class PgSqlImpl {
 		public Expression evaluate(EvaluationContext context) {
 			return OperatorExpression.create(lhs.evaluate(context.withType(rhs)), operator,
 					rhs.evaluate(context.withType(lhs)));
+		}
+
+		@Override
+		public String toString() {
+			return lhs() + " " + operator() + " " + rhs();
+		}
+	}
+
+	static class DefaultPostgresJsonQueryExpression implements PostgresJsonQueryExpression {
+
+		private final QueryExpression source;
+
+		public DefaultPostgresJsonQueryExpression(QueryExpression source) {
+			this.source = source;
+		}
+
+		public static PostgresJsonQueryExpression get(QueryExpression expression) {
+			return expression instanceof PostgresJsonQueryExpression jqe ? jqe
+					: new DefaultPostgresJsonQueryExpression(expression);
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression exists(QueryExpression expression) {
+			return createCriteria("?", expression);
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression contains(Object value) {
+			return createCriteria("@>", value);
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression containsAll(Collection<Object> values) {
+			return createCriteria("?&", ArrayExpression.expressionOrWrap(values));
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression containsAny(Collection<Object> values) {
+			return createCriteria("?|", ArrayExpression.expressionOrWrap(values));
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression jsonPathMatches(String jsonPath) {
+			return createCriteria("@?", new ValueExpression(jsonPath));
+		}
+
+		@Override
+		public PgSql.PostgresQueryExpression jsonPath(String jsonPath) {
+			return createCriteria("@@", new ValueExpression(jsonPath));
+		}
+
+		private PgSql.PostgresQueryExpression createCriteria(String operator, Object value) {
+			return new PostgresComparison(source, operator,
+					value instanceof QueryExpression e ? e : new ValueExpression(value));
 		}
 	}
 
@@ -377,13 +470,13 @@ class PgSqlImpl {
 		}
 
 		@Override
-		public PgSql.PostgresQueryExpression asJson() {
-			return this;
+		public PostgresJsonQueryExpression asJson() {
+			return DefaultPostgresJsonQueryExpression.get(this);
 		}
 
 		@Override
-		public PgSql.PostgresQueryExpression asJsonb() {
-			return this;
+		public PostgresJsonQueryExpression asJsonb() {
+			return DefaultPostgresJsonQueryExpression.get(this);
 		}
 
 		@Override
@@ -398,9 +491,26 @@ class PgSqlImpl {
 
 		@Override
 		public Expression evaluate(EvaluationContext context) {
-			return OperatorExpression.create(source.evaluate(context), baseOperator + (asString ? ">>" : ">"),
+			return OperatorExpression.create(source.evaluate(context), getOperator(),
 					context.bind(keyOrIndex));
 		}
+
+		@Nullable
+		@Override
+		public String getNameHint() {
+			return source.getNameHint();
+		}
+
+		@Override
+		public String toString() {
+			return source + " " + getOperator() + " "
+					+ (keyOrIndex instanceof Number ? keyOrIndex.toString() : "'" + keyOrIndex + "'");
+		}
+
+		private String getOperator() {
+			return baseOperator + (asString ? ">>" : ">");
+		}
+
 	}
 
 	static class TypeCast {
@@ -428,9 +538,20 @@ class PgSqlImpl {
 			return typeFunction.getType(source, context);
 		}
 
+		@Nullable
+		@Override
+		public String getNameHint() {
+			return source.getNameHint();
+		}
+
 		@Override
 		public Expression evaluate(EvaluationContext context) {
 			return new PostfixExpression(source.evaluate(context), Expressions.just(typeCast));
+		}
+
+		@Override
+		public String toString() {
+			return source() + typeCast;
 		}
 	}
 

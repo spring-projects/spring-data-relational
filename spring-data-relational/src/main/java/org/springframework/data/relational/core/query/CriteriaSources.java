@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.query;
 
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
@@ -40,10 +41,19 @@ class CriteriaSources {
 		}
 
 		@Override
+		public String getNameHint() {
+			return name;
+		}
+
+		@Override
 		public Expression evaluate(EvaluationContext context) {
 			return context.getColumn(name).toExpression();
 		}
 
+		@Override
+		public String toString() {
+			return name;
+		}
 	}
 
 	/**
@@ -58,10 +68,19 @@ class CriteriaSources {
 			return context.getColumn(identifier);
 		}
 
+		@Override
+		public String getNameHint() {
+			return identifier.getReference();
+		}
 
 		@Override
 		public Expression evaluate(EvaluationContext context) {
 			return context.getColumn(identifier).toExpression();
+		}
+
+		@Override
+		public String toString() {
+			return identifier.toSql(IdentifierProcessing.NONE);
 		}
 
 	}
