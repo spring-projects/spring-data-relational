@@ -26,7 +26,7 @@ enum Disjunct implements Condition {
 	INSTANCE;
 
 	@Override
-	public Condition and(Condition other) {
+	public Condition and(Expression other) {
 		return INSTANCE;
 	}
 

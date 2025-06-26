@@ -16,27 +16,40 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.NestedCondition;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.NestedExpression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * Renderer for {@link NestedCondition}. Uses a {@link RenderTarget} to call back for render results.
+ * Renderer for {@link NestedExpression}. Can use a {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
- * @since 2.0
+ * @since 4.0
  */
-class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
+class NestedExpressionVisitor extends TypedSubtreeVisitor<NestedExpression> implements PartRenderer {
 
 	private final RenderContext context;
-	private final RenderTarget target;
+	private final @Nullable RenderTarget target;
 
 	private @Nullable ConditionVisitor conditionVisitor;
+	private @Nullable ExpressionVisitor expressionVisitor;
+	private final StringBuilder builder = new StringBuilder();
 
-	NestedConditionVisitor(RenderContext context, RenderTarget target) {
+	NestedExpressionVisitor(RenderContext context) {
+		this.context = context;
+		this.target = null;
+	}
 
+	NestedExpressionVisitor(RenderContext context, RenderTarget target) {
 		this.context = context;
 		this.target = target;
+	}
+
+	@Override
+	Delegation enterMatched(NestedExpression segment) {
+		builder.setLength(0);
+		return super.enterMatched(segment);
 	}
 
 	@Override
@@ -54,6 +67,10 @@ class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 			return conditionVisitor = new ConditionVisitor(context);
 		}
 
+		if (segment instanceof Expression) {
+			return expressionVisitor = new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE);
+		}
+
 		return null;
 	}
 
@@ -62,10 +79,35 @@ class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 
 		if (conditionVisitor != null) {
 
-			target.onRendered("(" + conditionVisitor.getRenderedPart() + ")");
+			String part = "(" + conditionVisitor.getRenderedPart() + ")";
+			if (target != null) {
+				target.onRendered(part);
+			} else {
+				builder.append(part);
+			}
+			conditionVisitor = null;
+		}
+
+		if (expressionVisitor != null) {
+
+			String part = "(" + expressionVisitor.getRenderedPart() + ")";
+			if (target != null) {
+				target.onRendered(part);
+			} else {
+				builder.append(part);
+			}
 			conditionVisitor = null;
 		}
 
 		return super.leaveNested(segment);
+	}
+
+	@Override
+	public CharSequence getRenderedPart() {
+
+		String part = builder.toString();
+		builder.setLength(0);
+
+		return part;
 	}
 }

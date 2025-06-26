@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mapping.model.ValueExpressionEvaluator;
+import org.springframework.data.relational.core.binding.BindMarkersFactory;
 import org.springframework.data.relational.core.conversion.MappingRelationalConverter;
 import org.springframework.data.relational.core.conversion.ObjectPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -283,6 +284,31 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return readAggregate(context, source, entity.getTypeInformation());
 	}
 
+	public BindMarkersFactory getBindMarkersFactory() {
+		return BindMarkersFactory.named(":p", "", 32, MappingJdbcConverter::filterBindMarker);
+	}
+
+	private static String filterBindMarker(CharSequence input) {
+
+		StringBuilder builder = new StringBuilder();
+
+		for (int i = 0; i < input.length(); i++) {
+
+			char ch = input.charAt(i);
+
+			// ascii letter or digit
+			if (Character.isLetterOrDigit(ch) && ch < 127) {
+				builder.append(ch);
+			}
+		}
+
+		if (builder.isEmpty()) {
+			return "";
+		}
+
+		return "_" + builder;
+	}
+
 	@Override
 	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
 			ValueExpressionEvaluator evaluator, ConversionContext context) {
@@ -297,6 +323,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		return super.newValueProvider(documentAccessor, evaluator, context);
 	}
+
 
 	/**
 	 * {@link RelationalPropertyValueProvider} using a resolving context to lookup relations. This is highly

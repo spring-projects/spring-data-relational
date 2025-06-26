@@ -15,34 +15,41 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.Comparison;
-import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.OperatorExpression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * {@link org.springframework.data.relational.core.sql.Visitor} rendering comparison {@link Condition}. Uses a
- * {@link RenderTarget} to call back for render results.
+ * {@link org.springframework.data.relational.core.sql.Visitor} rendering comparison {@link OperatorExpression}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
- * @see Comparison
+ * @see OperatorExpression
  */
-class ComparisonVisitor extends FilteredSubtreeVisitor {
+class OperatorExpressionVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
 	private final RenderContext context;
-	private final Comparison condition;
-	private final RenderTarget target;
+	private final OperatorExpression expression;
+	private @Nullable final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 	private @Nullable PartRenderer current;
 
-	ComparisonVisitor(RenderContext context, Comparison condition, RenderTarget target) {
+	OperatorExpressionVisitor(RenderContext context, OperatorExpression expression) {
 
-		super(it -> it == condition);
+		super(it -> it == expression);
 
-		this.condition = condition;
+		this.expression = expression;
+		this.target = null;
+		this.context = context;
+	}
+
+	OperatorExpressionVisitor(RenderContext context, OperatorExpression expression, RenderTarget target) {
+
+		super(it -> it == expression);
+
+		this.expression = expression;
 		this.target = target;
 		this.context = context;
 	}
@@ -63,8 +70,8 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	Delegation leaveNested(Visitable segment) {
 
 		if (current != null) {
-			if (part.length() != 0) {
-				part.append(' ').append(condition.getComparator()).append(' ');
+			if (!part.isEmpty()) {
+				part.append(' ').append(expression.getOperator()).append(' ');
 			}
 
 			part.append(current.getRenderedPart());
@@ -77,8 +84,19 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	@Override
 	Delegation leaveMatched(Visitable segment) {
 
-		target.onRendered(part);
+		if (target != null) {
+			target.onRendered(part);
+		}
 
 		return super.leaveMatched(segment);
+	}
+
+	@Override
+	public CharSequence getRenderedPart() {
+
+		String part = this.part.toString();
+		this.part.setLength(0);
+
+		return part;
 	}
 }

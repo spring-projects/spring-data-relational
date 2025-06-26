@@ -15,11 +15,9 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * Simple function accepting one or more {@link Expression}s.
@@ -27,17 +25,10 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @since 1.1
  */
-public class SimpleFunction extends AbstractSegment implements Expression {
-
-	private final String functionName;
-	private final List<? extends Expression> expressions;
+public class SimpleFunction extends BaseFunction implements Expression {
 
 	private SimpleFunction(String functionName, List<? extends Expression> expressions) {
-
-		super(expressions.toArray(new Expression[0]));
-
-		this.functionName = functionName;
-		this.expressions = expressions;
+		super(functionName, "(", ")", expressions);
 	}
 
 	/**
@@ -55,68 +46,4 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 		return new SimpleFunction(functionName, expressions);
 	}
 
-	/**
-	 * Expose this function result under a column {@code alias}.
-	 *
-	 * @param alias column alias name, must not {@literal null} or empty.
-	 * @return the aliased {@link SimpleFunction}.
-	 */
-	public SimpleFunction as(String alias) {
-
-		Assert.hasText(alias, "Alias must not be null or empty");
-
-		return new AliasedFunction(functionName, expressions, SqlIdentifier.unquoted(alias));
-	}
-
-	/**
-	 * Expose this function result under a column {@code alias}.
-	 *
-	 * @param alias column alias name, must not {@literal null}.
-	 * @return the aliased {@link SimpleFunction}.
-	 * @since 2.0
-	 */
-	public SimpleFunction as(SqlIdentifier alias) {
-
-		Assert.notNull(alias, "Alias must not be null");
-
-		return new AliasedFunction(functionName, expressions, alias);
-	}
-
-	/**
-	 * @return the function name.
-	 */
-	public String getFunctionName() {
-		return functionName;
-	}
-
-	/**
-	 * @return the function arguments.
-	 * @since 2.0
-	 */
-	public List<Expression> getExpressions() {
-		return Collections.unmodifiableList(expressions);
-	}
-
-	@Override
-	public String toString() {
-		return functionName + "(" + StringUtils.collectionToDelimitedString(expressions, ", ") + ")";
-	}
-
-	/**
-	 * {@link Aliased} {@link SimpleFunction} implementation.
-	 */
-	static class AliasedFunction extends SimpleFunction implements Aliased {
-
-		private final SqlIdentifier alias;
-
-		AliasedFunction(String functionName, List<? extends Expression> expressions, SqlIdentifier alias) {
-			super(functionName, expressions);
-			this.alias = alias;
-		}
-
-		@Override
-		public SqlIdentifier getAlias() {
-			return alias;
-		}
-	}
 }

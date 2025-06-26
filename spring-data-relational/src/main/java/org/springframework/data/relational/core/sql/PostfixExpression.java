@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,29 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
- *
  * @author Mark Paluch
- * @since 1.1
- * @see Condition#and(Condition)
  */
-public class AndCondition extends MultipleCondition {
+public class PostfixExpression extends AbstractSegment implements Expression {
 
-	AndCondition(Expression... conditions) {
-		super(" AND ", conditions);
+	private final Expression expression;
+	private final Expression postfix;
+
+	public PostfixExpression(Expression expression, Expression postfix) {
+		super(expression, postfix);
+		this.expression = expression;
+		this.postfix = postfix;
+	}
+
+	public Expression getExpression() {
+		return expression;
+	}
+
+	public Expression getPostfix() {
+		return postfix;
+	}
+
+	@Override
+	public String toString() {
+		return expression.toString() + postfix;
 	}
 }

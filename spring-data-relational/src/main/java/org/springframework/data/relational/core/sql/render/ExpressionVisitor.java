@@ -71,9 +71,9 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			return Delegation.delegateTo(visitor);
 		}
 
-		if (segment instanceof SimpleFunction) {
+		if (segment instanceof BaseFunction) {
 
-			SimpleFunctionVisitor visitor = new SimpleFunctionVisitor(context);
+			FunctionVisitor visitor = new FunctionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}
@@ -88,6 +88,28 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		if (segment instanceof AnalyticFunction) {
 
 			AnalyticFunctionVisitor visitor = new AnalyticFunctionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof OperatorExpression oe) {
+
+			OperatorExpressionVisitor visitor = new OperatorExpressionVisitor(context, oe);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof PostfixExpression pe) {
+
+			PostfixExpressionVisitor visitor = new PostfixExpressionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof NestedExpression) {
+
+			NestedExpressionVisitor visitor = new NestedExpressionVisitor(context);
+
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}
@@ -110,6 +132,11 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 					: NameRenderer.render(context, table);
 
 			value = renderedTable + ".*";
+		} else if (segment instanceof ArrayIndexExpression) {
+
+			ArrayIndexExpressionVisitor visitor = new ArrayIndexExpressionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
 		} else if (segment instanceof Cast) {
 
 			CastVisitor visitor = new CastVisitor(context);

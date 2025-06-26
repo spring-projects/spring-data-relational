@@ -16,11 +16,11 @@
 package org.springframework.data.relational.core.sql.render;
 
 
+import org.springframework.data.relational.core.sql.BaseFunction;
 import org.springframework.data.relational.core.sql.CaseExpression;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.OrderByField;
-import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
@@ -82,9 +82,9 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	@Override
 	Delegation enterNested(Visitable segment) {
 
-		if (segment instanceof SimpleFunction) {
-			delegate = new SimpleFunctionVisitor(context);
-			return Delegation.delegateTo((SimpleFunctionVisitor) delegate);
+		if (segment instanceof BaseFunction) {
+			delegate = new FunctionVisitor(context);
+			return Delegation.delegateTo((FunctionVisitor) delegate);
 		}
 
 		if (segment instanceof Expressions.SimpleExpression || segment instanceof CaseExpression) {
@@ -98,7 +98,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (delegate instanceof SimpleFunctionVisitor || delegate instanceof ExpressionVisitor) {
+		if (delegate instanceof FunctionVisitor || delegate instanceof ExpressionVisitor) {
 			builder.append(delegate.getRenderedPart());
 			delegate = null;
 		}
