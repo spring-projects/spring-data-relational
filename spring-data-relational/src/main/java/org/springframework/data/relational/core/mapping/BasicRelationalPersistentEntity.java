@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
  * @author Bastian Wilhelm
  * @author Mikhail Polivakha
  * @author Kurt Niemi
+ * @author Sergey Korotaev
  */
 class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
@@ -47,7 +48,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	private final @Nullable Expression tableNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
 	private final @Nullable Expression schemaNameExpression;
-	private final ExpressionEvaluator expressionEvaluator;
+	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator;
 	private boolean forceQuote = true;
 
 	/**
@@ -56,11 +57,11 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 * @param information must not be {@literal null}.
 	 */
 	BasicRelationalPersistentEntity(TypeInformation<T> information, NamingStrategy namingStrategy,
-			ExpressionEvaluator expressionEvaluator) {
+									SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
 
 		super(information);
 
-		this.expressionEvaluator = expressionEvaluator;
+		this.sqlIdentifierExpressionEvaluator = sqlIdentifierExpressionEvaluator;
 
 		Lazy<Optional<SqlIdentifier>> defaultSchema = Lazy.of(() -> StringUtils.hasText(namingStrategy.getSchema())
 				? Optional.of(createDerivedSqlIdentifier(namingStrategy.getSchema()))
@@ -129,7 +130,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 			return tableName.get();
 		}
 
-		return createSqlIdentifier(expressionEvaluator.evaluate(tableNameExpression));
+		return sqlIdentifierExpressionEvaluator.evaluate(tableNameExpression, isForceQuote());
 	}
 
 	@Override
@@ -137,7 +138,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 		SqlIdentifier schema;
 		if (schemaNameExpression != null) {
-			schema = createSqlIdentifier(expressionEvaluator.evaluate(schemaNameExpression));
+			schema = sqlIdentifierExpressionEvaluator.evaluate(schemaNameExpression, isForceQuote());
 		} else {
 			schema = schemaName.get().orElse(null);
 		}
@@ -147,7 +148,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 		}
 
 		if (schemaNameExpression != null) {
-			schema = createSqlIdentifier(expressionEvaluator.evaluate(schemaNameExpression));
+			schema = sqlIdentifierExpressionEvaluator.evaluate(schemaNameExpression, isForceQuote());
 		}
 
 		return SqlIdentifier.from(schema, getTableName());

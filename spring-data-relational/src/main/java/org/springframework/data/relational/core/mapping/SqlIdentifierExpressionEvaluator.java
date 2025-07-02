@@ -1,5 +1,6 @@
 package org.springframework.data.relational.core.mapping;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
@@ -13,25 +14,31 @@ import org.springframework.util.Assert;
  * {@link #setSanitizer(SqlIdentifierSanitizer)} method.
  *
  * @author Kurt Niemi
+ * @author Sergey Korotaev
  * @see SqlIdentifierSanitizer
  * @since 3.2
  */
-class ExpressionEvaluator {
+class SqlIdentifierExpressionEvaluator {
 
 	private EvaluationContextProvider provider;
 
 	private SqlIdentifierSanitizer sanitizer = SqlIdentifierSanitizer.words();
 
-	public ExpressionEvaluator(EvaluationContextProvider provider) {
+	public SqlIdentifierExpressionEvaluator(EvaluationContextProvider provider) {
 		this.provider = provider;
 	}
 
-	public String evaluate(Expression expression) throws EvaluationException {
+	public SqlIdentifier evaluate(Expression expression, boolean isForceQuote) throws EvaluationException {
 
 		Assert.notNull(expression, "Expression must not be null.");
 
-		String result = expression.getValue(provider.getEvaluationContext(null), String.class);
-		return sanitizer.sanitize(result);
+		Object value = expression.getValue(provider.getEvaluationContext(null), Object.class);
+		if (value instanceof SqlIdentifier sqlIdentifier) {
+			return sqlIdentifier;
+		}
+
+		String sanitizedResult = sanitizer.sanitize((String) value);
+		return isForceQuote ? SqlIdentifier.quoted(sanitizedResult) : SqlIdentifier.unquoted(sanitizedResult);
 	}
 
 	public void setSanitizer(SqlIdentifierSanitizer sanitizer) {

@@ -43,6 +43,7 @@ import org.springframework.util.StringUtils;
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
  * @author Kurt Niemi
+ * @author Sergey Korotaev
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -61,7 +62,9 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
-	private ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+
+	private SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator =
+			new SqlIdentifierExpressionEvaluator(EvaluationContextProvider.DEFAULT);
 
 	/**
 	 * Creates a new {@link BasicRelationalPersistentProperty}.
@@ -73,7 +76,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @since 2.0
 	 */
 	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
+											 SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
 
 		super(property, owner, simpleTypeHolder);
 		this.namingStrategy = namingStrategy;
@@ -136,8 +139,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.collectionKeyColumnName = collectionKeyColumnName;
 	}
 
-	void setExpressionEvaluator(ExpressionEvaluator expressionEvaluator) {
-		this.expressionEvaluator = expressionEvaluator;
+	void setSqlIdentifierExpressionEvaluator(SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
+		this.sqlIdentifierExpressionEvaluator = sqlIdentifierExpressionEvaluator;
 	}
 
 	/**
@@ -191,7 +194,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			return columnName.get();
 		}
 
-		return createSqlIdentifier(expressionEvaluator.evaluate(columnNameExpression));
+		return sqlIdentifierExpressionEvaluator.evaluate(columnNameExpression, isForceQuote());
 	}
 
 	@Override
@@ -222,7 +225,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			return collectionKeyColumnName.get();
 		}
 
-		return createSqlIdentifier(expressionEvaluator.evaluate(collectionKeyColumnNameExpression));
+		return sqlIdentifierExpressionEvaluator.evaluate(collectionKeyColumnNameExpression, isForceQuote());
 	}
 
 	@Override
