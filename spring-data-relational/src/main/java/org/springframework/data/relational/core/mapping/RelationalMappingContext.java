@@ -48,7 +48,8 @@ public class RelationalMappingContext
 
 	private boolean forceQuote = true;
 
-	private final ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator =
+			new SqlIdentifierExpressionEvaluator(EvaluationContextProvider.DEFAULT);
 	private boolean singleQueryLoadingEnabled = false;
 
 	/**
@@ -99,7 +100,7 @@ public class RelationalMappingContext
 	 * @since 3.2
 	 */
 	public void setSqlIdentifierSanitizer(SqlIdentifierSanitizer sanitizer) {
-		this.expressionEvaluator.setSanitizer(sanitizer);
+		this.sqlIdentifierExpressionEvaluator.setSanitizer(sanitizer);
 	}
 
 	public NamingStrategy getNamingStrategy() {
@@ -108,7 +109,7 @@ public class RelationalMappingContext
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.expressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
+		this.sqlIdentifierExpressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
 	}
 
 	@Nullable
@@ -130,7 +131,7 @@ public class RelationalMappingContext
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
 		BasicRelationalPersistentEntity<T> entity = new BasicRelationalPersistentEntity<>(typeInformation,
-				this.namingStrategy, this.expressionEvaluator);
+				this.namingStrategy, this.sqlIdentifierExpressionEvaluator);
 		entity.setForceQuote(isForceQuote());
 
 		return entity;
@@ -171,7 +172,7 @@ public class RelationalMappingContext
 	protected void applyDefaults(BasicRelationalPersistentProperty persistentProperty) {
 
 		persistentProperty.setForceQuote(isForceQuote());
-		persistentProperty.setExpressionEvaluator(this.expressionEvaluator);
+		persistentProperty.setSqlIdentifierExpressionEvaluator(this.sqlIdentifierExpressionEvaluator);
 	}
 
 	/**
