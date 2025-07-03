@@ -99,8 +99,7 @@ class PartTreeR2dbcQueryUnitTests {
 
 		when(r2dbcConverter.writeValue(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-		mappingContext = new R2dbcMappingContext();
-		mappingContext.setForceQuote(false);
+		mappingContext = R2dbcMappingContext.forPlainIdentifiers();
 		doReturn(mappingContext).when(r2dbcConverter).getMappingContext();
 
 		R2dbcDialect dialect = DialectResolver.getDialect(connectionFactory);
@@ -691,8 +690,7 @@ class PartTreeR2dbcQueryUnitTests {
 				.from(TABLE);
 	}
 
-	@Test
-	// GH-475, GH-1687
+	@Test // GH-475, GH-1687
 	void createsDtoProjectionQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAsDtoProjectionByAge", Integer.TYPE);

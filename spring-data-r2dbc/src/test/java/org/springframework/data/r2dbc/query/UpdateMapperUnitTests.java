@@ -46,13 +46,9 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  */
 public class UpdateMapperUnitTests {
 
-	private final R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
+	private final R2dbcConverter converter = new MappingR2dbcConverter(R2dbcMappingContext.forPlainIdentifiers());
 	private final UpdateMapper mapper = new UpdateMapper(PostgresDialect.INSTANCE, converter);
 	private final BindTarget bindTarget = mock(BindTarget.class);
-
-	{
-		((R2dbcMappingContext) converter.getMappingContext()).setForceQuote(false);
-	}
 
 	@Test // gh-64
 	void shouldMapFieldNamesInUpdate() {

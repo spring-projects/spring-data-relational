@@ -212,7 +212,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+		RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 		JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 			throw new UnsupportedOperationException();
 		});

@@ -19,21 +19,28 @@ import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.EnabledOnClass;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.OracleTestSupport;
+import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -59,6 +66,15 @@ public class OracleR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposito
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return OracleTestSupport.createConnectionFactory(database);
+		}
+
+		@Override
+		public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+				R2dbcCustomConversions r2dbcCustomConversions, RelationalManagedTypes r2dbcManagedTypes) {
+			R2dbcMappingContext mappingContext = super.r2dbcMappingContext(namingStrategy, r2dbcCustomConversions,
+					r2dbcManagedTypes);
+			mappingContext.setForceQuote(false);
+			return mappingContext;
 		}
 	}
 

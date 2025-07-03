@@ -69,8 +69,7 @@ class QueryMapperUnitTests {
 
 		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect, Arrays.asList(converters));
 
-		R2dbcMappingContext context = new R2dbcMappingContext();
-		context.setForceQuote(false);
+		R2dbcMappingContext context = R2dbcMappingContext.forPlainIdentifiers();
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 		context.afterPropertiesSet();
 

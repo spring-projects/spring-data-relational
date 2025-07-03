@@ -125,7 +125,8 @@ public class TestConfiguration {
 	JdbcMappingContext jdbcMappingContextWithOutSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
 			CustomConversions conversions) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
+		JdbcMappingContext mappingContext = JdbcMappingContext
+				.forQuotedIdentifiers(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 		return mappingContext;
 	}
@@ -135,7 +136,8 @@ public class TestConfiguration {
 	JdbcMappingContext jdbcMappingContextWithSingleQueryLoading(Optional<NamingStrategy> namingStrategy,
 			CustomConversions conversions) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
+		JdbcMappingContext mappingContext = JdbcMappingContext
+				.forQuotedIdentifiers(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 		mappingContext.setSingleQueryLoadingEnabled(true);
 		return mappingContext;

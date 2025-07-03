@@ -15,17 +15,18 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the default {@link NamingStrategy}.
@@ -39,7 +40,7 @@ public class DefaultNamingStrategyUnitTests {
 	private final NamingStrategy target = DefaultNamingStrategy.INSTANCE;
 
 	private final RelationalPersistentEntity<?> persistentEntity = //
-			new JdbcMappingContext(target).getRequiredPersistentEntity(DummyEntity.class);
+			JdbcMappingContext.forQuotedIdentifiers(target).getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-184
 	public void getTableName() {

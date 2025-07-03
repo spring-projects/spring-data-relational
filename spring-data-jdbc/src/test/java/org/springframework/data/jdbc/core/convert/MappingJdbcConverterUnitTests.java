@@ -165,7 +165,7 @@ class MappingJdbcConverterUnitTests {
 	@Test // GH-1750
 	void readByteArrayToNestedUuidWithCustomConverter() {
 
-		JdbcMappingContext context = new JdbcMappingContext();
+		JdbcMappingContext context = JdbcMappingContext.forQuotedIdentifiers();
 		StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
 		Converter<byte[], UUID> customConverter = new ByteArrayToUuid();
 		MappingJdbcConverter converter = new MappingJdbcConverter( //
