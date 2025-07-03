@@ -177,7 +177,8 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null");
 
-		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
+		R2dbcMappingContext context = R2dbcMappingContext
+				.forQuotedIdentifiers(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
 		context.setManagedTypes(r2dbcManagedTypes);
 

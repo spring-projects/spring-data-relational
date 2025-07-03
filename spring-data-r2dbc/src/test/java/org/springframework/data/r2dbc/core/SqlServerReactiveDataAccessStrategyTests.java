@@ -28,7 +28,7 @@ public class SqlServerReactiveDataAccessStrategyTests extends ReactiveDataAccess
 
 	private final ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(SqlServerDialect.INSTANCE);
 
-	{
+	SqlServerReactiveDataAccessStrategyTests() {
 		((R2dbcMappingContext) strategy.getConverter().getMappingContext()).setForceQuote(false);
 	}
 

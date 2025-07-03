@@ -55,27 +55,24 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	private R2dbcMappingContext context;
 	private final ReactiveDataAccessStrategy strategy;
 
-	{
-		context = new R2dbcMappingContext();
-		context.setForceQuote(false);
+	PostgresReactiveDataAccessStrategyTests() {
 
-		DefaultReactiveDataAccessStrategy strategy1 = createReactiveDataAccessStrategy(DurationToIntervalConverter.INSTANCE,
+		context = R2dbcMappingContext.forPlainIdentifiers();
+		strategy = createReactiveDataAccessStrategy(DurationToIntervalConverter.INSTANCE,
 				IntervalToDurationConverter.INSTANCE);
-		strategy = strategy1;
 	}
 
 	private DefaultReactiveDataAccessStrategy createReactiveDataAccessStrategy(Object... converters) {
+
 		R2dbcCustomConversions customConversions = R2dbcCustomConversions.of(PostgresDialect.INSTANCE, converters);
 
 		MappingR2dbcConverter converter = new MappingR2dbcConverter(context, customConversions);
-		DefaultReactiveDataAccessStrategy strategy1 = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+		return new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
 				converter);
-		return strategy1;
 	}
 
 	@Override
 	protected ReactiveDataAccessStrategy getStrategy() {
-
 		return strategy;
 	}
 

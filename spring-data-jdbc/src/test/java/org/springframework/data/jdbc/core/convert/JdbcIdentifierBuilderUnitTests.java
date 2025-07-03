@@ -40,7 +40,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  */
 class JdbcIdentifierBuilderUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext();
+	JdbcMappingContext context = JdbcMappingContext.forQuotedIdentifiers();
 	JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});

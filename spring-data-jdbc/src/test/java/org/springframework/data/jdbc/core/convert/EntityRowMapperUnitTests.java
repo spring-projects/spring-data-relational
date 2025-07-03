@@ -1032,7 +1032,7 @@ public class EntityRowMapperUnitTests {
 	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
 
-		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+		RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 

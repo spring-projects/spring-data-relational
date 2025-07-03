@@ -46,7 +46,7 @@ import org.springframework.lang.Nullable;
  */
 class SqlGeneratorEmbeddedUnitTests {
 
-	private RelationalMappingContext context = new JdbcMappingContext();
+	private RelationalMappingContext context = JdbcMappingContext.forPlainIdentifiers();
 	private JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
@@ -54,7 +54,6 @@ class SqlGeneratorEmbeddedUnitTests {
 
 	@BeforeEach
 	void setUp() {
-		this.context.setForceQuote(false);
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
 	}
 

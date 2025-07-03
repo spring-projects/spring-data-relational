@@ -16,15 +16,13 @@
 
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -98,7 +96,7 @@ public class DeclaredQueryRepositoryUnitTests {
 
 		Dialect dialect = JdbcHsqlDbDialect.INSTANCE;
 
-		RelationalMappingContext context = new JdbcMappingContext();
+		RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers();
 
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 		JdbcConverter converter = new MappingJdbcConverter(context, delegatingDataAccessStrategy,

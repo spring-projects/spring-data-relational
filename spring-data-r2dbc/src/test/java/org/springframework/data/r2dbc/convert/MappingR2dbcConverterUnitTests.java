@@ -55,7 +55,7 @@ import org.springframework.r2dbc.core.Parameter;
  */
 public class MappingR2dbcConverterUnitTests {
 
-	private RelationalMappingContext mappingContext = new R2dbcMappingContext();
+	private RelationalMappingContext mappingContext = R2dbcMappingContext.forPlainIdentifiers();
 	private MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
 	@BeforeEach
@@ -67,7 +67,6 @@ public class MappingR2dbcConverterUnitTests {
 						StringToSimplePersonConverter.INSTANCE));
 
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
-		mappingContext.setForceQuote(false);
 		converter = new MappingR2dbcConverter(mappingContext, conversions);
 	}
 

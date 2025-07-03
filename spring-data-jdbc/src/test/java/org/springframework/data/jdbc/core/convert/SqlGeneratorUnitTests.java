@@ -15,17 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.util.Collections.emptySet;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
-import static org.springframework.data.relational.core.mapping.ForeignKeyNaming.APPLY_RENAMING;
-import static org.springframework.data.relational.core.mapping.ForeignKeyNaming.IGNORE_RENAMING;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.EMPTY;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.quoted;
-import static org.springframework.data.relational.core.sql.SqlIdentifier.unquoted;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.relational.core.mapping.ForeignKeyNaming.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -87,7 +81,7 @@ class SqlGeneratorUnitTests {
 	private static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
 
 	private final PrefixingNamingStrategy namingStrategy = new PrefixingNamingStrategy();
-	private RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+	private RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 	private final JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
@@ -977,7 +971,7 @@ class SqlGeneratorUnitTests {
 	void backReferenceShouldConsiderRenamedParent() {
 
 		namingStrategy.setForeignKeyNaming(APPLY_RENAMING);
-		context = new JdbcMappingContext(namingStrategy);
+		context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 
 		String sql = sqlGenerator.createDeleteInByPath(getPath("ref", RenamedDummy.class));
 
@@ -988,7 +982,7 @@ class SqlGeneratorUnitTests {
 	void backReferenceShouldIgnoreRenamedParent() {
 
 		namingStrategy.setForeignKeyNaming(IGNORE_RENAMING);
-		context = new JdbcMappingContext(namingStrategy);
+		context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 
 		String sql = sqlGenerator.createDeleteInByPath(getPath("ref", RenamedDummy.class));
 
@@ -999,7 +993,7 @@ class SqlGeneratorUnitTests {
 	void keyColumnShouldConsiderRenamedParent() {
 
 		namingStrategy.setForeignKeyNaming(APPLY_RENAMING);
-		context = new JdbcMappingContext(namingStrategy);
+		context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 
 		SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
 		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class),
@@ -1012,7 +1006,7 @@ class SqlGeneratorUnitTests {
 	void keyColumnShouldIgnoreRenamedParent() {
 
 		namingStrategy.setForeignKeyNaming(IGNORE_RENAMING);
-		context = new JdbcMappingContext(namingStrategy);
+		context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 
 		SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
 		String sql = sqlGenerator.getFindAllByProperty(Identifier.of(unquoted("parentId"), 23, RenamedDummy.class),

@@ -196,7 +196,7 @@ class SqlGeneratorFixedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		context = new JdbcMappingContext(namingStrategy);
+		context = JdbcMappingContext.forQuotedIdentifiers(namingStrategy);
 		JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 			throw new UnsupportedOperationException();
 		});

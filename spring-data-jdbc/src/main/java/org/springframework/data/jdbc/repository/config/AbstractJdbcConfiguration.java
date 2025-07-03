@@ -116,7 +116,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			JdbcCustomConversions customConversions, RelationalManagedTypes jdbcManagedTypes) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
+		JdbcMappingContext mappingContext = JdbcMappingContext
+				.forQuotedIdentifiers(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
 		mappingContext.setManagedTypes(jdbcManagedTypes);
 

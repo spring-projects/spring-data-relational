@@ -57,8 +57,7 @@ public class SqlInspectingR2dbcRepositoryUnitTests {
 	@SuppressWarnings("unchecked")
 	public void before() {
 
-		context = new R2dbcMappingContext();
-		context.setForceQuote(false);
+		context = R2dbcMappingContext.forPlainIdentifiers();
 		r2dbcConverter = new MappingR2dbcConverter(context);
 		dataAccessStrategy = new DefaultReactiveDataAccessStrategy(H2Dialect.INSTANCE, r2dbcConverter);
 

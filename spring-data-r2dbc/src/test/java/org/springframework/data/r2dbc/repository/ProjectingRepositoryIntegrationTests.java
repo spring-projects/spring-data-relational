@@ -112,8 +112,7 @@ public class ProjectingRepositoryIntegrationTests {
 		return H2TestSupport.createConnectionFactory();
 	}
 
-	@Test
-	// GH-1687
+	@Test // GH-1687
 	void shouldApplyProjectionDirectly() {
 
 		repository.findProjectionByEmail("heisenberg@the-white-family.com") //
@@ -123,8 +122,7 @@ public class ProjectingRepositoryIntegrationTests {
 				}).verifyComplete();
 	}
 
-	@Test
-	// GH-1687
+	@Test // GH-1687
 	void shouldApplyEntityQueryProjectionDirectly() {
 
 		repository.findAllByEmail("heisenberg@the-white-family.com") //

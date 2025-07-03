@@ -43,6 +43,62 @@ public class R2dbcMappingContext extends RelationalMappingContext {
 		super(namingStrategy);
 	}
 
+	/**
+	 * Create a new {@code R2dbcMappingContext} using {@link #setForceQuote(boolean) plain identifiers}. Plain
+	 * {@link org.springframework.data.relational.core.sql.SqlIdentifier identifiers} (i.e. table and column names) are
+	 * typically not case-sensitive (case-sensitivity can be still enforced by specific database configurations).
+	 *
+	 * @return a new {@code R2dbcMappingContext} using plain identifiers.
+	 * @since 4.0
+	 */
+	public static R2dbcMappingContext forPlainIdentifiers() {
+		R2dbcMappingContext context = forQuotedIdentifiers();
+		context.setForceQuote(false);
+		return context;
+	}
+
+	/**
+	 * Create a new {@code R2dbcMappingContext} using {@link #setForceQuote(boolean) plain identifiers} and the given
+	 * {@link NamingStrategy}. Plain {@link org.springframework.data.relational.core.sql.SqlIdentifier identifiers} (i.e.
+	 * table and column names) are typically not case-sensitive (case-sensitivity can be still enforced by specific
+	 * database configurations).
+	 *
+	 * @param namingStrategy must not be {@literal null}.
+	 * @return a new {@code R2dbcMappingContext} using plain identifiers.
+	 * @since 4.0
+	 */
+	public static R2dbcMappingContext forPlainIdentifiers(NamingStrategy namingStrategy) {
+		R2dbcMappingContext context = forQuotedIdentifiers(namingStrategy);
+		context.setForceQuote(false);
+		return context;
+	}
+
+	/**
+	 * Create a new {@code R2dbcMappingContext} using {@link #setForceQuote(boolean) quoted identifiers} (default
+	 * behavior). Quoted {@link org.springframework.data.relational.core.sql.SqlIdentifier identifiers} (i.e. table and
+	 * column names) are typically case-sensitive.
+	 *
+	 * @return a new {@code R2dbcMappingContext} using quoted identifiers.
+	 * @since 4.0
+	 */
+	public static R2dbcMappingContext forQuotedIdentifiers() {
+		return new R2dbcMappingContext();
+	}
+
+	/**
+	 * Create a new {@code R2dbcMappingContext} using {@link #setForceQuote(boolean) quoted identifiers} (default
+	 * behavior) and the given {@link NamingStrategy}. Quoted
+	 * {@link org.springframework.data.relational.core.sql.SqlIdentifier identifiers} (i.e. table and column names) are
+	 * typically case-sensitive.
+	 *
+	 * @param namingStrategy must not be {@literal null}.
+	 * @return a new {@code R2dbcMappingContext} using quoted identifiers.
+	 * @since 4.0
+	 */
+	public static R2dbcMappingContext forQuotedIdentifiers(NamingStrategy namingStrategy) {
+		return new R2dbcMappingContext(namingStrategy);
+	}
+
 	@Override
 	protected boolean shouldCreatePersistentEntityFor(TypeInformation<?> type) {
 

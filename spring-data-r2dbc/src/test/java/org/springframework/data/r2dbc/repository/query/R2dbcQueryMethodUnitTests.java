@@ -58,8 +58,7 @@ class R2dbcQueryMethodUnitTests {
 	@BeforeEach
 	void setUp() {
 
-		this.context = new R2dbcMappingContext();
-		this.context.setForceQuote(false);
+		this.context = R2dbcMappingContext.forPlainIdentifiers();
 	}
 
 	@Test

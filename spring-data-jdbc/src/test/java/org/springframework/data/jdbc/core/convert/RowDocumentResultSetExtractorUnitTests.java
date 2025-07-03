@@ -48,7 +48,7 @@ import org.springframework.data.relational.domain.RowDocument;
  */
 public class RowDocumentResultSetExtractorUnitTests {
 
-	RelationalMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+	RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers(new DefaultNamingStrategy());
 
 	private final PathToColumnMapping column = new PathToColumnMapping() {
 		@Override
