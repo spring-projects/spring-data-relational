@@ -193,7 +193,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		value = readJdbcArray(value);
 		targetType = determineNestedTargetType(targetType);
 
-		return readToAggregateReference(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
+		return possiblyReadToAggregateReference(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
 	}
 
 	/**
@@ -228,7 +228,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	/**
 	 * Convert value to an {@link AggregateReference} if that is specified by the parameter targetType.
 	 */
-	private Object readToAggregateReference(Object value, TypeInformation<?> targetType) {
+	private Object possiblyReadToAggregateReference(Object value, TypeInformation<?> targetType) {
 
 		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
 			return AggregateReference.to(value);
@@ -277,28 +277,37 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> columnType, SQLType sqlType) {
 
 		TypeInformation<?> targetType = canWriteAsJdbcValue(value) ? TypeInformation.of(JdbcValue.class) : columnType;
+		
+		if (value instanceof AggregateReference<?, ?> aggregateReference) {
+			return writeJdbcValue(aggregateReference.getId(), columnType, sqlType);
+		}
+		
 		Object convertedValue = writeValue(value, targetType);
 
 		if (convertedValue instanceof JdbcValue result) {
 			return result;
 		}
 
-		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-			return JdbcValue.of(convertedValue, sqlType);
+		if (convertedValue == null) {
+			return JdbcValue.of(null, sqlType);
 		}
 
-		Class<?> componentType = convertedValue.getClass().getComponentType();
-		if (componentType != byte.class && componentType != Byte.class) {
+		if (convertedValue.getClass().isArray()) {// array conversion
+			Class<?> componentType = convertedValue.getClass().getComponentType();
+			if (componentType != byte.class && componentType != Byte.class) {
 
-			Object[] objectArray = requireObjectArray(convertedValue);
-			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
+				Object[] objectArray = requireObjectArray(convertedValue);
+				return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
+			}
+
+			if (componentType == Byte.class) {
+				convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
+			}
+
+			return JdbcValue.of(convertedValue, JDBCType.BINARY);
 		}
-
-		if (componentType == Byte.class) {
-			convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
-		}
-
-		return JdbcValue.of(convertedValue, JDBCType.BINARY);
+		
+		return JdbcValue.of(convertedValue, sqlType);
 	}
 
 	@SuppressWarnings("unchecked")

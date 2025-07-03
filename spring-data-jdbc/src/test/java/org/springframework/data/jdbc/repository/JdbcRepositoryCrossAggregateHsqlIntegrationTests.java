@@ -65,7 +65,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
-			return new JdbcCustomConversions(asList(AggregateIdToLong.INSTANCE, LongToAggregateId.INSTANCE));
+			return new JdbcCustomConversions(asList(AggregateIdToLong.INSTANCE, NumberToAggregateId.INSTANCE));
 		}
 	}
 
@@ -109,7 +109,6 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	}
 
 	@Test // GH-1828
-	@Disabled
 	public void savesAndReadWithConvertableId() {
 
 		AggregateReference<AggregateWithConvertableId, AggregateId> idReference = AggregateReference
@@ -118,7 +117,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 				.save(new ReferencingAggregate(null, "Reference", idReference));
 
 		ReferencingAggregate reloaded = referencingAggregates.findById(reference.id).get();
-		assertThat(reloaded.id()).isEqualTo(idReference);
+		assertThat(reloaded.ref()).isEqualTo(idReference);
 	}
 
 	interface Ones extends CrudRepository<AggregateOne, Long> {}
@@ -163,12 +162,12 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	}
 
 	@ReadingConverter
-	enum LongToAggregateId implements Converter<Long, AggregateId> {
+	enum NumberToAggregateId implements Converter<Number, AggregateId> {
 		INSTANCE;
 
 		@Override
-		public AggregateId convert(Long source) {
-			return new AggregateId(source);
+		public AggregateId convert(Number source) {
+			return new AggregateId(source.longValue());
 		}
 	}
 }

@@ -44,16 +44,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.ValueExpressionEvaluator;
-import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -1174,8 +1165,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				return null;
 			}
 
-			// TODO: converting here seems wrong, since we have the ConvertingParameterValueProvider
-			// return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
 			return value;
 		}
 
