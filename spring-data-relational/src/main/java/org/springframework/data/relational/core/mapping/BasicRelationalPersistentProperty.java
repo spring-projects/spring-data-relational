@@ -43,6 +43,7 @@ import org.springframework.util.StringUtils;
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
  * @author Kurt Niemi
+ * @author Sergey Korotaev
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -51,11 +52,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	private final Lazy<SqlIdentifier> columnName;
 	private final boolean hasExplicitColumnName;
-	private final @Nullable Expression columnNameExpression;
+	private final Lazy<SqlIdentifier> columnNameExpression;
 	private final SqlIdentifier sequence;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
-	private final @Nullable Expression collectionKeyColumnNameExpression;
+	private final Lazy<SqlIdentifier> collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
 	private final String embeddedPrefix;
 
@@ -101,10 +102,10 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 					() -> StringUtils.hasText(mappedCollection.keyColumn()) ? createSqlIdentifier(mappedCollection.keyColumn())
 							: createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this)));
 
-			this.collectionKeyColumnNameExpression = detectExpression(mappedCollection.keyColumn());
+			this.collectionKeyColumnNameExpression = Lazy.of(() -> detectExpression(mappedCollection.keyColumn()));
 		} else {
 
-			this.collectionKeyColumnNameExpression = null;
+			this.collectionKeyColumnNameExpression = Lazy.empty();
 		}
 
 		if (isAnnotationPresent(Column.class)) {
@@ -114,7 +115,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 			this.columnName = Lazy.of(() -> StringUtils.hasText(column.value()) ? createSqlIdentifier(column.value())
 					: createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
-			this.columnNameExpression = detectExpression(column.value());
+			this.columnNameExpression = Lazy.of(() -> detectExpression(column.value()));
 
 			if (collectionIdColumnName == null && StringUtils.hasText(column.value())) {
 				collectionIdColumnName = Lazy.of(() -> Optional.of(createSqlIdentifier(column.value())));
@@ -123,7 +124,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		} else {
 			this.hasExplicitColumnName = false;
 			this.columnName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this)));
-			this.columnNameExpression = null;
+			this.columnNameExpression = Lazy.empty();
 		}
 
 		this.sequence = determineSequenceName();
@@ -145,17 +146,19 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * {@link LiteralExpression} (indicating that no subsequent evaluation is necessary).
 	 *
 	 * @param potentialExpression can be {@literal null}
-	 * @return can be {@literal null}.
 	 */
-	@Nullable
-	private static Expression detectExpression(@Nullable String potentialExpression) {
+	private SqlIdentifier detectExpression(@Nullable String potentialExpression) {
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;
 		}
 
 		Expression expression = PARSER.parseExpression(potentialExpression, ParserContext.TEMPLATE_EXPRESSION);
-		return expression instanceof LiteralExpression ? null : expression;
+		if (expression instanceof LiteralExpression) {
+			return null;
+		}
+
+		return createSqlIdentifier(expressionEvaluator.evaluate(expression));
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -186,12 +189,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public SqlIdentifier getColumnName() {
-
-		if (columnNameExpression == null) {
-			return columnName.get();
-		}
-
-		return createSqlIdentifier(expressionEvaluator.evaluate(columnNameExpression));
+		return columnNameExpression.getOptional()
+				.orElse(columnName.get());
 	}
 
 	@Override
@@ -218,11 +217,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			return null;
 		}
 
-		if (collectionKeyColumnNameExpression == null) {
-			return collectionKeyColumnName.get();
-		}
-
-		return createSqlIdentifier(expressionEvaluator.evaluate(collectionKeyColumnNameExpression));
+		return collectionKeyColumnNameExpression.getOptional()
+				.orElse(collectionKeyColumnName.get());
 	}
 
 	@Override

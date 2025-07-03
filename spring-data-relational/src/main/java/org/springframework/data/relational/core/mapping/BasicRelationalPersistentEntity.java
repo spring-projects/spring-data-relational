@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
  * @author Bastian Wilhelm
  * @author Mikhail Polivakha
  * @author Kurt Niemi
+ * @author Sergey Korotaev
  */
 class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
@@ -44,9 +45,9 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
 	private final Lazy<SqlIdentifier> tableName;
-	private final @Nullable Expression tableNameExpression;
+	private final Lazy<SqlIdentifier> tableNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
-	private final @Nullable Expression schemaNameExpression;
+	private final Lazy<SqlIdentifier> schemaNameExpression;
 	private final ExpressionEvaluator expressionEvaluator;
 	private boolean forceQuote = true;
 
@@ -72,19 +73,19 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 			this.tableName = Lazy.of(() -> StringUtils.hasText(table.value()) ? createSqlIdentifier(table.value())
 					: createDerivedSqlIdentifier(namingStrategy.getTableName(getType())));
-			this.tableNameExpression = detectExpression(table.value());
+			this.tableNameExpression = Lazy.of(() -> detectExpression(table.value()));
 
 			this.schemaName = StringUtils.hasText(table.schema())
 					? Lazy.of(() -> Optional.of(createSqlIdentifier(table.schema())))
 					: defaultSchema;
-			this.schemaNameExpression = detectExpression(table.schema());
+			this.schemaNameExpression = Lazy.of(() -> detectExpression(table.schema()));
 
 		} else {
 
 			this.tableName = Lazy.of(() -> createDerivedSqlIdentifier(namingStrategy.getTableName(getType())));
-			this.tableNameExpression = null;
+			this.tableNameExpression = Lazy.empty();
 			this.schemaName = defaultSchema;
-			this.schemaNameExpression = null;
+			this.schemaNameExpression = Lazy.empty();
 		}
 	}
 
@@ -93,17 +94,20 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 * {@link LiteralExpression} (indicating that no subsequent evaluation is necessary).
 	 *
 	 * @param potentialExpression can be {@literal null}
-	 * @return can be {@literal null}.
 	 */
-	@Nullable
-	private static Expression detectExpression(@Nullable String potentialExpression) {
+	private SqlIdentifier detectExpression(@Nullable String potentialExpression) {
+
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;
 		}
 
 		Expression expression = PARSER.parseExpression(potentialExpression, ParserContext.TEMPLATE_EXPRESSION);
-		return expression instanceof LiteralExpression ? null : expression;
+		if (expression instanceof LiteralExpression) {
+			return null;
+		}
+
+		return createSqlIdentifier(expressionEvaluator.evaluate(expression));
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -124,30 +128,19 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 	@Override
 	public SqlIdentifier getTableName() {
-
-		if (tableNameExpression == null) {
-			return tableName.get();
-		}
-
-		return createSqlIdentifier(expressionEvaluator.evaluate(tableNameExpression));
+		return tableNameExpression.getOptional()
+				.orElse(tableName.get());
 	}
 
 	@Override
 	public SqlIdentifier getQualifiedTableName() {
 
 		SqlIdentifier schema;
-		if (schemaNameExpression != null) {
-			schema = createSqlIdentifier(expressionEvaluator.evaluate(schemaNameExpression));
-		} else {
-			schema = schemaName.get().orElse(null);
-		}
+		schema = schemaNameExpression.getOptional()
+				.orElse(schemaName.get().orElse(null));
 
 		if (schema == null) {
 			return getTableName();
-		}
-
-		if (schemaNameExpression != null) {
-			schema = createSqlIdentifier(expressionEvaluator.evaluate(schemaNameExpression));
 		}
 
 		return SqlIdentifier.from(schema, getTableName());
