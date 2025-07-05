@@ -15,25 +15,36 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.LIST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.sql.Types;
+import java.time.DayOfWeek;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.dao.DataAccessException;
@@ -105,7 +116,7 @@ class StringBasedJdbcQueryUnitTests {
 
 		JdbcQueryMethod queryMethod = createMethod("noAnnotation");
 
-		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
+		assertThatExceptionOfType(IllegalStateException.class) //
 				.isThrownBy(() -> createQuery(queryMethod).execute(new Object[] {}));
 	}
 
@@ -297,6 +308,37 @@ class StringBasedJdbcQueryUnitTests {
 				.withArguments(Set.of(Direction.LEFT, Direction.RIGHT)).extractParameterSource();
 
 		assertThat(sqlParameterSource.getValue("directions")).asList().containsExactlyInAnyOrder("LEFT", "RIGHT");
+	}
+
+	@Test // GH-1212
+	void spelParametersSqlTypesArePropagatedCorrectly() {
+
+		String type = "TYPE";
+		int score = 12;
+		Instant creationDate = Instant.now();
+		DayOfWeek dayOfWeek = DayOfWeek.SUNDAY;
+		ComplexEntity expressionRootObject = new ComplexEntity(type, score, creationDate, dayOfWeek);
+
+		SqlParameterSource sqlParameterSource = forMethod("spelContainingQuery", ComplexEntity.class)
+				.withArguments(expressionRootObject).extractParameterSource();
+
+		var expectedSqlTypes = Map.<Object, Integer>of(
+				type, Types.VARCHAR,
+				score, Types.INTEGER,
+				creationDate, Types.TIMESTAMP,
+				dayOfWeek, Types.VARCHAR
+		);
+
+		assertThat(sqlParameterSource.getParameterNames()).hasSize(5); // 1 root + 4 expressions
+		assertThat(sqlParameterSource.getParameterNames()).satisfies(parameterNames -> {
+			for (var paramName : parameterNames) {
+				if (paramName.equalsIgnoreCase("complexEntity")) {
+					continue; // do not check root for sqlType
+				}
+				Object value = sqlParameterSource.getValue(paramName);
+				assertThat(sqlParameterSource.getSqlType(paramName)).isEqualTo(expectedSqlTypes.get(value));
+			}
+		});
 	}
 
 	@Test // GH-1212
@@ -506,6 +548,15 @@ class StringBasedJdbcQueryUnitTests {
 		@Query(value = "some sql statement")
 		List<Object> findByEnumTypeIn(Set<Direction> directions);
 
+		@Query(value = """
+			SELECT * FROM my_table 
+			WHERE t = :#{#complexEntity.type} 
+			AND s = :#{#complexEntity.score}
+			AND cd = :#{#complexEntity.creationDate}
+			AND dow = :#{#complexEntity.dayOfWeek}
+			""")
+		List<Object> spelContainingQuery(ComplexEntity complexEntity);
+
 		@Query(value = "some sql statement")
 		List<Object> findBySimpleValue(Integer value);
 
@@ -649,6 +700,37 @@ class StringBasedJdbcQueryUnitTests {
 		@Override
 		public Object getRootObject() {
 			return new ExtensionRoot();
+		}
+	}
+
+	static class ComplexEntity {
+
+		String type;
+		Integer score;
+		Instant creationDate;
+		DayOfWeek dayOfWeek;
+
+		public ComplexEntity(String type, Integer score, Instant creationDate, DayOfWeek dayOfWeek) {
+			this.type = type;
+			this.score = score;
+			this.creationDate = creationDate;
+			this.dayOfWeek = dayOfWeek;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public Integer getScore() {
+			return score;
+		}
+
+		public Instant getCreationDate() {
+			return creationDate;
+		}
+
+		public DayOfWeek getDayOfWeek() {
+			return dayOfWeek;
 		}
 	}
 
