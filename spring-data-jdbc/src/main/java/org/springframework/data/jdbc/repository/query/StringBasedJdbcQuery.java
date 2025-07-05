@@ -31,6 +31,7 @@ import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -176,13 +177,46 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 					.getEvaluationContext(objects);
 
 			parsedQuery.getParameterMap().forEach((paramName, valueExpression) -> {
-				parameterMap.addValue(paramName, valueExpression.evaluate(evaluationContext));
+				addEvaluatedParameterToParameterSource(parameterMap, paramName, valueExpression, evaluationContext);
 			});
 
 			return parsedQuery.getQueryString();
 		}
 
 		return this.query;
+	}
+
+	private static void addEvaluatedParameterToParameterSource(
+			MapSqlParameterSource parameterMap,
+			String paramName,
+			ValueExpression valueExpression,
+			ValueEvaluationContext evaluationContext) {
+
+		Object evaluatedValue = valueExpression.evaluate(evaluationContext);
+		Class<?> valueType = valueExpression.getValueType(evaluationContext);
+
+		SQLType sqlType;
+
+		if (valueType == null) {
+			if (evaluatedValue != null) {
+				sqlType = getSqlType(evaluatedValue.getClass());
+			} else {
+				sqlType = null;
+			}
+		} else {
+			sqlType = getSqlType(valueType);
+		}
+
+		if (sqlType != null) {
+			parameterMap.addValue(paramName, evaluatedValue, sqlType.getVendorTypeNumber());
+		} else {
+			parameterMap.addValue(paramName, evaluatedValue);
+		}
+	}
+
+	private static SQLType getSqlType(Class<?> valueType) {
+		Class<?> resolvedPrimitiveType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(valueType);
+		return JdbcUtil.targetSqlTypeFor(resolvedPrimitiveType);
 	}
 
 	private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor,

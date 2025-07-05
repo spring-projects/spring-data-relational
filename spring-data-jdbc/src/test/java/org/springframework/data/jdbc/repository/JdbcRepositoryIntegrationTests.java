@@ -41,7 +41,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -112,6 +115,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired RootRepository rootRepository;
 	@Autowired WithDelimitedColumnRepository withDelimitedColumnRepository;
 	@Autowired EntityWithSequenceRepository entityWithSequenceRepository;
+	@Autowired ExpressionSqlTypePropagationRepository expressionSqlTypePropagationRepository;
 
 	public static Stream<Arguments> findAllByExamplePageableSource() {
 
@@ -343,6 +347,20 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
 			assertThat(it.getName()).isEqualTo(saved.getName());
+		});
+	}
+
+	@ParameterizedTest
+	@NullSource
+	@EnumSource(value = EnumClass.class)
+	void shouldSaveWithCustomSpellExpressions(EnumClass value) {
+		expressionSqlTypePropagationRepository.saveWithSpel(new ExpressionSqlTypePropagation(1L, value));
+
+		var found = expressionSqlTypePropagationRepository.findById(1L);
+
+		assertThat(found).isPresent().hasValueSatisfying(entity -> {
+			assertThat(entity.getIdentifier()).isEqualTo(1L);
+			assertThat(entity.getEnumClass()).isEqualTo(value);
 		});
 	}
 
@@ -1573,6 +1591,18 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface EntityWithSequenceRepository extends CrudRepository<EntityWithSequence, Long> {}
 
+	interface ExpressionSqlTypePropagationRepository extends CrudRepository<ExpressionSqlTypePropagation, Long> {
+
+		// language=sql
+		@Modifying
+		@Query(value = """
+				INSERT INTO EXPRESSION_SQL_TYPE_PROPAGATION(identifier, enum_class) 
+				VALUES(:#{#expressionSqlTypePropagation.identifier}, :#{#expressionSqlTypePropagation.enumClass})
+    """)
+		void saveWithSpel(@Param("expressionSqlTypePropagation") ExpressionSqlTypePropagation expressionSqlTypePropagation);
+	}
+
+
 	interface DummyProjection {
 		String getName();
 	}
@@ -1606,6 +1636,11 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		EntityWithSequenceRepository entityWithSequenceRepository() {
 			return factory.getRepository(EntityWithSequenceRepository.class);
+		}
+
+		@Bean
+		ExpressionSqlTypePropagationRepository simpleEnumClassRepository() {
+			return factory.getRepository(ExpressionSqlTypePropagationRepository.class);
 		}
 
 		@Bean
@@ -1891,6 +1926,32 @@ public class JdbcRepositoryIntegrationTests {
 				return ID;
 			}
 		}
+	}
+
+	static class ExpressionSqlTypePropagation {
+
+		@Id
+		Long identifier;
+
+		EnumClass enumClass;
+
+		public ExpressionSqlTypePropagation(Long identifier, EnumClass enumClass) {
+			this.identifier = identifier;
+			this.enumClass = enumClass;
+		}
+
+		public EnumClass getEnumClass() {
+			return enumClass;
+		}
+
+		public Long getIdentifier() {
+			return identifier;
+		}
+	}
+
+	enum EnumClass {
+		ACTIVE,
+		DELETE
 	}
 
 	static class EntityWithSequence {
