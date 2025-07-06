@@ -249,7 +249,7 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an delete statement for all entities that that a reachable via a give path from any aggregate root of a
+	 * Represents a delete statement for all entities that are reachable via a given path from any aggregate root of a
 	 * given type.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
