@@ -777,14 +777,35 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		for (Object o : value) {
-			mapped.add(writeValue(o, component));
+			mapped.add(unwrap(writeValue(o, component)));
 		}
 
 		if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
 			return mapped;
 		}
 
-		return getConversionService().convert(mapped, type.getType());
+		// if we succeeded converting the members of the collection, we actually ignore the fallback targetType since that
+		// was derived without considering custom conversions.
+		Class<?> targetType = type.getType();
+		if (!mapped.isEmpty()) {
+
+			Class<?> targetComponentType = mapped.get(0).getClass();
+			targetType = Array.newInstance(targetComponentType, 0).getClass();
+		}
+		return getConversionService().convert(mapped, targetType);
+	}
+
+	/**
+	 * Unwraps technology specific wrappers. Custom conversions may choose to return a wrapper class that contains additional information for the technology driver.
+	 * These wrappers can't be used as members of a collection, therefore we may have to unwrap the values.
+	 *
+	 * This method allows technology specific implemenations to provide such an unwrapping mechanism.
+	 *
+	 * @param convertedValue a value that might need unwrapping.
+	 */
+	@Nullable
+	protected Object unwrap(@Nullable Object convertedValue) {
+		return convertedValue;
 	}
 
 	static Predicate<RelationalPersistentProperty> isConstructorArgument(PersistentEntity<?, ?> entity) {
