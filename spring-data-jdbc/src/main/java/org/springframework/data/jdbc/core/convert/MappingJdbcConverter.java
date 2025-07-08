@@ -289,11 +289,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return JdbcValue.of(null, sqlType);
 		}
 
-		if (convertedValue.getClass().isArray()) {// array conversion
-			Class<?> componentType = convertedValue.getClass().getComponentType();
+		Class<?> componentType = convertedValue.getClass().getComponentType();
+
+		if (convertedValue.getClass().isArray()) {
+
 			if (componentType != byte.class && componentType != Byte.class) {
 
 				Object[] objectArray = requireObjectArray(convertedValue);
+
 				return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
 			}
 
@@ -305,6 +308,21 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		return JdbcValue.of(convertedValue, sqlType);
+	}
+
+	/**
+	 * Unwraps values of type {@link JdbcValue}.
+	 *
+	 * @param convertedValue a value that might need unwrapping.
+	 */
+	@Override
+	@Nullable
+	protected Object unwrap(@Nullable Object convertedValue) {
+
+		if (convertedValue instanceof JdbcValue jdbcValue) {
+			return jdbcValue.getValue();
+		}
+		return convertedValue;
 	}
 
 	@SuppressWarnings("unchecked")
