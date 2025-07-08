@@ -38,8 +38,10 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -62,6 +64,11 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 
 		@Bean
+		EntityWithDirectionsRepository repositoryWithDirections(JdbcRepositoryFactory factory) {
+			return factory.getRepository(EntityWithDirectionsRepository.class);
+		}
+
+		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
 			return new JdbcCustomConversions(asList(StringToBigDecimalConverter.INSTANCE, BigDecimalToString.INSTANCE,
 					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE, DirectionToIntegerConverter.INSTANCE,
@@ -70,6 +77,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	}
 
 	@Autowired EntityWithStringyBigDecimalRepository repository;
+	@Autowired EntityWithDirectionsRepository repositoryWithDirections;
 
 	/**
 	 * In PostrgreSQL this fails if a simple converter like the following is used.
@@ -162,6 +170,18 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 				.containsExactly(Direction.CENTER);
 	}
 
+	@Test // GH-2078
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_ARRAYS)
+	void saveAndLoadListOfDirectionsAsArray() {
+
+		EntityWithDirections saved = repositoryWithDirections
+				.save(new EntityWithDirections(null, List.of(Direction.CENTER, Direction.RIGHT)));
+
+		EntityWithDirections reloaded = repositoryWithDirections.findById(saved.id).orElseThrow();
+
+		assertThat(reloaded).isEqualTo(saved);
+	}
+
 	interface EntityWithStringyBigDecimalRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {
 
 		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION IN (:types)")
@@ -170,6 +190,8 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION = :type")
 		List<EntityWithStringyBigDecimal> findByEnumType(Direction type);
 	}
+
+	interface EntityWithDirectionsRepository extends CrudRepository<EntityWithDirections, Long> {}
 
 	private static class EntityWithStringyBigDecimal {
 
@@ -192,6 +214,9 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		@Id CustomId id;
 		Date created;
+	}
+
+	record EntityWithDirections(@Id Long id, List<Direction> directions) {
 	}
 
 	enum Direction {
