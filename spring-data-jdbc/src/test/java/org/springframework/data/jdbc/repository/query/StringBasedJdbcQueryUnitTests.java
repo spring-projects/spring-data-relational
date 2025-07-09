@@ -15,17 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.assertj.core.api.Assertions.LIST;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
@@ -40,8 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -92,6 +85,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Chirag Tailor
  * @author Christopher Klein
  * @author Marcin Grzejszczak
+ * @author Mikhail Polivakha
  */
 class StringBasedJdbcQueryUnitTests {
 
@@ -322,23 +316,17 @@ class StringBasedJdbcQueryUnitTests {
 		SqlParameterSource sqlParameterSource = forMethod("spelContainingQuery", ComplexEntity.class)
 				.withArguments(expressionRootObject).extractParameterSource();
 
-		var expectedSqlTypes = Map.<Object, Integer>of(
-				type, Types.VARCHAR,
-				score, Types.INTEGER,
-				creationDate, Types.TIMESTAMP,
-				dayOfWeek, Types.VARCHAR
-		);
+		Set<Tuple> valueTypePairs = Arrays.stream(sqlParameterSource.getParameterNames()) //
+				.filter(n -> !n.equalsIgnoreCase("complexEntity")) //
+				.map(n -> tuple(sqlParameterSource.getValue(n), sqlParameterSource.getSqlType(n))) //
+				.collect(Collectors.toSet());
 
-		assertThat(sqlParameterSource.getParameterNames()).hasSize(5); // 1 root + 4 expressions
-		assertThat(sqlParameterSource.getParameterNames()).satisfies(parameterNames -> {
-			for (var paramName : parameterNames) {
-				if (paramName.equalsIgnoreCase("complexEntity")) {
-					continue; // do not check root for sqlType
-				}
-				Object value = sqlParameterSource.getValue(paramName);
-				assertThat(sqlParameterSource.getSqlType(paramName)).isEqualTo(expectedSqlTypes.get(value));
-			}
-		});
+		assertThat(valueTypePairs).containsExactlyInAnyOrder(
+				tuple(type, Types.VARCHAR),
+				tuple(score, Types.INTEGER),
+				tuple(creationDate, Types.TIMESTAMP),
+				tuple(dayOfWeek, Types.VARCHAR)
+		);
 	}
 
 	@Test // GH-1212
@@ -549,12 +537,12 @@ class StringBasedJdbcQueryUnitTests {
 		List<Object> findByEnumTypeIn(Set<Direction> directions);
 
 		@Query(value = """
-			SELECT * FROM my_table 
-			WHERE t = :#{#complexEntity.type} 
-			AND s = :#{#complexEntity.score}
-			AND cd = :#{#complexEntity.creationDate}
-			AND dow = :#{#complexEntity.dayOfWeek}
-			""")
+				SELECT * FROM my_table
+				WHERE t = :#{#complexEntity.type}
+				AND s = :#{#complexEntity.score}
+				AND cd = :#{#complexEntity.creationDate}
+				AND dow = :#{#complexEntity.dayOfWeek}
+				""")
 		List<Object> spelContainingQuery(ComplexEntity complexEntity);
 
 		@Query(value = "some sql statement")

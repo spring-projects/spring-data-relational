@@ -44,7 +44,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -352,16 +351,15 @@ public class JdbcRepositoryIntegrationTests {
 
 	@ParameterizedTest
 	@NullSource
-	@EnumSource(value = EnumClass.class)
+	@EnumSource(value = EnumClass.class) // GH-2007
 	void shouldSaveWithCustomSpellExpressions(EnumClass value) {
+
 		expressionSqlTypePropagationRepository.saveWithSpel(new ExpressionSqlTypePropagation(1L, value));
 
-		var found = expressionSqlTypePropagationRepository.findById(1L);
+		ExpressionSqlTypePropagation reloaded = expressionSqlTypePropagationRepository.findById(1L).orElseThrow();
 
-		assertThat(found).isPresent().hasValueSatisfying(entity -> {
-			assertThat(entity.getIdentifier()).isEqualTo(1L);
-			assertThat(entity.getEnumClass()).isEqualTo(value);
-		});
+		assertThat(reloaded.getIdentifier()).isEqualTo(1L);
+		assertThat(reloaded.getEnumClass()).isEqualTo(value);
 	}
 
 	@Test // DATAJDBC-98
@@ -1596,12 +1594,11 @@ public class JdbcRepositoryIntegrationTests {
 		// language=sql
 		@Modifying
 		@Query(value = """
-				INSERT INTO EXPRESSION_SQL_TYPE_PROPAGATION(identifier, enum_class) 
+				INSERT INTO EXPRESSION_SQL_TYPE_PROPAGATION(identifier, enum_class)
 				VALUES(:#{#expressionSqlTypePropagation.identifier}, :#{#expressionSqlTypePropagation.enumClass})
-    """)
+				""")
 		void saveWithSpel(@Param("expressionSqlTypePropagation") ExpressionSqlTypePropagation expressionSqlTypePropagation);
 	}
-
 
 	interface DummyProjection {
 		String getName();
@@ -1930,8 +1927,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	static class ExpressionSqlTypePropagation {
 
-		@Id
-		Long identifier;
+		@Id Long identifier;
 
 		EnumClass enumClass;
 
@@ -1950,8 +1946,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	enum EnumClass {
-		ACTIVE,
-		DELETE
+		ACTIVE, DELETE
 	}
 
 	static class EntityWithSequence {

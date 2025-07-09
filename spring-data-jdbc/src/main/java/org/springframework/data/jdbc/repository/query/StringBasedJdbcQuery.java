@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.ResultProcessingConverter;
+import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -186,11 +186,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return this.query;
 	}
 
-	private static void addEvaluatedParameterToParameterSource(
-			MapSqlParameterSource parameterMap,
-			String paramName,
-			ValueExpression valueExpression,
-			ValueEvaluationContext evaluationContext) {
+	private static void addEvaluatedParameterToParameterSource(MapSqlParameterSource parameterMap, String paramName,
+			ValueExpression valueExpression, ValueEvaluationContext evaluationContext) {
 
 		Object evaluatedValue = valueExpression.evaluate(evaluationContext);
 		Class<?> valueType = valueExpression.getValueType(evaluationContext);
@@ -215,8 +212,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	private static SQLType getSqlType(Class<?> valueType) {
-		Class<?> resolvedPrimitiveType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(valueType);
-		return JdbcUtil.targetSqlTypeFor(resolvedPrimitiveType);
+		return JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(valueType));
 	}
 
 	private JdbcQueryExecution<?> createJdbcQueryExecution(RelationalParameterAccessor accessor,
