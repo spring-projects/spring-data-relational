@@ -63,6 +63,7 @@ import org.springframework.util.Assert;
  * @author Christopher Klein
  * @author Mikhail Polivakha
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -251,6 +252,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
 
 		sqlSession().selectOne(statement, parameter);
+	}
+
+	@Override
+	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override

@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -39,6 +40,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Jaeyeon Kim
  */
 public interface DbAction<T> {
 
@@ -298,6 +300,63 @@ public interface DbAction<T> {
 	}
 
 	/**
+	 * Represents a delete statement for all entities reachable via a given property path from a list of aggregate root IDs.
+	 */
+	final class DeleteByRootIdIn<T> implements WithPropertyPath<T>, WithSelectIds<T> {
+
+		private final SelectIds<?> selectIds;
+
+		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+
+		public DeleteByRootIdIn(SelectIds<?> selectIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+			this.selectIds = selectIds;
+			this.propertyPath = propertyPath;
+        }
+
+		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
+			return this.propertyPath;
+		}
+
+		@Override
+		public SelectIds<?> getSelectIdsAction() {
+			return selectIds;
+		}
+
+		public String toString() {
+			return "DeleteByRootIdIn{propertyPath=" + this.propertyPath + ", selectIds=" + this.selectIds + "}";
+		}
+	}
+
+	/**
+	 * Represents a delete statement for multiple aggregate roots identified by their IDs.
+	 */
+	final class DeleteRootByIdIn<T> implements WithSelectIds<T> {
+
+		private final Class<T> entityType;
+
+		private final SelectIds<?> selectIds;
+
+        public DeleteRootByIdIn(Class<T> entityType, SelectIds<?> selectIds) {
+            this.entityType = entityType;
+            this.selectIds = selectIds;
+        }
+
+        @Override
+		public Class<T> getEntityType() {
+			return this.entityType;
+		}
+
+		@Override
+		public SelectIds<?> getSelectIdsAction() {
+			return selectIds;
+		}
+
+		public String toString() {
+			return "DeleteRootByIdIn{entityType=" + this.entityType + ", selectIds=" + this.selectIds + "}";
+		}
+	}
+
+	/**
 	 * Represents an acquire lock statement for a aggregate root when only the ID is known.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
@@ -344,6 +403,38 @@ public interface DbAction<T> {
 
 		public String toString() {
 			return "DbAction.AcquireLockAllRoot(entityType=" + this.getEntityType() + ")";
+		}
+	}
+
+	/**
+	 * Represents an acquire lock statement on all aggregate roots of a given type, constrained by a query.
+	 * This is used to select and lock aggregate root IDs matching a given {@link Query}, which can be reused
+	 * in follow-up actions like batch deletion.
+	 *
+	 * @param <T> type of the root entity for which this represents a database interaction.
+	 */
+	final class AcquireLockAllRootByQuery<T> implements SelectIds<T> {
+
+		private final Class<T> entityType;
+
+		private final Query query;
+
+		AcquireLockAllRootByQuery(Class<T> entityType, Query query) {
+			this.entityType = entityType;
+            this.query = query;
+        }
+
+		@Override
+		public Class<T> getEntityType() {
+			return this.entityType;
+		}
+
+		public Query getQuery() {
+			return query;
+		}
+
+		public String toString() {
+			return "DbAction.AcquireLockAllRootByQuery(entityType=" + this.entityType + ", query=" + this.query + ")";
 		}
 	}
 
@@ -560,5 +651,23 @@ public interface DbAction<T> {
 		default Class<T> getEntityType() {
 			return (Class<T>) getPropertyPath().getLeafProperty().getActualType();
 		}
+	}
+
+	/**
+	 * A {@link DbAction} that depends on a {@link SelectIds} action
+	 *
+	 * @author Jaeyeon Kim
+	 */
+	interface WithSelectIds<T> extends DbAction<T> {
+
+		DbAction.SelectIds<?> getSelectIdsAction();
+	}
+
+	/**
+	 * A {@link DbAction} that represents a query to select a list of root IDs.
+	 *
+	 * @author Jaeyeon Kim
+	 */
+	interface SelectIds<T> extends DbAction<T> {
 	}
 }

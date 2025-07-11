@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -117,6 +118,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 		delegate.acquireLockAll(lockMode, domainType);
+	}
+
+	@Override
+	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		return delegate.acquireLockAndFindIdsByQuery(query, lockMode, domainType);
 	}
 
 	@Override

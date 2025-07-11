@@ -74,6 +74,7 @@ import org.springframework.lang.Nullable;
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
+ * @author Jaeyeon Kim
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -164,6 +165,18 @@ class SqlGeneratorUnitTests {
 				.contains("dummy_entity.id1") //
 				.contains("FOR UPDATE") //
 				.doesNotContain("Element AS elements"));
+	}
+
+	@Test // GH-1978
+	void getAcquireLockAndFindIdsByQuery(){
+
+		Query query = Query.query(Criteria.where("id").is(23L))
+				.sort(Sort.by(Sort.Order.asc("id")))
+				.limit(5);
+
+		String sql = sqlGenerator.getAcquireLockAndFindIdsByQuery(query, new MapSqlParameterSource(), LockMode.PESSIMISTIC_WRITE);
+
+		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1 FROM dummy_entity WHERE dummy_entity.id1 = :id1 ORDER BY dummy_entity.id1 ASC LIMIT 5 FOR UPDATE");
 	}
 
 	@Test // DATAJDBC-112

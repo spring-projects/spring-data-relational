@@ -70,6 +70,7 @@ import org.springframework.util.ClassUtils;
  * @author Diego Krupitza
  * @author Sergey Korotaev
  * @author Mikhail Polivakha
+ * @author Jaeyeon Kim
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -461,6 +462,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		}
 	}
 
+	@Override
+	public <T> void deleteAllByQuery(Query query, Class<T> domainType) {
+
+		Assert.notNull(query, "Query must not be null");
+		Assert.notNull(domainType, "Domain type must not be null");
+
+		MutableAggregateChange<?> change = createDeletingChange(query, domainType);
+
+		executor.executeDelete(change);
+	}
+
 	private <T> void verifyIdProperty(T instance) {
 		// accessing the id property just to raise an exception in the case it does not exist.
 		context.getRequiredPersistentEntity(instance.getClass()).getRequiredIdProperty();
@@ -636,6 +648,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		MutableAggregateChange<?> aggregateChange = MutableAggregateChange.forDelete(domainType);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);
+		return aggregateChange;
+	}
+
+	private MutableAggregateChange<?> createDeletingChange(Query query, Class<?> domainType) {
+
+		MutableAggregateChange<?> aggregateChange = MutableAggregateChange.forDelete(domainType);
+		jdbcEntityDeleteWriter.writeForQuery(query, aggregateChange);
 		return aggregateChange;
 	}
 

@@ -43,6 +43,7 @@ import org.springframework.lang.Nullable;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  */
 public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationResolver {
 
@@ -193,6 +194,18 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	 * @param domainType the domain type of the entity. Must not be {@code null}.
 	 */
 	<T> void acquireLockAll(LockMode lockMode, Class<T> domainType);
+
+	/**
+	 * Acquire a lock on all aggregates that match the given {@link Query} and return their identifiers.
+	 * The resulting SQL will include a {@code SELECT id FROM … WHERE … (LOCK CLAUSE)} to retrieve and lock the matching rows.
+	 *
+	 * @param query the query specifying which entities to lock. Must not be {@code null}.
+	 * @param lockMode the lock mode to apply to the query (e.g. {@code FOR UPDATE}). Must not be {@code null}.
+	 * @param domainType the domain type of the entities to be locked. Must not be {@code null}.
+	 * @param <T> the type of the domain entity.
+	 * @return a {@link List} of ids corresponding to the rows locked by the query.
+	 */
+	<T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType);
 
 	/**
 	 * Counts the rows in the table representing the given domain type.

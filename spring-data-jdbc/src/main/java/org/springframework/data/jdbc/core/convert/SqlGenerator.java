@@ -70,6 +70,7 @@ import org.springframework.util.Assert;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Kurt Niemi
+ * @author Jaeyeon Kim
  */
 public class SqlGenerator {
 
@@ -378,6 +379,18 @@ public class SqlGenerator {
 	}
 
 	/**
+	 * Create a {@code SELECT id FROM … WHERE … (LOCK CLAUSE)} statement based on the given query.
+	 *
+	 * @param query the query to base the select on. Must not be null.
+	 * @param parameterSource the source for holding the bindings.
+	 * @param lockMode Lock clause mode.
+	 * @return the SQL statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	String getAcquireLockAndFindIdsByQuery(Query query, MapSqlParameterSource parameterSource, LockMode lockMode) {
+		return this.createAcquireLockByQuery(query, parameterSource, lockMode);
+	}
+
+	/**
 	 * Create a {@code INSERT INTO … (…) VALUES(…)} statement.
 	 *
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
@@ -589,6 +602,23 @@ public class SqlGenerator {
 				.select(getSingleNonNullColumn()) //
 				.from(table) //
 				.lock(lockMode) //
+				.build();
+
+		return render(select);
+	}
+
+	private String createAcquireLockByQuery(Query query, MapSqlParameterSource parameterSource, LockMode lockMode) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		Table table = this.getTable();
+
+		SelectBuilder.SelectWhere selectBuilder = StatementBuilder
+				.select(getIdColumns())
+				.from(table);
+
+		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder)
+				.lock(lockMode)
 				.build();
 
 		return render(select);
