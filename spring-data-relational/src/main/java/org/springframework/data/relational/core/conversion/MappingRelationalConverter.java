@@ -693,7 +693,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				return getConversionService().convert(value, customWriteTarget.get());
 			}
 
-			if (TypeInformation.OBJECT != type) {
+			if (!TypeInformation.OBJECT.equals(type)) {
 
 				if (type.getType().isAssignableFrom(value.getClass())) {
 
