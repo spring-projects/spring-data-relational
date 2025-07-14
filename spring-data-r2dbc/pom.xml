@@ -28,7 +28,7 @@
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
-		<netty>4.1.118.Final</netty>
+		<netty>4.2.2.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
