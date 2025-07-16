@@ -27,6 +27,7 @@ import java.lang.annotation.Target;
  * @author Kazuki Shimizu
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
@@ -34,8 +35,10 @@ import java.lang.annotation.Target;
 public @interface Column {
 
 	/**
-	 * The column name. The attribute supports SpEL expressions to dynamically calculate the column name on a
-	 * per-operation basis.
+	 * The column name. The attribute supports Value Expressions to dynamically obtain the column name on a per-operation
+	 * basis. Expressions returning a {@code String} are {@link SqlIdentifierSanitizer sanitized} prior usage. Expressions
+	 * can also return a {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is used as-is
+	 * without further sanitization.
 	 */
 	String value() default "";
 

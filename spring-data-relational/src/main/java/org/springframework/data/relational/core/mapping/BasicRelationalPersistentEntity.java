@@ -17,14 +17,14 @@ package org.springframework.data.relational.core.mapping;
 
 import java.util.Optional;
 
+import org.springframework.data.expression.ValueExpression;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.expression.Expression;
-import org.springframework.expression.ParserContext;
 import org.springframework.expression.common.LiteralExpression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
@@ -38,16 +38,17 @@ import org.springframework.util.StringUtils;
  * @author Mikhail Polivakha
  * @author Kurt Niemi
  * @author Sergey Korotaev
+ * @author Mark Paluch
  */
 class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
 
-	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+	private static final ValueExpressionParser PARSER = ValueExpressionParser.create();
 
 	private final Lazy<SqlIdentifier> tableName;
-	private final @Nullable Expression tableNameExpression;
+	private final @Nullable ValueExpression tableNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
-	private final @Nullable Expression schemaNameExpression;
+	private final @Nullable ValueExpression schemaNameExpression;
 	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator;
 	private boolean forceQuote = true;
 
@@ -97,14 +98,14 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 * @return can be {@literal null}.
 	 */
 	@Nullable
-	private static Expression detectExpression(@Nullable String potentialExpression) {
+	private static ValueExpression detectExpression(@Nullable String potentialExpression) {
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;
 		}
 
-		Expression expression = PARSER.parseExpression(potentialExpression, ParserContext.TEMPLATE_EXPRESSION);
-		return expression instanceof LiteralExpression ? null : expression;
+		ValueExpression expression = PARSER.parse(potentialExpression);
+		return expression.isLiteral() ? null : expression;
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {

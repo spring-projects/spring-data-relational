@@ -18,6 +18,8 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.expression.ValueExpression;
+import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
@@ -28,9 +30,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.util.Lazy;
 import org.springframework.expression.Expression;
-import org.springframework.expression.ParserContext;
 import org.springframework.expression.common.LiteralExpression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -44,19 +44,21 @@ import org.springframework.util.StringUtils;
  * @author Bastian Wilhelm
  * @author Kurt Niemi
  * @author Sergey Korotaev
+ * @author Mark Paluch
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
 
-	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+	private static final ValueExpressionParser PARSER = ValueExpressionParser.create();
 
 	private final Lazy<SqlIdentifier> columnName;
 	private final boolean hasExplicitColumnName;
-	private final @Nullable Expression columnNameExpression;
+	private final @Nullable ValueExpression columnNameExpression;
 	private final SqlIdentifier sequence;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
+	private final @Nullable ValueExpression collectionIdColumnNameExpression;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
-	private final @Nullable Expression collectionKeyColumnNameExpression;
+	private final @Nullable ValueExpression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
 	private final String embeddedPrefix;
 
@@ -99,6 +101,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			if (StringUtils.hasText(mappedCollection.idColumn())) {
 				collectionIdColumnName = Lazy.of(() -> Optional.of(createSqlIdentifier(mappedCollection.idColumn())));
 			}
+			this.collectionIdColumnNameExpression = detectExpression(mappedCollection.idColumn());
 
 			collectionKeyColumnName = Lazy.of(
 					() -> StringUtils.hasText(mappedCollection.keyColumn()) ? createSqlIdentifier(mappedCollection.keyColumn())
@@ -107,6 +110,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 			this.collectionKeyColumnNameExpression = detectExpression(mappedCollection.keyColumn());
 		} else {
 
+			this.collectionIdColumnNameExpression = null;
 			this.collectionKeyColumnNameExpression = null;
 		}
 
@@ -151,14 +155,14 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @return can be {@literal null}.
 	 */
 	@Nullable
-	private static Expression detectExpression(@Nullable String potentialExpression) {
+	private static ValueExpression detectExpression(@Nullable String potentialExpression) {
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;
 		}
 
-		Expression expression = PARSER.parseExpression(potentialExpression, ParserContext.TEMPLATE_EXPRESSION);
-		return expression instanceof LiteralExpression ? null : expression;
+		ValueExpression expression = PARSER.parse(potentialExpression);
+		return expression.isLiteral() ? null : expression;
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -210,8 +214,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public SqlIdentifier getReverseColumnName(RelationalPersistentEntity<?> owner) {
 
-		return collectionIdColumnName.get()
-				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(owner)));
+		if (collectionIdColumnNameExpression == null) {
+
+			return collectionIdColumnName.get()
+					.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(owner)));
+		}
+
+		return sqlIdentifierExpressionEvaluator.evaluate(collectionIdColumnNameExpression, isForceQuote());
 	}
 
 	@Override

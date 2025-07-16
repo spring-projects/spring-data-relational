@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -25,11 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentEntityUnitTests.MyConfig;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
+import org.springframework.mock.env.MockPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
@@ -154,15 +157,29 @@ class BasicRelationalPersistentEntityUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(simpleExpected);
 	}
 
-	@Test // GH-1325
+	@Test // GH-1325, GH-1524
 	void considersSpelExtensions() {
 
+		MockPropertySource mockPropertySource = new MockPropertySource().withProperty("hello.world", "yee haw");
+
+		StandardEnvironment environment = new StandardEnvironment();
+		environment.getPropertySources().addFirst(mockPropertySource);
+
+		mappingContext.setEnvironment(environment);
 		mappingContext.setApplicationContext(applicationContext);
 		RelationalPersistentEntity<?> entity = mappingContext
 				.getRequiredPersistentEntity(WithConfiguredSqlIdentifiers.class);
 
 		assertThat(entity.getTableName()).isEqualTo(SqlIdentifier.quoted("my_table"));
 		assertThat(entity.getIdColumn()).isEqualTo(SqlIdentifier.quoted("my_column"));
+
+		// note space was removed between "yee" and "haw"
+		assertThat(entity.getRequiredPersistentProperty("mixedExpression").getColumnName())
+				.isEqualTo(SqlIdentifier.quoted("yeehaw_and_my_column"));
+
+		RelationalPersistentProperty someCollection = entity.getRequiredPersistentProperty("someCollection");
+		assertThat(someCollection.getKeyColumn()).isEqualTo(SqlIdentifier.unquoted("some_--_identifier"));
+		assertThat(someCollection.getReverseColumnName(entity)).isEqualTo(SqlIdentifier.quoted("my_column"));
 	}
 
 	@Table(schema = "ANAKYN_SKYWALKER")
@@ -222,6 +239,10 @@ class BasicRelationalPersistentEntityUnitTests {
 	static class WithConfiguredSqlIdentifiers {
 		@Id
 		@Column("#{myExtension.getColumnName()}") Long id;
+
+		@Column("${hello.world}_and_#{myExtension.getColumnName()}") String mixedExpression;
+		@MappedCollection(idColumn = "#{myExtension.getColumnName()}",
+				keyColumn = "#{myExtension.getSqlIdentifier()}") List<String> someCollection;
 	}
 
 	@Configuration
@@ -249,10 +270,15 @@ class BasicRelationalPersistentEntityUnitTests {
 			return "my_column";
 		}
 
+		public SqlIdentifier getSqlIdentifier() {
+			return SqlIdentifier.unquoted("some_--_identifier");
+		}
+
 		@Override
 		public Map<String, Object> getProperties() {
 			return Map.of("myExtension", this);
 		}
 
 	}
+
 }

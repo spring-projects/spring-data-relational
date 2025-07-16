@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
@@ -110,6 +111,12 @@ public class RelationalMappingContext
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.sqlIdentifierExpressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
+	}
+
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.sqlIdentifierExpressionEvaluator.setEnvironment(environment);
+		super.setEnvironment(environment);
 	}
 
 	@Nullable

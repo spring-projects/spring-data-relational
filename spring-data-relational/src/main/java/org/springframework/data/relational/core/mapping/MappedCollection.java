@@ -27,9 +27,9 @@ import java.util.Set;
 /**
  * The annotation to configure the mapping for a {@link List}, {@link Set} or {@link Map} property in the database.
  *
- * @since 1.1
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @since 1.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
@@ -37,9 +37,11 @@ import java.util.Set;
 public @interface MappedCollection {
 
 	/**
-	 * The column name for id column in the corresponding relationship table. The attribute supports SpEL expressions to
-	 * dynamically calculate the column name on a per-operation basis. Defaults to {@link NamingStrategy} usage if the
-	 * value is empty.
+	 * The column name for id column in the corresponding relationship table. The attribute supports Value Expressions to
+	 * dynamically obtain the column name on a per-operation basis. Defaults to {@link NamingStrategy} usage if the value
+	 * is empty. Expressions returning a {@code String} are {@link SqlIdentifierSanitizer sanitized} prior usage.
+	 * Expressions can also return a {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is
+	 * used as-is without further sanitization.
 	 *
 	 * @see NamingStrategy#getReverseColumnName(RelationalPersistentProperty)
 	 */
@@ -47,10 +49,14 @@ public @interface MappedCollection {
 
 	/**
 	 * The column name for key columns of {@link List} or {@link Map} collections in the corresponding relationship table.
-	 * The attribute supports SpEL expressions to dynamically calculate the column name on a per-operation basis. Defaults
-	 * to {@link NamingStrategy} usage if the value is empty.
+	 * The attribute supports Value Expressions to dynamically obtain the column name on a per-operation basis. Defaults
+	 * to {@link NamingStrategy} usage if the value is empty. Expressions returning a {@code String} are
+	 * {@link SqlIdentifierSanitizer sanitized} prior usage. Expressions can also return a
+	 * {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is used as-is without further
+	 * sanitization.
 	 *
 	 * @see NamingStrategy#getKeyColumn(RelationalPersistentProperty)
 	 */
 	String keyColumn() default "";
+
 }
