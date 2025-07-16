@@ -18,8 +18,8 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -47,9 +47,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  *
  * @author Jens Schauder
  * @author Salim Achouche
- * @author Salim Achouche
  */
-
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
 public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
@@ -152,7 +150,8 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	}
 
 	@WritingConverter
-	enum AggregateIdToLong implements Converter<AggregateId, Long> {
+	private enum AggregateIdToLong implements Converter<AggregateId, Long> {
+
 		INSTANCE;
 
 		@Override
@@ -162,7 +161,8 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	}
 
 	@ReadingConverter
-	enum NumberToAggregateId implements Converter<Number, AggregateId> {
+	private enum NumberToAggregateId implements Converter<Number, AggregateId> {
+
 		INSTANCE;
 
 		@Override
@@ -170,4 +170,5 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 			return new AggregateId(source.longValue());
 		}
 	}
+
 }

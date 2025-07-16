@@ -242,7 +242,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters()
 					.getParameter(bindableParameter.getIndex());
 
-			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(), parameter);
+			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(),
+					parameter);
 			SQLType jdbcType = jdbcValue.getJdbcType();
 
 			if (jdbcType == null) {

@@ -20,15 +20,14 @@ import java.sql.JDBCType;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -46,6 +45,10 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.jdbc.UncategorizedSQLException;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -67,9 +70,9 @@ import org.springframework.util.Assert;
  */
 public class MappingJdbcConverter extends MappingRelationalConverter implements JdbcConverter, ApplicationContextAware {
 
-	private static final Log LOG = LogFactory.getLog(MappingJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
+	private SQLExceptionTranslator exceptionTranslator = new SQLExceptionSubclassTranslator();
 	private final JdbcTypeFactory typeFactory;
 	private final RelationResolver relationResolver;
 
@@ -109,6 +112,15 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
+	}
+
+	/**
+	 * Set the exception translator for this instance. Defaults to a {@link SQLErrorCodeSQLExceptionTranslator}.
+	 *
+	 * @see SQLExceptionSubclassTranslator
+	 */
+	public void setExceptionTranslator(SQLExceptionTranslator exceptionTranslator) {
+		this.exceptionTranslator = exceptionTranslator;
 	}
 
 	@Nullable
@@ -189,50 +201,35 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return null;
 		}
 
-		TypeInformation<?> originalTargetType = targetType;
-		value = readJdbcArray(value);
-		targetType = determineNestedTargetType(targetType);
+		value = potentiallyUnwrapArray(value);
 
-		return possiblyReadToAggregateReference(getPotentiallyConvertedSimpleRead(value, targetType), originalTargetType);
+		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
+
+			List<TypeInformation<?>> types = targetType.getTypeArguments();
+			TypeInformation<?> idType = types.get(1);
+			if (value instanceof AggregateReference<?, ?> ref) {
+				return AggregateReference.to(readValue(ref.getId(), idType));
+			} else {
+				return AggregateReference.to(readValue(value, idType));
+			}
+		}
+
+		return getPotentiallyConvertedSimpleRead(value, targetType);
 	}
 
 	/**
 	 * Unwrap a Jdbc array, if such a value is provided
 	 */
-	private Object readJdbcArray(Object value) {
+	private Object potentiallyUnwrapArray(Object value) {
 
 		if (value instanceof Array array) {
 			try {
 				return array.getArray();
 			} catch (SQLException e) {
-				throw new FailedToAccessJdbcArrayException(e);
+				throw translateException("Array.getArray()", null, e);
 			}
 		}
 
-		return value;
-	}
-
-	/**
-	 * Determine the id type of an {@link AggregateReference} that the rest of the conversion infrastructure needs to use
-	 * as a conversion target.
-	 */
-	private TypeInformation<?> determineNestedTargetType(TypeInformation<?> ultimateTargetType) {
-
-		if (AggregateReference.class.isAssignableFrom(ultimateTargetType.getType())) {
-			// the id type of a AggregateReference
-			return ultimateTargetType.getTypeArguments().get(1);
-		}
-		return ultimateTargetType;
-	}
-
-	/**
-	 * Convert value to an {@link AggregateReference} if that is specified by the parameter targetType.
-	 */
-	private Object possiblyReadToAggregateReference(Object value, TypeInformation<?> targetType) {
-
-		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
-			return AggregateReference.to(value);
-		}
 		return value;
 	}
 
@@ -240,8 +237,8 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	@Override
 	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
 
-		if (value instanceof AggregateReference<?, ?> aggregateReference) {
-			return writeValue(aggregateReference.getId(), type);
+		if (value instanceof AggregateReference<?, ?> ref) {
+			return writeValue(ref.getId(), type);
 		}
 
 		return super.getPotentiallyConvertedSimpleWrite(value, type);
@@ -277,11 +274,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> columnType, SQLType sqlType) {
 
 		TypeInformation<?> targetType = canWriteAsJdbcValue(value) ? TypeInformation.of(JdbcValue.class) : columnType;
-		
-		if (value instanceof AggregateReference<?, ?> aggregateReference) {
-			return writeJdbcValue(aggregateReference.getId(), columnType, sqlType);
+
+		if (value instanceof AggregateReference<?, ?> ref) {
+			return writeJdbcValue(ref.getId(), columnType, sqlType);
 		}
-		
+
 		Object convertedValue = writeValue(value, targetType);
 
 		if (convertedValue instanceof JdbcValue result) {
@@ -306,7 +303,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 			return JdbcValue.of(convertedValue, JDBCType.BINARY);
 		}
-		
+
 		return JdbcValue.of(convertedValue, sqlType);
 	}
 
@@ -340,10 +337,18 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return super.newValueProvider(documentAccessor, evaluator, context);
 	}
 
-	private static class FailedToAccessJdbcArrayException extends NonTransientDataAccessException {
-		public FailedToAccessJdbcArrayException(SQLException e) {
-			super("Failed to read array", e);
-		}
+	/**
+	 * Translate the given {@link SQLException} into a generic {@link DataAccessException}.
+	 *
+	 * @param task readable text describing the task being attempted
+	 * @param sql the SQL query or update that caused the problem (can be {@code null})
+	 * @param ex the offending {@code SQLException}
+	 * @return a DataAccessException wrapping the {@code SQLException} (never {@code null})
+	 */
+	private DataAccessException translateException(String task, @org.jspecify.annotations.Nullable String sql,
+			SQLException ex) {
+		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
+		return (dae != null ? dae : new UncategorizedSQLException(task, sql, ex));
 	}
 
 	/**

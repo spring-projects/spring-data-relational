@@ -49,7 +49,9 @@ import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.util.TypeScanner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StringUtils;
 
 /**
@@ -155,7 +157,15 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
 
-		return new MappingJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory);
+		MappingJdbcConverter mappingJdbcConverter = new MappingJdbcConverter(mappingContext, relationResolver, conversions,
+				jdbcTypeFactory);
+
+		if (operations instanceof NamedParameterJdbcTemplate namedParameterJdbcTemplate
+				&& namedParameterJdbcTemplate.getJdbcOperations() instanceof JdbcTemplate jdbcTemplate) {
+			mappingJdbcConverter.setExceptionTranslator(jdbcTemplate.getExceptionTranslator());
+		}
+
+		return mappingJdbcConverter;
 	}
 
 	/**

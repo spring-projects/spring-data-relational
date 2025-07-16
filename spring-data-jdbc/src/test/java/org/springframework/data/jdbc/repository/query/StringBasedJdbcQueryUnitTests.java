@@ -100,7 +100,7 @@ class StringBasedJdbcQueryUnitTests {
 
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
-		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
+		this.context = new RelationalMappingContext();
 		this.converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 		this.delegate = ValueExpressionDelegate.create();
 	}

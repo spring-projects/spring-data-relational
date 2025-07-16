@@ -352,7 +352,7 @@ public class JdbcRepositoryIntegrationTests {
 	@ParameterizedTest
 	@NullSource
 	@EnumSource(value = EnumClass.class) // GH-2007
-	void shouldSaveWithCustomSpellExpressions(EnumClass value) {
+	void shouldSaveWithCustomSpelExpressions(EnumClass value) {
 
 		expressionSqlTypePropagationRepository.saveWithSpel(new ExpressionSqlTypePropagation(1L, value));
 

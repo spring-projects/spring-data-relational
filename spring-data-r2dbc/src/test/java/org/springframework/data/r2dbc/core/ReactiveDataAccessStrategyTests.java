@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.r2dbc.testing.Assertions.*;
 
@@ -38,19 +39,19 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  *
  * @author Mark Paluch
  */
-public class ReactiveDataAccessStrategyTests {
+class ReactiveDataAccessStrategyTests {
 
-	BindTarget bindTarget = mock(BindTarget.class);
+	private BindTarget bindTarget = mock(BindTarget.class);
 
-	ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(MySqlDialect.INSTANCE,
+	private ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(MySqlDialect.INSTANCE,
 			Arrays.asList(UuidToStringConverter.INSTANCE, StringToUuidConverter.INSTANCE));
 
 	@Test // gh-305
-	public void shouldConvertParameter() {
+	void shouldConvertParameter() {
 
 		UUID value = UUID.randomUUID();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(strategy.getBindValue(Parameter.from(value))).isEqualTo(Parameter.from(value.toString()));
 			softly.assertThat(strategy.getBindValue(Parameter.from(Condition.New))).isEqualTo(Parameter.from("New"));
@@ -58,14 +59,14 @@ public class ReactiveDataAccessStrategyTests {
 	}
 
 	@Test // gh-305
-	public void shouldConvertEmptyParameter() {
+	void shouldConvertEmptyParameter() {
 
 		assertThat(strategy.getBindValue(Parameter.empty(UUID.class))).isEqualTo(Parameter.empty(String.class));
 		assertThat(strategy.getBindValue(Parameter.empty(Condition.class))).isEqualTo(Parameter.empty(String.class));
 	}
 
 	@Test // gh-305
-	public void shouldConvertCriteria() {
+	void shouldConvertCriteria() {
 
 		UUID value = UUID.randomUUID();
 
@@ -80,7 +81,7 @@ public class ReactiveDataAccessStrategyTests {
 	}
 
 	@Test // gh-305
-	public void shouldConvertAssignment() {
+	void shouldConvertAssignment() {
 
 		UUID value = UUID.randomUUID();
 
