@@ -102,10 +102,10 @@ class AggregateChangeExecutor {
 			executionContext.executeBatchDeleteRoot(batchDeleteRoot);
 		} else if (action instanceof DbAction.DeleteAllRoot<?> deleteAllRoot) {
 			executionContext.executeDeleteAllRoot(deleteAllRoot);
-		} else if (action instanceof DbAction.DeleteRootByIdIn<?> deleteRootByIdIn) {
-			executionContext.executeDeleteRootByIdIn(deleteRootByIdIn);
-		} else if (action instanceof DbAction.DeleteByRootIdIn<?> deleteByRootIdIn) {
-			executionContext.executeDeleteByRootIdIn(deleteByRootIdIn);
+		} else if (action instanceof DbAction.DeleteRootByQuery<?> deleteRootByQuery) {
+			executionContext.excuteDeleteRootByQuery(deleteRootByQuery);
+		} else if (action instanceof DbAction.DeleteByQuery<?> deleteByQuery) {
+			executionContext.excuteDeleteByQuery(deleteByQuery);
 		} else if (action instanceof DbAction.AcquireLockRoot<?> acquireLockRoot) {
 			executionContext.executeAcquireLock(acquireLockRoot);
 		} else if (action instanceof DbAction.AcquireLockAllRoot<?> acquireLockAllRoot) {

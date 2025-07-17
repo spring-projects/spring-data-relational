@@ -232,6 +232,16 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteRootByQuery(Query query, Class<?> domainType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".acquireLockById";
@@ -255,7 +265,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 

@@ -179,6 +179,22 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
+	 * Deletes all root entities of the given domain type that match the given {@link Query}.
+	 *
+	 * @param query the query specifying which rows to delete. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 */
+	void deleteRootByQuery(Query query, Class<?> domainType);
+
+	/**
+	 * Deletes entities reachable via the given {@link PersistentPropertyPath} from root entities that match the given {@link Query}.
+	 *
+	 * @param query the query specifying which root entities to consider for deleting related entities. Must not be {@code null}.
+	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
+	 */
+	void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
+
+	/**
 	 * Acquire a lock on the aggregate specified by id.
 	 *
 	 * @param id the id of the entity to load. Must not be {@code null}.
@@ -196,16 +212,14 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	<T> void acquireLockAll(LockMode lockMode, Class<T> domainType);
 
 	/**
-	 * Acquire a lock on all aggregates that match the given {@link Query} and return their identifiers.
-	 * The resulting SQL will include a {@code SELECT id FROM … WHERE … (LOCK CLAUSE)} to retrieve and lock the matching rows.
+	 * Acquire a lock on all aggregates that match the given {@link Query}.
 	 *
 	 * @param query the query specifying which entities to lock. Must not be {@code null}.
 	 * @param lockMode the lock mode to apply to the query (e.g. {@code FOR UPDATE}). Must not be {@code null}.
 	 * @param domainType the domain type of the entities to be locked. Must not be {@code null}.
 	 * @param <T> the type of the domain entity.
-	 * @return a {@link List} of ids corresponding to the rows locked by the query.
 	 */
-	<T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType);
+	<T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType);
 
 	/**
 	 * Counts the rows in the table representing the given domain type.

@@ -84,20 +84,20 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 		Class<?> entityType = aggregateChange.getEntityType();
 
-		DbAction.SelectIds<?> selectIds = new DbAction.AcquireLockAllRootByQuery<>(entityType, query);
+		List<DbAction<?>> deleteReferencedActions = new ArrayList<>();
+
+		forAllTableRepresentingPaths(entityType, p -> deleteReferencedActions.add(new DbAction.DeleteByQuery<>(query, p)));
+
+		Collections.reverse(deleteReferencedActions);
 
 		List<DbAction<?>> actions = new ArrayList<>();
-		actions.add(selectIds);
-
-		List<PersistentPropertyPath<RelationalPersistentProperty>> paths = new ArrayList<>();
-		forAllTableRepresentingPaths(entityType, paths::add);
-		Collections.reverse(paths);
-
-		for (PersistentPropertyPath<RelationalPersistentProperty> path : paths) {
-			actions.add(new DbAction.DeleteByRootIdIn<>(selectIds, path));
+		if (!deleteReferencedActions.isEmpty()) {
+			actions.add(new DbAction.AcquireLockAllRootByQuery<>(entityType, query));
 		}
+		actions.addAll(deleteReferencedActions);
 
-		actions.add(new DbAction.DeleteRootByIdIn<>(entityType, selectIds));
+		DbAction.DeleteRootByQuery<?> deleteRootByQuery = new DbAction.DeleteRootByQuery<>(entityType, query);
+		actions.add(deleteRootByQuery);
 
 		actions.forEach(aggregateChange::addAction);
 	}

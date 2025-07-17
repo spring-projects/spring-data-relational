@@ -150,7 +150,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 	void writeForQueryDeletesEntitiesByQueryAndReferencedEntities() {
 
 		MutableAggregateChange<SomeEntity> aggregateChange = MutableAggregateChange.forDelete(SomeEntity.class);
-		Query query = Query.query(Criteria.empty()).limit(10).sort(Sort.by("name"));
+		Query query = Query.query(Criteria.empty());
 
 		converter.writeForQuery(query, aggregateChange);
 
@@ -158,9 +158,9 @@ public class RelationalEntityDeleteWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath)
 				.containsExactly(
 						Tuple.tuple(DbAction.AcquireLockAllRootByQuery.class, SomeEntity.class, ""),
-						Tuple.tuple(DbAction.DeleteByRootIdIn.class, YetAnother.class, "other.yetAnother"),
-						Tuple.tuple(DbAction.DeleteByRootIdIn.class, OtherEntity.class, "other"),
-						Tuple.tuple(DbAction.DeleteRootByIdIn.class, SomeEntity.class, "")
+						Tuple.tuple(DbAction.DeleteByQuery.class, YetAnother.class, "other.yetAnother"),
+						Tuple.tuple(DbAction.DeleteByQuery.class, OtherEntity.class, "other"),
+						Tuple.tuple(DbAction.DeleteRootByQuery.class, SomeEntity.class, "")
 				);
 	}
 

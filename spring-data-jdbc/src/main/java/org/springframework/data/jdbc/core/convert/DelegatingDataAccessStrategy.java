@@ -111,6 +111,16 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteRootByQuery(Query query, Class<?> domainType) {
+		delegate.deleteRootByQuery(query, domainType);
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		delegate.deleteByQuery(query, propertyPath);
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 		delegate.acquireLockById(id, lockMode, domainType);
 	}
@@ -121,8 +131,8 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
-		return delegate.acquireLockAndFindIdsByQuery(query, lockMode, domainType);
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		delegate.acquireLockByQuery(query, lockMode, domainType);
 	}
 
 	@Override

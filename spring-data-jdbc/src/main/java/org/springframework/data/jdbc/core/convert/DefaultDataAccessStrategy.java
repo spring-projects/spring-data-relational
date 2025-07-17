@@ -39,7 +39,6 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -246,6 +245,30 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteRootByQuery(Query query, Class<?> domainType) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String deleteSql = sql(domainType).createDeleteByQuery(query, parameterSource);
+
+		operations.update(deleteSql, parameterSource);
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
+		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
+
+		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
+
+		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String deleteSql = sql(rootEntity.getType()).createDeleteInSubselectByPath(query, parameterSource, propertyPath);
+
+		operations.update(deleteSql, parameterSource);
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
@@ -262,25 +285,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String acquireLockByQuerySql = sql(domainType).getAcquireLockAndFindIdsByQuery(query, parameterSource, lockMode);
+		String acquireLockByQuerySql = sql(domainType).getAcquireLockByQuery(query, parameterSource, lockMode);
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(domainType);
-		RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
-
-		return operations.query(acquireLockByQuerySql, parameterSource, getIdRowMapper(idProperty));
-	}
-
-	private RowMapper<?> getIdRowMapper(RelationalPersistentProperty idProperty) {
-		RelationalPersistentEntity<?> complexId = context.getPersistentEntity(idProperty.getType());
-
-		if (complexId == null) {
-			return SingleColumnRowMapper.newInstance(idProperty.getType(), converter.getConversionService());
-		} else {
-			return new EntityRowMapper<>(context.getRequiredPersistentEntity(idProperty.getType()), converter);
-		}
+		operations.query(acquireLockByQuerySql, parameterSource, ResultSet::next);
 	}
 
 	@Override

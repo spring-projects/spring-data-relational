@@ -40,7 +40,6 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.SelectIdsDbActionExecutionResult;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.AggregatePath;
@@ -74,7 +73,6 @@ class JdbcAggregateChangeExecutionContext {
 	private final DataAccessStrategy accessStrategy;
 
 	private final Map<DbAction<?>, DbActionExecutionResult> results = new LinkedHashMap<>();
-	private final Map<DbAction.SelectIds<?>, SelectIdsDbActionExecutionResult> selectIdsDbActionExecutionResult = new LinkedHashMap<>();
 
 	JdbcAggregateChangeExecutionContext(JdbcConverter converter, DataAccessStrategy accessStrategy) {
 
@@ -172,32 +170,14 @@ class JdbcAggregateChangeExecutionContext {
 		accessStrategy.deleteAll(delete.getPropertyPath());
 	}
 
-	<T> void executeDeleteRootByIdIn(DbAction.DeleteRootByIdIn<T> deleteRootByIdIn) {
-		SelectIdsDbActionExecutionResult result = getRequiredSelectIdsResult(deleteRootByIdIn.getSelectIdsAction());
+	<T> void excuteDeleteRootByQuery(DbAction.DeleteRootByQuery<T> deleteRootByQuery) {
 
-		List<Object> rootIds = new ArrayList<>(result.getSelectedIds());
-		if (rootIds.isEmpty()) {
-			return;
-		}
-		accessStrategy.delete(rootIds, deleteRootByIdIn.getEntityType());
+		accessStrategy.deleteRootByQuery(deleteRootByQuery.getQuery(), deleteRootByQuery.getEntityType());
 	}
 
-	<T> void executeDeleteByRootIdIn(DbAction.DeleteByRootIdIn<T> deleteByRootIdIn) {
-		SelectIdsDbActionExecutionResult result = getRequiredSelectIdsResult(deleteByRootIdIn.getSelectIdsAction());
+	<T> void excuteDeleteByQuery(DbAction.DeleteByQuery<T> deleteByQuery) {
 
-		List<Object> rootIds = new ArrayList<>(result.getSelectedIds());
-		if (rootIds.isEmpty()) {
-			return;
-		}
-		accessStrategy.delete(rootIds, deleteByRootIdIn.getPropertyPath());
-	}
-
-	private SelectIdsDbActionExecutionResult getRequiredSelectIdsResult(DbAction.SelectIds selectIdsAction) {
-		SelectIdsDbActionExecutionResult result = selectIdsDbActionExecutionResult.get(selectIdsAction);
-		if (result == null) {
-			throw new IllegalArgumentException("Expected SelectIdsDbActionExecutionResult for given selectIdsAction but found none");
-		}
-		return result;
+		accessStrategy.deleteByQuery(deleteByQuery.getQuery(), deleteByQuery.getPropertyPath());
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
@@ -209,10 +189,7 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	<T> void executeAcquireLockRootByQuery(DbAction.AcquireLockAllRootByQuery<T> acquireLock) {
-
-		List<?> rootIds = accessStrategy.acquireLockAndFindIdsByQuery(acquireLock.getQuery(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
-
-		selectIdsDbActionExecutionResult.put(acquireLock, new SelectIdsDbActionExecutionResult(rootIds, acquireLock));
+		accessStrategy.acquireLockByQuery(acquireLock.getQuery(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
 	}
 
 	private void add(DbActionExecutionResult result) {

@@ -111,6 +111,16 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteRootByQuery(Query query, Class<?> domainType) {
+		collectVoid(das -> das.deleteRootByQuery(query, domainType));
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		collectVoid(das -> das.deleteByQuery(query, propertyPath));
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 		collectVoid(das -> das.acquireLockById(id, lockMode, domainType));
 	}
@@ -121,8 +131,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> List<?> acquireLockAndFindIdsByQuery(Query query, LockMode lockMode, Class<T> domainType) {
-		return collect(das -> das.acquireLockAndFindIdsByQuery(query, lockMode, domainType));
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockByQuery(query, lockMode, domainType));
 	}
 
 	@Override
