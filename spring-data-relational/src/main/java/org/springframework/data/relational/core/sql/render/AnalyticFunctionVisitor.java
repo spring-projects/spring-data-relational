@@ -16,8 +16,8 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.AnalyticFunction;
+import org.springframework.data.relational.core.sql.BaseFunction;
 import org.springframework.data.relational.core.sql.OrderBy;
-import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
@@ -42,9 +42,9 @@ class AnalyticFunctionVisitor extends TypedSingleConditionRenderSupport<Analytic
 	@Override
 	Delegation enterNested(Visitable segment) {
 
-		if (segment instanceof SimpleFunction) {
+		if (segment instanceof BaseFunction) {
 
-			delegate = new SimpleFunctionVisitor(context);
+			delegate = new FunctionVisitor(context);
 			return Delegation.delegateTo((DelegatingVisitor) delegate);
 		}
 
@@ -65,7 +65,7 @@ class AnalyticFunctionVisitor extends TypedSingleConditionRenderSupport<Analytic
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (delegate instanceof SimpleFunctionVisitor) {
+		if (delegate instanceof FunctionVisitor) {
 
 			part.append(delegate.getRenderedPart());
 			part.append(" OVER(");

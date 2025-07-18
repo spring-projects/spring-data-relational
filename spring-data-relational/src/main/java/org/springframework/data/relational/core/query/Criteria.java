@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.query;
 
+import static org.springframework.data.relational.core.query.CriteriaDefinition.Comparator.*;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,26 +65,39 @@ public class Criteria implements CriteriaDefinition {
 	private final Combinator combinator;
 	private final List<CriteriaDefinition> group;
 
+	private final @Nullable QueryExpression queryExpression;
 	private final @Nullable SqlIdentifier column;
 	private final @Nullable Comparator comparator;
 	private final @Nullable Object value;
 	private final boolean ignoreCase;
 
-	private Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
-		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
+	protected Criteria(QueryExpression expression) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), expression, null, null, null, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
-		this(previous, combinator, group, column, comparator, value, false);
+	protected Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), null, column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
+	protected Criteria(QueryExpression queryExpression, @Nullable SqlIdentifier column, Comparator comparator,
+			@Nullable Object value) {
+		this(null, Combinator.INITIAL, Collections.emptyList(), queryExpression, column, comparator, value, false);
+	}
+
+	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+			@Nullable QueryExpression queryExpression, @Nullable SqlIdentifier column, @Nullable Comparator comparator,
+			@Nullable Object value) {
+		this(previous, combinator, group, queryExpression, column, comparator, value, false);
+	}
+
+	protected Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
+			@Nullable QueryExpression queryExpression, @Nullable SqlIdentifier column, @Nullable Comparator comparator,
+			@Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
 		this.group = group;
+		this.queryExpression = queryExpression;
 		this.column = column;
 		this.comparator = comparator;
 		this.value = value;
@@ -92,6 +107,7 @@ public class Criteria implements CriteriaDefinition {
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group) {
 
 		this.previous = previous;
+		this.queryExpression = null;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
 		this.group = group;
 		this.column = null;
@@ -153,7 +169,7 @@ public class Criteria implements CriteriaDefinition {
 
 		Assert.hasText(column, "Column name must not be null or empty");
 
-		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column));
+		return new DefaultCriteriaStep(QueryExpression.column(column), SqlIdentifier.unquoted(column));
 	}
 
 	/**
@@ -167,10 +183,30 @@ public class Criteria implements CriteriaDefinition {
 		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
-		return new DefaultCriteriaStep(identifier) {
+		QueryExpression lhs = QueryExpression.column(column);
+		return new DefaultCriteriaStep(lhs, identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
-				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value);
+				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), lhs, identifier, comparator, value);
+			}
+		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code expression}.
+	 *
+	 * @param expression must not be {@literal null} or empty.
+	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
+	 */
+	public CriteriaStep and(QueryExpression expression) {
+
+		Assert.notNull(expression, "Query expression must not be null");
+
+		return new DefaultCriteriaStep(expression) {
+			@Override
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
+				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), expression, null, comparator,
+						value);
 			}
 		};
 	}
@@ -214,10 +250,29 @@ public class Criteria implements CriteriaDefinition {
 		Assert.hasText(column, "Column name must not be null or empty");
 
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
-		return new DefaultCriteriaStep(identifier) {
+		QueryExpression lhs = QueryExpression.column(column);
+		return new DefaultCriteriaStep(lhs, identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
-				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value);
+				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), lhs, identifier, comparator, value);
+			}
+		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it with {@code OR} using the provided {@code expression}.
+	 *
+	 * @param expression must not be {@literal null} or empty.
+	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
+	 */
+	public CriteriaStep or(QueryExpression expression) {
+
+		Assert.notNull(expression, "Query expression must not be null");
+
+		return new DefaultCriteriaStep(expression) {
+			@Override
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
+				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), expression, null, comparator, value);
 			}
 		};
 	}
@@ -259,7 +314,7 @@ public class Criteria implements CriteriaDefinition {
 	 */
 	public Criteria ignoreCase(boolean ignoreCase) {
 		if (this.ignoreCase != ignoreCase) {
-			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase);
+			return new Criteria(previous, combinator, group, queryExpression, column, comparator, value, ignoreCase);
 		}
 		return this;
 	}
@@ -315,6 +370,10 @@ public class Criteria implements CriteriaDefinition {
 			return false;
 		}
 
+		if (this.queryExpression != null) {
+			return false;
+		}
+
 		for (CriteriaDefinition criteria : group) {
 
 			if (!criteria.isEmpty()) {
@@ -342,6 +401,12 @@ public class Criteria implements CriteriaDefinition {
 	@Override
 	public List<CriteriaDefinition> getGroup() {
 		return group;
+	}
+
+	@Nullable
+	@Override
+	public QueryExpression getExpression() {
+		return queryExpression;
 	}
 
 	/**
@@ -476,7 +541,13 @@ public class Criteria implements CriteriaDefinition {
 			return;
 		}
 
-		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
+		stringBuilder.append(getLhs(criteria));
+
+		if (criteria.getComparator() == null) {
+			return;
+		}
+
+		stringBuilder.append(' ')
 				.append(criteria.getComparator().getComparator());
 
 		switch (criteria.getComparator()) {
@@ -500,6 +571,19 @@ public class Criteria implements CriteriaDefinition {
 			default:
 				stringBuilder.append(' ').append(renderValue(criteria.getValue()));
 		}
+	}
+
+	private static String getLhs(CriteriaDefinition criteria) {
+
+		if (criteria.hasExpression()) {
+			return criteria.getExpression().toString();
+		}
+
+		if (criteria.hasColumn()) {
+			return criteria.getColumn().toSql(IdentifierProcessing.NONE);
+		}
+
+		return "?";
 	}
 
 	private static String renderValue(@Nullable Object value) {
@@ -658,11 +742,18 @@ public class Criteria implements CriteriaDefinition {
 	/**
 	 * Default {@link CriteriaStep} implementation.
 	 */
-	static class DefaultCriteriaStep implements CriteriaStep {
+	protected static class DefaultCriteriaStep implements CriteriaStep {
 
-		private final SqlIdentifier property;
+		private final QueryExpression lhs;
+		private final @Nullable SqlIdentifier property;
 
-		DefaultCriteriaStep(SqlIdentifier property) {
+		protected DefaultCriteriaStep(QueryExpression lhs) {
+			this.lhs = lhs;
+			this.property = null;
+		}
+
+		DefaultCriteriaStep(QueryExpression lhs, SqlIdentifier property) {
+			this.lhs = lhs;
 			this.property = property;
 		}
 
@@ -734,7 +825,7 @@ public class Criteria implements CriteriaDefinition {
 			Assert.notNull(begin, "Begin value must not be null");
 			Assert.notNull(end, "End value must not be null");
 
-			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
+			return createCriteria(BETWEEN, Pair.of(begin, end));
 		}
 
 		@Override
@@ -812,8 +903,12 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.IS_FALSE, false);
 		}
 
+		protected QueryExpression getLhs() {
+			return lhs;
+		}
+
 		protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
-			return new Criteria(this.property, comparator, value);
+			return new Criteria(this.lhs, this.property, comparator, value);
 		}
 	}
 }

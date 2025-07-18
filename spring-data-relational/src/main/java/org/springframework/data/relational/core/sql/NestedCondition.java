@@ -21,10 +21,10 @@ package org.springframework.data.relational.core.sql;
  * @author Mark Paluch
  * @since 2.0
  */
-public class NestedCondition extends MultipleCondition implements Condition {
+public class NestedCondition extends NestedExpression implements Condition {
 
 	NestedCondition(Condition condition) {
-		super("", condition);
+		super(condition);
 	}
 
 	@Override

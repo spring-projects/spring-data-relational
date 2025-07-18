@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
+ * Condition group wrapping a nested {@link Condition} with parentheses.
  *
  * @author Mark Paluch
- * @since 1.1
- * @see Condition#and(Condition)
+ * @since 2.0
  */
-public class AndCondition extends MultipleCondition {
+public class NestedExpression extends MultipleExpression implements Expression {
 
-	AndCondition(Expression... conditions) {
-		super(" AND ", conditions);
+	NestedExpression(Expression expression) {
+		super("", expression);
+	}
+
+	@Override
+	public String toString() {
+		return "(" + super.toString() + ")";
 	}
 }

@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.SimpleFunction;
+import org.springframework.data.relational.core.sql.BaseFunction;
 import org.springframework.data.relational.core.sql.Visitable;
 
 /**
@@ -26,12 +26,12 @@ import org.springframework.data.relational.core.sql.Visitable;
  * @author Jens Schauder
  * @since 1.1
  */
-class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunction> implements PartRenderer {
+class FunctionVisitor extends TypedSingleConditionRenderSupport<BaseFunction> implements PartRenderer {
 
 	private final StringBuilder part = new StringBuilder();
 	private boolean needsComma = false;
 
-	SimpleFunctionVisitor(RenderContext context) {
+	FunctionVisitor(RenderContext context) {
 		super(context);
 	}
 
@@ -52,17 +52,17 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 	}
 
 	@Override
-	Delegation enterMatched(SimpleFunction segment) {
+	Delegation enterMatched(BaseFunction segment) {
 
-		part.append(segment.getFunctionName()).append("(");
+		part.append(segment.getFunctionName()).append(segment.getBeforeArgs());
 
 		return super.enterMatched(segment);
 	}
 
 	@Override
-	Delegation leaveMatched(SimpleFunction segment) {
+	Delegation leaveMatched(BaseFunction segment) {
 
-		part.append(")");
+		part.append(segment.getAfterArgs());
 
 		return super.leaveMatched(segment);
 	}

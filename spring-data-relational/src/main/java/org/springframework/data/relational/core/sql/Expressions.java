@@ -83,8 +83,13 @@ public abstract class Expressions {
 		return new TupleExpression(columns);
 	}
 
+	public static Expression nest(Expression expression) {
+		return new NestedExpression(expression);
+	}
+
 	// Utility constructor.
 	private Expressions() {}
+
 
 	static public class SimpleExpression extends AbstractSegment implements Expression {
 

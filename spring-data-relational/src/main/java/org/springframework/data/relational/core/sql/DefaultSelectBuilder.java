@@ -42,7 +42,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	private long limit = -1;
 	private long offset = -1;
 	private final List<Join> joins = new ArrayList<>();
-	private @Nullable Condition where;
+	private @Nullable Expression where;
 	private final List<OrderByField> orderBy = new ArrayList<>();
 	private @Nullable LockMode lockMode;
 
@@ -153,16 +153,23 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	}
 
 	@Override
-	public SelectWhereAndOr and(Condition condition) {
+	public SelectWhereAndOr where(Expression expression) {
 
-		where = where.and(condition);
+		where = expression;
 		return this;
 	}
 
 	@Override
-	public SelectWhereAndOr or(Condition condition) {
+	public SelectWhereAndOr and(Expression condition) {
 
-		where = where.or(condition);
+		where = where instanceof Condition c ? c.and(condition) : new AndCondition(where, condition);
+		return this;
+	}
+
+	@Override
+	public SelectWhereAndOr or(Expression condition) {
+
+		where = where instanceof Condition c ? c.or(condition) : new OrCondition(where, condition);
 		return this;
 	}
 
@@ -311,6 +318,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		public SelectWhereAndOr where(Condition condition) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.where(condition);
+		}
+
+		@Override
+		public SelectWhereAndOr where(Expression expression) {
+			selectBuilder.join(finishJoin());
+			return selectBuilder.where(expression);
 		}
 
 		@Override
