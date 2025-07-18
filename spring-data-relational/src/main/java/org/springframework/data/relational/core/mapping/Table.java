@@ -30,6 +30,7 @@ import org.springframework.core.annotation.AliasFor;
  * @author Kazuki Shimizu
  * @author Bastian Wilhelm
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -38,26 +39,35 @@ import org.springframework.core.annotation.AliasFor;
 public @interface Table {
 
 	/**
-	 * The table name. The attribute supports SpEL expressions to dynamically calculate the table name on a per-operation
-	 * basis.
+	 * The table name. The attribute supports value expressions to dynamically obtain the table name on a per-operation
+	 * basis. Expressions returning a {@code String} are {@link SqlIdentifierSanitizer sanitized} prior usage. Expressions
+	 * can also return a {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is used as-is
+	 * without further sanitization.
 	 */
 	@AliasFor("name")
 	String value() default "";
 
 	/**
-	 * The table name. The attribute supports SpEL expressions to dynamically calculate the table name on a per-operation
-	 * basis.
+	 * The table name. The attribute supports value expressions to dynamically obtain the table name on a per-operation
+	 * basis. Expressions returning a {@code String} are {@link SqlIdentifierSanitizer sanitized} prior usage. Expressions
+	 * can also return a {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is used as-is
+	 * without further sanitization.
 	 */
 	@AliasFor("value")
 	String name() default "";
 
 	/**
-	 * Name of the schema (or user, for example in case of oracle), in which this table resides in The behavior is the
+	 * Name of the schema (or user, for example in case of Oracle), in which this table resides in The behavior is the
 	 * following: <br/>
 	 * If the {@link Table#schema()} is specified, then it will be used as a schema of current table, i.e. as a prefix to
 	 * the name of the table, which can be specified in {@link Table#value()}. <br/>
 	 * If the {@link Table#schema()} is not specified, then spring data will assume the default schema, The default schema
-	 * itself can be provided by the means of {@link NamingStrategy#getSchema()}
+	 * itself can be provided by the means of {@link NamingStrategy#getSchema()}. The attribute supports value expressions
+	 * to dynamically obtain the schema name on a per-operation basis. Expressions returning a {@code String} are
+	 * {@link SqlIdentifierSanitizer sanitized} prior usage. Expressions can also return a
+	 * {@link org.springframework.data.relational.core.sql.SqlIdentifier} directly that is used as-is without further
+	 * sanitization.
 	 */
 	String schema() default "";
+
 }

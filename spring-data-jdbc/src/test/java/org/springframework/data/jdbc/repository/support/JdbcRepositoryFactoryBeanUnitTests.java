@@ -58,19 +58,19 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 @MockitoSettings(strictness = Strictness.LENIENT)
 @ExtendWith(MockitoExtension.class)
-public class JdbcRepositoryFactoryBeanUnitTests {
+class JdbcRepositoryFactoryBeanUnitTests {
 
-	JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
+	private JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
 
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher publisher;
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
 	@Mock JdbcDialect dialect;
 
-	RelationalMappingContext mappingContext;
+	private RelationalMappingContext mappingContext;
 
 	@BeforeEach
-	public void setUp() {
+	void setUp() {
 
 		this.mappingContext = new JdbcMappingContext();
 
@@ -79,14 +79,19 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
 
-		ObjectProvider<DataAccessStrategy> provider = mock(ObjectProvider.class);
-		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(provider);
-		when(provider.getIfAvailable(any()))
+		ObjectProvider<DataAccessStrategy> dataAccessStrategyObjectProvider = mock(ObjectProvider.class);
+		ObjectProvider<QueryMappingConfiguration> queryMappingConfigurationObjectProvider = mock(ObjectProvider.class);
+		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(dataAccessStrategyObjectProvider);
+		when(beanFactory.getBeanProvider(QueryMappingConfiguration.class)).thenReturn(queryMappingConfigurationObjectProvider);
+		when(beanFactory.getBean(RelationalMappingContext.class)).thenReturn(mappingContext);
+		when(dataAccessStrategyObjectProvider.getIfAvailable(any()))
+				.then((Answer<?>) invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
+		when(queryMappingConfigurationObjectProvider.getIfAvailable(any()))
 				.then((Answer<?>) invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
 	}
 
 	@Test // DATAJDBC-151
-	public void setsUpBasicInstanceCorrectly() {
+	void setsUpBasicInstanceCorrectly() {
 
 		factoryBean.setDataAccessStrategy(dataAccessStrategy);
 		factoryBean.setMappingContext(mappingContext);
@@ -100,22 +105,21 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	}
 
 	@Test // DATAJDBC-151
-	public void requiresListableBeanFactory() {
+	void requiresListableBeanFactory() {
 
 		assertThatExceptionOfType(IllegalArgumentException.class)
 				.isThrownBy(() -> factoryBean.setBeanFactory(mock(BeanFactory.class)));
 	}
 
 	@Test // DATAJDBC-155
-	public void afterPropertiesThrowsExceptionWhenNoMappingContextSet() {
+	void afterPropertiesThrowsExceptionWhenNoMappingContextSet() {
 
 		assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> factoryBean.setMappingContext(null));
 	}
 
 	@Test // DATAJDBC-155
-	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
+	void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
-		factoryBean.setMappingContext(mappingContext);
 		factoryBean.setConverter(new MappingJdbcConverter(mappingContext, dataAccessStrategy));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
@@ -125,8 +129,8 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		assertThat(factoryBean.getObject()).isNotNull();
 		assertThat(ReflectionTestUtils.getField(factoryBean, "dataAccessStrategy"))
 				.isInstanceOf(DefaultDataAccessStrategy.class);
-		assertThat(ReflectionTestUtils.getField(factoryBean, "queryMappingConfiguration"))
-				.isEqualTo(QueryMappingConfiguration.EMPTY);
+		assertThat(factoryBean).hasFieldOrPropertyWithValue("queryMappingConfiguration", QueryMappingConfiguration.EMPTY);
+		assertThat(factoryBean).hasFieldOrPropertyWithValue("mappingContext", mappingContext);
 	}
 
 	private static class DummyEntity {

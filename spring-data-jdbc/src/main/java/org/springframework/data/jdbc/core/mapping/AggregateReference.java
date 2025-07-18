@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -31,6 +32,14 @@ import org.springframework.util.Assert;
  */
 public interface AggregateReference<T, ID> {
 
+	/**
+	 * Creates an {@link AggregateReference} that refers to the target aggregate root with the given id.
+	 *
+	 * @param id aggregate identifier. Can be a simple value or an composite id (complex object).
+	 * @return
+	 * @param <T> target aggregate type.
+	 * @param <ID> target aggregate identifier type.
+	 */
 	static <T, ID> AggregateReference<T, ID> to(ID id) {
 		return new IdOnlyAggregateReference<>(id);
 	}

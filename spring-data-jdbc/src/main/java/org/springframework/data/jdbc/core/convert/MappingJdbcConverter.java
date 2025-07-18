@@ -20,16 +20,14 @@ import java.sql.JDBCType;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.converter.ConverterRegistry;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -47,6 +45,10 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.jdbc.UncategorizedSQLException;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -68,9 +70,9 @@ import org.springframework.util.Assert;
  */
 public class MappingJdbcConverter extends MappingRelationalConverter implements JdbcConverter, ApplicationContextAware {
 
-	private static final Log LOG = LogFactory.getLog(MappingJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
+	private SQLExceptionTranslator exceptionTranslator = new SQLExceptionSubclassTranslator();
 	private final JdbcTypeFactory typeFactory;
 	private final RelationResolver relationResolver;
 
@@ -91,8 +93,6 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = JdbcTypeFactory.unsupported();
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
 	}
 
 	/**
@@ -112,14 +112,15 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 		this.typeFactory = typeFactory;
 		this.relationResolver = relationResolver;
-
-		registerAggregateReferenceConverters();
 	}
 
-	private void registerAggregateReferenceConverters() {
-
-		ConverterRegistry registry = (ConverterRegistry) getConversionService();
-		AggregateReferenceConverters.getConvertersToRegister(getConversionService()).forEach(registry::addConverter);
+	/**
+	 * Set the exception translator for this instance. Defaults to a {@link SQLErrorCodeSQLExceptionTranslator}.
+	 *
+	 * @see SQLExceptionSubclassTranslator
+	 */
+	public void setExceptionTranslator(SQLExceptionTranslator exceptionTranslator) {
+		this.exceptionTranslator = exceptionTranslator;
 	}
 
 	@Nullable
@@ -184,34 +185,63 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		return componentColumnType;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
 	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
-		if (value == null) {
-			return value;
-		}
-
-		if (value instanceof Array array) {
-			try {
-				return super.readValue(array.getArray(), type);
-			} catch (SQLException | ConverterNotFoundException e) {
-				LOG.info("Failed to extract a value of type %s from an Array; Attempting to use standard conversions", e);
-			}
-		}
-
-		return super.readValue(value, type);
-	}
-
-	@Override
-	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (value == null) {
+		if (null == value) {
 			return null;
 		}
 
-		return super.writeValue(value, type);
+		value = potentiallyUnwrapArray(value);
+
+		if (AggregateReference.class.isAssignableFrom(targetType.getType())) {
+
+			List<TypeInformation<?>> types = targetType.getTypeArguments();
+			TypeInformation<?> idType = types.get(1);
+			if (value instanceof AggregateReference<?, ?> ref) {
+				return AggregateReference.to(readValue(ref.getId(), idType));
+			} else {
+				return AggregateReference.to(readValue(value, idType));
+			}
+		}
+
+		return getPotentiallyConvertedSimpleRead(value, targetType);
+	}
+
+	/**
+	 * Unwrap a Jdbc array, if such a value is provided
+	 */
+	private Object potentiallyUnwrapArray(Object value) {
+
+		if (value instanceof Array array) {
+			try {
+				return array.getArray();
+			} catch (SQLException e) {
+				throw translateException("Array.getArray()", null, e);
+			}
+		}
+
+		return value;
+	}
+
+	@Nullable
+	@Override
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
+
+		if (value instanceof AggregateReference<?, ?> ref) {
+			return writeValue(ref.getId(), type);
+		}
+
+		return super.getPotentiallyConvertedSimpleWrite(value, type);
 	}
 
 	private boolean canWriteAsJdbcValue(@Nullable Object value) {
@@ -244,28 +274,55 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> columnType, SQLType sqlType) {
 
 		TypeInformation<?> targetType = canWriteAsJdbcValue(value) ? TypeInformation.of(JdbcValue.class) : columnType;
+
+		if (value instanceof AggregateReference<?, ?> ref) {
+			return writeJdbcValue(ref.getId(), columnType, sqlType);
+		}
+
 		Object convertedValue = writeValue(value, targetType);
 
 		if (convertedValue instanceof JdbcValue result) {
 			return result;
 		}
 
-		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-			return JdbcValue.of(convertedValue, sqlType);
+		if (convertedValue == null) {
+			return JdbcValue.of(null, sqlType);
 		}
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
-		if (componentType != byte.class && componentType != Byte.class) {
 
-			Object[] objectArray = requireObjectArray(convertedValue);
-			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
+		if (convertedValue.getClass().isArray()) {
+
+			if (componentType != byte.class && componentType != Byte.class) {
+
+				Object[] objectArray = requireObjectArray(convertedValue);
+
+				return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
+			}
+
+			if (componentType == Byte.class) {
+				convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
+			}
+
+			return JdbcValue.of(convertedValue, JDBCType.BINARY);
 		}
 
-		if (componentType == Byte.class) {
-			convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
-		}
+		return JdbcValue.of(convertedValue, sqlType);
+	}
 
-		return JdbcValue.of(convertedValue, JDBCType.BINARY);
+	/**
+	 * Unwraps values of type {@link JdbcValue}.
+	 *
+	 * @param convertedValue a value that might need unwrapping.
+	 */
+	@Override
+	@Nullable
+	protected Object unwrap(@Nullable Object convertedValue) {
+
+		if (convertedValue instanceof JdbcValue jdbcValue) {
+			return jdbcValue.getValue();
+		}
+		return convertedValue;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -296,6 +353,20 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		return super.newValueProvider(documentAccessor, evaluator, context);
+	}
+
+	/**
+	 * Translate the given {@link SQLException} into a generic {@link DataAccessException}.
+	 *
+	 * @param task readable text describing the task being attempted
+	 * @param sql the SQL query or update that caused the problem (can be {@code null})
+	 * @param ex the offending {@code SQLException}
+	 * @return a DataAccessException wrapping the {@code SQLException} (never {@code null})
+	 */
+	private DataAccessException translateException(String task, @org.jspecify.annotations.Nullable String sql,
+			SQLException ex) {
+		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
+		return (dae != null ? dae : new UncategorizedSQLException(task, sql, ex));
 	}
 
 	/**

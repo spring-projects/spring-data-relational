@@ -568,7 +568,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				continue;
 			}
 
-			accessor.setProperty(property, valueProviderToUse.getPropertyValue(property));
+			Object propertyValue = valueProviderToUse.getPropertyValue(property);
+			propertyValue = readValue(propertyValue, property.getTypeInformation());
+			accessor.setProperty(property, propertyValue);
 		}
 	}
 
@@ -619,34 +621,23 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return false;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@code null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @return
+	 */
 	@Override
 	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (null == value) {
 			return null;
 		}
 
-		return getPotentiallyConvertedSimpleRead(value, type);
-	}
-
-	/**
-	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
-	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
-	 *
-	 * @param value to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
-	 */
-	@Nullable
-	private Object getPotentiallyConvertedSimpleWrite(Object value) {
-
-		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
-
-		if (customTarget.isPresent()) {
-			return getConversionService().convert(value, customTarget.get());
-		}
-
-		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
+		return getPotentiallyConvertedSimpleRead(value, targetType);
 	}
 
 	/**
@@ -696,33 +687,28 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return null;
 		}
 
-		if (getConversions().isSimpleType(value.getClass())) {
+		// custom conversion
+		Optional<Class<?>> customWriteTarget = determineCustomWriteTarget(value, type);
 
-			Optional<Class<?>> customWriteTarget = getConversions().hasCustomWriteTarget(value.getClass(), type.getType())
-					? getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-					: getConversions().getCustomWriteTarget(type.getType());
+		if (customWriteTarget.isPresent()) {
+			return getConversionService().convert(value, customWriteTarget.get());
+		}
 
-			if (customWriteTarget.isPresent()) {
-				return getConversionService().convert(value, customWriteTarget.get());
-			}
+		return getPotentiallyConvertedSimpleWrite(value, type);
+	}
 
-			if (TypeInformation.OBJECT != type) {
+	private Optional<Class<?>> determineCustomWriteTarget(Object value, TypeInformation<?> type) {
 
-				if (type.getType().isAssignableFrom(value.getClass())) {
+		return getConversions().getCustomWriteTarget(value.getClass(), type.getType())
+				.or(() -> getConversions().getCustomWriteTarget(type.getType()))
+				.or(() -> getConversions().getCustomWriteTarget(value.getClass()));
+	}
 
-					if (value.getClass().isEnum()) {
-						return getPotentiallyConvertedSimpleWrite(value);
-					}
+	@Nullable
+	protected Object getPotentiallyConvertedSimpleWrite(Object value, TypeInformation<?> type) {
 
-					return value;
-				} else {
-					if (getConversionService().canConvert(value.getClass(), type.getType())) {
-						value = getConversionService().convert(value, type.getType());
-					}
-				}
-			}
-
-			return getPotentiallyConvertedSimpleWrite(value);
+		if (value instanceof Enum<?> enumValue) {
+			return enumValue.name();
 		}
 
 		if (value.getClass().isArray()) {
@@ -744,9 +730,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 		}
 
-		return
+		if (type.getType().isInstance(value) || !getConversionService().canConvert(value.getClass(), type.getType())) {
+			return value;
+		}
 
-		getConversionService().convert(value, type.getType());
+		return getConversionService().convert(value, type.getType());
 	}
 
 	private Object writeArray(Object value, TypeInformation<?> type) {
@@ -790,14 +778,37 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		for (Object o : value) {
-			mapped.add(writeValue(o, component));
+			mapped.add(unwrap(writeValue(o, component)));
 		}
 
 		if (type.getType().isInstance(mapped) || !type.isCollectionLike()) {
 			return mapped;
 		}
 
-		return getConversionService().convert(mapped, type.getType());
+		// if we succeeded converting the members of the collection, we actually ignore the fallback targetType since that
+		// was derived without considering custom conversions.
+		Class<?> targetType = type.getType();
+		if (!mapped.isEmpty()) {
+
+			Class<?> targetComponentType = mapped.get(0).getClass();
+			targetType = Array.newInstance(targetComponentType, 0).getClass();
+		}
+
+		return getConversionService().convert(mapped, targetType);
+	}
+
+	/**
+	 * Unwraps technology-specific wrappers. Custom conversions may choose to return a wrapper class that contains
+	 * additional information for the driver. These wrappers can't be used as members of a collection, therefore we may
+	 * have to unwrap the values. This method allows technology-specific implementations to provide such an unwrapping
+	 * mechanism.
+	 *
+	 * @param convertedValue a value that might need unwrapping.
+	 * @since 4.0
+	 */
+	@Nullable
+	protected Object unwrap(@Nullable Object convertedValue) {
+		return convertedValue;
 	}
 
 	static Predicate<RelationalPersistentProperty> isConstructorArgument(PersistentEntity<?, ?> entity) {
@@ -1187,7 +1198,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				return null;
 			}
 
-			return context.convert(value, path.getRequiredLeafProperty().getTypeInformation());
+			return value;
 		}
 
 		@Override
