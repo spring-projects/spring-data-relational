@@ -35,12 +35,23 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
+import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
+import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
@@ -85,7 +96,7 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
+			JdbcDialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
 			List<EntityCallback<?>> callbacks, List<EvaluationContextExtension> evaulationContextExtensions) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
@@ -190,7 +201,7 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+	JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
 
