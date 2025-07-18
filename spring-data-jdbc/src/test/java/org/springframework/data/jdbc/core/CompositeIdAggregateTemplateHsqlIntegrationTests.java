@@ -35,6 +35,7 @@ import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -42,6 +43,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of entities with embedded entities as keys.
  *
  * @author Jens Schauder
+ * @author Jaeyeon Kim
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
@@ -130,6 +132,26 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 		Iterable<SimpleEntityWithEmbeddedPk> reloaded = template.findAll(SimpleEntityWithEmbeddedPk.class);
 
 		assertThat(reloaded).containsExactly(entities.get(2));
+	}
+
+	@Test // GH-1978
+	void deleteAllByQueryWithEmbeddedPk() {
+
+		List<SimpleEntityWithEmbeddedPk> entities = (List<SimpleEntityWithEmbeddedPk>) template.insertAll(List.of(
+				new SimpleEntityWithEmbeddedPk(new EmbeddedPk(1L, "a"), "alpha"),
+				new SimpleEntityWithEmbeddedPk(new EmbeddedPk(2L, "b"), "beta"),
+				new SimpleEntityWithEmbeddedPk(new EmbeddedPk(3L, "b"), "gamma")
+		));
+
+		Query query = Query.query(Criteria.where("name").is("beta"));
+		template.deleteAllByQuery(query, SimpleEntityWithEmbeddedPk.class);
+
+		assertThat(
+				template.findAll(SimpleEntityWithEmbeddedPk.class))
+				.containsExactlyInAnyOrder(
+						entities.get(0), // alpha
+						entities.get(2)  // gamma
+				);
 	}
 
 	@Test // GH-574
