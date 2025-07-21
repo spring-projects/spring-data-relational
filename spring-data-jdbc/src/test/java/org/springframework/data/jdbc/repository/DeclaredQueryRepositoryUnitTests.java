@@ -31,6 +31,7 @@ import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -94,15 +95,15 @@ public class DeclaredQueryRepositoryUnitTests {
 
 	private @NotNull <T extends CrudRepository> T repository(Class<T> repositoryInterface) {
 
-		Dialect dialect = JdbcHsqlDbDialect.INSTANCE;
+		JdbcDialect dialect = JdbcHsqlDbDialect.INSTANCE;
 
 		RelationalMappingContext context = JdbcMappingContext.forQuotedIdentifiers();
+		DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 
-		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy(dataAccessStrategy);
 		JdbcConverter converter = new MappingJdbcConverter(context, delegatingDataAccessStrategy,
 				new JdbcCustomConversions(), new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
 
-		DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 		ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,

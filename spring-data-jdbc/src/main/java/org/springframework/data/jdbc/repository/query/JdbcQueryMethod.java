@@ -24,6 +24,8 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.jdbc.core.dialect.DefaultSqlTypeResolver;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.Lock;
@@ -34,6 +36,7 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
@@ -53,6 +56,7 @@ import org.springframework.util.StringUtils;
  * @author Diego Krupitza
  * @author Mark Paluch
  * @author Daeho Kwon
+ * @author Mikhail Polivakha
  */
 public class JdbcQueryMethod extends QueryMethod {
 
@@ -67,8 +71,15 @@ public class JdbcQueryMethod extends QueryMethod {
 	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 			NamedQueries namedQueries,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
+		this(method, metadata, factory, namedQueries, mappingContext, DefaultSqlTypeResolver.INSTANCE);
+	}
 
-		super(method, metadata, factory, JdbcParameters::new);
+	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
+			NamedQueries namedQueries,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
+			SqlTypeResolver sqlTypeResolver) {
+
+		super(method, metadata, factory, parametersSource -> new JdbcParameters(parametersSource, sqlTypeResolver));
 		this.namedQueries = namedQueries;
 		this.method = method;
 		this.mappingContext = mappingContext;
