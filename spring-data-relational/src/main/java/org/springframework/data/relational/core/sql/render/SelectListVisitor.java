@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SelectList;
 import org.springframework.data.relational.core.sql.Visitable;
@@ -34,12 +35,14 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private final RenderTarget target;
 	private boolean requiresComma = false;
 	private ExpressionVisitor expressionVisitor;
+	private final ConditionVisitor conditionVisitor;
 	// subelements.
 
 	SelectListVisitor(RenderContext context, RenderTarget target) {
 
 		this.context = context;
 		this.target = target;
+		this.conditionVisitor = new ConditionVisitor(context);
 		this.expressionVisitor = new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE);
 	}
 
@@ -50,6 +53,11 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			builder.append(", ");
 			requiresComma = false;
 		}
+
+		if (segment instanceof Condition) {
+			return Delegation.delegateTo(conditionVisitor);
+		}
+
 		if (segment instanceof Expression) {
 			return Delegation.delegateTo(expressionVisitor);
 		}
@@ -67,7 +75,11 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (segment instanceof Expression) {
+		if (segment instanceof Condition) {
+
+			builder.append(conditionVisitor.getRenderedPart());
+			requiresComma = true;
+		} else if (segment instanceof Expression) {
 
 			builder.append(expressionVisitor.getRenderedPart());
 			requiresComma = true;

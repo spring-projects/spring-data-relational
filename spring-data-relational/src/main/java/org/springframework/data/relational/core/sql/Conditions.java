@@ -325,6 +325,18 @@ public abstract class Conditions {
 		return notIn(column, new SubselectExpression(subselect));
 	}
 
+	/**
+	 * Returns a {@link Condition} from an {@link Expression}. If the expression is already a {@link Condition}, it is
+	 * just returned, otherwise returned as {@link AndCondition}.
+	 *
+	 * @param expression the expression to be returned as condition.
+	 * @return the condition from the given {@link Expression}.
+	 * @since 4.0
+	 */
+	public static Condition from(Expression expression) {
+		return expression instanceof Condition c ? c : new AndCondition(expression);
+	}
+
 	// Utility constructor.
 	private Conditions() {}
 

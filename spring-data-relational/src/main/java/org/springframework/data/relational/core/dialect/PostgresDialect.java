@@ -69,7 +69,7 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	};
 
-	protected PostgresDialect() {}
+	public PostgresDialect() {}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 

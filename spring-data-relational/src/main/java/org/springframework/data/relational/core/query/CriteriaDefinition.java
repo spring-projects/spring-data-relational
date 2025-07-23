@@ -86,10 +86,33 @@ public interface CriteriaDefinition {
 	List<CriteriaDefinition> getGroup();
 
 	/**
+	 * @return
+	 * @since 4.0
+	 */
+	@Nullable
+	QueryExpression getExpression();
+
+	/**
+	 * @return returns {@literal true} if this criteria definition has a {@link QueryExpression}.
+	 * @since 4.0
+	 */
+	default boolean hasExpression() {
+		return getExpression() != null;
+	}
+
+	/**
 	 * @return the column/property name.
 	 */
 	@Nullable
 	SqlIdentifier getColumn();
+
+	/**
+	 * @return returns {@literal true} if this criteria definition has a column/property name.
+	 * @since 4.0
+	 */
+	default boolean hasColumn() {
+		return getColumn() != null;
+	}
 
 	/**
 	 * @return {@link Criteria.Comparator}.

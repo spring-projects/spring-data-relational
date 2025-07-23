@@ -13,30 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.query;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.data.relational.core.sql.BindMarker;
 
 /**
- * Unrestricted condition. Any condition combined with this condition will yield the other condition.
- *
  * @author Mark Paluch
- * @since 4.0
  */
-enum Unrestricted implements Condition {
+class SimpleBindings implements Bindings {
 
-	INSTANCE;
+	private final Map<BindMarker, Object> values = new LinkedHashMap<>();
 
 	@Override
-	public Condition and(Expression other) {
-		return ConditionWrapper.of(other);
+	public void bind(BindMarker bindMarker, Object value) {
+		values.put(bindMarker, value);
 	}
 
 	@Override
-	public Condition or(Expression other) {
-		return ConditionWrapper.of(other);
+	public void bind(BindMarker bindMarker, Object value, QueryExpression.ExpressionTypeContext typeContext) {
+		values.put(bindMarker, value);
 	}
 
-	@Override
-	public Condition not() {
-		return Disjunct.INSTANCE;
+	public Map<BindMarker, Object> getValues() {
+		return values;
 	}
 }
