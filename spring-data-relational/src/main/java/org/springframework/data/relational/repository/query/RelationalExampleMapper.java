@@ -22,9 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -39,6 +44,7 @@ import org.springframework.util.Assert;
  * @since 2.2
  * @author Greg Turnquist
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class RelationalExampleMapper {
 
@@ -64,69 +70,22 @@ public class RelationalExampleMapper {
 	 * {@link Query}.
 	 *
 	 * @param example
-	 * @param entity
+	 * @param persistentEntity
 	 * @return query
 	 */
-	private <T> Query getMappedExample(Example<T> example, RelationalPersistentEntity<?> entity) {
+	private <T> Query getMappedExample(Example<T> example, RelationalPersistentEntity<?> persistentEntity) {
 
 		Assert.notNull(example, "Example must not be null");
-		Assert.notNull(entity, "RelationalPersistentEntity must not be null");
+		Assert.notNull(persistentEntity, "RelationalPersistentEntity must not be null");
 
-		PersistentPropertyAccessor<T> propertyAccessor = entity.getPropertyAccessor(example.getProbe());
+		PersistentPropertyAccessor<T> probePropertyAccessor = persistentEntity.getPropertyAccessor(example.getProbe());
 		ExampleMatcherAccessor matcherAccessor = new ExampleMatcherAccessor(example.getMatcher());
 
-		final List<Criteria> criteriaBasedOnProperties = new ArrayList<>();
-
-		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
-
-			if (property.isCollectionLike() || property.isMap()) {
-				return;
-			}
-
-			if (matcherAccessor.isIgnoredPath(property.getName())) {
-				return;
-			}
-
-			Optional<?> optionalConvertedPropValue = matcherAccessor //
-					.getValueTransformerForPath(property.getName()) //
-					.apply(Optional.ofNullable(propertyAccessor.getProperty(property)));
-
-			// If the value is empty, don't try to match against it
-			if (!optionalConvertedPropValue.isPresent()) {
-				return;
-			}
-
-			Object convPropValue = optionalConvertedPropValue.get();
-			boolean ignoreCase = matcherAccessor.isIgnoreCaseForPath(property.getName());
-
-			String column = property.getName();
-
-			switch (matcherAccessor.getStringMatcherForPath(property.getName())) {
-				case DEFAULT:
-				case EXACT:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
-					break;
-				case ENDING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue).ignoreCase(ignoreCase));
-					break;
-				case STARTING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like(convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like(convPropValue + "%").ignoreCase(ignoreCase));
-					break;
-				case CONTAINING:
-					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
-					break;
-				default:
-					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported");
-			}
-		});
+		final List<Criteria> criteriaBasedOnProperties = buildCriteria( //
+				persistentEntity, //
+				matcherAccessor, //
+				probePropertyAccessor //
+		);
 
 		// Criteria, assemble!
 		Criteria criteria = Criteria.empty();
@@ -143,13 +102,161 @@ public class RelationalExampleMapper {
 		return Query.query(criteria);
 	}
 
+	private <T> List<Criteria> buildCriteria( //
+			RelationalPersistentEntity<?> persistentEntity, //
+			ExampleMatcherAccessor matcherAccessor, //
+			PersistentPropertyAccessor<T> probePropertyAccessor //
+	) {
+		final List<Criteria> criteriaBasedOnProperties = new ArrayList<>();
+
+		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+			potentiallyEnrichCriteria(
+					null,
+					matcherAccessor,  //
+					probePropertyAccessor, //
+					property, //
+					criteriaBasedOnProperties //
+			);
+		});
+		return criteriaBasedOnProperties;
+	}
+
 	/**
-	 * Does this {@link Example} need to include {@literal NULL} values in its {@link Criteria}?
+	 * Analyzes the incoming {@code property} and potentially enriches the {@code criteriaBasedOnProperties} with the new
+	 * {@link Criteria} for this property.
+	 * <p>
+	 * This algorithm is recursive in order to take the embedded properties into account. The caller can expect that the result
+	 * of this method call is fully processed subtree of an aggreagte where the passed {@code property} serves as the root.
 	 *
-	 * @param example
-	 * @return whether or not to include nulls.
+	 * @param propertyPath the {@link PropertyPath} of the passed {@code property}.
+	 * @param matcherAccessor the accessor for the original {@link ExampleMatcher}.
+	 * @param entityPropertiesAccessor the accessor for the properties of the current entity that holds the given {@code property}
+	 * @param property the property under analysis
+	 * @param criteriaBasedOnProperties the {@link List} of criteria objects that potentially gets enriched as a
+	 *                                  result of the incoming {@code property} processing
 	 */
-	private static <T> boolean includeNulls(Example<T> example) {
-		return example.getMatcher().getNullHandler() == NullHandler.INCLUDE;
+	private <T> void potentiallyEnrichCriteria(
+			@Nullable PropertyPath propertyPath,
+			ExampleMatcherAccessor matcherAccessor, //
+			PersistentPropertyAccessor<T> entityPropertiesAccessor, //
+			RelationalPersistentProperty property, //
+			List<Criteria> criteriaBasedOnProperties //
+	) {
+
+		// QBE do not support queries on Child aggregates yet
+		if (property.isCollectionLike() || property.isMap()) {
+			return;
+		}
+
+		PropertyPath currentPropertyPath = resolveCurrentPropertyPath(propertyPath, property);
+		String currentPropertyDotPath = currentPropertyPath.toDotPath();
+
+		if (matcherAccessor.isIgnoredPath(currentPropertyDotPath)) {
+			return;
+		}
+
+		Object actualPropertyValue = entityPropertiesAccessor.getProperty(property);
+
+		if (property.isEmbedded() && actualPropertyValue != null) {
+			processEmbeddedRecursively( //
+					matcherAccessor, //
+					actualPropertyValue,
+					property, //
+					criteriaBasedOnProperties, //
+					currentPropertyPath //
+			);
+		} else {
+			Optional<?> optionalConvertedPropValue = matcherAccessor //
+					.getValueTransformerForPath(currentPropertyDotPath) //
+					.apply(Optional.ofNullable(actualPropertyValue));
+
+			// If the value is empty, don't try to match against it
+			if (optionalConvertedPropValue.isEmpty()) {
+				return;
+			}
+
+			Object convPropValue = optionalConvertedPropValue.get();
+			boolean ignoreCase = matcherAccessor.isIgnoreCaseForPath(currentPropertyDotPath);
+
+			String column = property.getName();
+
+			switch (matcherAccessor.getStringMatcherForPath(currentPropertyDotPath)) {
+				case DEFAULT:
+				case EXACT:
+					criteriaBasedOnProperties.add(includeNulls(matcherAccessor) //
+							? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
+							: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
+					break;
+				case ENDING:
+					criteriaBasedOnProperties.add(includeNulls(matcherAccessor) //
+							? Criteria.where(column).isNull().or(column).like("%" + convPropValue).ignoreCase(ignoreCase)
+							: Criteria.where(column).like("%" + convPropValue).ignoreCase(ignoreCase));
+					break;
+				case STARTING:
+					criteriaBasedOnProperties.add(includeNulls(matcherAccessor) //
+							? Criteria.where(column).isNull().or(column).like(convPropValue + "%").ignoreCase(ignoreCase)
+							: Criteria.where(column).like(convPropValue + "%").ignoreCase(ignoreCase));
+					break;
+				case CONTAINING:
+					criteriaBasedOnProperties.add(includeNulls(matcherAccessor) //
+							? Criteria.where(column).isNull().or(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase)
+							: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
+					break;
+				default:
+					throw new IllegalStateException(matcherAccessor.getDefaultStringMatcher() + " is not supported");
+			}
+		}
+
+	}
+
+	/**
+	 * Processes an embedded entity's properties recursively.
+	 *
+	 * @param matcherAccessor the input matcher on the {@link Example#getProbe() original probe}.
+	 * @param value the actual embedded object.
+	 * @param property the embedded property.
+	 * @param criteriaBasedOnProperties collection of {@link Criteria} objects to potentially enrich.
+	 * @param currentPropertyPath the dot-separated path of the passed {@code property}.
+	 */
+	private void processEmbeddedRecursively(
+			ExampleMatcherAccessor matcherAccessor,
+			Object value,
+			RelationalPersistentProperty property,
+			List<Criteria> criteriaBasedOnProperties,
+			PropertyPath currentPropertyPath
+	) {
+		RelationalPersistentEntity<?> embeddedPersistentEntity = mappingContext.getPersistentEntity(property.getTypeInformation());
+
+		PersistentPropertyAccessor<?> embeddedEntityPropertyAccessor = embeddedPersistentEntity.getPropertyAccessor(value);
+
+		embeddedPersistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) embeddedProperty ->
+						potentiallyEnrichCriteria(
+								currentPropertyPath,
+								matcherAccessor,
+								embeddedEntityPropertyAccessor,
+								embeddedProperty,
+								criteriaBasedOnProperties
+						)
+		);
+	}
+
+	private static PropertyPath resolveCurrentPropertyPath(@Nullable PropertyPath propertyPath, RelationalPersistentProperty property) {
+		PropertyPath currentPropertyPath;
+
+		if (propertyPath == null) {
+			currentPropertyPath = PropertyPath.from(property.getName(), property.getOwner().getTypeInformation());
+		} else {
+			currentPropertyPath = propertyPath.nested(property.getName());
+		}
+		return currentPropertyPath;
+	}
+
+	/**
+	 * Does this {@link ExampleMatcherAccessor} need to include {@literal NULL} values in its {@link Criteria}?
+	 *
+	 * @return whether to include nulls.
+	 */
+	private static <T> boolean includeNulls(ExampleMatcherAccessor exampleMatcher) {
+		return exampleMatcher.getNullHandler() == NullHandler.INCLUDE;
 	}
 }
