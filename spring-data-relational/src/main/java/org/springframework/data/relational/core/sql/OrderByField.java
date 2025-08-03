@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Milan Milanov
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class OrderByField extends AbstractSegment {
@@ -33,8 +34,9 @@ public class OrderByField extends AbstractSegment {
 	private final Expression expression;
 	private final @Nullable Sort.Direction direction;
 	private final Sort.NullHandling nullHandling;
+	private final boolean caseInsensitive;
 
-	private OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling) {
+	private OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling, boolean caseInsensitive) {
 
 		super(expression);
 		Assert.notNull(expression, "Order by expression must not be null");
@@ -42,6 +44,7 @@ public class OrderByField extends AbstractSegment {
 
 		this.expression = expression;
 		this.direction = direction;
+		this.caseInsensitive = caseInsensitive;
 		this.nullHandling = nullHandling;
 	}
 
@@ -52,38 +55,51 @@ public class OrderByField extends AbstractSegment {
 	 * @return the {@link OrderByField}.
 	 */
 	public static OrderByField from(Expression expression) {
-		return new OrderByField(expression, null, NullHandling.NATIVE);
+		return new OrderByField(expression, null, NullHandling.NATIVE, false);
 	}
 
 	/**
 	 * Creates a new {@link OrderByField} from an {@link Expression} applying a given ordering.
 	 *
 	 * @param expression must not be {@literal null}.
-	 * @param direction order direction
+	 * @param direction order direction.
 	 * @return the {@link OrderByField}.
 	 */
 	public static OrderByField from(Expression expression, Direction direction) {
-		return new OrderByField(expression, direction, NullHandling.NATIVE);
+		return new OrderByField(expression, direction, NullHandling.NATIVE, false);
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a the current one using ascending sorting.
+	 * Creates a new {@link OrderByField} from an {@link Expression} applying a given ordering and {@link NullHandling}.
+	 *
+	 * @param expression      must not be {@literal null}.
+	 * @param direction       order direction.
+	 * @param nullHandling    the null handling strategy.
+	 * @param caseInsensitive whether the ordering is case-insensitive.
+	 * @return the {@link OrderByField}.
+	 */
+	public static OrderByField from(Expression expression, Direction direction, NullHandling nullHandling, boolean caseInsensitive) {
+		return new OrderByField(expression, direction, nullHandling, caseInsensitive);
+	}
+
+	/**
+	 * Creates a new {@link OrderByField} from a current one using ascending sorting.
 	 *
 	 * @return the new {@link OrderByField} with ascending sorting.
 	 * @see #desc()
 	 */
 	public OrderByField asc() {
-		return new OrderByField(expression, Direction.ASC, nullHandling);
+		return new OrderByField(expression, Direction.ASC, nullHandling, caseInsensitive);
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a the current one using descending sorting.
+	 * Creates a new {@link OrderByField} from a current one using descending sorting.
 	 *
 	 * @return the new {@link OrderByField} with descending sorting.
 	 * @see #asc()
 	 */
 	public OrderByField desc() {
-		return new OrderByField(expression, Direction.DESC, nullHandling);
+		return new OrderByField(expression, Direction.DESC, nullHandling, caseInsensitive);
 	}
 
 	/**
@@ -93,7 +109,7 @@ public class OrderByField extends AbstractSegment {
 	 * @return the new {@link OrderByField} with {@link NullHandling} applied.
 	 */
 	public OrderByField withNullHandling(NullHandling nullHandling) {
-		return new OrderByField(expression, direction, nullHandling);
+		return new OrderByField(expression, direction, nullHandling, caseInsensitive);
 	}
 
 	public Expression getExpression() {
