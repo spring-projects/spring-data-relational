@@ -45,6 +45,10 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	private DataAccessStrategy delegate;
 
+	/**
+	 * @deprecated please, use {@link DelegatingDataAccessStrategy#DelegatingDataAccessStrategy(DataAccessStrategy)} instead
+	 */
+	@Deprecated(forRemoval = true, since = "4.0")
 	public DelegatingDataAccessStrategy() {}
 
 	public DelegatingDataAccessStrategy(DataAccessStrategy delegate) {

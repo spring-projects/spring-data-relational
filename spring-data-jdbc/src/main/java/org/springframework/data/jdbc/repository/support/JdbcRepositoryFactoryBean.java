@@ -20,6 +20,7 @@ import java.io.Serializable;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -29,6 +30,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -39,7 +41,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
- * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
+ * Special adapter for Springs {@link FactoryBean} interface to allow easy setup of
  * repository factories via Spring configuration.
  * <p>
  * A partially populated factory bean can use {@link BeanFactory} to resolve missing dependencies, specifically:
@@ -76,7 +78,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private @Nullable QueryMappingConfiguration queryMappingConfiguration;
 	private @Nullable NamedParameterJdbcOperations operations;
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
-	private @Nullable Dialect dialect;
+	private @Nullable JdbcDialect dialect;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -126,7 +128,19 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.mappingContext = mappingContext;
 	}
 
+	/**
+	 * @deprecated please, use {@link #setDialect(JdbcDialect)} instead.
+	 */
+	@Deprecated(forRemoval = true, since = "4.0")
 	public void setDialect(Dialect dialect) {
+
+		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.state(dialect instanceof JdbcDialect, "Dialect must be an instance of the JdbcDialect");
+
+		this.setDialect(((JdbcDialect) dialect));
+	}
+
+	public void setDialect(JdbcDialect dialect) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 

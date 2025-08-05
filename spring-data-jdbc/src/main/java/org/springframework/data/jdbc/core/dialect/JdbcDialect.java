@@ -16,6 +16,8 @@
 package org.springframework.data.jdbc.core.dialect;
 
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.jdbc.core.dialect.SqlTypeResolver;
+import org.springframework.data.jdbc.core.dialect.DefaultSqlTypeResolver;
 
 /**
  * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC specific functionality.
@@ -37,4 +39,12 @@ public interface JdbcDialect extends Dialect {
 		return JdbcArrayColumns.Unsupported.INSTANCE;
 	}
 
+	/**
+	 * Returns a {@link SqlTypeResolver} of this dialect.
+	 *
+	 * @since 4.0
+	 */
+	default SqlTypeResolver getSqlTypeResolver() {
+		return DefaultSqlTypeResolver.INSTANCE;
+	}
 }
