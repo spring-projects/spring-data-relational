@@ -31,8 +31,8 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -2338,11 +2338,6 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			};
 		}
 
-		@Bean
-		JdbcAggregateOperations operations(ApplicationContext applicationContext, RelationalMappingContext context,
-				DataAccessStrategy dataAccessStrategy, JdbcConverter converter) {
-			return new JdbcAggregateTemplate(applicationContext, context, converter, dataAccessStrategy);
-		}
 	}
 
 	@ContextConfiguration(classes = Config.class)

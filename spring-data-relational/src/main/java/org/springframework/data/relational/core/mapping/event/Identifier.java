@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * Wrapper for an identifier of an entity.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public final class Identifier {
 
@@ -43,7 +44,6 @@ public final class Identifier {
 	 * @return will never be {@literal null}.
 	 */
 	public static Identifier of(Object identifier) {
-
 		return new Identifier(identifier);
 	}
 
@@ -70,5 +70,10 @@ public final class Identifier {
 	@Override
 	public int hashCode() {
 		return Objects.hash(value);
+	}
+
+	@Override
+	public String toString() {
+		return "Identifier: " + value;
 	}
 }

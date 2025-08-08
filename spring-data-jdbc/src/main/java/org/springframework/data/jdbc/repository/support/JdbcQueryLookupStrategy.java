@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -31,7 +32,6 @@ import org.springframework.data.jdbc.repository.query.StringBasedJdbcQuery;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.support.RelationalQueryLookupStrategy;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -61,7 +61,6 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
 	private final ApplicationEventPublisher publisher;
-	private final RelationalMappingContext context;
 	private final @Nullable EntityCallbacks callbacks;
 	private final JdbcConverter converter;
 	private final QueryMappingConfiguration queryMappingConfiguration;
@@ -69,11 +68,11 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	protected final ValueExpressionDelegate delegate;
 
 	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
+			JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			ValueExpressionDelegate delegate) {
 
-		super(context, dialect);
+		super(converter.getMappingContext(), dialect);
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -81,17 +80,12 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 		Assert.notNull(delegate, "ValueExpressionDelegate must not be null");
 
-		this.context = context;
 		this.publisher = publisher;
 		this.callbacks = callbacks;
 		this.converter = converter;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 		this.operations = operations;
 		this.delegate = delegate;
-	}
-
-	public RelationalMappingContext getMappingContext() {
-		return context;
 	}
 
 	/**
@@ -105,13 +99,13 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		private final RowMapperFactory rowMapperFactory;
 
 		CreateQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
+				JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				ValueExpressionDelegate delegate) {
 
-			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
+			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
-			this.rowMapperFactory = new DefaultRowMapperFactory(getMappingContext(), getConverter(),
+			this.rowMapperFactory = new DefaultRowMapperFactory(getConverter(),
 					getQueryMappingConfiguration(), getCallbacks(), getPublisher());
 		}
 
@@ -121,7 +115,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 			JdbcQueryMethod queryMethod = getJdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries);
 
-			return new PartTreeJdbcQuery(getMappingContext(), queryMethod, getDialect(), getConverter(), getOperations(),
+			return new PartTreeJdbcQuery(queryMethod, getDialect(), getConverter(), getOperations(),
 					rowMapperFactory);
 		}
 	}
@@ -138,12 +132,12 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		private final RowMapperFactory rowMapperFactory;
 
 		DeclaredQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
+				JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				@Nullable BeanFactory beanfactory, ValueExpressionDelegate delegate) {
-			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
+			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
-			this.rowMapperFactory = new BeanFactoryAwareRowMapperFactory(context, converter, queryMappingConfiguration,
+			this.rowMapperFactory = new BeanFactoryAwareRowMapperFactory(converter, queryMappingConfiguration,
 					callbacks, publisher, beanfactory);
 		}
 
@@ -191,12 +185,12 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		 * @param lookupStrategy must not be {@literal null}.
 		 */
 		CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
+				JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				CreateQueryLookupStrategy createStrategy, DeclaredQueryLookupStrategy lookupStrategy,
 				ValueExpressionDelegate delegate) {
 
-			super(publisher, callbacks, context, converter, dialect, queryMappingConfiguration, operations, delegate);
+			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
 			Assert.notNull(createStrategy, "CreateQueryLookupStrategy must not be null");
 			Assert.notNull(lookupStrategy, "DeclaredQueryLookupStrategy must not be null");
@@ -240,22 +234,22 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 * @param beanFactory may be {@literal null}
 	 */
 	public static QueryLookupStrategy create(@Nullable Key key, ApplicationEventPublisher publisher,
-			@Nullable EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
+			@Nullable EntityCallbacks callbacks, JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 			@Nullable BeanFactory beanFactory, ValueExpressionDelegate delegate) {
+
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 		Assert.notNull(delegate, "ValueExpressionDelegate must not be null");
 
-		CreateQueryLookupStrategy createQueryLookupStrategy = new CreateQueryLookupStrategy(publisher, callbacks, context,
+		CreateQueryLookupStrategy createQueryLookupStrategy = new CreateQueryLookupStrategy(publisher, callbacks,
 				converter, dialect, queryMappingConfiguration, operations, delegate);
 
 		DeclaredQueryLookupStrategy declaredQueryLookupStrategy = new DeclaredQueryLookupStrategy(publisher, callbacks,
-				context, converter, dialect, queryMappingConfiguration, operations, beanFactory, delegate);
+				converter, dialect, queryMappingConfiguration, operations, beanFactory, delegate);
 
 		Key keyToUse = key != null ? key : Key.CREATE_IF_NOT_FOUND;
 
@@ -265,7 +259,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 			case CREATE -> createQueryLookupStrategy;
 			case USE_DECLARED_QUERY -> declaredQueryLookupStrategy;
 			case CREATE_IF_NOT_FOUND ->
-				new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, context, converter, dialect,
+				new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, converter, dialect,
 						queryMappingConfiguration, operations, createQueryLookupStrategy, declaredQueryLookupStrategy, delegate);
 		};
 	}

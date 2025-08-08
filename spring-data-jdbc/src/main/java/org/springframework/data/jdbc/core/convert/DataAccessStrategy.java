@@ -26,9 +26,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 
 /**
@@ -45,6 +47,18 @@ import org.springframework.lang.Nullable;
  * @author Sergey Korotaev
  */
 public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationResolver {
+
+	/**
+	 * @return the dialect used by this strategy.
+	 * @since 4.0
+	 */
+	Dialect getDialect();
+
+	/**
+	 * @return the {@link NamedParameterJdbcOperations} used by this strategy.
+	 * @since 4.0
+	 */
+	NamedParameterJdbcOperations getJdbcOperations();
 
 	/**
 	 * Inserts the data of a single entity. Referenced entities don't get handled.

@@ -29,11 +29,22 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Annotation to enable JDBC repositories. Will scan the package of the annotated configuration class for Spring Data
- * repositories by default.
+ * Annotation to enable JDBC repositories. If no base package is configured through either * {@link #value()},
+ * {@link #basePackages()} or {@link #basePackageClasses()} it will trigger scanning of the package of annotated class.
+ * <p>
+ * Enabling JDBC repositories prefers a {@link org.springframework.data.jdbc.core.JdbcAggregateOperations} bean and
+ * falls back to creating a {@link org.springframework.data.jdbc.core.JdbcAggregateTemplate} instance from configured or
+ * discovered {@link org.springframework.data.relational.core.dialect.Dialect},
+ * {@link org.springframework.data.jdbc.core.convert.DataAccessStrategy}, and
+ * {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} beans.
+ * <p>
+ * Configuring {@link EnableJdbcRepositories#jdbcAggregateOperationsRef()} allows a consistent configuration using all
+ * involved components including reference lookups. {@link #dataAccessStrategyRef()} and {@link #jdbcOperationsRef()}
+ * are deprecated since 4.0 and will be removed in a future version as not all required components can be configured
+ * properly for a consistent repository configuration.
  *
  * @author Jens Schauder
  * @author Greg Turnquist
@@ -96,6 +107,14 @@ public @interface EnableJdbcRepositories {
 	String namedQueriesLocation() default "";
 
 	/**
+	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
+	 * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+	 *
+	 * @since 2.1
+	 */
+	QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
+
+	/**
 	 * Returns the {@link FactoryBean} class to be used for each repository instance. Defaults to
 	 * {@link JdbcRepositoryFactoryBean}.
 	 */
@@ -121,40 +140,52 @@ public @interface EnableJdbcRepositories {
 	 */
 	boolean considerNestedRepositories() default false;
 
+	// JDBC-specific configuration
+
 	/**
-	 * Configures the name of the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} bean
-	 * definition to be used to create repositories discovered through this annotation. Defaults to
-	 * {@code namedParameterJdbcTemplate}.
+	 * Configure the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateOperations} bean to be used to
+	 * create repositories discovered through this annotation.
+	 *
+	 * @since 4.0
 	 */
+	String jdbcAggregateOperationsRef() default "";
+
+	/**
+	 * Configures the name of the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} bean to be
+	 * used to create repositories discovered through this annotation. Defaults to {@code namedParameterJdbcTemplate}.
+	 *
+	 * @deprecated since 4.0 use {@link #jdbcAggregateOperationsRef()} instead to ensure consistent configuration
+	 *             repositories.
+	 */
+	@Deprecated(since = "4.0")
 	String jdbcOperationsRef() default "";
 
 	/**
-	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.DataAccessStrategy} bean definition to
-	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
-	 * @deprecated since 3.3 use {@link #jdbcAggregateOperationsRef()} instead
+	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.DataAccessStrategy} bean to be used to
+	 * create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
+	 *
+	 * @deprecated since 4.0 use {@link #jdbcAggregateOperationsRef()} instead to ensure consistent configuration
+	 *             repositories.
 	 */
-	@Deprecated(since = "3.3")
+	@Deprecated(since = "4.0")
 	String dataAccessStrategyRef() default "";
 
 	/**
-	 * Configures the name of the {@link DataSourceTransactionManager} bean definition to be used to create repositories
-	 * discovered through this annotation. Defaults to {@code transactionManager}.
-	 * 
+	 * Configures the name of the {@link PlatformTransactionManager} bean to be used to create repositories discovered
+	 * through this annotation. Defaults to {@code transactionManager}.
+	 *
 	 * @since 2.1
 	 */
 	String transactionManagerRef() default "transactionManager";
 
 	/**
-	 * Configure the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateOperations} bean definition to be
-	 * used to create repositories discovered through this annotation.
-	 */
-	String jdbcAggregateOperationsRef() default "";
-
-	/**
-	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
-	 * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+	 * Configures whether to enable default transactions for Spring Data JDBC repositories. Defaults to {@literal true}.
+	 * If disabled, repositories must be used behind a facade that's configuring transactions (e.g. using Spring's
+	 * annotation driven transaction facilities) or repository methods have to be used to demarcate transactions.
 	 *
-	 * @since 2.1
+	 * @return whether to enable default transactions, defaults to {@literal true}.
+	 * @since 4.0
 	 */
-	QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
+	boolean enableDefaultTransactions() default true;
+
 }

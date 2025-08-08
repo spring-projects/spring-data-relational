@@ -32,17 +32,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 
 /**
@@ -56,7 +54,6 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 @EnabledOnDatabase(DatabaseType.HSQL)
 public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
-	@Autowired SqlSessionFactory sqlSessionFactory;
 	@Autowired DummyEntityRepository repository;
 
 	@Test // DATAJDBC-178
@@ -107,12 +104,10 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
 		@Bean
 		@Primary
-		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
+		MyBatisDataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations operations, Dialect dialect,
+				SqlSession sqlSession) {
 
-			RelationalMappingContext context = new JdbcMappingContext();
-			JdbcConverter converter = new MappingJdbcConverter(context, (Identifier, path) -> null);
-
-			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);
+			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(operations, dialect, sqlSession);
 
 			strategy.setNamespaceStrategy(new NamespaceStrategy() {
 				@Override

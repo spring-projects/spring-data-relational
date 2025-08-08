@@ -105,6 +105,9 @@ public class DeclaredQueryRepositoryUnitTests {
 		DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 		ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
 
+		when(dataAccessStrategy.getDialect()).thenReturn(dialect);
+		when(dataAccessStrategy.getJdbcOperations()).thenReturn(operations);
+
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, operations);
 

@@ -73,6 +73,21 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	/**
 	 * Creates a new {@link PartTreeJdbcQuery}.
 	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 */
+	public PartTreeJdbcQuery(JdbcQueryMethod queryMethod, Dialect dialect, JdbcConverter converter,
+			NamedParameterJdbcOperations operations,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
+		this(converter.getMappingContext(), queryMethod, dialect, converter, operations, rowMapperFactory);
+	}
+
+	/**
+	 * Creates a new {@link PartTreeJdbcQuery}.
+	 *
 	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.

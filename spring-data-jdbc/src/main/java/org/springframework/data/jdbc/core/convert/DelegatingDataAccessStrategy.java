@@ -23,9 +23,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -51,6 +53,16 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.notNull(delegate, "DataAccessStrategy must not be null");
 		this.delegate = delegate;
+	}
+
+	@Override
+	public Dialect getDialect() {
+		return delegate.getDialect();
+	}
+
+	@Override
+	public NamedParameterJdbcOperations getJdbcOperations() {
+		return delegate.getJdbcOperations();
 	}
 
 	@Override

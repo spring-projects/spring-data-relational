@@ -66,7 +66,6 @@ import org.springframework.util.StringUtils;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Mikhail Polivakha
- * @author Tomohiko Ozawa
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -223,7 +222,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
 			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		return new JdbcAggregateTemplate(applicationContext, converter, dataAccessStrategy);
+		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
 	}
 
 	/**

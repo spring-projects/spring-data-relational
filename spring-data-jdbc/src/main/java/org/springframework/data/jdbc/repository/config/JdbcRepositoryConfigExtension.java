@@ -23,6 +23,8 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionValidationException;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
@@ -45,6 +47,7 @@ import org.springframework.util.StringUtils;
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
 	private static final String DEFAULT_TRANSACTION_MANAGER_BEAN_NAME = "transactionManager";
+	private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
 
 	@Override
 	public String getModuleName() {
@@ -69,25 +72,40 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
 
-		source.getAttribute("jdbcOperationsRef") //
-				.filter(StringUtils::hasText) //
-				.ifPresent(s -> builder.addPropertyReference("jdbcOperations", s));
-
-		source.getAttribute("dataAccessStrategyRef") //
-				.filter(StringUtils::hasText) //
-				.ifPresent(s -> builder.addPropertyReference("dataAccessStrategy", s));
+		source.getAttribute(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE, Boolean.class)
+				.ifPresent(it -> builder.addPropertyValue(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE, it));
 
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager", transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
 
-		Optional<String> jdbcAggregateOperationsRef = source.getAttribute("jdbcAggregateOperationsRef");
+		Optional<String> jdbcAggregateOperationsRef = source.getAttribute("jdbcAggregateOperationsRef")
+				.filter(StringUtils::hasText);
+
+		Optional<String> jdbcOperationsRef = source.getAttribute("jdbcOperationsRef") //
+				.filter(StringUtils::hasText);
+		Optional<String> dataAccessStrategyRef = source.getAttribute("dataAccessStrategyRef") //
+				.filter(StringUtils::hasText);
 
 		if (jdbcAggregateOperationsRef.isPresent()) {
+
+			if (jdbcOperationsRef.isPresent() || dataAccessStrategyRef.isPresent()) {
+				throw new BeanDefinitionValidationException(
+						"Cannot set both 'jdbcAggregateOperations' and 'jdbcOperations' or 'dataAccessStrategy' in '@EnableJdbcRepositories' at '"
+								+ source.getSource() + "'");
+			}
+
 			builder.addPropertyReference("jdbcAggregateOperations", jdbcAggregateOperationsRef.get());
-		} else {
+
+		} else if (jdbcOperationsRef.isPresent() || dataAccessStrategyRef.isPresent()) {
+
+			jdbcOperationsRef.ifPresent(s -> builder.addPropertyReference("jdbcOperations", s));
+			dataAccessStrategyRef.ifPresent(s -> builder.addPropertyReference("dataAccessStrategy", s));
+
 			builder.addPropertyValue("mappingContext", new RuntimeBeanReference(JdbcMappingContext.class));
 			builder.addPropertyValue("dialect", new RuntimeBeanReference(Dialect.class));
 			builder.addPropertyValue("converter", new RuntimeBeanReference(JdbcConverter.class));
+		} else {
+			builder.addPropertyValue("jdbcAggregateOperations", new RuntimeBeanReference(JdbcAggregateOperations.class));
 		}
 	}
 

@@ -40,6 +40,14 @@ public class BeanFactoryAwareRowMapperFactory extends DefaultRowMapperFactory {
 
 	private final @Nullable BeanFactory beanFactory;
 
+	BeanFactoryAwareRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
+			EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher, @Nullable BeanFactory beanFactory) {
+
+		super(converter, queryMappingConfiguration, entityCallbacks, publisher);
+
+		this.beanFactory = beanFactory;
+	}
+
 	public BeanFactoryAwareRowMapperFactory(RelationalMappingContext context, JdbcConverter converter,
 			QueryMappingConfiguration queryMappingConfiguration, EntityCallbacks entityCallbacks,
 			ApplicationEventPublisher publisher, @Nullable BeanFactory beanFactory) {

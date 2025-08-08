@@ -30,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.AggregatePath.TableInfo;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -103,6 +104,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.sqlParametersFactory = sqlParametersFactory;
 		this.insertStrategyFactory = insertStrategyFactory;
 		this.queryMappingConfiguration = queryMappingConfiguration;
+	}
+
+	@Override
+	public Dialect getDialect() {
+		return sqlGeneratorSource.getDialect();
+	}
+
+	@Override
+	public NamedParameterJdbcOperations getJdbcOperations() {
+		return operations;
 	}
 
 	@Override

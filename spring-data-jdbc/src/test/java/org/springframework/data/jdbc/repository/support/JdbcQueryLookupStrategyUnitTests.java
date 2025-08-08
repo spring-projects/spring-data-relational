@@ -77,6 +77,8 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		this.metadata = mock(RepositoryMetadata.class);
 
+		when(converter.getMappingContext()).thenReturn(mappingContext);
+
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
 		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
 		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getDomainTypeInformation();
@@ -135,7 +137,7 @@ class JdbcQueryLookupStrategyUnitTests {
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
-		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks,
 				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
 
 		assertThat(queryLookupStrategy).isInstanceOf(expectedClass);
@@ -155,7 +157,7 @@ class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryQuery getRepositoryQuery(QueryLookupStrategy.Key key, String name,
 			QueryMappingConfiguration mappingConfiguration) {
 
-		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks,
 				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);

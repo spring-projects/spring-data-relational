@@ -25,16 +25,19 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.convert.Identifier;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -57,7 +60,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
+	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(mock(), JdbcH2Dialect.INSTANCE, session);
 
 	PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath("one.two",
 			DummyEntity.class, context);

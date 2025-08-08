@@ -24,10 +24,10 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mockito.Mockito;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -39,14 +39,12 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.mapping.callback.EntityCallback;
-import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
@@ -87,14 +85,12 @@ public class TestConfiguration {
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
-			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries,
-			List<EntityCallback<?>> callbacks, List<EvaluationContextExtension> evaulationContextExtensions) {
+			JdbcAggregateOperations jdbcAggregateOperations, Optional<List<NamedQueries>> namedQueries,
+			List<EvaluationContextExtension> evaulationContextExtensions) {
 
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
-				publisher, namedParameterJdbcTemplate());
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(jdbcAggregateOperations);
 
-		factory.setEntityCallbacks(EntityCallbacks.create(callbacks.toArray(new EntityCallback[0])));
+		factory.setBeanFactory(beanFactory);
 
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
 
@@ -198,9 +194,9 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	JdbcAggregateOperations jdbcAggregateOperations(ApplicationContext publisher, JdbcConverter converter,
-			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy) {
-		return new JdbcAggregateTemplate(publisher, converter, dataAccessStrategy);
+	JdbcAggregateOperations jdbcAggregateOperations(JdbcConverter converter,
+			DataAccessStrategy defaultDataAccessStrategy) {
+		return new JdbcAggregateTemplate(converter, defaultDataAccessStrategy);
 	}
 
 	@Lazy

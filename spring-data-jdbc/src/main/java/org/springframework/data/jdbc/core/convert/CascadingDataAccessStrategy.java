@@ -28,9 +28,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.Assert;
 
 /**
  * Delegates each method to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -52,6 +55,22 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	public CascadingDataAccessStrategy(List<DataAccessStrategy> strategies) {
 		this.strategies = new ArrayList<>(strategies);
+	}
+
+	@Override
+	public Dialect getDialect() {
+
+		Assert.notEmpty(strategies, "DataAccessStrategy must have at least one strategy");
+
+		return strategies.get(0).getDialect();
+	}
+
+	@Override
+	public NamedParameterJdbcOperations getJdbcOperations() {
+
+		Assert.notEmpty(strategies, "DataAccessStrategy must have at least one strategy");
+
+		return strategies.get(0).getJdbcOperations();
 	}
 
 	@Override

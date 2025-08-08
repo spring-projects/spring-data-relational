@@ -32,6 +32,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
@@ -41,6 +42,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.Assert;
 
 /**
@@ -68,6 +70,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
+	private final NamedParameterJdbcOperations jdbcOperations;
+	private final Dialect dialect;
 	private final SqlSession sqlSession;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
 
@@ -106,7 +110,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
-		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession);
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(operations, dialect,
+				sqlSession);
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		return new CascadingDataAccessStrategy(
@@ -127,6 +132,25 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
+		this.jdbcOperations = new NamedParameterJdbcTemplate(
+				sqlSession.getConfiguration().getEnvironment().getDataSource());
+		this.dialect = DialectResolver.getDialect(jdbcOperations.getJdbcOperations());
+	}
+
+	MyBatisDataAccessStrategy(NamedParameterJdbcOperations jdbcOperations, Dialect dialect, SqlSession sqlSession) {
+		this.jdbcOperations = jdbcOperations;
+		this.dialect = dialect;
+		this.sqlSession = sqlSession;
+	}
+
+	@Override
+	public Dialect getDialect() {
+		return dialect;
+	}
+
+	@Override
+	public NamedParameterJdbcOperations getJdbcOperations() {
+		return jdbcOperations;
 	}
 
 	/**

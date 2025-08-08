@@ -19,11 +19,11 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -54,31 +54,28 @@ import org.springframework.util.Assert;
  * @author Marcin Grzejszczak
  * @author Tomohiko Ozawa
  */
-public class JdbcRepositoryFactory extends RepositoryFactorySupport {
+public class JdbcRepositoryFactory extends RepositoryFactorySupport implements ApplicationEventPublisherAware {
 
-	private final RelationalMappingContext context;
-	private final JdbcConverter converter;
-	private final ApplicationEventPublisher publisher;
-	private final DataAccessStrategy accessStrategy;
-	private final NamedParameterJdbcOperations operations;
-	private final Dialect dialect;
+	private final JdbcAggregateOperations operations;
+	private final NamedParameterJdbcOperations jdbcOperations;
+
+	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
+	private ApplicationEventPublisher publisher = event -> {};
 	private @Nullable BeanFactory beanFactory;
-
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
-	private EntityCallbacks entityCallbacks;
 
-	public JdbcRepositoryFactory(ApplicationEventPublisher publisher, JdbcAggregateOperations jdbcAggregateOperations,
-			NamedParameterJdbcOperations operations) {
-		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-		Assert.notNull(jdbcAggregateOperations, "JdbcAggregateOperations must not be null");
-		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
+	/**
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link JdbcAggregateOperations}.
+	 *
+	 * @param operations must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public JdbcRepositoryFactory(JdbcAggregateOperations operations) {
 
-		this.converter = jdbcAggregateOperations.getConverter();
-		this.accessStrategy = jdbcAggregateOperations.getDataAccessStrategy();
-		this.context = jdbcAggregateOperations.getConverter().getMappingContext();
-		this.dialect = DialectResolver.getDialect(operations.getJdbcOperations());
+		Assert.notNull(operations, "JdbcAggregateOperations must not be null");
+
 		this.operations = operations;
-		this.publisher = publisher;
+		this.jdbcOperations = operations.getDataAccessStrategy().getJdbcOperations();
 	}
 
 	/**
@@ -90,24 +87,53 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @param converter must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
+	 * @param jdbcOperations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
-			NamedParameterJdbcOperations operations) {
+			NamedParameterJdbcOperations jdbcOperations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "RelationalConverter must not be null");
-		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
+		Assert.notNull(jdbcOperations, "NamedParameterJdbcOperations must not be null");
+
+		this.operations = new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		this.jdbcOperations = jdbcOperations;
+		this.publisher = publisher;
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 
 		this.publisher = publisher;
-		this.context = context;
-		this.converter = converter;
-		this.dialect = dialect;
-		this.accessStrategy = dataAccessStrategy;
-		this.operations = operations;
+	}
+
+	/**
+	 * @param entityCallbacks
+	 * @since 1.1
+	 */
+	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
+
+		Assert.notNull(entityCallbacks, "EntityCallbacks must not be null");
+
+		this.entityCallbacks = entityCallbacks;
+	}
+
+	/**
+	 * @param beanFactory the {@link BeanFactory} used for looking up {@link org.springframework.jdbc.core.RowMapper} and
+	 *          {@link org.springframework.jdbc.core.ResultSetExtractor} beans.
+	 */
+	public void setBeanFactory(@Nullable BeanFactory beanFactory) {
+
+		this.beanFactory = beanFactory;
+
+		if (entityCallbacks == null && beanFactory != null) {
+			setEntityCallbacks(EntityCallbacks.create(beanFactory));
+		}
 	}
 
 	/**
@@ -124,24 +150,23 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	public RelationalEntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(metadata.getDomainType());
+		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(metadata.getDomainType());
 
 		return new MappingRelationalEntityInformation<>(entity);
+	}
+
+	private RelationalMappingContext getMappingContext() {
+		return operations.getConverter().getMappingContext();
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, converter, accessStrategy);
-
-		if (entityCallbacks != null) {
-			template.setEntityCallbacks(entityCallbacks);
-		}
-
-		RelationalPersistentEntity<?> persistentEntity = context
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext()
 				.getRequiredPersistentEntity(repositoryInformation.getDomainType());
 
-		return getTargetRepositoryViaReflection(repositoryInformation, template, persistentEntity, converter);
+		return getTargetRepositoryViaReflection(repositoryInformation, operations, persistentEntity,
+				operations.getConverter());
 	}
 
 	@Override
@@ -152,24 +177,13 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
-		return Optional.of(JdbcQueryLookupStrategy.create(key, publisher, entityCallbacks, context, converter, dialect,
-				queryMappingConfiguration, operations, beanFactory,
+
+		DataAccessStrategy strategy = operations.getDataAccessStrategy();
+		JdbcConverter converter = operations.getConverter();
+
+		return Optional.of(JdbcQueryLookupStrategy.create(key, publisher, entityCallbacks, converter, strategy.getDialect(),
+				queryMappingConfiguration, jdbcOperations, beanFactory,
 				new CachingValueExpressionDelegate(valueExpressionDelegate)));
 	}
 
-	/**
-	 * @param entityCallbacks
-	 * @since 1.1
-	 */
-	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
-		this.entityCallbacks = entityCallbacks;
-	}
-
-	/**
-	 * @param beanFactory the {@link BeanFactory} used for looking up {@link org.springframework.jdbc.core.RowMapper} and
-	 *          {@link org.springframework.jdbc.core.ResultSetExtractor} beans.
-	 */
-	public void setBeanFactory(@Nullable BeanFactory beanFactory) {
-		this.beanFactory = beanFactory;
-	}
 }

@@ -84,6 +84,8 @@ class JdbcRepositoryFactoryBeanUnitTests {
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
 
+		when(dataAccessStrategy.getDialect()).thenReturn(dialect);
+		when(dataAccessStrategy.getJdbcOperations()).thenReturn(namedParameterJdbcOperations);
 		when(operations.execute(any(ConnectionCallback.class))).thenReturn(H2Dialect.INSTANCE);
 		when(namedParameterJdbcOperations.getJdbcOperations()).thenReturn(operations);
 		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(namedParameterJdbcOperations);

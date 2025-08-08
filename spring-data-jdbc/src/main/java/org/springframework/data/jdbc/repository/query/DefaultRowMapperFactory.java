@@ -45,6 +45,16 @@ public class DefaultRowMapperFactory implements RowMapperFactory {
 	private final EntityCallbacks entityCallbacks;
 	private final ApplicationEventPublisher publisher;
 
+	public DefaultRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
+			EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher) {
+
+		this.context = converter.getMappingContext();
+		this.converter = converter;
+		this.queryMappingConfiguration = queryMappingConfiguration;
+		this.entityCallbacks = entityCallbacks;
+		this.publisher = publisher;
+	}
+
 	public DefaultRowMapperFactory(RelationalMappingContext context, JdbcConverter converter,
 			QueryMappingConfiguration queryMappingConfiguration, EntityCallbacks entityCallbacks,
 			ApplicationEventPublisher publisher) {

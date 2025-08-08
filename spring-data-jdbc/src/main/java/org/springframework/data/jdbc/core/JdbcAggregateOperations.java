@@ -341,4 +341,5 @@ public interface JdbcAggregateOperations {
 	 * @return the {@link DataAccessStrategy}
 	 */
 	DataAccessStrategy getDataAccessStrategy();
+
 }

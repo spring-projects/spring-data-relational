@@ -20,12 +20,16 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -49,9 +53,6 @@ import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallba
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -77,7 +78,7 @@ public class JdbcAggregateTemplateUnitTests {
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		JdbcConverter converter = new MappingJdbcConverter(mappingContext, relationResolver);
 
-		template = new JdbcAggregateTemplate(eventPublisher, converter, dataAccessStrategy);
+		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
 		template.setEntityCallbacks(callbacks);
 
 	}
