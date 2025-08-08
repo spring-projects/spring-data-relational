@@ -82,7 +82,13 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		config.setMaxLifetime(600000);
 		config.setConnectionTimeout(30000);
 
-		return new HikariDataSource(config);
+		return new HikariDataSource(config) {
+
+			@Override
+			public void close() {
+
+			}
+		};
 	}
 
 	private void initDb(String jdbcUrl, String username, String password) {
