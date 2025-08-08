@@ -37,4 +37,17 @@ public interface JdbcDialect extends Dialect {
 		return JdbcArrayColumns.Unsupported.INSTANCE;
 	}
 
+	/**
+	 * Returns the {@link JdbcArrayColumns array support} for the given {@link Dialect}. Defaults to
+	 * {@link JdbcArrayColumns.Unsupported} iff the dialect is not an instance of {@code JdbcDialect}.
+	 *
+	 * @param dialect the dialect to check for array support.
+	 * @return the {@link JdbcArrayColumns} instance that describes how array-typed columns are supported by the dialect.
+	 * @since 4.0
+	 */
+	static JdbcArrayColumns getArraySupport(Dialect dialect) {
+		return dialect instanceof JdbcDialect jdbcDialect ? jdbcDialect.getArraySupport()
+				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+	}
+
 }

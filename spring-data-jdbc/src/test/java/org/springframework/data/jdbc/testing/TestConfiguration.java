@@ -38,7 +38,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
@@ -114,8 +122,7 @@ public class TestConfiguration {
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
 
-		return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
-				new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect),
+		return new DataAccessStrategyFactory(converter, template, dialect,
 				queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY)).create();
 	}
 
@@ -165,9 +172,7 @@ public class TestConfiguration {
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 
-		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect
-				? ((JdbcDialect) dialect).getArraySupport()
-				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+		JdbcArrayColumns arrayColumns = JdbcDialect.getArraySupport(dialect);
 
 		return new MappingJdbcConverter( //
 				mappingContext, //

@@ -28,10 +28,19 @@ import java.util.stream.StreamSupport;
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
+import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.Identifier;
+import org.springframework.data.jdbc.core.convert.InsertSubject;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -94,18 +103,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
 			NamespaceStrategy namespaceStrategy, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration) {
 
-		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
-		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
-		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, dialect);
-
-		DataAccessStrategy defaultDataAccessStrategy = new DataAccessStrategyFactory( //
-				sqlGeneratorSource, //
-				converter, //
-				operations, //
-				sqlParametersFactory, //
-				insertStrategyFactory, //
-				queryMappingConfiguration //
-		).create();
+		DataAccessStrategy defaultDataAccessStrategy = new DataAccessStrategyFactory(converter, operations, dialect,
+				queryMappingConfiguration).create();
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are

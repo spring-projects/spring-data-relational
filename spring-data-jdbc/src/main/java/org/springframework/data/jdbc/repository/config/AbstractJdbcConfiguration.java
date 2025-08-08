@@ -25,8 +25,8 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
@@ -36,12 +36,20 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.core.convert.*;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.jdbc.dialect.DialectResolver;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -52,7 +60,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.util.TypeScanner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StringUtils;
 
 /**
@@ -153,16 +160,13 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
 			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
 
-		org.springframework.data.jdbc.core.dialect.JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect jd
-				? jd.getArraySupport()
-				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+		JdbcArrayColumns arrayColumns = JdbcDialect.getArraySupport(dialect);
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
 
 		MappingJdbcConverter mappingJdbcConverter = new MappingJdbcConverter(mappingContext, relationResolver, conversions,
 				jdbcTypeFactory);
 
-		if (operations instanceof NamedParameterJdbcTemplate namedParameterJdbcTemplate
-				&& namedParameterJdbcTemplate.getJdbcOperations() instanceof JdbcTemplate jdbcTemplate) {
+		if (operations.getJdbcOperations() instanceof JdbcTemplate jdbcTemplate) {
 			mappingJdbcConverter.setExceptionTranslator(jdbcTemplate.getExceptionTranslator());
 		}
 
@@ -180,21 +184,17 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public JdbcCustomConversions jdbcCustomConversions() {
 
-		try {
+		Dialect dialect = applicationContext.getBeanProvider(Dialect.class).getIfAvailable();
 
-			Dialect dialect = applicationContext.getBean(Dialect.class);
-			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
-					: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
-
-			return new JdbcCustomConversions(
-					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
-
-		} catch (NoSuchBeanDefinitionException exception) {
-
-			LOG.warn("No dialect found; CustomConversions will be configured without dialect specific conversions");
-
+		if (dialect == null) {
+			LOG.warn("No dialect found; CustomConversions will be configured without dialect-specific types.");
 			return new JdbcCustomConversions();
 		}
+
+		SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
+				userConverters());
 	}
 
 	protected List<?> userConverters() {
@@ -221,7 +221,6 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
 			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
-
 		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
 	}
 
@@ -235,13 +234,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
 			JdbcMappingContext context, Dialect dialect) {
-
-		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, jdbcConverter, dialect);
-		DataAccessStrategyFactory factory = new DataAccessStrategyFactory(sqlGeneratorSource, jdbcConverter, operations,
-				new SqlParametersFactory(context, jdbcConverter), new InsertStrategyFactory(operations, dialect),
-				this.queryMappingConfiguration);
-
-		return factory.create();
+		return new DataAccessStrategyFactory(jdbcConverter, operations, dialect, this.queryMappingConfiguration).create();
 	}
 
 	/**

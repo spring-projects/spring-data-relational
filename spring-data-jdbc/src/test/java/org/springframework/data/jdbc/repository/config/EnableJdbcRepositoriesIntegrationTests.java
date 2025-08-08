@@ -36,18 +36,14 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
-import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
-import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
-import org.springframework.data.jdbc.dialect.DialectResolver;
+import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -208,10 +204,9 @@ class EnableJdbcRepositoriesIntegrationTests {
 
 		@Bean("qualifierDataAccessStrategy")
 		DataAccessStrategy qualifierDataAccessStrategy(
-				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
-					new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect),
+				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, JdbcConverter converter,
+				Dialect dialect) {
+			return new DataAccessStrategyFactory(converter, template, dialect,
 					QueryMappingConfiguration.EMPTY).create();
 		}
 
@@ -248,10 +243,8 @@ class EnableJdbcRepositoriesIntegrationTests {
 		@Bean("qualifierDataAccessStrategy")
 		DataAccessStrategy qualifierDataAccessStrategy(
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-			return new DataAccessStrategyFactory(new SqlGeneratorSource(context, converter, dialect), converter, template,
-					new SqlParametersFactory(context, converter), new InsertStrategyFactory(template, dialect),
-					QueryMappingConfiguration.EMPTY).create();
+				JdbcConverter converter, Dialect dialect) {
+			return new DataAccessStrategyFactory(converter, template, dialect, QueryMappingConfiguration.EMPTY).create();
 		}
 
 		@Bean

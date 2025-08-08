@@ -15,9 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -110,12 +107,6 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IDENTIFIER_PROCESSING;
-	}
-
-	@Override
-	public Set<Class<?>> simpleTypes() {
-
-		return Collections.emptySet();
 	}
 
 	@Override

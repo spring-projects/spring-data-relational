@@ -53,6 +53,13 @@ public class SqlParametersFactory {
 	private final JdbcConverter converter;
 
 	/**
+	 * @since 4.0
+	 */
+	public SqlParametersFactory(JdbcConverter converter) {
+		this(converter.getMappingContext(), converter);
+	}
+
+	/**
 	 * @since 3.1
 	 */
 	public SqlParametersFactory(RelationalMappingContext context, JdbcConverter converter) {

@@ -25,11 +25,8 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
-import org.springframework.data.jdbc.core.convert.InsertStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
-import org.springframework.data.jdbc.core.convert.SqlParametersFactory;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -259,7 +256,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 					Assert.state(this.dialect != null, "Dialect must not be null");
 
-					DataAccessStrategyFactory factory = getDataAccessStrategyFactory(this.mappingContext, this.converter,
+					DataAccessStrategyFactory factory = getDataAccessStrategyFactory(this.converter,
 							this.dialect, this.jdbcOperations, this.queryMappingConfiguration);
 
 					this.dataAccessStrategy = factory.create();
@@ -270,15 +267,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		super.afterPropertiesSet();
 	}
 
-	private static DataAccessStrategyFactory getDataAccessStrategyFactory(RelationalMappingContext mappingContext,
-			JdbcConverter converter, Dialect dialect, NamedParameterJdbcOperations operations,
+	private static DataAccessStrategyFactory getDataAccessStrategyFactory(JdbcConverter converter, Dialect dialect,
+			NamedParameterJdbcOperations operations,
 			QueryMappingConfiguration queryMapping) {
 
-		SqlGeneratorSource source = new SqlGeneratorSource(mappingContext, converter, dialect);
-		SqlParametersFactory spf = new SqlParametersFactory(mappingContext, converter);
-		InsertStrategyFactory isf = new InsertStrategyFactory(operations, dialect);
 
-		return new DataAccessStrategyFactory(source, converter, operations, spf, isf, queryMapping);
+		return new DataAccessStrategyFactory(converter, operations, dialect, queryMapping);
 	}
 
 }

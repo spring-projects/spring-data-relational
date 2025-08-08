@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -36,6 +37,21 @@ public class DataAccessStrategyFactory {
 	private final SqlParametersFactory sqlParametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
 	private final QueryMappingConfiguration queryMappingConfiguration;
+
+	/**
+	 * Creates a new {@link DataAccessStrategyFactory}.
+	 *
+	 * @param converter must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param queryMappingConfiguration must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public DataAccessStrategyFactory(JdbcConverter converter, NamedParameterJdbcOperations operations, Dialect dialect,
+			QueryMappingConfiguration queryMappingConfiguration) {
+		this(new SqlGeneratorSource(converter, dialect), converter, operations, new SqlParametersFactory(converter),
+				new InsertStrategyFactory(operations, dialect), queryMappingConfiguration);
+	}
 
 	/**
 	 * Creates a new {@link DataAccessStrategyFactory}.
@@ -65,6 +81,7 @@ public class DataAccessStrategyFactory {
 		this.insertStrategyFactory = insertStrategyFactory;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
+
 
 	/**
 	 * Creates a new {@link DataAccessStrategy}.
