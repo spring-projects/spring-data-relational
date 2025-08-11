@@ -3,17 +3,16 @@ package org.springframework.data.jdbc.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.jdbc.core.mapping.AggregateReference.IdOnlyAggregateReference;
 
 /**
  * Unit tests for the {@link IdOnlyAggregateReference}.
  *
  * @author Myeonghyeon Lee
  */
-public class IdOnlyAggregateReferenceTest {
+class IdOnlyAggregateReferenceTest {
 
 	@Test // DATAJDBC-427
-	public void equals() {
+	void equals() {
 
 		AggregateReference<DummyEntity, String> reference1 = AggregateReference.to("1");
 		AggregateReference<DummyEntity, String> reference2 = AggregateReference.to("1");
@@ -23,7 +22,7 @@ public class IdOnlyAggregateReferenceTest {
 	}
 
 	@Test // DATAJDBC-427
-	public void equalsFalse() {
+	void equalsFalse() {
 
 		AggregateReference<DummyEntity, String> reference1 = AggregateReference.to("1");
 		AggregateReference<DummyEntity, String> reference2 = AggregateReference.to("2");
@@ -33,7 +32,7 @@ public class IdOnlyAggregateReferenceTest {
 	}
 
 	@Test // DATAJDBC-427
-	public void hashCodeTest() {
+	void hashCodeTest() {
 
 		AggregateReference<DummyEntity, String> reference1 = AggregateReference.to("1");
 		AggregateReference<DummyEntity, String> reference2 = AggregateReference.to("1");
