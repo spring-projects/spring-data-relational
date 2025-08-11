@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -35,7 +34,8 @@ public interface AggregateReference<T, ID> {
 	/**
 	 * Creates an {@link AggregateReference} that refers to the target aggregate root with the given id.
 	 *
-	 * @param id aggregate identifier. Can be a simple value or an composite id (complex object).
+	 * @param id aggregate identifier. Must not be {@literal null}, can be a simple value or a composite id (complex
+	 *          object).
 	 * @return
 	 * @param <T> target aggregate type.
 	 * @param <ID> target aggregate identifier type.
@@ -45,9 +45,8 @@ public interface AggregateReference<T, ID> {
 	}
 
 	/**
-	 * @return the id of the referenced aggregate. May be {@code null}.
+	 * @return the id of the referenced aggregate.
 	 */
-	@Nullable
 	ID getId();
 
 	/**
@@ -64,7 +63,6 @@ public interface AggregateReference<T, ID> {
 		public IdOnlyAggregateReference(ID id) {
 
 			Assert.notNull(id, "Id must not be null");
-
 			this.id = id;
 		}
 
@@ -91,7 +89,6 @@ public interface AggregateReference<T, ID> {
 
 		@Override
 		public String toString() {
-
 			return "IdOnlyAggregateReference{" + "id=" + id + '}';
 		}
 	}
