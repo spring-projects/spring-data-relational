@@ -54,7 +54,10 @@ public interface AggregateReference<T, ID> {
 	 *
 	 * @param <T>
 	 * @param <ID>
+	 * @deprecated since 3.5.3, will be converted to a package-private class in 4.0 as this class is an implementation
+	 *             detail and should not be used by application code.
 	 */
+	@Deprecated(since = "3.5.3", forRemoval = true)
 	class IdOnlyAggregateReference<T, ID> implements AggregateReference<T, ID> {
 
 		private final ID id;
