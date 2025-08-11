@@ -57,6 +57,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
+ * @author Jens Schauder
  */
 public class MappingR2dbcConverter extends MappingRelationalConverter implements R2dbcConverter {
 
@@ -189,8 +190,17 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		writeProperties(sink, entity, propertyAccessor);
 	}
 
+	/**
+	 * write the values of the properties of an {@link RelationalPersistentEntity} to an {@link OutboundRow}.
+	 * 
+	 * @param sink must not be {@literal null}.
+	 * @param entity must not be {@literal null}.
+	 * @param accessor used for accessing the property values of {@literal entity}. May be {@literal null}. A
+	 *          {@literal null} value is used when this is an embedded {@literal null} entity, resulting in all its
+	 *          property values to be {@literal null} as well.
+	 */
 	private void writeProperties(OutboundRow sink, RelationalPersistentEntity<?> entity,
-			PersistentPropertyAccessor<?> accessor) {
+			@Nullable PersistentPropertyAccessor<?> accessor) {
 
 		for (RelationalPersistentProperty property : entity) {
 
@@ -200,11 +210,27 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 			Object value;
 
-			if (property.isIdProperty()) {
-				IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(accessor.getBean());
-				value = identifierAccessor.getIdentifier();
+			if (accessor == null) {
+				value = null;
 			} else {
-				value = accessor.getProperty(property);
+				if (property.isIdProperty()) {
+					IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(accessor.getBean());
+					value = identifierAccessor.getIdentifier();
+				} else {
+					value = accessor.getProperty(property);
+				}
+			}
+
+			if (property.isEmbedded()) {
+
+				RelationalPersistentEntity<?> embeddedEntity = getMappingContext().getRequiredPersistentEntity(property);
+				PersistentPropertyAccessor<Object> embeddedAccessor = null;
+				if (value != null) {
+					embeddedAccessor = embeddedEntity.getPropertyAccessor(value);
+				}
+				writeProperties(sink, embeddedEntity, embeddedAccessor);
+
+				continue;
 			}
 
 			if (value == null) {

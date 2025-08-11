@@ -18,16 +18,21 @@ package org.springframework.data.r2dbc.repository;
 import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -36,12 +41,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -75,6 +82,24 @@ public class CompositeIdRepositoryIntegrationTests {
 			context.setForceQuote(false);
 
 			return context;
+		}
+
+		@Bean
+		BeforeConvertCallback<WithCompositeId> beforeConvertCallback() {
+
+			return new BeforeConvertCallback<>() {
+				AtomicInteger counter = new AtomicInteger();
+
+				@Override
+				public Publisher<WithCompositeId> onBeforeConvert(WithCompositeId entity, SqlIdentifier table) {
+
+					if (entity.pk == null) {
+						CompositeId pk = new CompositeId(counter.incrementAndGet(), "generated");
+						entity = new WithCompositeId(pk, entity.name);
+					}
+					return Mono.just(entity);
+				}
+			};
 		}
 	}
 
@@ -117,15 +142,71 @@ public class CompositeIdRepositoryIntegrationTests {
 
 	@Test // GH-574
 	void findAllById() {
+
 		repository.findById(new CompositeId(42, "HBAR")) //
 				.as(StepVerifier::create) //
-				.consumeNextWith(actual -> {
+				.assertNext(actual -> {
 					assertThat(actual.name).isEqualTo("Walter");
+					assertThat(actual.pk.one).isEqualTo(42);
+					assertThat(actual.pk.two).isEqualTo("HBAR");
 				}).verifyComplete();
 	}
 
-	interface WithCompositeIdRepository extends ReactiveCrudRepository<WithCompositeId, CompositeId> {
+	@Test // GH-2096
+	void findByName() {
 
+		repository.findByName("Walter") //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.name).isEqualTo("Walter");
+					assertThat(actual.pk.one).isEqualTo(42);
+					assertThat(actual.pk.two).isEqualTo("HBAR");
+				}).verifyComplete();
+	}
+
+	@Test // GH-2096
+	void insert() {
+
+		repository.save(new WithCompositeId(null, "Jane Margolis"))//
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual.pk).isNotNull()).verifyComplete();
+	}
+
+	@Test // GH-2096
+	void update() {
+
+		insert();
+
+		repository.findByName("Jane Margolis") //
+				.map(wci -> new WithCompositeId(wci.pk, "Jane")) //
+				.flatMap(repository::save) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		// nothing to be found under the old name
+		repository.findByName("Jane Margolis").as(StepVerifier::create).verifyComplete();
+
+		// but under the new name
+		repository.findByName("Jane").as(StepVerifier::create).expectNextCount(1).verifyComplete();
+	}
+
+	@Test
+	void delete() {
+
+		insert();
+
+		repository.findByName("Jane Margolis") //
+				.flatMap(repository::delete) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		// nothing to be found under the old name
+		repository.findByName("Jane Margolis").as(StepVerifier::create).verifyComplete();
+	}
+
+	interface WithCompositeIdRepository extends ReactiveCrudRepository<WithCompositeId, CompositeId> {
+		Flux<WithCompositeId> findByName(String name);
 	}
 
 	@Table("with_composite_id")
