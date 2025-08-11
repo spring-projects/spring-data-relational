@@ -43,6 +43,7 @@ import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
@@ -261,6 +262,53 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(42L));
 	}
 
+	@Test // GH-2096
+	void shouldWriteSingleLevelEmbeddedEntity() {
+
+		Level1 entity = new Level1("root", new Level2("child", 23));
+
+		OutboundRow row = new OutboundRow();
+		converter.write(entity, row);
+
+		assertThat(row).containsExactlyInAnyOrderEntriesOf(Map.of(
+				SqlIdentifier.unquoted("name"), Parameter.from("root"),
+				SqlIdentifier.unquoted("level2_name"), Parameter.from("child"),
+				SqlIdentifier.unquoted("level2_number"), Parameter.from(23)
+		));
+	}
+
+	@Test // GH-2096
+	void shouldWriteMultiLevelEmbeddedEntity() {
+
+		WithEmbedded entity = new WithEmbedded(4711L, new Level1("level1", new Level2("child", 23)));
+
+		OutboundRow row = new OutboundRow();
+		converter.write(entity, row);
+
+		assertThat(row).containsExactlyInAnyOrderEntriesOf(Map.of(
+				SqlIdentifier.unquoted("id"), Parameter.from(4711L),
+				SqlIdentifier.unquoted("level1_name"), Parameter.from("level1"),
+				SqlIdentifier.unquoted("level1_level2_name"), Parameter.from("child"),
+				SqlIdentifier.unquoted("level1_level2_number"), Parameter.from(23)
+		));
+	}
+
+	@Test // GH-2096
+	void shouldWriteNullEmbeddedEntity() {
+
+		WithEmbedded entity = new WithEmbedded(4711L, null);
+
+		OutboundRow row = new OutboundRow();
+		converter.write(entity, row);
+
+		assertThat(row).containsExactlyInAnyOrderEntriesOf(Map.of(
+				SqlIdentifier.unquoted("id"), Parameter.from(4711L),
+				SqlIdentifier.unquoted("level1_name"), Parameter.empty(String.class),
+				SqlIdentifier.unquoted("level1_level2_name"), Parameter.empty(String.class),
+				SqlIdentifier.unquoted("level1_level2_number"), Parameter.empty(Integer.class)
+		));
+	}
+
 	static class Person {
 		@Id String id;
 		String firstname, lastname;
@@ -325,6 +373,13 @@ public class MappingR2dbcConverterUnitTests {
 
 	record WithPrimitiveId(@Id long id) {
 	}
+
+	record WithEmbedded(@Id long id, @Embedded.Empty(prefix = "level1_") Level1 one){}
+
+	record Level1(String name, @Embedded.Empty(prefix = "level2_") Level2 two) {
+
+	}
+	record Level2(String name, Integer number){}
 
 	static class CustomConversionPerson {
 

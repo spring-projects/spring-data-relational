@@ -23,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -60,6 +60,7 @@ import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
@@ -96,6 +97,7 @@ import org.springframework.util.Assert;
  * @author Robert Heim
  * @author Sebastian Wieland
  * @author Mikhail Polivakha
+ * @author Jens Schauder
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -350,8 +352,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return (P) ((Flux<?>) result).concatMap(it -> maybeCallAfterConvert(it, tableName));
 	}
 
-	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName,
-			Class<T> returnType, Function<? super Statement, ? extends Statement> filterFunction) {
+	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName, Class<T> returnType,
+			Function<? super Statement, ? extends Statement> filterFunction) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
 
@@ -378,11 +380,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
-		return getRowsFetchSpec(
-				databaseClient.sql(operation).filter(statementFilterFunction.andThen(filterFunction)),
-			entityType,
-			returnType
-		);
+		return getRowsFetchSpec(databaseClient.sql(operation).filter(statementFilterFunction.andThen(filterFunction)),
+				entityType, returnType);
 	}
 
 	@Override
@@ -622,8 +621,9 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			return maybeCallBeforeSave(entityToUse, outboundRow, tableName) //
 					.flatMap(onBeforeSave -> {
 
-						SqlIdentifier idColumn = persistentEntity.getRequiredIdProperty().getColumnName();
-						Parameter id = outboundRow.remove(idColumn);
+						Map<SqlIdentifier, Object> idValues = new HashMap<>();
+						((RelationalMappingContext) mappingContext).getAggregatePath(persistentEntity).getTableInfo()
+								.idColumnInfos().forEach((ap, ci) -> idValues.put(ci.name(), outboundRow.remove(ci.name())));
 
 						persistentEntity.forEach(p -> {
 							if (p.isInsertOnly()) {
@@ -631,7 +631,16 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 							}
 						});
 
-						Criteria criteria = Criteria.where(dataAccessStrategy.toSql(idColumn)).is(id);
+						Assert.state(!idValues.isEmpty(), entityToUse + " has no id. Update is not possible");
+
+						Criteria criteria = null;
+						for (Map.Entry<SqlIdentifier, Object> idAndValue : idValues.entrySet()) {
+							if (criteria == null) {
+								criteria = Criteria.where(dataAccessStrategy.toSql(idAndValue.getKey())).is(idAndValue.getValue());
+							} else {
+								criteria = criteria.and(dataAccessStrategy.toSql(idAndValue.getKey())).is(idAndValue.getValue());
+							}
+						}
 
 						if (matchingVersionCriteria != null) {
 							criteria = criteria.and(matchingVersionCriteria);

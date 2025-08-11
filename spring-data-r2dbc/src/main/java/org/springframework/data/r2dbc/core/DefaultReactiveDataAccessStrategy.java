@@ -43,6 +43,7 @@ import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -66,7 +67,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private final R2dbcDialect dialect;
 	private final R2dbcConverter converter;
 	private final UpdateMapper updateMapper;
-	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+	private final RelationalMappingContext mappingContext;
 	private final StatementMapper statementMapper;
 	private final NamedParameterExpander expander = new NamedParameterExpander();
 
@@ -119,7 +120,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @param dialect the {@link R2dbcDialect} to use.
 	 * @param converter must not be {@literal null}.
 	 */
-	@SuppressWarnings("unchecked")
 	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
@@ -127,8 +127,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		this.converter = converter;
 		this.updateMapper = new UpdateMapper(dialect, converter);
-		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) this.converter
-				.getMappingContext();
+		this.mappingContext = (RelationalMappingContext) this.converter.getMappingContext();
 		this.dialect = dialect;
 
 		RenderContextFactory factory = new RenderContextFactory(dialect);
@@ -141,13 +140,22 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		RelationalPersistentEntity<?> persistentEntity = getPersistentEntity(entityType);
 
+		return getAllColumns(persistentEntity);
+	}
+
+	private List<SqlIdentifier> getAllColumns(@Nullable RelationalPersistentEntity<?> persistentEntity) {
+
 		if (persistentEntity == null) {
 			return Collections.singletonList(SqlIdentifier.unquoted("*"));
 		}
 
 		List<SqlIdentifier> columnNames = new ArrayList<>();
 		for (RelationalPersistentProperty property : persistentEntity) {
-			columnNames.add(property.getColumnName());
+			if (property.isEmbedded()) {
+				columnNames.addAll(getAllColumns(mappingContext.getRequiredPersistentEntity(property)));
+			} else {
+				columnNames.add(property.getColumnName());
+			}
 		}
 
 		return columnNames;
@@ -159,12 +167,8 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(entityType);
 
 		List<SqlIdentifier> columnNames = new ArrayList<>();
-		for (RelationalPersistentProperty property : persistentEntity) {
-
-			if (property.isIdProperty()) {
-				columnNames.add(property.getColumnName());
-			}
-		}
+		mappingContext.getAggregatePath(persistentEntity).getTableInfo().idColumnInfos()
+				.forEach((__, ci) -> columnNames.add(ci.name()));
 
 		return columnNames;
 	}
