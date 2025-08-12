@@ -32,6 +32,8 @@ import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.util.Assert;
@@ -47,19 +49,26 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
 	private final RelationalExampleMapper exampleMapper;
 	private final JdbcAggregateOperations entityOperations;
+	private final ProjectionFactory projectionFactory;
+	private final RelationalConverter converter;
 
 	FetchableFluentQueryByExample(Example<S> example, Class<R> resultType, RelationalExampleMapper exampleMapper,
-			JdbcAggregateOperations entityOperations) {
-		this(example, Sort.unsorted(), 0, resultType, Collections.emptyList(), exampleMapper, entityOperations);
+			JdbcAggregateOperations entityOperations, RelationalConverter converter, ProjectionFactory projectionFactory) {
+		this(example, Sort.unsorted(), 0, resultType, Collections.emptyList(), exampleMapper, entityOperations, converter,
+				projectionFactory);
 	}
 
 	FetchableFluentQueryByExample(Example<S> example, Sort sort, int limit, Class<R> resultType,
-			List<String> fieldsToInclude, RelationalExampleMapper exampleMapper, JdbcAggregateOperations entityOperations) {
+			List<String> fieldsToInclude, RelationalExampleMapper exampleMapper, JdbcAggregateOperations entityOperations,
+			RelationalConverter converter,
+			ProjectionFactory projectionFactory) {
 
-		super(example, sort, limit, resultType, fieldsToInclude);
+		super(example, sort, limit, resultType, fieldsToInclude, projectionFactory, converter);
 
 		this.exampleMapper = exampleMapper;
 		this.entityOperations = entityOperations;
+		this.converter = converter;
+		this.projectionFactory = projectionFactory;
 	}
 
 	@Override
@@ -167,6 +176,6 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 			List<String> fieldsToInclude) {
 
 		return new FetchableFluentQueryByExample<>(example, sort, limit, resultType, fieldsToInclude, this.exampleMapper,
-				this.entityOperations);
+				this.entityOperations, this.converter, this.projectionFactory);
 	}
 }
