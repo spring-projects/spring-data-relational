@@ -1236,6 +1236,32 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(matches).isEqualTo(2);
 	}
 
+	@Test // GH-2098
+	void projectByExample() {
+
+		String searchName = "Diego";
+		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+		DummyEntity entity = createEntity();
+
+		entity.setName(searchName);
+		entity.setPointInTime(now.minusSeconds(10000));
+		entity = repository.save(entity);
+
+		record DummyProjection(String name) {
+
+		}
+
+		Example<DummyEntity> example = Example.of(createEntity(searchName, it -> it.setBytes(null)));
+
+		DummyProjection projection = repository.findBy(example,
+				p -> p.project("name").as(DummyProjection.class).firstValue());
+		assertThat(projection.name()).isEqualTo(entity.name);
+
+		projection = repository.findBy(example, p -> p.project("flag").as(DummyProjection.class).firstValue());
+		assertThat(projection.name()).isNull();
+	}
+
 	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantFirstSimple() {
 
@@ -2005,6 +2031,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	static class DummyEntity {
 
+		@Id Long idProp;
 		String name;
 		Instant pointInTime;
 		OffsetDateTime offsetDateTime;
@@ -2012,7 +2039,6 @@ public class JdbcRepositoryIntegrationTests {
 		AggregateReference<DummyEntity, Long> ref;
 		Direction direction;
 		byte[] bytes = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-		@Id private Long idProp;
 
 		public DummyEntity(String name) {
 			this.name = name;

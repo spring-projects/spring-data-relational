@@ -21,9 +21,12 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.data.convert.DtoInstantiatingConverter;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.projection.EntityProjection;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.util.Assert;
 
@@ -41,16 +44,19 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 	private final int limit;
 	private final Class<R> resultType;
 	private final List<String> fieldsToInclude;
+	private final ProjectionFactory projectionFactory;
+	private final RelationalConverter converter;
 
-	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-
-	FluentQuerySupport(Example<S> example, Sort sort, int limit, Class<R> resultType, List<String> fieldsToInclude) {
+	FluentQuerySupport(Example<S> example, Sort sort, int limit, Class<R> resultType, List<String> fieldsToInclude,
+			ProjectionFactory projectionFactory, RelationalConverter converter) {
 
 		this.example = example;
 		this.sort = sort;
 		this.limit = limit;
 		this.resultType = resultType;
 		this.fieldsToInclude = fieldsToInclude;
+		this.projectionFactory = projectionFactory;
+		this.converter = converter;
 	}
 
 	@Override
@@ -118,8 +124,18 @@ abstract class FluentQuerySupport<S, R> implements FluentQuery.FetchableFluentQu
 			return (Function<Object, R>) Function.identity();
 		}
 
-		if (targetType.isInterface()) {
-			return o -> projectionFactory.createProjection(targetType, o);
+		EntityProjection<?, ?> entityProjection = converter.introspectProjection(targetType, inputType);
+
+		if (entityProjection.isProjection()) {
+
+			if (targetType.isInterface()) {
+				return o -> projectionFactory.createProjection(targetType, o);
+			}
+
+			DtoInstantiatingConverter dtoConverter = new DtoInstantiatingConverter(targetType, converter.getMappingContext(),
+					converter.getEntityInstantiators());
+
+			return o -> (R) dtoConverter.convert(o);
 		}
 
 		return o -> DefaultConversionService.getSharedInstance().convert(o, targetType);
