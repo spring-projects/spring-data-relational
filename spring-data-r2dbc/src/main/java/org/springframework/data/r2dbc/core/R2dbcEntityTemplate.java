@@ -114,6 +114,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	private Function<Statement, Statement> statementFilterFunction = Function.identity();
 
+	private final QueryWrapper queryWrapper;
 	/**
 	 * Create a new {@link R2dbcEntityTemplate} given {@link ConnectionFactory}.
 	 *
@@ -132,6 +133,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = converter.getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
+		this.queryWrapper=new DefaultQueryWrapper();
 	}
 
 	/**
@@ -157,7 +159,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	public R2dbcEntityTemplate(DatabaseClient databaseClient, R2dbcDialect dialect, R2dbcConverter converter) {
 		this(databaseClient, new DefaultReactiveDataAccessStrategy(dialect, converter));
 	}
-
 	/**
 	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient} and {@link ReactiveDataAccessStrategy}.
 	 *
@@ -165,6 +166,15 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @since 1.2
 	 */
 	public R2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy strategy) {
+		this(databaseClient,strategy,new DefaultQueryWrapper());
+	}
+	/**
+	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient} and {@link ReactiveDataAccessStrategy}.
+	 *
+	 * @param databaseClient must not be {@literal null}.
+	 * @since 1.2
+	 */
+	public R2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy strategy,QueryWrapper queryWrapper) {
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null");
 		Assert.notNull(strategy, "ReactiveDataAccessStrategy must not be null");
@@ -174,6 +184,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = strategy.getConverter().getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
+		this.queryWrapper = queryWrapper;
 	}
 
 	/**
@@ -274,7 +285,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	Mono<Long> doCount(Query query, Class<?> entityClass, SqlIdentifier tableName) {
-
+		query = queryWrapper.wrapper(query,entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
 		StatementMapper.SelectSpec selectSpec = statementMapper //
@@ -305,7 +316,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	Mono<Boolean> doExists(Query query, Class<?> entityClass, SqlIdentifier tableName) {
-
+		query = queryWrapper.wrapper(query,entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(tableName).limit(1)
 				.withProjection(Expressions.just("1"));
@@ -352,12 +363,12 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityType, SqlIdentifier tableName,
 			Class<T> returnType, Function<? super Statement, ? extends Statement> filterFunction) {
-
+		query = queryWrapper.wrapper(query,entityType);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityType);
-
+		final Query finalQuery = query;
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
-				.doWithTable((table, spec) -> spec.withProjection(getSelectProjection(table, query, entityType, returnType)));
+				.doWithTable((table, spec) -> spec.withProjection(getSelectProjection(table, finalQuery, entityType, returnType)));
 
 		if (query.getLimit() > 0) {
 			selectSpec = selectSpec.limit(query.getLimit());
@@ -402,7 +413,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	Mono<Long> doUpdate(Query query, Update update, Class<?> entityClass, SqlIdentifier tableName) {
-
+		query = queryWrapper.wrapper(query, entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
 		StatementMapper.UpdateSpec selectSpec = statementMapper //
@@ -427,7 +438,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	Mono<Long> doDelete(Query query, Class<?> entityClass, SqlIdentifier tableName) {
-
+		query = queryWrapper.wrapper(query, entityClass);
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
 		StatementMapper.DeleteSpec deleteSpec = statementMapper //
