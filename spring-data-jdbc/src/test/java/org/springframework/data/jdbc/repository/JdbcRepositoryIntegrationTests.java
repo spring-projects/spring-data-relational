@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -51,7 +52,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -64,8 +74,8 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
-import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Sequence;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -1187,6 +1197,32 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(matches).isEqualTo(2);
 	}
 
+	@Test // GH-2098
+	void projectByExample() {
+
+		String searchName = "Diego";
+		Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+		DummyEntity entity = createEntity();
+
+		entity.setName(searchName);
+		entity.setPointInTime(now.minusSeconds(10000));
+		entity = repository.save(entity);
+
+		record DummyProjection(String name) {
+
+		}
+
+		Example<DummyEntity> example = Example.of(createEntity(searchName, it -> it.setBytes(null)));
+
+		DummyProjection projection = repository.findBy(example,
+				p -> p.project("name").as(DummyProjection.class).firstValue());
+		assertThat(projection.name()).isEqualTo(entity.name);
+
+		projection = repository.findBy(example, p -> p.project("flag").as(DummyProjection.class).firstValue());
+		assertThat(projection.name()).isNull();
+	}
+
 	@Test // GH-1192
 	void fetchByExampleFluentOnlyInstantFirstSimple() {
 
@@ -1888,10 +1924,10 @@ public class JdbcRepositoryIntegrationTests {
 
 	static class DummyEntity {
 
+		@Id Long idProp;
 		String name;
 		Instant pointInTime;
 		OffsetDateTime offsetDateTime;
-		@Id private Long idProp;
 		boolean flag;
 		AggregateReference<DummyEntity, Long> ref;
 		Direction direction;

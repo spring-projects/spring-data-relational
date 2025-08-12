@@ -26,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -48,9 +49,11 @@ import org.springframework.util.Assert;
 public class SimpleJdbcRepository<T, ID>
 		implements CrudRepository<T, ID>, PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
 
+	private final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
 	private final JdbcAggregateOperations entityOperations;
 	private final PersistentEntity<T, ?> entity;
 	private final RelationalExampleMapper exampleMapper;
+	private final JdbcConverter converter;
 
 	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity,
 			JdbcConverter converter) {
@@ -60,6 +63,7 @@ public class SimpleJdbcRepository<T, ID>
 
 		this.entityOperations = entityOperations;
 		this.entity = entity;
+		this.converter = converter;
 		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
@@ -197,7 +201,7 @@ public class SimpleJdbcRepository<T, ID>
 		Assert.notNull(queryFunction, "Query function must not be null");
 
 		FluentQuery.FetchableFluentQuery<S> fluentQuery = new FetchableFluentQueryByExample<>(example,
-				example.getProbeType(), this.exampleMapper, this.entityOperations);
+				example.getProbeType(), this.exampleMapper, this.entityOperations, this.converter, this.projectionFactory);
 
 		return queryFunction.apply(fluentQuery);
 	}
