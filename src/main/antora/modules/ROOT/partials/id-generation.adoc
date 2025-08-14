@@ -3,7 +3,7 @@
 
 Spring Data uses identifier properties to identify entities.
 That is, looking these up or creating statements targeting a particular row.
-The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+The ID of an entity must be annotated with Spring Data's {spring-data-commons-javadoc-base}/org/springframework/data/annotation/Id.html[`@Id`] annotation.
 
 When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
