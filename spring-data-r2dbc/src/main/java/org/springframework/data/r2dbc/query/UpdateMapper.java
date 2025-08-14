@@ -16,13 +16,16 @@
 package org.springframework.data.r2dbc.query;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.AssignValue;
@@ -94,23 +97,42 @@ public class UpdateMapper extends QueryMapper {
 		List<Assignment> result = new ArrayList<>();
 
 		assignments.forEach((column, value) -> {
-			Assignment assignment = getAssignment(column, value, bindings, table, entity);
-			result.add(assignment);
+			result.addAll(getAssignments(column, value, bindings, table, entity));
 		});
 
 		return new BoundAssignments(bindings, result);
 	}
 
-	private Assignment getAssignment(SqlIdentifier columnName, Object value, MutableBindings bindings, Table table,
-			@Nullable RelationalPersistentEntity<?> entity) {
+	private Collection<Assignment> getAssignments(SqlIdentifier columnName, Object value, MutableBindings bindings,
+			Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, columnName, getMappingContext());
+
+		if (propertyField.isEmbedded() && entity != null) {
+
+			RelationalPersistentEntity<?> embeddedEntity = getMappingContext()
+					.getRequiredPersistentEntity(propertyField.getRequiredProperty());
+			PersistentPropertyAccessor<Object> propertyAccessor = getEmbeddedPropertyAccessor(value, embeddedEntity,
+					propertyField);
+
+			List<Assignment> assignments = new ArrayList<>();
+
+			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+
+				Object propertyValue = propertyAccessor.getProperty(embeddedProperty);
+
+				assignments.addAll(getAssignments(SqlIdentifier.unquoted(embeddedProperty.getName()), propertyValue, bindings,
+						table, embeddedEntity));
+			}
+
+			return assignments;
+		}
+
 		Column column = table.column(propertyField.getMappedColumnName());
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
 		Object mappedValue;
 		Class<?> typeHint;
-
 		if (value instanceof Parameter parameter) {
 
 			mappedValue = convertValue(parameter.getValue(), propertyField.getTypeHint());
@@ -121,7 +143,7 @@ public class UpdateMapper extends QueryMapper {
 			mappedValue = valueFunction.map(v -> convertValue(v, propertyField.getTypeHint())).apply(Escaper.DEFAULT);
 
 			if (mappedValue == null) {
-				return Assignments.value(column, SQL.nullLiteral());
+				return List.of(Assignments.value(column, SQL.nullLiteral()));
 			}
 
 			typeHint = actualType.getType();
@@ -130,13 +152,13 @@ public class UpdateMapper extends QueryMapper {
 			mappedValue = convertValue(value, propertyField.getTypeHint());
 
 			if (mappedValue == null) {
-				return Assignments.value(column, SQL.nullLiteral());
+				return List.of(Assignments.value(column, SQL.nullLiteral()));
 			}
 
 			typeHint = actualType.getType();
 		}
 
-		return createAssignment(column, mappedValue, typeHint, bindings);
+		return List.of(createAssignment(column, mappedValue, typeHint, bindings));
 	}
 
 	private Assignment createAssignment(Column column, Object value, Class<?> type, MutableBindings bindings) {

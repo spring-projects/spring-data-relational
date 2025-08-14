@@ -23,7 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -60,7 +61,6 @@ import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
@@ -621,17 +621,19 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			return maybeCallBeforeSave(entityToUse, outboundRow, tableName) //
 					.flatMap(onBeforeSave -> {
 
-						Map<SqlIdentifier, Object> idValues = new HashMap<>();
-						((RelationalMappingContext) mappingContext).getAggregatePath(persistentEntity).getTableInfo()
-								.idColumnInfos().forEach((ap, ci) -> idValues.put(ci.name(), outboundRow.remove(ci.name())));
+						Map<SqlIdentifier, Object> idValues = new LinkedHashMap<>();
+						List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(persistentEntity.getType());
+						Assert.state(!identifierColumns.isEmpty(), entityToUse + " has no Identifier. Update is not possible.");
+
+						identifierColumns.forEach(sqlIdentifier -> {
+							idValues.put(sqlIdentifier, outboundRow.remove(sqlIdentifier));
+						});
 
 						persistentEntity.forEach(p -> {
 							if (p.isInsertOnly()) {
 								outboundRow.remove(p.getColumnName());
 							}
 						});
-
-						Assert.state(!idValues.isEmpty(), entityToUse + " has no id. Update is not possible");
 
 						Criteria criteria = null;
 						for (Map.Entry<SqlIdentifier, Object> idAndValue : idValues.entrySet()) {

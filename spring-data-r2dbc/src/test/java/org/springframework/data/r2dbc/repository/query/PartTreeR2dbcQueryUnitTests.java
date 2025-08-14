@@ -50,6 +50,7 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -789,6 +790,46 @@ class PartTreeR2dbcQueryUnitTests {
 				.where(TABLE + ".first_name = $1 LIMIT 1");
 	}
 
+	@Test // GH-2096
+	void createsQueryForEmbeddable() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod(WithEmbeddableRepository.class, "findByHome", Address.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, new Address(new Country("DE")));
+
+		PreparedOperationAssert.assertThat(query) //
+				.selects("with_embeddable.home_country_name", "with_embeddable.work_country_name") //
+				.from("with_embeddable") //
+				.where("with_embeddable.home_country_name = $1");
+	}
+
+	@Test // GH-2096
+	void createsQueryForNestedEmbeddable() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod(WithEmbeddableRepository.class, "findByHomeCountry", Country.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, new Country("DE"));
+
+		PreparedOperationAssert.assertThat(query) //
+				.selects("with_embeddable.home_country_name", "with_embeddable.work_country_name") //
+				.from("with_embeddable") //
+				.where("with_embeddable.home_country_name = $1");
+	}
+
+	@Test // GH-2096
+	void createsQueryForNestedEmbeddableValue() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod(WithEmbeddableRepository.class, "findByHomeCountryName",
+				String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "DE");
+
+		PreparedOperationAssert.assertThat(query) //
+				.selects("with_embeddable.home_country_name", "with_embeddable.work_country_name") //
+				.from("with_embeddable") //
+				.where("with_embeddable.home_country_name = $1");
+	}
+
 	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,
 			Object... parameters) {
 		return createQuery(r2dbcQuery, getAccessor(queryMethod, parameters));
@@ -1001,6 +1042,15 @@ class PartTreeR2dbcQueryUnitTests {
 		Mono<Long> countByFirstName(String firstName);
 	}
 
+	interface WithEmbeddableRepository extends Repository<WithEmbeddable, Long> {
+
+		Mono<WithEmbeddable> findByHome(Address home);
+
+		Mono<WithEmbeddable> findByHomeCountry(Country homeCountry);
+
+		Mono<WithEmbeddable> findByHomeCountryName(String homeCountryName);
+	}
+
 	@Table("users")
 	private static class User {
 
@@ -1037,5 +1087,30 @@ class PartTreeR2dbcQueryUnitTests {
 
 		String firstName;
 		String unknown;
+	}
+
+	static class WithEmbeddable {
+
+		@Embedded.Nullable(prefix = "home_") Address home;
+
+		@Embedded.Nullable(prefix = "work_") Address work;
+	}
+
+	static class Address {
+
+		@Embedded.Nullable(prefix = "country_") Country country;
+
+		public Address(Country country) {
+			this.country = country;
+		}
+	}
+
+	static class Country {
+
+		String name;
+
+		public Country(String name) {
+			this.name = name;
+		}
 	}
 }
