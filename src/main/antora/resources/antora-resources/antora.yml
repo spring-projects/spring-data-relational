@@ -3,20 +3,21 @@ prerelease: ${antora-component.prerelease}
 
 asciidoc:
   attributes:
-    copyright-year: ${current.year}
+    attribute-missing: 'warn'
+    chomp: 'all'
     version: ${project.version}
+    copyright-year: ${current.year}
     springversionshort: ${spring.short}
     springversion: ${spring}
-    attribute-missing: 'warn'
     commons: ${springdata.commons.docs}
     include-xml-namespaces: false
-    spring-data-commons-docs-url: https://docs.spring.io/spring-data/commons/reference
-    spring-data-commons-javadoc-base: https://docs.spring.io/spring-data/commons/docs/${springdata.commons}/api/
-    spring-data-jdbc-javadoc: https://docs.spring.io/spring-data/jdbc/docs/${version}/api/
-    spring-data-r2dbc-javadoc: https://docs.spring.io/spring-data/r2dbc/docs/${version}/api/
+    spring-data-commons-docs-url: https://docs.spring.io/spring-data/commons/reference/{commons}
+    spring-data-commons-javadoc-base: '{spring-data-commons-docs-url}/api/java'
+    spring-data-jdbc-javadoc: https://docs.spring.io/spring-data/relational/reference/{version}/api/java
+    spring-data-r2dbc-javadoc: '{spring-data-jdbc-javadoc}'
     springdocsurl: https://docs.spring.io/spring-framework/reference/{springversionshort}
-    springjavadocurl: https://docs.spring.io/spring-framework/docs/${spring}/javadoc-api
     spring-framework-docs: '{springdocsurl}'
+    springjavadocurl: https://docs.spring.io/spring-framework/docs/${spring}/javadoc-api
     spring-framework-javadoc: '{springjavadocurl}'
     springhateoasversion: ${spring-hateoas}
     releasetrainversion: ${releasetrain}
