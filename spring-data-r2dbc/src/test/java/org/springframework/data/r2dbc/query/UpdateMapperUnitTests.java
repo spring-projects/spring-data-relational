@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -102,7 +101,8 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update);
 
-		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream() //
+				.map(it -> (AssignValue) it) //
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
 		assertThat(update.getAssignments()).hasSize(3);
@@ -117,11 +117,15 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update, WithEmbeddable.class);
 
-		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream() //
+				.map(it -> (AssignValue) it) //
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).hasSize(2).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"))
-				.containsEntry(SqlIdentifier.unquoted("home_street"), SQL.bindMarker("$2"));
+		assertThat(assignments).containsExactlyInAnyOrderEntriesOf( //
+				Map.of( //
+						SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"), //
+						SqlIdentifier.unquoted("home_street"), SQL.bindMarker("$2")//
+				));
 
 		mapped.getBindings().forEach(it -> {
 			assertThat(it.getValue()).isIn("DE", "foo");
@@ -135,10 +139,14 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update, WithEmbeddable.class);
 
-		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream() //
+				.map(it -> (AssignValue) it) //
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).hasSize(1).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+		assertThat(assignments) //
+				.hasSize(1) //
+				.containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+
 		mapped.getBindings().forEach(it -> {
 			assertThat(it.getValue()).isEqualTo("DE");
 		});
@@ -151,10 +159,14 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update, WithEmbeddable.class);
 
-		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream()//
+				.map(it -> (AssignValue) it) //
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).hasSize(1).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+		assertThat(assignments) //
+				.hasSize(1) //
+				.containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+
 		mapped.getBindings().forEach(it -> {
 			assertThat(it.getValue()).isEqualTo("DE");
 		});
