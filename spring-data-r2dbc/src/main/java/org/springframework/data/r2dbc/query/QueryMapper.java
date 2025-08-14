@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
@@ -112,22 +114,42 @@ public class QueryMapper {
 
 			SqlSort.validate(order);
 
-			OrderByField simpleOrderByField = createSimpleOrderByField(table, entity, order);
-			OrderByField orderBy = simpleOrderByField.withNullHandling(order.getNullHandling());
-			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
+			List<OrderByField> simpleOrderByFields = createSimpleOrderByFields(table, entity, order);
+
+			simpleOrderByFields.forEach(field -> {
+
+				OrderByField orderBy = field.withNullHandling(order.getNullHandling());
+				mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
+			});
 		}
 
 		return mappedOrder;
 	}
 
-	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
+	private List<OrderByField> createSimpleOrderByFields(Table table, @Nullable RelationalPersistentEntity<?> entity,
+			Sort.Order order) {
 
 		if (order instanceof SqlSort.SqlOrder sqlOrder && sqlOrder.isUnsafe()) {
-			return OrderByField.from(Expressions.just(sqlOrder.getProperty()));
+			return List.of(OrderByField.from(Expressions.just(sqlOrder.getProperty())));
 		}
 
 		Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
-		return OrderByField.from(table.column(field.getMappedColumnName()));
+
+		if (field.isEmbedded() && entity != null) {
+
+			RelationalPersistentEntity<?> embeddedEntity = getMappingContext()
+					.getRequiredPersistentEntity(field.getRequiredProperty());
+
+			List<OrderByField> fields = new ArrayList<>();
+
+			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+				fields.addAll(createSimpleOrderByFields(table, embeddedEntity, order.withProperty(embeddedProperty.getName())));
+			}
+
+			return fields;
+		}
+
+		return List.of(OrderByField.from(table.column(field.getMappedColumnName())));
 	}
 
 	/**
@@ -137,12 +159,35 @@ public class QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link Expression}.
 	 * @since 1.1
+	 * @deprecated since 4.0 in favor of {@link #getMappedObjects(Expression, RelationalPersistentEntity)} where usage of
+	 *             {@link org.springframework.data.relational.core.mapping.Embedded embeddable properties} can return more
+	 *             than one mapped result.
 	 */
+	@Deprecated(since = "4.0")
 	public Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
+
+		List<Expression> mappedObjects = getMappedObjects(expression, entity);
+
+		if (mappedObjects.isEmpty()) {
+			throw new IllegalArgumentException(String.format("Cannot map %s", expression));
+		}
+
+		return mappedObjects.get(0);
+	}
+
+	/**
+	 * Map the {@link Expression} object to apply field name mapping using {@link Class the type to read}.
+	 *
+	 * @param expression must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return the mapped {@link Expression}s.
+	 * @since 4.0
+	 */
+	public List<Expression> getMappedObjects(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
 
 		if (entity == null || expression instanceof AsteriskFromTable
 				|| expression instanceof Expressions.SimpleExpression) {
-			return expression;
+			return List.of(expression);
 		}
 
 		if (expression instanceof Column column) {
@@ -150,8 +195,22 @@ public class QueryMapper {
 			Field field = createPropertyField(entity, column.getName());
 			TableLike table = column.getTable();
 
+			if (field.isEmbedded()) {
+
+				RelationalPersistentEntity<?> embeddedEntity = getMappingContext()
+						.getRequiredPersistentEntity(field.getRequiredProperty());
+
+				List<Expression> expressions = new ArrayList<>();
+
+				for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+					expressions.addAll(getMappedObjects(Column.create(embeddedProperty.getName(), table), embeddedEntity));
+				}
+
+				return expressions;
+			}
+
 			Column columnFromTable = table.column(field.getMappedColumnName());
-			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
+			return List.of(column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable);
 		}
 
 		if (expression instanceof SimpleFunction function) {
@@ -160,12 +219,12 @@ public class QueryMapper {
 			List<Expression> mappedArguments = new ArrayList<>(arguments.size());
 
 			for (Expression argument : arguments) {
-				mappedArguments.add(getMappedObject(argument, entity));
+				mappedArguments.addAll(getMappedObjects(argument, entity));
 			}
 
 			SimpleFunction mappedFunction = SimpleFunction.create(function.getFunctionName(), mappedArguments);
 
-			return function instanceof Aliased ? mappedFunction.as(((Aliased) function).getAlias()) : mappedFunction;
+			return List.of(function instanceof Aliased ? mappedFunction.as(((Aliased) function).getAlias()) : mappedFunction);
 		}
 
 		throw new IllegalArgumentException(String.format("Cannot map %s", expression));
@@ -297,6 +356,43 @@ public class QueryMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
+
+		if (propertyField.isEmbedded() && entity != null) {
+
+			Object value = criteria.getValue();
+
+			RelationalPersistentEntity<?> embeddedEntity = mappingContext
+					.getRequiredPersistentEntity(propertyField.getRequiredProperty());
+			PersistentPropertyAccessor<Object> propertyAccessor = getEmbeddedPropertyAccessor(value, embeddedEntity,
+					propertyField);
+
+			Condition condition = Conditions.unrestricted();
+
+			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+
+				Object propertyValue = propertyAccessor.getProperty(embeddedProperty);
+
+				CriteriaWrapper cw = new CriteriaWrapper(criteria) {
+
+					@Override
+					public SqlIdentifier getColumn() {
+						return SqlIdentifier.unquoted(embeddedProperty.getName());
+					}
+
+					@Nullable
+					@Override
+					public Object getValue() {
+						return propertyValue;
+					}
+				};
+
+				Condition mapped = mapCondition(cw, bindings, table, embeddedEntity);
+				condition = condition.and(mapped);
+			}
+
+			return condition;
+		}
+
 		Column column = table.column(propertyField.getMappedColumnName());
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
@@ -321,6 +417,39 @@ public class QueryMapper {
 		}
 
 		return createCondition(column, mappedValue, typeHint, bindings, comparator, criteria.isIgnoreCase());
+
+	}
+
+	static PersistentPropertyAccessor<Object> getEmbeddedPropertyAccessor(@Nullable Object value,
+			RelationalPersistentEntity<?> embeddedEntity, Field propertyField) {
+
+		if (value != null) {
+
+			Class<?> propertyType = embeddedEntity.getType();
+			if (!propertyType.isInstance(value)) {
+				throw new IllegalArgumentException("Value of property " + propertyField.getRequiredProperty().getName()
+						+ " is not an instance of " + embeddedEntity.getType().getName() + " but " + value.getClass().getName());
+			}
+
+			return embeddedEntity.getPropertyAccessor(value);
+		}
+
+		return new PersistentPropertyAccessor<>() {
+			@Override
+			public void setProperty(PersistentProperty<?> property, @org.jspecify.annotations.Nullable Object value) {
+
+			}
+
+			@Override
+			public @org.jspecify.annotations.Nullable Object getProperty(PersistentProperty<?> property) {
+				return null;
+			}
+
+			@Override
+			public Object getBean() {
+				return null;
+			}
+		};
 	}
 
 	private Escaper getEscaper(Comparator comparator) {
@@ -587,6 +716,25 @@ public class QueryMapper {
 		public TypeInformation<?> getTypeHint() {
 			return TypeInformation.OBJECT;
 		}
+
+		public boolean isEmbedded() {
+			return false;
+		}
+
+		public @org.jspecify.annotations.Nullable RelationalPersistentProperty getProperty() {
+			return null;
+		}
+
+		public RelationalPersistentProperty getRequiredProperty() {
+
+			RelationalPersistentProperty property = getProperty();
+
+			if (property == null) {
+				throw new IllegalStateException("No property found for field: " + this.name);
+			}
+
+			return property;
+		}
 	}
 
 	/**
@@ -633,13 +781,34 @@ public class QueryMapper {
 			this.mappingContext = context;
 
 			this.path = getPath(name.getReference());
-			this.property = this.path == null ? property : this.path.getLeafProperty();
+
+			RelationalPersistentProperty persistentProperty = null;
+			if (this.path != null) {
+
+				RelationalPersistentEntity<?> currentEntity = entity;
+				RelationalPersistentProperty currentProperty = null;
+				for (RelationalPersistentProperty p : path) {
+
+					currentProperty = currentEntity.getPersistentProperty(p.getName());
+
+					if (currentProperty == null) {
+						break;
+					}
+
+					if (currentProperty.isEntity()) {
+						currentEntity = mappingContext.getRequiredPersistentEntity(currentProperty);
+					}
+				}
+
+				persistentProperty = currentProperty;
+			}
+
+			this.property = persistentProperty;
 		}
 
 		@Override
 		public SqlIdentifier getMappedColumnName() {
-			return this.path == null || this.path.getLeafProperty() == null ? super.getMappedColumnName()
-					: this.path.getLeafProperty().getColumnName();
+			return this.property == null ? super.getMappedColumnName() : this.property.getColumnName();
 		}
 
 		/**
@@ -699,6 +868,92 @@ public class QueryMapper {
 			}
 
 			return this.property.getTypeInformation();
+		}
+
+		@Override
+		public boolean isEmbedded() {
+			return this.property != null && this.property.isEmbedded();
+		}
+
+		@Override
+		public @org.jspecify.annotations.Nullable RelationalPersistentProperty getProperty() {
+			return this.property;
+		}
+	}
+
+	abstract static class CriteriaWrapper extends AbstractCriteria {
+
+		private final CriteriaDefinition delegate;
+
+		public CriteriaWrapper(CriteriaDefinition delegate) {
+			this.delegate = delegate;
+		}
+
+		@Nullable
+		@Override
+		public Comparator getComparator() {
+			return delegate.getComparator();
+		}
+
+		@Override
+		public boolean isIgnoreCase() {
+			return delegate.isIgnoreCase();
+		}
+	}
+
+	abstract static class AbstractCriteria implements CriteriaDefinition {
+		@Override
+		public boolean isGroup() {
+			return false;
+		}
+
+		@Override
+		public List<CriteriaDefinition> getGroup() {
+			return List.of();
+		}
+
+		@Nullable
+		@Override
+		public SqlIdentifier getColumn() {
+			return null;
+		}
+
+		@Nullable
+		@Override
+		public Comparator getComparator() {
+			return null;
+		}
+
+		@Nullable
+		@Override
+		public Object getValue() {
+			return null;
+		}
+
+		@Override
+		public boolean isIgnoreCase() {
+			return false;
+		}
+
+		@Nullable
+		@Override
+		public CriteriaDefinition getPrevious() {
+			return null;
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return false;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return false;
+		}
+
+		@Override
+		public Combinator getCombinator() {
+			return null;
 		}
 	}
 }

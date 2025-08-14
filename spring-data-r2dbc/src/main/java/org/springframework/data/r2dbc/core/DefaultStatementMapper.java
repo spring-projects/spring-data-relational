@@ -143,7 +143,7 @@ class DefaultStatementMapper implements StatementMapper {
 		List<Expression> mapped = new ArrayList<>(selectList.size());
 
 		for (Expression expression : selectList) {
-			mapped.add(updateMapper.getMappedObject(expression, entity));
+			mapped.addAll(updateMapper.getMappedObjects(expression, entity));
 		}
 
 		return mapped;

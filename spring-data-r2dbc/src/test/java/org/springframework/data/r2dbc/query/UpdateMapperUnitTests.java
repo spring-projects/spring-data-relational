@@ -22,11 +22,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Expression;
@@ -108,17 +110,102 @@ public class UpdateMapperUnitTests {
 				.containsEntry(SqlIdentifier.unquoted("c2"), SQL.bindMarker("$2"));
 	}
 
+	@Test // GH-2096
+	void shouldMapPathToEmbeddable() {
+
+		Update update = Update.update("home", new Address(new Country("DE"), "foo"));
+
+		BoundAssignments mapped = map(update, WithEmbeddable.class);
+
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
+
+		assertThat(assignments).hasSize(2).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"))
+				.containsEntry(SqlIdentifier.unquoted("home_street"), SQL.bindMarker("$2"));
+
+		mapped.getBindings().forEach(it -> {
+			assertThat(it.getValue()).isIn("DE", "foo");
+		});
+	}
+
+	@Test // GH-2096
+	void shouldMapPathToNestedEmbeddable() {
+
+		Update update = Update.update("home.country", new Country("DE"));
+
+		BoundAssignments mapped = map(update, WithEmbeddable.class);
+
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
+
+		assertThat(assignments).hasSize(1).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+		mapped.getBindings().forEach(it -> {
+			assertThat(it.getValue()).isEqualTo("DE");
+		});
+	}
+
+	@Test // GH-2096
+	void shouldMapPathIntoEmbeddable() {
+
+		Update update = Update.update("home.country.name", "DE");
+
+		BoundAssignments mapped = map(update, WithEmbeddable.class);
+
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
+
+		assertThat(assignments).hasSize(1).containsEntry(SqlIdentifier.unquoted("home_country_name"), SQL.bindMarker("$1"));
+		mapped.getBindings().forEach(it -> {
+			assertThat(it.getValue()).isEqualTo("DE");
+		});
+	}
+
 	private BoundAssignments map(Update update) {
+		return map(update, Person.class);
+	}
+
+	private BoundAssignments map(Update update, Class<?> entityType) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
 
-		return mapper.getMappedObject(markers.create(), update, Table.create("person"),
-				converter.getMappingContext().getRequiredPersistentEntity(Person.class));
+		return mapper.getMappedObject(markers.create(), update, Table.create(entityType.getSimpleName().toLowerCase()),
+				converter.getMappingContext().getRequiredPersistentEntity(entityType));
 	}
 
 	static class Person {
 
 		String name;
 		@Column("another_name") String alternative;
+	}
+
+	static class WithEmbeddable {
+
+		@Embedded.Nullable(prefix = "home_") Address home;
+
+		@Embedded.Nullable(prefix = "work_") Address work;
+	}
+
+	static class Address {
+
+		@Embedded.Nullable(prefix = "country_") Country country;
+		String street;
+
+		public Address(Country country) {
+			this.country = country;
+		}
+
+		public Address(Country country, String street) {
+			this.country = country;
+			this.street = street;
+		}
+	}
+
+	static class Country {
+
+		String name;
+
+		public Country(String name) {
+			this.name = name;
+		}
 	}
 }

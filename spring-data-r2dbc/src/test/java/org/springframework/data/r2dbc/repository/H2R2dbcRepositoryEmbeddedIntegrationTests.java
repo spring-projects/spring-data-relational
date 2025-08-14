@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
@@ -28,6 +30,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -35,6 +38,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Example;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -44,6 +48,7 @@ import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -53,6 +58,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Tests for support of embedded entities.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -63,7 +69,6 @@ class H2R2dbcRepositoryEmbeddedIntegrationTests extends R2dbcIntegrationTestSupp
 	}
 
 	@Autowired private PersonRepository repository;
-	@Autowired private ConnectionFactory connectionFactory;
 	protected JdbcTemplate jdbc;
 
 	@Configuration
@@ -146,7 +151,20 @@ class H2R2dbcRepositoryEmbeddedIntegrationTests extends R2dbcIntegrationTestSupp
 				.verifyComplete();
 	}
 
-	interface PersonRepository extends ReactiveCrudRepository<Person, Integer> {}
+	@Test // GH-2096
+	void shouldFindUsingQueryByExample() {
+
+		shouldInsertNewItems();
+
+		Person probe = new Person(null, new Name("Frodo", "Baggins"));
+
+		repository.findAll(Example.of(probe)) //
+				.as(StepVerifier::create) //
+				.assertNext(p -> assertThat(p.name.first).isEqualTo("Frodo")) //
+				.verifyComplete();
+	}
+
+	interface PersonRepository extends ReactiveCrudRepository<Person, Integer>, ReactiveQueryByExampleExecutor<Person> {}
 
 	record Person(@Id Integer id, @Embedded.Empty(prefix = "name_") Name name) {
 

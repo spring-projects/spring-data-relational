@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -36,6 +37,7 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
@@ -45,6 +47,7 @@ import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.r2dbc.core.binding.BindTarget;
+
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.node.TextNode;
 
@@ -215,8 +218,8 @@ class QueryMapperUnitTests {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
-		Expression mappedObject = mapper.getMappedObject(table.column("alternative").as("my_aliased_col"),
-				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+		Expression mappedObject = mapper.getMappedObjects(table.column("alternative").as("my_aliased_col"),
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class)).get(0);
 
 		assertThat(mappedObject).hasToString("my_aliased_table.another_name AS my_aliased_col");
 	}
@@ -226,8 +229,8 @@ class QueryMapperUnitTests {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
-		Expression mappedObject = mapper.getMappedObject(Functions.count(table.column("alternative")),
-				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+		Expression mappedObject = mapper.getMappedObjects(Functions.count(table.column("alternative")),
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class)).get(0);
 
 		assertThat(mappedObject).hasToString("COUNT(my_aliased_table.another_name)");
 	}
@@ -237,8 +240,8 @@ class QueryMapperUnitTests {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
-		Expression mappedObject = mapper.getMappedObject(table.column("unknown").as("my_aliased_col"),
-				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+		Expression mappedObject = mapper.getMappedObjects(table.column("unknown").as("my_aliased_col"),
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class)).get(0);
 
 		assertThat(mappedObject).hasToString("my_aliased_table.unknown AS my_aliased_col");
 	}
@@ -248,7 +251,7 @@ class QueryMapperUnitTests {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
-		Expression mappedObject = mapper.getMappedObject(table.column("my_col").as("my_aliased_col"), null);
+		Expression mappedObject = mapper.getMappedObjects(table.column("my_col").as("my_aliased_col"), null).get(0);
 
 		assertThat(mappedObject).hasToString("my_aliased_table.my_col AS my_aliased_col");
 	}
@@ -541,12 +544,94 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo("foo");
 	}
 
+	@Test // GH-2096
+	void shouldMapPathToEmbeddable() {
+
+		Criteria criteria = Criteria.where("home").is(new Address(new Country("DE")));
+
+		BoundCondition bindings = map(criteria, WithEmbeddable.class);
+
+		assertThat(bindings.getCondition())
+				.hasToString("withembeddable.home_country_name = ?[$1] AND withembeddable.home_street = ?[$2]");
+	}
+
+	@Test // GH-2096
+	void shouldMapPathToNestedEmbeddable() {
+
+		Criteria criteria = Criteria.where("home.country").is(new Country("DE"));
+
+		BoundCondition bindings = map(criteria, WithEmbeddable.class);
+
+		assertThat(bindings.getCondition()).hasToString("withembeddable.home_country_name = ?[$1]");
+	}
+
+	@Test // GH-2096
+	void shouldMapPathIntoEmbeddable() {
+
+		Criteria criteria = Criteria.where("home.country.name").is("DE");
+
+		BoundCondition bindings = map(criteria, WithEmbeddable.class);
+
+		assertThat(bindings.getCondition()).hasToString("withembeddable.home_country_name = ?[$1]");
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathForEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields).contains(OrderByField.from(table.column("home_country_name"), Sort.Direction.ASC))
+				.contains(OrderByField.from(table.column("home_street"), Sort.Direction.ASC));
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathIntoNestedEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home.country"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields).contains(OrderByField.from(table.column("home_country_name"), Sort.Direction.ASC));
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathIntoEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home.country.name"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields).contains(OrderByField.from(table.column("home_country_name"), Sort.Direction.ASC));
+	}
+
+	@Test // GH-2096
+	void shouldMapSelectionForEmbeddable() {
+
+		Table table = Table.create("my_table").as("my_aliased_table");
+
+		List<Expression> mappedObject = mapper.getMappedObjects(table.column("home"),
+				mapper.getMappingContext().getRequiredPersistentEntity(WithEmbeddable.class));
+
+		assertThat(mappedObject).extracting(Expression::toString) //
+				.hasSize(2) //
+				.contains("my_aliased_table.home_street", "my_aliased_table.home_country_name");
+	}
+
 	private BoundCondition map(Criteria criteria) {
+		return map(criteria, Person.class);
+	}
+
+	private BoundCondition map(Criteria criteria, Class<?> entityType) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
 
-		return mapper.getMappedObject(markers.create(), criteria, Table.create("person"),
-				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
+		return mapper.getMappedObject(markers.create(), criteria, Table.create(entityType.getSimpleName().toLowerCase()),
+				mapper.getMappingContext().getRequiredPersistentEntity(entityType));
+	}
+
+	private List<OrderByField> map(Sort sort, Class<?> entityType) {
+
+		return mapper.getMappedSort(Table.create(entityType.getSimpleName().toLowerCase()), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(entityType));
 	}
 
 	static class Person {
@@ -558,6 +643,32 @@ class QueryMapperUnitTests {
 		boolean state;
 
 		JsonNode jsonNode;
+	}
+
+	static class WithEmbeddable {
+
+		@Embedded.Nullable(prefix = "home_") Address home;
+
+		@Embedded.Nullable(prefix = "work_") Address work;
+	}
+
+	static class Address {
+
+		@Embedded.Nullable(prefix = "country_") Country country;
+		String street;
+
+		public Address(Country country) {
+			this.country = country;
+		}
+	}
+
+	static class Country {
+
+		String name;
+
+		public Country(String name) {
+			this.name = name;
+		}
 	}
 
 	enum MyEnum {
