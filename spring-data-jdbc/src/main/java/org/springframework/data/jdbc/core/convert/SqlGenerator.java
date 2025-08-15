@@ -70,6 +70,7 @@ import org.springframework.util.Assert;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Kurt Niemi
+ * @author Jaeyeon Kim
  */
 public class SqlGenerator {
 
@@ -378,6 +379,18 @@ public class SqlGenerator {
 	}
 
 	/**
+	 * Create a {@code SELECT id FROM … WHERE … (LOCK CLAUSE)} statement based on the given query.
+	 *
+	 * @param query the query to base the select on. Must not be null.
+	 * @param parameterSource the source for holding the bindings.
+	 * @param lockMode Lock clause mode.
+	 * @return the SQL statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	String getAcquireLockByQuery(Query query, MapSqlParameterSource parameterSource, LockMode lockMode) {
+		return this.createAcquireLockByQuery(query, parameterSource, lockMode);
+	}
+
+	/**
 	 * Create a {@code INSERT INTO … (…) VALUES(…)} statement.
 	 *
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
@@ -493,6 +506,72 @@ public class SqlGenerator {
 	}
 
 	/**
+	 * Create a {@code DELETE FROM ... WHERE ...} SQL statement based on the given {@link Query}.
+	 *
+	 * @param query the query object defining filter criteria; must not be {@literal null}.
+	 * @param parameterSource the parameter bindings for the query; must not be {@literal null}.
+	 * @return the SQL DELETE statement as a {@link String}; guaranteed to be not {@literal null}.
+	 */
+	public String createDeleteByQuery(Query query, MapSqlParameterSource parameterSource) {
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		Table table = this.getTable();
+
+		DeleteBuilder.DeleteWhere builder = Delete.builder()
+				.from(table);
+
+		query.getCriteria()
+				.filter(criteria -> !criteria.isEmpty())
+				.map(criteria -> queryMapper.getMappedObject(parameterSource, criteria, table, entity))
+				.ifPresent(builder::where);
+
+		return render(builder.build());
+	}
+
+	/**
+	 * Creates a {@code DELETE} SQL query that targets a specific table defined by the given {@link PersistentPropertyPath},
+	 * and applies filtering using a subselect based on the provided {@link Query}.
+	 *
+	 * @param query the query object containing the filtering criteria; must not be {@literal null}.
+	 * @param parameterSource the source for parameter bindings used in the query; must not be {@literal null}.
+	 * @param propertyPath must not be {@literal null}.
+	 * @return the DELETE SQL statement as a {@link String}. Guaranteed to be not {@literal null}.
+	 */
+	public String createDeleteInSubselectByPath(Query query, MapSqlParameterSource parameterSource,
+												PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		AggregatePath path = mappingContext.getAggregatePath(propertyPath);
+
+        return createDeleteByPathAndCriteria(path, columnMap -> {
+            Select subSelect = createRootIdSubSelect(query, parameterSource);
+			Collection<Column> columns = columnMap.values();
+            Expression expression = columns.size() == 1 ? columns.iterator().next() : TupleExpression.create(columns);
+            return Conditions.in(expression, subSelect);
+        });
+	}
+
+	/**
+	 * Creates a subselect that retrieves root entity IDs filtered by the given query.
+	 */
+	private Select createRootIdSubSelect(Query query, MapSqlParameterSource parameterSource) {
+
+		Table table = this.getTable();
+
+		SelectBuilder.SelectWhere selectBuilder = StatementBuilder
+				.select(getIdColumns())
+				.from(table);
+
+		query.getCriteria()
+				.filter(criteria -> !criteria.isEmpty())
+				.map(criteria -> queryMapper.getMappedObject(parameterSource, criteria, table, entity))
+				.ifPresent(selectBuilder::where);
+
+		return selectBuilder.build();
+	}
+
+	/**
 	 * Constructs a where condition. The where condition will be of the form {@literal <columns> IN :bind-marker}
 	 */
 	private Condition inCondition(Map<AggregatePath, Column> columnMap) {
@@ -589,6 +668,28 @@ public class SqlGenerator {
 				.select(getSingleNonNullColumn()) //
 				.from(table) //
 				.lock(lockMode) //
+				.build();
+
+		return render(select);
+	}
+
+	private String createAcquireLockByQuery(Query query, MapSqlParameterSource parameterSource, LockMode lockMode) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		Table table = this.getTable();
+
+		SelectBuilder.SelectWhere selectBuilder = StatementBuilder
+				.select(getSingleNonNullColumn())
+				.from(table);
+
+		query.getCriteria()
+				.filter(criteria -> !criteria.isEmpty())
+				.map(criteria -> queryMapper.getMappedObject(parameterSource, criteria, table, entity))
+				.ifPresent(selectBuilder::where);
+
+		Select select = selectBuilder
+				.lock(lockMode)
 				.build();
 
 		return render(select);

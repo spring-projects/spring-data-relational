@@ -25,6 +25,8 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.RelationalPredicates;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -40,6 +42,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Jaeyeon Kim
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
 
@@ -68,6 +71,42 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 		} else {
 			deleteRoot(id, aggregateChange).forEach(aggregateChange::addAction);
 		}
+	}
+
+	/**
+	 * Fills the provided {@link MutableAggregateChange} with the necessary {@link DbAction}s
+	 * to delete all aggregate roots matching the given {@link Query}.
+	 * This includes acquiring locks, deleting referenced entities, and deleting the root entities themselves.
+	 *
+	 * @param query the query used to select aggregate root IDs to delete. Must not be {@code null}.
+	 * @param aggregateChange The change object to which delete actions will be added. Must not be {@code null}.
+	 */
+	public void writeForQuery(Query query, MutableAggregateChange<?> aggregateChange) {
+
+		Class<?> entityType = aggregateChange.getEntityType();
+
+		CriteriaDefinition criteria = query.getCriteria().orElse(null);
+		if (criteria == null || criteria.isEmpty()) {
+			deleteAll(entityType).forEach(aggregateChange::addAction);
+			return;
+		}
+
+		List<DbAction<?>> deleteReferencedActions = new ArrayList<>();
+
+		forAllTableRepresentingPaths(entityType, p -> deleteReferencedActions.add(new DbAction.DeleteByQuery<>(query, p)));
+
+		Collections.reverse(deleteReferencedActions);
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		if (!deleteReferencedActions.isEmpty()) {
+			actions.add(new DbAction.AcquireLockAllRootByQuery<>(entityType, query));
+		}
+		actions.addAll(deleteReferencedActions);
+
+		DbAction.DeleteRootByQuery<?> deleteRootByQuery = new DbAction.DeleteRootByQuery<>(entityType, query);
+		actions.add(deleteRootByQuery);
+
+		actions.forEach(aggregateChange::addAction);
 	}
 
 	private List<DbAction<?>> deleteAll(Class<?> entityType) {

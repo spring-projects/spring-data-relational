@@ -64,6 +64,7 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Sergey Korotaev
  * @author Mikhail Polivakha
+ * @author Jaeyeon Kim
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -255,6 +256,29 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteByQuery(Query query, Class<?> domainType) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String deleteSql = sql(domainType).createDeleteByQuery(query, parameterSource);
+
+		operations.update(deleteSql, parameterSource);
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+
+		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
+
+		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
+		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String deleteSql = sql(rootEntity.getType()).createDeleteInSubselectByPath(query, parameterSource, propertyPath);
+
+		operations.update(deleteSql, parameterSource);
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
@@ -268,6 +292,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
 		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
+	}
+
+	@Override
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String acquireLockByQuerySql = sql(domainType).getAcquireLockByQuery(query, parameterSource, lockMode);
+
+		operations.query(acquireLockByQuerySql, parameterSource, ResultSet::next);
 	}
 
 	@Override

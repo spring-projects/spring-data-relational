@@ -74,6 +74,7 @@ import org.springframework.util.Assert;
  * @author Christopher Klein
  * @author Mikhail Polivakha
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -254,6 +255,16 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteByQuery(Query query, Class<?> domainType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".acquireLockById";
@@ -274,6 +285,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
 
 		sqlSession().selectOne(statement, parameter);
+	}
+
+	@Override
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
