@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;

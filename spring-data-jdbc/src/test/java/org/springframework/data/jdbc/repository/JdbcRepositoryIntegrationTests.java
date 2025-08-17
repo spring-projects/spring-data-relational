@@ -56,7 +56,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.*;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;

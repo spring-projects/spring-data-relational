@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.mapping;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;

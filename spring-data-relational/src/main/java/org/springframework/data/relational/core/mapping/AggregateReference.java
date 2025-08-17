@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.mapping;
+package org.springframework.data.relational.core.mapping;
 
 /**
  * A reference to the aggregate root of a different aggregate.

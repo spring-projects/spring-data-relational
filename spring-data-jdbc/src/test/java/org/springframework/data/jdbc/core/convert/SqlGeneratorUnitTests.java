@@ -36,7 +36,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.AnsiDialect;

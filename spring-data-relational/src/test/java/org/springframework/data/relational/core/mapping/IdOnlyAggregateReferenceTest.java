@@ -1,4 +1,4 @@
-package org.springframework.data.jdbc.core.mapping;
+package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 

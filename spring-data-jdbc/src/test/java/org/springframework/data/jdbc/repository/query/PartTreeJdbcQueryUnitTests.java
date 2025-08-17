@@ -35,7 +35,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;

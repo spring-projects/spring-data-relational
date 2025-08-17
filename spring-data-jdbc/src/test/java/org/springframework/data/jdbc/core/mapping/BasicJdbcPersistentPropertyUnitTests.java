@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.data.relational.core.mapping.AggregateReference;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
