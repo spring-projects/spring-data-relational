@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Mark Paluch
+ * @author Jaeyeon Kim
  */
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
@@ -169,12 +170,26 @@ class JdbcAggregateChangeExecutionContext {
 		accessStrategy.deleteAll(delete.getPropertyPath());
 	}
 
+	<T> void excuteDeleteRootByQuery(DbAction.DeleteRootByQuery<T> deleteRootByQuery) {
+
+		accessStrategy.deleteByQuery(deleteRootByQuery.getQuery(), deleteRootByQuery.getEntityType());
+	}
+
+	<T> void excuteDeleteByQuery(DbAction.DeleteByQuery<T> deleteByQuery) {
+
+		accessStrategy.deleteByQuery(deleteByQuery.getQuery(), deleteByQuery.getPropertyPath());
+	}
+
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
 		accessStrategy.acquireLockById(acquireLock.getId(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
 	}
 
 	<T> void executeAcquireLockAllRoot(DbAction.AcquireLockAllRoot<T> acquireLock) {
 		accessStrategy.acquireLockAll(LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
+	}
+
+	<T> void executeAcquireLockRootByQuery(DbAction.AcquireLockAllRootByQuery<T> acquireLock) {
+		accessStrategy.acquireLockByQuery(acquireLock.getQuery(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
 	}
 
 	private void add(DbActionExecutionResult result) {

@@ -74,6 +74,7 @@ import org.springframework.lang.Nullable;
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
+ * @author Jaeyeon Kim
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -166,6 +167,16 @@ class SqlGeneratorUnitTests {
 				.doesNotContain("Element AS elements"));
 	}
 
+	@Test // GH-1978
+	void getAcquireLockByQuery(){
+
+		Query query = Query.query(Criteria.where("id").is(23L));
+
+		String sql = sqlGenerator.getAcquireLockByQuery(query, new MapSqlParameterSource(), LockMode.PESSIMISTIC_WRITE);
+
+		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1 FROM dummy_entity WHERE dummy_entity.id1 = :id1 FOR UPDATE");
+	}
+
 	@Test // DATAJDBC-112
 	void cascadingDeleteFirstLevel() {
 
@@ -239,6 +250,47 @@ class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE element.dummy_entity = :id1");
+	}
+
+	@Test // GH-1978
+	void deleteByQuery() {
+
+		Query query = Query.query(Criteria.where("id").greaterThan(23L));
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String sql = sqlGenerator.createDeleteByQuery(query, parameterSource);
+
+		assertThat(sql).isEqualTo("DELETE FROM dummy_entity WHERE dummy_entity.id1 > :id1");
+	}
+
+	@Test // GH-1978
+	void cascadingDeleteInSubselectByPathFirstLevel() {
+
+		Query query = Query.query(Criteria.where("id").is(23L));
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String sql = sqlGenerator.createDeleteInSubselectByPath(query, parameterSource,
+				getPath("ref", DummyEntity.class));
+
+		assertThat(sql).isEqualTo(
+				"DELETE FROM referenced_entity WHERE referenced_entity.dummy_entity IN " +
+						"(SELECT dummy_entity.id1 AS id1 FROM dummy_entity WHERE dummy_entity.id1 = :id1)");
+	}
+
+	@Test // GH-1978
+	void cascadingDeleteInSubselectByPathSecondLevel() {
+
+		Query query = Query.query(Criteria.where("id").is(23L));
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String sql = sqlGenerator.createDeleteInSubselectByPath(query, parameterSource,
+				getPath("ref.further", DummyEntity.class));
+
+		assertThat(sql).isEqualTo(
+				"DELETE FROM second_level_referenced_entity " +
+						"WHERE second_level_referenced_entity.referenced_entity IN " +
+						"(SELECT referenced_entity.x_l1id FROM referenced_entity WHERE referenced_entity.dummy_entity IN " +
+						"(SELECT dummy_entity.id1 AS id1 FROM dummy_entity WHERE dummy_entity.id1 = :id1))");
 	}
 
 	@Test // DATAJDBC-101
