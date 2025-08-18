@@ -59,14 +59,11 @@ public interface OrderByNullPrecedence {
 
 		@Override
 		public String evaluate(Sort.NullHandling nullHandling) {
-
-			switch (nullHandling) {
-				case NULLS_FIRST: return NULLS_FIRST;
-				case NULLS_LAST: return NULLS_LAST;
-				case NATIVE: return UNSPECIFIED;
-				default:
-					throw new UnsupportedOperationException("Sort.NullHandling " + nullHandling + " not supported");
-			}
+            return switch (nullHandling) {
+                case NULLS_FIRST -> NULLS_FIRST;
+                case NULLS_LAST -> NULLS_LAST;
+                case NATIVE -> UNSPECIFIED;
+            };
 		}
 	}
 }

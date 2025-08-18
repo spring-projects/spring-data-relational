@@ -89,23 +89,29 @@ public class QueryMapper {
 
 			SqlSort.validate(order);
 
-			OrderByField simpleOrderByField = createSimpleOrderByField(table, entity, order);
-			OrderByField orderBy = simpleOrderByField.withNullHandling(order.getNullHandling());
-			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
+			if (order instanceof SqlSort.SqlOrder sqlOrder && sqlOrder.isUnsafe()) {
+				mappedOrder.add(OrderByField.from(Expressions.just(sqlOrder.getProperty())));
+				continue;
+			}
+
+			Field field = createField(entity, order);
+
+			OrderByField orderByField = OrderByField.from( //
+					table.column(field.getMappedColumnName()), //
+					order.isAscending() ? Sort.Direction.ASC : Sort.Direction.DESC, //
+					order.getNullHandling(), //
+					order.isIgnoreCase() //
+			);
+
+			mappedOrder.add(orderByField);
 		}
 
 		return mappedOrder;
 
 	}
 
-	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
-
-		if (order instanceof SqlSort.SqlOrder sqlOrder && sqlOrder.isUnsafe()) {
-			return OrderByField.from(Expressions.just(sqlOrder.getProperty()));
-		}
-
-		Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
-		return OrderByField.from(table.column(field.getMappedColumnName()));
+	private Field createField(RelationalPersistentEntity<?> entity, Sort.Order order) {
+		return createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
 	}
 
 	/**

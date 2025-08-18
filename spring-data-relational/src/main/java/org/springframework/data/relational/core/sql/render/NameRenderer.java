@@ -91,8 +91,13 @@ class NameRenderer {
 			return render(context, namingStrategy.getReferenceName(column));
 		}
 
-		return render(context, SqlIdentifier.from(namingStrategy.getReferenceName(column.getTable()),
-				namingStrategy.getReferenceName(column)));
+		return render( //
+				context, //
+				SqlIdentifier.from( //
+						namingStrategy.getReferenceName(column.getTable()), //
+						namingStrategy.getReferenceName(column) //
+				)
+		);
 	}
 
 	/**
