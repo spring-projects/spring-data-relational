@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -35,7 +36,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -74,7 +74,11 @@ record Tables(List<Table> tables) {
 							continue;
 						}
 
-						Column column = new Column(property.getColumnName().getReference(), sqlTypeMapping.getColumnType(property),
+						String columnType = sqlTypeMapping.getColumnType(property);
+
+						Assert.state(columnType != null, "Column type must not be null");
+
+						Column column = new Column(property.getColumnName().getReference(), columnType,
 								sqlTypeMapping.isNullable(property), identifierColumns.contains(property));
 						table.columns().add(column);
 					}
@@ -103,13 +107,17 @@ record Tables(List<Table> tables) {
 			List<String> parentIdColumnNames = parentIdColumns.stream().map(Column::name).toList();
 
 			String foreignKeyName = getForeignKeyName(foreignKeyMetadata.parentTableName, parentIdColumnNames);
+			String keyColumnType = foreignKeyMetadata.keyColumnType();
+
 			if (parentIdColumnNames.size() == 1) {
 
 				addIfAbsent(table.columns(), new Column(foreignKeyMetadata.referencingColumnName(),
 						parentIdColumns.get(0).type(), false, table.getIdColumns().isEmpty()));
 				if (foreignKeyMetadata.keyColumnName() != null) {
-					addIfAbsent(table.columns(),
-							new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(), false, true));
+
+					Assert.state(keyColumnType != null, "Key column type must not be null");
+
+					addIfAbsent(table.columns(), new Column(foreignKeyMetadata.keyColumnName(), keyColumnType, false, true));
 				}
 				addIfAbsent(table.foreignKeys(),
 						new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(),
@@ -118,8 +126,12 @@ record Tables(List<Table> tables) {
 			} else {
 
 				addIfAbsent(table.columns(), parentIdColumns.toArray(new Column[0]));
-				addIfAbsent(table.columns(),
-						new Column(foreignKeyMetadata.keyColumnName(), foreignKeyMetadata.keyColumnType(), false, true));
+				String keyColumnName = foreignKeyMetadata.keyColumnName();
+
+				Assert.state(keyColumnName != null, "Key column name must not be null");
+				Assert.state(keyColumnType != null, "Key column type must not be null");
+
+				addIfAbsent(table.columns(), new Column(keyColumnName, keyColumnType, false, true));
 				addIfAbsent(table.foreignKeys(), new ForeignKey(foreignKeyName, foreignKeyMetadata.tableName(),
 						parentIdColumnNames, foreignKeyMetadata.parentTableName(), parentIdColumnNames));
 			}
@@ -147,6 +159,8 @@ record Tables(List<Table> tables) {
 		excludeTables.add(child.tableName());
 
 		Table parentTable = findTableByName(tables, child.parentTableName());
+
+		Assert.state(parentTable != null, "Parent table must not be null");
 		ForeignKeyMetadata parentMetadata = findMetadataByTableName(foreignKeyMetadataList, child.parentTableName(),
 				excludeTables);
 		List<Column> parentIdColumns = parentTable.getIdColumns();
@@ -165,8 +179,11 @@ record Tables(List<Table> tables) {
 			parentParentIdColumns = new LinkedList<>(List.of(withChangedName));
 		}
 		if (parentMetadata.keyColumnName() != null) {
-			parentParentIdColumns
-					.add(new Column(parentMetadata.keyColumnName(), parentMetadata.keyColumnType(), false, true));
+			String keyColumnType = parentMetadata.keyColumnType();
+
+			Assert.state(keyColumnType != null, "Key column type must not be null");
+
+			parentParentIdColumns.add(new Column(parentMetadata.keyColumnName(), keyColumnType, false, true));
 		}
 		return parentParentIdColumns;
 	}
@@ -197,7 +214,11 @@ record Tables(List<Table> tables) {
 			if (property.getType() == List.class) {
 				referencedKeyColumnType = sqlTypeMapping.getColumnType(Integer.class);
 			} else if (property.getType() == Map.class) {
-				referencedKeyColumnType = sqlTypeMapping.getColumnType(property.getComponentType());
+				Class<?> componentType = property.getComponentType();
+
+				Assert.state(componentType != null, "Component type must not be null");
+
+				referencedKeyColumnType = sqlTypeMapping.getColumnType(componentType);
 			}
 		}
 

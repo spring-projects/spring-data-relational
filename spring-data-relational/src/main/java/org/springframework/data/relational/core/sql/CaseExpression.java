@@ -1,16 +1,17 @@
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.lang.Nullable;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.stream.Collectors.*;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Case with one or more conditions expression.
  * <p>
  * Results in a rendered condition:
+ * 
  * <pre>
  *   CASE
  *     WHEN condition1 THEN result1
@@ -25,8 +26,7 @@ import static java.util.stream.Collectors.*;
 public class CaseExpression extends AbstractSegment implements Expression {
 
 	private final List<When> whenList;
-	@Nullable
-	private final Expression elseExpression;
+	@Nullable private final Expression elseExpression;
 
 	private static Segment[] children(List<When> whenList, @Nullable Expression elseExpression) {
 
@@ -81,6 +81,7 @@ public class CaseExpression extends AbstractSegment implements Expression {
 
 	@Override
 	public String toString() {
-		return "CASE " + whenList.stream().map(When::toString).collect(joining(" ")) + (elseExpression != null ? " ELSE " + elseExpression : "") + " END";
+		return "CASE " + whenList.stream().map(When::toString).collect(joining(" "))
+				+ (elseExpression != null ? " ELSE " + elseExpression : "") + " END";
 	}
 }

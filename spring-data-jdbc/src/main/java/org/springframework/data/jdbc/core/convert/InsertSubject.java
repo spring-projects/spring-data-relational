@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.Objects;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The subject of an insert, described by the entity instance and its {@link Identifier}, where identifier contains

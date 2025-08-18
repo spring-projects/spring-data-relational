@@ -15,9 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 
 /**
  * A {@link PersistentProperty} with methods for additional RDBMS related metadata based on columns.
@@ -77,11 +77,10 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	}
 
 	/**
-	 * @return Prefix for embedded columns. If the column is not embedded the return value is null.
+	 * @return Prefix for embedded columns. If the column is not embedded the return value is empty.
 	 */
-	@Nullable
 	default String getEmbeddedPrefix() {
-		return null;
+		return "";
 	}
 
 	/**

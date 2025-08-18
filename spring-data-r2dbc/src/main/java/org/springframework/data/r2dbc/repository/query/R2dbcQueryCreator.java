@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -40,8 +41,8 @@ import org.springframework.data.relational.repository.query.RelationalParameterA
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
 import org.springframework.data.repository.query.parser.PartTree;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.util.Assert;
 
 /**
  * Implementation of {@link AbstractQueryCreator} that creates {@link PreparedOperation} from a {@link PartTree}.
@@ -76,6 +77,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 	public R2dbcQueryCreator(PartTree tree, ReactiveDataAccessStrategy dataAccessStrategy,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor,
 			List<String> projectedProperties, Optional<Lock> lock) {
+
 		super(tree, accessor);
 
 		this.tree = tree;
@@ -123,7 +125,12 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		if (tree.isExistsProjection()) {
 			selectSpec = selectSpec.limit(1);
 		} else if (tree.isLimiting()) {
-			selectSpec = selectSpec.limit(tree.getMaxResults());
+
+			Integer maxResults = tree.getMaxResults();
+
+			Assert.state(maxResults != null, "Max results must be specified when limit is set");
+
+			selectSpec = selectSpec.limit(maxResults);
 		}
 
 		Pageable pageable = accessor.getPageable();

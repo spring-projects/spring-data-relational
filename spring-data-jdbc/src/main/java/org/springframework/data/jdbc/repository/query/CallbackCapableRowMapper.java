@@ -17,12 +17,12 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.sql.ResultSet;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * Delegating {@link RowMapper} implementation that applies post-processing logic after the

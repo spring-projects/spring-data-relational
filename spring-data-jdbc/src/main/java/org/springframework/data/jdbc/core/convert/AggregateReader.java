@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
@@ -40,7 +41,6 @@ import org.springframework.data.util.Streamable;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 
 /**
  * Reads complete Aggregates from the database, by generating appropriate SQL using a {@link SingleQuerySqlGenerator}
@@ -110,6 +110,7 @@ class AggregateReader implements PathToColumnMapping {
 	 * @return the found aggregate root, or {@literal null} if not found.
 	 * @param <T> aggregator type.
 	 */
+	@SuppressWarnings("NullAway") // NullAway complains about the ResultSetExtractor returning null, which should be ok.
 	@Nullable
 	public <T> T findOne(Query query, RelationalPersistentEntity<T> entity) {
 		return doFind(query, entity, rs -> extractZeroOrOne(rs, entity));

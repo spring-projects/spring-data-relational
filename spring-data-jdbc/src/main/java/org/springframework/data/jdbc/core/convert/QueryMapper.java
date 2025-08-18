@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -42,7 +43,6 @@ import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -98,7 +98,8 @@ public class QueryMapper {
 
 	}
 
-	private OrderByField createSimpleOrderByField(Table table, RelationalPersistentEntity<?> entity, Sort.Order order) {
+	private OrderByField createSimpleOrderByField(Table table, @Nullable RelationalPersistentEntity<?> entity,
+			Sort.Order order) {
 
 		if (order instanceof SqlSort.SqlOrder sqlOrder && sqlOrder.isUnsafe()) {
 			return OrderByField.from(Expressions.just(sqlOrder.getProperty()));
@@ -182,8 +183,13 @@ public class QueryMapper {
 		Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
 
 		while (current.hasPrevious()) {
-			forwardChain.put(current.getPrevious(), current);
-			current = current.getPrevious();
+
+			CriteriaDefinition previous = current.getPrevious();
+
+			Assert.state(previous != null, "Previous must not be null");
+
+			forwardChain.put(previous, current);
+			current = previous;
 		}
 
 		// perform the actual mapping
@@ -270,12 +276,19 @@ public class QueryMapper {
 	private Condition mapCondition(CriteriaDefinition criteria, MapSqlParameterSource parameterSource, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
+		SqlIdentifier criteriaColumn = criteria.getColumn();
+
+		Assert.notNull(criteriaColumn, "Column must not be null");
+
+		Field propertyField = createPropertyField(entity, criteriaColumn, this.mappingContext);
 
 		// Single embedded entity
 		if (propertyField.isEmbedded()) {
-			return mapEmbeddedObjectCondition(criteria, parameterSource, table,
-					((MetadataBackedField) propertyField).getPath().getLeafProperty());
+			PersistentPropertyPath<RelationalPersistentProperty> path = ((MetadataBackedField) propertyField).getPath();
+
+			Assert.state(path != null, "Path must not be null");
+
+			return mapEmbeddedObjectCondition(criteria, parameterSource, table, path.getLeafProperty());
 		}
 
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
@@ -283,6 +296,8 @@ public class QueryMapper {
 		Object mappedValue;
 		SQLType sqlType;
 		Comparator comparator = criteria.getComparator();
+
+		Assert.notNull(comparator, "Comparator must not be null");
 
 		if (criteria.getValue() instanceof JdbcValue settableValue) {
 
@@ -329,7 +344,14 @@ public class QueryMapper {
 
 			JdbcValue first = getWriteValue(property, ((Pair<?, ?>) value).getFirst());
 			JdbcValue second = getWriteValue(property, ((Pair<?, ?>) value).getSecond());
-			return JdbcValue.of(Pair.of(first.getValue(), second.getValue()), first.getJdbcType());
+			Object firstValue = first.getValue();
+			Object secondValue = second.getValue();
+
+			Assert.state(firstValue != null, "First value must not be null");
+
+			Assert.state(secondValue != null, "Second value must not be null");
+
+			return JdbcValue.of(Pair.of(firstValue, secondValue), first.getJdbcType());
 		}
 
 		if (value instanceof Iterable) {
@@ -407,8 +429,12 @@ public class QueryMapper {
 					nestedProperty.getTypeInformation());
 			SQLType sqlType = converter.getTargetSqlType(nestedProperty);
 
+			Comparator criteriaComparator = criteria.getComparator();
+
+			Assert.notNull(criteriaComparator, "Criteria comparator must not be null");
+
 			Condition mappedCondition = createCondition(table.column(sqlIdentifier), mappedNestedValue, sqlType,
-					parameterSource, criteria.getComparator(), criteria.isIgnoreCase());
+					parameterSource, criteriaComparator, criteria.isIgnoreCase());
 
 			if (condition != null) {
 				condition = condition.and(mappedCondition);
@@ -416,6 +442,8 @@ public class QueryMapper {
 				condition = mappedCondition;
 			}
 		}
+
+		Assert.state(condition != null, "Condition must not be null");
 
 		return Conditions.nest(condition);
 	}
@@ -456,6 +484,10 @@ public class QueryMapper {
 			Object second = convertValue(pair.getSecond(), typeInformation.getActualType() != null //
 					? typeInformation.getRequiredActualType()
 					: TypeInformation.OBJECT);
+
+			Assert.state(first != null, "First value must not be null");
+
+			Assert.state(second != null, "Second value must not be null");
 
 			return Pair.of(first, second);
 		}
@@ -534,6 +566,8 @@ public class QueryMapper {
 
 		if (comparator == Comparator.BETWEEN || comparator == Comparator.NOT_BETWEEN) {
 
+			Assert.state(mappedValue != null, "Mapped value must not be null");
+
 			Pair<Object, Object> pair = (Pair<Object, Object>) mappedValue;
 
 			Expression begin = bind(pair.getFirst(), sqlType, parameterSource, column.getName().getReference(), ignoreCase);
@@ -603,11 +637,19 @@ public class QueryMapper {
 			return JdbcUtil.TYPE_UNKNOWN;
 		}
 
-		if (mappedValue.getClass().equals(settableValue.getValue().getClass())) {
+		Object settableValueValue = settableValue.getValue();
+
+		Assert.state(settableValueValue != null, "Settable value must not be null");
+
+		if (mappedValue.getClass().equals(settableValueValue.getClass())) {
 			return JdbcUtil.TYPE_UNKNOWN;
 		}
 
-		return settableValue.getJdbcType();
+		SQLType jdbcType = settableValue.getJdbcType();
+
+		Assert.state(jdbcType != null, "JDBC type must not be null");
+
+		return jdbcType;
 	}
 
 	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource,
@@ -690,7 +732,7 @@ public class QueryMapper {
 
 		private final RelationalPersistentEntity<?> entity;
 		private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
-		private final RelationalPersistentProperty property;
+		private final @Nullable RelationalPersistentProperty property;
 		private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 		private final boolean embedded;
 		private final SQLType sqlType;

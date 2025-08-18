@@ -44,8 +44,8 @@ public class ParameterMetadataProviderUnitTests {
 
 		ParameterMetadata metadata = getParameterMetadata("findByNameContains", "hell%o");
 
-		assertThat(metadata.getValue()).isInstanceOf(ValueFunction.class);
-		ValueFunction<Object> function = (ValueFunction<Object>) metadata.getValue();
+		assertThat(metadata.value()).isInstanceOf(ValueFunction.class);
+		ValueFunction<Object> function = (ValueFunction<Object>) metadata.value();
 		assertThat(function.apply(Escaper.DEFAULT)).isEqualTo("%hell\\%o%");
 	}
 
@@ -54,8 +54,8 @@ public class ParameterMetadataProviderUnitTests {
 
 		ParameterMetadata metadata = getParameterMetadata("findByNameStartingWith", "hell%o");
 
-		assertThat(metadata.getValue()).isInstanceOf(ValueFunction.class);
-		ValueFunction<Object> function = (ValueFunction<Object>) metadata.getValue();
+		assertThat(metadata.value()).isInstanceOf(ValueFunction.class);
+		ValueFunction<Object> function = (ValueFunction<Object>) metadata.value();
 		assertThat(function.apply(Escaper.DEFAULT)).isEqualTo("hell\\%o%");
 	}
 
@@ -64,7 +64,7 @@ public class ParameterMetadataProviderUnitTests {
 
 		ParameterMetadata metadata = getParameterMetadata("findByName", "hell%o");
 
-		assertThat(metadata.getValue()).isEqualTo("hell%o");
+		assertThat(metadata.value()).isEqualTo("hell%o");
 	}
 
 	private ParameterMetadata getParameterMetadata(String methodName, Object value) throws Exception {

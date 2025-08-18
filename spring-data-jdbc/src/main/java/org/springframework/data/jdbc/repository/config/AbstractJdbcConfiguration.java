@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -80,7 +79,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 	private static final Log LOG = LogFactory.getLog(AbstractJdbcConfiguration.class);
 
-	private ApplicationContext applicationContext;
+	@SuppressWarnings("NullAway.Init") private ApplicationContext applicationContext;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 

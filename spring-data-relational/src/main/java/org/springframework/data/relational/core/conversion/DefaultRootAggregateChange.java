@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -37,7 +37,7 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
-	private DbAction.WithRoot<T> rootAction;
+	private DbAction.@Nullable WithRoot<T> rootAction;
 
 	/** The previous version assigned to the instance being changed, if available */
 	@Nullable private final Number previousVersion;
@@ -77,6 +77,7 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 
 		Assert.isInstanceOf(this.entityType, aggregateRoot,
 				String.format("AggregateRoot must be of type %s", entityType.getName()));
+		Assert.state(rootAction != null, "rootAction must not be null");
 
 		rootAction.setEntity(aggregateRoot);
 	}
@@ -97,7 +98,10 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 
 	@Override
 	public T getRoot() {
-		return this.rootAction.getEntity();
+
+		Assert.state(rootAction != null, "rootAction must not be null");
+
+		return this.rootAction.entity();
 	}
 
 	@Override

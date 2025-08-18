@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.util.Assert;
 
 /**
  * A {@link RowMapper} that maps a row to a {@link Map.Entry} so an {@link Iterable} of those can be converted to a
@@ -55,6 +56,9 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 		RowDocument document = RowDocumentResultSetExtractor.toRowDocument(rs);
 
 		Object key = document.get(keyColumn.getReference());
+
+		Assert.notNull(key, "Key must not be null");
+
 		Class<?> qualifierColumnType = path.getRequiredLeafProperty().getQualifierColumnType();
 		Object convertedKey = converter.readValue(key, TypeInformation.of(qualifierColumnType));
 

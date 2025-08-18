@@ -18,9 +18,9 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -35,7 +35,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
@@ -46,8 +45,8 @@ import org.springframework.lang.Nullable;
  */
 class SqlGeneratorEmbeddedUnitTests {
 
-	private RelationalMappingContext context = JdbcMappingContext.forPlainIdentifiers();
-	private JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
+	private final RelationalMappingContext context = JdbcMappingContext.forPlainIdentifiers();
+	private final JdbcConverter converter = new MappingJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 	private SqlGenerator sqlGenerator;
@@ -416,8 +415,7 @@ class SqlGeneratorEmbeddedUnitTests {
 						SqlIdentifier.unquoted("prefix_other_value"));
 	}
 
-	@Nullable
-	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
+	private SqlGenerator.@Nullable Join generateJoin(String path, Class<?> type) {
 		return createSqlGenerator(type)
 				.getJoin(context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));
 	}
@@ -431,8 +429,7 @@ class SqlGeneratorEmbeddedUnitTests {
 		return null;
 	}
 
-	@Nullable
-	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
+	private org.springframework.data.relational.core.sql.@Nullable Column generatedColumn(String path, Class<?> type) {
 
 		return createSqlGenerator(type)
 				.getColumn(context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));

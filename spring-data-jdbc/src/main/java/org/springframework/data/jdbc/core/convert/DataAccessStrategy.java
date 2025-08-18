@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,7 +32,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 
 /**
  * Abstraction for accesses to the database that should be implementable with a single SQL statement per method and
@@ -291,8 +291,8 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
 	/**
-	 * Loads all entities that match one of the ids passed as an argument to a {@link Stream}.
-	 * It is not guaranteed that the number of ids passed in matches the number of entities returned.
+	 * Loads all entities that match one of the ids passed as an argument to a {@link Stream}. It is not guaranteed that
+	 * the number of ids passed in matches the number of entities returned.
 	 *
 	 * @param ids the Ids of the entities to load. Must not be {@code null}.
 	 * @param domainType the type of entities to load. Must not be {@code null}.

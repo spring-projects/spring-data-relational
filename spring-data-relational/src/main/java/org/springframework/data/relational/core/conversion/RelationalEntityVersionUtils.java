@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * Utilities commonly used to set/get properties for instances of RelationalPersistentEntities.

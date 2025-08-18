@@ -19,10 +19,10 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.lang.Nullable;
 
 /**
  * The finding methods of a {@link DataAccessStrategy}.
@@ -74,8 +74,8 @@ interface ReadingDataAccessStrategy {
 	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
 	/**
-	 * Loads all entities that match one of the ids passed as an argument to a {@link Stream}.
-	 * It is not guaranteed that the number of ids passed in matches the number of entities returned.
+	 * Loads all entities that match one of the ids passed as an argument to a {@link Stream}. It is not guaranteed that
+	 * the number of ids passed in matches the number of entities returned.
 	 *
 	 * @param ids the Ids of the entities to load. Must not be {@code null}.
 	 * @param domainType the type of entities to load. Must not be {@code null}.

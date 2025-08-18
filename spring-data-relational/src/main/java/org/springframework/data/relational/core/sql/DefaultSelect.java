@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**

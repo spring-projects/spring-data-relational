@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.mapping;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
@@ -25,7 +26,6 @@ import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.expression.Expression;
 import org.springframework.expression.common.LiteralExpression;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -58,7 +58,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 * @param information must not be {@literal null}.
 	 */
 	BasicRelationalPersistentEntity(TypeInformation<T> information, NamingStrategy namingStrategy,
-									SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
+			SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
 
 		super(information);
 

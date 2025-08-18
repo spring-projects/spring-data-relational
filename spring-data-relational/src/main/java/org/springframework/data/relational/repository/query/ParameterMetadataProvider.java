@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.parser.Part;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -58,8 +58,7 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 	 * @param bindableParameterValueIterator iterator over bindable parameter values
 	 * @param parameters method parameters (must not be {@literal null})
 	 */
-	private ParameterMetadataProvider(Parameters<?, ?> parameters,
-			@Nullable Iterator<Object> bindableParameterValueIterator) {
+	private ParameterMetadataProvider(Parameters<?, ?> parameters, Iterator<Object> bindableParameterValueIterator) {
 
 		Assert.notNull(parameters, "Parameters must not be null");
 
@@ -140,8 +139,8 @@ class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 		return switch (partType) {
 			case STARTING_WITH -> (ValueFunction<String>) escaper -> escaper.escape(value.toString()) + "%";
 			case ENDING_WITH -> (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString());
-			case CONTAINING, NOT_CONTAINING -> (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString())
-					+ "%";
+			case CONTAINING, NOT_CONTAINING ->
+				(ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString()) + "%";
 			default -> value;
 		};
 	}

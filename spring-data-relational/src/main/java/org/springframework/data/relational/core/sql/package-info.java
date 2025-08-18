@@ -9,9 +9,7 @@
  * 
  * @since 1.1
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

@@ -15,10 +15,10 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.NullHandling;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
 public class OrderByField extends AbstractSegment {
 
 	private final Expression expression;
-	private final @Nullable Sort.Direction direction;
+	private final Sort.@Nullable Direction direction;
 	private final Sort.NullHandling nullHandling;
 
 	private OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling) {

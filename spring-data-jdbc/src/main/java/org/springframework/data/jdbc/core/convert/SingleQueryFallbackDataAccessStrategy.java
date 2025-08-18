@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
@@ -55,7 +56,7 @@ class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T> @Nullable T findById(Object id, Class<T> domainType) {
 
 		if (isSingleSelectQuerySupported(domainType)) {
 			return singleSelectDelegate.findById(id, domainType);

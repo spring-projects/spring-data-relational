@@ -24,9 +24,9 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -56,7 +56,6 @@ import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -827,8 +826,7 @@ class SqlGeneratorUnitTests {
 		});
 	}
 
-	@Nullable
-	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
+	private SqlGenerator.@Nullable Join generateJoin(String path, Class<?> type) {
 		return createSqlGenerator(type, AnsiDialect.INSTANCE)
 				.getJoin(context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));
 	}
@@ -1035,8 +1033,7 @@ class SqlGeneratorUnitTests {
 		return null;
 	}
 
-	@Nullable
-	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
+	private org.springframework.data.relational.core.sql.@Nullable Column generatedColumn(String path, Class<?> type) {
 
 		return createSqlGenerator(type, AnsiDialect.INSTANCE)
 				.getColumn(context.getAggregatePath(PersistentPropertyPathTestUtils.getPath(path, type, context)));

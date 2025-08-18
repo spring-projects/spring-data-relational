@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
@@ -42,7 +43,6 @@ import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
@@ -203,11 +203,16 @@ public class QueryMapper {
 				List<Expression> expressions = new ArrayList<>();
 
 				for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+
+					Assert.state(table != null, "Embedded table must not be null");
+
 					expressions.addAll(getMappedObjects(Column.create(embeddedProperty.getName(), table), embeddedEntity));
 				}
 
 				return expressions;
 			}
+
+			Assert.state(table != null, "Table must not be null");
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return List.of(column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable);
@@ -267,8 +272,13 @@ public class QueryMapper {
 		Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
 
 		while (current.hasPrevious()) {
-			forwardChain.put(current.getPrevious(), current);
-			current = current.getPrevious();
+
+			CriteriaDefinition previous = current.getPrevious();
+
+			Assert.state(previous != null, "Previous criteria must not be null");
+
+			forwardChain.put(previous, current);
+			current = previous;
 		}
 
 		// perform the actual mapping
@@ -355,7 +365,11 @@ public class QueryMapper {
 	private Condition mapCondition(CriteriaDefinition criteria, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
+		SqlIdentifier criteriaColumn = criteria.getColumn();
+
+		Assert.notNull(criteriaColumn, "CriteriaColumn must not be null");
+
+		Field propertyField = createPropertyField(entity, criteriaColumn, this.mappingContext);
 
 		if (propertyField.isEmbedded() && entity != null) {
 
@@ -400,6 +414,9 @@ public class QueryMapper {
 		Class<?> typeHint;
 
 		Comparator comparator = criteria.getComparator();
+
+		Assert.state(comparator != null, "CriteriaComparator must not be null");
+
 		if (criteria.getValue() instanceof Parameter parameter) {
 
 			mappedValue = convertValue(comparator, parameter.getValue(), propertyField.getTypeHint());
@@ -447,7 +464,7 @@ public class QueryMapper {
 
 			@Override
 			public Object getBean() {
-				return null;
+				throw new UnsupportedOperationException("Can't get bean for null valued embedded property");
 			}
 		};
 	}
@@ -474,7 +491,11 @@ public class QueryMapper {
 			return Parameter.empty(converter.getTargetType(value.getType()));
 		}
 
-		return Parameter.from(convertValue(value.getValue(), TypeInformation.OBJECT));
+		Object convertedValue = convertValue(value.getValue(), TypeInformation.OBJECT);
+
+		Assert.state(convertedValue != null, "Value must not be null");
+
+		return Parameter.from(convertedValue);
 	}
 
 	@Nullable
@@ -508,9 +529,11 @@ public class QueryMapper {
 
 			Object first = convertValue(pair.getFirst(),
 					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType() : TypeInformation.OBJECT);
-
 			Object second = convertValue(pair.getSecond(),
 					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType() : TypeInformation.OBJECT);
+
+			Assert.state(first != null, "First value must not be null");
+			Assert.state(second != null, "Second value must not be null");
 
 			return Pair.of(first, second);
 		}
@@ -586,6 +609,8 @@ public class QueryMapper {
 
 			Pair<Object, Object> pair = (Pair<Object, Object>) mappedValue;
 
+			Assert.state(pair != null, "Pair must not be null");
+
 			Expression begin = bind(pair.getFirst(), valueType, bindings,
 					bindings.nextMarker(column.getName().getReference()), ignoreCase);
 			Expression end = bind(pair.getSecond(), valueType, bindings, bindings.nextMarker(column.getName().getReference()),
@@ -654,7 +679,11 @@ public class QueryMapper {
 			return parameter.getType();
 		}
 
-		if (mappedValue.getClass().equals(parameter.getValue().getClass())) {
+		Object value = parameter.getValue();
+
+		Assert.state(value != null, "Value must not be null");
+
+		if (mappedValue.getClass().equals(value.getClass())) {
 			return parameter.getType();
 		}
 
@@ -679,8 +708,8 @@ public class QueryMapper {
 				: SQL.bindMarker(bindMarker.getPlaceholder());
 	}
 
-	private Expression booleanBind(Column column, Object mappedValue, Class<?> valueType, MutableBindings bindings,
-			boolean ignoreCase) {
+	private Expression booleanBind(Column column, @Nullable Object mappedValue, Class<?> valueType,
+			MutableBindings bindings, boolean ignoreCase) {
 		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 
 		return bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
@@ -953,7 +982,7 @@ public class QueryMapper {
 
 		@Override
 		public Combinator getCombinator() {
-			return null;
+			throw new UnsupportedOperationException("No combinator for AbstractCriteria");
 		}
 	}
 }

@@ -17,9 +17,9 @@ package org.springframework.data.relational.core.sql.render;
 
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.data.relational.core.sql.Visitor;
-import org.springframework.lang.Nullable;
 
 /**
  * Filtering {@link DelegatingVisitor visitor} applying a {@link Predicate filter}. Typically used as base class for

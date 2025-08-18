@@ -30,6 +30,7 @@ import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.r2dbc.core.RowsFetchSpec;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -60,7 +61,12 @@ interface R2dbcQueryExecution {
 		 */
 		@Override
 		public Publisher<Object> execute(RowsFetchSpec<Object> fetchSpec) {
-			return (Publisher<Object>) this.converter.convert(this.delegate.execute(fetchSpec));
+
+			Publisher<Object> publisher = (Publisher<Object>) this.converter.convert(this.delegate.execute(fetchSpec));
+
+			Assert.state(publisher != null, "Publisher must not be null");
+
+			return publisher;
 		}
 	}
 

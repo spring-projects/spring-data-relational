@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -27,7 +28,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.lang.Nullable;
 
 /**
  * An {@link InsertStrategy} that expects an id to be generated from the insert.
@@ -40,7 +40,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 
 	private final Dialect dialect;
 	private final NamedParameterJdbcOperations jdbcOperations;
-	private final SqlIdentifier idColumn;
+	private final @Nullable SqlIdentifier idColumn;
 
 	IdGeneratingInsertStrategy(Dialect dialect, NamedParameterJdbcOperations jdbcOperations,
 			@Nullable SqlIdentifier idColumn) {
@@ -50,7 +50,7 @@ class IdGeneratingInsertStrategy implements InsertStrategy {
 	}
 
 	@Override
-	public Object execute(String sql, SqlParameterSource sqlParameterSource) {
+	public @Nullable Object execute(String sql, SqlParameterSource sqlParameterSource) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 

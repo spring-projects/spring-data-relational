@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.mapping.context.MappingContext;
@@ -48,7 +49,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
@@ -202,21 +202,19 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			return false;
 		}
 
-		if (value.hasValue() && (value.getValue() instanceof Collection || value.getValue().getClass().isArray())) {
+		if (value.hasValue() && value.getValue() instanceof Collection
+				// use != null, because NullAway doesn't understand the semantics of hasValue
+				|| (value.getValue() != null && value.getValue().getClass().isArray())) {
 			return true;
 		}
 
-		if (Collection.class.isAssignableFrom(value.getType()) || value.getType().isArray()) {
-			return true;
-		}
-
-		return false;
+		return Collection.class.isAssignableFrom(value.getType()) || value.getType().isArray();
 	}
 
-	private Parameter getArrayValue(Parameter value, RelationalPersistentProperty property) {
+	private Parameter getArrayValue(Parameter parameter, RelationalPersistentProperty property) {
 
-		if (value.getType().equals(byte[].class)) {
-			return value;
+		if (parameter.getType().equals(byte[].class)) {
+			return parameter;
 		}
 
 		ArrayColumns arrayColumns = this.dialect.getArraySupport();
@@ -227,10 +225,12 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		}
 
 		Class<?> actualType = null;
-		if (value.getValue() instanceof Collection) {
-			actualType = CollectionUtils.findCommonElementType((Collection<?>) value.getValue());
-		} else if (!value.isEmpty() && value.getValue().getClass().isArray()) {
-			actualType = value.getValue().getClass().getComponentType();
+
+		Object value = parameter.getValue();
+		if (value instanceof Collection) {
+			actualType = CollectionUtils.findCommonElementType((Collection<?>) value);
+		} else if (value != null && value.getClass().isArray()) {
+			actualType = value.getClass().getComponentType();
 		}
 
 		if (actualType == null) {
@@ -239,7 +239,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		actualType = converter.getTargetType(actualType);
 
-		if (value.isEmpty()) {
+		if (parameter.isEmpty()) {
 
 			Class<?> targetType = arrayColumns.getArrayType(actualType);
 			int depth = actualType.isArray() ? ArrayUtils.getDimensionDepth(actualType) : 1;
@@ -247,7 +247,9 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			return Parameter.empty(targetArrayType);
 		}
 
-		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()), actualType);
+		Assert.state(value != null, "value must not be null");
+
+		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value), actualType);
 	}
 
 	@Override

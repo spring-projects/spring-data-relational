@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
@@ -50,7 +51,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
@@ -156,7 +156,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	@Override
-	public Object execute(Object[] objects) {
+	public @Nullable Object execute(Object[] objects) {
 
 		RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(), objects);
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
@@ -242,8 +242,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters()
 					.getParameter(bindableParameter.getIndex());
 
-			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(),
-					parameter);
+			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(), parameter);
 			SQLType jdbcType = jdbcValue.getJdbcType();
 
 			if (jdbcType == null) {
@@ -410,6 +409,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 					return defaultMapper.get();
 				}
 
+				Assert.state(constructor != null, "Constructor must not be null");
+
 				return (RowMapper<Object>) BeanUtils.instantiateClass(constructor);
 			});
 		}
@@ -464,6 +465,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				if (rowMapperConstructor != null) {
 					return BeanUtils.instantiateClass(rowMapperConstructor, rowMapper.get());
 				}
+
+				Assert.state(constructor != null, "Constructor must not be null");
 
 				return BeanUtils.instantiateClass(constructor);
 			};

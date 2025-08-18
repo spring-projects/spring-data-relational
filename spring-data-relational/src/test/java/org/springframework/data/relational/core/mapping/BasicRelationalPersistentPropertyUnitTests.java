@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import org.assertj.core.api.SoftAssertions;
@@ -45,8 +46,8 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 class BasicRelationalPersistentPropertyUnitTests {
 
-	private RelationalMappingContext context = new RelationalMappingContext();
-	private RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+	private final RelationalMappingContext context = new RelationalMappingContext();
+	private final RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-106
 	void detectsAnnotatedColumnName() {
@@ -104,17 +105,19 @@ class BasicRelationalPersistentPropertyUnitTests {
 
 			RelationalPersistentProperty property = requiredPersistentEntity.getRequiredPersistentProperty(name);
 
-			softly.assertThat(property.isEmbedded()) //
-					.describedAs(name + " is embedded") //
-					.isEqualTo(prefix != null);
+			if (!prefix.isEmpty()) {
+				softly.assertThat(property.isEmbedded()) //
+						.describedAs(name + " is embedded") //
+						.isTrue();
+			}
 
 			softly.assertThat(property.getEmbeddedPrefix()) //
 					.describedAs(name + " prefix") //
 					.isEqualTo(prefix);
 		};
 
-		checkEmbedded.accept("someList", null);
-		checkEmbedded.accept("id", null);
+		checkEmbedded.accept("someList", "");
+		checkEmbedded.accept("id", "");
 		checkEmbedded.accept("embeddableEntity", "");
 		checkEmbedded.accept("prefixedEmbeddableEntity", "prefix");
 
@@ -341,77 +344,67 @@ class BasicRelationalPersistentPropertyUnitTests {
 		public boolean equals(final Object o) {
 			if (o == this)
 				return true;
-			if (!(o instanceof DummyEntity))
+			if (!(o instanceof DummyEntity other))
 				return false;
-			final DummyEntity other = (DummyEntity) o;
-			if (!other.canEqual((Object) this))
+			if (!other.canEqual(this))
 				return false;
 			final Object this$id = this.getId();
 			final Object other$id = other.getId();
-			if (this$id == null ? other$id != null : !this$id.equals(other$id))
+			if (!Objects.equals(this$id, other$id))
 				return false;
 			final Object this$someEnum = this.getSomeEnum();
 			final Object other$someEnum = other.getSomeEnum();
-			if (this$someEnum == null ? other$someEnum != null : !this$someEnum.equals(other$someEnum))
+			if (!Objects.equals(this$someEnum, other$someEnum))
 				return false;
 			final Object this$localDateTime = this.getLocalDateTime();
 			final Object other$localDateTime = other.getLocalDateTime();
-			if (this$localDateTime == null ? other$localDateTime != null : !this$localDateTime.equals(other$localDateTime))
+			if (!Objects.equals(this$localDateTime, other$localDateTime))
 				return false;
 			final Object this$zonedDateTime = this.getZonedDateTime();
 			final Object other$zonedDateTime = other.getZonedDateTime();
-			if (this$zonedDateTime == null ? other$zonedDateTime != null : !this$zonedDateTime.equals(other$zonedDateTime))
+			if (!Objects.equals(this$zonedDateTime, other$zonedDateTime))
 				return false;
 			final Object this$listOfString = this.getListOfString();
 			final Object other$listOfString = other.getListOfString();
-			if (this$listOfString == null ? other$listOfString != null : !this$listOfString.equals(other$listOfString))
+			if (!Objects.equals(this$listOfString, other$listOfString))
 				return false;
 			if (!java.util.Arrays.deepEquals(this.getArrayOfString(), other.getArrayOfString()))
 				return false;
 			final Object this$listOfEntity = this.getListOfEntity();
 			final Object other$listOfEntity = other.getListOfEntity();
-			if (this$listOfEntity == null ? other$listOfEntity != null : !this$listOfEntity.equals(other$listOfEntity))
+			if (!Objects.equals(this$listOfEntity, other$listOfEntity))
 				return false;
 			if (!java.util.Arrays.deepEquals(this.getArrayOfEntity(), other.getArrayOfEntity()))
 				return false;
 			final Object this$someList = this.getSomeList();
 			final Object other$someList = other.getSomeList();
-			if (this$someList == null ? other$someList != null : !this$someList.equals(other$someList))
+			if (!Objects.equals(this$someList, other$someList))
 				return false;
 			final Object this$name = this.getName();
 			final Object other$name = other.getName();
-			if (this$name == null ? other$name != null : !this$name.equals(other$name))
+			if (!Objects.equals(this$name, other$name))
 				return false;
 			final Object this$spelExpression1 = this.getSpelExpression1();
 			final Object other$spelExpression1 = other.getSpelExpression1();
-			if (this$spelExpression1 == null ? other$spelExpression1 != null
-					: !this$spelExpression1.equals(other$spelExpression1))
+			if (!Objects.equals(this$spelExpression1, other$spelExpression1))
 				return false;
 			final Object this$littleBobbyTables = this.getLittleBobbyTables();
 			final Object other$littleBobbyTables = other.getLittleBobbyTables();
-			if (this$littleBobbyTables == null ? other$littleBobbyTables != null
-					: !this$littleBobbyTables.equals(other$littleBobbyTables))
+			if (!Objects.equals(this$littleBobbyTables, other$littleBobbyTables))
 				return false;
 			final Object this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = this
 					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
 			final Object other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = other
 					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
-			if (this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot == null
-					? other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot != null
-					: !this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot
-							.equals(other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
+			if (!Objects.equals(this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot, other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
 				return false;
 			final Object this$embeddableEntity = this.getEmbeddableEntity();
 			final Object other$embeddableEntity = other.getEmbeddableEntity();
-			if (this$embeddableEntity == null ? other$embeddableEntity != null
-					: !this$embeddableEntity.equals(other$embeddableEntity))
+			if (!Objects.equals(this$embeddableEntity, other$embeddableEntity))
 				return false;
 			final Object this$prefixedEmbeddableEntity = this.getPrefixedEmbeddableEntity();
 			final Object other$prefixedEmbeddableEntity = other.getPrefixedEmbeddableEntity();
-			if (this$prefixedEmbeddableEntity == null ? other$prefixedEmbeddableEntity != null
-					: !this$prefixedEmbeddableEntity.equals(other$prefixedEmbeddableEntity))
-				return false;
-			return true;
+			return Objects.equals(this$prefixedEmbeddableEntity, other$prefixedEmbeddableEntity);
 		}
 
 		boolean canEqual(final Object other) {
@@ -479,48 +472,37 @@ class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	// DATAJDBC-111
-	private static class EmbeddableEntity {
-		private final String embeddedTest;
+		private record EmbeddableEntity(String embeddedTest) {
 
-		public EmbeddableEntity(String embeddedTest) {
-			this.embeddedTest = embeddedTest;
-		}
-
-		String getEmbeddedTest() {
-			return this.embeddedTest;
-		}
 
 		public boolean equals(final Object o) {
-			if (o == this)
-				return true;
-			if (!(o instanceof EmbeddableEntity))
-				return false;
-			final EmbeddableEntity other = (EmbeddableEntity) o;
-			if (!other.canEqual((Object) this))
-				return false;
-			final Object this$embeddedTest = this.getEmbeddedTest();
-			final Object other$embeddedTest = other.getEmbeddedTest();
-			if (this$embeddedTest == null ? other$embeddedTest != null : !this$embeddedTest.equals(other$embeddedTest))
-				return false;
-			return true;
-		}
+				if (o == this)
+					return true;
+				if (!(o instanceof EmbeddableEntity other))
+					return false;
+				if (!other.canEqual(this))
+					return false;
+				final Object this$embeddedTest = this.embeddedTest();
+				final Object other$embeddedTest = other.embeddedTest();
+				return Objects.equals(this$embeddedTest, other$embeddedTest);
+			}
 
-		boolean canEqual(final Object other) {
-			return other instanceof EmbeddableEntity;
-		}
+			boolean canEqual(final Object other) {
+				return other instanceof EmbeddableEntity;
+			}
 
-		public int hashCode() {
-			final int PRIME = 59;
-			int result = 1;
-			final Object $embeddedTest = this.getEmbeddedTest();
-			result = result * PRIME + ($embeddedTest == null ? 43 : $embeddedTest.hashCode());
-			return result;
-		}
+			public int hashCode() {
+				final int PRIME = 59;
+				int result = 1;
+				final Object $embeddedTest = this.embeddedTest();
+				result = result * PRIME + ($embeddedTest == null ? 43 : $embeddedTest.hashCode());
+				return result;
+			}
 
-		public String toString() {
-			return "BasicRelationalPersistentPropertyUnitTests.EmbeddableEntity(embeddedTest=" + this.getEmbeddedTest() + ")";
+			public String toString() {
+				return "BasicRelationalPersistentPropertyUnitTests.EmbeddableEntity(embeddedTest=" + this.embeddedTest() + ")";
+			}
 		}
-	}
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}

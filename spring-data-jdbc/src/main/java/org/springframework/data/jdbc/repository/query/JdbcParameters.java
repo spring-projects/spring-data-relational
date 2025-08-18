@@ -26,6 +26,7 @@ import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.Assert;
 
 /**
  * Custom extension of {@link RelationalParameters}.
@@ -84,8 +85,13 @@ public class JdbcParameters extends RelationalParameters {
 
 			sqlType = JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getType()));
 
-			actualSqlType = Lazy.of(() -> JdbcUtil
-					.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(typeInformation.getActualType().getType())));
+			TypeInformation<?> actualType = typeInformation.getActualType();
+			actualSqlType = Lazy.of(() -> {
+
+				Assert.state(actualType != null, "ActualType must not be null");
+
+				return JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(actualType.getType()));
+			});
 		}
 
 		public SQLType getSqlType() {

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -55,7 +56,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -305,7 +305,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T> @Nullable T findById(Object id, Class<T> domainType) {
 
 		Assert.notNull(id, "Id must not be null");
 		Assert.notNull(domainType, "Domain type must not be null");

@@ -15,10 +15,10 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Values;
 import org.springframework.data.relational.core.sql.Visitable;
-import org.springframework.lang.Nullable;
 
 /**
  * Renderer for {@link Values}. Uses a {@link RenderTarget} to call back for render results.

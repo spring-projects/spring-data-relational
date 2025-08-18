@@ -15,8 +15,8 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * Configures a {@link org.springframework.jdbc.core.RowMapper} for each type to be used for extracting entities of that
@@ -39,7 +39,7 @@ public interface QueryMappingConfiguration {
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		@Override
-		public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+		public <T> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type) {
 			return null;
 		}
 

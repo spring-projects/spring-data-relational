@@ -33,8 +33,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -75,7 +75,6 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.Predicates;
 import org.springframework.data.util.ProxyUtils;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -218,7 +217,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 
 		projectionFactory.setBeanFactory(applicationContext);
-		projectionFactory.setBeanClassLoader(applicationContext.getClassLoader());
+		ClassLoader classLoader = applicationContext.getClassLoader();
+
+		Assert.notNull(classLoader, "ClassLoader must not be null");
+
+		projectionFactory.setBeanClassLoader(classLoader);
 	}
 
 	/**
@@ -644,6 +647,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 							}
 						}
 
+						Assert.state(criteria != null, "Criteria must not be null");
+
 						if (matchingVersionCriteria != null) {
 							criteria = criteria.and(matchingVersionCriteria);
 						}
@@ -702,11 +707,17 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
 
+		Assert.state(versionProperty != null, "Version property must not be null");
+
 		ConversionService conversionService = this.dataAccessStrategy.getConverter().getConversionService();
 		Object currentVersionValue = propertyAccessor.getProperty(versionProperty);
 		long newVersionValue = 1L;
 		if (currentVersionValue != null) {
-			newVersionValue = conversionService.convert(currentVersionValue, Long.class) + 1;
+			Long converted = conversionService.convert(currentVersionValue, Long.class);
+
+			Assert.state(converted != null, "Current version value must not be null");
+
+			newVersionValue = converted + 1;
 		}
 		Class<?> versionPropertyType = versionProperty.getType();
 		propertyAccessor.setProperty(versionProperty, conversionService.convert(newVersionValue, versionPropertyType));
@@ -718,6 +729,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+
+		Assert.state(versionProperty != null, "Version property must not be null");
 
 		Object version = propertyAccessor.getProperty(versionProperty);
 		Criteria.CriteriaStep versionColumn = Criteria.where(dataAccessStrategy.toSql(versionProperty.getColumnName()));
@@ -896,29 +909,23 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 *
 	 * @param <T>
 	 */
-	private static class UnwrapOptionalFetchSpecAdapter<T> implements RowsFetchSpec<T> {
-
-		private final RowsFetchSpec<Optional<T>> delegate;
-
-		private UnwrapOptionalFetchSpecAdapter(RowsFetchSpec<Optional<T>> delegate) {
-			this.delegate = delegate;
-		}
+		private record UnwrapOptionalFetchSpecAdapter<T>(RowsFetchSpec<Optional<T>> delegate) implements RowsFetchSpec<T> {
 
 		@Override
-		public Mono<T> one() {
-			return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
-		}
+			public Mono<T> one() {
+				return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
+			}
 
-		@Override
-		public Mono<T> first() {
-			return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
-		}
+			@Override
+			public Mono<T> first() {
+				return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
+			}
 
-		@Override
-		public Flux<T> all() {
-			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
+			@Override
+			public Flux<T> all() {
+				return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
+			}
 		}
-	}
 
 	/**
 	 * {@link RowsFetchSpec} adapter applying {@link #maybeCallAfterConvert(Object, SqlIdentifier)} to each emitted

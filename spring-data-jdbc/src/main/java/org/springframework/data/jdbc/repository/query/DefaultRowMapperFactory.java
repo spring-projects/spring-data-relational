@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -42,11 +43,11 @@ public class DefaultRowMapperFactory implements RowMapperFactory {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 	private final QueryMappingConfiguration queryMappingConfiguration;
-	private final EntityCallbacks entityCallbacks;
+	private final @Nullable EntityCallbacks entityCallbacks;
 	private final ApplicationEventPublisher publisher;
 
 	public DefaultRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
-			EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher) {
+			@Nullable EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher) {
 
 		this.context = converter.getMappingContext();
 		this.converter = converter;

@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -47,7 +48,6 @@ import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -233,7 +233,12 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		if (tree.isExistsProjection()) {
 			limitOffsetBuilder = limitOffsetBuilder.limit(1);
 		} else if (tree.isLimiting()) {
-			limitOffsetBuilder = limitOffsetBuilder.limit(tree.getMaxResults());
+
+			Integer maxResults = tree.getMaxResults();
+
+			Assert.state(maxResults != null, "Max results must not be null");
+
+			limitOffsetBuilder = limitOffsetBuilder.limit(maxResults);
 		}
 
 		Pageable pageable = accessor.getPageable();

@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -421,8 +421,13 @@ public class Criteria implements CriteriaDefinition {
 		Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
 
 		while (current.hasPrevious()) {
-			forwardChain.put(current.getPrevious(), current);
-			current = current.getPrevious();
+
+			CriteriaDefinition previous = current.getPrevious();
+
+			Assert.state(previous != null, "Previous criteria must not be null");
+
+			forwardChain.put(previous, current);
+			current = previous;
 		}
 
 		// perform the actual mapping
@@ -476,13 +481,23 @@ public class Criteria implements CriteriaDefinition {
 			return;
 		}
 
-		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
-				.append(criteria.getComparator().getComparator());
+		SqlIdentifier column = criteria.getColumn();
 
-		switch (criteria.getComparator()) {
+		Assert.state(column != null, "Column must not be null");
+
+		Comparator comparator = criteria.getComparator();
+
+		Assert.state(comparator != null, "Comparator must not be null");
+
+		stringBuilder.append(column.toSql(IdentifierProcessing.NONE)).append(' ').append(comparator.getComparator());
+
+		switch (comparator) {
 			case BETWEEN:
 			case NOT_BETWEEN:
 				Pair<Object, Object> pair = (Pair<Object, Object>) criteria.getValue();
+
+				Assert.state(pair != null, "Pair must not be null");
+
 				stringBuilder.append(' ').append(pair.getFirst()).append(" AND ").append(pair.getSecond());
 				break;
 

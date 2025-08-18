@@ -15,8 +15,8 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.util.Streamable;
-import org.springframework.lang.Nullable;
 
 /**
  * Interface that defines common functionality for objects that can offer parameter values for named bind parameters,

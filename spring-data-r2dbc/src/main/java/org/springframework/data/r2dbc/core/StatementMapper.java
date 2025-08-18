@@ -26,6 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -37,7 +38,6 @@ import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.RenderContext;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
@@ -229,10 +229,11 @@ public interface StatementMapper {
 		private final long offset;
 		private final int limit;
 		private final boolean distinct;
-		private final LockMode lockMode;
+		private final @Nullable LockMode lockMode;
 
 		protected SelectSpec(Table table, List<String> projectedFields, List<Expression> selectList,
-				@Nullable CriteriaDefinition criteria, Sort sort, int limit, long offset, boolean distinct, LockMode lockMode) {
+				@Nullable CriteriaDefinition criteria, Sort sort, int limit, long offset, boolean distinct,
+				@Nullable LockMode lockMode) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.selectList = selectList;
@@ -536,10 +537,10 @@ public interface StatementMapper {
 	class UpdateSpec {
 
 		private final SqlIdentifier table;
-		private final @Nullable org.springframework.data.relational.core.query.Update update;
+		private final org.springframework.data.relational.core.query.@Nullable Update update;
 		private final @Nullable CriteriaDefinition criteria;
 
-		protected UpdateSpec(SqlIdentifier table, @Nullable org.springframework.data.relational.core.query.Update update,
+		protected UpdateSpec(SqlIdentifier table, org.springframework.data.relational.core.query.@Nullable Update update,
 				@Nullable CriteriaDefinition criteria) {
 
 			this.table = table;
@@ -582,8 +583,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
-		@Nullable
-		public org.springframework.data.relational.core.query.Update getUpdate() {
+		public org.springframework.data.relational.core.query.@Nullable Update getUpdate() {
 			return this.update;
 		}
 
@@ -601,7 +601,7 @@ public interface StatementMapper {
 		private final SqlIdentifier table;
 		private final @Nullable CriteriaDefinition criteria;
 
-		protected DeleteSpec(SqlIdentifier table, CriteriaDefinition criteria) {
+		protected DeleteSpec(SqlIdentifier table, @Nullable CriteriaDefinition criteria) {
 			this.table = table;
 			this.criteria = criteria;
 		}
@@ -633,7 +633,7 @@ public interface StatementMapper {
 		 * @param criteria
 		 * @return the {@link DeleteSpec}.
 		 */
-		public DeleteSpec withCriteria(CriteriaDefinition criteria) {
+		public DeleteSpec withCriteria(@Nullable CriteriaDefinition criteria) {
 			return new DeleteSpec(this.table, criteria);
 		}
 

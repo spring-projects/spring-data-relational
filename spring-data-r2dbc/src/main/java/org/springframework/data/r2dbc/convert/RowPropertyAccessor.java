@@ -18,10 +18,10 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link PropertyAccessor} to read values from a {@link Row}.

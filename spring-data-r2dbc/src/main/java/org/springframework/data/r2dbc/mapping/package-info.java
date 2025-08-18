@@ -1,7 +1,7 @@
 /**
  * Domain objects for R2DBC.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.r2dbc.mapping;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

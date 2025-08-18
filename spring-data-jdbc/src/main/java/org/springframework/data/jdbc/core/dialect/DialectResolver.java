@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -44,7 +45,6 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -112,6 +112,7 @@ public class DialectResolver {
 	public static class DefaultDialectProvider implements JdbcDialectProvider {
 
 		@Override
+		@SuppressWarnings("NullAway") // Nullaway compalins, while IntelliJ seems to befine.
 		public Optional<Dialect> getDialect(JdbcOperations operations) {
 			return Optional.ofNullable(operations.execute((ConnectionCallback<Dialect>) DefaultDialectProvider::getDialect));
 		}

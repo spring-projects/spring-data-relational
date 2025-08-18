@@ -15,14 +15,13 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.CaseExpression;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link PartRenderer} for {@link OrderByField}s.
@@ -40,8 +39,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 	private final StringBuilder builder = new StringBuilder();
 
-	@Nullable
-	private PartRenderer delegate;
+	@Nullable private PartRenderer delegate;
 
 	private boolean first = true;
 

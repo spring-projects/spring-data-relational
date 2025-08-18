@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.lang.Nullable;
 
 /**
  * A {@link BatchInsertStrategy} that expects ids to be generated from the batch insert. When the {@link Dialect} does
@@ -42,7 +42,7 @@ class IdGeneratingBatchInsertStrategy implements BatchInsertStrategy {
 	private final InsertStrategy insertStrategy;
 	private final Dialect dialect;
 	private final NamedParameterJdbcOperations jdbcOperations;
-	private final SqlIdentifier idColumn;
+	private final @Nullable SqlIdentifier idColumn;
 
 	IdGeneratingBatchInsertStrategy(InsertStrategy insertStrategy, Dialect dialect,
 			NamedParameterJdbcOperations jdbcOperations, @Nullable SqlIdentifier idColumn) {

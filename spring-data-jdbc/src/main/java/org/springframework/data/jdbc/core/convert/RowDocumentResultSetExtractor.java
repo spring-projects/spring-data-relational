@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.AggregateContext;
 import org.springframework.data.jdbc.core.convert.RowDocumentExtractorSupport.RowDocumentSink;
@@ -33,7 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.jdbc.support.JdbcUtils;
-import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
@@ -73,7 +74,7 @@ class RowDocumentResultSetExtractor {
 		for (int i = 0; i < columnCount; i++) {
 
 			Object rsv = JdbcUtils.getResultSetValue(resultSet, i + 1);
-			String columnName = JdbcUtils.lookupColumnName(md, i+1);
+			String columnName = JdbcUtils.lookupColumnName(md, i + 1);
 			Object old = document.putIfAbsent(columnName, rsv instanceof Array a ? a.getArray() : rsv);
 			if (old != null) {
 				log.warn(DUPLICATE_COLUMN_WARNING.formatted(columnName, i));
@@ -91,7 +92,7 @@ class RowDocumentResultSetExtractor {
 		INSTANCE;
 
 		@Override
-		public Object getObject(ResultSet row, int index) {
+		public @Nullable Object getObject(ResultSet row, int index) {
 
 			try {
 
@@ -120,7 +121,7 @@ class RowDocumentResultSetExtractor {
 					String columnLabel = metaData.getColumnLabel(i + 1);
 					Object old = columns.put(columnLabel, i + 1);
 					if (old != null) {
-						log.warn(DUPLICATE_COLUMN_WARNING.formatted( columnLabel, i));
+						log.warn(DUPLICATE_COLUMN_WARNING.formatted(columnLabel, i));
 					}
 				}
 				return columns;
@@ -207,8 +208,14 @@ class RowDocumentResultSetExtractor {
 			this.aggregateContext = new AggregateContext<>(adapter, context, propertyToColumn, columns);
 
 			this.resultSet = resultSet;
-			this.identifierIndex = columns.get(idColumn);
+
+			Integer index = columns.get(idColumn);
+
+			Assert.state(index != null, "Identifier index must not be null");
+
+			this.identifierIndex = index;
 			this.hasNext = hasRow(resultSet);
+
 		}
 
 		private static boolean hasRow(ResultSet resultSet) {

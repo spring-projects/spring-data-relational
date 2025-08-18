@@ -15,9 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.ResolvableTypeProvider;
-import org.springframework.lang.Nullable;
 
 /**
  * an event signalling JDBC processing.
