@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.ClassUtils;
 
@@ -62,12 +63,12 @@ public class DefaultSqlTypeMapping implements SqlTypeMapping {
 	}
 
 	@Override
-	public String getColumnType(RelationalPersistentProperty property) {
+	public @Nullable String getColumnType(RelationalPersistentProperty property) {
 		return getColumnType(property.getActualType());
 	}
 
 	@Override
-	public String getColumnType(Class<?> type) {
+	public @Nullable String getColumnType(Class<?> type) {
 		return typeMap.get(ClassUtils.resolvePrimitiveIfNecessary(type));
 	}
 }

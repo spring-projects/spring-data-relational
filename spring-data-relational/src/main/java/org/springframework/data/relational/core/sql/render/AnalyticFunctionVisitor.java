@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.AnalyticFunction;
 import org.springframework.data.relational.core.sql.OrderBy;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
-import org.springframework.lang.Nullable;
 
 /**
  * Renderer for {@link AnalyticFunction}. Uses a {@link RenderTarget} to call back for render results.

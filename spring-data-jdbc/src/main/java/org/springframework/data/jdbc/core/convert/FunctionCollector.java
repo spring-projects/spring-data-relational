@@ -96,7 +96,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 	 */
 	static class ResultOrException<T> {
 
-		private T result;
+		@SuppressWarnings("NullAway.Init") private T result;
 		private final List<Exception> exceptions = new LinkedList<>();
 		private boolean hasResult = false;
 

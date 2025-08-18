@@ -23,13 +23,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -122,28 +122,31 @@ class WritingContext<T> {
 	@SuppressWarnings("unchecked")
 	private List<? extends DbAction<?>> insertAll(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		RelationalPersistentEntity<?> persistentEntity = context
-				.getRequiredPersistentEntity(path.getLeafProperty());
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(path.getLeafProperty());
 		List<DbAction.Insert<Object>> inserts = new ArrayList<>();
 		from(path).forEach(node -> {
 
-			DbAction.WithEntity<?> parentAction = getAction(node.getParent());
+			DbAction.WithEntity<?> parentAction = getAction(node.parent());
+
+			Assert.state(parentAction != null, "parentAction must not be null");
+
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
 			Object instance;
-			if (node.getPath().getLeafProperty().isQualified()) {
+			if (node.path().getLeafProperty().isQualified()) {
 
-				Pair<Object, Object> value = (Pair) node.getValue();
-				qualifiers.put(node.getPath(), value.getFirst());
+				Pair<Object, Object> value = (Pair) node.value();
+				qualifiers.put(node.path(), value.getFirst());
 
 				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.getEntityType());
 
 				if (!parentEntity.hasIdProperty() && parentAction instanceof DbAction.Insert) {
-					qualifiers.putAll(((DbAction.Insert<?>) parentAction).getQualifiers());
+					qualifiers.putAll(((DbAction.Insert<?>) parentAction).qualifiers());
 				}
 				instance = value.getSecond();
 			} else {
-				instance = node.getValue();
+				instance = node.value();
 			}
+
 			IdValueSource idValueSource = IdValueSource.forInstance(instance, persistentEntity);
 			DbAction.Insert<Object> insert = new DbAction.Insert<>(instance, path, parentAction, qualifiers, idValueSource);
 			inserts.add(insert);
@@ -166,6 +169,8 @@ class WritingContext<T> {
 
 		Object id = context.getRequiredPersistentEntity(entityType).getIdentifierAccessor(root).getIdentifier();
 
+		Assert.state(id != null, "Id must not be null");
+
 		return new DbAction.Delete<>(id, path);
 	}
 
@@ -176,8 +181,7 @@ class WritingContext<T> {
 		previousActions.put(null, dbAction);
 	}
 
-	@Nullable
-	private DbAction.WithEntity<?> getAction(@Nullable PathNode parent) {
+	private DbAction.@Nullable WithEntity<?> getAction(@Nullable PathNode parent) {
 
 		DbAction<?> action = previousActions.get(parent);
 

@@ -15,9 +15,9 @@
  */
 package org.springframework.data.relational.core.sqlgeneration;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.lang.Nullable;
 
 /**
  * Generates SQL statements for loading aggregates.

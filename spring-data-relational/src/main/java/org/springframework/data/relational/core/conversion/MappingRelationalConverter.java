@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -44,16 +45,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.EntityInstantiator;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
-import org.springframework.data.mapping.model.PropertyValueProvider;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mapping.model.SpELContext;
-import org.springframework.data.mapping.model.ValueExpressionEvaluator;
-import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
+import org.springframework.data.mapping.model.*;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -72,7 +64,6 @@ import org.springframework.data.util.Predicates;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
@@ -152,7 +143,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		this.spELContext = new SpELContext(this.spELContext, applicationContext);
 		this.environment = applicationContext.getEnvironment();
 		this.projectionFactory.setBeanFactory(applicationContext);
-		this.projectionFactory.setBeanClassLoader(applicationContext.getClassLoader());
+		ClassLoader classLoader = applicationContext.getClassLoader();
+
+		Assert.notNull(classLoader, "ClassLoader must not be null");
+
+		this.projectionFactory.setBeanClassLoader(classLoader);
 	}
 
 	@Override
@@ -269,7 +264,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return populateProperties(context, mappedEntity, documentAccessor, evaluator, instance);
 	}
 
-	private Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
+	private @Nullable Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
 			EntityProjection<?, ?> typeDescriptor) {
 
 		if (typeDescriptor.isProjection()) {
@@ -284,12 +279,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		Map<String, Object> map = new LinkedHashMap<>();
 
 		@Override
-		public void setProperty(PersistentProperty<?> persistentProperty, Object o) {
+		public void setProperty(PersistentProperty<?> persistentProperty, @Nullable Object o) {
 			map.put(persistentProperty.getName(), o);
 		}
 
 		@Override
-		public Object getProperty(PersistentProperty<?> persistentProperty) {
+		public @Nullable Object getProperty(PersistentProperty<?> persistentProperty) {
 			return map.get(persistentProperty.getName());
 		}
 
@@ -344,7 +339,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		Class<? extends S> rawType = typeHint.getType();
 
 		if (getConversions().hasCustomReadTarget(RowDocument.class, rawType)) {
-			return doConvert(documentAccessor.getDocument(), rawType, typeHint.getType());
+
+			S converted = doConvert(documentAccessor.getDocument(), rawType, typeHint.getType());
+
+			Assert.state(converted != null, "Converted must not be null");
+
+			return converted;
 		}
 
 		if (RowDocument.class.isAssignableFrom(rawType)) {
@@ -389,7 +389,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		Class<?> rawKeyType = keyType != null ? keyType.getType() : Object.class;
 
 		Map<Object, Object> map = CollectionFactory.createMap(mapType, rawKeyType,
-				((Map<String, Object>) source).keySet().size());
+				((Map<String, Object>) source).size());
 
 		source.forEach((k, v) -> {
 
@@ -433,7 +433,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				: CollectionFactory.createCollection(collectionType, rawComponentType, source.size());
 
 		if (source.isEmpty()) {
-			return getPotentiallyConvertedSimpleRead(items, targetType);
+
+			Object converted = getPotentiallyConvertedSimpleRead(items, targetType);
+
+			Assert.state(converted != null, "Converted must not be null");
+
+			return converted;
 		}
 
 		for (Object element : source) {
@@ -443,12 +448,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return getPotentiallyConvertedSimpleRead(items, targetType);
 	}
 
-	private <T> T doConvert(Object value, Class<? extends T> target) {
+	private <T> @Nullable T doConvert(Object value, Class<? extends T> target) {
 		return doConvert(value, target, null);
 	}
 
-	@SuppressWarnings("ConstantConditions")
-	private <T> T doConvert(Object value, Class<? extends T> target, @Nullable Class<? extends T> fallback) {
+	private <T> @Nullable T doConvert(Object value, Class<? extends T> target, @Nullable Class<? extends T> fallback) {
 
 		if (getConversionService().canConvert(value.getClass(), target) || fallback == null) {
 			return getConversionService().convert(value, target);
@@ -654,7 +658,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		Class<?> target = type.getType();
 
 		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
-			return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
+			Object converted = getConversionService().convert(value, TypeDescriptor.forObject(value),
+					createTypeDescriptor(type));
+
+			Assert.state(converted != null, "Converted must not be null");
+
+			return converted;
 		}
 
 		if (ClassUtils.isAssignableValue(target, value)) {
@@ -665,7 +674,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
 
-		return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
+		Object converted = getConversionService().convert(value, TypeDescriptor.forObject(value),
+				createTypeDescriptor(type));
+
+		Assert.state(converted != null, "Converted must not be null");
+
+		return converted;
 	}
 
 	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
@@ -794,7 +808,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			targetType = Array.newInstance(targetComponentType, 0).getClass();
 		}
 
-		return getConversionService().convert(mapped, targetType);
+		Object converted = getConversionService().convert(mapped, targetType);
+
+		Assert.state(converted != null, "Converted must not be null");
+
+		return converted;
 	}
 
 	/**
@@ -947,8 +965,14 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				ObjectPath path, ContainerValueConverter<Collection<?>> collectionConverter,
 				ContainerValueConverter<Map<?, ?>> mapConverter, ValueConverter<Object> elementConverter,
 				EntityProjection<?, ?> projection) {
-			super(sourceConverter, customConversions, path,
-					(context, source, typeHint) -> doReadOrProject(context, source, typeHint, projection),
+			super(sourceConverter, customConversions, path, (context, source, typeHint) -> {
+
+				Object result = doReadOrProject(context, source, typeHint, projection);
+
+				Assert.state(result != null, "Result must not be null");
+
+				return result;
+			},
 
 					collectionConverter, mapConverter, elementConverter);
 			this.returnedTypeDescriptor = projection;
@@ -1053,7 +1077,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		INSTANCE;
 
 		@Override
-		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> @Nullable T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 			return null;
 		}
 	}
@@ -1194,10 +1218,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 			Object value = document.get(path.getColumnInfo().alias().getReference());
 
-			if (value == null) {
-				return null;
-			}
-
 			return value;
 		}
 
@@ -1225,6 +1245,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 
 			Object value = document.get(path.getColumnInfo().alias().getReference());
+
+			Assert.state(value != null, "Value must not be null");
 
 			if (value instanceof Collection<?> || value.getClass().isArray()) {
 				return !ObjectUtils.isEmpty(value);
@@ -1264,7 +1286,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <T> T getParameterValue(Parameter<T, P> parameter) {
+		public <T> @Nullable T getParameterValue(Parameter<T, P> parameter) {
 			return (T) readValue(delegate.apply(parameter), parameter.getType());
 		}
 	}
@@ -1318,7 +1340,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		@Override
-		public Object getProperty(PersistentProperty<?> property) {
+		public @Nullable Object getProperty(PersistentProperty<?> property) {
 			return delegate.getProperty(translate(property));
 		}
 

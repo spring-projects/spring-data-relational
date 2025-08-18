@@ -17,9 +17,9 @@ package org.springframework.data.relational.core.sql.render;
 
 import java.util.Stack;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.data.relational.core.sql.Visitor;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  */
 abstract class DelegatingVisitor implements Visitor {
 
-	private Stack<DelegatingVisitor> delegation = new Stack<>();
+	private final Stack<DelegatingVisitor> delegation = new Stack<>();
 
 	/**
 	 * Invoked for a {@link Visitable segment} when entering the segment.
@@ -148,8 +148,8 @@ abstract class DelegatingVisitor implements Visitor {
 	 */
 	static class Delegation {
 
-		private static Delegation RETAIN = new Delegation(true, false, null);
-		private static Delegation LEAVE = new Delegation(false, true, null);
+		private static final Delegation RETAIN = new Delegation(true, false, null);
+		private static final Delegation LEAVE = new Delegation(false, true, null);
 
 		private final boolean retain;
 		private final boolean leave;
@@ -188,7 +188,8 @@ abstract class DelegatingVisitor implements Visitor {
 
 		DelegatingVisitor getDelegate() {
 
-			Assert.state(isDelegate(), "No delegate available");
+			Assert.state(delegate != null, "No delegate available");
+
 			return delegate;
 		}
 	}

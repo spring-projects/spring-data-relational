@@ -25,6 +25,8 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.springframework.util.Assert;
+
 /**
  * This class is created to return the difference between a source and target {@link Tables} The difference consists of
  * Table Additions, Deletions, and Modified Tables (i.e. table exists in both source and target - but has columns to add
@@ -90,6 +92,8 @@ record SchemaDiff(List<Table> tableAdditions, List<Table> tableDeletions, List<T
 			// TODO: How to handle changed columns (type?)
 
 			Table existingTable = existingIndex.get(getKey(mappedEntity));
+
+			Assert.state(existingTable != null, "Existing table must not be null");
 			TableDiff tableDiff = new TableDiff(mappedEntity);
 
 			Map<String, Column> mappedColumns = createMapping(mappedEntity.columns(), Column::name, nameComparator);

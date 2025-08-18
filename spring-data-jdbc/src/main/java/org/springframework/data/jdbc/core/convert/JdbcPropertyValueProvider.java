@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -42,7 +43,7 @@ class JdbcPropertyValueProvider implements PropertyValueProvider<RelationalPersi
 	}
 
 	@Override
-	public <T> T getPropertyValue(RelationalPersistentProperty property) {
+	public <T> @Nullable T getPropertyValue(RelationalPersistentProperty property) {
 		return (T) resultSet.getObject(getColumnName(property));
 	}
 

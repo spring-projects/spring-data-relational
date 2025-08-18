@@ -15,6 +15,16 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,16 +40,6 @@ import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the {@link RelationalEntityWriter}
@@ -253,7 +253,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn, //
 						DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, IdValueSource.PROVIDED), //
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false,
+								IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, "other", null, false, null), //
 						tuple(Insert.class, Element.class, "other", Element.class, true, IdValueSource.GENERATED) //
 				);
@@ -369,7 +370,8 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::isWithDependsOn, //
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false, IdValueSource.PROVIDED), //
+						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false,
+								IdValueSource.PROVIDED), //
 						tuple(Delete.class, Element.class, "other.element", null, false, null),
 						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false, null),
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
@@ -591,8 +593,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new NoIdMapContainer());
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
-		RootAggregateChange<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer,
-				1L);
+		RootAggregateChange<NoIdListMapContainer> aggregateChange = MutableAggregateChange.forSave(listMapContainer, 1L);
 
 		new RelationalEntityWriter<NoIdListMapContainer>(context).write(listMapContainer, aggregateChange);
 
@@ -642,8 +643,7 @@ public class RelationalEntityWriterUnitTests {
 		root.other = new EmbeddedReferenceChainEntity(null);
 		// the embedded is null !!!
 
-		RootAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange
-				.forSave(root);
+		RootAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = MutableAggregateChange.forSave(root);
 
 		new RelationalEntityWriter<RootWithEmbeddedReferenceChainEntity>(context).write(root, aggregateChange);
 
@@ -706,7 +706,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //
-						// no insert for element
+				// no insert for element
 				);
 
 	}
@@ -726,7 +726,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(UpdateRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //
-						// no insert for element
+				// no insert for element
 				);
 
 	}
@@ -764,7 +764,7 @@ public class RelationalEntityWriterUnitTests {
 	private Object getQualifier(DbAction a, PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		return a instanceof DbAction.WithDependingOn //
-				? ((DbAction.WithDependingOn) a).getQualifiers().get(path) //
+				? ((DbAction.WithDependingOn) a).qualifiers().get(path) //
 				: null;
 	}
 
@@ -799,8 +799,7 @@ public class RelationalEntityWriterUnitTests {
 
 	static class SingleReferenceEntity {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		Element other;
 		// should not trigger own DbAction
 		String name;
@@ -812,10 +811,8 @@ public class RelationalEntityWriterUnitTests {
 
 	static class EmbeddedReferenceEntity {
 
-		@Id
-		final Long id;
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
-		Element other;
+		@Id final Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Element other;
 
 		public EmbeddedReferenceEntity(Long id) {
 			this.id = id;
@@ -824,10 +821,8 @@ public class RelationalEntityWriterUnitTests {
 
 	static class EmbeddedReferenceChainEntity {
 
-		@Id
-		final Long id;
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
-		ElementReference other;
+		@Id final Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") ElementReference other;
 
 		public EmbeddedReferenceChainEntity(Long id) {
 			this.id = id;
@@ -836,8 +831,7 @@ public class RelationalEntityWriterUnitTests {
 
 	static class RootWithEmbeddedReferenceChainEntity {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		EmbeddedReferenceChainEntity other;
 
 		public RootWithEmbeddedReferenceChainEntity(Long id) {
@@ -847,8 +841,7 @@ public class RelationalEntityWriterUnitTests {
 
 	static class ReferenceWoIdEntity {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		NoIdElement other;
 		// should not trigger own DbAction
 		String name;
@@ -860,8 +853,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class CascadingReferenceMiddleElement {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		final Set<Element> element = new HashSet<>();
 
 		public CascadingReferenceMiddleElement(Long id) {
@@ -871,8 +863,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class CascadingReferenceEntity {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		final Set<CascadingReferenceMiddleElement> other = new HashSet<>();
 
 		public CascadingReferenceEntity(Long id) {
@@ -882,8 +873,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class SetContainer {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		Set<Element> elements = new HashSet<>();
 
 		public SetContainer(Long id) {
@@ -893,8 +883,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class ListMapContainer {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		List<MapContainer> maps = new ArrayList<>();
 
 		public ListMapContainer(Long id) {
@@ -904,8 +893,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class MapContainer {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		Map<String, Element> elements = new HashMap<>();
 
 		public MapContainer(Long id) {
@@ -915,8 +903,7 @@ public class RelationalEntityWriterUnitTests {
 
 	private static class ListContainer {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		List<Element> elements = new ArrayList<>();
 
 		public ListContainer(Long id) {
@@ -925,26 +912,19 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	private static class Element {
-		@Id
-		final Long id;
+		@Id final Long id;
 
 		public Element(Long id) {
 			this.id = id;
 		}
 	}
 
-	private static class ElementReference {
-		final Element element;
-
-		public ElementReference(Element element) {
-			this.element = element;
-		}
+	private record ElementReference(Element element) {
 	}
 
 	private static class NoIdListMapContainer {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		List<NoIdMapContainer> maps = new ArrayList<>();
 
 		public NoIdListMapContainer(Long id) {
@@ -956,24 +936,20 @@ public class RelationalEntityWriterUnitTests {
 
 		Map<String, NoIdElement> elements = new HashMap<>();
 
-		public NoIdMapContainer() {
-		}
+		public NoIdMapContainer() {}
 	}
 
 	private static class NoIdElement {
 		// empty classes feel weird.
 		String name;
 
-		public NoIdElement() {
-		}
+		public NoIdElement() {}
 	}
 
 	private static class WithReadOnlyReference {
 
-		@Id
-		final Long id;
-		@ReadOnlyProperty
-		Element readOnly;
+		@Id final Long id;
+		@ReadOnlyProperty Element readOnly;
 
 		public WithReadOnlyReference(Long id) {
 			this.id = id;

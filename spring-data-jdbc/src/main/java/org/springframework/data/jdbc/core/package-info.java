@@ -1,7 +1,7 @@
 /**
  * Core JDBC implementation.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.core;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

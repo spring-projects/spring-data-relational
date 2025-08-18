@@ -17,8 +17,8 @@ package org.springframework.data.relational.core;
 
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.lang.Nullable;
 
 /**
  * Delegate class to encapsulate lifecycle event configuration and publishing. Event creation is deferred within an

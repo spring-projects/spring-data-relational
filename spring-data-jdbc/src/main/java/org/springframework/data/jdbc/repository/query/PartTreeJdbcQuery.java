@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -47,7 +48,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -195,7 +195,11 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 						Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuery.getQuery(),
 								countQuery.getParameterSource(dialect.getLikeEscaper()));
 
-						return converter.getConversionService().convert(count, Long.class);
+						Long converted = converter.getConversionService().convert(count, Long.class);
+
+						Assert.state(converted != null, "Count must not be null");
+
+						return converted;
 					});
 		}
 

@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -36,7 +37,6 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
@@ -86,8 +86,8 @@ public class UpdateMapper extends QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundAssignments}.
 	 */
-	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ?> assignments,
-			Table table, @Nullable RelationalPersistentEntity<?> entity) {
+	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ?> assignments, Table table,
+			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(markers, "BindMarkers must not be null");
 		Assert.notNull(assignments, "Assignments must not be null");
@@ -103,8 +103,8 @@ public class UpdateMapper extends QueryMapper {
 		return new BoundAssignments(bindings, result);
 	}
 
-	private Collection<Assignment> getAssignments(SqlIdentifier columnName, Object value, MutableBindings bindings,
-			Table table, @Nullable RelationalPersistentEntity<?> entity) {
+	private Collection<Assignment> getAssignments(SqlIdentifier columnName, @Nullable Object value,
+			MutableBindings bindings, Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, columnName, getMappingContext());
 
@@ -161,7 +161,7 @@ public class UpdateMapper extends QueryMapper {
 		return List.of(createAssignment(column, mappedValue, typeHint, bindings));
 	}
 
-	private Assignment createAssignment(Column column, Object value, Class<?> type, MutableBindings bindings) {
+	private Assignment createAssignment(Column column, @Nullable Object value, Class<?> type, MutableBindings bindings) {
 
 		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 		AssignValue assignValue = Assignments.value(column, SQL.bindMarker(bindMarker.getPlaceholder()));

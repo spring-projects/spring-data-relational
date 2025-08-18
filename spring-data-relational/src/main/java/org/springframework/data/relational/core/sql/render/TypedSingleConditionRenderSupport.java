@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.data.relational.core.sql.When;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -81,7 +81,8 @@ abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends Ty
 	 */
 	protected CharSequence consumeRenderedPart() {
 
-		Assert.state(hasDelegatedRendering(), "Rendering not delegated; Cannot consume delegated rendering part");
+		// hasDelegateRendering inlined for NullAway
+		Assert.state(current != null, "Rendering not delegated; Cannot consume delegated rendering part");
 
 		PartRenderer current = this.current;
 		this.current = null;

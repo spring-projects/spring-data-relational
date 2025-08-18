@@ -17,9 +17,9 @@ package org.springframework.data.relational.core.sql.render;
 
 import java.util.StringJoiner;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Cast;
 import org.springframework.data.relational.core.sql.Visitable;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

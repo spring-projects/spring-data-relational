@@ -15,8 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.lang.Nullable;
 
 /**
  * Gets published after deletion of an entity. It will have a {@link Identifier} identifier. If the entity is

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -28,7 +29,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.RowMapperResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

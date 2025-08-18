@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.repository.query;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -23,30 +23,12 @@ import org.springframework.util.Assert;
  *
  * @since 2.0
  */
-class ParameterMetadata {
+record ParameterMetadata(String name, @Nullable Object value, Class<?> type) {
 
-	private final String name;
-	private final @Nullable Object value;
-	private final Class<?> type;
-
-	public ParameterMetadata(String name, @Nullable Object value, Class<?> type) {
+	ParameterMetadata {
 
 		Assert.notNull(type, "Parameter type must not be null");
-		this.name = name;
-		this.value = value;
-		this.type = type;
 	}
 
-	public String getName() {
-		return name;
-	}
 
-	@Nullable
-	public Object getValue() {
-		return value;
-	}
-
-	public Class<?> getType() {
-		return type;
-	}
 }

@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.sql.Named;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.TableLike;
+import org.springframework.util.Assert;
 
 /**
  * Utility to render {@link Column} and {@link Table} names using {@link SqlIdentifier} and {@link RenderContext} to
@@ -91,8 +92,12 @@ class NameRenderer {
 			return render(context, namingStrategy.getReferenceName(column));
 		}
 
-		return render(context, SqlIdentifier.from(namingStrategy.getReferenceName(column.getTable()),
-				namingStrategy.getReferenceName(column)));
+		TableLike table = column.getTable();
+
+		Assert.notNull(table, "Table must not be null");
+
+		return render(context,
+				SqlIdentifier.from(namingStrategy.getReferenceName(table), namingStrategy.getReferenceName(column)));
 	}
 
 	/**
@@ -106,8 +111,11 @@ class NameRenderer {
 
 		RenderNamingStrategy namingStrategy = context.getNamingStrategy();
 
-		return render(context,
-				SqlIdentifier.from(namingStrategy.getReferenceName(column.getTable()), namingStrategy.getName(column)));
+		TableLike table = column.getTable();
+
+		Assert.notNull(table, "Table must not be null");
+
+		return render(context, SqlIdentifier.from(namingStrategy.getReferenceName(table), namingStrategy.getName(column)));
 	}
 
 	/**

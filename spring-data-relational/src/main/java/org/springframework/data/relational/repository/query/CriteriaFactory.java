@@ -70,33 +70,36 @@ class CriteriaFactory {
 
 		switch (type) {
 			case BETWEEN: {
-				ParameterMetadata geParamMetadata = parameterMetadataProvider.next(part);
-				ParameterMetadata leParamMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.between(geParamMetadata.getValue(), leParamMetadata.getValue());
+
+				Object geValue = requireNextValue(part, "geValue");
+				Object leValue = requireNextValue(part, "leValue");
+
+				return criteriaStep.between(geValue, leValue);
 			}
 			case AFTER:
 			case GREATER_THAN: {
-				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.greaterThan(paramMetadata.getValue());
+				Object value = requireNextValue(part);
+
+				return criteriaStep.greaterThan(value);
 			}
 			case GREATER_THAN_EQUAL: {
-				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.greaterThanOrEquals(paramMetadata.getValue());
+				Object value = requireNextValue(part);
+				return criteriaStep.greaterThanOrEquals(value);
 			}
 			case BEFORE:
 			case LESS_THAN: {
-				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.lessThan(paramMetadata.getValue());
+				Object value = requireNextValue(part);
+				return criteriaStep.lessThan(value);
 			}
 			case LESS_THAN_EQUAL: {
-				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.lessThanOrEquals(paramMetadata.getValue());
+				Object value = requireNextValue(part);
+				return criteriaStep.lessThanOrEquals(value);
 			}
 			case IN:
 			case NOT_IN: {
-				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				Criteria criteria = part.getType() == Part.Type.IN ? criteriaStep.in(asCollection(paramMetadata.getValue()))
-						: criteriaStep.notIn(asCollection(paramMetadata.getValue()));
+				Object value = requireNextValue(part);
+				Criteria criteria = part.getType() == Part.Type.IN ? criteriaStep.in(asCollection(value))
+						: criteriaStep.notIn(asCollection(value));
 				return criteria.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, part.getProperty().getType()));
 			}
 			case STARTING_WITH:
@@ -106,28 +109,49 @@ class CriteriaFactory {
 			case LIKE:
 			case NOT_LIKE: {
 				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
+				Object value = paramMetadata.value();
+
+				Assert.state(value != null, "value must not be null");
+
 				Criteria criteria = part.getType() == Part.Type.NOT_LIKE || part.getType() == Part.Type.NOT_CONTAINING
-						? criteriaStep.notLike(paramMetadata.getValue())
-						: criteriaStep.like(paramMetadata.getValue());
+						? criteriaStep.notLike(value)
+						: criteriaStep.like(value);
 				return criteria
-						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.getType()));
+						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.type()));
 			}
 			case SIMPLE_PROPERTY: {
 				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				if (paramMetadata.getValue() == null) {
+				if (paramMetadata.value() == null) {
 					return criteriaStep.isNull();
 				}
-				return criteriaStep.is(paramMetadata.getValue())
-						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.getType()));
+				return criteriaStep.is(paramMetadata.value())
+						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.type()));
 			}
 			case NEGATING_SIMPLE_PROPERTY: {
 				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.not(paramMetadata.getValue())
-						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.getType()));
+				Object value = paramMetadata.value();
+
+				Assert.state(value != null, "value must not be null");
+
+				return criteriaStep.not(value)
+						.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, propertyType, paramMetadata.type()));
 			}
 			default:
 				throw new IllegalArgumentException("Unsupported keyword " + type);
 		}
+	}
+
+	private Object requireNextValue(Part part, String geValue_must_not_be_null) {
+
+		Object value = parameterMetadataProvider.next(part).value();
+
+		Assert.state(value != null, geValue_must_not_be_null + " must not be null");
+
+		return value;
+	}
+
+	private Object requireNextValue(Part part) {
+		return requireNextValue(part, "value");
 	}
 
 	/**

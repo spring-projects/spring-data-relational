@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
@@ -49,7 +50,6 @@ import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -165,7 +165,12 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		}
 
 		if (property.isEntity()) {
-			Class<?> columnType = getEntityColumnType(property.getTypeInformation().getActualType());
+
+			TypeInformation<?> actualType = property.getTypeInformation().getActualType();
+
+			Assert.state(actualType != null, "actualType must not be null");
+
+			Class<?> columnType = getEntityColumnType(actualType);
 
 			if (columnType != null) {
 				return columnType;
@@ -207,11 +212,17 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 			List<TypeInformation<?>> types = targetType.getTypeArguments();
 			TypeInformation<?> idType = types.get(1);
+
+			Object referencedId;
 			if (value instanceof AggregateReference<?, ?> ref) {
-				return AggregateReference.to(readValue(ref.getId(), idType));
+				referencedId = readValue(ref.getId(), idType);
 			} else {
-				return AggregateReference.to(readValue(value, idType));
+				referencedId = readValue(value, idType);
 			}
+
+			Assert.state(referencedId != null, "Reference must not be null");
+
+			return AggregateReference.to(referencedId);
 		}
 
 		return getPotentiallyConvertedSimpleRead(value, targetType);
@@ -545,7 +556,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		if (owner.equals(base.getRequiredLeafEntity())) {
 			return base.append(suffix);
 		} else {
-			return smartAppend(base, suffix.getTail());
+			AggregatePath tail = suffix.getTail();
+
+			Assert.state(tail != null, "Tail must not be null");
+
+			return smartAppend(base, tail);
 		}
 	}
 

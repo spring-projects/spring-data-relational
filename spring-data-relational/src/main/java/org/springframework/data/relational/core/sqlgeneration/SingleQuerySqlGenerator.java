@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -31,7 +32,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
-import org.springframework.lang.Nullable;
 
 /**
  * A {@link SqlGenerator} that creates SQL statements for loading complete aggregates with a single statement.

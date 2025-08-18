@@ -1,6 +1,5 @@
 /**
  * R2DBC-specific repository implementation.
  */
-@org.springframework.lang.NonNullApi
-@org.springframework.lang.NonNullFields
+@org.jspecify.annotations.NullMarked
 package org.springframework.data.r2dbc.repository;

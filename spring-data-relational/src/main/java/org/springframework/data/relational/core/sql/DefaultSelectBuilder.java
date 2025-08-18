@@ -20,11 +20,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Join.JoinType;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoin;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhereAndOr;
-import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Default {@link SelectBuilder} implementation.
@@ -155,12 +156,16 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	@Override
 	public SelectWhereAndOr and(Condition condition) {
 
+		Assert.state(this.where != null, "Where must not be null");
+
 		where = where.and(condition);
 		return this;
 	}
 
 	@Override
 	public SelectWhereAndOr or(Condition condition) {
+
+		Assert.state(this.where != null, "Where must not be null");
 
 		where = where.or(condition);
 		return this;
@@ -274,6 +279,9 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 				return;
 			}
 
+			Assert.state(from != null, "from must not be null");
+			Assert.state(to != null, "to must not be null");
+
 			Comparison comparison = Comparison.create(from, "=", to);
 
 			if (condition == null) {
@@ -285,7 +293,11 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		}
 
 		private Join finishJoin() {
+
 			finishCondition();
+
+			Assert.state(condition != null, "condition must not be null");
+
 			return new Join(joinType, table, condition);
 		}
 

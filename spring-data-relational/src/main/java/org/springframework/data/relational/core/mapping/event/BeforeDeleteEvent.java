@@ -15,8 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.lang.Nullable;
 
 /**
  * Gets published when an entity is about to get deleted.

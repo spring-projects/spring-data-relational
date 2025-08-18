@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -42,7 +42,7 @@ public class SqlSort extends Sort {
 	private static final long serialVersionUID = 1L;
 
 	private SqlSort(Direction direction, List<String> paths) {
-		this(Collections.<Order> emptyList(), direction, paths);
+		this(Collections.emptyList(), direction, paths);
 	}
 
 	private SqlSort(List<Order> orders, @Nullable Direction direction, List<String> paths) {
@@ -84,7 +84,7 @@ public class SqlSort extends Sort {
 
 		if (!predicate.test(property)) {
 			throw new IllegalArgumentException(
-					"order fields that are not marked as unsafe must only consist of digits, letter, '.', '_', and '\'. If you want to sort by arbitrary expressions please use RelationalSort.unsafe. Note that such expressions become part of SQL statements and therefore need to be sanitized to prevent SQL injection attacks.");
+					"order fields that are not marked as unsafe must only consist of digits, letter, '.', '_', and ''. If you want to sort by arbitrary expressions please use RelationalSort.unsafe. Note that such expressions become part of SQL statements and therefore need to be sanitized to prevent SQL injection attacks.");
 		}
 	}
 

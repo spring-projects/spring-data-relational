@@ -1,7 +1,7 @@
 /**
  * JDBC-specific conversion classes.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.core.convert;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

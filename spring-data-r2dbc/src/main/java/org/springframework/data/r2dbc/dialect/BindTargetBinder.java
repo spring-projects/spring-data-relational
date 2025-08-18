@@ -58,7 +58,7 @@ public final class BindTargetBinder {
 		if (value == null) {
 			target.bindNull(index, parameter.getType());
 		} else {
-			target.bind(index, parameter.getValue());
+			target.bind(index, value);
 		}
 	}
 }

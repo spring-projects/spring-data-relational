@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -41,7 +41,7 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	@Override
 	public DeleteWhereAndOr where(Condition condition) {
 
-		Assert.notNull(condition, "Where Condition must not be null");
+		Assert.notNull(condition, "where must not be null");
 		this.where = condition;
 		return this;
 	}
@@ -50,6 +50,8 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	public DeleteWhereAndOr and(Condition condition) {
 
 		Assert.notNull(condition, "Condition must not be null");
+		Assert.state(this.where != null, "where must not be null");
+
 		this.where = this.where.and(condition);
 		return this;
 	}
@@ -58,12 +60,16 @@ class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAn
 	public DeleteWhereAndOr or(Condition condition) {
 
 		Assert.notNull(condition, "Condition must not be null");
+		Assert.state(this.where != null, "where must not be null");
+
 		this.where = this.where.or(condition);
 		return this;
 	}
 
 	@Override
 	public Delete build() {
+
+		Assert.state(this.from != null, "from must not be null");
 
 		DefaultDelete delete = new DefaultDelete(this.from, this.where);
 

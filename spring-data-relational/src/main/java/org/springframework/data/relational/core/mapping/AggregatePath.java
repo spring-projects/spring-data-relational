@@ -29,13 +29,13 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -342,6 +342,13 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		}
 
+		public ColumnInfo requiredQualifierColumnInfo() {
+
+			Assert.notNull(qualifierColumnInfo, "ColumnInfo for qualifier columns must not be null");
+
+			return qualifierColumnInfo;
+		}
+
 		private static ColumnInfos computeIdColumnInfos(AggregatePath tableOwner,
 				RelationalPersistentEntity<?> leafEntity) {
 
@@ -442,6 +449,15 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 */
 		public ColumnInfos effectiveIdColumnInfos() {
 			return backReferenceColumnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
+		}
+
+		public Class<?> requiredQualifierColumnType() {
+
+			Class<?> type = qualifierColumnType();
+
+			Assert.notNull(type, "ColumnInfo for qualifier columns must not be null");
+
+			return type;
 		}
 	}
 
@@ -640,7 +656,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 		 * @param path for which to return the {@literal ColumnInfo}
 		 * @return {@literal ColumnInfo} for the given path.
 		 */
-		public ColumnInfo get(AggregatePath path) {
+		public @Nullable ColumnInfo get(AggregatePath path) {
 			return columnInfos.get(path);
 		}
 

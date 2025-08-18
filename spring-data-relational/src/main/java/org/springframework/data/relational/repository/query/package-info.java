@@ -1,7 +1,7 @@
 /**
  * Query support for relational database repositories.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.relational.repository.query;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

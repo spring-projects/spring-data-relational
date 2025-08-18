@@ -18,8 +18,8 @@ package org.springframework.data.jdbc.repository.query;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -41,11 +41,14 @@ public abstract class AbstractDelegatingRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Override
-	@Nullable
 	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
 
 		T intermediate = delegate.mapRow(rs, rowNum);
-		return postProcessMapping(intermediate);
+		T result = postProcessMapping(intermediate);
+
+		Assert.state(result != null, "Result must not be null");
+
+		return result;
 	}
 
 	/**

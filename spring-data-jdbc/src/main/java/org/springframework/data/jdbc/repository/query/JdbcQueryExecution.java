@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.DtoInstantiatingConverter;
 import org.springframework.data.mapping.context.MappingContext;
@@ -25,7 +26,6 @@ import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
 /**

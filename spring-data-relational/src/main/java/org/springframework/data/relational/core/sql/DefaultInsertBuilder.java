@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -33,8 +33,8 @@ class DefaultInsertBuilder
 		implements InsertBuilder, InsertBuilder.InsertIntoColumnsAndValuesWithBuild, InsertBuilder.InsertValuesWithBuild {
 
 	private @Nullable Table into;
-	private List<Column> columns = new ArrayList<>();
-	private List<Expression> values = new ArrayList<>();
+	private final List<Column> columns = new ArrayList<>();
+	private final List<Expression> values = new ArrayList<>();
 
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild into(Table table) {

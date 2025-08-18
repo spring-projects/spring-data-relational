@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -47,11 +48,13 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	private DataAccessStrategy delegate;
 
+	@SuppressWarnings("NullAway.Init")
 	public DelegatingDataAccessStrategy() {}
 
 	public DelegatingDataAccessStrategy(DataAccessStrategy delegate) {
 
 		Assert.notNull(delegate, "DataAccessStrategy must not be null");
+
 		this.delegate = delegate;
 	}
 
@@ -66,7 +69,8 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+			IdValueSource idValueSource) {
 		return delegate.insert(instance, domainType, identifier, idValueSource);
 	}
 
@@ -137,7 +141,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T> @Nullable T findById(Object id, Class<T> domainType) {
 
 		Assert.notNull(delegate, "Delegate is null");
 

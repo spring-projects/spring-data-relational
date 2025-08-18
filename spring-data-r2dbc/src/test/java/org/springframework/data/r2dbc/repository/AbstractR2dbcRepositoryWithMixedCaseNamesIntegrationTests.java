@@ -15,7 +15,19 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.test.StepVerifier;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import javax.sql.DataSource;
+
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,16 +39,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.lang.Nullable;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link LegoSetRepository} with table and column names that contain
@@ -120,14 +122,11 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 
 		@Nullable
 		@Column("Id")
-		@Id
-		Integer id;
+		@Id Integer id;
 
-		@Column("Name")
-		String name;
+		@Column("Name") String name;
 
-		@Column("Manual")
-		Integer manual;
+		@Column("Manual") Integer manual;
 
 		@PersistenceCreator
 		LegoSet(@Nullable Integer id, String name, Integer manual) {
@@ -136,8 +135,7 @@ public abstract class AbstractR2dbcRepositoryWithMixedCaseNamesIntegrationTests 
 			this.manual = manual;
 		}
 
-		public LegoSet() {
-		}
+		public LegoSet() {}
 
 		@Override
 		public boolean equals(@Nullable Object o) {

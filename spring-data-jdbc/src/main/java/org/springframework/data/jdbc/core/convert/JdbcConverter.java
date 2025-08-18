@@ -17,13 +17,13 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.SQLType;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 
 /**
  * A {@link JdbcConverter} is responsible for converting for values to the native relational representation and vice

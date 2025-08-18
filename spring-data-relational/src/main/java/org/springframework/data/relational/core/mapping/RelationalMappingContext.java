@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
@@ -29,7 +30,6 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -49,8 +49,8 @@ public class RelationalMappingContext
 
 	private boolean forceQuote = true;
 
-	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator =
-			new SqlIdentifierExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator = new SqlIdentifierExpressionEvaluator(
+			EvaluationContextProvider.DEFAULT);
 	private boolean singleQueryLoadingEnabled = false;
 
 	/**

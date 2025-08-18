@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +44,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -117,7 +117,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+			IdValueSource idValueSource) {
 
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
 				idValueSource);
@@ -281,7 +282,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T> @Nullable T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
@@ -338,7 +339,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(propertyPath, "propertyPath must not be null");
 
 		AggregatePath path = context.getAggregatePath(propertyPath);
-		Class<?> actualType = path.getLeafEntity().getType();
+		RelationalPersistentEntity<?> leafEntity = path.getLeafEntity();
+
+		Assert.state(leafEntity != null, "leafEntity must not be null");
+
+		Class<?> actualType = leafEntity.getType();
 
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, propertyPath);
@@ -358,7 +363,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				if (!path.hasIdProperty() && path.isQualified()) {
 
 					TableInfo tableInfo = path.getTableInfo();
-					identifierToUse = identifierToUse.withPart(tableInfo.qualifierColumnInfo().name(), rowNum, Object.class);
+					identifierToUse = identifierToUse.withPart(tableInfo.requiredQualifierColumnInfo().name(), rowNum,
+							Object.class);
 				}
 
 				return getEntityRowMapper(path, identifierToUse).mapRow(rs, rowNum);

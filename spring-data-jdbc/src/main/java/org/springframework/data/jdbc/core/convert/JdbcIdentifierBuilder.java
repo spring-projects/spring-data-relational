@@ -93,7 +93,8 @@ public class JdbcIdentifierBuilder {
 		Assert.notNull(value, "Value must not be null");
 
 		AggregatePath.TableInfo tableInfo = path.getTableInfo();
-		identifier = identifier.withPart(tableInfo.qualifierColumnInfo().name(), value, tableInfo.qualifierColumnType());
+		identifier = identifier.withPart(tableInfo.requiredQualifierColumnInfo().name(), value,
+				tableInfo.requiredQualifierColumnType());
 
 		return this;
 	}

@@ -33,91 +33,91 @@ import java.util.*
  * Extension for [JdbcAggregateOperations.count].
  */
 inline fun <reified T> JdbcAggregateOperations.count(): Long =
-		count(T::class.java)
+    count(T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.count] with a query.
  */
-inline fun <reified T> JdbcAggregateOperations.count(query: Query): Long =
-		count(query, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.count(query: Query): Long =
+    count(query, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.exists].
  */
-inline fun <reified T> JdbcAggregateOperations.exists(query: Query): Boolean =
-		exists(query, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.exists(query: Query): Boolean =
+    exists(query, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.existsById].
  */
-inline fun <reified T> JdbcAggregateOperations.existsById(id: Any): Boolean =
-		existsById(id, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.existsById(id: Any): Boolean =
+    existsById(id, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findById].
  */
-inline fun <reified T> JdbcAggregateOperations.findById(id: Any): T? =
-		findById(id, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.findById(id: Any): T? =
+    findById(id, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findAllById].
  */
-inline fun <reified T> JdbcAggregateOperations.findAllById(ids: Iterable<*>): List<T> =
-		findAllById(ids, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.findAllById(ids: Iterable<*>): List<T> =
+    findAllById(ids, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findAll].
  */
-inline fun <reified T> JdbcAggregateOperations.findAll(): List<T> =
-		findAll(T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.findAll(): List<T> =
+    findAll(T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findAll] with sorting.
  */
-inline fun <reified T> JdbcAggregateOperations.findAll(sort: Sort): List<T> =
-		findAll(T::class.java, sort)
+inline fun <reified T : Any> JdbcAggregateOperations.findAll(sort: Sort): List<T> =
+    findAll(T::class.java, sort)
 
 /**
  * Extension for [JdbcAggregateOperations.findAll] with pagination.
  */
 inline fun <reified T : Any> JdbcAggregateOperations.findAll(pageable: Pageable): Page<T> =
-		findAll(T::class.java, pageable)
+    findAll(T::class.java, pageable)
 
 /**
  * Extension for [JdbcAggregateOperations.findOne] with a query.
  */
-inline fun <reified T> JdbcAggregateOperations.findOne(query: Query): Optional<T> =
-		findOne(query, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.findOne(query: Query): Optional<T> =
+    findOne(query, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findAll] with a query.
  */
-inline fun <reified T> JdbcAggregateOperations.findAll(query: Query): List<T> =
-		findAll(query, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.findAll(query: Query): List<T> =
+    findAll(query, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.findAll] with query and pagination.
  */
 inline fun <reified T : Any> JdbcAggregateOperations.findAll(
-	query: Query,
-	pageable: Pageable
+    query: Query,
+    pageable: Pageable
 ): Page<T> =
-		findAll(query, T::class.java, pageable)
+    findAll(query, T::class.java, pageable)
 
 /**
  * Extension for [JdbcAggregateOperations.deleteById].
  */
-inline fun <reified T> JdbcAggregateOperations.deleteById(id: Any): Unit =
-		deleteById(id, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.deleteById(id: Any): Unit =
+    deleteById(id, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.deleteAllById].
  */
-inline fun <reified T> JdbcAggregateOperations.deleteAllById(ids: Iterable<*>): Unit =
-		deleteAllById(ids, T::class.java)
+inline fun <reified T : Any> JdbcAggregateOperations.deleteAllById(ids: Iterable<*>): Unit =
+    deleteAllById(ids, T::class.java)
 
 /**
  * Extension for [JdbcAggregateOperations.deleteAll].
  */
 inline fun <reified T> JdbcAggregateOperations.deleteAll(): Unit =
-		deleteAll(T::class.java)
+    deleteAll(T::class.java)
