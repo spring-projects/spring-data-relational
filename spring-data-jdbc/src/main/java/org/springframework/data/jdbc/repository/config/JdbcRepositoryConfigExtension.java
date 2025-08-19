@@ -21,17 +21,27 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.aot.generate.GenerationContext;
+import org.springframework.beans.factory.aot.BeanRegistrationAotProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionValidationException;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.aot.JdbcRepositoryContributor;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.repository.config.AotRepositoryContext;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
+import org.springframework.data.repository.config.RepositoryRegistrationAotProcessor;
+import org.springframework.data.util.TypeContributor;
 import org.springframework.util.StringUtils;
 
 /**
@@ -109,11 +119,48 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		}
 	}
 
+	@Override
+	public Class<? extends BeanRegistrationAotProcessor> getRepositoryAotProcessor() {
+		return JdbcRepositoryRegistrationAotProcessor.class;
+	}
+
 	/**
 	 * In strict mode only domain types having a {@link Table} annotation get a repository.
 	 */
 	@Override
 	protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
 		return Collections.singleton(Table.class);
+	}
+
+	/**
+	 * A {@link RepositoryRegistrationAotProcessor} implementation that maintains aot repository setup.
+	 *
+	 * @since 3.0
+	 */
+	public static class JdbcRepositoryRegistrationAotProcessor extends RepositoryRegistrationAotProcessor {
+
+		private static final String MODULE_NAME = "jdbc";
+
+		protected @Nullable JdbcRepositoryContributor contribute(AotRepositoryContext repositoryContext,
+				GenerationContext generationContext) {
+
+			// do some custom type registration here
+			super.contribute(repositoryContext, generationContext);
+
+			repositoryContext.getResolvedTypes().stream().forEach(type -> {
+				TypeContributor.contribute(type, it -> true, generationContext);
+			});
+
+			if (!repositoryContext.isGeneratedRepositoriesEnabled(MODULE_NAME)) {
+				return null;
+			}
+
+			ConfigurableListableBeanFactory beanFactory = repositoryContext.getBeanFactory();
+			JdbcDialect dialect = beanFactory.getBean(JdbcDialect.class);
+			JdbcConverter converter = beanFactory.getBean(JdbcConverter.class);
+
+			return new JdbcRepositoryContributor(repositoryContext, dialect, converter);
+		}
+
 	}
 }

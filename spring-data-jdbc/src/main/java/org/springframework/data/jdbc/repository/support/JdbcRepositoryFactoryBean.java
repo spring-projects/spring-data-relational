@@ -22,6 +22,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -192,13 +193,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		} else {
 
 			Assert.state(this.dataAccessStrategy != null, "DataAccessStrategy is required and must not be null");
-			Assert.state(this.mappingContext != null, "MappingContext is required and must not be null");
 			Assert.state(this.converter != null, "RelationalConverter is required and must not be null");
-			Assert.state(this.dialect != null, "Dialect is required and must not be null");
-			Assert.state(this.jdbcOperations != null, "NamedParameterJdbcOperations is required and must not be null");
 
-			repositoryFactory = new JdbcRepositoryFactory(this.dataAccessStrategy, this.mappingContext, this.converter,
-					this.dialect, this.publisher, this.jdbcOperations);
+			JdbcAggregateOperations operations = new JdbcAggregateTemplate(converter, dataAccessStrategy);
+
+			repositoryFactory = new JdbcRepositoryFactory(operations);
 			repositoryFactory.setEntityCallbacks(entityCallbacks);
 		}
 

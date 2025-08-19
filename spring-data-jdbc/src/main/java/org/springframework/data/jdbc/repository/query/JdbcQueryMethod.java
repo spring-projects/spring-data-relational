@@ -84,10 +84,7 @@ public class JdbcQueryMethod extends QueryMethod {
 			Class<?> domainClass = getDomainClass();
 
 			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType)) {
-
-				this.metadata = new SimpleRelationalEntityMetadata<>((Class<Object>) domainClass,
-						mappingContext.getRequiredPersistentEntity(domainClass));
-
+				this.metadata = new SimpleRelationalEntityMetadata<>(mappingContext.getRequiredPersistentEntity(domainClass));
 			} else {
 
 				RelationalPersistentEntity<?> returnedEntity = mappingContext.getPersistentEntity(returnedObjectType);

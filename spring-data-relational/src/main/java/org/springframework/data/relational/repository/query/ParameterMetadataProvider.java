@@ -34,7 +34,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 2.0
  */
-class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
+public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 	private static final Object VALUE_PLACEHOLDER = new Object();
 

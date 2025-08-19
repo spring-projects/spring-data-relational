@@ -16,29 +16,19 @@
 package org.springframework.data.jdbc.repository.query;
 
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.QueryMapper;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -59,18 +49,16 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @since 2.0
  */
-class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
+public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 	private final RelationalMappingContext context;
 	private final PartTree tree;
 	private final RelationalParameterAccessor accessor;
-	private final QueryMapper queryMapper;
 	private final RelationalEntityMetadata<?> entityMetadata;
-	private final RenderContextFactory renderContextFactory;
 	private final boolean isSliceQuery;
 	private final ReturnedType returnedType;
 	private final Optional<Lock> lockMode;
-	private final SqlGeneratorSource sqlGeneratorSource;
+	private final StatementFactory statementFactory;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -98,6 +86,24 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
+	 * {@link JdbcQueryMethod} and {@link RelationalParameterAccessor}.
+	 *
+	 * @param tree part tree, must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public JdbcQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect, JdbcQueryMethod queryMethod,
+			RelationalParameterAccessor accessor, ReturnedType returnedType) {
+		this(converter.getMappingContext(), tree, converter, dialect, queryMethod.getEntityInformation(), accessor,
+				queryMethod.isSliceQuery(), returnedType, queryMethod.lookupLockAnnotation(),
+				new SqlGeneratorSource(converter.getMappingContext(), converter, dialect));
+	}
+
+	/**
+	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
 	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
 	 *
 	 * @param context the mapping context. Must not be {@literal null}.
@@ -113,7 +119,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 *          {@literal null}
 	 * @since 4.0
 	 */
-	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
+	public JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
 			ReturnedType returnedType, Optional<Lock> lockMode, SqlGeneratorSource sqlGeneratorSource) {
 		super(tree, accessor);
@@ -129,12 +135,14 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.accessor = accessor;
 
 		this.entityMetadata = entityMetadata;
-		this.queryMapper = new QueryMapper(converter);
-		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.isSliceQuery = isSliceQuery;
 		this.returnedType = returnedType;
 		this.lockMode = lockMode;
-		this.sqlGeneratorSource = sqlGeneratorSource;
+		this.statementFactory = new StatementFactory(converter, dialect);
+	}
+
+	StatementFactory getStatementFactory() {
+		return statementFactory;
 	}
 
 	/**
@@ -191,91 +199,45 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	protected ParametrizedQuery complete(@Nullable Criteria criteria, Sort sort) {
 
 		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
-		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SelectBuilder.SelectLimitOffset limitOffsetBuilder = createSelectClause(entity, table);
-		SelectBuilder.SelectWhere whereBuilder = applyLimitAndOffset(limitOffsetBuilder);
-		SelectBuilder.SelectOrdered selectOrderBuilder = applyCriteria(criteria, entity, table, parameterSource,
-				whereBuilder);
-		selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
+		StatementFactory.SelectionBuilder selection = getSelection(entity);
 
-		SelectBuilder.BuildSelect completedBuildSelect = selectOrderBuilder;
+		selection.page(accessor.getPageable()).filter(criteria).orderBy(sort);
+
 		if (this.lockMode.isPresent()) {
-			completedBuildSelect = selectOrderBuilder.lock(this.lockMode.get().value());
+			selection.lock(this.lockMode.get().value());
 		}
 
-		Select select = completedBuildSelect.build();
-
-		String sql = SqlRenderer.create(renderContextFactory.createRenderContext()).render(select);
-
-		return new ParametrizedQuery(sql, parameterSource);
+		String sql = selection.build(parameterSource);
+		return new ParametrizedQuery(sql, parameterSource, criteria != null ? criteria : Criteria.empty());
 	}
 
-	SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
-			SelectBuilder.SelectOrdered selectOrdered) {
-
-		return sort.isSorted() ? //
-				selectOrdered.orderBy(queryMapper.getMappedSort(table, sort, entity)) //
-				: selectOrdered;
-	}
-
-	SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
-			Table table, MapSqlParameterSource parameterSource, SelectBuilder.SelectWhere whereBuilder) {
-
-		return criteria != null //
-				? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
-				: whereBuilder;
-	}
-
-	SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
+	StatementFactory.SelectionBuilder getSelection(RelationalPersistentEntity<?> entity) {
 
 		if (tree.isExistsProjection()) {
-			limitOffsetBuilder = limitOffsetBuilder.limit(1);
-		} else if (tree.isLimiting()) {
-
-			Integer maxResults = tree.getMaxResults();
-
-			Assert.state(maxResults != null, "Max results must not be null");
-
-			limitOffsetBuilder = limitOffsetBuilder.limit(maxResults);
-		}
-
-		Pageable pageable = accessor.getPageable();
-		if (pageable.isPaged()) {
-			limitOffsetBuilder = limitOffsetBuilder.limit(isSliceQuery ? pageable.getPageSize() + 1 : pageable.getPageSize())
-					.offset(pageable.getOffset());
-		}
-
-		return (SelectBuilder.SelectWhere) limitOffsetBuilder;
-	}
-
-	SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
-
-		SelectBuilder.SelectJoin builder;
-		if (tree.isExistsProjection()) {
-
-			AggregatePath.ColumnInfo anyIdColumnInfo = context.getAggregatePath(entity).getTableInfo().idColumnInfos().any();
-			Column idColumn = table.column(anyIdColumnInfo.name());
-			builder = Select.builder().select(idColumn).from(table);
+			return statementFactory.exists(entity);
 		} else if (tree.isCountProjection()) {
-			builder = Select.builder().select(Functions.count(Expressions.asterisk())).from(table);
-		} else {
-			builder = selectBuilder(table);
+			return statementFactory.count(entity);
 		}
 
-		return (SelectBuilder.SelectLimitOffset) builder;
-	}
+		StatementFactory.SelectionBuilder selection;
 
-	private SelectBuilder.SelectJoin selectBuilder(Table table) {
+		if (isSliceQuery) {
+			selection = statementFactory.slice(entity);
+		} else {
+			selection = statementFactory.select(entity);
+		}
 
-		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
+		if (returnedType.needsCustomConstruction()) {
+			selection.project(returnedType.getInputProperties());
+		}
 
-		Predicate<AggregatePath> filter = ap -> returnedType.needsCustomConstruction()
-				&& !returnedType.getInputProperties().contains(ap.getRequiredBaseProperty().getName());
+		if (tree.isLimiting()) {
+			selection.limit(tree.getResultLimit());
+		}
 
-		return (SelectBuilder.SelectJoin) sqlGeneratorSource.getSqlGenerator(entity.getType()).createSelectBuilder(table,
-				filter);
+		return selection;
 	}
 
 }

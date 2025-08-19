@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Mikhail Polivakha
  * @since 4.0
  */
-public class ConvertingRowMapper extends AbstractDelegatingRowMapper<Object> {
+class ConvertingRowMapper extends AbstractDelegatingRowMapper<Object> {
 
 	private final Converter<Object, Object> converter;
 

@@ -15,23 +15,18 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
-
-import java.util.Optional;
 
 /**
  * {@link JdbcQueryCreator} that creates {@code COUNT(*)} queries without applying limit/offset and {@link Sort}.
@@ -40,7 +35,12 @@ import java.util.Optional;
  * @author Diego Krupitza
  * @since 2.2
  */
-class JdbcCountQueryCreator extends JdbcQueryCreator {
+public class JdbcCountQueryCreator extends JdbcQueryCreator {
+
+	public JdbcCountQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect, JdbcQueryMethod queryMethod,
+			RelationalParameterAccessor accessor, ReturnedType returnedType) {
+		super(tree, converter, dialect, queryMethod, accessor, returnedType);
+	}
 
 	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
@@ -49,18 +49,7 @@ class JdbcCountQueryCreator extends JdbcQueryCreator {
 	}
 
 	@Override
-	SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
-			SelectBuilder.SelectOrdered selectOrdered) {
-		return selectOrdered;
-	}
-
-	@Override
-	SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
-		return (SelectBuilder.SelectWhere) limitOffsetBuilder;
-	}
-
-	@Override
-	SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
-		return Select.builder().select(Functions.count(Expressions.asterisk())).from(table);
+	StatementFactory.SelectionBuilder getSelection(RelationalPersistentEntity<?> entity) {
+		return getStatementFactory().count(entity);
 	}
 }
