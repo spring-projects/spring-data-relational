@@ -1515,11 +1515,12 @@ public class JdbcRepositoryIntegrationTests {
 		String getName();
 	}
 
-	interface ProvidedIdEntityRepository extends CrudRepository<ProvidedIdEntity, Long> {
+	public interface ProvidedIdEntityRepository extends CrudRepository<ProvidedIdEntity, Long> {
 
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {
+	public interface DummyEntityRepository
+			extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {
 
 		@Lock(LockMode.PESSIMISTIC_WRITE)
 		List<DummyEntity> findAllByName(String name);
@@ -1607,15 +1608,15 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByBytes(byte[] bytes);
 	}
 
-	interface RootRepository extends ListCrudRepository<Root, Long> {
+	public interface RootRepository extends ListCrudRepository<Root, Long> {
 		List<Root> findAllByOrderByIdAsc();
 	}
 
-	interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
+	public interface WithDelimitedColumnRepository extends CrudRepository<WithDelimitedColumn, Long> {}
 
-	interface EntityWithSequenceRepository extends CrudRepository<EntityWithSequence, Long> {}
+	public interface EntityWithSequenceRepository extends CrudRepository<EntityWithSequence, Long> {}
 
-	interface ExpressionSqlTypePropagationRepository extends CrudRepository<ExpressionSqlTypePropagation, Long> {
+	public interface ExpressionSqlTypePropagationRepository extends CrudRepository<ExpressionSqlTypePropagation, Long> {
 
 		// language=sql
 		@Modifying
@@ -1626,7 +1627,7 @@ public class JdbcRepositoryIntegrationTests {
 		void saveWithSpel(@Param("expressionSqlTypePropagation") ExpressionSqlTypePropagation expressionSqlTypePropagation);
 	}
 
-	interface DummyProjection {
+	public interface DummyProjection {
 		String getName();
 	}
 
@@ -1987,7 +1988,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class DummyEntity {
+	public static class DummyEntity {
 
 		@Id Long idProp;
 		String name;

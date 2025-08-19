@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +39,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.EntityLifecycleEventDelegate;
@@ -56,6 +60,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -83,6 +88,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	private final JdbcConverter converter;
 
 	private @Nullable EntityCallbacks entityCallbacks;
+	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link RelationalMappingContext} and {@link DataAccessStrategy}.
@@ -184,6 +190,23 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	 */
 	public void setEntityLifecycleEventsEnabled(boolean enabled) {
 		this.eventDelegate.setEventsEnabled(enabled);
+	}
+
+	/**
+	 * Return a {@link RowMapper} to map results for {@link Class type}.
+	 *
+	 * @param type must not be {@literal null}.
+	 * @return a row mapper to map results for {@link Class type}.
+	 * @param <T> return type.
+	 * @since 4.0
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
+
+		return new LifecycleEntityRowMapper<T>((RelationalPersistentEntity<T>) entity);
 	}
 
 	@Override
@@ -739,6 +762,31 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 
 	private interface AggregateChangeCreator<T> {
 		RootAggregateChange<T> createAggregateChange(T instance);
+	}
+
+	class LifecycleEntityRowMapper<T> extends EntityRowMapper<T> {
+
+		public LifecycleEntityRowMapper(RelationalPersistentEntity<T> entity) {
+			super(entity, converter);
+		}
+
+		@Override
+		public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
+
+			T object = super.mapRow(resultSet, rowNumber);
+
+			if (object != null) {
+
+				eventDelegate.publishEvent(() -> new AfterConvertEvent<>(object));
+
+				if (entityCallbacks != null) {
+					return entityCallbacks.callback(AfterConvertCallback.class, object);
+				}
+			}
+
+			return object;
+		}
+
 	}
 
 }

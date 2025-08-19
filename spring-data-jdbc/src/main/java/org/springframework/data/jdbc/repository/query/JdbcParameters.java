@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.sql.SQLType;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
@@ -54,6 +55,18 @@ public class JdbcParameters extends RelationalParameters {
 	@Override
 	public JdbcParameter getParameter(int index) {
 		return (JdbcParameter) super.getParameter(index);
+	}
+
+	public JdbcParameter getParameter(String parameterName) {
+
+		for (RelationalParameter relationalParameter : this) {
+
+			if (relationalParameter.getName().equals(parameterName)) {
+				return (JdbcParameter) relationalParameter;
+			}
+		}
+
+		throw new NoSuchElementException("Invalid parameter name");
 	}
 
 	@Override

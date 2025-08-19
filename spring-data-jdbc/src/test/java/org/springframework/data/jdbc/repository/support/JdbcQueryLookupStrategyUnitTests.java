@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
-import java.text.NumberFormat;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,13 +27,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.context.ApplicationEventPublisher;
+
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
@@ -63,25 +63,29 @@ import org.springframework.util.ReflectionUtils;
  */
 class JdbcQueryLookupStrategyUnitTests {
 
-	private ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
-	private EntityCallbacks callbacks = mock(EntityCallbacks.class);
-	private RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
+	private JdbcAggregateOperations operations = mock(JdbcAggregateOperations.class);
 	private JdbcConverter converter = mock(JdbcConverter.class);
 	private ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	private RepositoryMetadata metadata;
 	private NamedQueries namedQueries = mock(NamedQueries.class);
-	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+	private NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
+	private DataAccessStrategy strategy = mock(DataAccessStrategy.class);
 
 	@BeforeEach
 	void setup() {
 
 		this.metadata = mock(RepositoryMetadata.class);
 
-		when(converter.getMappingContext()).thenReturn(mappingContext);
+		when(strategy.getJdbcOperations()).thenReturn(jdbcOperations);
+		when(strategy.getDialect()).thenReturn(JdbcH2Dialect.INSTANCE);
+		when(converter.getMappingContext()).thenReturn(new RelationalMappingContext());
+		when(operations.getConverter()).thenReturn(converter);
+		when(operations.getDataAccessStrategy()).thenReturn(strategy);
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
 		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
 		doReturn(TypeInformation.of(NumberFormat.class)).when(metadata).getDomainTypeInformation();
+		doReturn(NumberFormat.class).when(metadata).getDomainType();
 	}
 
 	@Test // DATAJDBC-166
@@ -97,7 +101,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		repositoryQuery.execute(new Object[] {});
 
-		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
+		verify(jdbcOperations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
 	@Test // GH-1061
@@ -112,7 +116,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		repositoryQuery.execute(new Object[] {});
 
-		verify(operations).queryForObject(eq("some SQL"), any(SqlParameterSource.class), any(RowMapper.class));
+		verify(jdbcOperations).queryForObject(eq("some SQL"), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
 	@Test // GH-1043
@@ -137,8 +141,8 @@ class JdbcQueryLookupStrategyUnitTests {
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
-		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks,
-				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, operations,
+				new DefaultRowMapperFactory(operations, mappingConfiguration), ValueExpressionDelegate.create());
 
 		assertThat(queryLookupStrategy).isInstanceOf(expectedClass);
 	}
@@ -157,8 +161,8 @@ class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryQuery getRepositoryQuery(QueryLookupStrategy.Key key, String name,
 			QueryMappingConfiguration mappingConfiguration) {
 
-		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks,
-				converter, JdbcH2Dialect.INSTANCE, mappingConfiguration, operations, null, ValueExpressionDelegate.create());
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, operations,
+				new DefaultRowMapperFactory(operations, mappingConfiguration), ValueExpressionDelegate.create());
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);
@@ -166,7 +170,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 	interface MyRepository {
 
-		// NumberFormat is just used as an arbitrary non simple type.
+		// NumberFormat is just used as an arbitrary non-simple type.
 		@Query("some SQL")
 		NumberFormat returningNumberFormat();
 
@@ -174,5 +178,9 @@ class JdbcQueryLookupStrategyUnitTests {
 		void annotatedQueryWithQueryAndQueryName();
 
 		NumberFormat findByName();
+	}
+
+	record NumberFormat(String numberFormatString) {
+
 	}
 }
