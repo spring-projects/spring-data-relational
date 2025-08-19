@@ -147,29 +147,5 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		return (query, parameters) -> operations.query(query, parameters, resultSetExtractor);
 	}
 
-	/**
-	 * Factory to create a {@link RowMapper} for a given class.
-	 *
-	 * @since 2.3
-	 * @deprecated Use {@link org.springframework.data.jdbc.repository.query.RowMapperFactory} instead
-	 */
-	@Deprecated(forRemoval = true, since = "3.4.4")
-	public interface RowMapperFactory extends org.springframework.data.jdbc.repository.query.RowMapperFactory {}
 
-	/**
-	 * Delegating {@link RowMapper} that reads a row into {@code T} and converts it afterwards into {@code Object}.
-	 *
-	 * @param <T>
-	 * @since 2.3
-	 * @deprecated use {@link org.springframework.data.jdbc.repository.query.ConvertingRowMapper} instead
-	 */
-	@Deprecated(forRemoval = true, since = "3.4.4")
-	protected static class ConvertingRowMapper<T>
-			extends org.springframework.data.jdbc.repository.query.ConvertingRowMapper {
-
-		@SuppressWarnings("unchecked")
-		public ConvertingRowMapper(RowMapper<T> delegate, Converter<Object, Object> converter) {
-			super((RowMapper<Object>) delegate, converter);
-		}
-	}
 }

@@ -122,7 +122,8 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 		List<ParametrizedQuery> queries = new ArrayList<>(deleteChain.size());
 		for (Delete d : deleteChain) {
-			queries.add(new ParametrizedQuery(renderer.render(d), parameterSource));
+			queries.add(
+					new ParametrizedQuery(renderer.render(d), parameterSource, criteria == null ? Criteria.empty() : criteria));
 		}
 
 		return queries;

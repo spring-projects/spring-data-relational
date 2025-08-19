@@ -32,6 +32,7 @@
 ** xref:jdbc/auditing.adoc[]
 ** xref:jdbc/transactions.adoc[]
 ** xref:jdbc/schema-support.adoc[]
+** xref:jdbc/aot.adoc[]
 
 * xref:r2dbc.adoc[]
 ** xref:r2dbc/getting-started.adoc[]

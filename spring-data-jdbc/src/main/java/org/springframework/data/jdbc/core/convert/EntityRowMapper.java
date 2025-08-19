@@ -41,13 +41,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcConverter converter;
 	private final Identifier identifier;
 
-	private EntityRowMapper(TypeInformation<T> typeInformation, JdbcConverter converter, Identifier identifier) {
-
-		this.typeInformation = typeInformation;
-		this.converter = converter;
-		this.identifier = identifier;
-	}
-
 	@SuppressWarnings("unchecked")
 	public EntityRowMapper(AggregatePath path, JdbcConverter converter, Identifier identifier) {
 		this(((RelationalPersistentEntity<T>) path.getRequiredLeafEntity()).getTypeInformation(), converter, identifier);
@@ -55,6 +48,13 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter) {
 		this(entity.getTypeInformation(), converter, Identifier.empty());
+	}
+
+	private EntityRowMapper(TypeInformation<T> typeInformation, JdbcConverter converter, Identifier identifier) {
+
+		this.typeInformation = typeInformation;
+		this.converter = converter;
+		this.identifier = identifier;
 	}
 
 	@Override

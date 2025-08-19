@@ -30,6 +30,20 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	private final RelationalPersistentEntity<?> tableEntity;
 
 	/**
+	 * Creates a new {@link SimpleRelationalEntityMetadata} using the given {@link RelationalPersistentEntity} to use for
+	 * table lookups.
+	 *
+	 * @param tableEntity must not be {@literal null}.
+	 */
+	public SimpleRelationalEntityMetadata(RelationalPersistentEntity<?> tableEntity) {
+
+		Assert.notNull(tableEntity, "Table entity must not be null");
+
+		this.type = (Class) tableEntity.getType();
+		this.tableEntity = tableEntity;
+	}
+
+	/**
 	 * Creates a new {@link SimpleRelationalEntityMetadata} using the given type and {@link RelationalPersistentEntity} to
 	 * use for table lookups.
 	 *

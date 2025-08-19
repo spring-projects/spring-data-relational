@@ -28,10 +28,14 @@ import org.springframework.jdbc.core.RowMapper;
  */
 public interface QueryMappingConfiguration {
 
-	@Nullable
-	default <T extends @Nullable Object> RowMapper<? extends T> getRowMapper(Class<T> type) {
-		return null;
-	}
+	/**
+	 * Returns the {@link RowMapper} to be used for the given type or {@literal null} if no specific mapper is configured.
+	 *
+	 * @param type
+	 * @return
+	 * @param <T extends @Nullable Object>
+	 */
+	<T> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type);
 
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.

@@ -28,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Specifies operations one can perform on a database, based on an <em>Domain Type</em>.
@@ -341,5 +342,17 @@ public interface JdbcAggregateOperations {
 	 * @return the {@link DataAccessStrategy}
 	 */
 	DataAccessStrategy getDataAccessStrategy();
+
+	/**
+	 * Return a {@link RowMapper} that can map rows of a {@link java.sql.ResultSet} to instances of the specified
+	 * {@link Class type}. The row mapper supports entity callbacks and lifecycle events if enabled and configured on the
+	 * underlying template instance.
+	 *
+	 * @param type type of the entity to map.
+	 * @return a row mapper for the given type.
+	 * @param <T>
+	 * @since 4.0
+	 */
+	<T> RowMapper<? extends T> getRowMapper(Class<T> type);
 
 }

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.query;
 
 import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
@@ -26,19 +27,29 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * @author Jens Schauder
  * @since 2.0
  */
-class ParametrizedQuery {
+public class ParametrizedQuery {
 
 	private final String query;
 	private final SqlParameterSource parameterSource;
+	private final Criteria criteria;
 
-	ParametrizedQuery(String query, SqlParameterSource parameterSource) {
+	ParametrizedQuery(String query, SqlParameterSource parameterSource, Criteria criteria) {
 
 		this.query = query;
 		this.parameterSource = parameterSource;
+		this.criteria = criteria;
 	}
 
-	String getQuery() {
+	public SqlParameterSource getParameterSource() {
+		return parameterSource;
+	}
+
+	public String getQuery() {
 		return query;
+	}
+
+	public Criteria getCriteria() {
+		return criteria;
 	}
 
 	SqlParameterSource getParameterSource(Escaper escaper) {

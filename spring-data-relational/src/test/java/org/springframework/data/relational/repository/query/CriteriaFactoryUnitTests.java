@@ -17,12 +17,12 @@ package org.springframework.data.relational.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.repository.Repository;

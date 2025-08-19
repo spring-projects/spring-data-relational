@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.query;
+package org.springframework.data.jdbc.repository.support;
 
-import org.jspecify.annotations.Nullable;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.core.convert.EntityRowMapper;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
-import org.springframework.data.mapping.callback.EntityCallbacks;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link RowMapperFactory}. Honors the custom mappings defined in
@@ -40,43 +37,30 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
  */
 public class DefaultRowMapperFactory implements RowMapperFactory {
 
-	private final RelationalMappingContext context;
-	private final JdbcConverter converter;
+	private final JdbcAggregateOperations operations;
 	private final QueryMappingConfiguration queryMappingConfiguration;
-	private final @Nullable EntityCallbacks entityCallbacks;
-	private final ApplicationEventPublisher publisher;
 
-	public DefaultRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
-			@Nullable EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher) {
+	public DefaultRowMapperFactory(JdbcAggregateOperations operations,
+			QueryMappingConfiguration queryMappingConfiguration) {
 
-		this.context = converter.getMappingContext();
-		this.converter = converter;
+		Assert.notNull(operations, "JdbcAggregateOperations must not be null");
+		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
+
+		this.operations = operations;
 		this.queryMappingConfiguration = queryMappingConfiguration;
-		this.entityCallbacks = entityCallbacks;
-		this.publisher = publisher;
-	}
-
-	public DefaultRowMapperFactory(RelationalMappingContext context, JdbcConverter converter,
-			QueryMappingConfiguration queryMappingConfiguration, EntityCallbacks entityCallbacks,
-			ApplicationEventPublisher publisher) {
-
-		this.context = context;
-		this.converter = converter;
-		this.queryMappingConfiguration = queryMappingConfiguration;
-		this.entityCallbacks = entityCallbacks;
-		this.publisher = publisher;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public RowMapper<Object> create(Class<?> returnedObjectType) {
 
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
+		RelationalPersistentEntity<?> persistentEntity = operations.getConverter().getMappingContext()
+				.getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
 
 			return (RowMapper<Object>) SingleColumnRowMapper.newInstance(returnedObjectType,
-					converter.getConversionService());
+					operations.getConverter().getConversionService());
 		}
 
 		return (RowMapper<Object>) determineDefaultMapper(returnedObjectType);
@@ -90,11 +74,7 @@ public class DefaultRowMapperFactory implements RowMapperFactory {
 			return configuredQueryMapper;
 		}
 
-		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
-				context.getRequiredPersistentEntity(returnedObjectType), //
-				converter //
-		);
 
-		return new CallbackCapableRowMapper<>(defaultEntityRowMapper, publisher, entityCallbacks);
+		return operations.getRowMapper(returnedObjectType);
 	}
 }
