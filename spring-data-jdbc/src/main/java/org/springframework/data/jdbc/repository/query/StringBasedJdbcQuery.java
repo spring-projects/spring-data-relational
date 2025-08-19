@@ -17,13 +17,9 @@ package org.springframework.data.jdbc.repository.query;
 
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.sql.SQLType;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -45,7 +41,6 @@ import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -242,8 +237,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters()
 					.getParameter(bindableParameter.getIndex());
 
-			JdbcValue jdbcValue = writeValue(value, parameter.getTypeInformation(),
-					parameter);
+			JdbcValue jdbcValue = StringValueUtil.writeValue(converter, value, parameter.getTypeInformation(),
+					parameter.getSqlType(), parameter.getActualSqlType());
 			SQLType jdbcType = jdbcValue.getJdbcType();
 
 			if (jdbcType == null) {
@@ -256,88 +251,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return parameters;
 	}
 
-	private JdbcValue writeValue(@Nullable Object value, TypeInformation<?> typeInformation,
-			JdbcParameters.JdbcParameter parameter) {
 
-		if (value == null) {
-			return JdbcValue.of(value, parameter.getSqlType());
-		}
-
-		if (typeInformation.isCollectionLike() && value instanceof Collection<?> collection) {
-
-			TypeInformation<?> actualType = typeInformation.getActualType();
-
-			// allow tuple-binding for collection of byte arrays to be used as BINARY,
-			// we do not want to convert to column arrays.
-			if (actualType != null && actualType.getType().isArray() && !actualType.getType().equals(byte[].class)) {
-
-				TypeInformation<?> nestedElementType = actualType.getRequiredActualType();
-				return writeCollection(collection, parameter.getActualSqlType(),
-						array -> writeArrayValue(parameter, array, nestedElementType));
-			}
-
-			// parameter expansion
-			return writeCollection(collection, parameter.getActualSqlType(),
-					it -> converter.writeJdbcValue(it, typeInformation.getRequiredActualType(), parameter.getActualSqlType()));
-		}
-
-		SQLType sqlType = parameter.getSqlType();
-		return converter.writeJdbcValue(value, typeInformation, sqlType);
-	}
-
-	private JdbcValue writeCollection(Collection<?> value, SQLType defaultType, Function<Object, Object> mapper) {
-
-		if (value.isEmpty()) {
-			return JdbcValue.of(value, defaultType);
-		}
-
-		JdbcValue jdbcValue;
-		List<Object> mapped = new ArrayList<>(value.size());
-		SQLType jdbcType = null;
-
-		for (Object o : value) {
-
-			Object mappedValue = mapper.apply(o);
-
-			if (mappedValue instanceof JdbcValue jv) {
-				if (jdbcType == null) {
-					jdbcType = jv.getJdbcType();
-				}
-				mappedValue = jv.getValue();
-			}
-
-			mapped.add(mappedValue);
-		}
-
-		jdbcValue = JdbcValue.of(mapped, jdbcType == null ? defaultType : jdbcType);
-
-		return jdbcValue;
-	}
-
-	private JdbcValue writeArrayValue(JdbcParameters.JdbcParameter parameter, Object array,
-			TypeInformation<?> nestedElementType) {
-
-		int length = Array.getLength(array);
-		Object[] mappedArray = new Object[length];
-		SQLType sqlType = null;
-
-		for (int i = 0; i < length; i++) {
-
-			Object element = Array.get(array, i);
-			JdbcValue converted = converter.writeJdbcValue(element, nestedElementType, parameter.getActualSqlType());
-
-			if (sqlType == null && converted.getJdbcType() != null) {
-				sqlType = converted.getJdbcType();
-			}
-			mappedArray[i] = converted.getValue();
-		}
-
-		if (sqlType == null) {
-			sqlType = JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(nestedElementType.getType()));
-		}
-
-		return JdbcValue.of(mappedArray, sqlType);
-	}
 
 	RowMapper<Object> determineRowMapper(ResultProcessor resultProcessor, boolean hasDynamicProjection) {
 

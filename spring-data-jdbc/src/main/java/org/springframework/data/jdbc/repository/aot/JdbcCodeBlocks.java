@@ -1,0 +1,630 @@
+/*
+ * Copyright 2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.springframework.data.jdbc.repository.aot;
+
+import java.lang.reflect.Type;
+import java.sql.ResultSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
+import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.ParameterBinding;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
+import org.springframework.data.jdbc.repository.query.StatementFactory;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.repository.aot.generate.AotQueryMethodGenerationContext;
+import org.springframework.data.util.Pair;
+import org.springframework.javapoet.CodeBlock;
+import org.springframework.javapoet.CodeBlock.Builder;
+import org.springframework.javapoet.TypeName;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.RowMapperResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+
+/**
+ * Common code blocks for JDBC AOT Fragment generation.
+ *
+ * @author Mark Paluch
+ * @since 4.0
+ */
+class JdbcCodeBlocks {
+
+	/**
+	 * @return new {@link QueryBlockBuilder}.
+	 */
+	public static QueryBlockBuilder queryBuilder(AotQueryMethodGenerationContext context, JdbcQueryMethod queryMethod) {
+		return new QueryBlockBuilder(context, queryMethod);
+	}
+
+	/**
+	 * @return new {@link QueryExecutionBlockBuilder}.
+	 */
+	static QueryExecutionBlockBuilder executionBuilder(AotQueryMethodGenerationContext context,
+			JdbcQueryMethod queryMethod) {
+		return new QueryExecutionBlockBuilder(context, queryMethod);
+	}
+
+	/**
+	 * Builder for the actual query code block.
+	 */
+	static class QueryBlockBuilder {
+
+		private final AotQueryMethodGenerationContext context;
+		private final JdbcQueryMethod queryMethod;
+		private final String parameterNames;
+		private String queryVariableName = "undefined";
+		private String parameterSourceVariableName = "undefined";
+		private @Nullable AotQueries queries;
+		private MergedAnnotation<Lock> lock = MergedAnnotation.missing();
+		private @Nullable Class<?> queryReturnType;
+
+		private QueryBlockBuilder(AotQueryMethodGenerationContext context, JdbcQueryMethod queryMethod) {
+
+			this.context = context;
+			this.queryMethod = queryMethod;
+
+			String parameterNames = StringUtils.collectionToDelimitedString(context.getAllParameterNames(), ", ");
+
+			if (StringUtils.hasText(parameterNames)) {
+				this.parameterNames = ", " + parameterNames;
+			} else {
+				this.parameterNames = "";
+			}
+		}
+
+		public QueryBlockBuilder usingQueryVariableName(String queryVariableName) {
+
+			this.queryVariableName = queryVariableName;
+			return this;
+		}
+
+		public QueryBlockBuilder parameterSource(String parameterSource) {
+
+			this.parameterSourceVariableName = parameterSource;
+			return this;
+		}
+
+		public QueryBlockBuilder filter(AotQueries query) {
+			this.queries = query;
+			return this;
+		}
+
+		public QueryBlockBuilder queryReturnType(@Nullable Class<?> queryReturnType) {
+			this.queryReturnType = queryReturnType;
+			return this;
+		}
+
+		public QueryBlockBuilder lock(MergedAnnotation<Lock> lock) {
+			this.lock = lock;
+			return this;
+		}
+
+		/**
+		 * Build the query block.
+		 *
+		 * @return
+		 */
+		public CodeBlock build() {
+
+			Assert.notNull(queries, "Queries must not be null");
+
+			if (queries.result() instanceof DerivedAotQuery dq) {
+				return createDerivedQuery(dq);
+			}
+
+			return createStringQuery(queryVariableName, parameterSourceVariableName, queries.result());
+		}
+
+		private CodeBlock createDerivedQuery(DerivedAotQuery dq) {
+
+			CriteriaDefinition criteria = dq.getCriteria();
+
+			Builder builder = CodeBlock.builder();
+
+			if (!criteria.isEmpty()) {
+
+				CriteriaDefinition current = criteria;
+
+				// reverse unroll criteria chain
+				Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
+
+				while (current.hasPrevious()) {
+					forwardChain.put(current.getPrevious(), current);
+					current = current.getPrevious();
+				}
+
+				builder.add("$[$1T $2L = $1T.where($3S)", Criteria.class, context.localVariable("criteria"),
+						current.getColumn().getReference());
+				appendCriteria(current, builder);
+
+				while ((current = forwardChain.get(current)) != null) {
+					if (current.getCombinator() == CriteriaDefinition.Combinator.OR) {
+						builder.add(".or($S)", current.getColumn().getReference());
+					} else {
+						builder.add(".and($S)", current.getColumn().getReference());
+					}
+					appendCriteria(current, builder);
+				}
+
+				builder.add(";\n$]");
+			}
+
+			String method;
+
+			if (dq.isExists()) {
+				method = "exists($T.class)";
+			} else {
+				method = "select($T.class)";
+			}
+
+			builder.addStatement("$T $L = getStatementFactory()." + method, StatementFactory.Selection.class,
+					context.localVariable("selection"), context.getRepositoryInformation().getDomainType());
+
+			if (dq.isLimited()) {
+				builder.addStatement("$1L.limit($2L)", context.localVariable("selection"), dq.getLimit().max());
+			} else if (StringUtils.hasText(context.getLimitParameterName())) {
+				builder.addStatement("$L.limit($L)", context.localVariable("selection"), context.getLimitParameterName());
+			}
+
+			if (StringUtils.hasText(context.getPageableParameterName())) {
+				builder.addStatement("$L.with($L)", context.localVariable("selection"), context.getPageableParameterName());
+			}
+
+			if (StringUtils.hasText(context.getSortParameterName())) {
+				builder.addStatement("$L.orderBy($L)", context.localVariable("selection"), context.getSortParameterName());
+			}
+
+			if (lock.isPresent()) {
+				builder.addStatement("$L.lock($T.$L)", context.localVariable("selection"), LockMode.class,
+						lock.getEnum("value", LockMode.class).name());
+			}
+
+			if (!criteria.isEmpty()) {
+				builder.addStatement("$L.filter($L)", context.localVariable("selection"), context.localVariable("criteria"));
+			}
+
+			// TODO Projections, Pagination, Count
+
+			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, context.localVariable("mps"));
+			builder.addStatement("$1T $2L = new $1T($3L, getDialect().getLikeEscaper())", EscapingParameterSource.class,
+					parameterSourceVariableName, context.localVariable("mps"));
+			builder.addStatement("$T $L = $L.build($L)", String.class, queryVariableName, context.localVariable("selection"),
+					context.localVariable("mps"));
+
+			return builder.build();
+		}
+
+		private void appendCriteria(CriteriaDefinition current, Builder builder) {
+
+			switch (current.getComparator()) {
+				case INITIAL -> {}
+				case EQ -> builder.add(".is($L)", render(current.getValue()));
+				case NEQ -> builder.add(".not($L)", render(current.getValue()));
+				case BETWEEN -> builder.add(".between($L, $L)", render(current.getValue(), 0), render(current.getValue(), 1));
+				case NOT_BETWEEN ->
+					builder.add(".notBetween($L, $L)", render(current.getValue(), 0), render(current.getValue(), 1));
+				case LT -> builder.add(".lessThan($L)", render(current.getValue()));
+				case LTE -> builder.add(".lessThanOrEquals($L)", render(current.getValue()));
+				case GT -> builder.add(".greaterThan($L)", render(current.getValue()));
+				case GTE -> builder.add(".greaterThanEquals($L)", render(current.getValue()));
+				case IS_NULL -> builder.add(".isNull()");
+				case IS_NOT_NULL -> builder.add(".isNotNull()");
+				case LIKE -> builder.add(".like($S)", render(current.getValue()));
+				case NOT_LIKE -> builder.add(".notLike($L)", render(current.getValue()));
+				case NOT_IN -> builder.add(".notIn($L)", render(current.getValue()));
+				case IN -> builder.add(".in($L)", render(current.getValue()));
+				case IS_TRUE -> builder.add(".isTrue()");
+				case IS_FALSE -> builder.add(".isFalse()");
+			}
+
+			if (current.isIgnoreCase()) {
+				builder.addStatement(".ignoreCase(true)");
+			}
+		}
+
+		private String render(Object value) {
+
+			if (value instanceof JdbcValue jv) {
+				value = jv.getValue();
+			}
+
+			ParameterBinding binding = (ParameterBinding) value;
+			ParameterBinding.MethodInvocationArgument argument = (ParameterBinding.MethodInvocationArgument) binding
+					.getOrigin();
+			ParameterBinding.BindingIdentifier identifier = argument.identifier();
+
+			return identifier.hasName() ? identifier.getName() : context.getParameterName(identifier.getPosition());
+		}
+
+		private Object render(Object value, int index) {
+			return index == 0 ? ((Pair) value).getFirst() : ((Pair) value).getSecond();
+		}
+
+		private CodeBlock createStringQuery(String queryVariableName, String parameterSourceName, AotQuery query) {
+
+			Builder builder = CodeBlock.builder();
+
+			builder.add(doCreateQuery(queryVariableName, query));
+			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, parameterSourceName);
+
+			for (ParameterBinding binding : query.getParameterBindings()) {
+
+				String parameterIdentifier = getParameterName(binding.getIdentifier());
+				builder.add(bindValue(parameterIdentifier, binding.getOrigin()));
+			}
+
+			return builder.build();
+		}
+
+		private static boolean isArray(Class<?> parameterType) {
+			return parameterType.isArray() && !parameterType.getComponentType().equals(byte.class)
+					&& !parameterType.getComponentType().equals(Byte.class);
+		}
+
+		private CodeBlock doCreateQuery(String queryVariableName, AotQuery query) {
+
+			Builder builder = CodeBlock.builder();
+
+			if (query instanceof StringAotQuery sq) {
+
+				builder.addStatement("$T $L = $S", String.class, queryVariableName, sq.getQueryString());
+				return builder.build();
+			}
+
+			throw new UnsupportedOperationException("Unsupported query type: " + query);
+		}
+
+		private String getParameterName(ParameterBinding.BindingIdentifier identifier) {
+			return identifier.hasName() ? identifier.getName() : Integer.toString(identifier.getPosition());
+		}
+
+		private CodeBlock bindValue(String parameterName, ParameterBinding.ParameterOrigin origin) {
+
+			if (origin.isMethodArgument() && origin instanceof ParameterBinding.MethodInvocationArgument mia) {
+
+				String parameterReference;
+				String identifier;
+
+				if (mia.identifier().hasPosition()) {
+					parameterReference = context.getRequiredBindableParameterName(mia.identifier().getPosition() - 1);
+					identifier = Integer.toString(mia.identifier().getPosition() - 1);
+				} else {
+					parameterReference = context.getRequiredBindableParameterName(mia.identifier().getName());
+					identifier = mia.identifier().getName();
+				}
+
+				Builder builder = CodeBlock.builder();
+				builder.addStatement("getBindableValue($L, $L, $L).bind($S, $L)",
+						context.getExpressionMarker().enclosingMethod(), parameterReference, identifier, parameterName,
+						parameterSourceVariableName);
+				return builder.build();
+			}
+
+			if (origin.isExpression() && origin instanceof ParameterBinding.Expression expr) {
+
+				Builder builder = CodeBlock.builder();
+
+				String expressionString = expr.expression().getExpressionString();
+				// re-wrap expression
+				if (!expressionString.startsWith("$")) {
+					expressionString = "#{" + expressionString + "}";
+				}
+
+				builder.addStatement("evaluate($L, $S, $L, $S$L).bind($S, $L)", context.getExpressionMarker().enclosingMethod(),
+						expressionString, parameterNames, parameterName, parameterSourceVariableName);
+				return builder.build();
+			}
+
+			throw new UnsupportedOperationException("Not supported yet for: " + origin);
+		}
+
+	}
+
+	static class QueryExecutionBlockBuilder {
+
+		private final AotQueryMethodGenerationContext context;
+		private final JdbcQueryMethod queryMethod;
+		private @Nullable AotQuery aotQuery;
+		private String queryVariableName = "undefined";
+		private String parameterSourceVariableName = "undefined";
+		private @Nullable String rowMapperRef;
+		private @Nullable Class<?> rowMapperClass;
+		private @Nullable String resultSetExtractorRef;
+		private @Nullable Class<?> resultSetExtractorClass;
+		private MergedAnnotation<Modifying> modifying = MergedAnnotation.missing();
+
+		private QueryExecutionBlockBuilder(AotQueryMethodGenerationContext context, JdbcQueryMethod queryMethod) {
+
+			this.context = context;
+			this.queryMethod = queryMethod;
+		}
+
+		public QueryExecutionBlockBuilder queryAnnotation(MergedAnnotation<Query> query) {
+
+			if (query.isPresent()) {
+				rowMapper(query.getClass("rowMapperClass"));
+				rowMapper(query.getString("rowMapperRef"));
+				resultSetExtractor(query.getClass("resultSetExtractorClass"));
+				resultSetExtractor(query.getString("resultSetExtractorRef"));
+			}
+
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder rowMapper(String rowMapperRef) {
+			this.rowMapperRef = rowMapperRef;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder rowMapper(Class<?> rowMapperClass) {
+			this.rowMapperClass = rowMapperClass == RowMapper.class ? null : rowMapperClass;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder resultSetExtractor(String resultSetExtractorRef) {
+			this.resultSetExtractorRef = resultSetExtractorRef;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder resultSetExtractor(Class<?> resultSetExtractorClass) {
+			this.resultSetExtractorClass = resultSetExtractorClass == ResultSetExtractor.class ? null
+					: resultSetExtractorClass;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder usingQueryVariableName(String queryVariableName) {
+
+			this.queryVariableName = queryVariableName;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder parameterSource(String parameterSourceVariableName) {
+
+			this.parameterSourceVariableName = parameterSourceVariableName;
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder queries(AotQueries aotQueries) {
+
+			this.aotQuery = aotQueries.result();
+			return this;
+		}
+
+		public QueryExecutionBlockBuilder modifying(MergedAnnotation<Modifying> modifying) {
+
+			this.modifying = modifying;
+			return this;
+		}
+
+		public CodeBlock build() {
+
+			Builder builder = CodeBlock.builder();
+
+			boolean isProjecting = context.getActualReturnType() != null
+					&& !ObjectUtils.nullSafeEquals(TypeName.get(context.getRepositoryInformation().getDomainType()),
+							context.getActualReturnType());
+			Type actualReturnType = isProjecting ? context.getActualReturnType().getType()
+					: context.getRepositoryInformation().getDomainType();
+			builder.add("\n");
+
+			if (modifying.isPresent()) {
+
+				Class<?> returnType = context.getMethod().getReturnType();
+
+				String result = context.localVariable("result");
+
+				builder.addStatement("$T $L = getJdbcOperations().update($L, $L)", List.class, result, queryVariableName,
+						parameterSourceVariableName);
+
+				if (returnType == boolean.class || returnType == Boolean.class) {
+					builder.addStatement("return $L != 0", result);
+				} else
+
+				if (returnType == Long.class) {
+					builder.addStatement("return (long) $L", result);
+				} else {
+					builder.addStatement("return $L", result);
+				}
+
+				return builder.build();
+			}
+
+			TypeName queryResultType = TypeName.get(context.getActualReturnType().toClass());
+
+			if (aotQuery != null && aotQuery.isDelete()) {
+
+				if (!Collection.class.isAssignableFrom(context.getReturnType().toClass())) {
+					if (ClassUtils.isAssignable(Number.class, context.getMethod().getReturnType())) {
+						builder.addStatement("return $T.valueOf($L.size())", context.getMethod().getReturnType(),
+								context.localVariable("resultList"));
+					} else {
+						builder.addStatement("return ($T) ($L.isEmpty() ? null : $L.iterator().next())", actualReturnType,
+								context.localVariable("resultList"), context.localVariable("resultList"));
+					}
+				} else {
+					builder.addStatement("return ($T) $L", List.class, context.localVariable("resultList"));
+				}
+			} else if (aotQuery != null && aotQuery.isExists()) {
+
+				builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $T::next)", queryResultType,
+						queryVariableName, parameterSourceVariableName, ResultSet.class);
+
+				builder.addStatement("return !$L.getResultList().isEmpty()", queryVariableName);
+			} else if (aotQuery != null) {
+
+				// TODO: Paging, Projection, Count
+				String rowMapper = context.localVariable("rowMapper");
+				String resultSetExtractor = null;
+
+				if (rowMapperClass != null) {
+					builder.addStatement("$T $L = new $T()", RowMapper.class, rowMapper,
+							context.fieldNameOf(RowMapperFactory.class), rowMapperClass);
+				} else if (StringUtils.hasText(rowMapperRef)) {
+					builder.addStatement("$T $L = $L.getRowMapper($S)", RowMapper.class, rowMapper,
+							context.fieldNameOf(RowMapperFactory.class), rowMapperRef);
+				} else {
+					builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
+							context.fieldNameOf(RowMapperFactory.class), actualReturnType);
+				}
+
+				if (StringUtils.hasText(resultSetExtractorRef) || resultSetExtractorClass != null) {
+
+					resultSetExtractor = context.localVariable("resultSetExtractor");
+
+					if (resultSetExtractorClass != null && (rowMapperClass != null || StringUtils.hasText(rowMapperRef))) {
+						builder.addStatement("$T $L = new $T($L)", ResultSetExtractor.class, resultSetExtractor,
+								resultSetExtractorClass, rowMapperRef);
+					} else if (resultSetExtractorClass != null) {
+						builder.addStatement("$T $L = new $T()", ResultSetExtractor.class, resultSetExtractor,
+								resultSetExtractorClass);
+					} else if (StringUtils.hasText(resultSetExtractorRef)) {
+						builder.addStatement("$T $L = $L.getResultSetExtractor($S)", ResultSetExtractor.class, resultSetExtractor,
+								context.fieldNameOf(RowMapperFactory.class), resultSetExtractorRef);
+					}
+				}
+
+				if (StringUtils.hasText(resultSetExtractor)) {
+
+					builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $L)", queryResultType, queryVariableName,
+							parameterSourceVariableName, resultSetExtractor);
+				} else {
+
+					String result = context.localVariable("result");
+					if (queryMethod.isCollectionQuery()) {
+						builder.addStatement("$T $L = getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
+								queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
+						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
+								queryResultType);
+					} else if (queryMethod.isStreamQuery()) {
+						builder.addStatement("$T $L = getJdbcOperations().queryForStream($L, $L, $L)", Stream.class,
+								queryResultType, result, queryVariableName, parameterSourceVariableName, rowMapper);
+						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
+								queryResultType);
+					} else {
+
+						builder.beginControlFlow("try");
+						builder.addStatement("$T $L = getJdbcOperations().queryForObject($L, $L, $L)", Object.class, result,
+								queryVariableName, parameterSourceVariableName, rowMapper);
+						builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
+								queryResultType);
+
+						builder.endControlFlow();
+
+						builder.beginControlFlow("catch ($T $L)", EmptyResultDataAccessException.class, context.localVariable("e"));
+						builder.addStatement("return null");
+						builder.endControlFlow();
+					}
+
+					/*	if (context.getReturnedType().isProjecting()) {
+
+							if (queryMethod.isCollectionQuery()) {
+								builder.addStatement("return ($T) convertMany($L.getResultList(), $L, $T.class)",
+										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
+							} else if (queryMethod.isStreamQuery()) {
+								builder.addStatement("return ($T) convertMany($L.getResultStream(), $L, $T.class)",
+										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
+							} else if (queryMethod.isPageQuery()) {
+								builder.addStatement("return $T.getPage(($T<$T>) convertMany($L.getResultList(), $L, $T.class), $L, $L)",
+										PageableExecutionUtils.class, List.class, actualReturnType, queryVariableName, aotQuery.isNative(),
+										queryResultType, pageable, context.localVariable("countAll"));
+							} else if (queryMethod.isSliceQuery()) {
+								builder.addStatement("$T<$T> $L = ($T<$T>) convertMany($L.getResultList(), $L, $T.class)", List.class,
+										actualReturnType, context.localVariable("resultList"), List.class, actualReturnType, queryVariableName,
+										aotQuery.isNative(), queryResultType);
+								builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
+										context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
+								builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
+										context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
+										context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
+							} else {
+
+								if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+									builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
+											Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(), queryResultType);
+								} else {
+									builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
+											context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
+								}
+							}
+
+						} else {
+
+							if(resultSetExtractor != null){
+
+							}
+
+							if (queryMethod.isCollectionQuery()) {
+								builder.addStatement("return ($T) $L.getResultList()", context.getReturnTypeName(), queryVariableName);
+							} else if (queryMethod.isStreamQuery()) {
+								builder.addStatement("return ($T) $L.getResultStream()", context.getReturnTypeName(), queryVariableName);
+							} else if (queryMethod.isPageQuery()) {
+								builder.addStatement("return $T.getPage(($T<$T>) $L.getResultList(), $L, $L)", PageableExecutionUtils.class,
+										List.class, actualReturnType, queryVariableName, pageable, context.localVariable("countAll"));
+							} else if (queryMethod.isSliceQuery()) {
+								builder.addStatement("$T<$T> $L = $L.getResultList()", List.class, actualReturnType,
+										context.localVariable("resultList"), queryVariableName);
+								builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
+										context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
+								builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
+										context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
+										context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
+							} else {
+
+								if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+									builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
+											Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(),
+											context.getActualReturnType().toClass());
+								} else {
+									builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
+											context.getReturnTypeName(), queryVariableName, aotQuery.isNative(),
+											context.getReturnType().toClass());
+								}
+							}
+						} */
+				}
+			}
+
+			return builder.build();
+		}
+
+		public static boolean returnsModifying(Class<?> returnType) {
+
+			return returnType == int.class || returnType == long.class || returnType == Integer.class
+					|| returnType == Long.class;
+		}
+
+	}
+
+}
