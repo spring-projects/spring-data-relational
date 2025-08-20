@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -29,7 +30,6 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
@@ -574,17 +574,16 @@ class JdbcCodeBlocks {
 								queryResultType);
 					} else {
 
-						builder.beginControlFlow("try");
-						builder.addStatement("$T $L = getJdbcOperations().queryForObject($L, $L, $L)", Object.class, result,
+						builder.addStatement("$T $L = queryForObject($L, $L, $L)", Object.class, result,
 								queryVariableName, parameterSourceVariableName, rowMapper);
-						builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
-								queryResultType);
 
-						builder.endControlFlow();
-
-						builder.beginControlFlow("catch ($T $L)", EmptyResultDataAccessException.class, context.localVariable("e"));
-						builder.addStatement("return null");
-						builder.endControlFlow();
+						if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+							builder.addStatement("return ($1T) $1T.ofNullable(convertOne($2L, $3T.class))", Optional.class, result,
+									queryResultType);
+						} else {
+							builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
+									queryResultType);
+						}
 					}
 
 					/*	if (context.getReturnedType().isProjecting()) {

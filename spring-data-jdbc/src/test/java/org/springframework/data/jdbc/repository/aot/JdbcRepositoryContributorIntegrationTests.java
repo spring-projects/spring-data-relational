@@ -88,6 +88,13 @@ class JdbcRepositoryContributorIntegrationTests {
 	}
 
 	@Test
+	void shouldFindOptionalByFirstname() {
+
+		assertThat(fragment.findOptionalByFirstname("Walter")).isPresent();
+		assertThat(fragment.findOptionalByFirstname("Hank")).isEmpty();
+	}
+
+	@Test
 	void shouldFindAnnotatedByFirstname() {
 
 		User walter = fragment.findByFirstnameAnnotated("Walter");

@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -30,6 +31,8 @@ import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.expression.ValueEvaluationContextProvider;
@@ -49,8 +52,10 @@ import org.springframework.data.repository.core.support.RepositoryFactoryBeanSup
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.util.Lazy;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.ConcurrentLruCache;
 
 /**
@@ -125,6 +130,13 @@ public class AotRepositoryFragmentSupport {
 
 	protected NamedParameterJdbcOperations getJdbcOperations() {
 		return this.aggregateOperations.getDataAccessStrategy().getJdbcOperations();
+	}
+
+	protected <T extends @Nullable Object> T queryForObject(String sql, SqlParameterSource paramSource,
+			RowMapper<T> rowMapper) throws DataAccessException {
+
+		List<T> results = getJdbcOperations().query(sql, paramSource, rowMapper);
+		return DataAccessUtils.uniqueResult(results);
 	}
 
 	protected BindValue getBindableValue(Method method, @Nullable Object value, String parameterReference) {
