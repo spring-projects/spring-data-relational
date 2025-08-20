@@ -43,7 +43,7 @@ public class CriteriaFactoryUnitTests {
 
 		QueryMethod queryMethod = getQueryMethod("findAllByNameIn", List.class);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, Arrays.asList("foo", "bar"));
-		ParameterMetadataProvider parameterMetadata = new ParameterMetadataProvider(accessor, valueMapper);
+		ParameterMetadataProvider parameterMetadata = new ParameterMetadataProvider(accessor);
 		CriteriaFactory criteriaFactory = new CriteriaFactory(parameterMetadata);
 
 		Part part = new Part("NameIn", User.class);
@@ -60,7 +60,7 @@ public class CriteriaFactoryUnitTests {
 
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
 				new Object[] { new String[] { "foo", "bar" } });
-		ParameterMetadataProvider parameterMetadata = new ParameterMetadataProvider(accessor, valueMapper);
+		ParameterMetadataProvider parameterMetadata = new ParameterMetadataProvider(accessor);
 		CriteriaFactory criteriaFactory = new CriteriaFactory(parameterMetadata);
 
 		Part part = new Part("NameIn", User.class);

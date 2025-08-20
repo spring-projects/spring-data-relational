@@ -31,11 +31,15 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.util.TypeInformation;
 
 /**
+ * Utility to obtain {@link JdbcValue} instances for string values, collections, and arrays for string-based query
+ * usage.
+ *
  * @author Mark Paluch
+ * @since 4.0
  */
 public class StringValueUtil {
 
-	public static JdbcValue writeValue(JdbcConverter converter, @Nullable Object value,
+	public static JdbcValue getBindValue(JdbcConverter converter, @Nullable Object value,
 			TypeInformation<?> typeInformation, SQLType sqlType, SQLType actualSqlType) {
 
 		if (value == null) {

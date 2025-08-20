@@ -137,7 +137,7 @@ public class AotRepositoryFragmentSupport {
 
 	private BindValue getBindableValue(JdbcParameters.JdbcParameter parameter, @Nullable Object value) {
 
-		JdbcValue jdbcValue = StringValueUtil.writeValue(aggregateOperations.getConverter(), value,
+		JdbcValue jdbcValue = StringValueUtil.getBindValue(aggregateOperations.getConverter(), value,
 				parameter.getTypeInformation(), parameter.getSqlType(), parameter.getActualSqlType());
 		SQLType jdbcType = jdbcValue.getJdbcType();
 
