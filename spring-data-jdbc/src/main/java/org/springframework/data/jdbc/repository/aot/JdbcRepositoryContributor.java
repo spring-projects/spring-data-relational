@@ -45,7 +45,10 @@ import org.springframework.javapoet.TypeName;
 import org.springframework.util.ClassUtils;
 
 /**
+ * JDBC-specific {@link RepositoryContributor} contributing an AOT repository fragment.
+ *
  * @author Mark Paluch
+ * @since 4.0
  */
 public class JdbcRepositoryContributor extends RepositoryContributor {
 

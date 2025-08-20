@@ -15,14 +15,47 @@
  */
 package org.springframework.data.jdbc.repository.aot;
 
+import java.util.List;
+
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
 
+	// -------------------------------------------------------------------------
+	// Derived Queries
+	// -------------------------------------------------------------------------
+
 	User findByFirstname(String name);
+
+	// -------------------------------------------------------------------------
+	// Declared Queries
+	// -------------------------------------------------------------------------
 
 	@Query("SELECT * FROM MY_USER WHERE firstname = :name")
 	User findByFirstnameAnnotated(String name);
+
+	@Query("SELECT * FROM MY_USER WHERE firstname = :#{#name}")
+	User findByFirstnameExpression(String name);
+
+	// -------------------------------------------------------------------------
+	// Parameter naming
+	// -------------------------------------------------------------------------
+
+	@Query("select u from User u where u.lastname like :name or u.lastname like :name ORDER BY u.lastname")
+	List<User> findAnnotatedWithParameterNameQuery(@Param("name") String lastname);
+
+	List<User> findWithParameterNameByFirstnameStartingWithOrFirstnameEndingWith(@Param("l1") String l1,
+			@Param("l2") String l2);
+
+	// -------------------------------------------------------------------------
+	// Named Queries
+	// -------------------------------------------------------------------------
+
+	User findByNamedQuery(String name);
+
+	@Query(name = "User.findBySomeAnnotatedNamedQuery")
+	User findByAnnotatedNamedQuery(String name);
 
 }

@@ -50,7 +50,11 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 		super(tree);
 
 		Assert.notNull(accessor, "RelationalParameterAccessor must not be null");
-		this.criteriaFactory = new CriteriaFactory(new ParameterMetadataProvider(accessor));
+		this.criteriaFactory = new CriteriaFactory(getParameterMetadataProvider(accessor));
+	}
+
+	protected ParameterMetadataProvider getParameterMetadataProvider(RelationalParameterAccessor accessor) {
+		return new ParameterMetadataProvider(accessor);
 	}
 
 	/**

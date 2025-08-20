@@ -20,14 +20,17 @@ import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
@@ -154,31 +157,10 @@ class JdbcCodeBlocks {
 			Builder builder = CodeBlock.builder();
 
 			if (!criteria.isEmpty()) {
-
-				CriteriaDefinition current = criteria;
-
-				// reverse unroll criteria chain
-				Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
-
-				while (current.hasPrevious()) {
-					forwardChain.put(current.getPrevious(), current);
-					current = current.getPrevious();
-				}
-
-				builder.add("$[$1T $2L = $1T.where($3S)", Criteria.class, context.localVariable("criteria"),
-						current.getColumn().getReference());
-				appendCriteria(current, builder);
-
-				while ((current = forwardChain.get(current)) != null) {
-					if (current.getCombinator() == CriteriaDefinition.Combinator.OR) {
-						builder.add(".or($S)", current.getColumn().getReference());
-					} else {
-						builder.add(".and($S)", current.getColumn().getReference());
-					}
-					appendCriteria(current, builder);
-				}
-
-				builder.add(";\n$]");
+				builder.add(buildCriteria(criteria, (criteriaDefinition, b) -> {
+					b.add("$[$1T $2L = $1T.where($3S)", Criteria.class, context.localVariable("criteria"),
+							criteriaDefinition.getColumn().getReference());
+				}, b -> b.add(";\n$]")));
 			}
 
 			String method;
@@ -226,6 +208,65 @@ class JdbcCodeBlocks {
 			return builder.build();
 		}
 
+		private CodeBlock buildCriteria(CriteriaDefinition criteria, BiConsumer<CriteriaDefinition, Builder> preamble,
+				Consumer<CodeBlock.Builder> end) {
+
+			CriteriaDefinition current = criteria;
+
+			// reverse unroll criteria chain
+			Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
+
+			Builder builder = CodeBlock.builder();
+
+			while (current.hasPrevious()) {
+				forwardChain.put(current.getPrevious(), current);
+				current = current.getPrevious();
+			}
+
+			preamble.accept(current, builder);
+			appendCriteria(current, builder);
+
+			while ((current = forwardChain.get(current)) != null) {
+
+				if (current.isEmpty()) {
+					continue;
+				}
+
+				if (current.isGroup()) {
+
+					String suffix;
+
+					builder.add(".$L(", current.getCombinator().name().toLowerCase(Locale.ROOT));
+
+					if (current.getGroup().size() == 1) {
+						suffix = ")";
+
+					} else {
+						suffix = "))";
+						builder.add("$T.of(", List.class);
+					}
+
+					for (CriteriaDefinition nested : current.getGroup()) {
+
+						builder.add(buildCriteria(nested, (criteriaDefinition, start) -> start.add("$T.where($S)", Criteria.class,
+								criteriaDefinition.getColumn().getReference()), b -> {}));
+					}
+
+					builder.add(suffix);
+					continue;
+				}
+
+				builder.add(".$L($S)", builder.add(".$L(", current.getCombinator().name().toLowerCase(Locale.ROOT)),
+						current.getColumn().getReference());
+
+				appendCriteria(current, builder);
+			}
+
+			end.accept(builder);
+
+			return builder.build();
+		}
+
 		private void appendCriteria(CriteriaDefinition current, Builder builder) {
 
 			switch (current.getComparator()) {
@@ -241,7 +282,7 @@ class JdbcCodeBlocks {
 				case GTE -> builder.add(".greaterThanEquals($L)", render(current.getValue()));
 				case IS_NULL -> builder.add(".isNull()");
 				case IS_NOT_NULL -> builder.add(".isNotNull()");
-				case LIKE -> builder.add(".like($S)", render(current.getValue()));
+				case LIKE -> builder.add(".like($L)", render(current.getValue()));
 				case NOT_LIKE -> builder.add(".notLike($L)", render(current.getValue()));
 				case NOT_IN -> builder.add(".notIn($L)", render(current.getValue()));
 				case IN -> builder.add(".in($L)", render(current.getValue()));
@@ -256,11 +297,9 @@ class JdbcCodeBlocks {
 
 		private String render(Object value) {
 
-			if (value instanceof JdbcValue jv) {
-				value = jv.getValue();
-			}
+			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(value);
 
-			ParameterBinding binding = (ParameterBinding) value;
+			ParameterBinding binding = captured.getBinding();
 			ParameterBinding.MethodInvocationArgument argument = (ParameterBinding.MethodInvocationArgument) binding
 					.getOrigin();
 			ParameterBinding.BindingIdentifier identifier = argument.identifier();
@@ -342,7 +381,7 @@ class JdbcCodeBlocks {
 					expressionString = "#{" + expressionString + "}";
 				}
 
-				builder.addStatement("evaluate($L, $S, $L, $S$L).bind($S, $L)", context.getExpressionMarker().enclosingMethod(),
+				builder.addStatement("evaluate($L, $S$L).bind($S, $L)", context.getExpressionMarker().enclosingMethod(),
 						expressionString, parameterNames, parameterName, parameterSourceVariableName);
 				return builder.build();
 			}
@@ -523,13 +562,14 @@ class JdbcCodeBlocks {
 
 					String result = context.localVariable("result");
 					if (queryMethod.isCollectionQuery()) {
-						builder.addStatement("$T $L = getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
+						builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
+								List.class,
 								queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
 						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
 								queryResultType);
 					} else if (queryMethod.isStreamQuery()) {
-						builder.addStatement("$T $L = getJdbcOperations().queryForStream($L, $L, $L)", Stream.class,
-								queryResultType, result, queryVariableName, parameterSourceVariableName, rowMapper);
+						builder.addStatement("$T $L = ($T) getJdbcOperations().queryForStream($L, $L, $L)", Stream.class,
+								queryResultType, Stream.class, result, queryVariableName, parameterSourceVariableName, rowMapper);
 						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
 								queryResultType);
 					} else {

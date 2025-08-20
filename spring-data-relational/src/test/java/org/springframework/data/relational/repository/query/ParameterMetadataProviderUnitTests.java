@@ -73,7 +73,7 @@ public class ParameterMetadataProviderUnitTests {
 		ParameterMetadataProvider provider = new ParameterMetadataProvider(new RelationalParametersParameterAccessor(
 				new RelationalQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
 						new SpelAwareProxyProjectionFactory()),
-				new Object[] { value }));
+				new Object[] { value }), valueMapper);
 
 		PartTree tree = new PartTree(methodName, User.class);
 

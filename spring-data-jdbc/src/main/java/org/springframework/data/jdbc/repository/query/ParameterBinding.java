@@ -17,16 +17,18 @@ package org.springframework.data.jdbc.repository.query;
 
 import static org.springframework.util.ObjectUtils.*;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.data.domain.Score;
-import org.springframework.data.domain.Vector;
 import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * A generic parameter binding with name or position information.
@@ -73,6 +75,17 @@ public class ParameterBinding {
 	 */
 	public static ParameterBinding named(String name, ParameterOrigin origin) {
 		return new ParameterBinding(BindingIdentifier.of(name), origin);
+	}
+
+	/**
+	 * Creates a new {@link ParameterBinding} for the named parameter with the given name and origin.
+	 *
+	 * @param name
+	 * @param origin
+	 * @return
+	 */
+	public static ParameterBinding like(String name, ParameterOrigin origin, String probe) {
+		return new LikeParameterBinding(BindingIdentifier.of(name), origin, LikeParameterBinding.getLikeTypeFrom(probe));
 	}
 
 	public BindingIdentifier getIdentifier() {
@@ -165,58 +178,91 @@ public class ParameterBinding {
 		return String.format("ParameterBinding [identifier: %s, origin: %s]", identifier, origin);
 	}
 
-	/**
-	 * @param valueToBind value to prepare
-	 */
-	public @Nullable Object prepare(@Nullable Object valueToBind) {
-
-		if (valueToBind instanceof Score score) {
-			return score.getValue();
-		}
-
-		if (valueToBind instanceof Vector v) {
-			return v.getType() == Float.TYPE ? v.toFloatArray() : v.toDoubleArray();
-		}
-
-		return valueToBind;
-	}
 
 	/**
-	 * Check whether the {@code other} binding uses the same bind target.
-	 *
-	 * @param other must not be {@literal null}.
-	 * @return {@code true} if the other binding uses the same parameter to bind to as this one.
+	 * Represents a parameter binding in a JDBC query augmented with instructions of how to apply a parameter as LIKE
+	 * parameter.
 	 */
-	public boolean bindsTo(ParameterBinding other) {
+	static class LikeParameterBinding extends ParameterBinding {
 
-		if (getIdentifier().equals(other.getIdentifier())) {
-			return true;
+		private static final List<Type> SUPPORTED_TYPES = Arrays.asList(Type.CONTAINING, Type.STARTING_WITH,
+				Type.ENDING_WITH, Type.LIKE);
+
+		private final Type type;
+
+		/**
+		 * Creates a new {@link LikeParameterBinding} for the parameter with the given name and {@link Type} and parameter
+		 * binding input.
+		 *
+		 * @param identifier must not be {@literal null} or empty.
+		 * @param type must not be {@literal null}.
+		 */
+		LikeParameterBinding(BindingIdentifier identifier, ParameterOrigin origin, Type type) {
+
+			super(identifier, origin);
+
+			Assert.notNull(type, "Type must not be null");
+
+			Assert.isTrue(SUPPORTED_TYPES.contains(type),
+					String.format("Type must be one of %s", StringUtils.collectionToCommaDelimitedString(SUPPORTED_TYPES)));
+
+			this.type = type;
 		}
 
-		if (identifier.hasName() && other.identifier.hasName()) {
-			if (identifier.getName().equals(other.identifier.getName())) {
-				return true;
+		/**
+		 * Returns the {@link Type} of the binding.
+		 *
+		 * @return the type
+		 */
+		public Type getType() {
+			return type;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+
+			if (!(obj instanceof LikeParameterBinding that)) {
+				return false;
 			}
+
+			return super.equals(obj) && this.type.equals(that.type);
 		}
 
-		if (identifier.hasPosition() && other.identifier.hasPosition()) {
-			if (identifier.getPosition() == other.identifier.getPosition()) {
-				return true;
+		@Override
+		public int hashCode() {
+
+			int result = super.hashCode();
+
+			result += nullSafeHashCode(this.type);
+
+			return result;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("LikeBinding [identifier: %s, origin: %s, type: %s]", getIdentifier(), getOrigin(),
+					getType());
+		}
+
+		/**
+		 * Extracts the like {@link Type} from the given like expression.
+		 *
+		 * @param expression must not be {@literal null} or empty.
+		 */
+		static Type getLikeTypeFrom(String expression) {
+
+			Assert.hasText(expression, "Expression must not be null or empty");
+
+			if (expression.startsWith("%")) {
+				return expression.endsWith("%") ? Type.CONTAINING : Type.ENDING_WITH;
 			}
+
+			if (expression.endsWith("%")) {
+				return Type.STARTING_WITH;
+			}
+
+			return Type.LIKE;
 		}
-
-		return false;
-	}
-
-	/**
-	 * Check whether this binding can be bound as the {@code other} binding by checking its type and origin. Subclasses
-	 * may override this method to include other properties for the compatibility check.
-	 *
-	 * @param other
-	 * @return {@code true} if the other binding is compatible with this one.
-	 */
-	public boolean isCompatibleWith(ParameterBinding other) {
-		return other.getClass() == getClass() && other.getOrigin().equals(getOrigin());
 	}
 
 	/**

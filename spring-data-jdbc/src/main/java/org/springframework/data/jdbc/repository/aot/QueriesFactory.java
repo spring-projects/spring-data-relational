@@ -32,6 +32,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.config.JdbcRepositoryConfigExtension;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
 import org.springframework.data.jdbc.repository.query.JdbcQueryCreator;
@@ -40,6 +41,9 @@ import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.query.ValueFunction;
+import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
+import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.aot.generate.AotQueryMethodGenerationContext;
@@ -172,10 +176,46 @@ class QueriesFactory {
 			JdbcParameters parameters, JdbcQueryMethod queryMethod) {
 
 		List<ParameterBinding> bindings = new ArrayList<>();
+		RelationalParametersParameterAccessor accessor = getAccessor(parameters, queryMethod);
+
+		// TODO Count Query (Pagination)
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, converter, dialect, queryMethod, accessor,
+				returnedType) {
+
+			@Override
+			protected ParameterMetadataProvider getParameterMetadataProvider(RelationalParameterAccessor accessor) {
+				return new CapturingParameterMetadataProvider(accessor);
+			}
+		};
+
+		ParametrizedQuery query = queryCreator.createQuery(Sort.unsorted());
+
+		for (String parameterName : query.getParameterSource().getParameterNames()) {
+
+			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(query.getParameterSource().getValue(parameterName));
+
+			if (captured.getValue() instanceof ValueFunction<?> vf) {
+
+				Object escaped = vf.apply(dialect.getLikeEscaper());
+
+				if (escaped != null && (escaped.equals("%s") || escaped.equals("s%") || escaped.equals("%s%"))) {
+					bindings.add(ParameterBinding.like(parameterName, captured.getBinding().getOrigin(), escaped.toString()));
+					continue;
+				}
+			}
+
+			bindings.add(ParameterBinding.named(parameterName, captured.getBinding().getOrigin()));
+		}
+
+		return new DerivedAotQuery(query.getQuery(), bindings, query.getCriteria(), partTree.getSort(),
+				partTree.getResultLimit(), partTree.isDelete(), partTree.isExistsProjection());
+	}
+
+	private RelationalParametersParameterAccessor getAccessor(JdbcParameters parameters, JdbcQueryMethod queryMethod) {
+
 		Object[] parameterValues = new Object[parameters.getNumberOfParameters()];
 
 		RelationalParameters bindable = parameters.getBindableParameters();
-
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(queryMethod,
 				parameterValues) {
 
@@ -210,20 +250,7 @@ class QueriesFactory {
 						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())), JDBCType.OTHER);
 			}
 		};
-
-		// TODO ValueFunction, Escaping, Count Query (Pagination)
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, converter, dialect, queryMethod, accessor,
-				returnedType);
-		ParametrizedQuery query = queryCreator.createQuery(Sort.unsorted());
-
-		for (String parameterName : query.getParameterSource().getParameterNames()) {
-
-			ParameterBinding value = (ParameterBinding) query.getParameterSource().getValue(parameterName);
-			bindings.add(ParameterBinding.named(parameterName, value.getOrigin()));
-		}
-
-		return new DerivedAotQuery(query.getQuery(), bindings, query.getCriteria(), partTree.getSort(),
-				partTree.getResultLimit(), partTree.isDelete(), partTree.isExistsProjection());
+		return accessor;
 	}
 
 	public static @Nullable Class<?> getQueryReturnType(AotQuery query, ReturnedType returnedType,
