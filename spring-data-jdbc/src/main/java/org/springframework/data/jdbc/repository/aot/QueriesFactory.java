@@ -169,7 +169,7 @@ class QueriesFactory {
 		AotQuery aotQuery = createQuery(this.converter, this.dialect, partTree, returnedType, queryMethod.getParameters(),
 				queryMethod);
 
-		return AotQueries.create(aotQuery);
+		return queryMethod.isPageQuery() ? AotQueries.create(aotQuery, aotQuery) : AotQueries.create(aotQuery);
 	}
 
 	private AotQuery createQuery(JdbcConverter converter, Dialect dialect, PartTree partTree, ReturnedType returnedType,
@@ -178,7 +178,6 @@ class QueriesFactory {
 		List<ParameterBinding> bindings = new ArrayList<>();
 		RelationalParametersParameterAccessor accessor = getAccessor(parameters, queryMethod);
 
-		// TODO Count Query (Pagination)
 		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, converter, dialect, queryMethod, accessor,
 				returnedType) {
 

@@ -25,11 +25,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
@@ -44,6 +46,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.aot.generate.AotQueryMethodGenerationContext;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.javapoet.CodeBlock;
 import org.springframework.javapoet.CodeBlock.Builder;
@@ -137,98 +140,141 @@ class JdbcCodeBlocks {
 
 			Assert.notNull(queries, "Queries must not be null");
 
-			if (queries.result() instanceof DerivedAotQuery dq) {
-				return createDerivedQuery(dq);
+			if (queries.result() instanceof DerivedAotQuery derivedQuery) {
+				return createDerivedQuery(derivedQuery,
+						queries.count() instanceof DerivedAotQuery derivedCountQuery ? derivedCountQuery : null);
 			}
 
 			return createStringQuery(queryVariableName, parameterSourceVariableName, queries.result());
 		}
 
-		private CodeBlock createDerivedQuery(DerivedAotQuery dq) {
+		private CodeBlock createDerivedQuery(DerivedAotQuery entityQuery, @Nullable DerivedAotQuery countQuery) {
 
-			CriteriaDefinition criteria = dq.getCriteria();
+			CriteriaDefinition criteria = entityQuery.getCriteria();
 
 			Builder builder = CodeBlock.builder();
 
-			if (criteria != null && !criteria.isEmpty()) {
+			if (!criteria.isEmpty()) {
 				builder.add(buildCriteria(criteria, (criteriaDefinition, b) -> {
 					b.add("$[$1T $2L = $1T.where($3S)", Criteria.class, context.localVariable("criteria"),
 							criteriaDefinition.getColumn().getReference());
 				}, b -> b.add(";\n$]")));
 			}
 
-			String method;
+			builder.add(buildQuery(false, entityQuery, criteria, this.parameterSourceVariableName, this.queryVariableName));
 
-			if (dq.isCount()) {
+			if (countQuery != null) {
+
+				Builder countAll = CodeBlock.builder();
+
+				countAll.beginControlFlow("$T $L = () ->", LongSupplier.class, context.localVariable("countAll"));
+
+				String parameterSourceVariableName = context
+						.localVariable("count" + StringUtils.capitalize(this.parameterSourceVariableName));
+				String queryVariableName = context.localVariable("count" + StringUtils.capitalize(this.queryVariableName));
+
+				countAll.add(buildQuery(true, countQuery, criteria, parameterSourceVariableName, queryVariableName));
+
+				countAll.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class,
+						context.localVariable("count"), queryVariableName, parameterSourceVariableName,
+						SingleColumnRowMapper.class);
+
+				countAll.addStatement("return $1L != null ? $1L.longValue() : 0L", context.localVariable("count"));
+
+				// end control flow does not work well with lambdas
+				countAll.unindent();
+				countAll.add("};\n");
+
+				builder.add("\n");
+				builder.add(countAll.build());
+			}
+
+			return builder.build();
+		}
+
+		private CodeBlock buildQuery(boolean count, DerivedAotQuery aotQuery, CriteriaDefinition criteria,
+				String parameterSourceVariableName, String queryVariableName) {
+
+			Builder builder = CodeBlock.builder();
+			String selection = context.localVariable(count ? "countSelection" : "selection");
+
+			String rawParameterSource = context.localVariable(count ? "countRawParameterSource" : "rawParameterSource");
+
+			String method;
+			if (aotQuery.isCount() || count) {
 				method = "count($T.class)";
-			} else if (dq.isExists()) {
+			} else if (aotQuery.isExists()) {
 				method = "exists($T.class)";
 			} else {
 				method = "select($T.class)";
 			}
 
-			builder.addStatement("$T $L = getStatementFactory()." + method, StatementFactory.Selection.class,
-					context.localVariable("selection"), context.getRepositoryInformation().getDomainType());
+			builder.addStatement("$T $L = getStatementFactory()." + method, StatementFactory.Selection.class, selection,
+					context.getRepositoryInformation().getDomainType());
 
-			if (dq.isLimited()) {
-				builder.addStatement("$1L.limit($2L)", context.localVariable("selection"), dq.getLimit().max());
-			} else if (StringUtils.hasText(context.getLimitParameterName())) {
-				builder.addStatement("$L.limit($L)", context.localVariable("selection"), context.getLimitParameterName());
-			}
+			if (!count && !aotQuery.isCount() && !aotQuery.isExists()) {
 
-			if (StringUtils.hasText(context.getPageableParameterName())) {
-				builder.addStatement("$L.with($L)", context.localVariable("selection"), context.getPageableParameterName());
-			}
-
-			Sort sort = dq.getSort();
-			if (sort.isSorted()) {
-
-				Builder sortBuilder = CodeBlock.builder();
-				sortBuilder.add("$T.by(", Sort.class);
-
-				boolean first = true;
-				for (Sort.Order order : sort) {
-
-					sortBuilder.add("$T.$L($S)", Sort.Order.class, order.isAscending() ? "asc" : "desc", order.getProperty());
-					if (order.isIgnoreCase()) {
-						sortBuilder.add(".ignoreCase()");
-					}
-
-					if (first) {
-						first = false;
-					} else {
-						sortBuilder.add(", ");
-					}
+				if (aotQuery.isLimited()) {
+					builder.addStatement("$1L.limit($2L)", selection, aotQuery.getLimit().max());
+				} else if (StringUtils.hasText(context.getLimitParameterName())) {
+					builder.addStatement("$L.limit($L)", selection, context.getLimitParameterName());
 				}
 
-				sortBuilder.add(")");
+				if (StringUtils.hasText(context.getPageableParameterName())) {
+					builder.addStatement("$L.with($L)", selection, context.getPageableParameterName());
+				}
 
-				builder.addStatement("$L.orderBy($L)", context.localVariable("selection"), sortBuilder.build());
-			}
+				Sort sort = aotQuery.getSort();
+				if (sort.isSorted()) {
+					builder.addStatement("$L.orderBy($L)", selection, buildSort(sort));
+				}
 
-			if (StringUtils.hasText(context.getSortParameterName())) {
-				builder.addStatement("$L.orderBy($L)", context.localVariable("selection"), context.getSortParameterName());
+				if (StringUtils.hasText(context.getSortParameterName())) {
+					builder.addStatement("$L.orderBy($L)", selection, context.getSortParameterName());
+				}
 			}
 
 			if (lock.isPresent()) {
-				builder.addStatement("$L.lock($T.$L)", context.localVariable("selection"), LockMode.class,
-						lock.getEnum("value", LockMode.class).name());
+				builder.addStatement("$L.lock($T.$L)", selection, LockMode.class, lock.getEnum("value", LockMode.class).name());
 			}
 
 			if (!criteria.isEmpty()) {
-				builder.addStatement("$L.filter($L)", context.localVariable("selection"), context.localVariable("criteria"));
+				builder.addStatement("$L.filter($L)", selection, context.localVariable("criteria"));
 			}
 
 			// TODO Projections, Pagination
 
-			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class,
-					context.localVariable("rawParameterSource"));
-			builder.addStatement("$T $L = $L.build($L)", String.class, queryVariableName, context.localVariable("selection"),
-					context.localVariable("rawParameterSource"));
+			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, rawParameterSource);
+			builder.addStatement("$T $L = $L.build($L)", String.class, queryVariableName, selection, rawParameterSource);
 			builder.addStatement("$1T $2L = escapingParameterSource($3L)", SqlParameterSource.class,
-					parameterSourceVariableName, context.localVariable("rawParameterSource"));
+					parameterSourceVariableName, rawParameterSource);
 
 			return builder.build();
+		}
+
+		private static CodeBlock buildSort(Sort sort) {
+
+			Builder sortBuilder = CodeBlock.builder();
+			sortBuilder.add("$T.by(", Sort.class);
+
+			boolean first = true;
+			for (Sort.Order order : sort) {
+
+				sortBuilder.add("$T.$L($S)", Sort.Order.class, order.isAscending() ? "asc" : "desc", order.getProperty());
+				if (order.isIgnoreCase()) {
+					sortBuilder.add(".ignoreCase()");
+				}
+
+				if (first) {
+					first = false;
+				} else {
+					sortBuilder.add(", ");
+				}
+			}
+
+			sortBuilder.add(")");
+
+			return sortBuilder.build();
 		}
 
 		private CodeBlock buildCriteria(CriteriaDefinition criteria, BiConsumer<CriteriaDefinition, Builder> preamble,
@@ -292,23 +338,25 @@ class JdbcCodeBlocks {
 
 		private void appendCriteria(CriteriaDefinition current, Builder builder) {
 
+			Object value = current.getValue();
+
 			switch (current.getComparator()) {
 				case INITIAL -> {}
-				case EQ -> builder.add(".is($L)", render(current.getValue()));
-				case NEQ -> builder.add(".not($L)", render(current.getValue()));
-				case BETWEEN -> builder.add(".between($L, $L)", render(current.getValue(), 0), render(current.getValue(), 1));
+				case EQ -> builder.add(".is($L)", renderPlaceholder(value));
+				case NEQ -> builder.add(".not($L)", renderPlaceholder(value));
+				case BETWEEN -> builder.add(".between($L, $L)", renderPlaceholder(value, 0), renderPlaceholder(value, 1));
 				case NOT_BETWEEN ->
-					builder.add(".notBetween($L, $L)", render(current.getValue(), 0), render(current.getValue(), 1));
-				case LT -> builder.add(".lessThan($L)", render(current.getValue()));
-				case LTE -> builder.add(".lessThanOrEquals($L)", render(current.getValue()));
-				case GT -> builder.add(".greaterThan($L)", render(current.getValue()));
-				case GTE -> builder.add(".greaterThanEquals($L)", render(current.getValue()));
+					builder.add(".notBetween($L, $L)", renderPlaceholder(value, 0), renderPlaceholder(value, 1));
+				case LT -> builder.add(".lessThan($L)", renderPlaceholder(value));
+				case LTE -> builder.add(".lessThanOrEquals($L)", renderPlaceholder(value));
+				case GT -> builder.add(".greaterThan($L)", renderPlaceholder(value));
+				case GTE -> builder.add(".greaterThanEquals($L)", renderPlaceholder(value));
 				case IS_NULL -> builder.add(".isNull()");
 				case IS_NOT_NULL -> builder.add(".isNotNull()");
-				case LIKE -> builder.add(".like($L)", render(current.getValue()));
-				case NOT_LIKE -> builder.add(".notLike($L)", render(current.getValue()));
-				case NOT_IN -> builder.add(".notIn($L)", render(current.getValue()));
-				case IN -> builder.add(".in($L)", render(current.getValue()));
+				case LIKE -> builder.add(".like($L)", renderPlaceholder(value));
+				case NOT_LIKE -> builder.add(".notLike($L)", renderPlaceholder(value));
+				case NOT_IN -> builder.add(".notIn($L)", renderPlaceholder(value));
+				case IN -> builder.add(".in($L)", renderPlaceholder(value));
 				case IS_TRUE -> builder.add(".isTrue()");
 				case IS_FALSE -> builder.add(".isFalse()");
 			}
@@ -318,7 +366,7 @@ class JdbcCodeBlocks {
 			}
 		}
 
-		private String render(Object value) {
+		private @Nullable String renderPlaceholder(@Nullable Object value) {
 
 			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(value);
 
@@ -330,7 +378,7 @@ class JdbcCodeBlocks {
 			return identifier.hasName() ? identifier.getName() : context.getParameterName(identifier.getPosition());
 		}
 
-		private Object render(Object value, int index) {
+		private Object renderPlaceholder(@Nullable Object value, int index) {
 			return index == 0 ? ((Pair) value).getFirst() : ((Pair) value).getSecond();
 		}
 
@@ -496,86 +544,28 @@ class JdbcCodeBlocks {
 
 			Builder builder = CodeBlock.builder();
 
-			boolean isProjecting = context.getActualReturnType() != null
-					&& !ObjectUtils.nullSafeEquals(TypeName.get(context.getRepositoryInformation().getDomainType()),
-							context.getActualReturnType());
+			boolean isProjecting = !ObjectUtils.nullSafeEquals(
+					TypeName.get(context.getRepositoryInformation().getDomainType()), context.getActualReturnType());
 			Type actualReturnType = isProjecting ? context.getActualReturnType().getType()
 					: context.getRepositoryInformation().getDomainType();
 			builder.add("\n");
 
 			Class<?> returnType = context.getMethod().getReturnType();
-			if (modifying.isPresent()) {
-
-				String result = context.localVariable("result");
-
-				builder.addStatement("int $L = getJdbcOperations().update($L, $L)", result, queryVariableName,
-						parameterSourceVariableName);
-
-				if (returnType == boolean.class || returnType == Boolean.class) {
-					builder.addStatement("return $L != 0", result);
-				} else if (returnType == Long.class) {
-					builder.addStatement("return (long) $L", result);
-				} else {
-					builder.addStatement("return $L", result);
-				}
-
-				return builder.build();
-			}
-
 			TypeName queryResultType = TypeName.get(context.getActualReturnType().toClass());
 			String result = context.localVariable("result");
 			String rowMapper = context.localVariable("rowMapper");
 
-			if (aotQuery.isCount()) {
-
-				builder.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class, result,
-						queryVariableName, parameterSourceVariableName, SingleColumnRowMapper.class);
-
-				if (returnType == Long.class) {
-					builder.addStatement("return $1L != null ? $1L.longValue() : null", result);
-				} else if (returnType == Integer.class) {
-					builder.addStatement("return $1L != null ? $1L.intValue() : null", result);
-				} else if (returnType == Long.TYPE) {
-					builder.addStatement("return $1L != null ? $1L.longValue() : 0L", result);
-				} else if (returnType == Integer.TYPE) {
-					builder.addStatement("return $1L != null ? $1L.intValue() : 0", result);
-				} else {
-					builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
-							queryResultType);
-				}
-
-			} else
-
-			if (aotQuery.isExists()) {
-
-				builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $T::next)", queryResultType,
-						queryVariableName, parameterSourceVariableName, ResultSet.class);
+			if (modifying.isPresent()) {
+				return update(builder, returnType);
+			} else if (aotQuery.isCount()) {
+				return count(builder, result, returnType, queryResultType);
+			} else if (aotQuery.isExists()) {
+				return exists(builder, queryResultType);
 			} else if (aotQuery.isDelete()) {
-
-				builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
-						context.fieldNameOf(RowMapperFactory.class), context.getRepositoryInformation().getDomainType());
-
-				builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
-						List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
-
-				builder.addStatement("$L.forEach($L::delete)", result, context.fieldNameOf(JdbcAggregateOperations.class));
-
-				if (Collection.class.isAssignableFrom(context.getReturnType().toClass())) {
-					builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-							queryResultType);
-				} else if (returnType == context.getRepositoryInformation().getDomainType()) {
-					builder.addStatement("return ($1T) ($2L.isEmpty() ? null : $2L.iterator().next())", actualReturnType, result);
-				} else if (returnType == boolean.class || returnType == Boolean.class) {
-					builder.addStatement("return !$L.isEmpty()", result);
-				} else if (returnType == Long.class) {
-					builder.addStatement("return (long) $L.size()", result);
-				} else {
-					builder.addStatement("return $L.size()", result);
-				}
-
+				return delete(builder, rowMapper, result, queryResultType, returnType, actualReturnType);
 			} else {
 
-				// TODO: Paging, Projection, Count
+				// TODO: Projection
 				String resultSetExtractor = null;
 
 				if (rowMapperClass != null) {
@@ -609,101 +599,200 @@ class JdbcCodeBlocks {
 
 					builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $L)", queryResultType, queryVariableName,
 							parameterSourceVariableName, resultSetExtractor);
-				} else {
 
-					if (queryMethod.isCollectionQuery()) {
-						builder.addStatement("$1T $2L = ($1T) getJdbcOperations().query($3L, $4L, new $5T<>($6L))", List.class,
-								result, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class,
-								rowMapper);
-						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-								queryResultType);
-					} else if (queryMethod.isStreamQuery()) {
-						builder.addStatement("$1T $2L = getJdbcOperations().queryForStream($3L, $4L, $5L)", Stream.class, result,
-								queryVariableName, parameterSourceVariableName, rowMapper);
-						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-								queryResultType);
-					} else {
+					return builder.build();
+				}
 
-						builder.addStatement("$T $L = queryForObject($L, $L, $L)", Object.class, result, queryVariableName,
-								parameterSourceVariableName, rowMapper);
+				if (queryMethod.isCollectionQuery() || queryMethod.isSliceQuery() || queryMethod.isPageQuery()) {
 
-						if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-							builder.addStatement("return ($1T) $1T.ofNullable(convertOne($2L, $3T.class))", Optional.class, result,
-									queryResultType);
+					builder.addStatement("$1T $2L = ($1T) getJdbcOperations().query($3L, $4L, new $5T<>($6L))", List.class,
+							result, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
+
+					if (queryMethod.isSliceQuery() || queryMethod.isPageQuery()) {
+
+						String pageable = context.getPageableParameterName();
+
+						builder.addStatement("$1T $2L = ($1T) convertMany($3L, $4T.class)", List.class,
+								context.localVariable("converted"), result, queryResultType);
+
+						if (queryMethod.isPageQuery()) {
+
+							builder.addStatement("return $1T.getPage($2L, $3L, $4L)", PageableExecutionUtils.class,
+									context.localVariable("converted"), pageable, context.localVariable("countAll"));
 						} else {
-							builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
-									queryResultType);
+
+							builder.addStatement("boolean $1L = $2L.isPaged() && $3L.size() > $2L.getPageSize()",
+									context.localVariable("hasNext"), pageable, context.localVariable("converted"));
+
+							builder.addStatement("return new $1T($2L ? $3L.subList(0, $4L.getPageSize()) : $3L, $4L, $2L)",
+									SliceImpl.class, context.localVariable("hasNext"), context.localVariable("converted"), pageable);
 						}
+
+						return builder.build();
 					}
 
-					/*	if (context.getReturnedType().isProjecting()) {
+					builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
+							queryResultType);
+				} else if (queryMethod.isStreamQuery()) {
 
-							if (queryMethod.isCollectionQuery()) {
-								builder.addStatement("return ($T) convertMany($L.getResultList(), $L, $T.class)",
-										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-							} else if (queryMethod.isStreamQuery()) {
-								builder.addStatement("return ($T) convertMany($L.getResultStream(), $L, $T.class)",
-										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-							} else if (queryMethod.isPageQuery()) {
-								builder.addStatement("return $T.getPage(($T<$T>) convertMany($L.getResultList(), $L, $T.class), $L, $L)",
-										PageableExecutionUtils.class, List.class, actualReturnType, queryVariableName, aotQuery.isNative(),
-										queryResultType, pageable, context.localVariable("countAll"));
-							} else if (queryMethod.isSliceQuery()) {
-								builder.addStatement("$T<$T> $L = ($T<$T>) convertMany($L.getResultList(), $L, $T.class)", List.class,
-										actualReturnType, context.localVariable("resultList"), List.class, actualReturnType, queryVariableName,
-										aotQuery.isNative(), queryResultType);
-								builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
-										context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
-								builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
-										context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
-										context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
-							} else {
+					builder.addStatement("$1T $2L = getJdbcOperations().queryForStream($3L, $4L, $5L)", Stream.class, result,
+							queryVariableName, parameterSourceVariableName, rowMapper);
+					builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
+							queryResultType);
+				} else {
 
-								if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-									builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
-											Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(), queryResultType);
-								} else {
-									builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
-											context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-								}
-							}
+					builder.addStatement("$T $L = queryForObject($L, $L, $L)", Object.class, result, queryVariableName,
+							parameterSourceVariableName, rowMapper);
 
+					if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+						builder.addStatement("return ($1T) $1T.ofNullable(convertOne($2L, $3T.class))", Optional.class, result,
+								queryResultType);
+					} else {
+						builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
+								queryResultType);
+					}
+				}
+
+				/*	if (context.getReturnedType().isProjecting()) {
+
+						if (queryMethod.isCollectionQuery()) {
+							builder.addStatement("return ($T) convertMany($L.getResultList(), $L, $T.class)",
+									context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
+						} else if (queryMethod.isStreamQuery()) {
+							builder.addStatement("return ($T) convertMany($L.getResultStream(), $L, $T.class)",
+									context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
+						} else if (queryMethod.isPageQuery()) {
+							builder.addStatement("return $T.getPage(($T<$T>) convertMany($L.getResultList(), $L, $T.class), $L, $L)",
+									PageableExecutionUtils.class, List.class, actualReturnType, queryVariableName, aotQuery.isNative(),
+									queryResultType, pageable, context.localVariable("countAll"));
+						} else if (queryMethod.isSliceQuery()) {
+							builder.addStatement("$T<$T> $L = ($T<$T>) convertMany($L.getResultList(), $L, $T.class)", List.class,
+									actualReturnType, context.localVariable("resultList"), List.class, actualReturnType, queryVariableName,
+									aotQuery.isNative(), queryResultType);
+							builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
+									context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
+							builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
+									context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
+									context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
 						} else {
 
-							if(resultSetExtractor != null){
-
-							}
-
-							if (queryMethod.isCollectionQuery()) {
-								builder.addStatement("return ($T) $L.getResultList()", context.getReturnTypeName(), queryVariableName);
-							} else if (queryMethod.isStreamQuery()) {
-								builder.addStatement("return ($T) $L.getResultStream()", context.getReturnTypeName(), queryVariableName);
-							} else if (queryMethod.isPageQuery()) {
-								builder.addStatement("return $T.getPage(($T<$T>) $L.getResultList(), $L, $L)", PageableExecutionUtils.class,
-										List.class, actualReturnType, queryVariableName, pageable, context.localVariable("countAll"));
-							} else if (queryMethod.isSliceQuery()) {
-								builder.addStatement("$T<$T> $L = $L.getResultList()", List.class, actualReturnType,
-										context.localVariable("resultList"), queryVariableName);
-								builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
-										context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
-								builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
-										context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
-										context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
+							if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+								builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
+										Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(), queryResultType);
 							} else {
-
-								if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-									builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
-											Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(),
-											context.getActualReturnType().toClass());
-								} else {
-									builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
-											context.getReturnTypeName(), queryVariableName, aotQuery.isNative(),
-											context.getReturnType().toClass());
-								}
+								builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
+										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
 							}
-						} */
-				}
+						}
+
+					} else {
+
+						if(resultSetExtractor != null){
+
+						}
+
+						if (queryMethod.isCollectionQuery()) {
+							builder.addStatement("return ($T) $L.getResultList()", context.getReturnTypeName(), queryVariableName);
+						} else if (queryMethod.isStreamQuery()) {
+							builder.addStatement("return ($T) $L.getResultStream()", context.getReturnTypeName(), queryVariableName);
+						} else if (queryMethod.isPageQuery()) {
+							builder.addStatement("return $T.getPage(($T<$T>) $L.getResultList(), $L, $L)", PageableExecutionUtils.class,
+									List.class, actualReturnType, queryVariableName, pageable, context.localVariable("countAll"));
+						} else if (queryMethod.isSliceQuery()) {
+							builder.addStatement("$T<$T> $L = $L.getResultList()", List.class, actualReturnType,
+									context.localVariable("resultList"), queryVariableName);
+							builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
+									context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
+							builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
+									context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
+									context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
+						} else {
+
+							if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
+								builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
+										Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(),
+										context.getActualReturnType().toClass());
+							} else {
+								builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
+										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(),
+										context.getReturnType().toClass());
+							}
+						}
+					} */
 			}
+
+			return builder.build();
+		}
+
+		private CodeBlock update(Builder builder, Class<?> returnType) {
+			String result = context.localVariable("result");
+
+			builder.addStatement("int $L = getJdbcOperations().update($L, $L)", result, queryVariableName,
+					parameterSourceVariableName);
+
+			if (returnType == boolean.class || returnType == Boolean.class) {
+				builder.addStatement("return $L != 0", result);
+			} else if (returnType == Long.class) {
+				builder.addStatement("return (long) $L", result);
+			} else {
+				builder.addStatement("return $L", result);
+			}
+
+			return builder.build();
+		}
+
+		private CodeBlock delete(Builder builder, String rowMapper, String result, TypeName queryResultType,
+				Class<?> returnType, Type actualReturnType) {
+
+			builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
+					context.fieldNameOf(RowMapperFactory.class), context.getRepositoryInformation().getDomainType());
+
+			builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
+					List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
+
+			builder.addStatement("$L.forEach($L::delete)", result, context.fieldNameOf(JdbcAggregateOperations.class));
+
+			if (Collection.class.isAssignableFrom(context.getReturnType().toClass())) {
+				builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
+						queryResultType);
+			} else if (returnType == context.getRepositoryInformation().getDomainType()) {
+				builder.addStatement("return ($1T) ($2L.isEmpty() ? null : $2L.iterator().next())", actualReturnType, result);
+			} else if (returnType == boolean.class || returnType == Boolean.class) {
+				builder.addStatement("return !$L.isEmpty()", result);
+			} else if (returnType == Long.class) {
+				builder.addStatement("return (long) $L.size()", result);
+			} else {
+				builder.addStatement("return $L.size()", result);
+			}
+
+			return builder.build();
+		}
+
+		private CodeBlock count(Builder builder, String result, Class<?> returnType, TypeName queryResultType) {
+
+			builder.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class, result,
+					queryVariableName, parameterSourceVariableName, SingleColumnRowMapper.class);
+
+			if (returnType == Long.class) {
+				builder.addStatement("return $1L != null ? $1L.longValue() : null", result);
+			} else if (returnType == Integer.class) {
+				builder.addStatement("return $1L != null ? $1L.intValue() : null", result);
+			} else if (returnType == Long.TYPE) {
+				builder.addStatement("return $1L != null ? $1L.longValue() : 0L", result);
+			} else if (returnType == Integer.TYPE) {
+				builder.addStatement("return $1L != null ? $1L.intValue() : 0", result);
+			} else {
+				builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
+						queryResultType);
+			}
+
+			return builder.build();
+		}
+
+		private CodeBlock exists(Builder builder, TypeName queryResultType) {
+
+			builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $T::next)", queryResultType,
+					queryVariableName, parameterSourceVariableName, ResultSet.class);
 
 			return builder.build();
 		}

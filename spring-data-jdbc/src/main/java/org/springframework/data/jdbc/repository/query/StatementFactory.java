@@ -128,9 +128,12 @@ public class StatementFactory {
 			return this;
 		}
 
-		public Selection with(Pageable pageable) {
-			this.pageable = pageable;
-			orderBy(pageable.getSort());
+		public Selection with(@org.jspecify.annotations.Nullable Pageable pageable) {
+
+			if (pageable != null) {
+				this.pageable = pageable;
+				orderBy(pageable.getSort());
+			}
 			return this;
 		}
 

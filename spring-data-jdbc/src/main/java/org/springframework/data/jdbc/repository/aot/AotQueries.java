@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository.aot;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.repository.aot.generate.QueryMetadata;
 
 /**
@@ -26,10 +28,27 @@ import org.springframework.data.repository.aot.generate.QueryMetadata;
  * @author Mark Paluch
  * @since 4.0
  */
-record AotQueries(AotQuery result) {
+record AotQueries(AotQuery result, @Nullable AotQuery count) {
 
+	/**
+	 * Factory method to create an {@link AotQueries} instance with a single query.
+	 *
+	 * @param query
+	 * @return
+	 */
 	public static AotQueries create(AotQuery query) {
-		return new AotQueries(query);
+		return new AotQueries(query, null);
+	}
+
+	/**
+	 * Factory method to create an {@link AotQueries} instance with an entity- and a count query.
+	 *
+	 * @param query
+	 * @param count
+	 * @return
+	 */
+	public static AotQueries create(AotQuery query, AotQuery count) {
+		return new AotQueries(query, count);
 	}
 
 	public QueryMetadata toMetadata() {
@@ -52,6 +71,14 @@ record AotQueries(AotQuery result) {
 
 			if (result() instanceof StringAotQuery.NamedStringAotQuery nsq) {
 				serialized.put("name", nsq.getQueryName());
+			}
+
+			if (count() instanceof StringAotQuery sq) {
+				serialized.put("count-query", sq.getQueryString());
+			}
+
+			if (count() instanceof StringAotQuery.NamedStringAotQuery nsq) {
+				serialized.put("count-name", nsq.getQueryName());
 			}
 
 			return serialized;

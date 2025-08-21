@@ -28,6 +28,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -100,6 +105,34 @@ class JdbcRepositoryContributorIntegrationTests {
 	@Test
 	void streamByAgeGreaterThan() {
 		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
+	}
+
+	@Test
+	void shouldReturnSlice() {
+
+		Slice<User> slice = fragment.findSliceByAgeGreaterThan(Pageable.ofSize(4), 10);
+
+		assertThat(slice).hasSize(4);
+
+		assertThat(slice.hasNext()).isTrue();
+		slice = fragment.findSliceByAgeGreaterThan(Pageable.ofSize(5), 10);
+
+		assertThat(slice).hasSize(6);
+		assertThat(slice.hasNext()).isFalse();
+	}
+
+	@Test
+	void shouldReturnPage() {
+
+		Page<User> page = fragment.findPageByAgeGreaterThan(PageRequest.of(0, 4, Sort.by("age")), 10);
+
+		assertThat(page).hasSize(4);
+
+		assertThat(page.hasNext()).isTrue();
+		page = fragment.findPageByAgeGreaterThan(page.nextPageable(), 10);
+
+		assertThat(page).hasSize(2);
+		assertThat(page.hasNext()).isFalse();
 	}
 
 	@Test

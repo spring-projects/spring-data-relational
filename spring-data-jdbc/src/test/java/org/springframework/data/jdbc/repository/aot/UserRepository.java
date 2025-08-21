@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -47,9 +47,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	List<User> findTop5ByOrderByAge();
 
-	Slice<User> findSliceByFirstname(PageRequest pageable, String name);
+	Slice<User> findSliceByAgeGreaterThan(Pageable pageable, int age);
 
-	Page<User> findPageByFirstname(PageRequest pageable, String name);
+	Page<User> findPageByAgeGreaterThan(Pageable pageable, int age);
 
 	// -------------------------------------------------------------------------
 	// Declared Queries
