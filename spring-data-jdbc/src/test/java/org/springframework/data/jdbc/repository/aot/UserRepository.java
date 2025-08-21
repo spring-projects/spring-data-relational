@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.aot;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -60,5 +61,19 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	@Query(name = "User.findBySomeAnnotatedNamedQuery")
 	User findByAnnotatedNamedQuery(String name);
+
+	// -------------------------------------------------------------------------
+	// Modifying
+	// -------------------------------------------------------------------------
+
+	boolean deleteByFirstname(String name);
+
+	int deleteCountByFirstname(String name);
+
+	User deleteOneByFirstname(String name);
+
+	@Modifying
+	@Query("delete from MY_USER where firstname = :firstname")
+	int deleteAnnotatedQuery(String firstname);
 
 }

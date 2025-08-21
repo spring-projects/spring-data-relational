@@ -119,7 +119,6 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 			String parameterSourceVariable = context.localVariable("parameterSource");
 
 			body.add(JdbcCodeBlocks.queryBuilder(context, queryMethod).filter(aotQueries)
-					.queryReturnType(QueriesFactory.getQueryReturnType(aotQueries.result(), returnedType, context))
 					.usingQueryVariableName(queryVariable).parameterSource(parameterSourceVariable).lock(lock).build());
 
 			body.add(JdbcCodeBlocks.executionBuilder(context, queryMethod).modifying(modifying)

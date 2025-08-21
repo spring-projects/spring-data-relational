@@ -103,4 +103,32 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter.getFirstname()).isEqualTo("Walter");
 	}
 
+	@Test
+	void shouldDeleteByName() {
+
+		assertThat(fragment.deleteByFirstname("Walter")).isTrue();
+		assertThat(fragment.deleteByFirstname("Walter")).isFalse();
+	}
+
+	@Test
+	void shouldDeleteCountByName() {
+
+		assertThat(fragment.deleteCountByFirstname("Walter")).isOne();
+		assertThat(fragment.deleteCountByFirstname("Walter")).isZero();
+	}
+
+	@Test
+	void shouldDeleteAnnotated() {
+
+		assertThat(fragment.deleteAnnotatedQuery("Walter")).isOne();
+		assertThat(fragment.deleteAnnotatedQuery("Walter")).isZero();
+	}
+
+	@Test
+	void shouldDeleteAndReturnByName() {
+
+		assertThat(fragment.deleteOneByFirstname("Walter")).isNotNull();
+		assertThat(fragment.deleteOneByFirstname("Walter")).isNull();
+	}
+
 }
