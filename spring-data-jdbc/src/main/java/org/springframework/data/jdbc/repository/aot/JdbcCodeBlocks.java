@@ -33,7 +33,6 @@ import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
-import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
@@ -54,6 +53,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.RowMapperResultSetExtractor;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -221,11 +221,12 @@ class JdbcCodeBlocks {
 
 			// TODO Projections, Pagination
 
-			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, context.localVariable("mps"));
-			builder.addStatement("$1T $2L = new $1T($3L, getDialect().getLikeEscaper())", EscapingParameterSource.class,
-					parameterSourceVariableName, context.localVariable("mps"));
+			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class,
+					context.localVariable("rawParameterSource"));
 			builder.addStatement("$T $L = $L.build($L)", String.class, queryVariableName, context.localVariable("selection"),
-					context.localVariable("mps"));
+					context.localVariable("rawParameterSource"));
+			builder.addStatement("$1T $2L = escapingParameterSource($3L)", SqlParameterSource.class,
+					parameterSourceVariableName, context.localVariable("rawParameterSource"));
 
 			return builder.build();
 		}
@@ -611,14 +612,14 @@ class JdbcCodeBlocks {
 				} else {
 
 					if (queryMethod.isCollectionQuery()) {
-						builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
-								List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class,
+						builder.addStatement("$1T $2L = ($1T) getJdbcOperations().query($3L, $4L, new $5T<>($6L))", List.class,
+								result, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class,
 								rowMapper);
 						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
 								queryResultType);
 					} else if (queryMethod.isStreamQuery()) {
-						builder.addStatement("$T $L = ($T) getJdbcOperations().queryForStream($L, $L, $L)", Stream.class,
-								queryResultType, Stream.class, result, queryVariableName, parameterSourceVariableName, rowMapper);
+						builder.addStatement("$1T $2L = getJdbcOperations().queryForStream($3L, $4L, $5L)", Stream.class, result,
+								queryVariableName, parameterSourceVariableName, rowMapper);
 						builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
 								queryResultType);
 					} else {

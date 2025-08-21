@@ -98,6 +98,11 @@ class JdbcRepositoryContributorIntegrationTests {
 	}
 
 	@Test
+	void streamByAgeGreaterThan() {
+		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
+	}
+
+	@Test
 	void countByAgeLessThan() {
 
 		long count = fragment.countByAgeLessThan(20);
