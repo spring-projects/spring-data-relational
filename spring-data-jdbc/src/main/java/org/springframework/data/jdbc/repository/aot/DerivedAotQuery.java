@@ -4,15 +4,16 @@ import java.util.List;
 
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.repository.query.ParameterBinding;
+import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.repository.query.parser.PartTree;
 
 /**
  * PartTree (derived) Query with a limit associated.
  *
  * @author Mark Paluch
  */
-public class DerivedAotQuery extends StringAotQuery {
+class DerivedAotQuery extends StringAotQuery {
 
 	private final String queryString;
 	private final CriteriaDefinition criteria;
@@ -22,9 +23,9 @@ public class DerivedAotQuery extends StringAotQuery {
 	private final boolean count;
 	private final boolean exists;
 
-	DerivedAotQuery(String queryString, List<ParameterBinding> parameterBindings, CriteriaDefinition criteria, Sort sort,
+	DerivedAotQuery(String queryString, CriteriaDefinition criteria, Sort sort,
 			Limit limit, boolean delete, boolean count, boolean exists) {
-		super(parameterBindings);
+		super(List.of());
 		this.queryString = queryString;
 		this.criteria = criteria;
 		this.sort = sort;
@@ -32,6 +33,13 @@ public class DerivedAotQuery extends StringAotQuery {
 		this.delete = delete;
 		this.count = count;
 		this.exists = exists;
+	}
+
+	DerivedAotQuery(ParametrizedQuery query, PartTree partTree, boolean countQuery) {
+
+		this(query.getQuery(), query.getCriteria(), partTree.getSort(), partTree.getResultLimit(), partTree.isDelete(),
+				countQuery, partTree.isExistsProjection());
+
 	}
 
 	@Override

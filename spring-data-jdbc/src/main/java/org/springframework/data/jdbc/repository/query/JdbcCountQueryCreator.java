@@ -35,7 +35,12 @@ import org.springframework.data.repository.query.parser.PartTree;
  * @author Diego Krupitza
  * @since 2.2
  */
-class JdbcCountQueryCreator extends JdbcQueryCreator {
+public class JdbcCountQueryCreator extends JdbcQueryCreator {
+
+	public JdbcCountQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect, JdbcQueryMethod queryMethod,
+			RelationalParameterAccessor accessor, ReturnedType returnedType) {
+		super(tree, converter, dialect, queryMethod, accessor, returnedType);
+	}
 
 	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,

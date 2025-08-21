@@ -26,19 +26,17 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.config.JdbcRepositoryConfigExtension;
+import org.springframework.data.jdbc.repository.query.JdbcCountQueryCreator;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
 import org.springframework.data.jdbc.repository.query.JdbcQueryCreator;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
@@ -147,89 +145,57 @@ class QueriesFactory {
 
 	private AotQueries buildNamedQuery(String queryName, JdbcQueryMethod queryMethod) {
 
-		AotQuery aotQuery = createNamedAotQuery(queryName, queryMethod);
-		return AotQueries.create(aotQuery);
-	}
-
-	private AotQuery createNamedAotQuery(String queryName, JdbcQueryMethod queryMethod) {
-
 		String queryString = namedQueries.getQuery(queryName);
 		ValueExpressionQueryRewriter.ParsedQuery parsedQuery = parseQuery(queryString);
 
-		return StringAotQuery.named(queryName, queryString, getBindings(parsedQuery, queryMethod));
+		return AotQueries.create(StringAotQuery.named(queryName, queryString, getBindings(parsedQuery, queryMethod)));
 	}
 
 	private AotQueries buildPartTreeQuery(RepositoryInformation repositoryInformation, ReturnedType returnedType,
 			JdbcQueryMethod queryMethod) {
 
 		PartTree partTree = new PartTree(queryMethod.getName(), repositoryInformation.getDomainType());
-		AotQuery aotQuery = createQuery(this.converter, this.dialect, partTree, returnedType, queryMethod.getParameters(),
-				queryMethod);
-
-		return queryMethod.isPageQuery() ? AotQueries.create(aotQuery, aotQuery) : AotQueries.create(aotQuery);
-	}
-
-	private AotQuery createQuery(JdbcConverter converter, Dialect dialect, PartTree partTree, ReturnedType returnedType,
-			JdbcParameters parameters, JdbcQueryMethod queryMethod) {
-
-		List<ParameterBinding> bindings = new ArrayList<>();
-		RelationalParametersParameterAccessor accessor = getAccessor(parameters, queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod);
 
 		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, converter, dialect, queryMethod, accessor,
 				returnedType) {
 
 			@Override
 			protected ParameterMetadataProvider getParameterMetadataProvider(RelationalParameterAccessor accessor) {
-				return new CapturingParameterMetadataProvider(accessor);
+				return new PlaceholderAccessor.CapturingParameterMetadataProvider(accessor);
 			}
 		};
 
 		ParametrizedQuery query = queryCreator.createQuery(Sort.unsorted());
+		DerivedAotQuery aotQuery = new DerivedAotQuery(query, partTree, partTree.isCountProjection());
 
-		return new DerivedAotQuery(query.getQuery(), bindings, query.getCriteria(), partTree.getSort(),
-				partTree.getResultLimit(), partTree.isDelete(), partTree.isCountProjection(), partTree.isExistsProjection());
+		if (queryMethod.isPageQuery()) {
+
+			JdbcQueryCreator countQueryCreator = new JdbcCountQueryCreator(partTree, converter, dialect, queryMethod,
+					accessor, returnedType) {
+
+				@Override
+				protected ParameterMetadataProvider getParameterMetadataProvider(RelationalParameterAccessor accessor) {
+					return PlaceholderAccessor.metadata(accessor);
+				}
+			};
+
+			ParametrizedQuery countQuery = countQueryCreator.createQuery(Sort.unsorted());
+			DerivedAotQuery aotCountQuery = new DerivedAotQuery(countQuery, partTree, true);
+
+			return AotQueries.create(aotQuery, aotCountQuery);
+		}
+
+		return AotQueries.create(aotQuery);
 	}
 
-	private RelationalParametersParameterAccessor getAccessor(JdbcParameters parameters, JdbcQueryMethod queryMethod) {
+	private RelationalParametersParameterAccessor getAccessor(JdbcQueryMethod queryMethod) {
 
+		JdbcParameters parameters = queryMethod.getParameters();
 		Object[] parameterValues = new Object[parameters.getNumberOfParameters()];
 
 		RelationalParameters bindable = parameters.getBindableParameters();
-		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(queryMethod,
-				parameterValues) {
-
-			@Override
-			public Sort getSort() {
-				return Sort.unsorted();
-			}
-
-			@Override
-			public Pageable getPageable() {
-				return Pageable.unpaged();
-			}
-
-			@Override
-			public Object[] getValues() {
-				return super.getValues();
-			}
-
-			@Override
-			protected <T> @Nullable T getValue(int index) {
-
-				RelationalParameters.RelationalParameter parameter = parameters.getParameter(index);
-				return (T) new CapturingJdbcValue(null, ParameterBinding.named(parameter.getRequiredName(),
-						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())));
-			}
-
-			@Override
-			public @Nullable Object getBindableValue(int index) {
-
-				RelationalParameters.RelationalParameter parameter = bindable.getParameter(index);
-				return new CapturingJdbcValue(null, ParameterBinding.named(parameter.getRequiredName(),
-						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())));
-			}
-		};
-		return accessor;
+		return PlaceholderAccessor.capture(queryMethod, parameterValues, parameters, bindable);
 	}
 
 	public static @Nullable Class<?> getQueryReturnType(AotQuery query, ReturnedType returnedType,

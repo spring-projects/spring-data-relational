@@ -34,7 +34,6 @@ import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
@@ -204,11 +203,10 @@ class JdbcCodeBlocks {
 
 			Builder builder = CodeBlock.builder();
 			String selection = context.localVariable(count ? "countSelection" : "selection");
-
 			String rawParameterSource = context.localVariable(count ? "countRawParameterSource" : "rawParameterSource");
 
 			String method;
-			if (aotQuery.isCount() || count) {
+			if (aotQuery.isCount()) {
 				method = "count($T.class)";
 			} else if (aotQuery.isExists()) {
 				method = "exists($T.class)";
@@ -221,7 +219,7 @@ class JdbcCodeBlocks {
 			builder.addStatement("$T $L = getStatementFactory()." + method, StatementFactory.Selection.class, selection,
 					context.getRepositoryInformation().getDomainType());
 
-			if (!count && !aotQuery.isCount() && !aotQuery.isExists()) {
+			if (!aotQuery.isCount() && !aotQuery.isExists()) {
 
 				if (aotQuery.isLimited()) {
 					builder.addStatement("$1L.limit($2L)", selection, aotQuery.getLimit().max());
@@ -377,7 +375,7 @@ class JdbcCodeBlocks {
 
 		private void applyLike(Builder builder, String method, @Nullable Object value) {
 
-			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(value);
+			PlaceholderAccessor.CapturingJdbcValue captured = PlaceholderAccessor.unwrap(value);
 
 			String likeValue = "$L";
 			if (captured.getBinding() instanceof ParameterBinding.LikeParameterBinding lpb) {
@@ -396,7 +394,7 @@ class JdbcCodeBlocks {
 
 		private @Nullable String renderPlaceholder(@Nullable Object value) {
 
-			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(value);
+			PlaceholderAccessor.CapturingJdbcValue captured = PlaceholderAccessor.unwrap(value);
 
 			ParameterBinding binding = captured.getBinding();
 			ParameterBinding.MethodInvocationArgument argument = (ParameterBinding.MethodInvocationArgument) binding

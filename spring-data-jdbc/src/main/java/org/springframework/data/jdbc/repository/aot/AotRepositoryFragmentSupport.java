@@ -15,14 +15,11 @@
  */
 package org.springframework.data.jdbc.repository.aot;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.sql.SQLType;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -83,10 +80,6 @@ public class AotRepositoryFragmentSupport {
 
 	private final JdbcAggregateOperations aggregateOperations;
 
-	private final RepositoryMetadata repositoryMetadata;
-
-	private final ValueExpressionDelegate valueExpressions;
-
 	private final StatementFactory statementFactory;
 
 	private final ProjectionFactory projectionFactory;
@@ -109,8 +102,6 @@ public class AotRepositoryFragmentSupport {
 
 		this.rowMapperFactory = rowMapperFactory;
 		this.aggregateOperations = aggregateOperations;
-		this.repositoryMetadata = repositoryMetadata;
-		this.valueExpressions = valueExpressions;
 		this.statementFactory = new StatementFactory(aggregateOperations.getConverter(),
 				aggregateOperations.getDataAccessStrategy().getDialect());
 		this.projectionFactory = projectionFactory;
@@ -210,41 +201,6 @@ public class AotRepositoryFragmentSupport {
 		return JdbcUtil.targetSqlTypeFor(JdbcColumnTypes.INSTANCE.resolvePrimitiveType(valueType));
 	}
 
-	protected @Nullable Object mapIgnoreCase(@Nullable Object source, UnaryOperator<String> mapper) {
-
-		if (source == null) {
-			return null;
-		}
-
-		if (source.getClass().isArray()) {
-			int length = Array.getLength(source);
-			Collection<Object> result = new ArrayList<>(length);
-
-			for (int i = 0; i < length; i++) {
-				result.add(Array.get(source, i));
-			}
-			source = result;
-		}
-
-		if (source instanceof Collection<?> c) {
-
-			Collection<@Nullable Object> result = new ArrayList<>(c.size());
-
-			for (Object o : c) {
-
-				if (o instanceof String s) {
-					result.add(mapper.apply(s));
-				} else {
-					result.add(o != null ? mapper.apply(o.toString()) : null);
-				}
-			}
-
-			return result;
-		}
-
-		return source;
-	}
-
 	protected <T> @Nullable T convertOne(@Nullable Object result, Class<T> projection) {
 
 		if (result == null) {
@@ -294,8 +250,20 @@ public class AotRepositoryFragmentSupport {
 		throw new UnsupportedOperationException("Cannot create projection for %s".formatted(result));
 	}
 
+	/**
+	 * Interface for binding values to a {@link MapSqlParameterSource}.
+	 */
 	protected interface BindValue {
+
+		/**
+		 * Bind the value to the given {@link MapSqlParameterSource} using the given parameter name. Can apply further value
+		 * customization such as providing SQL types or type names.
+		 *
+		 * @param parameterName
+		 * @param parameterSource
+		 */
 		void bind(String parameterName, MapSqlParameterSource parameterSource);
+
 	}
 
 }

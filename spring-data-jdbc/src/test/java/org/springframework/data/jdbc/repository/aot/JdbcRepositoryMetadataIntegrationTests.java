@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +90,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentBase() throws IOException {
 
 		Resource resource = getResource();
@@ -107,7 +106,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 				.containsEntry("type", "IMPERATIVE");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentDerivedQuery() throws IOException {
 
 		Resource resource = getResource();
@@ -122,7 +121,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" = :firstname");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentDerivedQueryWithParam() throws IOException {
 
 		Resource resource = getResource();
@@ -138,8 +137,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" LIKE :firstname OR (\"MY_USER\".\"FIRSTNAME\" LIKE :firstname1)");
 	}
 
-	@Test
-	@Disabled("TODO")
+	@Test // GH-2121
 	void shouldDocumentPagedQuery() throws IOException {
 
 		Resource resource = getResource();
@@ -149,12 +147,14 @@ class JdbcRepositoryMetadataIntegrationTests {
 
 		String json = resource.getContentAsString(StandardCharsets.UTF_8);
 
-		assertThatJson(json).inPath("$.methods[?(@.name == 'findPagedByFirstname')].query").isArray().element(1).isObject()
-				.containsEntry("query", "select u from OTHER u where u.emailAddress = ?1")
-				.containsEntry("count-query", "select count(u) from OTHER u where u.emailAddress = ?1");
+		assertThatJson(json).inPath("$.methods[?(@.name == 'findPageByAgeGreaterThan')].query").isArray().element(0)
+				.isObject()
+				.containsEntry("query",
+						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"AGE\" > :age")
+				.containsEntry("count-query", "SELECT COUNT(*) FROM \"MY_USER\" WHERE \"MY_USER\".\"AGE\" > :age");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentQueryWithExpression() throws IOException {
 
 		Resource resource = getResource();
@@ -168,7 +168,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 				.isObject().containsEntry("query", "SELECT * FROM MY_USER WHERE firstname = :__$synthetic$__1");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentAnnotatedQuery() throws IOException {
 
 		Resource resource = getResource();
@@ -182,7 +182,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 				.containsEntry("query", "SELECT * FROM MY_USER WHERE firstname = :name");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentNamedQuery() throws IOException {
 
 		Resource resource = getResource();
@@ -196,7 +196,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 				.containsEntry("name", "User.findByNamedQuery").containsEntry("query", "SELECT * FROM USER WHERE NAME = :name");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentExplicitlyNamedQuery() throws IOException {
 
 		Resource resource = getResource();
@@ -211,7 +211,7 @@ class JdbcRepositoryMetadataIntegrationTests {
 				.containsEntry("query", "SELECT ANNOTATED FROM USER WHERE NAME = :name");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDocumentBaseFragment() throws IOException {
 
 		Resource resource = getResource();

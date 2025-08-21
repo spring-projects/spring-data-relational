@@ -86,7 +86,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		operations.insert(new User("Hector", 83));
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindByFirstname() {
 
 		User walter = fragment.findByFirstname("Walter");
@@ -95,14 +95,14 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter.getFirstname()).isEqualTo("Walter");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindOptionalByFirstname() {
 
 		assertThat(fragment.findOptionalByFirstname("Walter")).isPresent();
 		assertThat(fragment.findOptionalByFirstname("Hank")).isEmpty();
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindByFirstnameLike() {
 
 		User walter = fragment.findByFirstnameLike("%alter");
@@ -111,7 +111,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter.getFirstname()).isEqualTo("Walter");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindByFirstnameStartingWith() {
 
 		User walter = fragment.findByFirstnameStartingWith("Wa");
@@ -124,7 +124,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter).isNull(); // % is escaped
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindByFirstnameEndingWith() {
 
 		User walter = fragment.findByFirstnameEndingWith("lter");
@@ -137,7 +137,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter).isNull(); // % is escaped
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindBetween() {
 
 		List<User> users = fragment.findAllByAgeBetween(40, 51);
@@ -145,12 +145,12 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(users).hasSize(2);
 	}
 
-	@Test
+	@Test // GH-2121
 	void streamByAgeGreaterThan() {
 		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldReturnSlice() {
 
 		Slice<User> slice = fragment.findSliceByAgeGreaterThan(Pageable.ofSize(4), 10);
@@ -164,7 +164,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(slice.hasNext()).isFalse();
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldReturnPage() {
 
 		Page<User> page = fragment.findPageByAgeGreaterThan(PageRequest.of(0, 4, Sort.by("age")), 10);
@@ -178,7 +178,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(page.hasNext()).isFalse();
 	}
 
-	@Test
+	@Test // GH-2121
 	void countByAgeLessThan() {
 
 		long count = fragment.countByAgeLessThan(20);
@@ -186,7 +186,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(count).isOne();
 	}
 
-	@Test
+	@Test // GH-2121
 	void countShortByAgeLessThan() {
 
 		short count = fragment.countShortByAgeLessThan(20);
@@ -194,14 +194,14 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(count).isOne();
 	}
 
-	@Test
+	@Test // GH-2121
 	void existsByAgeLessThan() {
 
 		assertThat(fragment.existsByAgeLessThan(20)).isTrue();
 		assertThat(fragment.existsByAgeLessThan(5)).isFalse();
 	}
 
-	@Test
+	@Test // GH-2121
 	void listWithLimit() {
 
 		List<User> users = fragment.findTop5ByOrderByAge();
@@ -210,7 +210,7 @@ class JdbcRepositoryContributorIntegrationTests {
 				"Mike");
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldFindAnnotatedByFirstname() {
 
 		User walter = fragment.findByFirstnameAnnotated("Walter");
@@ -219,28 +219,37 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(walter.getFirstname()).isEqualTo("Walter");
 	}
 
-	@Test
+	@Test // GH-2121
+	void shouldFindAnnotatedByFirstnameExpression() {
+
+		User walter = fragment.findByFirstnameExpression("Walter");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Walter");
+	}
+
+	@Test // GH-2121
 	void shouldDeleteByName() {
 
 		assertThat(fragment.deleteByFirstname("Walter")).isTrue();
 		assertThat(fragment.deleteByFirstname("Walter")).isFalse();
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDeleteCountByName() {
 
 		assertThat(fragment.deleteCountByFirstname("Walter")).isOne();
 		assertThat(fragment.deleteCountByFirstname("Walter")).isZero();
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDeleteAnnotated() {
 
 		assertThat(fragment.deleteAnnotatedQuery("Walter")).isOne();
 		assertThat(fragment.deleteAnnotatedQuery("Walter")).isZero();
 	}
 
-	@Test
+	@Test // GH-2121
 	void shouldDeleteAndReturnByName() {
 
 		assertThat(fragment.deleteOneByFirstname("Walter")).isNotNull();
