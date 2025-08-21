@@ -69,6 +69,23 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	@Query("SELECT * FROM MY_USER WHERE firstname = :#{#name}")
 	User findByFirstnameExpression(String name);
 
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name", rowMapperClass = MyRowMapper.class)
+	User findUsingRowMapper(String name);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name", rowMapperClass = MyRowMapper.class,
+			resultSetExtractorClass = MyResultSetExtractor.class)
+	User findUsingRowMapperAndResultSetExtractor(String name);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name", rowMapperRef = "myRowMapper")
+	User findUsingRowMapperRef(String name);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name",
+			resultSetExtractorClass = SimpleResultSetExtractor.class)
+	int findUsingAndResultSetExtractor(String name);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name", resultSetExtractorRef = "simpleResultSetExtractor")
+	int findUsingAndResultSetExtractorRef(String name);
+
 	// -------------------------------------------------------------------------
 	// Parameter naming
 	// -------------------------------------------------------------------------

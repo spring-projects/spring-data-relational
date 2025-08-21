@@ -578,11 +578,11 @@ class JdbcCodeBlocks {
 
 				if (rowMapperClass != null) {
 					builder.addStatement("$T $L = new $T()", RowMapper.class, rowMapper,
-							context.fieldNameOf(RowMapperFactory.class), rowMapperClass);
+							rowMapperClass);
 				} else if (StringUtils.hasText(rowMapperRef)) {
 					builder.addStatement("$T $L = $L.getRowMapper($S)", RowMapper.class, rowMapper,
 							context.fieldNameOf(RowMapperFactory.class), rowMapperRef);
-				} else {
+				} else if (resultSetExtractorClass == null) {
 					builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
 							context.fieldNameOf(RowMapperFactory.class), actualReturnType);
 				}
@@ -593,7 +593,7 @@ class JdbcCodeBlocks {
 
 					if (resultSetExtractorClass != null && (rowMapperClass != null || StringUtils.hasText(rowMapperRef))) {
 						builder.addStatement("$T $L = new $T($L)", ResultSetExtractor.class, resultSetExtractor,
-								resultSetExtractorClass, rowMapperRef);
+								resultSetExtractorClass, rowMapper);
 					} else if (resultSetExtractorClass != null) {
 						builder.addStatement("$T $L = new $T()", ResultSetExtractor.class, resultSetExtractor,
 								resultSetExtractorClass);

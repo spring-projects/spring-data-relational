@@ -71,6 +71,16 @@ class JdbcRepositoryContributorIntegrationTests {
 			return TestClass.of(JdbcRepositoryContributorIntegrationTests.class);
 		}
 
+		@Bean
+		MyRowMapper myRowMapper() {
+			return new MyRowMapper();
+		}
+
+		@Bean
+		SimpleResultSetExtractor simpleResultSetExtractor() {
+			return new SimpleResultSetExtractor();
+		}
+
 	}
 
 	@BeforeEach
@@ -226,6 +236,40 @@ class JdbcRepositoryContributorIntegrationTests {
 
 		assertThat(walter).isNotNull();
 		assertThat(walter.getFirstname()).isEqualTo("Walter");
+	}
+
+	@Test // GH-2121
+	void shouldFindUsingRowMapper() {
+
+		User walter = fragment.findUsingRowMapper("Walter");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Row: 0");
+	}
+
+	@Test // GH-2121
+	void shouldFindUsingRowMapperRef() {
+
+		User walter = fragment.findUsingRowMapperRef("Walter");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Row: 0");
+	}
+
+	@Test // GH-2121
+	void shouldFindUsingResultSetExtractor() {
+
+		int result = fragment.findUsingAndResultSetExtractor("Walter");
+
+		assertThat(result).isOne();
+	}
+
+	@Test // GH-2121
+	void shouldFindUsingResultSetExtractorRef() {
+
+		int result = fragment.findUsingAndResultSetExtractorRef("Walter");
+
+		assertThat(result).isOne();
 	}
 
 	@Test // GH-2121
