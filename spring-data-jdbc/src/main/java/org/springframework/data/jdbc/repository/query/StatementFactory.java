@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 
@@ -232,8 +233,13 @@ public class StatementFactory {
 
 		private SelectBuilder.SelectJoin selectBuilder(Table table) {
 
-			Predicate<AggregatePath> filter = ap -> !properties.isEmpty()
-					&& !properties.contains(ap.getRequiredBaseProperty().getName());
+			Predicate<AggregatePath> filter;
+
+			if (properties.isEmpty()) {
+				filter = Predicates.isFalse();
+			} else {
+				filter = ap -> !properties.contains(ap.getRequiredBaseProperty().getName());
+			}
 
 			return (SelectBuilder.SelectJoin) sqlGeneratorSource.getSqlGenerator(entity.getType()).createSelectBuilder(table,
 					filter);

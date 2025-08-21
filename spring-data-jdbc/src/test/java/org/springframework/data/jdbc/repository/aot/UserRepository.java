@@ -106,6 +106,24 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	User findByAnnotatedNamedQuery(String name);
 
 	// -------------------------------------------------------------------------
+	// Projections: DTO
+	// -------------------------------------------------------------------------
+
+	UserDto findOneDtoByFirstname(String name);
+
+	List<UserDto> findDtoByFirstname(String name);
+
+	// -------------------------------------------------------------------------
+	// Projections: Interface
+	// -------------------------------------------------------------------------
+
+	UserProjection findOneInterfaceByFirstname(String name);
+
+	List<UserProjection> findInterfaceByFirstname(String name);
+
+	<T> List<T> findDynamicProjectionByFirstname(String name, Class<T> type);
+
+	// -------------------------------------------------------------------------
 	// Modifying
 	// -------------------------------------------------------------------------
 

@@ -30,6 +30,7 @@ import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.data.convert.DtoInstantiatingConverter;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.expression.ValueEvaluationContextProvider;
@@ -45,6 +46,7 @@ import org.springframework.data.jdbc.repository.query.StringValueUtil;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.query.ParametersSource;
@@ -213,6 +215,14 @@ public class AotRepositoryFragmentSupport {
 
 		if (CONVERSION_SERVICE.canConvert(result.getClass(), projection)) {
 			return CONVERSION_SERVICE.convert(result, projection);
+		}
+
+		if (!projection.isInterface()) {
+
+			RelationalMappingContext mappingContext = aggregateOperations.getConverter().getMappingContext();
+			DtoInstantiatingConverter converter = new DtoInstantiatingConverter(projection, mappingContext,
+					aggregateOperations.getConverter().getEntityInstantiators());
+			return (T) converter.convert(result);
 		}
 
 		return projectionFactory.createProjection(projection, result);

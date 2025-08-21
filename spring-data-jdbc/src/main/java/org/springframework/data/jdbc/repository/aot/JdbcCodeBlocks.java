@@ -573,7 +573,6 @@ class JdbcCodeBlocks {
 				return delete(builder, rowMapper, result, queryResultType, returnType, actualReturnType);
 			} else {
 
-				// TODO: Projection
 				String resultSetExtractor = null;
 
 				if (rowMapperClass != null) {
@@ -583,8 +582,17 @@ class JdbcCodeBlocks {
 					builder.addStatement("$T $L = $L.getRowMapper($S)", RowMapper.class, rowMapper,
 							context.fieldNameOf(RowMapperFactory.class), rowMapperRef);
 				} else if (resultSetExtractorClass == null) {
+
+					Type typeToRead;
+
+					if (isProjecting) {
+						typeToRead = context.getReturnedType().getDomainType();
+					} else {
+						typeToRead = context.getActualReturnType().getType();
+					}
+
 					builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
-							context.fieldNameOf(RowMapperFactory.class), actualReturnType);
+							context.fieldNameOf(RowMapperFactory.class), typeToRead);
 				}
 
 				if (StringUtils.hasText(resultSetExtractorRef) || resultSetExtractorClass != null) {
@@ -611,6 +619,9 @@ class JdbcCodeBlocks {
 					return builder.build();
 				}
 
+				boolean dynamicProjection = StringUtils.hasText(context.getDynamicProjectionParameterName());
+				Object queryResultTypeRef = dynamicProjection ? context.getDynamicProjectionParameterName() : queryResultType;
+
 				if (queryMethod.isCollectionQuery() || queryMethod.isSliceQuery() || queryMethod.isPageQuery()) {
 
 					builder.addStatement("$1T $2L = ($1T) getJdbcOperations().query($3L, $4L, new $5T<>($6L))", List.class,
@@ -620,8 +631,9 @@ class JdbcCodeBlocks {
 
 						String pageable = context.getPageableParameterName();
 
-						builder.addStatement("$1T $2L = ($1T) convertMany($3L, $4T.class)", List.class,
-								context.localVariable("converted"), result, queryResultType);
+						builder.addStatement(
+								"$1T $2L = ($1T) convertMany($3L, %s)".formatted(dynamicProjection ? "$4L" : "$4T.class"), List.class,
+								context.localVariable("converted"), result, queryResultTypeRef);
 
 						if (queryMethod.isPageQuery()) {
 
@@ -639,94 +651,28 @@ class JdbcCodeBlocks {
 						return builder.build();
 					}
 
-					builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-							queryResultType);
+					builder.addStatement("return ($T) convertMany($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
+							context.getReturnTypeName(), result, queryResultTypeRef);
 				} else if (queryMethod.isStreamQuery()) {
 
 					builder.addStatement("$1T $2L = getJdbcOperations().queryForStream($3L, $4L, $5L)", Stream.class, result,
 							queryVariableName, parameterSourceVariableName, rowMapper);
 					builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-							queryResultType);
+							queryResultTypeRef);
 				} else {
 
 					builder.addStatement("$T $L = queryForObject($L, $L, $L)", Object.class, result, queryVariableName,
 							parameterSourceVariableName, rowMapper);
 
 					if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-						builder.addStatement("return ($1T) $1T.ofNullable(convertOne($2L, $3T.class))", Optional.class, result,
-								queryResultType);
+						builder.addStatement(
+								"return ($1T) $1T.ofNullable(convertOne($2L, %s))".formatted(dynamicProjection ? "$3L" : "$3T.class"),
+								Optional.class, result, queryResultTypeRef);
 					} else {
-						builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
-								queryResultType);
+						builder.addStatement("return ($T) convertOne($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
+								context.getReturnTypeName(), result, queryResultTypeRef);
 					}
 				}
-
-				/*	if (context.getReturnedType().isProjecting()) {
-
-						if (queryMethod.isCollectionQuery()) {
-							builder.addStatement("return ($T) convertMany($L.getResultList(), $L, $T.class)",
-									context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-						} else if (queryMethod.isStreamQuery()) {
-							builder.addStatement("return ($T) convertMany($L.getResultStream(), $L, $T.class)",
-									context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-						} else if (queryMethod.isPageQuery()) {
-							builder.addStatement("return $T.getPage(($T<$T>) convertMany($L.getResultList(), $L, $T.class), $L, $L)",
-									PageableExecutionUtils.class, List.class, actualReturnType, queryVariableName, aotQuery.isNative(),
-									queryResultType, pageable, context.localVariable("countAll"));
-						} else if (queryMethod.isSliceQuery()) {
-							builder.addStatement("$T<$T> $L = ($T<$T>) convertMany($L.getResultList(), $L, $T.class)", List.class,
-									actualReturnType, context.localVariable("resultList"), List.class, actualReturnType, queryVariableName,
-									aotQuery.isNative(), queryResultType);
-							builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
-									context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
-							builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
-									context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
-									context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
-						} else {
-
-							if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-								builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
-										Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(), queryResultType);
-							} else {
-								builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
-										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(), queryResultType);
-							}
-						}
-
-					} else {
-
-						if(resultSetExtractor != null){
-
-						}
-
-						if (queryMethod.isCollectionQuery()) {
-							builder.addStatement("return ($T) $L.getResultList()", context.getReturnTypeName(), queryVariableName);
-						} else if (queryMethod.isStreamQuery()) {
-							builder.addStatement("return ($T) $L.getResultStream()", context.getReturnTypeName(), queryVariableName);
-						} else if (queryMethod.isPageQuery()) {
-							builder.addStatement("return $T.getPage(($T<$T>) $L.getResultList(), $L, $L)", PageableExecutionUtils.class,
-									List.class, actualReturnType, queryVariableName, pageable, context.localVariable("countAll"));
-						} else if (queryMethod.isSliceQuery()) {
-							builder.addStatement("$T<$T> $L = $L.getResultList()", List.class, actualReturnType,
-									context.localVariable("resultList"), queryVariableName);
-							builder.addStatement("boolean $L = $L.isPaged() && $L.size() > $L.getPageSize()",
-									context.localVariable("hasNext"), pageable, context.localVariable("resultList"), pageable);
-							builder.addStatement("return new $T<>($L ? $L.subList(0, $L.getPageSize()) : $L, $L, $L)", SliceImpl.class,
-									context.localVariable("hasNext"), context.localVariable("resultList"), pageable,
-									context.localVariable("resultList"), pageable, context.localVariable("hasNext"));
-						} else {
-
-							if (Optional.class.isAssignableFrom(context.getReturnType().toClass())) {
-								builder.addStatement("return $T.ofNullable(($T) convertOne($L.getSingleResultOrNull(), $L, $T.class))",
-										Optional.class, actualReturnType, queryVariableName, aotQuery.isNative(),
-										context.getActualReturnType().toClass());
-							} else {
-								builder.addStatement("return ($T) convertOne($L.getSingleResultOrNull(), $L, $T.class)",
-										context.getReturnTypeName(), queryVariableName, aotQuery.isNative(),
-										context.getReturnType().toClass());
-							}
-						}
-					} */
 			}
 
 			return builder.build();

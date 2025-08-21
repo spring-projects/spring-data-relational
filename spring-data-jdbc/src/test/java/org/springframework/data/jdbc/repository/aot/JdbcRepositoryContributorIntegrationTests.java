@@ -273,6 +273,50 @@ class JdbcRepositoryContributorIntegrationTests {
 	}
 
 	@Test // GH-2121
+	void shouldProjectOneToDto() {
+
+		UserDto dto = fragment.findOneDtoByFirstname("Walter");
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.firstname()).isEqualTo("Walter");
+	}
+
+	@Test // GH-2121
+	void shouldProjectListToDto() {
+
+		List<UserDto> dtos = fragment.findDtoByFirstname("Walter");
+
+		assertThat(dtos).hasSize(1).extracting(UserDto::firstname).containsOnly("Walter");
+	}
+
+	@Test // GH-2121
+	void shouldProjectOneToInterface() {
+
+		UserProjection projection = fragment.findOneInterfaceByFirstname("Walter");
+
+		assertThat(projection).isNotNull();
+		assertThat(projection.getFirstname()).isEqualTo("Walter");
+	}
+
+	@Test // GH-2121
+	void shouldProjectListToInterface() {
+
+		List<UserProjection> projections = fragment.findInterfaceByFirstname("Walter");
+
+		assertThat(projections).hasSize(1).extracting(UserProjection::getFirstname).containsOnly("Walter");
+	}
+
+	@Test // GH-2121
+	void shouldProjectDynamically() {
+
+		List<UserDto> dtos = fragment.findDynamicProjectionByFirstname("Walter", UserDto.class);
+		assertThat(dtos).hasSize(1).extracting(UserDto::firstname).containsOnly("Walter");
+
+		List<UserProjection> projections = fragment.findDynamicProjectionByFirstname("Walter", UserProjection.class);
+		assertThat(projections).hasSize(1).extracting(UserProjection::getFirstname).containsOnly("Walter");
+	}
+
+	@Test // GH-2121
 	void shouldDeleteByName() {
 
 		assertThat(fragment.deleteByFirstname("Walter")).isTrue();

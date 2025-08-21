@@ -212,6 +212,21 @@ class JdbcRepositoryMetadataIntegrationTests {
 	}
 
 	@Test // GH-2121
+	void shouldDocumentInterfaceProjection() throws IOException {
+
+		Resource resource = getResource();
+
+		assertThat(resource).isNotNull();
+		assertThat(resource.exists()).isTrue();
+
+		String json = resource.getContentAsString(StandardCharsets.UTF_8);
+
+		assertThatJson(json).inPath("$.methods[?(@.name == 'findInterfaceByFirstname')].query").isArray().first().isObject()
+				.containsEntry("query",
+						"SELECT \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" = :firstname");
+	}
+
+	@Test // GH-2121
 	void shouldDocumentBaseFragment() throws IOException {
 
 		Resource resource = getResource();
