@@ -338,6 +338,14 @@ class JdbcRepositoryContributorIntegrationTests {
 	}
 
 	@Test // GH-2121
+	void shouldDeleteWithoutResult() {
+
+		fragment.deleteWithoutResult("Walter");
+
+		assertThat(fragment.findByFirstname("Walter")).isNull();
+	}
+
+	@Test // GH-2121
 	void shouldDeleteAndReturnByName() {
 
 		assertThat(fragment.deleteOneByFirstname("Walter")).isNotNull();

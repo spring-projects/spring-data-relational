@@ -137,4 +137,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	@Query("delete from MY_USER where firstname = :firstname")
 	int deleteAnnotatedQuery(String firstname);
 
+	@Modifying
+	@Query("delete from MY_USER where firstname = :firstname")
+	void deleteWithoutResult(String firstname);
+
 }

@@ -679,7 +679,19 @@ class JdbcCodeBlocks {
 		}
 
 		private CodeBlock update(Builder builder, Class<?> returnType) {
+
 			String result = context.localVariable("result");
+
+			if (returnType == Void.TYPE || returnType == Void.class) {
+
+				builder.addStatement("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
+
+				if (returnType == Void.class) {
+					builder.addStatement("return null");
+				}
+
+				return builder.build();
+			}
 
 			builder.addStatement("int $L = getJdbcOperations().update($L, $L)", result, queryVariableName,
 					parameterSourceVariableName);
