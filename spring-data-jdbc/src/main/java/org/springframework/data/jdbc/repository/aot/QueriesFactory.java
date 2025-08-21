@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.repository.aot;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
-import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.config.JdbcRepositoryConfigExtension;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
@@ -41,7 +39,6 @@ import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
@@ -189,23 +186,6 @@ class QueriesFactory {
 
 		ParametrizedQuery query = queryCreator.createQuery(Sort.unsorted());
 
-		for (String parameterName : query.getParameterSource().getParameterNames()) {
-
-			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(query.getParameterSource().getValue(parameterName));
-
-			if (captured.getValue() instanceof ValueFunction<?> vf) {
-
-				Object escaped = vf.apply(dialect.getLikeEscaper());
-
-				if (escaped != null && (escaped.equals("%s") || escaped.equals("s%") || escaped.equals("%s%"))) {
-					bindings.add(ParameterBinding.like(parameterName, captured.getBinding().getOrigin(), escaped.toString()));
-					continue;
-				}
-			}
-
-			bindings.add(ParameterBinding.named(parameterName, captured.getBinding().getOrigin()));
-		}
-
 		return new DerivedAotQuery(query.getQuery(), bindings, query.getCriteria(), partTree.getSort(),
 				partTree.getResultLimit(), partTree.isDelete(), partTree.isCountProjection(), partTree.isExistsProjection());
 	}
@@ -237,16 +217,16 @@ class QueriesFactory {
 			protected <T> @Nullable T getValue(int index) {
 
 				RelationalParameters.RelationalParameter parameter = parameters.getParameter(index);
-				return (T) JdbcValue.of(ParameterBinding.named(parameter.getRequiredName(),
-						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())), JDBCType.OTHER);
+				return (T) new CapturingJdbcValue(null, ParameterBinding.named(parameter.getRequiredName(),
+						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())));
 			}
 
 			@Override
 			public @Nullable Object getBindableValue(int index) {
 
 				RelationalParameters.RelationalParameter parameter = bindable.getParameter(index);
-				return JdbcValue.of(ParameterBinding.named(parameter.getRequiredName(),
-						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())), JDBCType.OTHER);
+				return new CapturingJdbcValue(null, ParameterBinding.named(parameter.getRequiredName(),
+						ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())));
 			}
 		};
 		return accessor;

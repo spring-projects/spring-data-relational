@@ -144,6 +144,15 @@ public class AotRepositoryFragmentSupport {
 		return new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper());
 	}
 
+	protected @Nullable Object escape(@Nullable Object value) {
+
+		if (value == null) {
+			return value;
+		}
+
+		return getDialect().getLikeEscaper().escape(value.toString());
+	}
+
 	protected BindValue getBindableValue(Method method, @Nullable Object value, String parameterReference) {
 		return getBindableValue(parameters.get().get(method).getParameter(parameterReference), value);
 	}

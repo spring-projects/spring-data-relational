@@ -202,7 +202,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 
 		StatementFactory.Selection selection = getSelection(entity);
 
-		selection.with(accessor.getPageable()).filter(criteria).orderBy(sort);
+		selection.page(accessor.getPageable()).filter(criteria).orderBy(sort);
 
 		if (this.lockMode.isPresent()) {
 			selection.lock(this.lockMode.get().value());

@@ -46,6 +46,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.aot.generate.AotQueryMethodGenerationContext;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.javapoet.CodeBlock;
@@ -90,6 +91,7 @@ class JdbcCodeBlocks {
 	static class QueryBlockBuilder {
 
 		private final AotQueryMethodGenerationContext context;
+		private final JdbcQueryMethod queryMethod;
 		private final String parameterNames;
 		private String queryVariableName = "undefined";
 		private String parameterSourceVariableName = "undefined";
@@ -99,6 +101,7 @@ class JdbcCodeBlocks {
 		private QueryBlockBuilder(AotQueryMethodGenerationContext context, JdbcQueryMethod queryMethod) {
 
 			this.context = context;
+			this.queryMethod = queryMethod;
 
 			String parameterNames = StringUtils.collectionToDelimitedString(context.getAllParameterNames(), ", ");
 
@@ -145,7 +148,11 @@ class JdbcCodeBlocks {
 						queries.count() instanceof DerivedAotQuery derivedCountQuery ? derivedCountQuery : null);
 			}
 
-			return createStringQuery(queryVariableName, parameterSourceVariableName, queries.result());
+			if (queries.result() instanceof StringAotQuery stringQuery) {
+				return createStringQuery(queryVariableName, parameterSourceVariableName, stringQuery);
+			}
+
+			throw new IllegalArgumentException("Unsupported AOT query type: " + queries.result());
 		}
 
 		private CodeBlock createDerivedQuery(DerivedAotQuery entityQuery, @Nullable DerivedAotQuery countQuery) {
@@ -205,6 +212,8 @@ class JdbcCodeBlocks {
 				method = "count($T.class)";
 			} else if (aotQuery.isExists()) {
 				method = "exists($T.class)";
+			} else if (queryMethod.isSliceQuery()) {
+				method = "slice($T.class)";
 			} else {
 				method = "select($T.class)";
 			}
@@ -221,7 +230,7 @@ class JdbcCodeBlocks {
 				}
 
 				if (StringUtils.hasText(context.getPageableParameterName())) {
-					builder.addStatement("$L.with($L)", selection, context.getPageableParameterName());
+					builder.addStatement("$L.page($L)", selection, context.getPageableParameterName());
 				}
 
 				Sort sort = aotQuery.getSort();
@@ -242,7 +251,7 @@ class JdbcCodeBlocks {
 				builder.addStatement("$L.filter($L)", selection, context.localVariable("criteria"));
 			}
 
-			// TODO Projections, Pagination
+			// TODO Projections
 
 			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, rawParameterSource);
 			builder.addStatement("$T $L = $L.build($L)", String.class, queryVariableName, selection, rawParameterSource);
@@ -353,8 +362,8 @@ class JdbcCodeBlocks {
 				case GTE -> builder.add(".greaterThanEquals($L)", renderPlaceholder(value));
 				case IS_NULL -> builder.add(".isNull()");
 				case IS_NOT_NULL -> builder.add(".isNotNull()");
-				case LIKE -> builder.add(".like($L)", renderPlaceholder(value));
-				case NOT_LIKE -> builder.add(".notLike($L)", renderPlaceholder(value));
+				case LIKE -> applyLike(builder, "like", value);
+				case NOT_LIKE -> applyLike(builder, "notLike", value);
 				case NOT_IN -> builder.add(".notIn($L)", renderPlaceholder(value));
 				case IN -> builder.add(".in($L)", renderPlaceholder(value));
 				case IS_TRUE -> builder.add(".isTrue()");
@@ -364,6 +373,25 @@ class JdbcCodeBlocks {
 			if (current.isIgnoreCase()) {
 				builder.addStatement(".ignoreCase(true)");
 			}
+		}
+
+		private void applyLike(Builder builder, String method, @Nullable Object value) {
+
+			CapturingJdbcValue captured = CapturingJdbcValue.unwrap(value);
+
+			String likeValue = "$L";
+			if (captured.getBinding() instanceof ParameterBinding.LikeParameterBinding lpb) {
+
+				if (lpb.getType() == Part.Type.CONTAINING) {
+					likeValue = "\"%\" + escape($L) + \"%\"";
+				} else if (lpb.getType() == Part.Type.STARTING_WITH) {
+					likeValue = "escape($L) + \"%\"";
+				} else if (lpb.getType() == Part.Type.ENDING_WITH) {
+					likeValue = "\"%\" + escape($L)";
+				}
+			}
+
+			builder.add(".$L(" + likeValue + ")", method, renderPlaceholder(value));
 		}
 
 		private @Nullable String renderPlaceholder(@Nullable Object value) {
@@ -379,14 +407,14 @@ class JdbcCodeBlocks {
 		}
 
 		private Object renderPlaceholder(@Nullable Object value, int index) {
-			return index == 0 ? ((Pair) value).getFirst() : ((Pair) value).getSecond();
+			return renderPlaceholder(index == 0 ? ((Pair) value).getFirst() : ((Pair) value).getSecond());
 		}
 
-		private CodeBlock createStringQuery(String queryVariableName, String parameterSourceName, AotQuery query) {
+		private CodeBlock createStringQuery(String queryVariableName, String parameterSourceName, StringAotQuery query) {
 
 			Builder builder = CodeBlock.builder();
 
-			builder.add(doCreateQuery(queryVariableName, query));
+			builder.addStatement("$T $L = $S", String.class, queryVariableName, query.getQueryString());
 			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, parameterSourceName);
 
 			for (ParameterBinding binding : query.getParameterBindings()) {
@@ -396,24 +424,6 @@ class JdbcCodeBlocks {
 			}
 
 			return builder.build();
-		}
-
-		private static boolean isArray(Class<?> parameterType) {
-			return parameterType.isArray() && !parameterType.getComponentType().equals(byte.class)
-					&& !parameterType.getComponentType().equals(Byte.class);
-		}
-
-		private CodeBlock doCreateQuery(String queryVariableName, AotQuery query) {
-
-			Builder builder = CodeBlock.builder();
-
-			if (query instanceof StringAotQuery sq) {
-
-				builder.addStatement("$T $L = $S", String.class, queryVariableName, sq.getQueryString());
-				return builder.build();
-			}
-
-			throw new UnsupportedOperationException("Unsupported query type: " + query);
 		}
 
 		private String getParameterName(ParameterBinding.BindingIdentifier identifier) {

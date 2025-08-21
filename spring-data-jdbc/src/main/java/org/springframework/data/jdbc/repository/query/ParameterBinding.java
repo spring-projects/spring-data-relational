@@ -78,14 +78,16 @@ public class ParameterBinding {
 	}
 
 	/**
-	 * Creates a new {@link ParameterBinding} for the named parameter with the given name and origin.
+	 * Creates a new {@code LIKE} {@link ParameterBinding} for the given {@link ParameterBinding} applying the part
+	 * {@code Type}.
 	 *
-	 * @param name
-	 * @param origin
+	 * @param binding
+	 * @param partType
 	 * @return
 	 */
-	public static ParameterBinding like(String name, ParameterOrigin origin, String probe) {
-		return new LikeParameterBinding(BindingIdentifier.of(name), origin, LikeParameterBinding.getLikeTypeFrom(probe));
+
+	public static ParameterBinding like(ParameterBinding binding, Type partType) {
+		return new LikeParameterBinding(binding.getIdentifier(), binding.getOrigin(), partType);
 	}
 
 	public BindingIdentifier getIdentifier() {
@@ -183,7 +185,7 @@ public class ParameterBinding {
 	 * Represents a parameter binding in a JDBC query augmented with instructions of how to apply a parameter as LIKE
 	 * parameter.
 	 */
-	static class LikeParameterBinding extends ParameterBinding {
+	public static class LikeParameterBinding extends ParameterBinding {
 
 		private static final List<Type> SUPPORTED_TYPES = Arrays.asList(Type.CONTAINING, Type.STARTING_WITH,
 				Type.ENDING_WITH, Type.LIKE);

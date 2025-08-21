@@ -35,6 +35,14 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	User findByFirstname(String name);
 
+	User findByFirstnameLike(String name);
+
+	User findByFirstnameStartingWith(String name);
+
+	User findByFirstnameEndingWith(String name);
+
+	List<User> findAllByAgeBetween(int start, int end);
+
 	Optional<User> findOptionalByFirstname(String name);
 
 	Stream<User> streamByAgeGreaterThan(int age);

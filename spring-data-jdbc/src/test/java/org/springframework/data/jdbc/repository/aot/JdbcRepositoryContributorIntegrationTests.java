@@ -103,6 +103,49 @@ class JdbcRepositoryContributorIntegrationTests {
 	}
 
 	@Test
+	void shouldFindByFirstnameLike() {
+
+		User walter = fragment.findByFirstnameLike("%alter");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Walter");
+	}
+
+	@Test
+	void shouldFindByFirstnameStartingWith() {
+
+		User walter = fragment.findByFirstnameStartingWith("Wa");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Walter");
+
+		walter = fragment.findByFirstnameStartingWith("Wa%");
+
+		assertThat(walter).isNull(); // % is escaped
+	}
+
+	@Test
+	void shouldFindByFirstnameEndingWith() {
+
+		User walter = fragment.findByFirstnameEndingWith("lter");
+
+		assertThat(walter).isNotNull();
+		assertThat(walter.getFirstname()).isEqualTo("Walter");
+
+		walter = fragment.findByFirstnameEndingWith("$lter");
+
+		assertThat(walter).isNull(); // % is escaped
+	}
+
+	@Test
+	void shouldFindBetween() {
+
+		List<User> users = fragment.findAllByAgeBetween(40, 51);
+
+		assertThat(users).hasSize(2);
+	}
+
+	@Test
 	void streamByAgeGreaterThan() {
 		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
 	}
@@ -115,7 +158,7 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(slice).hasSize(4);
 
 		assertThat(slice.hasNext()).isTrue();
-		slice = fragment.findSliceByAgeGreaterThan(Pageable.ofSize(5), 10);
+		slice = fragment.findSliceByAgeGreaterThan(Pageable.ofSize(6), 10);
 
 		assertThat(slice).hasSize(6);
 		assertThat(slice.hasNext()).isFalse();

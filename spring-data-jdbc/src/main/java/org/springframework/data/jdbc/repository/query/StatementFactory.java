@@ -128,7 +128,7 @@ public class StatementFactory {
 			return this;
 		}
 
-		public Selection with(@org.jspecify.annotations.Nullable Pageable pageable) {
+		public Selection page(@org.jspecify.annotations.Nullable Pageable pageable) {
 
 			if (pageable != null) {
 				this.pageable = pageable;

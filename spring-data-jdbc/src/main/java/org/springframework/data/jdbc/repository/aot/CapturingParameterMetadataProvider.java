@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.aot;
 
+import java.sql.JDBCType;
+
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -22,6 +24,7 @@ import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.parser.Part;
+import org.springframework.util.Assert;
 
 /**
  * Extension to {@link ParameterMetadataProvider} that captures the {@link ParameterBinding} for each parameter along
@@ -39,11 +42,15 @@ class CapturingParameterMetadataProvider extends ParameterMetadataProvider {
 	@Override
 	protected Object prepareParameterValue(@Nullable Object value, Class<?> valueType, Part.Type partType) {
 
-		Object prepared = super.prepareParameterValue(value, valueType, partType);
+		CapturingJdbcValue capturingJdbcValue = (CapturingJdbcValue) value;
 
-		return JdbcValue.of(value instanceof JdbcValue jv && jv.getValue() instanceof ParameterBinding pb
-				? new CapturingJdbcValue(prepared, pb)
-				: prepared, null);
+		if (partType == Part.Type.STARTING_WITH || partType == Part.Type.ENDING_WITH || partType == Part.Type.CONTAINING
+				|| partType == Part.Type.NOT_CONTAINING) {
+			return capturingJdbcValue.withBinding(ParameterBinding.like(capturingJdbcValue.getBinding(), partType));
+		}
+
+		return JdbcValue.of(capturingJdbcValue.withValue(super.prepareParameterValue(value, valueType, partType)),
+				JDBCType.OTHER);
 	}
 
 	static class CapturingJdbcValue extends JdbcValue {
@@ -52,6 +59,7 @@ class CapturingParameterMetadataProvider extends ParameterMetadataProvider {
 
 		protected CapturingJdbcValue(@Nullable Object value, ParameterBinding binding) {
 			super(value, null);
+			Assert.notNull(binding, "Parameter binding must not be null");
 			this.binding = binding;
 		}
 
@@ -75,6 +83,19 @@ class CapturingParameterMetadataProvider extends ParameterMetadataProvider {
 		@Override
 		public String toString() {
 			return "s";
+		}
+
+		public CapturingJdbcValue withValue(@Nullable Object value) {
+
+			if (value == this) {
+				return this;
+			}
+
+			return new CapturingJdbcValue(value, binding);
+		}
+
+		public CapturingJdbcValue withBinding(ParameterBinding binding) {
+			return new CapturingJdbcValue(getValue(), binding);
 		}
 	}
 }
