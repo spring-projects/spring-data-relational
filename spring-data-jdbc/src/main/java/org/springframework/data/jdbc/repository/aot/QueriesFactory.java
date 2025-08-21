@@ -208,7 +208,7 @@ class QueriesFactory {
 		}
 
 		return new DerivedAotQuery(query.getQuery(), bindings, query.getCriteria(), partTree.getSort(),
-				partTree.getResultLimit(), partTree.isDelete(), partTree.isExistsProjection());
+				partTree.getResultLimit(), partTree.isDelete(), partTree.isCountProjection(), partTree.isExistsProjection());
 	}
 
 	private RelationalParametersParameterAccessor getAccessor(JdbcParameters parameters, JdbcQueryMethod queryMethod) {

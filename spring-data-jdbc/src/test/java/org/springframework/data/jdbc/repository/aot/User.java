@@ -28,6 +28,11 @@ public class User {
 	private String firstname;
 	private int age;
 
+	public User(String firstname, int age) {
+		this.firstname = firstname;
+		this.age = age;
+	}
+
 	public long getId() {
 		return id;
 	}

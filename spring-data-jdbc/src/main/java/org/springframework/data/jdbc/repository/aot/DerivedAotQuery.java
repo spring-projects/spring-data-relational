@@ -19,16 +19,18 @@ public class DerivedAotQuery extends StringAotQuery {
 	private final Sort sort;
 	private final Limit limit;
 	private final boolean delete;
+	private final boolean count;
 	private final boolean exists;
 
 	DerivedAotQuery(String queryString, List<ParameterBinding> parameterBindings, CriteriaDefinition criteria, Sort sort,
-			Limit limit, boolean delete, boolean exists) {
+			Limit limit, boolean delete, boolean count, boolean exists) {
 		super(parameterBindings);
 		this.queryString = queryString;
 		this.criteria = criteria;
 		this.sort = sort;
 		this.limit = limit;
 		this.delete = delete;
+		this.count = count;
 		this.exists = exists;
 	}
 
@@ -45,6 +47,11 @@ public class DerivedAotQuery extends StringAotQuery {
 	@Override
 	public boolean isDelete() {
 		return delete;
+	}
+
+	@Override
+	public boolean isCount() {
+		return count;
 	}
 
 	@Override

@@ -45,6 +45,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
@@ -192,7 +193,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation());
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
-						Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuery.getQuery(),
+						Object count = singleObjectQuery(new SingleColumnRowMapper<>(Number.class)).execute(countQuery.getQuery(),
 								countQuery.getParameterSource(dialect.getLikeEscaper()));
 
 						return converter.getConversionService().convert(count, Long.class);

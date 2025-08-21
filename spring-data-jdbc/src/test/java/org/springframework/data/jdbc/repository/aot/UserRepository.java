@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository.aot;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -32,6 +34,16 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	User findByFirstname(String name);
 
 	Optional<User> findOptionalByFirstname(String name);
+
+	long countByAgeLessThan(int age);
+
+	short countShortByAgeLessThan(int age);
+
+	boolean existsByAgeLessThan(int age);
+
+	List<User> findTop5ByOrderByAge();
+
+	Page<User> findPageByFirstname(PageRequest pageable, String name);
 
 	// -------------------------------------------------------------------------
 	// Declared Queries

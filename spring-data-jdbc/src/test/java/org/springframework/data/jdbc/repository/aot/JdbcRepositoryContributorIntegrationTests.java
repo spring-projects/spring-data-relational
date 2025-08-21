@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.repository.aot;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -71,11 +73,12 @@ class JdbcRepositoryContributorIntegrationTests {
 
 		operations.deleteAll(User.class);
 
-		User user = new User();
-		user.setFirstname("Walter");
-		user.setAge(52);
-
-		operations.insert(user);
+		operations.insert(new User("Walter", 52));
+		operations.insert(new User("Skyler", 40));
+		operations.insert(new User("Flynn", 16));
+		operations.insert(new User("Mike", 62));
+		operations.insert(new User("Gustavo", 51));
+		operations.insert(new User("Hector", 83));
 	}
 
 	@Test
@@ -92,6 +95,38 @@ class JdbcRepositoryContributorIntegrationTests {
 
 		assertThat(fragment.findOptionalByFirstname("Walter")).isPresent();
 		assertThat(fragment.findOptionalByFirstname("Hank")).isEmpty();
+	}
+
+	@Test
+	void countByAgeLessThan() {
+
+		long count = fragment.countByAgeLessThan(20);
+
+		assertThat(count).isOne();
+	}
+
+	@Test
+	void countShortByAgeLessThan() {
+
+		short count = fragment.countShortByAgeLessThan(20);
+
+		assertThat(count).isOne();
+	}
+
+	@Test
+	void existsByAgeLessThan() {
+
+		assertThat(fragment.existsByAgeLessThan(20)).isTrue();
+		assertThat(fragment.existsByAgeLessThan(5)).isFalse();
+	}
+
+	@Test
+	void listWithLimit() {
+
+		List<User> users = fragment.findTop5ByOrderByAge();
+
+		assertThat(users).hasSize(5).extracting(User::getFirstname).containsSequence("Flynn", "Skyler", "Gustavo", "Walter",
+				"Mike");
 	}
 
 	@Test

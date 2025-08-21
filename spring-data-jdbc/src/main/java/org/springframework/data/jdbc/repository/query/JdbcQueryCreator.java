@@ -209,7 +209,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 		}
 
 		String sql = selection.build(parameterSource);
-		return new ParametrizedQuery(sql, parameterSource, criteria);
+		return new ParametrizedQuery(sql, parameterSource, criteria != null ? criteria : Criteria.empty());
 	}
 
 	StatementFactory.Selection getSelection(RelationalPersistentEntity<?> entity) {

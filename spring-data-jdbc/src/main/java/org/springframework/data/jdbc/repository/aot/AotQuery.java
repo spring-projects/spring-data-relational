@@ -63,6 +63,13 @@ abstract class AotQuery {
 	}
 
 	/**
+	 * @return whether the query is a count query.
+	 */
+	public boolean isCount() {
+		return false;
+	}
+
+	/**
 	 * @return whether the query is an exists query.
 	 */
 	public boolean isExists() {

@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.repository.aot.CapturingParameterMetadataProvider.CapturingJdbcValue;
 import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
@@ -51,6 +52,7 @@ import org.springframework.javapoet.TypeName;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.RowMapperResultSetExtractor;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
@@ -148,7 +150,7 @@ class JdbcCodeBlocks {
 
 			Builder builder = CodeBlock.builder();
 
-			if (!criteria.isEmpty()) {
+			if (criteria != null && !criteria.isEmpty()) {
 				builder.add(buildCriteria(criteria, (criteriaDefinition, b) -> {
 					b.add("$[$1T $2L = $1T.where($3S)", Criteria.class, context.localVariable("criteria"),
 							criteriaDefinition.getColumn().getReference());
@@ -157,7 +159,9 @@ class JdbcCodeBlocks {
 
 			String method;
 
-			if (dq.isExists()) {
+			if (dq.isCount()) {
+				method = "count($T.class)";
+			} else if (dq.isExists()) {
 				method = "exists($T.class)";
 			} else {
 				method = "select($T.class)";
@@ -176,6 +180,32 @@ class JdbcCodeBlocks {
 				builder.addStatement("$L.with($L)", context.localVariable("selection"), context.getPageableParameterName());
 			}
 
+			Sort sort = dq.getSort();
+			if (sort.isSorted()) {
+
+				Builder sortBuilder = CodeBlock.builder();
+				sortBuilder.add("$T.by(", Sort.class);
+
+				boolean first = true;
+				for (Sort.Order order : sort) {
+
+					sortBuilder.add("$T.$L($S)", Sort.Order.class, order.isAscending() ? "asc" : "desc", order.getProperty());
+					if (order.isIgnoreCase()) {
+						sortBuilder.add(".ignoreCase()");
+					}
+
+					if (first) {
+						first = false;
+					} else {
+						sortBuilder.add(", ");
+					}
+				}
+
+				sortBuilder.add(")");
+
+				builder.addStatement("$L.orderBy($L)", context.localVariable("selection"), sortBuilder.build());
+			}
+
 			if (StringUtils.hasText(context.getSortParameterName())) {
 				builder.addStatement("$L.orderBy($L)", context.localVariable("selection"), context.getSortParameterName());
 			}
@@ -189,7 +219,7 @@ class JdbcCodeBlocks {
 				builder.addStatement("$L.filter($L)", context.localVariable("selection"), context.localVariable("criteria"));
 			}
 
-			// TODO Projections, Pagination, Count
+			// TODO Projections, Pagination
 
 			builder.addStatement("$1T $2L = new $1T()", MapSqlParameterSource.class, context.localVariable("mps"));
 			builder.addStatement("$1T $2L = new $1T($3L, getDialect().getLikeEscaper())", EscapingParameterSource.class,
@@ -495,12 +525,30 @@ class JdbcCodeBlocks {
 			String result = context.localVariable("result");
 			String rowMapper = context.localVariable("rowMapper");
 
+			if (aotQuery.isCount()) {
+
+				builder.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class, result,
+						queryVariableName, parameterSourceVariableName, SingleColumnRowMapper.class);
+
+				if (returnType == Long.class) {
+					builder.addStatement("return $1L != null ? $1L.longValue() : null", result);
+				} else if (returnType == Integer.class) {
+					builder.addStatement("return $1L != null ? $1L.intValue() : null", result);
+				} else if (returnType == Long.TYPE) {
+					builder.addStatement("return $1L != null ? $1L.longValue() : 0L", result);
+				} else if (returnType == Integer.TYPE) {
+					builder.addStatement("return $1L != null ? $1L.intValue() : 0", result);
+				} else {
+					builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
+							queryResultType);
+				}
+
+			} else
+
 			if (aotQuery.isExists()) {
 
 				builder.addStatement("return ($T) getJdbcOperations().query($L, $L, $T::next)", queryResultType,
 						queryVariableName, parameterSourceVariableName, ResultSet.class);
-
-				builder.addStatement("return !$L.getResultList().isEmpty()", queryVariableName);
 			} else if (aotQuery.isDelete()) {
 
 				builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,

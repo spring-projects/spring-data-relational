@@ -124,13 +124,18 @@ public class StatementFactory {
 		}
 
 		public Selection orderBy(Sort sort) {
-			this.sort = sort;
+			this.sort = this.sort.and(sort);
 			return this;
 		}
 
 		public Selection with(Pageable pageable) {
 			this.pageable = pageable;
-			this.sort = pageable.getSort();
+			orderBy(pageable.getSort());
+			return this;
+		}
+
+		public Selection limit(int limit) {
+			this.limit = Limit.of(limit);
 			return this;
 		}
 
@@ -178,7 +183,7 @@ public class StatementFactory {
 		SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
 				Table table, MapSqlParameterSource parameterSource, SelectBuilder.SelectWhere whereBuilder) {
 
-			return criteria != null //
+			return criteria != null && !criteria.isEmpty() //
 					? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
 					: whereBuilder;
 		}
