@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository.support;
 
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
@@ -41,22 +40,21 @@ public class BeanFactoryAwareRowMapperFactory extends DefaultRowMapperFactory {
 
 	private final @Nullable BeanFactory beanFactory;
 
+	public BeanFactoryAwareRowMapperFactory(BeanFactory beanFactory) {
+
+		super(beanFactory.getBean(JdbcConverter.class), beanFactory
+						.getBeanProvider(QueryMappingConfiguration.class).getIfAvailable(() -> QueryMappingConfiguration.EMPTY),
+				EntityCallbacks.create(beanFactory), (ApplicationEventPublisher) beanFactory);
+
+		this.beanFactory = beanFactory;
+	}
+
 	BeanFactoryAwareRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
 			EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher, @Nullable BeanFactory beanFactory) {
 
 		super(converter, queryMappingConfiguration, entityCallbacks, publisher);
 
 		this.beanFactory = beanFactory;
-	}
-
-	public BeanFactoryAwareRowMapperFactory(ApplicationContext applicationContext) {
-
-		super(
-				applicationContext.getBean(JdbcConverter.class), applicationContext
-						.getBeanProvider(QueryMappingConfiguration.class).getIfAvailable(() -> QueryMappingConfiguration.EMPTY),
-				EntityCallbacks.create(applicationContext), applicationContext);
-
-		this.beanFactory = applicationContext;
 	}
 
 	public BeanFactoryAwareRowMapperFactory(RelationalMappingContext context, JdbcConverter converter,

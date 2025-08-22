@@ -34,6 +34,7 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultBeanNameGenerator;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
@@ -67,12 +68,13 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Mark Paluch
  */
-public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProcessor {
+public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProcessor, ApplicationContextAware {
 
 	private final Class<?> repositoryInterface;
 	private final JdbcDialect dialect;
 	private final boolean registerFragmentFacade;
 	private final TestJdbcAotRepositoryContext<?> repositoryContext;
+	private ApplicationContext applicationContext;
 
 	public AotFragmentTestConfigurationSupport(Class<?> repositoryInterface, JdbcDialect dialect, Class<?> configClass) {
 		this(repositoryInterface, dialect, configClass, true);
@@ -110,7 +112,7 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 
 		AbstractBeanDefinition aotGeneratedRepository = BeanDefinitionBuilder
 				.genericBeanDefinition(repositoryInterface.getName() + "Impl__AotRepository")
-				.addConstructorArgValue(new RuntimeBeanReference(BeanFactoryAwareRowMapperFactory.class))
+				.addConstructorArgValue(applicationContext)
 				.addConstructorArgValue(new RuntimeBeanReference(JdbcAggregateOperations.class))
 				.addConstructorArgValue(
 						getCreationContext(repositoryContext, beanFactory.getBean(Environment.class), beanFactory))
@@ -183,4 +185,8 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 		return creationContext;
 	}
 
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+	}
 }

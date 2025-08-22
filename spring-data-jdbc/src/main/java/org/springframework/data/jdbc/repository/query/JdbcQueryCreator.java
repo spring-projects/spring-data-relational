@@ -232,6 +232,10 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 			selection.project(returnedType.getInputProperties());
 		}
 
+		if (tree.isLimiting()) {
+			selection.limit(tree.getResultLimit());
+		}
+
 		return selection;
 	}
 

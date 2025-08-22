@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
@@ -27,7 +28,7 @@ import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.jdbc.repository.query.RowMapperFactory;
+import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.aot.generate.AotRepositoryClassBuilder;
@@ -53,17 +54,15 @@ import org.springframework.util.ClassUtils;
 public class JdbcRepositoryContributor extends RepositoryContributor {
 
 	private final RelationalMappingContext mappingContext;
-	private final JdbcConverter converter;
 	private final QueriesFactory queriesFactory;
 
 	public JdbcRepositoryContributor(AotRepositoryContext repositoryContext, JdbcDialect dialect,
 			JdbcConverter converter) {
+
 		super(repositoryContext);
 
-		this.converter = converter;
 		this.mappingContext = converter.getMappingContext();
-
-		this.queriesFactory = new QueriesFactory(repositoryContext.getConfigurationSource(), this.converter, dialect,
+		this.queriesFactory = new QueriesFactory(repositoryContext.getConfigurationSource(), converter, dialect,
 				repositoryContext.getRequiredClassLoader(), ValueExpressionDelegate.create());
 	}
 
@@ -75,12 +74,13 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 	@Override
 	protected void customizeConstructor(AotRepositoryConstructorBuilder constructorBuilder) {
 
-		constructorBuilder.addParameter("rowMapperFactory", TypeName.get(RowMapperFactory.class));
+		constructorBuilder.addParameter("beanFactory", TypeName.get(BeanFactory.class), false);
 		constructorBuilder.addParameter("operations", JdbcAggregateOperations.class);
-		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class);
+		constructorBuilder.addParameter("context", TypeName.get(RepositoryFactoryBeanSupport.FragmentCreationContext.class),
+				false);
 
 		constructorBuilder.customize(builder -> {
-			builder.addStatement("super(rowMapperFactory, operations, context)");
+			builder.addStatement("super(new $T(beanFactory), operations, context)", BeanFactoryAwareRowMapperFactory.class);
 		});
 	}
 

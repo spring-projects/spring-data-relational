@@ -38,7 +38,6 @@ import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.jdbc.repository.query.StatementFactory;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -579,8 +578,8 @@ class JdbcCodeBlocks {
 					builder.addStatement("$T $L = new $T()", RowMapper.class, rowMapper,
 							rowMapperClass);
 				} else if (StringUtils.hasText(rowMapperRef)) {
-					builder.addStatement("$T $L = $L.getRowMapper($S)", RowMapper.class, rowMapper,
-							context.fieldNameOf(RowMapperFactory.class), rowMapperRef);
+					builder.addStatement("$T $L = getRowMapperFactory().getRowMapper($S)", RowMapper.class, rowMapper,
+							rowMapperRef);
 				} else if (resultSetExtractorClass == null) {
 
 					Type typeToRead;
@@ -591,8 +590,8 @@ class JdbcCodeBlocks {
 						typeToRead = context.getActualReturnType().getType();
 					}
 
-					builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
-							context.fieldNameOf(RowMapperFactory.class), typeToRead);
+					builder.addStatement("$T $L = getRowMapperFactory().create($T.class)", RowMapper.class, rowMapper,
+							typeToRead);
 				}
 
 				if (StringUtils.hasText(resultSetExtractorRef) || resultSetExtractorClass != null) {
@@ -606,8 +605,8 @@ class JdbcCodeBlocks {
 						builder.addStatement("$T $L = new $T()", ResultSetExtractor.class, resultSetExtractor,
 								resultSetExtractorClass);
 					} else if (StringUtils.hasText(resultSetExtractorRef)) {
-						builder.addStatement("$T $L = $L.getResultSetExtractor($S)", ResultSetExtractor.class, resultSetExtractor,
-								context.fieldNameOf(RowMapperFactory.class), resultSetExtractorRef);
+						builder.addStatement("$T $L = getRowMapperFactory().getResultSetExtractor($S)", ResultSetExtractor.class,
+								resultSetExtractor, resultSetExtractorRef);
 					}
 				}
 
@@ -710,8 +709,8 @@ class JdbcCodeBlocks {
 		private CodeBlock delete(Builder builder, String rowMapper, String result, TypeName queryResultType,
 				Class<?> returnType, Type actualReturnType) {
 
-			builder.addStatement("$T $L = $L.create($T.class)", RowMapper.class, rowMapper,
-					context.fieldNameOf(RowMapperFactory.class), context.getRepositoryInformation().getDomainType());
+			builder.addStatement("$T $L = getRowMapperFactory().create($T.class)", RowMapper.class, rowMapper,
+					context.getRepositoryInformation().getDomainType());
 
 			builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
 					List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);

@@ -114,6 +114,10 @@ public class AotRepositoryFragmentSupport {
 				it -> valueExpressions.createValueContextProvider(parameters.get().get(it))));
 	}
 
+	protected RowMapperFactory getRowMapperFactory() {
+		return rowMapperFactory;
+	}
+
 	protected StatementFactory getStatementFactory() {
 		return statementFactory;
 	}
