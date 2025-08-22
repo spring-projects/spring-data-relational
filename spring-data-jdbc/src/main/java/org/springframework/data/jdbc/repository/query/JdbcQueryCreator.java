@@ -16,9 +16,11 @@
 package org.springframework.data.jdbc.repository.query;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -60,6 +62,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author Tomasz Bielecki
  * @since 2.0
  */
 class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
@@ -235,7 +238,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 	private SelectBuilder.SelectJoin selectBuilder(Table table) {
 
-		List<Expression> columnExpressions = new ArrayList<>();
+		Set<Expression> columnExpressions = new LinkedHashSet<>();
 		RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
 		SqlContext sqlContext = new SqlContext(entity);
 

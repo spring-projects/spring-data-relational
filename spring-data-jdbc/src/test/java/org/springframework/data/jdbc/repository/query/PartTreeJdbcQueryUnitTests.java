@@ -38,12 +38,14 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.dialect.H2Dialect;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -60,6 +62,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author Tomasz Bielecki
  */
 @ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {
@@ -668,6 +671,17 @@ public class PartTreeJdbcQueryUnitTests {
 				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
+	@Test
+	public void mappingMapKeyToChildShouldNotResultInDuplicateColumn() throws Exception {
+		Method method = ParentRepository.class.getMethod("findByName", String.class);
+		var queryMethod = new JdbcQueryMethod(method, new DefaultRepositoryMetadata(ParentRepository.class),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }), returnedType);
+
+		assertThat(query.getQuery()).containsOnlyOnce("\"children\".\"NICK_NAME\" AS \"children_NICK_NAME\"");
+	}
+
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return new PartTreeJdbcQuery(mappingContext, queryMethod, H2Dialect.INSTANCE, converter,
 				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
@@ -773,6 +787,19 @@ public class PartTreeJdbcQueryUnitTests {
 		User findByAnotherEmbeddedList(Object list);
 
 		long countByFirstName(String name);
+	}
+
+	@NoRepositoryBean
+	interface ParentRepository extends ListCrudRepository<Parent, Long> {
+		Parent findByName(String name);
+	}
+
+	@Table("parent")
+	record Parent(@Id String name, @MappedCollection(idColumn = "NICK_NAME") Child children) {
+	}
+
+	@Table("children")
+	record Child(@Column("NICK_NAME") String nickName,  String name) {
 	}
 
 	@Table("users")
