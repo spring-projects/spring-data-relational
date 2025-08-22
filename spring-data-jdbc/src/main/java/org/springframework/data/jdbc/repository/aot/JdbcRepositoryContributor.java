@@ -74,9 +74,9 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 	@Override
 	protected void customizeConstructor(AotRepositoryConstructorBuilder constructorBuilder) {
 
-		constructorBuilder.addParameter("beanFactory", TypeName.get(BeanFactory.class), false);
+		constructorBuilder.addParameter("beanFactory", BeanFactory.class, false);
 		constructorBuilder.addParameter("operations", JdbcAggregateOperations.class);
-		constructorBuilder.addParameter("context", TypeName.get(RepositoryFactoryBeanSupport.FragmentCreationContext.class),
+		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class,
 				false);
 
 		constructorBuilder.customize(builder -> {
