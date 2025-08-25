@@ -80,7 +80,7 @@ public class AotRepositoryFragmentSupport {
 
 	private final RowMapperFactory rowMapperFactory;
 
-	private final JdbcAggregateOperations aggregateOperations;
+	private final JdbcAggregateOperations operations;
 
 	private final StatementFactory statementFactory;
 
@@ -92,20 +92,20 @@ public class AotRepositoryFragmentSupport {
 
 	private final Lazy<ConcurrentLruCache<Method, ValueEvaluationContextProvider>> contextProviders;
 
-	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations aggregateOperations,
+	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations operations,
 			RepositoryFactoryBeanSupport.FragmentCreationContext context) {
-		this(rowMapperFactory, aggregateOperations, context.getRepositoryMetadata(), context.getValueExpressionDelegate(),
+		this(rowMapperFactory, operations, context.getRepositoryMetadata(), context.getValueExpressionDelegate(),
 				context.getProjectionFactory());
 	}
 
-	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations aggregateOperations,
+	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations operations,
 			RepositoryMetadata repositoryMetadata, ValueExpressionDelegate valueExpressions,
 			ProjectionFactory projectionFactory) {
 
 		this.rowMapperFactory = rowMapperFactory;
-		this.aggregateOperations = aggregateOperations;
-		this.statementFactory = new StatementFactory(aggregateOperations.getConverter(),
-				aggregateOperations.getDataAccessStrategy().getDialect());
+		this.operations = operations;
+		this.statementFactory = new StatementFactory(operations.getConverter(),
+				operations.getDataAccessStrategy().getDialect());
 		this.projectionFactory = projectionFactory;
 		this.expressions = Lazy.of(() -> new ConcurrentLruCache<>(32, valueExpressions::parse));
 		this.parameters = Lazy
@@ -123,11 +123,15 @@ public class AotRepositoryFragmentSupport {
 	}
 
 	protected Dialect getDialect() {
-		return aggregateOperations.getDataAccessStrategy().getDialect();
+		return operations.getDataAccessStrategy().getDialect();
+	}
+
+	protected JdbcAggregateOperations getOperations() {
+		return operations;
 	}
 
 	protected NamedParameterJdbcOperations getJdbcOperations() {
-		return this.aggregateOperations.getDataAccessStrategy().getJdbcOperations();
+		return this.operations.getDataAccessStrategy().getJdbcOperations();
 	}
 
 	protected <T extends @Nullable Object> T queryForObject(String sql, SqlParameterSource paramSource,
@@ -160,7 +164,7 @@ public class AotRepositoryFragmentSupport {
 
 	private BindValue getBindableValue(JdbcParameters.JdbcParameter parameter, @Nullable Object value) {
 
-		JdbcValue jdbcValue = StringValueUtil.getBindValue(aggregateOperations.getConverter(), value,
+		JdbcValue jdbcValue = StringValueUtil.getBindValue(operations.getConverter(), value,
 				parameter.getTypeInformation(), parameter.getSqlType(), parameter.getActualSqlType());
 		SQLType jdbcType = jdbcValue.getJdbcType();
 
@@ -223,9 +227,9 @@ public class AotRepositoryFragmentSupport {
 
 		if (!projection.isInterface()) {
 
-			RelationalMappingContext mappingContext = aggregateOperations.getConverter().getMappingContext();
+			RelationalMappingContext mappingContext = operations.getConverter().getMappingContext();
 			DtoInstantiatingConverter converter = new DtoInstantiatingConverter(projection, mappingContext,
-					aggregateOperations.getConverter().getEntityInstantiators());
+					operations.getConverter().getEntityInstantiators());
 			return (T) converter.convert(result);
 		}
 

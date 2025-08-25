@@ -28,7 +28,6 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -42,7 +41,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.test.tools.TestCompiler;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.expression.ValueExpressionParser;
-import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -113,7 +111,6 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 		AbstractBeanDefinition aotGeneratedRepository = BeanDefinitionBuilder
 				.genericBeanDefinition(repositoryInterface.getName() + "Impl__AotRepository")
 				.addConstructorArgValue(applicationContext)
-				.addConstructorArgValue(new RuntimeBeanReference(JdbcAggregateOperations.class))
 				.addConstructorArgValue(
 						getCreationContext(repositoryContext, beanFactory.getBean(Environment.class), beanFactory))
 				.getBeanDefinition();

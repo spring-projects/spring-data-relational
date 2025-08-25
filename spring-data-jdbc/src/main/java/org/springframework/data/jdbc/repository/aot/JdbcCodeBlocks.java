@@ -33,7 +33,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
@@ -715,7 +714,7 @@ class JdbcCodeBlocks {
 			builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
 					List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
 
-			builder.addStatement("$L.forEach($L::delete)", result, context.fieldNameOf(JdbcAggregateOperations.class));
+			builder.addStatement("$L.forEach(getOperations()::delete)", result);
 
 			if (Collection.class.isAssignableFrom(context.getReturnType().toClass())) {
 				builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,

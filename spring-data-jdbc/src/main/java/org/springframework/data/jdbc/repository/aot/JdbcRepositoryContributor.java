@@ -24,6 +24,7 @@ import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
@@ -36,6 +37,7 @@ import org.springframework.data.repository.aot.generate.AotRepositoryConstructor
 import org.springframework.data.repository.aot.generate.MethodContributor;
 import org.springframework.data.repository.aot.generate.RepositoryContributor;
 import org.springframework.data.repository.config.AotRepositoryContext;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.query.ReturnedType;
@@ -44,6 +46,7 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.javapoet.CodeBlock;
 import org.springframework.javapoet.TypeName;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * JDBC-specific {@link RepositoryContributor} contributing an AOT repository fragment.
@@ -55,6 +58,7 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 
 	private final RelationalMappingContext mappingContext;
 	private final QueriesFactory queriesFactory;
+	private final @Nullable String jdbcAggregateOperationsRef;
 
 	public JdbcRepositoryContributor(AotRepositoryContext repositoryContext, JdbcDialect dialect,
 			JdbcConverter converter) {
@@ -62,8 +66,13 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 		super(repositoryContext);
 
 		this.mappingContext = converter.getMappingContext();
-		this.queriesFactory = new QueriesFactory(repositoryContext.getConfigurationSource(), converter, dialect,
+
+		RepositoryConfigurationSource configurationSource = repositoryContext.getConfigurationSource();
+
+		this.queriesFactory = new QueriesFactory(configurationSource, converter, dialect,
 				repositoryContext.getRequiredClassLoader(), ValueExpressionDelegate.create());
+
+		jdbcAggregateOperationsRef = configurationSource.getAttribute("jdbcAggregateOperationsRef").orElse(null);
 	}
 
 	@Override
@@ -75,12 +84,19 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 	protected void customizeConstructor(AotRepositoryConstructorBuilder constructorBuilder) {
 
 		constructorBuilder.addParameter("beanFactory", BeanFactory.class, false);
-		constructorBuilder.addParameter("operations", JdbcAggregateOperations.class);
-		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class,
-				false);
+		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class, false);
 
 		constructorBuilder.customize(builder -> {
-			builder.addStatement("super(new $T(beanFactory), operations, context)", BeanFactoryAwareRowMapperFactory.class);
+
+			if (StringUtils.hasText(jdbcAggregateOperationsRef)) {
+				builder.addStatement(
+						"super(new $1T(beanFactory, beanFactory.getBean($2S, $3T.class), beanFactory.getBeanProvider($4T.class).getIfUnique(() -> $4T.EMPTY)), beanFactory.getBean($2S, $3T.class), context)",
+						BeanFactoryAwareRowMapperFactory.class, jdbcAggregateOperationsRef, JdbcAggregateOperations.class,
+						QueryMappingConfiguration.class);
+			} else {
+				builder.addStatement("super(new $1T(beanFactory), beanFactory.getBean($2T.class), context)",
+						BeanFactoryAwareRowMapperFactory.class, JdbcAggregateOperations.class);
+			}
 		});
 	}
 

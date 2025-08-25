@@ -28,10 +28,14 @@ import org.springframework.lang.Nullable;
  */
 public interface QueryMappingConfiguration {
 
-	@Nullable
-	default <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
-		return null;
-	}
+	/**
+	 * Returns the {@link RowMapper} to be used for the given type or {@literal null} if no specific mapper is configured.
+	 *
+	 * @param type
+	 * @return
+	 * @param <T>
+	 */
+	<T> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type);
 
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.
@@ -39,7 +43,7 @@ public interface QueryMappingConfiguration {
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		@Override
-		public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+		public <T> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type) {
 			return null;
 		}
 

@@ -44,7 +44,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
- * Integration tests for AOT processing.
+ * Integration tests for AOT processing via {@link JdbcRepositoryContributor}.
  *
  * @author Mark Paluch
  */
@@ -57,7 +57,7 @@ class JdbcRepositoryContributorIntegrationTests {
 	@Autowired JdbcAggregateOperations operations;
 
 	@Configuration
-	@EnableJdbcRepositories(considerNestedRepositories = true,
+	@EnableJdbcRepositories(jdbcAggregateOperationsRef = "jdbcAggregateOperations", considerNestedRepositories = true,
 			includeFilters = { @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = String.class) })
 	@Import(TestConfiguration.class)
 	static class JdbcRepositoryContributorConfiguration extends AotFragmentTestConfigurationSupport {

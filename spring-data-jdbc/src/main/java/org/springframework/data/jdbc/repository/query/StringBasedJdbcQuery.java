@@ -28,6 +28,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.expression.ValueEvaluationContext;
 import org.springframework.data.expression.ValueExpression;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -111,7 +112,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, JdbcConverter converter,
 			ValueExpressionDelegate delegate) {
+
 		super(queryMethod, operations);
+
 		Assert.hasText(query, "Query must not be null or empty");
 		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
@@ -148,6 +151,23 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		}
 		this.parsedQuery = rewriter.parse(this.query);
 		this.delegate = delegate;
+	}
+
+	/**
+	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link JdbcAggregateOperations}
+	 * and {@link RowMapperFactory}.
+	 *
+	 * @param query must not be {@literal null} or empty.
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @param delegate must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public StringBasedJdbcQuery(String query, JdbcQueryMethod queryMethod, JdbcAggregateOperations operations,
+			RowMapperFactory rowMapperFactory, ValueExpressionDelegate delegate) {
+		this(query, queryMethod, operations.getDataAccessStrategy().getJdbcOperations(), rowMapperFactory,
+				operations.getConverter(), delegate);
 	}
 
 	@Override
@@ -251,8 +271,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return parameters;
 	}
 
-
-
 	RowMapper<Object> determineRowMapper(ResultProcessor resultProcessor, boolean hasDynamicProjection) {
 
 		if (cachedRowMapperFactory.isConfiguredRowMapper()) {
@@ -265,7 +283,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 			ResultProcessingConverter converter = new ResultProcessingConverter(resultProcessor,
 					this.converter.getMappingContext(), this.converter.getEntityInstantiators());
-			return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(rowMapperToUse, converter);
+			return new ConvertingRowMapper(rowMapperToUse, converter);
 		}
 
 		return cachedRowMapperFactory.getRowMapper();

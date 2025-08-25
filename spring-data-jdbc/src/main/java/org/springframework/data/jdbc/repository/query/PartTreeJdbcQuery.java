@@ -30,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -70,6 +71,20 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcConverter converter;
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final PartTree tree;
+
+	/**
+	 * Creates a new {@link PartTreeJdbcQuery}.
+	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public PartTreeJdbcQuery(JdbcQueryMethod queryMethod, JdbcAggregateOperations operations,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
+		this(operations.getConverter().getMappingContext(), queryMethod, operations.getDataAccessStrategy().getDialect(),
+				operations.getConverter(), operations.getDataAccessStrategy().getJdbcOperations(), rowMapperFactory);
+	}
 
 	/**
 	 * Creates a new {@link PartTreeJdbcQuery}.
@@ -309,7 +324,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
 
 		public CachedRowMapperFactory(PartTree tree,
-				org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, RelationalConverter converter,
+				RowMapperFactory rowMapperFactory, RelationalConverter converter,
 				ResultProcessor defaultResultProcessor) {
 
 			this.rowMapperFunction = processor -> {
@@ -319,7 +334,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(
+				return new ConvertingRowMapper(
 						rowMapperFactory.create(processor.getReturnedType().getDomainType()), resultProcessingConverter);
 			};
 
