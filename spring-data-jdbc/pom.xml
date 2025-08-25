@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-data-jdbc</artifactId>
-	<version>4.0.0-SNAPSHOT</version>
+	<version>4.0.0-GH-2121-SNAPSHOT</version>
 
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.springframework.data</groupId>
 		<artifactId>spring-data-relational-parent</artifactId>
-		<version>4.0.0-SNAPSHOT</version>
+		<version>4.0.0-GH-2121-SNAPSHOT</version>
 	</parent>
 
 	<properties>
@@ -168,6 +168,18 @@
 		<!-- Test dependencies -->
 
 		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>org.awaitility</groupId>
 			<artifactId>awaitility</artifactId>
 			<version>${awaitility}</version>
@@ -191,6 +203,19 @@
 			<groupId>org.jmolecules.integrations</groupId>
 			<artifactId>jmolecules-spring</artifactId>
 			<version>${jmolecules-integration}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>net.javacrumbs.json-unit</groupId>
+			<artifactId>json-unit-assertj</artifactId>
+			<version>4.1.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 			<scope>test</scope>
 		</dependency>
 

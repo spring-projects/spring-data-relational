@@ -57,10 +57,10 @@ class JdbcRuntimeHints implements RuntimeHintsRegistrar {
 				TypeReference.of("org.springframework.core.DecoratingProxy"));
 
 		hints.reflection().registerType(TypeReference.of("org.postgresql.jdbc.TypeInfoCache"),
-				MemberCategory.PUBLIC_CLASSES);
+				MemberCategory.INVOKE_DECLARED_CONSTRUCTORS);
 
 		for (Class<?> simpleType : JdbcPostgresDialect.INSTANCE.simpleTypes()) {
-			hints.reflection().registerType(TypeReference.of(simpleType), MemberCategory.PUBLIC_CLASSES);
+			hints.reflection().registerType(TypeReference.of(simpleType), MemberCategory.INVOKE_DECLARED_METHODS);
 		}
 	}
 }
