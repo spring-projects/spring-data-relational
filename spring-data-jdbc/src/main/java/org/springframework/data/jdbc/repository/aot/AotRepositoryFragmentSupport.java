@@ -92,13 +92,13 @@ public class AotRepositoryFragmentSupport {
 
 	private final Lazy<ConcurrentLruCache<Method, ValueEvaluationContextProvider>> contextProviders;
 
-	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations operations,
+	protected AotRepositoryFragmentSupport(JdbcAggregateOperations operations, RowMapperFactory rowMapperFactory,
 			RepositoryFactoryBeanSupport.FragmentCreationContext context) {
-		this(rowMapperFactory, operations, context.getRepositoryMetadata(), context.getValueExpressionDelegate(),
+		this(operations, rowMapperFactory, context.getRepositoryMetadata(), context.getValueExpressionDelegate(),
 				context.getProjectionFactory());
 	}
 
-	protected AotRepositoryFragmentSupport(RowMapperFactory rowMapperFactory, JdbcAggregateOperations operations,
+	protected AotRepositoryFragmentSupport(JdbcAggregateOperations operations, RowMapperFactory rowMapperFactory,
 			RepositoryMetadata repositoryMetadata, ValueExpressionDelegate valueExpressions,
 			ProjectionFactory projectionFactory) {
 

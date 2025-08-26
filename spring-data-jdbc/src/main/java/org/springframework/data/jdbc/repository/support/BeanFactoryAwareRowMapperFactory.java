@@ -36,20 +36,6 @@ public class BeanFactoryAwareRowMapperFactory extends DefaultRowMapperFactory {
 	private final BeanFactory beanFactory;
 
 	/**
-	 * Create a {@code BeanFactoryAwareRowMapperFactory} instance using the given {@link BeanFactory}.
-	 * {@link JdbcAggregateOperations} and {@link QueryMappingConfiguration} are resolved from the bean factory.
-	 *
-	 * @param beanFactory
-	 */
-	public BeanFactoryAwareRowMapperFactory(BeanFactory beanFactory) {
-
-		super(beanFactory.getBean(JdbcAggregateOperations.class), beanFactory
-				.getBeanProvider(QueryMappingConfiguration.class).getIfAvailable(() -> QueryMappingConfiguration.EMPTY));
-
-		this.beanFactory = beanFactory;
-	}
-
-	/**
 	 * Create a {@code BeanFactoryAwareRowMapperFactory} instance using the given {@link BeanFactory},
 	 * {@link JdbcAggregateOperations} and {@link QueryMappingConfiguration}.
 	 *

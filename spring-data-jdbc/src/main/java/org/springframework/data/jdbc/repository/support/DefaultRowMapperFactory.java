@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link RowMapperFactory}. Honors the custom mappings defined in
@@ -41,6 +42,10 @@ public class DefaultRowMapperFactory implements RowMapperFactory {
 
 	public DefaultRowMapperFactory(JdbcAggregateOperations operations,
 			QueryMappingConfiguration queryMappingConfiguration) {
+
+		Assert.notNull(operations, "JdbcAggregateOperations must not be null");
+		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
+
 		this.operations = operations;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 	}

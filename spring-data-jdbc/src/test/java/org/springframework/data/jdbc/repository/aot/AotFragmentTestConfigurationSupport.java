@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.mockito.Mockito;
 
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -41,10 +43,13 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.test.tools.TestCompiler;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.expression.ValueExpressionParser;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
@@ -94,8 +99,10 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 	}
 
 	@Bean
-	BeanFactoryAwareRowMapperFactory rowMapperFactory(ApplicationContext context) {
-		return new BeanFactoryAwareRowMapperFactory(context);
+	BeanFactoryAwareRowMapperFactory rowMapperFactory(ApplicationContext context,
+			JdbcAggregateOperations aggregateOperations, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
+		return new BeanFactoryAwareRowMapperFactory(context, aggregateOperations,
+				queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY));
 	}
 
 	@Override
@@ -105,12 +112,14 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 
 		repositoryContext.setBeanFactory(beanFactory);
 
-		new JdbcRepositoryContributor(repositoryContext, dialect,
-				new MappingJdbcConverter(new JdbcMappingContext(), (identifier, path) -> null)).contribute(generationContext);
+		JdbcRepositoryContributor jdbcRepositoryContributor = new JdbcRepositoryContributor(repositoryContext, dialect,
+				new MappingJdbcConverter(new JdbcMappingContext(), (identifier, path) -> null));
+		jdbcRepositoryContributor.contribute(generationContext);
 
 		AbstractBeanDefinition aotGeneratedRepository = BeanDefinitionBuilder
 				.genericBeanDefinition(repositoryInterface.getName() + "Impl__AotRepository")
-				.addConstructorArgValue(applicationContext)
+				.addConstructorArgValue(new RuntimeBeanReference(JdbcAggregateOperations.class))
+				.addConstructorArgValue(new RuntimeBeanReference(RowMapperFactory.class))
 				.addConstructorArgValue(
 						getCreationContext(repositoryContext, beanFactory.getBean(Environment.class), beanFactory))
 				.getBeanDefinition();

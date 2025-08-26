@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
@@ -29,6 +29,7 @@ import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.Lock;
@@ -83,21 +84,29 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 	@Override
 	protected void customizeConstructor(AotRepositoryConstructorBuilder constructorBuilder) {
 
-		constructorBuilder.addParameter("beanFactory", BeanFactory.class, false);
-		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class, false);
+		constructorBuilder.addParameter("operations", JdbcAggregateOperations.class, customizer -> {
 
-		constructorBuilder.customize(builder -> {
-
-			if (StringUtils.hasText(jdbcAggregateOperationsRef)) {
-				builder.addStatement(
-						"super(new $1T(beanFactory, beanFactory.getBean($2S, $3T.class), beanFactory.getBeanProvider($4T.class).getIfUnique(() -> $4T.EMPTY)), beanFactory.getBean($2S, $3T.class), context)",
-						BeanFactoryAwareRowMapperFactory.class, jdbcAggregateOperationsRef, JdbcAggregateOperations.class,
-						QueryMappingConfiguration.class);
-			} else {
-				builder.addStatement("super(new $1T(beanFactory), beanFactory.getBean($2T.class), context)",
-						BeanFactoryAwareRowMapperFactory.class, JdbcAggregateOperations.class);
-			}
+			customizer.origin(StringUtils.hasText(jdbcAggregateOperationsRef)
+					? new RuntimeBeanReference(jdbcAggregateOperationsRef, JdbcAggregateOperations.class)
+					: new RuntimeBeanReference(JdbcAggregateOperations.class));
 		});
+
+		constructorBuilder.addParameter("rowMapperFactory", RowMapperFactory.class, customizer -> {
+
+			customizer.origin(ctx -> {
+
+				String rowMapperFactory = ctx.localVariable("rowMapperFactory");
+				String operations = ctx.localVariable("operations");
+				CodeBlock.Builder builder = CodeBlock.builder();
+				builder.addStatement("$1T $2L = new $1T($4L, $3L, $4L.getBeanProvider($5T.class).getIfUnique(() -> $5T.EMPTY))",
+						BeanFactoryAwareRowMapperFactory.class, rowMapperFactory, operations, ctx.beanFactory(),
+						QueryMappingConfiguration.class);
+
+				return AotRepositoryConstructorBuilder.ParameterOrigin.of(rowMapperFactory, builder.build());
+			});
+		});
+
+		constructorBuilder.addParameter("context", RepositoryFactoryBeanSupport.FragmentCreationContext.class, false);
 	}
 
 	@Override
