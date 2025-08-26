@@ -1,7 +1,7 @@
 /**
  * JDBC-specific Dialect implementations.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.core.dialect;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

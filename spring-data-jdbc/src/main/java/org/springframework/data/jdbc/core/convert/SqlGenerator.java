@@ -15,21 +15,13 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -49,7 +41,6 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -298,7 +289,7 @@ public class SqlGenerator {
 	 *          keyColumn must not be {@code null}.
 	 * @return a SQL String.
 	 */
-	String getFindAllByProperty(Identifier parentIdentifier, @Nullable AggregatePath.ColumnInfo keyColumn,
+	String getFindAllByProperty(Identifier parentIdentifier, AggregatePath.@Nullable ColumnInfo keyColumn,
 			boolean ordered) {
 
 		Assert.isTrue(keyColumn != null || !ordered,
@@ -315,9 +306,15 @@ public class SqlGenerator {
 		Condition condition = buildConditionForBackReference(parentIdentifier, table);
 		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
 
-		Select select = ordered //
-				? withWhereClause.orderBy(table.column(keyColumn.name()).as(keyColumn.alias())).build() //
-				: withWhereClause.build();
+		Select select;
+		if (ordered) {
+
+			Assert.isTrue(keyColumn != null, "KeyColumn must not be null");
+
+			select = withWhereClause.orderBy(table.column(keyColumn.name()).as(keyColumn.alias())).build();
+		} else {
+			select = withWhereClause.build();
+		}
 
 		return render(select);
 	}
@@ -514,7 +511,12 @@ public class SqlGenerator {
 		AggregatePath.ColumnInfos idColumnInfos = mappingContext.getAggregatePath(entity).getTableInfo().idColumnInfos();
 
 		return createPredicate(columnMap, (aggregatePath, column) -> {
-			return column.isEqualTo(getBindMarker(idColumnInfos.get(aggregatePath).name()));
+
+			AggregatePath.ColumnInfo columnInfo = idColumnInfos.get(aggregatePath);
+
+			Assert.notNull(columnInfo, "ColumnInfo must not be null");
+
+			return column.isEqualTo(getBindMarker(columnInfo.name()));
 		});
 	}
 
@@ -813,8 +815,11 @@ public class SqlGenerator {
 
 		Condition joinCondition = backRefColumnInfos.reduce(Conditions.unrestricted(), (aggregatePath, columnInfo) -> {
 
-			return currentTable.column(columnInfo.name())
-					.isEqualTo(parentTable.column(idColumnInfos.get(aggregatePath).name()));
+			AggregatePath.ColumnInfo idColumnInfo = idColumnInfos.get(aggregatePath);
+
+			Assert.notNull(idColumnInfo, "IdColumnInfo must not be null");
+
+			return currentTable.column(columnInfo.name()).isEqualTo(parentTable.column(idColumnInfo.name()));
 		}, Condition::and);
 
 		return new Join(currentTable, joinCondition);
@@ -882,6 +887,8 @@ public class SqlGenerator {
 		for (SqlIdentifier cn : columnNamesForInsert) {
 			insertWithValues = (insertWithValues == null ? insert : insertWithValues).values(getBindMarker(cn));
 		}
+
+		Assert.state(insertWithValues != null, "InsertWithValues must not be null");
 
 		return render(insertWithValues.build());
 	}

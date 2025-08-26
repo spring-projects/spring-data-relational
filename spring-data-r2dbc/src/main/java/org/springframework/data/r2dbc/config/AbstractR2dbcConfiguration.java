@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -49,7 +50,6 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.util.TypeScanner;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -193,8 +193,8 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @since 3.5
 	 */
 	@Bean
-	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(
-			RelationalMappingContext relationalMappingContext, DatabaseClient databaseClient) {
+	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(RelationalMappingContext relationalMappingContext,
+			DatabaseClient databaseClient) {
 		return new IdGeneratingEntityCallback(relationalMappingContext, getDialect(lookupConnectionFactory()),
 				databaseClient);
 	}

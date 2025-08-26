@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.List;
 import java.util.OptionalLong;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * AST for a {@code SELECT} statement. Visiting order:

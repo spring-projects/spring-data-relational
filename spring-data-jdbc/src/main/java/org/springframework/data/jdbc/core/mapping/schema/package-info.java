@@ -1,7 +1,7 @@
 /**
  * Schema creation and schema update integration with Liquibase.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.core.mapping.schema;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

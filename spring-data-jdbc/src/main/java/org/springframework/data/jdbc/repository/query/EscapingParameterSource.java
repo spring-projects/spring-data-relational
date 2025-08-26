@@ -16,9 +16,11 @@
 
 package org.springframework.data.jdbc.repository.query;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.util.Assert;
 
 /**
  * This {@link SqlParameterSource} will apply escaping to its values.
@@ -43,7 +45,7 @@ class EscapingParameterSource implements SqlParameterSource {
 	}
 
 	@Override
-	public Object getValue(String paramName) throws IllegalArgumentException {
+	public @Nullable Object getValue(String paramName) throws IllegalArgumentException {
 
 		Object value = parameterSource.getValue(paramName);
 		if (value instanceof ValueFunction<?> valueFunction) {
@@ -52,19 +54,22 @@ class EscapingParameterSource implements SqlParameterSource {
 		return value;
 	}
 
-
 	@Override
 	public int getSqlType(String paramName) {
 		return parameterSource.getSqlType(paramName);
 	}
 
 	@Override
-	public String getTypeName(String paramName) {
+	public @Nullable String getTypeName(String paramName) {
 		return parameterSource.getTypeName(paramName);
 	}
 
 	@Override
 	public String[] getParameterNames() {
-		return parameterSource.getParameterNames();
+		String[] parameterNames = parameterSource.getParameterNames();
+
+		Assert.state(parameterNames != null, "Parameter names must not be null");
+
+		return parameterNames;
 	}
 }

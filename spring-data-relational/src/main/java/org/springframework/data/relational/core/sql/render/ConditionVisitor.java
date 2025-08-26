@@ -15,8 +15,8 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link org.springframework.data.relational.core.sql.Visitor} delegating {@link Condition} rendering to condition

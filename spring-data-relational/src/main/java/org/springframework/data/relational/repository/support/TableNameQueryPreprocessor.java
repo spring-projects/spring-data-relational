@@ -70,7 +70,11 @@ class TableNameQueryPreprocessor {
 		query = quoteExpressionsParameter(query);
 		Expression expression = parser.parseExpression(query, ParserContext.TEMPLATE_EXPRESSION);
 
-		return unquoteParameterExpressions(expression.getValue(evaluationContext, String.class));
+		String value = expression.getValue(evaluationContext, String.class);
+
+		Assert.state(value != null, "Value must not be null");
+
+		return unquoteParameterExpressions(value);
 	}
 
 	private static String unquoteParameterExpressions(String result) {

@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.repository.support;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link RelationalEntityInformation} implementation using a {@link RelationalPersistentEntity} instance to lookup the
@@ -77,7 +77,7 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 	 */
 	@SuppressWarnings("unchecked")
 	private MappingRelationalEntityInformation(RelationalPersistentEntity<T> entity, @Nullable String customTableName,
-											   @Nullable Class<ID> idType) {
+			@Nullable Class<ID> idType) {
 
 		super(entity);
 

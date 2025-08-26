@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository.support;
 import java.io.Serializable;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -255,9 +254,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 				if (this.dataAccessStrategy == null) {
 
 					Assert.state(this.dialect != null, "Dialect must not be null");
+					Assert.state(this.converter != null, "Converter must not be null");
 
-					DataAccessStrategyFactory factory = getDataAccessStrategyFactory(this.converter,
-							this.dialect, this.jdbcOperations, this.queryMappingConfiguration);
+					DataAccessStrategyFactory factory = getDataAccessStrategyFactory(this.converter, this.dialect,
+							this.jdbcOperations, this.queryMappingConfiguration);
 
 					this.dataAccessStrategy = factory.create();
 				}
@@ -268,9 +268,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	}
 
 	private static DataAccessStrategyFactory getDataAccessStrategyFactory(JdbcConverter converter, Dialect dialect,
-			NamedParameterJdbcOperations operations,
-			QueryMappingConfiguration queryMapping) {
-
+			NamedParameterJdbcOperations operations, QueryMappingConfiguration queryMapping) {
 
 		return new DataAccessStrategyFactory(converter, operations, dialect, queryMapping);
 	}

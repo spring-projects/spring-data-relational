@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
@@ -25,7 +26,8 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.util.Streamable;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
+import org.springframework.lang.Contract;
+import org.springframework.util.Assert;
 
 /**
  * Embedded entity extension for a {@link Embedded entity}.
@@ -82,7 +84,13 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 
 			@Override
 			public RelationalPersistentProperty next() {
-				return wrap(iterator.next());
+
+				RelationalPersistentProperty property = wrap(iterator.next());
+
+				// NullAway doesn't understand contracts
+				Assert.state(property != null, "Property must not be null");
+
+				return property;
 			}
 		};
 	}
@@ -178,28 +186,50 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 
 	@Override
 	public void doWithProperties(PropertyHandler<RelationalPersistentProperty> handler) {
+
 		delegate.doWithProperties((PropertyHandler<RelationalPersistentProperty>) persistentProperty -> {
-			handler.doWithPersistentProperty(wrap(persistentProperty));
+
+			RelationalPersistentProperty wrapped = wrap(persistentProperty);
+
+			Assert.state(wrapped != null, "Property must not be null");
+
+			handler.doWithPersistentProperty(wrapped);
 		});
 	}
 
 	@Override
 	public void doWithProperties(SimplePropertyHandler handler) {
-		delegate.doWithProperties((SimplePropertyHandler) property -> handler
-				.doWithPersistentProperty(wrap((RelationalPersistentProperty) property)));
+		delegate.doWithProperties((SimplePropertyHandler) property -> {
+
+			RelationalPersistentProperty wrapped = wrap((RelationalPersistentProperty) property);
+
+			Assert.state(wrapped != null, "Property must not be null");
+
+			handler.doWithPersistentProperty(wrapped);
+		});
 	}
 
 	@Override
 	public void doWithAssociations(AssociationHandler<RelationalPersistentProperty> handler) {
 		delegate.doWithAssociations((AssociationHandler<RelationalPersistentProperty>) association -> {
-			handler.doWithAssociation(new Association<>(wrap(association.getInverse()), wrap(association.getObverse())));
+
+			RelationalPersistentProperty wrapped = wrap(association.getInverse());
+
+			Assert.state(wrapped != null, "Association must not be null");
+
+			handler.doWithAssociation(new Association<>(wrapped, wrap(association.getObverse())));
 		});
 	}
 
 	@Override
 	public void doWithAssociations(SimpleAssociationHandler handler) {
 		delegate.doWithAssociations((AssociationHandler<RelationalPersistentProperty>) association -> {
-			handler.doWithAssociation(new Association<>(wrap(association.getInverse()), wrap(association.getObverse())));
+
+			RelationalPersistentProperty wrapped = wrap(association.getInverse());
+
+			Assert.state(wrapped != null, "Association must not be null");
+
+			handler.doWithAssociation(new Association<>(wrapped, wrap(association.getObverse())));
 		});
 	}
 
@@ -245,6 +275,7 @@ class EmbeddedRelationalPersistentEntity<T> implements RelationalPersistentEntit
 	}
 
 	@Nullable
+	@Contract("null -> null; !null -> new")
 	private RelationalPersistentProperty wrap(@Nullable RelationalPersistentProperty source) {
 
 		if (source == null) {

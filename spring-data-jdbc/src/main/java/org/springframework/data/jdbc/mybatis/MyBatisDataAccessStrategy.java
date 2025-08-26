@@ -27,8 +27,8 @@ import java.util.stream.StreamSupport;
 
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -165,7 +165,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+			IdValueSource idValueSource) {
 
 		MyBatisContext myBatisContext = new MyBatisContext(identifier, instance, domainType);
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);

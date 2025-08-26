@@ -83,7 +83,7 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 			} else if (action instanceof DbAction.InsertRoot<?> rootAction) {
 
 				if (!insertRootBatchCandidates.isEmpty()
-						&& !insertRootBatchCandidates.get(0).getIdValueSource().equals(rootAction.getIdValueSource())) {
+						&& !insertRootBatchCandidates.get(0).idValueSource().equals(rootAction.idValueSource())) {
 					combineBatchCandidatesIntoSingleBatchRootAction();
 				}
 				// noinspection unchecked

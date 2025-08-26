@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.util.Assert;
+
 /**
  * Represents a {@link Boolean} literal.
  *
@@ -29,7 +31,12 @@ public class BooleanLiteral extends Literal<Boolean> {
 
 	@Override
 	public Boolean getContent() {
-		return super.getContent();
+
+		Boolean content = super.getContent();
+
+		Assert.state(content != null, "Content must not be null");
+
+		return content;
 	}
 
 	@Override

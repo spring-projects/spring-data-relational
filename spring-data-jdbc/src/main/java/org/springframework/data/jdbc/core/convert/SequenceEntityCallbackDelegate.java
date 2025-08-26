@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -26,7 +26,6 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.NumberUtils;
 
@@ -87,7 +86,11 @@ class SequenceEntityCallbackDelegate {
 
 		SqlIdentifier sequence = property.getSequence();
 
-		if (sequence != null && !dialect.getIdGeneration().sequencesSupported()) {
+		if (sequence == null) {
+			return null;
+		}
+
+		if (!dialect.getIdGeneration().sequencesSupported()) {
 			LOG.warn("""
 					Aggregate type '%s' is marked for sequence usage but configured dialect '%s'
 					does not support sequences. Falling back to identity columns.

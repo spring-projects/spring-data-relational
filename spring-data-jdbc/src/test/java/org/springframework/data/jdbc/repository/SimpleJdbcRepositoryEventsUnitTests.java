@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -56,7 +57,6 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
 /**
@@ -132,7 +132,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		repository.saveAll(asList(entity1, entity2));
 
 		assertThat(publisher.events) //
-				.extracting(RelationalEvent::getClass, e -> ((DummyEntity) e.getEntity()).getId()) //
+				.extracting(RelationalEvent::getClass, e -> ((DummyEntity) e.getEntity()).id()) //
 				.containsExactly( //
 						tuple(BeforeConvertEvent.class, null), //
 						tuple(BeforeSaveEvent.class, null), //
@@ -299,43 +299,39 @@ class SimpleJdbcRepositoryEventsUnitTests {
 	interface DummyEntityRepository
 			extends CrudRepository<DummyEntity, Long>, PagingAndSortingRepository<DummyEntity, Long> {}
 
-	static final class DummyEntity {
-		private final @Id Long id;
-
-		public DummyEntity(Long id) {
-			this.id = id;
-		}
-
-		public Long getId() {
-			return this.id;
-		}
-
-		public DummyEntity withId(Long id) {
-			return this.id == id ? this : new DummyEntity(id);
-		}
+	record DummyEntity(@Id Long id) {
 
 		@Override
-		public boolean equals(Object o) {
-			if (this == o)
-				return true;
-			if (o == null || getClass() != o.getClass())
-				return false;
+		public Long id() {
+				return this.id;
+			}
 
-			DummyEntity that = (DummyEntity) o;
+			public DummyEntity withId(Long id) {
+				return this.id == id ? this : new DummyEntity(id);
+			}
 
-			return ObjectUtils.nullSafeEquals(id, that.id);
+			@Override
+			public boolean equals(Object o) {
+				if (this == o)
+					return true;
+				if (o == null || getClass() != o.getClass())
+					return false;
+
+				DummyEntity that = (DummyEntity) o;
+
+				return ObjectUtils.nullSafeEquals(id, that.id);
+			}
+
+			@Override
+			public int hashCode() {
+				return ObjectUtils.nullSafeHashCode(id);
+			}
+
+			public String toString() {
+				return "SimpleJdbcRepositoryEventsUnitTests.DummyEntity(id=" + this.id() + ")";
+			}
+
 		}
-
-		@Override
-		public int hashCode() {
-			return ObjectUtils.nullSafeHashCode(id);
-		}
-
-		public String toString() {
-			return "SimpleJdbcRepositoryEventsUnitTests.DummyEntity(id=" + this.getId() + ")";
-		}
-
-	}
 
 	static class CollectingEventPublisher implements ApplicationEventPublisher {
 

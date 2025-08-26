@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 
 /**
  * Strategy for executing an insert.

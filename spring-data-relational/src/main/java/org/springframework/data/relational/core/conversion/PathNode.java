@@ -15,33 +15,24 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a single entity in an aggregate along with its property path from the root entity and the chain of objects
  * to traverse a long this path.
  *
+ * @param path   The path to this entity
+ * @param parent The parent {@link PathNode}. This is {@code null} if this is the root entity.
+ * @param value  The value of the entity.
  * @author Jens Schauder
  */
-final class PathNode {
-
-	/**
-	 * The path to this entity
-	 */
-	private final PersistentPropertyPath<RelationalPersistentProperty> path;
-
-	/**
-	 * The parent {@link PathNode}. This is {@code null} if this is the root entity.
-	 */
-	@Nullable private final PathNode parent;
-
-	/**
-	 * The value of the entity.
-	 */
-	private final Object value;
+record PathNode(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable PathNode parent, Object value) {
 
 	PathNode(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable PathNode parent, Object value) {
 
@@ -51,29 +42,17 @@ final class PathNode {
 	}
 
 	/**
-	 * If the node represents a qualified property (i.e. a {@link java.util.List} or {@link java.util.Map}) the actual
+	 * If the node represents a qualified property (i.e. a {@link List} or {@link Map}) the actual
 	 * value is an element of the {@literal List} or a value of the {@literal Map}, while the {@link #value} is actually a
 	 * {@link Pair} with the index or key as the first element and the actual value as second element.
 	 */
 	Object getActualValue() {
 
-		return getPath().getLeafProperty().isQualified() //
-				? ((Pair<?,?>) getValue()).getSecond() //
-				: getValue();
+		return path().getLeafProperty().isQualified() //
+				? ((Pair<?, ?>) value()).getSecond() //
+				: value();
 	}
 
-	public PersistentPropertyPath<RelationalPersistentProperty> getPath() {
-		return this.path;
-	}
-
-	@Nullable
-	public PathNode getParent() {
-		return this.parent;
-	}
-
-	public Object getValue() {
-		return this.value;
-	}
 
 	@Override
 	public String toString() {

@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 
@@ -152,7 +152,7 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 	}
 
 	@Override
-	public Parameter get(Object key) {
+	public @Nullable Parameter get(Object key) {
 		return this.rowAsMap.get(convertKeyIfNecessary(key));
 	}
 

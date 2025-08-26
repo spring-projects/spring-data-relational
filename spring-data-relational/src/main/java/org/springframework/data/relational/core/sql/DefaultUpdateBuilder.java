@@ -20,10 +20,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign;
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhere;
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.util.Assert;
 class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAndOr, UpdateAssign {
 
 	private @Nullable Table table;
-	private List<Assignment> assignments = new ArrayList<>();
+	private final List<Assignment> assignments = new ArrayList<>();
 	private @Nullable Condition where;
 
 	@Override
@@ -90,6 +90,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 	public UpdateWhereAndOr and(Condition condition) {
 
 		Assert.notNull(condition, "Condition must not be null");
+		Assert.state(this.where != null, "Where must not be null");
 
 		this.where = this.where.and(condition);
 
@@ -100,6 +101,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 	public UpdateWhereAndOr or(Condition condition) {
 
 		Assert.notNull(condition, "Condition must not be null");
+		Assert.state(this.where != null, "Where must not be null");
 
 		this.where = this.where.and(condition);
 
@@ -108,6 +110,9 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 
 	@Override
 	public Update build() {
+
+		Assert.state(this.table != null, "Table must not be null");
+
 		return new DefaultUpdate(this.table, this.assignments, this.where);
 	}
 }

@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.mapping.schema;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -48,7 +48,6 @@ public interface SqlTypeMapping {
 	 * @param type class for which the type should be determined.
 	 * @return the SQL type to use, such as {@code VARCHAR} or {@code NUMERIC}. Can be {@literal null} if the strategy
 	 *         cannot provide a column type.
-	 *
 	 * @since 3.3
 	 */
 	@Nullable

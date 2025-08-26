@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -42,7 +43,6 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
 import org.springframework.data.relational.core.conversion.RootAggregateChange;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link MutableAggregateChange}.
@@ -335,7 +335,7 @@ public class AggregateChangeIdGenerationUnitTests {
 			DbAction.Insert<?> parentInsert) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
-				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
+				parentInsert.propertyPath().toDotPath() + "." + propertyName);
 
 		return new DbAction.Insert<>(value, propertyPath, parentInsert,
 				key == null ? emptyMap() : singletonMap(propertyPath, key), IdValueSource.GENERATED);

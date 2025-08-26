@@ -17,11 +17,11 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.TypedValue;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link org.springframework.expression.PropertyAccessor} to allow entity based field access to

@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.relational.core.sql.Visitable;
-import org.springframework.lang.Nullable;
 
 /**
  * Renderer for {@link Column}s. Renders a column as {@literal &gt;table&lt;.&gt;column&lt;} or

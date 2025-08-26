@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
@@ -35,7 +36,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 
 /**
  * Creates the {@link SqlIdentifierParameterSource} for various SQL operations, dialect identifier processing rules and
@@ -94,7 +94,7 @@ public class SqlParametersFactory {
 
 			AggregatePath.ColumnInfos columnInfos = context.getAggregatePath(persistentEntity).getTableInfo().idColumnInfos();
 
-			//  fullPath: because we use the result with a PropertyPathAccessor
+			// fullPath: because we use the result with a PropertyPathAccessor
 			columnInfos.forEach((ap, __) -> {
 				Object idValue = propertyPathAccessor.getProperty(ap.getRequiredPersistentPropertyPath());
 				RelationalPersistentProperty idProperty = ap.getRequiredLeafProperty();
@@ -192,7 +192,7 @@ public class SqlParametersFactory {
 	interface IdentifierCallback<T> {
 
 		T doWithIdentifiers(AggregatePath.ColumnInfos columns, RelationalPersistentProperty idProperty,
-				RelationalPersistentEntity<?> complexId);
+				@Nullable RelationalPersistentEntity<?> complexId);
 	}
 
 	/**
@@ -267,7 +267,6 @@ public class SqlParametersFactory {
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
-
 		persistentEntity.doWithAll(property -> {
 
 			if (skipProperty.test(property) || !property.isWritable()) {
@@ -281,7 +280,8 @@ public class SqlParametersFactory {
 			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
-				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getTypeInformation());
+				RelationalPersistentEntity<?> embeddedEntity = context
+						.getRequiredPersistentEntity(property.getTypeInformation());
 				SqlIdentifierParameterSource additionalParameters = getParameterSource((T) value,
 						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				parameters.addAll(additionalParameters);
@@ -316,13 +316,13 @@ public class SqlParametersFactory {
 		}
 
 		@Override
-		public Object getProperty(PersistentProperty<?> property) {
+		public @Nullable Object getProperty(PersistentProperty<?> property) {
 			return null;
 		}
 
 		@Override
 		public T getBean() {
-			return null;
+			throw new UnsupportedOperationException("Cannot get bean of NoValuePropertyAccessor");
 		}
 	}
 }

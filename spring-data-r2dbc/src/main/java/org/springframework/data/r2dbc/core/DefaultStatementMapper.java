@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -32,7 +33,6 @@ import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWithBuild;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindMarkers;
 import org.springframework.r2dbc.core.binding.BindTarget;
@@ -247,8 +247,9 @@ class DefaultStatementMapper implements StatementMapper {
 
 		if (criteria != null && !criteria.isEmpty()) {
 
-			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, deleteSpec.getCriteria(), table,
-					entity);
+			Assert.state(criteria != null, "DeleteSpec must have a criteria");
+
+			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, criteria, table, entity);
 
 			bindings = boundCondition.getBindings();
 			delete = deleteBuilder.where(boundCondition.getCondition()).build();

@@ -15,10 +15,10 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link PropertyAccessor} to access a column from a {@link ResultSetAccessor}.

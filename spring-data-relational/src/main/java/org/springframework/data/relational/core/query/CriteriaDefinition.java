@@ -18,8 +18,8 @@ package org.springframework.data.relational.core.query;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -134,7 +134,7 @@ public interface CriteriaDefinition {
 	Combinator getCombinator();
 
 	enum Combinator {
-		INITIAL, AND, OR;
+		INITIAL, AND, OR
 	}
 
 	enum Comparator {

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
@@ -48,7 +49,6 @@ import org.springframework.data.relational.repository.query.RelationalQueryCreat
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -158,7 +158,7 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 			).from(table) //
 					.where(inCondition) //
 					.build();
-			deleteRelations(aggregatePath.getLeafEntity(), select, deleteConsumer);
+			deleteRelations(aggregatePath.getRequiredLeafEntity(), select, deleteConsumer);
 
 			deleteConsumer.accept(StatementBuilder.delete(table).where(inCondition).build());
 		}

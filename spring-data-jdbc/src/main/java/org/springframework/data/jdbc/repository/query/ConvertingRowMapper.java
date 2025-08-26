@@ -15,9 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * Delegating {@link RowMapper} that reads a row into {@code T} and converts it afterward into {@code Object}.

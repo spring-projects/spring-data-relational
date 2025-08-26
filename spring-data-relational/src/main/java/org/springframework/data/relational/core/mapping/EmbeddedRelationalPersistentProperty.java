@@ -19,10 +19,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 
 /**
@@ -48,7 +48,6 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 		return delegate.isEmbedded();
 	}
 
-	@Nullable
 	@Override
 	public String getEmbeddedPrefix() {
 		return context.withEmbeddedPrefix(delegate.getEmbeddedPrefix());

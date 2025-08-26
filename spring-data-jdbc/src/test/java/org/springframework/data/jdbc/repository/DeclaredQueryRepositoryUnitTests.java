@@ -20,9 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -42,7 +42,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 
 /**
  * Extracts the SQL statement that results from declared queries of a repository and perform assertions on it.
@@ -51,7 +50,7 @@ import org.springframework.lang.Nullable;
  */
 public class DeclaredQueryRepositoryUnitTests {
 
-	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class, RETURNS_DEEP_STUBS);
+	private final NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class, RETURNS_DEEP_STUBS);
 
 	@Test // GH-1856
 	void plainSql() {

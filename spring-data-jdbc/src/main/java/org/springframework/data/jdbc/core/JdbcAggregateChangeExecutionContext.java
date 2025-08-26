@@ -15,20 +15,12 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -48,7 +40,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -82,8 +73,8 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
-				insert.getIdValueSource());
+		Object id = accessStrategy.insert(insert.entity(), insert.entityType(), Identifier.empty(),
+				insert.idValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
@@ -91,9 +82,9 @@ class JdbcAggregateChangeExecutionContext {
 
 		List<DbAction.InsertRoot<T>> inserts = batchInsertRoot.getActions();
 		List<InsertSubject<T>> insertSubjects = inserts.stream()
-				.map(insert -> InsertSubject.describedBy(insert.getEntity(), Identifier.empty())).collect(Collectors.toList());
+				.map(insert -> InsertSubject.describedBy(insert.entity(), Identifier.empty())).collect(Collectors.toList());
 
-		Object[] ids = accessStrategy.insert(insertSubjects, batchInsertRoot.getEntityType(),
+		Object[] ids = accessStrategy.insert(insertSubjects, batchInsertRoot.entityType(),
 				batchInsertRoot.getBatchValue());
 
 		for (int i = 0; i < inserts.size(); i++) {
@@ -104,8 +95,8 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys,
-				insert.getIdValueSource());
+		Object id = accessStrategy.insert(insert.entity(), insert.entityType(), parentKeys,
+				insert.idValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
@@ -113,10 +104,10 @@ class JdbcAggregateChangeExecutionContext {
 
 		List<DbAction.Insert<T>> inserts = batchInsert.getActions();
 		List<InsertSubject<T>> insertSubjects = inserts.stream()
-				.map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter)))
+				.map(insert -> InsertSubject.describedBy(insert.entity(), getParentKeys(insert, converter)))
 				.collect(Collectors.toList());
 
-		Object[] ids = accessStrategy.insert(insertSubjects, batchInsert.getEntityType(), batchInsert.getBatchValue());
+		Object[] ids = accessStrategy.insert(insertSubjects, batchInsert.entityType(), batchInsert.getBatchValue());
 
 		for (int i = 0; i < inserts.size(); i++) {
 			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
@@ -135,46 +126,46 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeDeleteRoot(DbAction.DeleteRoot<T> delete) {
 
-		if (delete.getPreviousVersion() != null) {
-			accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
+		if (delete.previousVersion() != null) {
+			accessStrategy.deleteWithVersion(delete.id(), delete.entityType(), delete.previousVersion());
 		} else {
-			accessStrategy.delete(delete.getId(), delete.getEntityType());
+			accessStrategy.delete(delete.id(), delete.entityType());
 		}
 	}
 
 	<T> void executeBatchDeleteRoot(DbAction.BatchDeleteRoot<T> batchDelete) {
 
-		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.DeleteRoot::getId).toList();
-		accessStrategy.delete(rootIds, batchDelete.getEntityType());
+		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.DeleteRoot::id).toList();
+		accessStrategy.delete(rootIds, batchDelete.entityType());
 	}
 
 	<T> void executeDelete(DbAction.Delete<T> delete) {
 
-		accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
+		accessStrategy.delete(delete.rootId(), delete.propertyPath());
 	}
 
 	<T> void executeBatchDelete(DbAction.BatchDelete<T> batchDelete) {
 
-		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.Delete::getRootId).toList();
+		List<Object> rootIds = batchDelete.getActions().stream().map(DbAction.Delete::rootId).toList();
 		accessStrategy.delete(rootIds, batchDelete.getBatchValue());
 	}
 
 	<T> void executeDeleteAllRoot(DbAction.DeleteAllRoot<T> deleteAllRoot) {
 
-		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
+		accessStrategy.deleteAll(deleteAllRoot.entityType());
 	}
 
 	<T> void executeDeleteAll(DbAction.DeleteAll<T> delete) {
 
-		accessStrategy.deleteAll(delete.getPropertyPath());
+		accessStrategy.deleteAll(delete.propertyPath());
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
-		accessStrategy.acquireLockById(acquireLock.getId(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
+		accessStrategy.acquireLockById(acquireLock.getId(), LockMode.PESSIMISTIC_WRITE, acquireLock.entityType());
 	}
 
 	<T> void executeAcquireLockAllRoot(DbAction.AcquireLockAllRoot<T> acquireLock) {
-		accessStrategy.acquireLockAll(LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
+		accessStrategy.acquireLockAll(LockMode.PESSIMISTIC_WRITE, acquireLock.entityType());
 	}
 
 	private void add(DbActionExecutionResult result) {
@@ -185,11 +176,11 @@ class JdbcAggregateChangeExecutionContext {
 
 		Object id = getParentId(action);
 
-		AggregatePath aggregatePath = context.getAggregatePath(action.getPropertyPath());
+		AggregatePath aggregatePath = context.getAggregatePath(action.propertyPath());
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
 				.forBackReferences(converter, aggregatePath, getIdMapper(id, aggregatePath, converter));
 
-		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
+		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.qualifiers()
 				.entrySet()) {
 			identifier = identifier.withQualifier(context.getAggregatePath(qualifier.getKey()), qualifier.getValue());
 		}
@@ -200,21 +191,21 @@ class JdbcAggregateChangeExecutionContext {
 	static Function<AggregatePath, Object> getIdMapper(Object idValue, AggregatePath path, JdbcConverter converter) {
 
 		RelationalPersistentProperty idProperty = path.getIdDefiningParentPath().getRequiredIdProperty();
-		RelationalPersistentEntity<?> entity = converter.getMappingContext()
-				.getPersistentEntity(idProperty);
+		RelationalPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(idProperty);
 
 		if (entity == null) {
 			return aggregatePath -> idValue;
 		}
 
 		PersistentPropertyPathAccessor<Object> propertyPathAccessor = entity.getPropertyPathAccessor(idValue);
-		return aggregatePath -> propertyPathAccessor.getProperty(aggregatePath.getSubPathBasedOn(idProperty.getActualType()).getRequiredPersistentPropertyPath());
+		return aggregatePath -> propertyPathAccessor
+				.getProperty(aggregatePath.getSubPathBasedOn(idProperty.getActualType()).getRequiredPersistentPropertyPath());
 	}
 
 	private Object getParentId(DbAction.WithDependingOn<?> action) {
 
 		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action,
-				context.getAggregatePath(action.getPropertyPath()).getIdDefiningParentPath());
+				context.getAggregatePath(action.propertyPath()).getIdDefiningParentPath());
 
 		return getPotentialGeneratedIdFrom(idOwningAction);
 	}
@@ -229,16 +220,16 @@ class JdbcAggregateChangeExecutionContext {
 			return action;
 		}
 
-		if (idPath.equals(context.getAggregatePath(withDependingOn.getPropertyPath()))) {
+		if (idPath.equals(context.getAggregatePath(withDependingOn.propertyPath()))) {
 			return action;
 		}
 
-		return getIdOwningAction(withDependingOn.getDependingOn(), idPath);
+		return getIdOwningAction(withDependingOn.dependingOn(), idPath);
 	}
 
 	private Object getPotentialGeneratedIdFrom(DbAction.WithEntity<?> idOwningAction) {
 
-		if (IdValueSource.GENERATED.equals(idOwningAction.getIdValueSource())) {
+		if (IdValueSource.GENERATED.equals(idOwningAction.idValueSource())) {
 
 			DbActionExecutionResult dbActionExecutionResult = results.get(idOwningAction);
 			Object generatedId = Optional.ofNullable(dbActionExecutionResult) //
@@ -255,8 +246,8 @@ class JdbcAggregateChangeExecutionContext {
 
 	private Object getIdFrom(DbAction.WithEntity<?> idOwningAction) {
 
-		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(idOwningAction.getEntityType());
-		Object identifier = persistentEntity.getIdentifierAccessor(idOwningAction.getEntity()).getIdentifier();
+		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(idOwningAction.entityType());
+		Object identifier = persistentEntity.getIdentifierAccessor(idOwningAction.entity()).getIdentifier();
 
 		Assert.state(identifier != null, () -> "Couldn't obtain a required id value for " + persistentEntity);
 
@@ -290,12 +281,12 @@ class JdbcAggregateChangeExecutionContext {
 				Pair<?, ?> qualifier = insert.getQualifier();
 				Object qualifierValue = qualifier == null ? null : qualifier.getSecond();
 
-				if (newEntity != action.getEntity()) {
+				if (newEntity != action.entity()) {
 
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
-				} else if (insert.getPropertyPath().getLeafProperty().isCollectionLike()) {
+					cascadingValues.stage(insert.dependingOn(), insert.propertyPath(), qualifierValue, newEntity);
+				} else if (insert.propertyPath().getLeafProperty().isCollectionLike()) {
 
-					cascadingValues.gather(insert.getDependingOn(), insert.getPropertyPath(), qualifierValue, newEntity);
+					cascadingValues.gather(insert.dependingOn(), insert.propertyPath(), qualifierValue, newEntity);
 				}
 			}
 		}
@@ -315,14 +306,14 @@ class JdbcAggregateChangeExecutionContext {
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,
 			StagedValues cascadingValues) {
 
-		S originalEntity = action.getEntity();
+		S originalEntity = action.entity();
 
 		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context
-				.getRequiredPersistentEntity(action.getEntityType());
+				.getRequiredPersistentEntity(action.entityType());
 		PersistentPropertyPathAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity,
 				originalEntity);
 
-		if (IdValueSource.GENERATED.equals(action.getIdValueSource())) {
+		if (IdValueSource.GENERATED.equals(action.idValueSource())) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 
@@ -337,7 +328,7 @@ class JdbcAggregateChangeExecutionContext {
 	private PersistentPropertyPath<?> getRelativePath(DbAction<?> action, PersistentPropertyPath<?> pathToValue) {
 
 		if (action instanceof DbAction.Insert insert) {
-			return pathToValue.getExtensionForBaseOf(insert.getPropertyPath());
+			return pathToValue.getExtensionForBaseOf(insert.propertyPath());
 		}
 
 		if (action instanceof DbAction.InsertRoot) {
@@ -358,10 +349,10 @@ class JdbcAggregateChangeExecutionContext {
 
 	private <T> void updateWithoutVersion(DbAction.UpdateRoot<T> update) {
 
-		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+		if (!accessStrategy.update(update.entity(), update.entityType())) {
 
 			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+					String.format(UPDATE_FAILED, update.entity(), getIdFrom(update)));
 		}
 	}
 
@@ -370,9 +361,9 @@ class JdbcAggregateChangeExecutionContext {
 		Number previousVersion = update.getPreviousVersion();
 		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null");
 
-		if (!accessStrategy.updateWithVersion(update.getEntity(), update.getEntityType(), previousVersion)) {
+		if (!accessStrategy.updateWithVersion(update.entity(), update.entityType(), previousVersion)) {
 
-			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
+			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.entity()));
 		}
 	}
 

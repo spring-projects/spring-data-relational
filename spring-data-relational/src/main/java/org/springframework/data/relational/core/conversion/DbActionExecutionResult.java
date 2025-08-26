@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Jens Schauder
@@ -24,7 +24,7 @@ import org.springframework.lang.Nullable;
  */
 public class DbActionExecutionResult {
 
-	private final Object generatedId;
+	private final @Nullable Object generatedId;
 	private final DbAction.WithEntity<?> action;
 
 	public DbActionExecutionResult(DbAction.WithEntity<?> action) {
@@ -39,6 +39,11 @@ public class DbActionExecutionResult {
 		this.generatedId = generatedId;
 	}
 
+	/**
+	 * @deprecated Use one of the other constructors.
+	 */
+	@SuppressWarnings("NullAway")
+	@Deprecated(since = "4.0", forRemoval = true)
 	public DbActionExecutionResult() {
 
 		action = null;

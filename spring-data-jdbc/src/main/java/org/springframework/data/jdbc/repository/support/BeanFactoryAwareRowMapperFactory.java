@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -25,7 +26,6 @@ import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * This {@link RowMapperFactory} implementation extends the {@link DefaultRowMapperFactory} by adding the capabilities
@@ -41,7 +41,8 @@ public class BeanFactoryAwareRowMapperFactory extends DefaultRowMapperFactory {
 	private final @Nullable BeanFactory beanFactory;
 
 	BeanFactoryAwareRowMapperFactory(JdbcConverter converter, QueryMappingConfiguration queryMappingConfiguration,
-			EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher, @Nullable BeanFactory beanFactory) {
+			@Nullable EntityCallbacks entityCallbacks, ApplicationEventPublisher publisher,
+			@Nullable BeanFactory beanFactory) {
 
 		super(converter, queryMappingConfiguration, entityCallbacks, publisher);
 

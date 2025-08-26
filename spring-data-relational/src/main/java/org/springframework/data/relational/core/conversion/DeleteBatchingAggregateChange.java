@@ -65,7 +65,7 @@ public class DeleteBatchingAggregateChange<T> implements BatchingAggregateChange
 
 	private void addDeleteRoot(DbAction.DeleteRoot<T> action) {
 
-		if (action.getPreviousVersion() == null) {
+		if (action.previousVersion() == null) {
 			rootActionsWithoutVersion.add(action);
 		} else {
 			rootActionsWithVersion.add(action);

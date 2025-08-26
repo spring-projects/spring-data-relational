@@ -19,9 +19,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.UnaryOperator;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

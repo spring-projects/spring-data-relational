@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.mapping.Association;
@@ -31,7 +32,6 @@ import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.util.Lazy;
 import org.springframework.expression.Expression;
 import org.springframework.expression.common.LiteralExpression;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -54,7 +54,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<SqlIdentifier> columnName;
 	private final boolean hasExplicitColumnName;
 	private final @Nullable ValueExpression columnNameExpression;
-	private final SqlIdentifier sequence;
+	private final @Nullable SqlIdentifier sequence;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final @Nullable ValueExpression collectionIdColumnNameExpression;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
@@ -65,8 +65,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
 
-	private SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator =
-			new SqlIdentifierExpressionEvaluator(EvaluationContextProvider.DEFAULT);
+	private SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator = new SqlIdentifierExpressionEvaluator(
+			EvaluationContextProvider.DEFAULT);
 
 	/**
 	 * Creates a new {@link BasicRelationalPersistentProperty}.
@@ -78,7 +78,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @since 2.0
 	 */
 	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
-											 SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
+			SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
 
 		super(property, owner, simpleTypeHolder);
 		this.namingStrategy = namingStrategy;
@@ -224,6 +224,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
+	@Nullable
 	public SqlIdentifier getKeyColumn() {
 
 		if (!isQualified()) {
@@ -267,7 +268,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public String getEmbeddedPrefix() {
-		return isEmbedded() ? embeddedPrefix : null;
+		return isEmbedded() ? embeddedPrefix : "";
 	}
 
 	@Override

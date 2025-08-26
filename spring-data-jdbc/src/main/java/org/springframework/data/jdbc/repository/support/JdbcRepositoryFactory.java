@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -38,7 +39,6 @@ import org.springframework.data.repository.query.CachingValueExpressionDelegate;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -175,7 +175,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 	}
 
 	@Override
-	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.@Nullable Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
 
 		DataAccessStrategy strategy = operations.getDataAccessStrategy();

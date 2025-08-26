@@ -1,4 +1,4 @@
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.repository.support;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

@@ -3,10 +3,10 @@ package org.springframework.data.jdbc.repository.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -19,7 +19,7 @@ import org.springframework.util.Assert;
  */
 public class DefaultQueryMappingConfiguration implements QueryMappingConfiguration {
 
-	private Map<Class<?>, RowMapper<?>> mappers = new LinkedHashMap<>();
+	private final Map<Class<?>, RowMapper<?>> mappers = new LinkedHashMap<>();
 
 	@Nullable
 	public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {

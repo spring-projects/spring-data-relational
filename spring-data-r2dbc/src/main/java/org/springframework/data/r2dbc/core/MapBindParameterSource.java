@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.util.Streamable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
@@ -93,13 +94,17 @@ class MapBindParameterSource implements BindParameterSource {
 	}
 
 	@Override
-	public Object getValue(String paramName) throws IllegalArgumentException {
+	public @Nullable Object getValue(String paramName) throws IllegalArgumentException {
 
 		if (!hasValue(paramName)) {
 			throw new IllegalArgumentException("No value registered for key '" + paramName + "'");
 		}
 
-		return this.values.get(paramName).getValue();
+		Parameter parameter = this.values.get(paramName);
+
+		Assert.notNull(parameter, "Parameter must not be null");
+
+		return parameter.getValue();
 	}
 
 	@Override

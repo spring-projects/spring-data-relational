@@ -23,10 +23,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -42,64 +42,41 @@ import org.springframework.util.Assert;
  */
 public interface DbAction<T> {
 
-	Class<T> getEntityType();
+	Class<T> entityType();
 
 	/**
 	 * Represents an insert statement for a single entity that is not the root of an aggregate.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	class Insert<T> implements WithDependingOn<T> {
+		record Insert<T>(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+						 WithEntity<?> dependingOn,
+						 Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
+						 IdValueSource idValueSource) implements WithDependingOn<T> {
 
-		private final T entity;
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		private final WithEntity<?> dependingOn;
-		private final IdValueSource idValueSource;
+			public Insert(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+						  WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
+						  IdValueSource idValueSource) {
 
-		final Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers;
+				this.entity = entity;
+				this.propertyPath = propertyPath;
+				this.dependingOn = dependingOn;
+				this.qualifiers = Map.copyOf(qualifiers);
+				this.idValueSource = idValueSource;
+			}
 
-		public Insert(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
-				WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
-				IdValueSource idValueSource) {
+			@Override
+			public Class<T> entityType() {
+				return WithDependingOn.super.entityType();
+			}
 
-			this.entity = entity;
-			this.propertyPath = propertyPath;
-			this.dependingOn = dependingOn;
-			this.qualifiers = Map.copyOf(qualifiers);
-			this.idValueSource = idValueSource;
-		}
-
-		@Override
-		public Class<T> getEntityType() {
-			return WithDependingOn.super.getEntityType();
-		}
-
-		public T getEntity() {
-			return this.entity;
-		}
-
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
-
-		public DbAction.WithEntity<?> getDependingOn() {
-			return this.dependingOn;
-		}
-
-		public Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers() {
-			return this.qualifiers;
-		}
-
-		public IdValueSource getIdValueSource() {
-			return idValueSource;
-		}
 
 		@Override
-		public String toString() {
-			return "Insert{" + "entity=" + entity + ", propertyPath=" + propertyPath + ", dependingOn=" + dependingOn
-					+ ", idValueSource=" + idValueSource + ", qualifiers=" + qualifiers + '}';
+			public String toString() {
+				return "Insert{" + "entity=" + entity + ", propertyPath=" + propertyPath + ", dependingOn=" + dependingOn
+						+ ", idValueSource=" + idValueSource + ", qualifiers=" + qualifiers + '}';
+			}
 		}
-	}
 
 	/**
 	 * Represents an insert statement for the root of an aggregate. Upon a successful insert, the initial version and
@@ -118,7 +95,7 @@ public interface DbAction<T> {
 			this.idValueSource = idValueSource;
 		}
 
-		public T getEntity() {
+		public T entity() {
 			return this.entity;
 		}
 
@@ -127,7 +104,7 @@ public interface DbAction<T> {
 			this.entity = entity;
 		}
 
-		public IdValueSource getIdValueSource() {
+		public IdValueSource idValueSource() {
 			return idValueSource;
 		}
 
@@ -153,7 +130,7 @@ public interface DbAction<T> {
 			this.previousVersion = previousVersion;
 		}
 
-		public T getEntity() {
+		public T entity() {
 			return this.entity;
 		}
 
@@ -163,7 +140,7 @@ public interface DbAction<T> {
 		}
 
 		@Override
-		public IdValueSource getIdValueSource() {
+		public IdValueSource idValueSource() {
 			return IdValueSource.PROVIDED;
 		}
 
@@ -173,7 +150,7 @@ public interface DbAction<T> {
 		}
 
 		public String toString() {
-			return "DbAction.UpdateRoot(entity=" + this.getEntity() + ")";
+			return "DbAction.UpdateRoot(entity=" + this.entity() + ")";
 		}
 	}
 
@@ -182,29 +159,14 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	final class Delete<T> implements WithPropertyPath<T> {
+		record Delete<T>(Object rootId,
+						 PersistentPropertyPath<RelationalPersistentProperty> propertyPath) implements WithPropertyPath<T> {
 
-		private final Object rootId;
-
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-
-		public Delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-			this.rootId = rootId;
-			this.propertyPath = propertyPath;
-		}
-
-		public Object getRootId() {
-			return this.rootId;
-		}
-
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
 
 		public String toString() {
-			return "DbAction.Delete(rootId=" + this.getRootId() + ", propertyPath=" + this.getPropertyPath() + ")";
+				return "DbAction.Delete(rootId=" + this.rootId() + ", propertyPath=" + this.propertyPath() + ")";
+			}
 		}
-	}
 
 	/**
 	 * Represents a delete statement for a aggregate root when only the ID is known.
@@ -215,38 +177,15 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	final class DeleteRoot<T> implements DbAction<T> {
+		record DeleteRoot<T>(Object id, Class<T> entityType, @Nullable Number previousVersion) implements DbAction<T> {
 
-		private final Object id;
-		private final Class<T> entityType;
-		@Nullable private final Number previousVersion;
-
-		public DeleteRoot(Object id, Class<T> entityType, @Nullable Number previousVersion) {
-
-			this.id = id;
-			this.entityType = entityType;
-			this.previousVersion = previousVersion;
-		}
-
-		public Object getId() {
-			return this.id;
-		}
-
-		public Class<T> getEntityType() {
-			return this.entityType;
-		}
-
-		@Nullable
-		public Number getPreviousVersion() {
-			return this.previousVersion;
-		}
 
 		public String toString() {
 
-			return "DbAction.DeleteRoot(id=" + this.getId() + ", entityType=" + this.getEntityType() + ", previousVersion="
-					+ this.getPreviousVersion() + ")";
+				return "DbAction.DeleteRoot(id=" + this.id() + ", entityType=" + this.entityType() + ", previousVersion="
+						+ this.previousVersion() + ")";
+			}
 		}
-	}
 
 	/**
 	 * Represents a delete statement for all entities that are reachable via a given path from any aggregate root of a
@@ -254,22 +193,14 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	final class DeleteAll<T> implements WithPropertyPath<T> {
+		record DeleteAll<T>(
+			PersistentPropertyPath<RelationalPersistentProperty> propertyPath) implements WithPropertyPath<T> {
 
-		private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-
-		public DeleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-			this.propertyPath = propertyPath;
-		}
-
-		public PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath() {
-			return this.propertyPath;
-		}
 
 		public String toString() {
-			return "DbAction.DeleteAll(propertyPath=" + this.getPropertyPath() + ")";
+				return "DbAction.DeleteAll(propertyPath=" + this.propertyPath() + ")";
+			}
 		}
-	}
 
 	/**
 	 * Represents a delete statement for all aggregate roots of a given type.
@@ -280,22 +211,13 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	final class DeleteAllRoot<T> implements DbAction<T> {
+		record DeleteAllRoot<T>(Class<T> entityType) implements DbAction<T> {
 
-		private final Class<T> entityType;
-
-		public DeleteAllRoot(Class<T> entityType) {
-			this.entityType = entityType;
-		}
-
-		public Class<T> getEntityType() {
-			return this.entityType;
-		}
 
 		public String toString() {
-			return "DbAction.DeleteAllRoot(entityType=" + this.getEntityType() + ")";
+				return "DbAction.DeleteAllRoot(entityType=" + this.entityType() + ")";
+			}
 		}
-	}
 
 	/**
 	 * Represents an acquire lock statement for a aggregate root when only the ID is known.
@@ -316,12 +238,12 @@ public interface DbAction<T> {
 			return this.id;
 		}
 
-		public Class<T> getEntityType() {
+		public Class<T> entityType() {
 			return this.entityType;
 		}
 
 		public String toString() {
-			return "DbAction.AcquireLockRoot(id=" + this.getId() + ", entityType=" + this.getEntityType() + ")";
+			return "DbAction.AcquireLockRoot(id=" + this.getId() + ", entityType=" + this.entityType() + ")";
 		}
 	}
 
@@ -338,12 +260,12 @@ public interface DbAction<T> {
 			this.entityType = entityType;
 		}
 
-		public Class<T> getEntityType() {
+		public Class<T> entityType() {
 			return this.entityType;
 		}
 
 		public String toString() {
-			return "DbAction.AcquireLockAllRoot(entityType=" + this.getEntityType() + ")";
+			return "DbAction.AcquireLockAllRoot(entityType=" + this.entityType() + ")";
 		}
 	}
 
@@ -379,8 +301,8 @@ public interface DbAction<T> {
 		}
 
 		@Override
-		public Class<T> getEntityType() {
-			return actions.get(0).getEntityType();
+		public Class<T> entityType() {
+			return actions.get(0).entityType();
 		}
 
 		public List<A> getActions() {
@@ -405,7 +327,7 @@ public interface DbAction<T> {
 	 */
 	final class BatchInsert<T> extends BatchWithValue<T, Insert<T>, IdValueSource> {
 		public BatchInsert(List<Insert<T>> actions) {
-			super(actions, Insert::getIdValueSource);
+			super(actions, Insert::idValueSource);
 		}
 	}
 
@@ -417,7 +339,7 @@ public interface DbAction<T> {
 	 */
 	final class BatchInsertRoot<T> extends BatchWithValue<T, InsertRoot<T>, IdValueSource> {
 		public BatchInsertRoot(List<InsertRoot<T>> actions) {
-			super(actions, InsertRoot::getIdValueSource);
+			super(actions, InsertRoot::idValueSource);
 		}
 	}
 
@@ -431,7 +353,7 @@ public interface DbAction<T> {
 	final class BatchDelete<T>
 			extends BatchWithValue<T, Delete<T>, PersistentPropertyPath<RelationalPersistentProperty>> {
 		public BatchDelete(List<Delete<T>> actions) {
-			super(actions, Delete::getPropertyPath);
+			super(actions, Delete::propertyPath);
 		}
 	}
 
@@ -444,7 +366,7 @@ public interface DbAction<T> {
 	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
 
 		BatchDeleteRoot(List<DeleteRoot<T>> actions) {
-			super(actions, DeleteRoot::getEntityType);
+			super(actions, DeleteRoot::entityType);
 		}
 	}
 
@@ -461,9 +383,9 @@ public interface DbAction<T> {
 		 * become available once the parent entity got persisted.
 		 *
 		 * @return guaranteed to be not {@code null}.
-		 * @see #getQualifiers()
+		 * @see #qualifiers()
 		 */
-		WithEntity<?> getDependingOn();
+		WithEntity<?> dependingOn();
 
 		/**
 		 * Additional values to be set during insert or update statements.
@@ -473,7 +395,7 @@ public interface DbAction<T> {
 		 *
 		 * @return guaranteed to be not {@code null}.
 		 */
-		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
+		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers();
 
 		// TODO: Encapsulate propertyPath and qualifier in object: PropertyPathWithListIndex,
 		// PropertyPathWithMapIndex, PropertyPathInSet, PropertyPathWithoutQualifier
@@ -481,7 +403,7 @@ public interface DbAction<T> {
 		@Nullable
 		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
 
-			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
+			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = qualifiers();
 
 			if (qualifiers.isEmpty()) {
 				return null;
@@ -501,8 +423,8 @@ public interface DbAction<T> {
 		}
 
 		@Override
-		default Class<T> getEntityType() {
-			return WithEntity.super.getEntityType();
+		default Class<T> entityType() {
+			return WithEntity.super.entityType();
 		}
 	}
 
@@ -517,18 +439,18 @@ public interface DbAction<T> {
 		/**
 		 * @return the entity to persist. Guaranteed to be not {@code null}.
 		 */
-		T getEntity();
+		T entity();
 
 		@SuppressWarnings("unchecked")
 		@Override
-		default Class<T> getEntityType() {
-			return (Class<T>) getEntity().getClass();
+		default Class<T> entityType() {
+			return (Class<T>) entity().getClass();
 		}
 
 		/**
 		 * @return the {@link IdValueSource} for the entity to persist. Guaranteed to be not {@code null}.
 		 */
-		IdValueSource getIdValueSource();
+		IdValueSource idValueSource();
 	}
 
 	/**
@@ -553,12 +475,12 @@ public interface DbAction<T> {
 		/**
 		 * @return the path from the aggregate root to the affected entity
 		 */
-		PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath();
+		PersistentPropertyPath<RelationalPersistentProperty> propertyPath();
 
 		@SuppressWarnings("unchecked")
 		@Override
-		default Class<T> getEntityType() {
-			return (Class<T>) getPropertyPath().getLeafProperty().getActualType();
+		default Class<T> entityType() {
+			return (Class<T>) propertyPath().getLeafProperty().getActualType();
 		}
 	}
 }

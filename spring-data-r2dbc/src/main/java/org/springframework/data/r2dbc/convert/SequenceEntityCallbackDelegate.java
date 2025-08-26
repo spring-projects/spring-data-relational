@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
@@ -89,6 +88,10 @@ class SequenceEntityCallbackDelegate {
 	private Mono<Object> getSequenceValue(RelationalPersistentProperty property) {
 
 		SqlIdentifier sequence = property.getSequence();
+
+		if (sequence == null) {
+			return Mono.empty();
+		}
 
 		if (sequence != null && !dialect.getIdGeneration().sequencesSupported()) {
 			LOG.warn("""

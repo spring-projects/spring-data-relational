@@ -73,7 +73,7 @@ class DeleteBatchingAggregateChangeTest {
 		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(actions).extracting(DbAction::getClass, DbAction::entityType) //
 				.containsExactly(Tuple.tuple(DbAction.BatchDelete.class, Intermediate.class));
 		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchDelete.class).getActions())
 				.containsExactly(intermediateDelete1, intermediateDelete2);
@@ -165,7 +165,7 @@ class DeleteBatchingAggregateChangeTest {
 		change.add(aggregateChange4);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
+		assertThat(actions).extracting(DbAction::getClass, DbAction::entityType).containsExactly( //
 				Tuple.tuple(DbAction.BatchDeleteRoot.class, Root.class), //
 				Tuple.tuple(DbAction.DeleteRoot.class, Root.class), //
 				Tuple.tuple(DbAction.DeleteRoot.class, Root.class));
@@ -194,7 +194,7 @@ class DeleteBatchingAggregateChangeTest {
 
 		return actions.stream() //
 				.filter(dbAction -> dbAction.getClass().equals(batchActionType)) //
-				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
+				.filter(dbAction -> dbAction.entityType().equals(entityType)) //
 				.map(dbAction -> (DbAction.BatchWithValue<T, DbAction<T>, Object>) dbAction).collect(Collectors.toList());
 	}
 

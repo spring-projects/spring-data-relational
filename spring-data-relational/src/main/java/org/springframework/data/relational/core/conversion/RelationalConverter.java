@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -27,7 +28,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 
 /**
  * A {@link RelationalConverter} is responsible for converting for values to the native relational representation and
@@ -101,7 +101,7 @@ public interface RelationalConverter {
 	 * @param <R> aggregate type.
 	 * @since 3.2
 	 */
-	<R> R read(Class<R> type, RowDocument source);
+	<R> @Nullable R read(Class<R> type, RowDocument source);
 
 	/**
 	 * Read a relational value into the desired {@link TypeInformation destination type}.

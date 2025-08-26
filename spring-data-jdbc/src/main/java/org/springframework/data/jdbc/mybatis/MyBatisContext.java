@@ -18,8 +18,8 @@ package org.springframework.data.jdbc.mybatis;
 import java.util.Collections;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jdbc.core.convert.Identifier;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link MyBatisContext} instances get passed to MyBatis mapped statements as arguments, making Ids, instances,

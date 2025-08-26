@@ -15,12 +15,12 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.lang.Nullable;
 
 /**
  * Factory which selects and builds the appropriate {@link InsertStrategy} or {@link BatchInsertStrategy} based on
@@ -70,36 +70,25 @@ public class InsertStrategyFactory {
 		return new DefaultBatchInsertStrategy(jdbcOperations);
 	}
 
-	private static class DefaultInsertStrategy implements InsertStrategy {
-
-		private final NamedParameterJdbcOperations jdbcOperations;
-
-		DefaultInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
-			this.jdbcOperations = jdbcOperations;
-		}
+	private record DefaultInsertStrategy(NamedParameterJdbcOperations jdbcOperations) implements InsertStrategy {
 
 		@Override
-		public Object execute(String sql, SqlParameterSource sqlParameterSource) {
+			public @Nullable Object execute(String sql, SqlParameterSource sqlParameterSource) {
 
-			jdbcOperations.update(sql, sqlParameterSource);
-			return null;
+				jdbcOperations.update(sql, sqlParameterSource);
+				return null;
+			}
 		}
-	}
 
-	private static class DefaultBatchInsertStrategy implements BatchInsertStrategy {
-
-		private final NamedParameterJdbcOperations jdbcOperations;
-
-		DefaultBatchInsertStrategy(NamedParameterJdbcOperations jdbcOperations) {
-			this.jdbcOperations = jdbcOperations;
-		}
+	private record DefaultBatchInsertStrategy(
+			NamedParameterJdbcOperations jdbcOperations) implements BatchInsertStrategy {
 
 		@Override
-		public Object[] execute(String sql, SqlParameterSource[] sqlParameterSources) {
+			public Object[] execute(String sql, SqlParameterSource[] sqlParameterSources) {
 
-			jdbcOperations.batchUpdate(sql, sqlParameterSources);
-			return new Object[sqlParameterSources.length];
+				jdbcOperations.batchUpdate(sql, sqlParameterSources);
+				return new Object[sqlParameterSources.length];
+			}
 		}
-	}
 
 }

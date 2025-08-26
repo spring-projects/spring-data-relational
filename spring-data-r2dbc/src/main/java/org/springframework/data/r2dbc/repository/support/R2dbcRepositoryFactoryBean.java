@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.repository.support;
 
 import java.io.Serializable;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -27,7 +28,6 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
@@ -90,8 +90,14 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	@Override
 	protected final RepositoryFactorySupport createRepositoryFactory() {
 
-		return this.operations != null ? getFactoryInstance(this.operations)
-				: getFactoryInstance(this.client, this.dataAccessStrategy);
+		if (this.operations != null) {
+			return getFactoryInstance(this.operations);
+		}
+
+		Assert.state(this.client != null, "DatabaseClient must not be null");
+		Assert.state(this.dataAccessStrategy != null, "DataAccessStrategy must not be null");
+
+		return getFactoryInstance(this.client, this.dataAccessStrategy);
 	}
 
 	/**

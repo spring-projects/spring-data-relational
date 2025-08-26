@@ -17,9 +17,9 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

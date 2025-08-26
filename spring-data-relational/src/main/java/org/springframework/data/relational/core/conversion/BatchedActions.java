@@ -71,7 +71,7 @@ class BatchedActions<S extends DbAction.WithPropertyPath, B extends DbAction.Bat
 	 * @param action the action to combine with other actions.
 	 */
 	void add(S action) {
-		combiner.merge(actionMap, action.getPropertyPath(), action);
+		combiner.merge(actionMap, action.propertyPath(), action);
 	}
 
 	void forEach(Consumer<? super DbAction> consumer) {
@@ -150,9 +150,9 @@ class BatchedActions<S extends DbAction.WithPropertyPath, B extends DbAction.Bat
 
 			actionMap.merge( //
 					propertyPath, //
-					new HashMap<>(singletonMap(action.getIdValueSource(), new ArrayList<>(singletonList(action)))), //
+					new HashMap<>(singletonMap(action.idValueSource(), new ArrayList<>(singletonList(action)))), //
 					(map, mapDefaultValue) -> {
-						map.merge(action.getIdValueSource(), new ArrayList<>(singletonList(action)),
+						map.merge(action.idValueSource(), new ArrayList<>(singletonList(action)),
 								(actions, listDefaultValue) -> {
 									actions.add(action);
 									return actions;

@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utility class for analyzing DbActions in tests.
@@ -32,7 +32,7 @@ final class DbActionTestSupport {
 	static String extractPath(DbAction<?> action) {
 
 		if (action instanceof DbAction.WithPropertyPath) {
-			return ((DbAction.WithPropertyPath<?>) action).getPropertyPath().toDotPath();
+			return ((DbAction.WithPropertyPath<?>) action).propertyPath().toDotPath();
 		}
 
 		return "";
@@ -46,7 +46,7 @@ final class DbActionTestSupport {
 	static Class<?> actualEntityType(DbAction<?> a) {
 
 		if (a instanceof DbAction.WithEntity) {
-			return ((DbAction.WithEntity<?>) a).getEntity().getClass();
+			return ((DbAction.WithEntity<?>) a).entity().getClass();
 		}
 		return null;
 	}
@@ -55,7 +55,7 @@ final class DbActionTestSupport {
 	static IdValueSource insertIdValueSource(DbAction<?> action) {
 
 		if (action instanceof DbAction.WithEntity<?>) {
-			return ((DbAction.WithEntity<?>) action).getIdValueSource();
+			return ((DbAction.WithEntity<?>) action).idValueSource();
 		} else if (action instanceof DbAction.BatchInsert) {
 			return ((DbAction.BatchInsert<?>) action).getBatchValue();
 		} else if (action instanceof DbAction.BatchInsertRoot<?>) {

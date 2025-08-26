@@ -15,11 +15,11 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.InlineQuery;
 import org.springframework.data.relational.core.sql.TableLike;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**

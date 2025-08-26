@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -29,7 +30,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.mapping.RelationalPredicates;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Support class for {@code ResultSet}-driven extractor implementations extracting {@link RowDocument documents} from
@@ -105,7 +106,12 @@ abstract class RowDocumentExtractorSupport {
 
 		@Nullable
 		public Object getObject(RS row, String columnName) {
-			return adapter.getObject(row, columnMap.get(columnName));
+
+			Integer index = columnMap.get(columnName);
+
+			Assert.state(index != null, "Column not found");
+
+			return adapter.getObject(row, index);
 		}
 
 		/**
@@ -176,9 +182,9 @@ abstract class RowDocumentExtractorSupport {
 		private final AggregateContext<RS> aggregateContext;
 		private final RelationalPersistentEntity<?> entity;
 		private final AggregatePath basePath;
-		private RowDocument result;
+		private @Nullable RowDocument result;
 
-		private String keyColumnName;
+		private final String keyColumnName;
 
 		private @Nullable Object key;
 		private final Map<RelationalPersistentProperty, TabularSink<RS>> readerState = new LinkedHashMap<>();
@@ -297,6 +303,8 @@ abstract class RowDocumentExtractorSupport {
 		@Override
 		RowDocument getResult() {
 
+			Assert.state(result != null, "Result must not be null");
+
 			readerState.forEach((property, reader) -> {
 
 				if (reader.hasResult()) {
@@ -350,7 +358,12 @@ abstract class RowDocumentExtractorSupport {
 
 		@Override
 		Object getResult() {
-			return getValue();
+
+			Object result = getValue();
+
+			Assert.state(result != null, "Result must not be null");
+
+			return result;
 		}
 
 		@Nullable
@@ -375,7 +388,7 @@ abstract class RowDocumentExtractorSupport {
 		private final String keyColumn;
 		private final AggregateContext<RS> aggregateContext;
 
-		private Object key;
+		private @Nullable Object key;
 		private boolean hasResult = false;
 
 		private final TabularSink<RS> componentReader;
@@ -413,6 +426,9 @@ abstract class RowDocumentExtractorSupport {
 
 			if (keyChange) {
 				if (componentReader.hasResult()) {
+
+					Assert.state(this.key != null, "Key must not be null");
+
 					container.add(this.key, componentReader.getResult());
 					componentReader.reset();
 				}
@@ -434,6 +450,8 @@ abstract class RowDocumentExtractorSupport {
 		public Object getResult() {
 
 			if (componentReader.hasResult()) {
+
+				Assert.state(this.key != null, "Key must not be null");
 
 				container.add(this.key, componentReader.getResult());
 				componentReader.reset();

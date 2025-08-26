@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
 
@@ -44,7 +45,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 	}
 
 	@Override
-	public Object getValue(String paramName) throws IllegalArgumentException {
+	public @Nullable Object getValue(String paramName) throws IllegalArgumentException {
 		return namesToValues.get(paramName);
 	}
 
@@ -61,7 +62,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 		addValue(name, value, Integer.MIN_VALUE);
 	}
 
-	void addValue(SqlIdentifier identifier, Object value, int sqlType) {
+	void addValue(SqlIdentifier identifier, @Nullable Object value, int sqlType) {
 
 		identifiers.add(identifier);
 		String name = BindParameterNameSanitizer.sanitize(identifier.getReference());

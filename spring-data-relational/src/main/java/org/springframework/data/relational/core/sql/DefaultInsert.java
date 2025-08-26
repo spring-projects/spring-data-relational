@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -35,7 +35,9 @@ class DefaultInsert implements Insert {
 	private final Values values;
 
 	DefaultInsert(@Nullable Table into, List<Column> columns, List<Expression> values) {
-		this.into = new Into(into);
+
+		// TODO: this is weird. can we really have an insert without table?
+		this.into = into == null ? new Into() : new Into(into);
 		this.columns = new ArrayList<>(columns);
 		this.values = new Values(new ArrayList<>(values));
 	}

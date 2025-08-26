@@ -18,9 +18,9 @@ package org.springframework.data.r2dbc.core;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.RowsFetchSpec;
 import org.springframework.util.Assert;
 

@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -39,7 +39,6 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -68,9 +67,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	protected final ValueExpressionDelegate delegate;
 
 	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-			JdbcConverter converter, Dialect dialect,
-			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
-			ValueExpressionDelegate delegate) {
+			JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration,
+			NamedParameterJdbcOperations operations, ValueExpressionDelegate delegate) {
 
 		super(converter.getMappingContext(), dialect);
 
@@ -99,14 +97,13 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		private final RowMapperFactory rowMapperFactory;
 
 		CreateQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				JdbcConverter converter, Dialect dialect,
-				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
-				ValueExpressionDelegate delegate) {
+				JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration,
+				NamedParameterJdbcOperations operations, ValueExpressionDelegate delegate) {
 
 			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
-			this.rowMapperFactory = new DefaultRowMapperFactory(getConverter(),
-					getQueryMappingConfiguration(), getCallbacks(), getPublisher());
+			this.rowMapperFactory = new DefaultRowMapperFactory(getConverter(), getQueryMappingConfiguration(),
+					getCallbacks(), getPublisher());
 		}
 
 		@Override
@@ -115,8 +112,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 
 			JdbcQueryMethod queryMethod = getJdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries);
 
-			return new PartTreeJdbcQuery(queryMethod, getDialect(), getConverter(), getOperations(),
-					rowMapperFactory);
+			return new PartTreeJdbcQuery(queryMethod, getDialect(), getConverter(), getOperations(), rowMapperFactory);
 		}
 	}
 
@@ -132,13 +128,12 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		private final RowMapperFactory rowMapperFactory;
 
 		DeclaredQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				JdbcConverter converter, Dialect dialect,
-				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
-				@Nullable BeanFactory beanfactory, ValueExpressionDelegate delegate) {
+				JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration,
+				NamedParameterJdbcOperations operations, @Nullable BeanFactory beanfactory, ValueExpressionDelegate delegate) {
 			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
-			this.rowMapperFactory = new BeanFactoryAwareRowMapperFactory(converter, queryMappingConfiguration,
-					callbacks, publisher, beanfactory);
+			this.rowMapperFactory = new BeanFactoryAwareRowMapperFactory(converter, queryMappingConfiguration, callbacks,
+					publisher, beanfactory);
 		}
 
 		@Override
@@ -185,10 +180,9 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		 * @param lookupStrategy must not be {@literal null}.
 		 */
 		CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
-				JdbcConverter converter, Dialect dialect,
-				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
-				CreateQueryLookupStrategy createStrategy, DeclaredQueryLookupStrategy lookupStrategy,
-				ValueExpressionDelegate delegate) {
+				JdbcConverter converter, Dialect dialect, QueryMappingConfiguration queryMappingConfiguration,
+				NamedParameterJdbcOperations operations, CreateQueryLookupStrategy createStrategy,
+				DeclaredQueryLookupStrategy lookupStrategy, ValueExpressionDelegate delegate) {
 
 			super(publisher, callbacks, converter, dialect, queryMappingConfiguration, operations, delegate);
 
@@ -223,10 +217,9 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 	 * Creates a {@link QueryLookupStrategy} based on the provided
 	 * {@link org.springframework.data.repository.query.QueryLookupStrategy.Key}.
 	 *
-	 * @param key the key that decides what {@link QueryLookupStrategy} shozld be used.
+	 * @param key the key that decides what {@link QueryLookupStrategy} should be used. May be {@literal null}
 	 * @param publisher must not be {@literal null}
 	 * @param callbacks may be {@literal null}
-	 * @param context must not be {@literal null}
 	 * @param converter must not be {@literal null}
 	 * @param dialect must not be {@literal null}
 	 * @param queryMappingConfiguration must not be {@literal null}
@@ -245,8 +238,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 		Assert.notNull(delegate, "ValueExpressionDelegate must not be null");
 
-		CreateQueryLookupStrategy createQueryLookupStrategy = new CreateQueryLookupStrategy(publisher, callbacks,
-				converter, dialect, queryMappingConfiguration, operations, delegate);
+		CreateQueryLookupStrategy createQueryLookupStrategy = new CreateQueryLookupStrategy(publisher, callbacks, converter,
+				dialect, queryMappingConfiguration, operations, delegate);
 
 		DeclaredQueryLookupStrategy declaredQueryLookupStrategy = new DeclaredQueryLookupStrategy(publisher, callbacks,
 				converter, dialect, queryMappingConfiguration, operations, beanFactory, delegate);
@@ -258,9 +251,8 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		return switch (keyToUse) {
 			case CREATE -> createQueryLookupStrategy;
 			case USE_DECLARED_QUERY -> declaredQueryLookupStrategy;
-			case CREATE_IF_NOT_FOUND ->
-				new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, converter, dialect,
-						queryMappingConfiguration, operations, createQueryLookupStrategy, declaredQueryLookupStrategy, delegate);
+			case CREATE_IF_NOT_FOUND -> new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, converter, dialect,
+					queryMappingConfiguration, operations, createQueryLookupStrategy, declaredQueryLookupStrategy, delegate);
 		};
 	}
 
@@ -276,6 +268,7 @@ abstract class JdbcQueryLookupStrategy extends RelationalQueryLookupStrategy {
 		return queryMappingConfiguration;
 	}
 
+	@Nullable
 	EntityCallbacks getCallbacks() {
 		return callbacks;
 	}

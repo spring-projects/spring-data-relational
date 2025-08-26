@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
@@ -84,7 +85,7 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 		INSTANCE;
 
 		@Override
-		public Boolean convert(Byte s) {
+		public @Nullable Boolean convert(@Nullable Byte s) {
 
 			if (s == null) {
 				return null;

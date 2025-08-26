@@ -71,7 +71,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	private final R2dbcEntityOperations entityOperations;
 	private final Lazy<RelationalPersistentProperty> idProperty;
 	private final RelationalExampleMapper exampleMapper;
-	private MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 
 	/**
 	 * Create a new {@link SimpleR2dbcRepository}.
@@ -107,11 +107,11 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 
 		this.entity = entity;
 		this.entityOperations = new R2dbcEntityTemplate(databaseClient, accessStrategy);
-		this.idProperty = Lazy.of(() -> converter //
-				.getMappingContext() //
+		this.mappingContext = converter.getMappingContext();
+		this.idProperty = Lazy.of(() -> mappingContext //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty());
-		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
+		this.exampleMapper = new RelationalExampleMapper(mappingContext);
 	}
 
 	// -------------------------------------------------------------------------
@@ -377,8 +377,12 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 			idEntity.doWithProperties(new PropertyHandler<RelationalPersistentProperty>() {
 				@Override
 				public void doWithPersistentProperty(RelationalPersistentProperty persistentProperty) {
-					criteriaHolder[0] = criteriaHolder[0].and(persistentProperty.getName())
-							.is(accessor.getProperty(persistentProperty));
+
+					Object property = accessor.getProperty(persistentProperty);
+
+					Assert.state(property != null, "Property must not be null");
+
+					criteriaHolder[0] = criteriaHolder[0].and(persistentProperty.getName()).is(property);
 				}
 			});
 			criteria = criteriaHolder[0];

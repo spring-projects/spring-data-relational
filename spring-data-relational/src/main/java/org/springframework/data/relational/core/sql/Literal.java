@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Represents a literal.
@@ -25,7 +25,7 @@ import org.springframework.lang.Nullable;
  */
 public class Literal<T> extends AbstractSegment implements Expression {
 
-	private @Nullable T content;
+	private final @Nullable T content;
 
 	Literal(@Nullable T content) {
 		this.content = content;

@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
@@ -173,7 +173,7 @@ abstract class NamedParameterUtils {
 		}
 		ParsedSql parsedSql = new ParsedSql(sqlToUse);
 		for (ParameterHolder ph : parameterList) {
-			parsedSql.addNamedParameter(ph.getParameterName(), ph.getStartIndex(), ph.getEndIndex());
+			parsedSql.addNamedParameter(ph.parameterName(), ph.startIndex(), ph.endIndex());
 		}
 		parsedSql.setNamedParameterCount(namedParameterCount);
 		parsedSql.setUnnamedParameterCount(unnamedParameterCount);
@@ -354,47 +354,20 @@ abstract class NamedParameterUtils {
 		return substituteNamedParameters(parsedSql, bindMarkersFactory, paramSource);
 	}
 
-	private static final class ParameterHolder {
+	private record ParameterHolder(String parameterName, int startIndex, int endIndex) {
 
-		private final String parameterName;
-
-		private final int startIndex;
-
-		private final int endIndex;
-
-		ParameterHolder(String parameterName, int startIndex, int endIndex) {
-			this.parameterName = parameterName;
-			this.startIndex = startIndex;
-			this.endIndex = endIndex;
-		}
-
-		String getParameterName() {
-			return this.parameterName;
-		}
-
-		int getStartIndex() {
-			return this.startIndex;
-		}
-
-		int getEndIndex() {
-			return this.endIndex;
-		}
 
 		@Override
-		public boolean equals(@Nullable Object o) {
-			if (this == o)
-				return true;
-			if (o instanceof ParameterHolder that) {
-				return this.startIndex == that.startIndex && this.endIndex == that.endIndex
-					&& Objects.equals(this.parameterName, that.parameterName);
+			public boolean equals(@Nullable Object o) {
+				if (this == o)
+					return true;
+				if (o instanceof ParameterHolder that) {
+					return this.startIndex == that.startIndex && this.endIndex == that.endIndex
+							&& Objects.equals(this.parameterName, that.parameterName);
+				}
+				return false;
 			}
-			return false;
-		}
 
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.parameterName, this.startIndex, this.endIndex);
-		}
 	}
 
 	/**
@@ -483,127 +456,116 @@ abstract class NamedParameterUtils {
 	 * Expanded query that allows binding of parameters using parameter names that were used to expand the query. Binding
 	 * unrolls {@link Collection}s and nested arrays.
 	 */
-	private static class ExpandedQuery implements PreparedOperation<String> {
-
-		private final String expandedSql;
-
-		private final NamedParameters parameters;
-
-		private final BindParameterSource parameterSource;
-
-		ExpandedQuery(String expandedSql, NamedParameters parameters, BindParameterSource parameterSource) {
-			this.expandedSql = expandedSql;
-			this.parameters = parameters;
-			this.parameterSource = parameterSource;
-		}
+		private record ExpandedQuery(String expandedSql, NamedParameters parameters,
+									 BindParameterSource parameterSource) implements PreparedOperation<String> {
 
 		@SuppressWarnings("unchecked")
-		public void bind(org.springframework.r2dbc.core.binding.BindTarget target, String identifier, Object value) {
+			public void bind(BindTarget target, String identifier, Object value) {
 
-			List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
+				List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
 
-			if (bindMarkers == null) {
+				if (bindMarkers == null) {
 
-				target.bind(identifier, value);
-				return;
-			}
+					target.bind(identifier, value);
+					return;
+				}
 
-			for (List<BindMarker> outer : bindMarkers) {
-				if (value instanceof Collection) {
-					Collection<Object> collection = (Collection<Object>) value;
+				for (List<BindMarker> outer : bindMarkers) {
+					if (value instanceof Collection) {
+						Collection<Object> collection = (Collection<Object>) value;
 
-					Iterator<Object> iterator = collection.iterator();
-					Iterator<BindMarker> markers = outer.iterator();
+						Iterator<Object> iterator = collection.iterator();
+						Iterator<BindMarker> markers = outer.iterator();
 
-					while (iterator.hasNext()) {
+						while (iterator.hasNext()) {
 
-						Object valueToBind = iterator.next();
+							Object valueToBind = iterator.next();
 
-						if (valueToBind instanceof Object[] objects) {
-							for (Object object : objects) {
-								bind(target, markers, object);
+							if (valueToBind instanceof Object[] objects) {
+								for (Object object : objects) {
+									bind(target, markers, object);
+								}
+							} else {
+								bind(target, markers, valueToBind);
 							}
-						} else {
-							bind(target, markers, valueToBind);
+						}
+					} else {
+						for (BindMarker bindMarker : outer) {
+							bindMarker.bind(target, value);
 						}
 					}
-				} else {
+				}
+			}
+
+			private void bind(BindTarget target, Iterator<BindMarker> markers,
+							  Object valueToBind) {
+
+				Assert.isTrue(markers.hasNext(),
+						() -> String.format(
+								"No bind marker for value [%s] in SQL [%s]; Check that the query was expanded using the same arguments",
+								valueToBind, toQuery()));
+
+				markers.next().bind(target, valueToBind);
+			}
+
+			public void bindNull(BindTarget target, String identifier,
+								 Class<?> valueType) {
+
+				List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
+
+				if (bindMarkers == null) {
+
+					target.bindNull(identifier, valueType);
+					return;
+				}
+
+				for (List<BindMarker> outer : bindMarkers) {
 					for (BindMarker bindMarker : outer) {
-						bindMarker.bind(target, value);
+						bindMarker.bindNull(target, valueType);
 					}
 				}
 			}
-		}
 
-		private void bind(org.springframework.r2dbc.core.binding.BindTarget target, Iterator<BindMarker> markers,
-				Object valueToBind) {
+			@Nullable
+			List<List<BindMarker>> getBindMarkers(String identifier) {
 
-			Assert.isTrue(markers.hasNext(),
-					() -> String.format(
-							"No bind marker for value [%s] in SQL [%s]; Check that the query was expanded using the same arguments",
-							valueToBind, toQuery()));
+				List<NamedParameters.NamedParameter> parameters = this.parameters.getMarker(identifier);
 
-			markers.next().bind(target, valueToBind);
-		}
+				if (parameters == null) {
+					return null;
+				}
 
-		public void bindNull(org.springframework.r2dbc.core.binding.BindTarget target, String identifier,
-				Class<?> valueType) {
+				List<List<BindMarker>> markers = new ArrayList<>();
+				for (NamedParameters.NamedParameter parameter : parameters) {
+					markers.add(new ArrayList<>(parameter.placeholders));
+				}
 
-			List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
-
-			if (bindMarkers == null) {
-
-				target.bindNull(identifier, valueType);
-				return;
+				return markers;
 			}
 
-			for (List<BindMarker> outer : bindMarkers) {
-				for (BindMarker bindMarker : outer) {
-					bindMarker.bindNull(target, valueType);
+			@Override
+			public String getSource() {
+				return this.expandedSql;
+			}
+
+			@Override
+			public void bindTo(BindTarget target) {
+
+				for (String namedParameter : this.parameterSource.getParameterNames()) {
+
+					Object value = this.parameterSource.getValue(namedParameter);
+
+					if (value == null) {
+						bindNull(target, namedParameter, this.parameterSource.getType(namedParameter));
+					} else {
+						bind(target, namedParameter, value);
+					}
 				}
 			}
-		}
 
-		@Nullable
-		List<List<BindMarker>> getBindMarkers(String identifier) {
-
-			List<NamedParameters.NamedParameter> parameters = this.parameters.getMarker(identifier);
-
-			if (parameters == null) {
-				return null;
-			}
-
-			List<List<BindMarker>> markers = new ArrayList<>();
-			for (NamedParameters.NamedParameter parameter : parameters) {
-				markers.add(new ArrayList<>(parameter.placeholders));
-			}
-
-			return markers;
-		}
-
-		@Override
-		public String getSource() {
-			return this.expandedSql;
-		}
-
-		@Override
-		public void bindTo(BindTarget target) {
-
-			for (String namedParameter : this.parameterSource.getParameterNames()) {
-
-				Object value = this.parameterSource.getValue(namedParameter);
-
-				if (value == null) {
-					bindNull(target, namedParameter, this.parameterSource.getType(namedParameter));
-				} else {
-					bind(target, namedParameter, value);
-				}
+			@Override
+			public String toQuery() {
+				return this.expandedSql;
 			}
 		}
-
-		@Override
-		public String toQuery() {
-			return this.expandedSql;
-		}
-	}
 }

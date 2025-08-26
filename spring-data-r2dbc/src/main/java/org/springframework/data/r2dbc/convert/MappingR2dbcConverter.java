@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
@@ -46,7 +47,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -104,7 +104,12 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 		if (getConversions().hasCustomReadTarget(Row.class, rawType)
 				&& getConversionService().canConvert(Row.class, rawType)) {
-			return getConversionService().convert(row, rawType);
+
+			R converted = getConversionService().convert(row, rawType);
+
+			Assert.notNull(converted, "Converted must not be null");
+
+			return converted;
 		}
 
 		RowDocument document = toRowDocument(type, row, metadata != null ? metadata.getColumnMetadatas() : null);
@@ -175,6 +180,9 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 		if (customTarget.isPresent()) {
 
 			OutboundRow result = getConversionService().convert(source, OutboundRow.class);
+
+			Assert.notNull(result, "Result must not be null");
+
 			sink.putAll(result);
 			return;
 		}
@@ -376,6 +384,8 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 			}
 		}
 
+		Assert.state(value != null, "Value must not be null");
+
 		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
 
 		if (customTarget.isPresent()) {
@@ -407,7 +417,11 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 			int depth = value.getClass().isArray() ? ArrayUtils.getDimensionDepth(value.getClass()) : 1;
 			Class<?> targetArrayType = ArrayUtils.getArrayClass(targetType, depth);
-			return getConversionService().convert(value, targetArrayType);
+			Object converted = getConversionService().convert(value, targetArrayType);
+
+			Assert.state(converted != null, "Value must not be null");
+
+			return converted;
 		}
 
 		return value;

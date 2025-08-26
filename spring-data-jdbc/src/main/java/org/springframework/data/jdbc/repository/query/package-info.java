@@ -1,7 +1,7 @@
 /**
  * Query derivation mechanism for JDBC specific repositories.
  */
-@NonNullApi
+@NullMarked
 package org.springframework.data.jdbc.repository.query;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

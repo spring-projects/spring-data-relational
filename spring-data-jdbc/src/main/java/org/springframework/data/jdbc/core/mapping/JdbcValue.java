@@ -19,7 +19,7 @@ import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.Objects;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Wraps a value with the JDBCType that should be used to pass it as a bind parameter to a
@@ -31,16 +31,19 @@ import org.springframework.lang.Nullable;
  */
 public class JdbcValue {
 
-	private final Object value;
+	private final @Nullable Object value;
 	private final SQLType jdbcType;
 
-	protected JdbcValue(@Nullable Object value, @Nullable SQLType jdbcType) {
+	protected JdbcValue(@Nullable Object value, SQLType jdbcType) {
 
 		this.value = value;
 		this.jdbcType = jdbcType;
 	}
 
 	public static JdbcValue of(@Nullable Object value, @Nullable SQLType jdbcType) {
+		if (jdbcType == null) {
+			jdbcType = value == null ? JDBCType.NULL : JDBCType.OTHER;
+		}
 		return new JdbcValue(value, jdbcType);
 	}
 
@@ -49,7 +52,6 @@ public class JdbcValue {
 		return this.value;
 	}
 
-	@Nullable
 	public SQLType getJdbcType() {
 		return this.jdbcType;
 	}

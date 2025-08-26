@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterFactory;
 import org.springframework.util.Assert;
@@ -159,7 +160,7 @@ abstract class R2dbcConverters {
 			}
 
 			@Override
-			public T convert(Row source) {
+			public @Nullable T convert(Row source) {
 
 				Object object = source.get(0);
 

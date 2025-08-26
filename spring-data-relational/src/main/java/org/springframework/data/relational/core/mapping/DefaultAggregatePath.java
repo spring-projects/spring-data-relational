@@ -19,9 +19,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
-import org.springframework.lang.Nullable;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentLruCache;
 
@@ -89,7 +90,11 @@ class DefaultAggregatePath implements AggregatePath {
 			return context.getAggregatePath(path.getLeafProperty().getOwner());
 		}
 
-		return context.getAggregatePath(path.getParentPath());
+		PersistentPropertyPath<RelationalPersistentProperty> parentPath = path.getParentPath();
+
+		Assert.state(parentPath != null, "Parent path must not be null");
+
+		return context.getAggregatePath(parentPath);
 	}
 
 	@Override
@@ -113,10 +118,20 @@ class DefaultAggregatePath implements AggregatePath {
 
 	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
 
-		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = isRoot() //
-				? context.getPersistentPropertyPath(property.getName(), rootType.getTypeInformation()) //
-				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(),
-						path.getBaseProperty().getOwner().getTypeInformation());
+		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath;
+
+		if (isRoot()) {
+
+			Assert.state(rootType != null, "Root type must not be null");
+
+			newPath = context.getPersistentPropertyPath(property.getName(), rootType.getTypeInformation());
+		} else {
+
+			Assert.state(path != null, "Path must not be null");
+
+			newPath = context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(),
+					path.getBaseProperty().getOwner().getTypeInformation());
+		}
 
 		return context.getAggregatePath(newPath);
 	}
@@ -182,7 +197,13 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	public RelationalPersistentProperty getRequiredIdProperty() {
-		return isRoot() ? rootType.getRequiredIdProperty() : getRequiredLeafEntity().getRequiredIdProperty();
+		if (isRoot()) {
+
+			Assert.state(rootType != null, "Root type must not be null");
+
+			return rootType.getRequiredIdProperty();
+		}
+		return getRequiredLeafEntity().getRequiredIdProperty();
 	}
 
 	@Override
@@ -193,9 +214,16 @@ class DefaultAggregatePath implements AggregatePath {
 	}
 
 	@Override
-	public RelationalPersistentEntity<?> getLeafEntity() {
-		return isRoot() ? rootType
-				: context.getPersistentEntity(getRequiredLeafProperty().getTypeInformation().getActualType());
+	public @Nullable RelationalPersistentEntity<?> getLeafEntity() {
+		if (isRoot()) {
+			return rootType;
+		}
+
+		TypeInformation<?> actualType = getRequiredLeafProperty().getTypeInformation().getActualType();
+
+		Assert.state(actualType != null, "Actual type must not be null");
+
+		return context.getPersistentEntity(actualType);
 	}
 
 	@Override
@@ -216,10 +244,16 @@ class DefaultAggregatePath implements AggregatePath {
 			return null;
 		}
 
+		Assert.state(this.path != null, "Path must not be null");
+
 		AggregatePath tail = null;
 		for (RelationalPersistentProperty prop : this.path) {
 			if (tail == null) {
-				tail = context.getAggregatePath(context.getPersistentEntity(prop));
+				RelationalPersistentEntity<?> entity = context.getPersistentEntity(prop);
+
+				Assert.state(entity != null, "Entity must not be null");
+
+				tail = context.getAggregatePath(entity);
 			} else {
 				tail = tail.append(prop);
 			}
@@ -254,6 +288,9 @@ class DefaultAggregatePath implements AggregatePath {
 	public AggregatePath getSubPathBasedOn(Class<?> baseType) {
 
 		if (isRoot()) {
+
+			Assert.state(rootType != null, "Root type must not be null");
+
 			if (rootType.getType() != baseType) {
 				throw new IllegalStateException("No matching path found for [%s]".formatted(baseType));
 			}
@@ -264,8 +301,12 @@ class DefaultAggregatePath implements AggregatePath {
 		if (owner.getType() == baseType) {
 			return this;
 		}
-		
-		return getTail().getSubPathBasedOn(baseType);
+
+		AggregatePath tail = getTail();
+
+		Assert.state(tail != null, "Tail must not be null");
+
+		return tail.getSubPathBasedOn(baseType);
 	}
 
 	/**
@@ -306,9 +347,27 @@ class DefaultAggregatePath implements AggregatePath {
 
 	@Override
 	public String toString() {
-		return "AggregatePath["
-				+ (rootType == null ? path.getBaseProperty().getOwner().getType().getName() : rootType.getName()) + "]"
-				+ ((isRoot()) ? "/" : path.toDotPath());
+		String typeName;
+		if (rootType == null) {
+
+			Assert.state(path != null, "Path must not be null");
+
+			typeName = path.getBaseProperty().getOwner().getType().getName();
+		} else {
+			typeName = rootType.getName();
+		}
+
+		String pathPart;
+		if (isRoot()) {
+			pathPart = "/";
+		} else {
+
+			Assert.state(path != null, "Path must not be null");
+
+			pathPart = path.toDotPath();
+		}
+
+		return "AggregatePath[" + typeName + "]" + pathPart;
 	}
 
 	private static class AggregatePathIterator implements Iterator<AggregatePath> {

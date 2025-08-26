@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
-
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
 import org.springframework.data.util.ReactiveWrappers;
@@ -69,7 +69,7 @@ class R2dbcParameterAccessor extends RelationalParametersParameterAccessor {
 	/* (non-Javadoc)
 	 * @see org.springframework.data.repository.query.ParametersParameterAccessor#getBindableValue(int)
 	 */
-	public Object getBindableValue(int index) {
+	public @Nullable Object getBindableValue(int index) {
 		return getValue(getParameters().getBindableParameter(index).getIndex());
 	}
 

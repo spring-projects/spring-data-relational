@@ -18,8 +18,8 @@ package org.springframework.data.relational.core.query;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.dialect.Escaper;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
