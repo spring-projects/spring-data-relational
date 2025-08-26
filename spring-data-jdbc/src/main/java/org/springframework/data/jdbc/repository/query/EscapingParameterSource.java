@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * @author Jens Schauder
  * @since 3.2
  */
-class EscapingParameterSource implements SqlParameterSource {
+public class EscapingParameterSource implements SqlParameterSource {
 
 	private final SqlParameterSource parameterSource;
 	private final Escaper escaper;
