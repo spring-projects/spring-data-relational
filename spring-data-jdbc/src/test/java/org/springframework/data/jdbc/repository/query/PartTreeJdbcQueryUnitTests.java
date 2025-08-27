@@ -671,10 +671,11 @@ public class PartTreeJdbcQueryUnitTests {
 				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
-	@Test
+	@Test // GH-2125
 	public void mappingMapKeyToChildShouldNotResultInDuplicateColumn() throws Exception {
+
 		Method method = ParentRepository.class.getMethod("findByName", String.class);
-		var queryMethod = new JdbcQueryMethod(method, new DefaultRepositoryMetadata(ParentRepository.class),
+		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, new DefaultRepositoryMetadata(ParentRepository.class),
 				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }), returnedType);
@@ -688,6 +689,7 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	private JdbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
+
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
 				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
