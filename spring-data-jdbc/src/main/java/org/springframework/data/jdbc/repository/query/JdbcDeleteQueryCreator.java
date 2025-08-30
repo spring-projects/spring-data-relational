@@ -150,11 +150,11 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 			Condition inCondition = Conditions.in(expression, parentSelect);
 
-			List<Column> parentIdColumns = aggregatePath.getIdDefiningParentPath().getTableInfo().idColumnInfos()
+			List<Column> idColumns = aggregatePath.getTableInfo().idColumnInfos()
 					.toColumnList(table);
 
 			Select select = StatementBuilder.select( //
-					parentIdColumns //
+                            idColumns //
 			).from(table) //
 					.where(inCondition) //
 					.build();
