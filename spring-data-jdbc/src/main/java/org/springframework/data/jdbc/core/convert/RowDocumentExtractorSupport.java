@@ -109,7 +109,7 @@ abstract class RowDocumentExtractorSupport {
 
 			Integer index = columnMap.get(columnName);
 
-			Assert.state(index != null, "Column not found");
+			Assert.state(index != null, () -> "Column '%s' not found".formatted(columnName));
 
 			return adapter.getObject(row, index);
 		}
@@ -499,9 +499,9 @@ abstract class RowDocumentExtractorSupport {
 		}
 
 		@Override
-		public List<Object> get() {
+		public List<@Nullable Object> get() {
 
-			List<Object> result = new ArrayList<>(list.size());
+			List<@Nullable Object> result = new ArrayList<>(list.size());
 
 			// TODO: How do we go about padding? Should we insert null values?
 			list.forEach((index, o) -> {
@@ -519,7 +519,7 @@ abstract class RowDocumentExtractorSupport {
 
 	private static class MapContainer extends CollectionContainer {
 
-		private final Map<Object, Object> map = new LinkedHashMap<>();
+		private final Map<Object, @Nullable Object> map = new LinkedHashMap<>();
 
 		@Override
 		public void add(Object key, @Nullable Object value) {
@@ -527,7 +527,7 @@ abstract class RowDocumentExtractorSupport {
 		}
 
 		@Override
-		public Map<Object, Object> get() {
+		public Map<Object, @Nullable Object> get() {
 			return new LinkedHashMap<>(map);
 		}
 	}

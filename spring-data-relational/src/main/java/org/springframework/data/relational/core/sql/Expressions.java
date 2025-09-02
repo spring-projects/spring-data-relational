@@ -29,7 +29,7 @@ import java.util.List;
  */
 public abstract class Expressions {
 
-	private static Expression ASTERISK = new SimpleExpression("*");
+	private static final Expression ASTERISK = new SimpleExpression("*");
 
 	/**
 	 * @return a new asterisk {@code *} expression.

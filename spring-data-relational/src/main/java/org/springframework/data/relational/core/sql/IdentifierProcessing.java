@@ -42,7 +42,7 @@ public interface IdentifierProcessing {
 	 * @param letterCasing {@link LetterCasing} rules for identifier normalization.
 	 * @return a new {@link IdentifierProcessing} object.
 	 */
-	static DefaultIdentifierProcessing create(Quoting quoting, LetterCasing letterCasing) {
+	static IdentifierProcessing create(Quoting quoting, LetterCasing letterCasing) {
 		return new DefaultIdentifierProcessing(quoting, letterCasing);
 	}
 

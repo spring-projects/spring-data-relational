@@ -36,9 +36,9 @@ public class Update {
 
 	private static final Update EMPTY = new Update(Collections.emptyMap());
 
-	private final Map<SqlIdentifier, Object> columnsToUpdate;
+	private final Map<SqlIdentifier, @Nullable Object> columnsToUpdate;
 
-	private Update(Map<SqlIdentifier, Object> columnsToUpdate) {
+	private Update(Map<SqlIdentifier, @Nullable Object> columnsToUpdate) {
 		this.columnsToUpdate = columnsToUpdate;
 	}
 
@@ -48,7 +48,7 @@ public class Update {
 	 * @param assignments must not be {@literal null}.
 	 * @return
 	 */
-	public static Update from(Map<SqlIdentifier, Object> assignments) {
+	public static Update from(Map<SqlIdentifier, @Nullable Object> assignments) {
 		return new Update(new LinkedHashMap<>(assignments));
 	}
 
@@ -94,7 +94,7 @@ public class Update {
 	 *
 	 * @return
 	 */
-	public Map<SqlIdentifier, Object> getAssignments() {
+	public Map<SqlIdentifier, @Nullable Object> getAssignments() {
 		return Collections.unmodifiableMap(this.columnsToUpdate);
 	}
 
@@ -102,7 +102,7 @@ public class Update {
 
 		Assert.notNull(key, "Column for update must not be null");
 
-		Map<SqlIdentifier, Object> updates = new LinkedHashMap<>(this.columnsToUpdate);
+		Map<SqlIdentifier, @Nullable Object> updates = new LinkedHashMap<>(this.columnsToUpdate);
 		updates.put(key, value);
 
 		return new Update(updates);

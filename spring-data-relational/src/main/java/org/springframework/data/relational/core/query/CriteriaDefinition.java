@@ -33,19 +33,19 @@ import org.springframework.util.Assert;
 public interface CriteriaDefinition {
 
 	/**
-	 * Static factory method to create an empty {@link CriteriaDefinition}.
+	 * Static factory method to create an empty {@code CriteriaDefinition}.
 	 *
-	 * @return an empty {@link CriteriaDefinition}.
+	 * @return an empty {@code CriteriaDefinition}.
 	 */
 	static CriteriaDefinition empty() {
 		return Criteria.EMPTY;
 	}
 
 	/**
-	 * Create a new {@link CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
+	 * Create a new {@code CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
 	 * Criterias}.
 	 *
-	 * @return new {@link CriteriaDefinition}.
+	 * @return new {@code CriteriaDefinition}.
 	 */
 	static CriteriaDefinition from(CriteriaDefinition... criteria) {
 
@@ -56,10 +56,10 @@ public interface CriteriaDefinition {
 	}
 
 	/**
-	 * Create a new {@link CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
+	 * Create a new {@code CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
 	 * Criterias}.
 	 *
-	 * @return new {@link CriteriaDefinition}.
+	 * @return new {@code CriteriaDefinition}.
 	 * @since 1.1
 	 */
 	static CriteriaDefinition from(List<? extends CriteriaDefinition> criteria) {
@@ -79,7 +79,7 @@ public interface CriteriaDefinition {
 	}
 
 	/**
-	 * @return {@literal true} if this {@link Criteria} is empty.
+	 * @return {@literal true} if this {@code CriteriaDefinition} is empty.
 	 */
 	boolean isGroup();
 
@@ -111,25 +111,42 @@ public interface CriteriaDefinition {
 	boolean isIgnoreCase();
 
 	/**
-	 * @return the previous {@link CriteriaDefinition} object. Can be {@literal null} if there is no previous
-	 *         {@link CriteriaDefinition}.
+	 * @return the previous {@code CriteriaDefinition} object. Can be {@literal null} if there is no previous
+	 *         {@code CriteriaDefinition}.
 	 * @see #hasPrevious()
 	 */
 	@Nullable
 	CriteriaDefinition getPrevious();
 
 	/**
-	 * @return {@literal true} if this {@link Criteria} has a previous one.
+	 * @return the required previous {@code CriteriaDefinition} object or throws an {@link IllegalStateException} if there
+	 *         is no previous {@code CriteriaDefinition}.
+	 * @see #hasPrevious()
+	 * @see #getPrevious()
+	 * @since 4.0
+	 */
+	default CriteriaDefinition getRequiredPrevious() {
+
+		CriteriaDefinition previous = getPrevious();
+		if (previous == null) {
+			throw new IllegalStateException("No previous CriteriaDefinition available");
+		}
+
+		return previous;
+	}
+
+	/**
+	 * @return {@literal true} if this {@code CriteriaDefinition} has a previous one.
 	 */
 	boolean hasPrevious();
 
 	/**
-	 * @return {@literal true} if this {@link Criteria} is empty.
+	 * @return {@literal true} if this {@code CriteriaDefinition} is empty.
 	 */
 	boolean isEmpty();
 
 	/**
-	 * @return {@link Combinator} to combine this criteria with a previous one.
+	 * @return {@link Combinator} to combine this {@code CriteriaDefinition} with a previous one.
 	 */
 	Combinator getCombinator();
 

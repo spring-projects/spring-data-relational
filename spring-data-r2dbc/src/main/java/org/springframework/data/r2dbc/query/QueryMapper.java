@@ -193,7 +193,7 @@ public class QueryMapper {
 		if (expression instanceof Column column) {
 
 			Field field = createPropertyField(entity, column.getName());
-			TableLike table = column.getTable();
+			TableLike table = column.getRequiredTable();
 
 			if (field.isEmbedded()) {
 
@@ -204,15 +204,11 @@ public class QueryMapper {
 
 				for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
 
-					Assert.state(table != null, "Embedded table must not be null");
-
 					expressions.addAll(getMappedObjects(Column.create(embeddedProperty.getName(), table), embeddedEntity));
 				}
 
 				return expressions;
 			}
-
-			Assert.state(table != null, "Table must not be null");
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return List.of(column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable);
@@ -273,10 +269,7 @@ public class QueryMapper {
 
 		while (current.hasPrevious()) {
 
-			CriteriaDefinition previous = current.getPrevious();
-
-			Assert.state(previous != null, "Previous criteria must not be null");
-
+			CriteriaDefinition previous = current.getRequiredPrevious();
 			forwardChain.put(previous, current);
 			current = previous;
 		}
@@ -452,13 +445,14 @@ public class QueryMapper {
 		}
 
 		return new PersistentPropertyAccessor<>() {
+
 			@Override
-			public void setProperty(PersistentProperty<?> property, @org.jspecify.annotations.Nullable Object value) {
+			public void setProperty(PersistentProperty<?> property, @Nullable Object value) {
 
 			}
 
 			@Override
-			public @org.jspecify.annotations.Nullable Object getProperty(PersistentProperty<?> property) {
+			public @Nullable Object getProperty(PersistentProperty<?> property) {
 				return null;
 			}
 
@@ -750,7 +744,7 @@ public class QueryMapper {
 			return false;
 		}
 
-		public @org.jspecify.annotations.Nullable RelationalPersistentProperty getProperty() {
+		public @Nullable RelationalPersistentProperty getProperty() {
 			return null;
 		}
 
@@ -846,8 +840,7 @@ public class QueryMapper {
 		 * @param pathExpression the path expression to use.
 		 * @return
 		 */
-		@Nullable
-		private PersistentPropertyPath<RelationalPersistentProperty> getPath(String pathExpression) {
+		private @Nullable PersistentPropertyPath<RelationalPersistentProperty> getPath(String pathExpression) {
 
 			try {
 
@@ -905,7 +898,7 @@ public class QueryMapper {
 		}
 
 		@Override
-		public @org.jspecify.annotations.Nullable RelationalPersistentProperty getProperty() {
+		public @Nullable RelationalPersistentProperty getProperty() {
 			return this.property;
 		}
 	}

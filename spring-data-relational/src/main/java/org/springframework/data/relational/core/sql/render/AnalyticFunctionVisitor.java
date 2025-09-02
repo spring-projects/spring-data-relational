@@ -31,7 +31,7 @@ class AnalyticFunctionVisitor extends TypedSingleConditionRenderSupport<Analytic
 
 	private final StringBuilder part = new StringBuilder();
 	private final RenderContext context;
-	@Nullable private PartRenderer delegate;
+	private @Nullable PartRenderer delegate;
 	private boolean addSpace = false;
 
 	AnalyticFunctionVisitor(RenderContext context) {
@@ -73,8 +73,8 @@ class AnalyticFunctionVisitor extends TypedSingleConditionRenderSupport<Analytic
 
 		if (delegate instanceof SegmentListVisitor) {
 
-			final CharSequence renderedPart = delegate.getRenderedPart();
-			if (renderedPart.length() != 0) {
+			CharSequence renderedPart = delegate.getRenderedPart();
+			if (!renderedPart.isEmpty()) {
 
 				if (addSpace) {
 					part.append(' ');

@@ -26,6 +26,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -45,7 +46,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.*;
+import org.springframework.data.mapping.model.CachingValueExpressionEvaluatorFactory;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.mapping.model.EntityInstantiator;
+import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.mapping.model.PersistentEntityParameterValueProvider;
+import org.springframework.data.mapping.model.PropertyValueProvider;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.ValueExpressionEvaluator;
+import org.springframework.data.mapping.model.ValueExpressionParameterValueProvider;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.projection.EntityProjectionIntrospector.ProjectionPredicate;
@@ -264,7 +274,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return populateProperties(context, mappedEntity, documentAccessor, evaluator, instance);
 	}
 
-	private @Nullable Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
+	private Object doReadOrProject(ConversionContext context, RowDocument source, TypeInformation<?> typeHint,
 			EntityProjection<?, ?> typeDescriptor) {
 
 		if (typeDescriptor.isProjection()) {
@@ -375,7 +385,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 * @param targetType the {@link Map} {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
 	 * @return the converted {@link Map}, will never be {@literal null}.
 	 */
-	protected Map<Object, Object> readMap(ConversionContext context, Map<?, ?> source, TypeInformation<?> targetType) {
+	protected Map<@Nullable Object, @Nullable Object> readMap(ConversionContext context, Map<?, ?> source,
+			TypeInformation<?> targetType) {
 
 		Assert.notNull(source, "Document must not be null");
 		Assert.notNull(targetType, "TypeInformation must not be null");
@@ -388,8 +399,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		Class<?> rawKeyType = keyType != null ? keyType.getType() : Object.class;
 
-		Map<Object, Object> map = CollectionFactory.createMap(mapType, rawKeyType,
-				((Map<String, Object>) source).size());
+		Map<@Nullable Object, @Nullable Object> map = CollectionFactory.createMap(mapType, rawKeyType, source.size());
 
 		source.forEach((k, v) -> {
 

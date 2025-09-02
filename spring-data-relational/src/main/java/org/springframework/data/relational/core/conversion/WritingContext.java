@@ -50,7 +50,7 @@ class WritingContext<T> {
 	private final Map<PathNode, DbAction<?>> previousActions = new HashMap<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 	private final IdValueSource rootIdValueSource;
-	@Nullable private final Number previousVersion;
+	private @Nullable final Number previousVersion;
 	private final RootAggregateChange<T> aggregateChange;
 
 	WritingContext(RelationalMappingContext context, T root, RootAggregateChange<T> aggregateChange) {

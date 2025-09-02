@@ -28,18 +28,18 @@ import org.springframework.data.relational.core.sql.Where;
  */
 class DeleteStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
-	private StringBuilder builder = new StringBuilder();
-	private StringBuilder from = new StringBuilder();
-	private StringBuilder where = new StringBuilder();
+	private final StringBuilder builder = new StringBuilder();
+	private final StringBuilder from = new StringBuilder();
+	private final StringBuilder where = new StringBuilder();
 
-	private FromClauseVisitor fromClauseVisitor;
-	private WhereClauseVisitor whereClauseVisitor;
+	private final FromClauseVisitor fromClauseVisitor;
+	private final WhereClauseVisitor whereClauseVisitor;
 
 	DeleteStatementVisitor(RenderContext context) {
 
 		this.fromClauseVisitor = new FromClauseVisitor(context, it -> {
 
-			if (from.length() != 0) {
+			if (!from.isEmpty()) {
 				from.append(", ");
 			}
 
@@ -70,11 +70,11 @@ class DeleteStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			builder.append("DELETE ");
 
-			if (from.length() != 0) {
+			if (!from.isEmpty()) {
 				builder.append("FROM ").append(from);
 			}
 
-			if (where.length() != 0) {
+			if (!where.isEmpty()) {
 				builder.append(" WHERE ").append(where);
 			}
 

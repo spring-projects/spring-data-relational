@@ -36,16 +36,16 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	private final RenderContext context;
 	private final SelectRenderContext selectRenderContext;
 
-	private StringBuilder builder = new StringBuilder();
-	private StringBuilder selectList = new StringBuilder();
-	private StringBuilder from = new StringBuilder();
-	private StringBuilder join = new StringBuilder();
-	private StringBuilder where = new StringBuilder();
+	private final StringBuilder builder = new StringBuilder();
+	private final StringBuilder selectList = new StringBuilder();
+	private final StringBuilder from = new StringBuilder();
+	private final StringBuilder join = new StringBuilder();
+	private final StringBuilder where = new StringBuilder();
 
-	private SelectListVisitor selectListVisitor;
-	private OrderByClauseVisitor orderByClauseVisitor;
-	private FromClauseVisitor fromClauseVisitor;
-	private WhereClauseVisitor whereClauseVisitor;
+	private final SelectListVisitor selectListVisitor;
+	private final OrderByClauseVisitor orderByClauseVisitor;
+	private final FromClauseVisitor fromClauseVisitor;
+	private final WhereClauseVisitor whereClauseVisitor;
 
 	SelectStatementVisitor(RenderContext context) {
 
@@ -55,7 +55,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		this.orderByClauseVisitor = new OrderByClauseVisitor(context);
 		this.fromClauseVisitor = new FromClauseVisitor(context, it -> {
 
-			if (from.length() != 0) {
+			if (!from.isEmpty()) {
 				from.append(", ");
 			}
 
@@ -83,7 +83,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		if (segment instanceof Join) {
 			return Delegation.delegateTo(new JoinVisitor(context, it -> {
 
-				if (join.length() != 0) {
+				if (!join.isEmpty()) {
 					join.append(' ');
 				}
 
@@ -112,26 +112,26 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 			builder.append(selectList);
 			builder.append(selectRenderContext.afterSelectList().apply(select));
 
-			if (from.length() != 0) {
+			if (!from.isEmpty()) {
 				builder.append(" FROM ").append(from);
 			}
 
 			builder.append(selectRenderContext.afterFromTable().apply(select));
 
-			if (join.length() != 0) {
+			if (!join.isEmpty()) {
 				builder.append(' ').append(join);
 			}
 
-			if (where.length() != 0) {
+			if (!where.isEmpty()) {
 				builder.append(" WHERE ").append(where);
 			}
 
 			CharSequence orderBy = orderByClauseVisitor.getRenderedPart();
-			if (orderBy.length() != 0) {
+			if (!orderBy.isEmpty()) {
 				builder.append(" ORDER BY ").append(orderBy);
 			}
 
-			builder.append(selectRenderContext.afterOrderBy(orderBy.length() != 0).apply(select));
+			builder.append(selectRenderContext.afterOrderBy(!orderBy.isEmpty()).apply(select));
 
 			return Delegation.leave();
 		}

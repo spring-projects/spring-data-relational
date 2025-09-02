@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -74,12 +76,14 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+			IdValueSource idValueSource) {
 		return collect(das -> das.insert(instance, domainType, identifier, idValueSource));
 	}
 
 	@Override
-	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+	public <T> @Nullable Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType,
+			IdValueSource idValueSource) {
 		return collect(das -> das.insert(insertSubjects, domainType, idValueSource));
 	}
 
@@ -144,7 +148,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 		return collect(das -> das.findById(id, domainType));
 	}
 
@@ -224,8 +228,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.count(query, domainType));
 	}
 
-	private <T> T collect(Function<DataAccessStrategy, T> function) {
-
+	private <T extends @Nullable Object> T collect(Function<DataAccessStrategy, T> function) {
 		return strategies.stream().collect(new FunctionCollector<>(function));
 	}
 

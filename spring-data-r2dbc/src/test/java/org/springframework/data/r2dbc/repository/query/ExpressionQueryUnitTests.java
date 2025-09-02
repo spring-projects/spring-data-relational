@@ -39,7 +39,7 @@ class ExpressionQueryUnitTests {
 		ExpressionQuery query = ExpressionQuery
 				.create(ValueExpressionParser.create(), "INSERT IGNORE INTO table (x, y) VALUES (:#{#point.x}, :${point.y})");
 
-		assertThat(query.getQuery())
+		assertThat(query.query())
 				.isEqualTo("INSERT IGNORE INTO table (x, y) VALUES (:__synthetic_0__, :__synthetic_1__)");
 
 		Map<String, ValueExpression> bindings = query.getBindings();

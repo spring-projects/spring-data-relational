@@ -94,8 +94,7 @@ class AggregateReader implements PathToColumnMapping {
 	 * @return the found aggregate root, or {@literal null} if not found.
 	 * @param <T> aggregator type.
 	 */
-	@Nullable
-	public <T> T findById(Object id, RelationalPersistentEntity<T> entity) {
+	public <T> @Nullable T findById(Object id, RelationalPersistentEntity<T> entity) {
 
 		Query query = Query.query(Criteria.where(entity.getRequiredIdProperty().getName()).is(id)).limit(1);
 
@@ -111,8 +110,7 @@ class AggregateReader implements PathToColumnMapping {
 	 * @param <T> aggregator type.
 	 */
 	@SuppressWarnings("NullAway") // NullAway complains about the ResultSetExtractor returning null, which should be ok.
-	@Nullable
-	public <T> T findOne(Query query, RelationalPersistentEntity<T> entity) {
+	public <T> @Nullable T findOne(Query query, RelationalPersistentEntity<T> entity) {
 		return doFind(query, entity, rs -> extractZeroOrOne(rs, entity));
 	}
 
@@ -159,7 +157,8 @@ class AggregateReader implements PathToColumnMapping {
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	private <T, R> R doFind(Query query, RelationalPersistentEntity<T> entity, ResultSetExtractor<R> extractor) {
+	private <T, R extends @Nullable Object> R doFind(Query query, RelationalPersistentEntity<T> entity,
+			ResultSetExtractor<R> extractor) {
 
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		Condition condition = createCondition(query, parameterSource, entity);

@@ -155,7 +155,7 @@ class ExpressionEvaluatingParameterBinder {
 		return namedParameters.computeIfAbsent(name.get(), it -> {
 
 			Pattern namedParameterPattern = Pattern.compile("(\\W)[:#$@]" + Pattern.quote(it) + "(\\W|$)");
-			return namedParameterPattern.matcher(expressionQuery.getQuery()).find();
+			return namedParameterPattern.matcher(expressionQuery.query()).find();
 		});
 	}
 

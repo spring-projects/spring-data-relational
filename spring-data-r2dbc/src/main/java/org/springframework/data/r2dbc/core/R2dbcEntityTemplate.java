@@ -909,23 +909,23 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 *
 	 * @param <T>
 	 */
-		private record UnwrapOptionalFetchSpecAdapter<T>(RowsFetchSpec<Optional<T>> delegate) implements RowsFetchSpec<T> {
+	private record UnwrapOptionalFetchSpecAdapter<T>(RowsFetchSpec<Optional<T>> delegate) implements RowsFetchSpec<T> {
 
 		@Override
-			public Mono<T> one() {
-				return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
-			}
-
-			@Override
-			public Mono<T> first() {
-				return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
-			}
-
-			@Override
-			public Flux<T> all() {
-				return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
-			}
+		public Mono<T> one() {
+			return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
 		}
+
+		@Override
+		public Mono<T> first() {
+			return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+
+		@Override
+		public Flux<T> all() {
+			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+	}
 
 	/**
 	 * {@link RowsFetchSpec} adapter applying {@link #maybeCallAfterConvert(Object, SqlIdentifier)} to each emitted

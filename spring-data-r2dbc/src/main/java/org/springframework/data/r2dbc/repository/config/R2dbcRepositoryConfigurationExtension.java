@@ -27,7 +27,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
-import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryMetadata;
 
 /**
@@ -60,9 +59,6 @@ public class R2dbcRepositoryConfigurationExtension extends RepositoryConfigurati
 	protected Collection<Class<?>> getIdentifyingTypes() {
 		return Collections.singleton(R2dbcRepository.class);
 	}
-
-	@Override
-	public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {}
 
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, AnnotationRepositoryConfigurationSource config) {

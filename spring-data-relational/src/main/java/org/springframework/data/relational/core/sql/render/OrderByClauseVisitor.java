@@ -39,7 +39,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 
 	private final StringBuilder builder = new StringBuilder();
 
-	@Nullable private PartRenderer delegate;
+	private @Nullable PartRenderer delegate;
 
 	private boolean first = true;
 

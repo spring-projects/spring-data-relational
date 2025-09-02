@@ -34,8 +34,7 @@ public class Literal<T> extends AbstractSegment implements Expression {
 	/**
 	 * @return the content of the literal.
 	 */
-	@Nullable
-	public T getContent() {
+	public @Nullable T getContent() {
 		return content;
 	}
 

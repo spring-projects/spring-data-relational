@@ -20,7 +20,7 @@ package org.springframework.data.relational.core.sql;
  * <p>
  * Validates that all {@link Column}s using a table qualifier have a table import from the {@code FROM} clause.
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @since 1.1
  */
@@ -40,7 +40,7 @@ class DeleteValidator extends AbstractImportValidator {
 
 		select.visit(this);
 
-		for (Table table : requiredByWhere) {
+		for (TableLike table : requiredByWhere) {
 			if (!from.contains(table)) {
 				throw new IllegalStateException(
 						String.format("Required table [%s] by a WHERE predicate not imported by FROM %s", table, from));

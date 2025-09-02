@@ -123,7 +123,7 @@ public interface DbAction<T> {
 
 		private T entity;
 
-		@Nullable private final Number previousVersion;
+		private @Nullable final Number previousVersion;
 
 		public UpdateRoot(T entity, @Nullable Number previousVersion) {
 			this.entity = entity;

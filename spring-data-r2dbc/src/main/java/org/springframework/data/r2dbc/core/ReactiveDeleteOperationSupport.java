@@ -28,13 +28,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  */
-class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
-
-	private final R2dbcEntityTemplate template;
-
-	ReactiveDeleteOperationSupport(R2dbcEntityTemplate template) {
-		this.template = template;
-	}
+record ReactiveDeleteOperationSupport(R2dbcEntityTemplate template) implements ReactiveDeleteOperation {
 
 	@Override
 	public ReactiveDelete delete(Class<?> domainType) {

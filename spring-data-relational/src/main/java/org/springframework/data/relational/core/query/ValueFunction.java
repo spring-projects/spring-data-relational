@@ -32,7 +32,7 @@ import org.springframework.util.Assert;
  * @see Supplier
  */
 @FunctionalInterface
-public interface ValueFunction<T> extends Function<Escaper, T> {
+public interface ValueFunction<T extends @Nullable Object> extends Function<Escaper, T> {
 
 	/**
 	 * Produces a value by considering the given {@link Escaper}.
@@ -40,7 +40,6 @@ public interface ValueFunction<T> extends Function<Escaper, T> {
 	 * @param escaper the escaper to use.
 	 * @return the return value, may be {@literal null}.
 	 */
-	@Nullable
 	@Override
 	T apply(Escaper escaper);
 

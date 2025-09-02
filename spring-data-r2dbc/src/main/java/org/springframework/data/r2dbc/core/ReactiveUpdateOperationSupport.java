@@ -29,13 +29,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  */
-class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
-
-	private final R2dbcEntityTemplate template;
-
-	ReactiveUpdateOperationSupport(R2dbcEntityTemplate template) {
-		this.template = template;
-	}
+record ReactiveUpdateOperationSupport(R2dbcEntityTemplate template) implements ReactiveUpdateOperation {
 
 	@Override
 	public ReactiveUpdate update(Class<?> domainType) {

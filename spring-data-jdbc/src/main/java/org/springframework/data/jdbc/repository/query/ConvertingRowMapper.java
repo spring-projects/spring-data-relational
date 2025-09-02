@@ -38,8 +38,8 @@ public class ConvertingRowMapper extends AbstractDelegatingRowMapper<Object> {
 	}
 
 	@Override
-	@Nullable
-	public Object postProcessMapping(@Nullable Object object) {
+	@SuppressWarnings("NullAway")
+	public @Nullable Object postProcessMapping(@Nullable Object object) {
 		return object != null ? converter.convert(object) : null;
 	}
 }

@@ -421,7 +421,7 @@ public interface StatementMapper {
 
 		/**
 		 * The used lockmode
-		 * 
+		 *
 		 * @return might be null if no lockmode defined.
 		 */
 		@Nullable
@@ -641,8 +641,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
-		@Nullable
-		public CriteriaDefinition getCriteria() {
+		public @Nullable CriteriaDefinition getCriteria() {
 			return this.criteria;
 		}
 	}

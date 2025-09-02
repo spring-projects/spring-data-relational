@@ -41,8 +41,7 @@ interface ReadingDataAccessStrategy {
 	 * @param <T> the type of the entity.
 	 * @return Might return {@code null}.
 	 */
-	@Nullable
-	<T> T findById(Object id, Class<T> domainType);
+	<T extends @Nullable Object> T findById(Object id, Class<T> domainType);
 
 	/**
 	 * Loads all entities of the given type.

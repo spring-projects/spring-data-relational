@@ -75,7 +75,8 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+	public <T> @Nullable Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType,
+			IdValueSource idValueSource) {
 		return delegate.insert(insertSubjects, domainType, idValueSource);
 	}
 
@@ -141,7 +142,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable T findById(Object id, Class<T> domainType) {
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 
 		Assert.notNull(delegate, "Delegate is null");
 

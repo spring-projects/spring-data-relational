@@ -30,8 +30,7 @@ public class NumericLiteral extends Literal<Number> {
 	}
 
 	@Override
-	@Nullable
-	public Number getContent() {
+	public @Nullable Number getContent() {
 		return super.getContent();
 	}
 }

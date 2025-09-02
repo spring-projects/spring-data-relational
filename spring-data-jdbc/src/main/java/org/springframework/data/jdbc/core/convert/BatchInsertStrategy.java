@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
@@ -32,5 +34,6 @@ interface BatchInsertStrategy {
 	 *         elements will be {@code null}.
 	 * @since 2.4
 	 */
+	@Nullable
 	Object[] execute(String sql, SqlParameterSource[] sqlParameterSources);
 }

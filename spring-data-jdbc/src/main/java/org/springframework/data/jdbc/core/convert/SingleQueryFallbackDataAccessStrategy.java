@@ -56,7 +56,7 @@ class SingleQueryFallbackDataAccessStrategy extends DelegatingDataAccessStrategy
 	}
 
 	@Override
-	public <T> @Nullable T findById(Object id, Class<T> domainType) {
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 
 		if (isSingleSelectQuerySupported(domainType)) {
 			return singleSelectDelegate.findById(id, domainType);

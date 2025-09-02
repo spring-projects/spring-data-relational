@@ -39,13 +39,13 @@ import org.springframework.data.util.ReactiveWrappers;
  */
 class R2dbcParameterAccessor extends RelationalParametersParameterAccessor {
 
-	private final Object[] values;
+	private final @Nullable Object[] values;
 	private final R2dbcQueryMethod method;
 
 	/**
 	 * Creates a new {@link R2dbcParameterAccessor}.
 	 */
-	public R2dbcParameterAccessor(R2dbcQueryMethod method, Object... values) {
+	public R2dbcParameterAccessor(R2dbcQueryMethod method, @Nullable Object... values) {
 
 		super(method, values);
 
@@ -57,8 +57,9 @@ class R2dbcParameterAccessor extends RelationalParametersParameterAccessor {
 	 * @see org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor#getValues()
 	 */
 	@Override
-	public Object[] getValues() {
+	public @Nullable Object[] getValues() {
 
+		@Nullable
 		Object[] result = new Object[values.length];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = getValue(i);

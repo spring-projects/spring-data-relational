@@ -262,6 +262,24 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	AggregatePath getTail();
 
 	/**
+	 * The required path resulting from removing the first element of the {@link AggregatePath} or throwing
+	 * {@link IllegalStateException} for any {@link AggregatePath} having less than two elements.
+	 *
+	 * @throws IllegalStateException for any {@link AggregatePath} having less than two elements.
+	 * @since 4.0
+	 */
+	default AggregatePath getRequiredTail() {
+
+		AggregatePath tail = getTail();
+
+		if (tail == null) {
+			throw new IllegalStateException("No tail available");
+		}
+
+		return tail;
+	}
+
+	/**
 	 * Subtract the {@literal basePath} from {@literal this} {@literal AggregatePath} by removing the {@literal basePath}
 	 * from the beginning of {@literal this}.
 	 *
@@ -342,7 +360,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 		}
 
-		public ColumnInfo requiredQualifierColumnInfo() {
+		public ColumnInfo getRequiredQualifierColumnInfo() {
 
 			Assert.notNull(qualifierColumnInfo, "ColumnInfo for qualifier columns must not be null");
 
@@ -451,7 +469,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 			return backReferenceColumnInfos.isEmpty() ? idColumnInfos : backReferenceColumnInfos;
 		}
 
-		public Class<?> requiredQualifierColumnType() {
+		public Class<?> getRequiredQualifierColumnType() {
 
 			Class<?> type = qualifierColumnType();
 

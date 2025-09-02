@@ -29,17 +29,9 @@ import org.springframework.data.repository.query.ValueExpressionQueryRewriter;
  * @author Mark Paluch
  * @since 1.1
  */
-class ExpressionQuery {
+record ExpressionQuery(String query, Map<String, ValueExpression> parameterMap) {
 
 	private static final String SYNTHETIC_PARAMETER_TEMPLATE = "__synthetic_%d__";
-
-	private final String query;
-	private final Map<String, ValueExpression> parameterMap;
-
-	private ExpressionQuery(String query, Map<String, ValueExpression> parameterMap) {
-		this.query = query;
-		this.parameterMap = parameterMap;
-	}
 
 	/**
 	 * Create a {@link ExpressionQuery} from a {@code query}.
@@ -49,7 +41,6 @@ class ExpressionQuery {
 	 */
 	public static ExpressionQuery create(ValueExpressionParser parser, String query) {
 
-
 		ValueExpressionQueryRewriter rewriter = ValueExpressionQueryRewriter.of(parser,
 				(counter, expression) -> String.format(SYNTHETIC_PARAMETER_TEMPLATE, counter), String::concat);
 		ValueExpressionQueryRewriter.ParsedQuery parsed = rewriter.parse(query);
@@ -57,9 +48,6 @@ class ExpressionQuery {
 		return new ExpressionQuery(parsed.getQueryString(), parsed.getParameterMap());
 	}
 
-	public String getQuery() {
-		return query;
-	}
 
 	public Map<String, ValueExpression> getBindings() {
 		return parameterMap;

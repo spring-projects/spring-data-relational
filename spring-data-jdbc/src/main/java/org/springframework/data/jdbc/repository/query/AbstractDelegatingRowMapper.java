@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @since 4.0
  */
-public abstract class AbstractDelegatingRowMapper<T> implements RowMapper<T> {
+public abstract class AbstractDelegatingRowMapper<T extends @Nullable Object> implements RowMapper<T> {
 
 	private final RowMapper<T> delegate;
 
@@ -44,11 +44,7 @@ public abstract class AbstractDelegatingRowMapper<T> implements RowMapper<T> {
 	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
 
 		T intermediate = delegate.mapRow(rs, rowNum);
-		T result = postProcessMapping(intermediate);
-
-		Assert.state(result != null, "Result must not be null");
-
-		return result;
+		return postProcessMapping(intermediate);
 	}
 
 	/**
@@ -56,8 +52,7 @@ public abstract class AbstractDelegatingRowMapper<T> implements RowMapper<T> {
 	 *
 	 * @return the mapped entity after applying post-processing logic
 	 */
-	@Nullable
-	protected T postProcessMapping(@Nullable T object) {
+	protected T postProcessMapping(T object) {
 		return object;
 	}
 }

@@ -1,7 +1,7 @@
 /**
  * Dialects abstract the SQL dialect of the underlying database.
  */
-@NullMarked
+@org.jspecify.annotations.NullMarked
 package org.springframework.data.relational.core.dialect;
 
-import org.jspecify.annotations.NullMarked;
+

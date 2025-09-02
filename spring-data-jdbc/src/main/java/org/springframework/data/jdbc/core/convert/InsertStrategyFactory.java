@@ -73,22 +73,22 @@ public class InsertStrategyFactory {
 	private record DefaultInsertStrategy(NamedParameterJdbcOperations jdbcOperations) implements InsertStrategy {
 
 		@Override
-			public @Nullable Object execute(String sql, SqlParameterSource sqlParameterSource) {
+		public @Nullable Object execute(String sql, SqlParameterSource sqlParameterSource) {
 
-				jdbcOperations.update(sql, sqlParameterSource);
-				return null;
-			}
+			jdbcOperations.update(sql, sqlParameterSource);
+			return null;
 		}
+	}
 
 	private record DefaultBatchInsertStrategy(
 			NamedParameterJdbcOperations jdbcOperations) implements BatchInsertStrategy {
 
 		@Override
-			public Object[] execute(String sql, SqlParameterSource[] sqlParameterSources) {
+		public @Nullable Object[] execute(String sql, SqlParameterSource[] sqlParameterSources) {
 
-				jdbcOperations.batchUpdate(sql, sqlParameterSources);
-				return new Object[sqlParameterSources.length];
-			}
+			jdbcOperations.batchUpdate(sql, sqlParameterSources);
+			return new Object[sqlParameterSources.length];
 		}
+	}
 
 }
