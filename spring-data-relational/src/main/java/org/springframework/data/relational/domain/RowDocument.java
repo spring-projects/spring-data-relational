@@ -70,8 +70,8 @@ public class RowDocument implements Map<String, Object> {
 	 * @return the value or {@literal null}.
 	 * @throws ClassCastException if {@code key} holds a value that is not a {@link List}.
 	 */
-	@Nullable
-	public List getList(String key) {
+	@SuppressWarnings("rawtypes")
+	public @Nullable List getList(String key) {
 
 		Object item = get(key);
 		if (item instanceof List<?> || item == null) {
@@ -88,8 +88,8 @@ public class RowDocument implements Map<String, Object> {
 	 * @return the value or {@literal null}.
 	 * @throws ClassCastException if {@code key} holds a value that is not a {@link Map}.
 	 */
-	@Nullable
-	public Map<String, Object> getMap(String key) {
+	@SuppressWarnings("unchecked")
+	public @Nullable Map<String, Object> getMap(String key) {
 
 		Object item = get(key);
 		if (item instanceof Map || item == null) {

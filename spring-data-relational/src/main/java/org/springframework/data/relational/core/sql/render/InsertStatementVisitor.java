@@ -96,7 +96,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 	private void addInsertValuesIfPresentElseDefault() {
 
-		if (values.length() != 0) {
+		if (!values.isEmpty()) {
 			builder.append(" VALUES (").append(values).append(")");
 		} else {
 			addInsertWithDefaultValuesToBuilder();
@@ -105,7 +105,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 	private void addInsertColumnsIfPresent() {
 
-		if (columns.length() != 0) {
+		if (!columns.isEmpty()) {
 			builder.append(" (").append(columns).append(")");
 		}
 	}
@@ -118,7 +118,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 		return new ColumnVisitor(context, false, it -> {
 
-			if (columns.length() != 0) {
+			if (!columns.isEmpty()) {
 				columns.append(", ");
 			}
 
@@ -130,7 +130,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 		return new IntoClauseVisitor(context, it -> {
 
-			if (into.length() != 0) {
+			if (!into.isEmpty()) {
 				into.append(", ");
 			}
 

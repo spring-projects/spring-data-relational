@@ -50,7 +50,8 @@ class SingleQueryDataAccessStrategy implements ReadingDataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable T findById(Object id, Class<T> domainType) {
+	@SuppressWarnings("NullAway")
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 		return aggregateReader.findById(id, getPersistentEntity(domainType));
 	}
 

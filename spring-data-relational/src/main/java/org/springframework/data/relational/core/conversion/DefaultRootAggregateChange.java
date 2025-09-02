@@ -40,7 +40,7 @@ class DefaultRootAggregateChange<T> implements RootAggregateChange<T> {
 	private DbAction.@Nullable WithRoot<T> rootAction;
 
 	/** The previous version assigned to the instance being changed, if available */
-	@Nullable private final Number previousVersion;
+	private @Nullable final Number previousVersion;
 
 	DefaultRootAggregateChange(Kind kind, Class<T> entityType, @Nullable Number previousVersion) {
 

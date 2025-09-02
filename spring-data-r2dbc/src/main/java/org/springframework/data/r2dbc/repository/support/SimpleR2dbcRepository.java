@@ -380,7 +380,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 
 					Object property = accessor.getProperty(persistentProperty);
 
-					Assert.state(property != null, "Property must not be null");
+					Assert.state(property != null, () -> "Property '%s' must not be null".formatted(persistentProperty));
 
 					criteriaHolder[0] = criteriaHolder[0].and(persistentProperty.getName()).is(property);
 				}

@@ -93,7 +93,7 @@ class SequenceEntityCallbackDelegate {
 			return Mono.empty();
 		}
 
-		if (sequence != null && !dialect.getIdGeneration().sequencesSupported()) {
+		if (!dialect.getIdGeneration().sequencesSupported()) {
 			LOG.warn("""
 					Entity type '%s' is marked for sequence usage but configured dialect '%s'
 					does not support sequences. Falling back to identity columns.

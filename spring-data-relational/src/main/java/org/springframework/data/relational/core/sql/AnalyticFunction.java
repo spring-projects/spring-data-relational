@@ -20,7 +20,7 @@ import java.util.Collection;
 
 /**
  * Represents an analytic function, also known as windowing function
- * 
+ *
  * @author Jens Schauder
  * @since 2.7
  */
@@ -47,7 +47,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 
 	/**
 	 * Specify the {@literal PARTITION BY} clause of an analytic function
-	 * 
+	 *
 	 * @param partitionBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is partitioned by the given expressions, overwriting any expression
 	 *         previously present.
@@ -58,7 +58,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 
 	/**
 	 * Specify the {@literal PARTITION BY} clause of an analytic function
-	 * 
+	 *
 	 * @param partitionBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is partitioned by the given expressions, overwriting any expression
 	 *         previously present.
@@ -70,7 +70,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 
 	/**
 	 * Specify the {@literal ORDER BY} clause of an analytic function
-	 * 
+	 *
 	 * @param orderBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
 	 *         previously present.
@@ -81,7 +81,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 
 	/**
 	 * Specify the {@literal ORDER BY} clause of an analytic function
-	 * 
+	 *
 	 * @param orderBy Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
 	 *         previously present.
@@ -93,7 +93,7 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 
 	/**
 	 * Specify the {@literal ORDER BY} clause of an analytic function
-	 * 
+	 *
 	 * @param orderBy array of {@link Expression}. Typically, column but other expressions are fine to.
 	 * @return a new {@literal AnalyticFunction} is ordered by the given expressions, overwriting any expression
 	 *         previously present.
@@ -107,11 +107,11 @@ public class AnalyticFunction extends AbstractSegment implements Expression {
 		return new AnalyticFunction(function, partition, new OrderBy(orderByFields));
 	}
 
-	public AliasedAnalyticFunction as(String alias) {
+	public AnalyticFunction as(String alias) {
 		return new AliasedAnalyticFunction(this, SqlIdentifier.unquoted(alias));
 	}
 
-	public AliasedAnalyticFunction as(SqlIdentifier alias) {
+	public AnalyticFunction as(SqlIdentifier alias) {
 		return new AliasedAnalyticFunction(this, alias);
 	}
 

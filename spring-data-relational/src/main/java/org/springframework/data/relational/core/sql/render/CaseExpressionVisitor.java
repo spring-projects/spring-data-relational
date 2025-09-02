@@ -12,7 +12,8 @@ import org.springframework.data.relational.core.sql.When;
  * @since 3.4
  */
 public class CaseExpressionVisitor extends TypedSingleConditionRenderSupport<CaseExpression> implements PartRenderer {
-    private final StringBuilder part = new StringBuilder();
+
+	private final StringBuilder part = new StringBuilder();
 
     CaseExpressionVisitor(RenderContext context) {
         super(context);

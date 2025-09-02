@@ -26,21 +26,21 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting
  *
  * @author Jens Schauder
  */
-public class DefaultIdentifierProcessingUnitTests {
+class DefaultIdentifierProcessingUnitTests {
 
 	@Test // DATAJDBC-386
-	public void ansiConformProcessing() {
+	void ansiConformProcessing() {
 
-		DefaultIdentifierProcessing processing = IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
+		IdentifierProcessing processing = IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
 
 		assertThat(processing.quote("something")).isEqualTo("\"something\"");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("ABC");
 	}
 
 	@Test // DATAJDBC-386
-	public void twoCharacterAsIs() {
+	void twoCharacterAsIs() {
 
-		DefaultIdentifierProcessing processing = IdentifierProcessing.create(new Quoting("[", "]"), LetterCasing.AS_IS);
+		IdentifierProcessing processing = IdentifierProcessing.create(new Quoting("[", "]"), LetterCasing.AS_IS);
 
 		assertThat(processing.quote("something")).isEqualTo("[something]");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("aBc");

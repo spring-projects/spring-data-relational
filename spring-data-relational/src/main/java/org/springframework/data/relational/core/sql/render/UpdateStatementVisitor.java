@@ -29,20 +29,20 @@ import org.springframework.data.relational.core.sql.Where;
  */
 class UpdateStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
-	private StringBuilder builder = new StringBuilder();
-	private StringBuilder table = new StringBuilder();
-	private StringBuilder assignments = new StringBuilder();
-	private StringBuilder where = new StringBuilder();
+	private final StringBuilder builder = new StringBuilder();
+	private final StringBuilder table = new StringBuilder();
+	private final StringBuilder assignments = new StringBuilder();
+	private final StringBuilder where = new StringBuilder();
 
-	private FromTableVisitor tableVisitor;
-	private AssignmentVisitor assignmentVisitor;
-	private WhereClauseVisitor whereClauseVisitor;
+	private final FromTableVisitor tableVisitor;
+	private final AssignmentVisitor assignmentVisitor;
+	private final WhereClauseVisitor whereClauseVisitor;
 
 	UpdateStatementVisitor(RenderContext context) {
 
 		this.tableVisitor = new FromTableVisitor(context, it -> {
 
-			if (table.length() != 0) {
+			if (!table.isEmpty()) {
 				table.append(", ");
 			}
 
@@ -51,7 +51,7 @@ class UpdateStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 		this.assignmentVisitor = new AssignmentVisitor(context, it -> {
 
-			if (assignments.length() != 0) {
+			if (!assignments.isEmpty()) {
 				assignments.append(", ");
 			}
 
@@ -86,15 +86,15 @@ class UpdateStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			builder.append("UPDATE");
 
-			if (table.length() != 0) {
+			if (!table.isEmpty()) {
 				builder.append(" ").append(table);
 			}
 
-			if (assignments.length() != 0) {
+			if (!assignments.isEmpty()) {
 				builder.append(" SET ").append(assignments);
 			}
 
-			if (where.length() != 0) {
+			if (!where.isEmpty()) {
 				builder.append(" WHERE ").append(where);
 			}
 

@@ -27,20 +27,17 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Will Easterling
  */
-class PreparedOperationBindableQuery implements BindableQuery {
-
-	private final PreparedOperation<?> preparedQuery;
+record PreparedOperationBindableQuery(PreparedOperation<?> preparedQuery) implements BindableQuery {
 
 	/**
 	 * Creates new instance of this class with the given {@link PreparedOperation}.
 	 *
 	 * @param preparedQuery prepared SQL query, must not be {@literal null}.
 	 */
-	PreparedOperationBindableQuery(PreparedOperation<?> preparedQuery) {
+	PreparedOperationBindableQuery {
 
 		Assert.notNull(preparedQuery, "Prepared query must not be null");
 
-		this.preparedQuery = preparedQuery;
 	}
 
 	@Override

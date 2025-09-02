@@ -28,8 +28,8 @@ import org.jspecify.annotations.Nullable;
  */
 abstract class AbstractImportValidator implements Visitor {
 
-	Set<Table> requiredByWhere = new HashSet<>();
-	Set<Table> from = new HashSet<>();
+	final Set<TableLike> requiredByWhere = new HashSet<>();
+	final Set<TableLike> from = new HashSet<>();
 	@Nullable Visitable parent;
 
 	@Override

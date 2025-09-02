@@ -1,7 +1,7 @@
 /**
  * Ahead of Time processing utilities for Spring Data Relational.
  */
-@NullMarked
+@org.jspecify.annotations.NullMarked
 package org.springframework.data.relational.aot;
 
-import org.jspecify.annotations.NullMarked;
+

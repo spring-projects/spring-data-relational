@@ -28,11 +28,8 @@ record EmbeddedContext(RelationalPersistentProperty ownerProperty) {
 		if (!ownerProperty.isEmbedded()) {
 			return name;
 		}
-		String embeddedPrefix = ownerProperty.getEmbeddedPrefix();
-		if (embeddedPrefix != null) {
-			return embeddedPrefix + name;
-		}
 
-		return name;
+		String embeddedPrefix = ownerProperty.getEmbeddedPrefix();
+		return embeddedPrefix + name;
 	}
 }

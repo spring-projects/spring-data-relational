@@ -19,13 +19,14 @@ import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Column name within a {@code SELECT … FROM} clause.
  * <p>
  * Renders to: {@code <name>} or {@code <table(alias)>.<name>}.
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
@@ -33,20 +34,20 @@ import org.springframework.util.Assert;
 public class Column extends AbstractSegment implements Expression, Named {
 
 	private final SqlIdentifier name;
-	private final TableLike table;
+	private final @Nullable TableLike table;
 
-	Column(String name, TableLike table) {
+	Column(String name, @Nullable TableLike table) {
 
-		super(table);
+		super(table == null ? new Segment[0] : new Segment[] { table });
 		Assert.notNull(name, "Name must not be null");
 
 		this.name = SqlIdentifier.unquoted(name);
 		this.table = table;
 	}
 
-	Column(SqlIdentifier name, TableLike table) {
+	Column(SqlIdentifier name, @Nullable TableLike table) {
 
-		super(table);
+		super(table == null ? new Segment[0] : new Segment[] { table });
 		Assert.notNull(name, "Name must not be null");
 
 		this.name = name;
@@ -340,14 +341,29 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 * @return the {@link Table}. Can be {@literal null} if the column was not referenced in the context of a
 	 *         {@link Table}.
 	 */
-	@Nullable
-	public TableLike getTable() {
+	public @Nullable TableLike getTable() {
+		return table;
+	}
+
+	/**
+	 * @return the required {@link Table}, throws {@link IllegalStateException} if the column was not referenced in the
+	 *         context of a {@link Table}.
+	 * @throws IllegalStateException if the column was not referenced in the context of a {@link Table}.
+	 * @since 4.0
+	 */
+	public TableLike getRequiredTable() {
+
+		TableLike table = getTable();
+
+		if (table == null) {
+			throw new IllegalStateException("Column '%s' is not associated with a Table".formatted(getName()));
+		}
+
 		return table;
 	}
 
 	@Override
 	public String toString() {
-
 		return getPrefix() + name;
 	}
 
@@ -372,7 +388,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 			return false;
 		}
 		Column column = (Column) o;
-		return name.equals(column.name) && table.equals(column.table);
+		return name.equals(column.name) && ObjectUtils.nullSafeEquals(table, column.table);
 	}
 
 	@Override
@@ -387,12 +403,12 @@ public class Column extends AbstractSegment implements Expression, Named {
 
 		private final SqlIdentifier alias;
 
-		private AliasedColumn(String name, TableLike table, String alias) {
+		private AliasedColumn(String name, @Nullable TableLike table, String alias) {
 			super(name, table);
 			this.alias = SqlIdentifier.unquoted(alias);
 		}
 
-		private AliasedColumn(SqlIdentifier name, TableLike table, SqlIdentifier alias) {
+		private AliasedColumn(SqlIdentifier name, @Nullable TableLike table, SqlIdentifier alias) {
 			super(name, table);
 			this.alias = alias;
 		}

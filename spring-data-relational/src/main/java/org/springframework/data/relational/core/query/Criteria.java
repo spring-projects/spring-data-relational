@@ -422,10 +422,7 @@ public class Criteria implements CriteriaDefinition {
 
 		while (current.hasPrevious()) {
 
-			CriteriaDefinition previous = current.getPrevious();
-
-			Assert.state(previous != null, "Previous criteria must not be null");
-
+			CriteriaDefinition previous = current.getRequiredPrevious();
 			forwardChain.put(previous, current);
 			current = previous;
 		}

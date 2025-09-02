@@ -29,7 +29,7 @@ import org.springframework.jdbc.core.RowMapper;
 public interface QueryMappingConfiguration {
 
 	@Nullable
-	default <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+	default <T extends @Nullable Object> RowMapper<? extends T> getRowMapper(Class<T> type) {
 		return null;
 	}
 
@@ -39,7 +39,7 @@ public interface QueryMappingConfiguration {
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		@Override
-		public <T> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type) {
+		public <T extends @Nullable Object> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type) {
 			return null;
 		}
 

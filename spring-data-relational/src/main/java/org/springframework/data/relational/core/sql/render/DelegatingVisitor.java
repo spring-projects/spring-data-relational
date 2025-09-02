@@ -40,7 +40,7 @@ import org.springframework.util.Assert;
  * <p>
  * Delegation is recursive and limited by the stack size.
  * </p>
- * 
+ *
  * @author Mark Paluch
  * @since 1.1
  * @see FilteredSubtreeVisitor
@@ -57,7 +57,7 @@ abstract class DelegatingVisitor implements Visitor {
 	 * requires delegation to a sub-{@link Visitor}. When delegating to a sub-{@link Visitor}, {@link #doEnter(Visitable)}
 	 * is called on the {@link DelegatingVisitor delegate}.
 	 * </p>
-	 * 
+	 *
 	 * @param segment must not be {@literal null}.
 	 * @return
 	 */
@@ -91,7 +91,7 @@ abstract class DelegatingVisitor implements Visitor {
 	 * {@link Visitor segments} or whether it should step back from delegation. When stepping back from delegation,
 	 * {@link #doLeave(Visitable)} is called on the {@link DelegatingVisitor parent delegate}.
 	 * </p>
-	 * 
+	 *
 	 * @param segment must not be {@literal null}.
 	 * @return
 	 */
@@ -188,7 +188,7 @@ abstract class DelegatingVisitor implements Visitor {
 
 		DelegatingVisitor getDelegate() {
 
-			Assert.state(delegate != null, "No delegate available");
+			Assert.state(isDelegate() && delegate != null, "No delegate available");
 
 			return delegate;
 		}

@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.mapping.AggregatePathTraversal;
  * @since 3.2
  */
 public class AliasFactory {
+
 	private final SingleAliasFactory columnAliases = new SingleAliasFactory("c");
 	private final SingleAliasFactory tableAliases = new SingleAliasFactory("t");
 	private final SingleAliasFactory rowNumberAliases = new SingleAliasFactory("rn");

@@ -112,8 +112,8 @@ class DefaultAggregatePath implements AggregatePath {
 		RelationalPersistentProperty baseProperty = path.getRequiredBaseProperty();
 		AggregatePath appended = append(baseProperty);
 		AggregatePath tail = path.getTail();
-		return tail == null ? appended : appended.append(tail);
 
+		return tail == null ? appended : appended.append(tail);
 	}
 
 	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
@@ -302,10 +302,7 @@ class DefaultAggregatePath implements AggregatePath {
 			return this;
 		}
 
-		AggregatePath tail = getTail();
-
-		Assert.state(tail != null, "Tail must not be null");
-
+		AggregatePath tail = getRequiredTail();
 		return tail.getSubPathBasedOn(baseType);
 	}
 

@@ -130,7 +130,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+	public <T> @Nullable Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType,
+			IdValueSource idValueSource) {
 
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 
@@ -282,7 +283,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable T findById(Object id, Class<T> domainType) {
+	@SuppressWarnings("NullAway")
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
@@ -331,7 +333,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public List<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
 
@@ -363,7 +364,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				if (!path.hasIdProperty() && path.isQualified()) {
 
 					TableInfo tableInfo = path.getTableInfo();
-					identifierToUse = identifierToUse.withPart(tableInfo.requiredQualifierColumnInfo().name(), rowNum,
+					identifierToUse = identifierToUse.withPart(tableInfo.getRequiredQualifierColumnInfo().name(), rowNum,
 							Object.class);
 				}
 

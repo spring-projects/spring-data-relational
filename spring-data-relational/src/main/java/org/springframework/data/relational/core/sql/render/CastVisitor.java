@@ -25,15 +25,15 @@ import org.springframework.util.Assert;
 /**
  * Renders a CAST expression, by delegating to an {@link ExpressionVisitor} and building the expression out of the
  * rendered parts.
- * 
+ *
  * @author Jens Schauder
  * @since 2.3
  */
 class CastVisitor extends TypedSubtreeVisitor<Cast> implements PartRenderer {
 
 	private final RenderContext context;
-	@Nullable private StringJoiner joiner;
-	@Nullable private ExpressionVisitor expressionVisitor;
+	private @Nullable StringJoiner joiner;
+	private @Nullable ExpressionVisitor expressionVisitor;
 
 	CastVisitor(RenderContext context) {
 

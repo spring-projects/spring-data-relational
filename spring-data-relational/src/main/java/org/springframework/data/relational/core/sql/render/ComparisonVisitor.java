@@ -63,7 +63,7 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	Delegation leaveNested(Visitable segment) {
 
 		if (current != null) {
-			if (part.length() != 0) {
+			if (!part.isEmpty()) {
 				part.append(' ').append(condition.getComparator()).append(' ');
 			}
 

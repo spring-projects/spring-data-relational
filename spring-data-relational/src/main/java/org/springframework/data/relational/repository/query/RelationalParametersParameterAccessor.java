@@ -18,6 +18,8 @@ package org.springframework.data.relational.repository.query;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.QueryMethod;
@@ -30,7 +32,7 @@ import org.springframework.data.repository.query.QueryMethod;
 public class RelationalParametersParameterAccessor extends ParametersParameterAccessor
 		implements RelationalParameterAccessor {
 
-	private final List<Object> values;
+	private final List<@Nullable Object> values;
 
 	/**
 	 * Creates a new {@link RelationalParametersParameterAccessor}.
@@ -38,14 +40,14 @@ public class RelationalParametersParameterAccessor extends ParametersParameterAc
 	 * @param method must not be {@literal null}.
 	 * @param values must not be {@literal null}.
 	 */
-	public RelationalParametersParameterAccessor(QueryMethod method, Object[] values) {
+	public RelationalParametersParameterAccessor(QueryMethod method, @Nullable Object[] values) {
 
 		super(method.getParameters(), values);
 		this.values = Arrays.asList(values);
 	}
 
 	@Override
-	public Object[] getValues() {
+	public @Nullable Object[] getValues() {
 		return values.toArray();
 	}
 

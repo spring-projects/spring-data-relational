@@ -48,8 +48,7 @@ public class CallbackCapableRowMapper<T> extends AbstractDelegatingRowMapper<T> 
 	}
 
 	@Override
-	@Nullable
-	public T postProcessMapping(@Nullable T object) {
+	public T postProcessMapping(T object) {
 
 		if (object != null) {
 

@@ -101,7 +101,7 @@ public interface RelationalConverter {
 	 * @param <R> aggregate type.
 	 * @since 3.2
 	 */
-	<R> @Nullable R read(Class<R> type, RowDocument source);
+	<R> R read(Class<R> type, RowDocument source);
 
 	/**
 	 * Read a relational value into the desired {@link TypeInformation destination type}.

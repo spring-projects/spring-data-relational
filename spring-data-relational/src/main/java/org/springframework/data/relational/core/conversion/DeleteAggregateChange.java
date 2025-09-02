@@ -38,7 +38,7 @@ public class DeleteAggregateChange<T> implements MutableAggregateChange<T> {
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
 	/** The previous version assigned to the instance being changed, if available */
-	@Nullable private final Number previousVersion;
+	private @Nullable final Number previousVersion;
 
 	DeleteAggregateChange(Class<T> entityType, @Nullable Number previousVersion) {
 		this.entityType = entityType;

@@ -34,10 +34,10 @@ class SelectValidator extends AbstractImportValidator {
 	private final Stack<Select> selects = new Stack<>();
 
 	private int selectFieldCount;
-	private Set<TableLike> requiredBySelect = new HashSet<>();
-	private Set<TableLike> requiredByOrderBy = new HashSet<>();
+	private final Set<TableLike> requiredBySelect = new HashSet<>();
+	private final Set<TableLike> requiredByOrderBy = new HashSet<>();
 
-	private Set<TableLike> join = new HashSet<>();
+	private final Set<TableLike> join = new HashSet<>();
 
 	/**
 	 * Validates a {@link Select} statement.
@@ -64,7 +64,7 @@ class SelectValidator extends AbstractImportValidator {
 			}
 		}
 
-		for (Table table : requiredByWhere) {
+		for (TableLike table : requiredByWhere) {
 			if (!join.contains(table) && !from.contains(table)) {
 				throw new IllegalStateException(String
 						.format("Required table [%s] by a WHERE predicate not imported by FROM %s or JOIN %s", table, from, join));

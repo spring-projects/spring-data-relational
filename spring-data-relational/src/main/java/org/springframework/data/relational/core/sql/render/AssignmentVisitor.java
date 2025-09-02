@@ -59,7 +59,7 @@ class AssignmentVisitor extends TypedSubtreeVisitor<Assignment> {
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Column) {
-			if (part.length() != 0) {
+			if (!part.isEmpty()) {
 				part.append(" = ");
 			}
 			return super.leaveNested(segment);

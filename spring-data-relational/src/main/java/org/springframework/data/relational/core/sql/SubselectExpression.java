@@ -24,7 +24,6 @@ package org.springframework.data.relational.core.sql;
 public class SubselectExpression extends Subselect implements Expression {
 
 	SubselectExpression(Select subselect) {
-
 		super(subselect);
 	}
 

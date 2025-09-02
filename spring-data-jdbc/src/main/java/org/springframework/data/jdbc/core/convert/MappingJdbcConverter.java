@@ -374,7 +374,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * @param ex the offending {@code SQLException}
 	 * @return a DataAccessException wrapping the {@code SQLException} (never {@code null})
 	 */
-	private DataAccessException translateException(String task, @org.jspecify.annotations.Nullable String sql,
+	private DataAccessException translateException(String task, @Nullable String sql,
 			SQLException ex) {
 		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
 		return (dae != null ? dae : new UncategorizedSQLException(task, sql, ex));
@@ -556,10 +556,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		if (owner.equals(base.getRequiredLeafEntity())) {
 			return base.append(suffix);
 		} else {
-			AggregatePath tail = suffix.getTail();
-
-			Assert.state(tail != null, "Tail must not be null");
-
+			AggregatePath tail = suffix.getRequiredTail();
 			return smartAppend(base, tail);
 		}
 	}

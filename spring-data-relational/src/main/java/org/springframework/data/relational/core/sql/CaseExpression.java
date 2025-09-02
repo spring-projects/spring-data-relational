@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
 public class CaseExpression extends AbstractSegment implements Expression {
 
 	private final List<When> whenList;
-	@Nullable private final Expression elseExpression;
+	private @Nullable final Expression elseExpression;
 
 	private static Segment[] children(List<When> whenList, @Nullable Expression elseExpression) {
 

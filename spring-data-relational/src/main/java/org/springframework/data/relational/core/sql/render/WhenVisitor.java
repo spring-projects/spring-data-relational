@@ -11,39 +11,39 @@ import org.springframework.data.relational.core.sql.When;
  */
 public class WhenVisitor extends TypedSingleConditionRenderSupport<When> implements PartRenderer {
 
-    private final StringBuilder part = new StringBuilder();
-    private boolean conditionRendered;
+	private final StringBuilder part = new StringBuilder();
+	private boolean conditionRendered;
 
-    WhenVisitor(RenderContext context) {
-        super(context);
-    }
+	WhenVisitor(RenderContext context) {
+		super(context);
+	}
 
-    @Override
-    Delegation leaveNested(Visitable segment) {
+	@Override
+	Delegation leaveNested(Visitable segment) {
 
-        if (hasDelegatedRendering()) {
+		if (hasDelegatedRendering()) {
 
-            if (conditionRendered) {
-                part.append(" THEN ");
-            }
+			if (conditionRendered) {
+				part.append(" THEN ");
+			}
 
-            part.append(consumeRenderedPart());
-            conditionRendered = true;
-        }
+			part.append(consumeRenderedPart());
+			conditionRendered = true;
+		}
 
-        return super.leaveNested(segment);
-    }
+		return super.leaveNested(segment);
+	}
 
-    @Override
-    Delegation enterMatched(When segment) {
+	@Override
+	Delegation enterMatched(When segment) {
 
-        part.append("WHEN ");
+		part.append("WHEN ");
 
-        return super.enterMatched(segment);
-    }
+		return super.enterMatched(segment);
+	}
 
-    @Override
-    public CharSequence getRenderedPart() {
-        return part;
-    }
+	@Override
+	public CharSequence getRenderedPart() {
+		return part;
+	}
 }

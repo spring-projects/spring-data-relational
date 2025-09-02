@@ -21,8 +21,7 @@ public class DefaultQueryMappingConfiguration implements QueryMappingConfigurati
 
 	private final Map<Class<?>, RowMapper<?>> mappers = new LinkedHashMap<>();
 
-	@Nullable
-	public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+	public <T extends @Nullable Object> @Nullable RowMapper<? extends T> getRowMapper(Class<T> type) {
 
 		Assert.notNull(type, "Type must not be null");
 
@@ -41,7 +40,7 @@ public class DefaultQueryMappingConfiguration implements QueryMappingConfigurati
 	}
 
 	/**
-	 * Registers a the given {@link RowMapper} as to be used for the given type.
+	 * Registers a given {@link RowMapper} as to be used for the given type.
 	 *
 	 * @return this instance, so this can be used as a fluent interface.
 	 */

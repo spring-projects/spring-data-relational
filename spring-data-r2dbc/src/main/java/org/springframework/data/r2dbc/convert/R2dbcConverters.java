@@ -75,7 +75,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public Boolean convert(Row row) {
+		public @Nullable Boolean convert(Row row) {
 			return row.get(0, Boolean.class);
 		}
 	}
@@ -90,7 +90,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public LocalDate convert(Row row) {
+		public @Nullable LocalDate convert(Row row) {
 			return row.get(0, LocalDate.class);
 		}
 	}
@@ -105,7 +105,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public LocalDateTime convert(Row row) {
+		public @Nullable LocalDateTime convert(Row row) {
 			return row.get(0, LocalDateTime.class);
 		}
 	}
@@ -120,7 +120,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public LocalTime convert(Row row) {
+		public @Nullable LocalTime convert(Row row) {
 			return row.get(0, LocalTime.class);
 		}
 	}
@@ -151,13 +151,7 @@ abstract class R2dbcConverters {
 			return new RowToNumber<>(targetType);
 		}
 
-		static class RowToNumber<T extends Number> implements Converter<Row, T> {
-
-			private final Class<T> targetType;
-
-			RowToNumber(Class<T> targetType) {
-				this.targetType = targetType;
-			}
+		record RowToNumber<T extends Number>(Class<T> targetType) implements Converter<Row, T> {
 
 			@Override
 			public @Nullable T convert(Row source) {
@@ -179,7 +173,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public OffsetDateTime convert(Row row) {
+		public @Nullable OffsetDateTime convert(Row row) {
 			return row.get(0, OffsetDateTime.class);
 		}
 	}
@@ -194,7 +188,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public String convert(Row row) {
+		public @Nullable String convert(Row row) {
 			return row.get(0, String.class);
 		}
 	}
@@ -209,7 +203,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public UUID convert(Row row) {
+		public @Nullable UUID convert(Row row) {
 			return row.get(0, UUID.class);
 		}
 	}
@@ -224,7 +218,7 @@ abstract class R2dbcConverters {
 		INSTANCE;
 
 		@Override
-		public ZonedDateTime convert(Row row) {
+		public @Nullable ZonedDateTime convert(Row row) {
 			return row.get(0, ZonedDateTime.class);
 		}
 	}

@@ -154,8 +154,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @param potentialExpression can be {@literal null}
 	 * @return can be {@literal null}.
 	 */
-	@Nullable
-	private static ValueExpression detectExpression(@Nullable String potentialExpression) {
+	private static @Nullable ValueExpression detectExpression(@Nullable String potentialExpression) {
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;
@@ -224,8 +223,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
-	@Nullable
-	public SqlIdentifier getKeyColumn() {
+	public @Nullable SqlIdentifier getKeyColumn() {
 
 		if (!isQualified()) {
 			return null;
@@ -285,9 +283,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return findAnnotation(InsertOnlyProperty.class) != null;
 	}
 
-	@Nullable
 	@Override
-	public SqlIdentifier getSequence() {
+	public @Nullable SqlIdentifier getSequence() {
 		return this.sequence;
 	}
 

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.data.relational.domain;
 
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import org.springframework.util.Assert;
  * SqlSort supports additional to {@link Sort} {@literal unsafe} sort expressions. Such sort expressions get included in
  * a query as they are. The user has to ensure that they come from trusted sorted or are properly sanatized to prevent
  * SQL injection attacks.
- * 
+ *
  * @author Jens Schauder
  * @since 3.1
  */
@@ -71,7 +70,7 @@ public class SqlSort extends Sort {
 	/**
 	 * Validates a {@link org.springframework.data.domain.Sort.Order}, to be either safe for use in SQL or to be
 	 * explicitely marked unsafe.
-	 * 
+	 *
 	 * @param order the {@link org.springframework.data.domain.Sort.Order} to validate. Must not be null.
 	 */
 	public static void validate(Sort.Order order) {

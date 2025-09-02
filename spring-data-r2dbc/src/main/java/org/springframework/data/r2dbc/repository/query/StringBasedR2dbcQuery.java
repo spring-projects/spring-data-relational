@@ -167,7 +167,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " [" + expressionQuery.getQuery() + ']';
+		return getClass().getSimpleName() + " [" + expressionQuery.query() + ']';
 	}
 
 	private class ExpandedQuery implements PreparedOperation<String> {
@@ -187,7 +187,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 			remainderByName = new LinkedHashMap<>(recordedBindings.byName);
 			remainderByIndex = new LinkedHashMap<>(recordedBindings.byIndex);
-			expanded = dataAccessStrategy.processNamedParameters(expressionQuery.getQuery(), (index, name) -> {
+			expanded = dataAccessStrategy.processNamedParameters(expressionQuery.query(), (index, name) -> {
 
 				if (recordedBindings.byName.containsKey(name)) {
 					remainderByName.remove(name);
@@ -205,7 +205,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		@Override
 		public String getSource() {
-			return expressionQuery.getQuery();
+			return expressionQuery.query();
 		}
 
 		@Override
@@ -225,7 +225,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		@Override
 		public String toString() {
-			return String.format("Original: [%s], Expanded: [%s]", expressionQuery.getQuery(), expanded.toQuery());
+			return String.format("Original: [%s], Expanded: [%s]", expressionQuery.query(), expanded.toQuery());
 		}
 	}
 

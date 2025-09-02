@@ -59,7 +59,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 	private final JdbcAggregateOperations operations;
 	private final NamedParameterJdbcOperations jdbcOperations;
 
-	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
+	private @Nullable EntityCallbacks entityCallbacks;
 	private ApplicationEventPublisher publisher = event -> {};
 	private @Nullable BeanFactory beanFactory;
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;

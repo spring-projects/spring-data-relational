@@ -17,7 +17,7 @@ package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Subselect;
 
-public class SubselectVisitor extends TypedSubtreeVisitor<Subselect> {
+class SubselectVisitor extends TypedSubtreeVisitor<Subselect> {
 
 	private final RenderContext context;
 	private final RenderTarget parent;

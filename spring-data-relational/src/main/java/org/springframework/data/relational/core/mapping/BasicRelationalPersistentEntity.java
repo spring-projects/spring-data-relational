@@ -97,8 +97,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 * @param potentialExpression can be {@literal null}
 	 * @return can be {@literal null}.
 	 */
-	@Nullable
-	private static ValueExpression detectExpression(@Nullable String potentialExpression) {
+	private static @Nullable ValueExpression detectExpression(@Nullable String potentialExpression) {
 
 		if (!StringUtils.hasText(potentialExpression)) {
 			return null;

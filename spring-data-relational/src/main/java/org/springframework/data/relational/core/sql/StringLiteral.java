@@ -30,8 +30,7 @@ public class StringLiteral extends Literal<CharSequence> {
 	}
 
 	@Override
-	@Nullable
-	public CharSequence getContent() {
+	public @Nullable CharSequence getContent() {
 		return super.getContent();
 	}
 

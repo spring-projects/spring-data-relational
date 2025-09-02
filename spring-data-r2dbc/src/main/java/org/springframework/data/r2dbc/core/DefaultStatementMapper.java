@@ -247,8 +247,6 @@ class DefaultStatementMapper implements StatementMapper {
 
 		if (criteria != null && !criteria.isEmpty()) {
 
-			Assert.state(criteria != null, "DeleteSpec must have a criteria");
-
 			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, criteria, table, entity);
 
 			bindings = boundCondition.getBindings();

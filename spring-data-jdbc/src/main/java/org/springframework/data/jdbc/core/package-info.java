@@ -1,7 +1,6 @@
 /**
  * Core JDBC implementation.
  */
-@NullMarked
+@org.jspecify.annotations.NullMarked
 package org.springframework.data.jdbc.core;
 
-import org.jspecify.annotations.NullMarked;

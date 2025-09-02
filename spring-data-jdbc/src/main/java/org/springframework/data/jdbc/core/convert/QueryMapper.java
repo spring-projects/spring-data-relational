@@ -126,9 +126,7 @@ public class QueryMapper {
 		if (expression instanceof Column column) {
 
 			Field field = createPropertyField(entity, column.getName());
-			TableLike table = column.getTable();
-
-			Assert.state(table != null, String.format("The column %s must have a table set", column));
+			TableLike table = column.getRequiredTable();
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return column instanceof Aliased aliased ? columnFromTable.as(aliased.getAlias()) : columnFromTable;
@@ -184,10 +182,7 @@ public class QueryMapper {
 
 		while (current.hasPrevious()) {
 
-			CriteriaDefinition previous = current.getPrevious();
-
-			Assert.state(previous != null, "Previous must not be null");
-
+			CriteriaDefinition previous = current.getRequiredPrevious();
 			forwardChain.put(previous, current);
 			current = previous;
 		}
@@ -332,7 +327,7 @@ public class QueryMapper {
 	 * @param property the property to which the value relates. It determines the type to convert to. Must not be
 	 *          {@literal null}.
 	 * @param value the value to be converted.
-	 * @return a non null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
+	 * @return a non-null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
 	 */
 	private JdbcValue convertToJdbcValue(RelationalPersistentProperty property, @Nullable Object value) {
 
@@ -348,7 +343,6 @@ public class QueryMapper {
 			Object secondValue = second.getValue();
 
 			Assert.state(firstValue != null, "First value must not be null");
-
 			Assert.state(secondValue != null, "Second value must not be null");
 
 			return JdbcValue.of(Pair.of(firstValue, secondValue), first.getJdbcType());
@@ -356,7 +350,7 @@ public class QueryMapper {
 
 		if (value instanceof Iterable) {
 
-			List<Object> mapped = new ArrayList<>();
+			List<@Nullable Object> mapped = new ArrayList<>();
 			SQLType jdbcType = null;
 
 			for (Object o : (Iterable<?>) value) {
@@ -375,7 +369,8 @@ public class QueryMapper {
 		if (value.getClass().isArray()) {
 
 			Object[] valueAsArray = (Object[]) value;
-			Object[] mappedValueArray = new Object[valueAsArray.length];
+			@Nullable
+			Object[] mappedValueArray = new Object @Nullable [valueAsArray.length];
 			SQLType jdbcType = null;
 
 			for (int i = 0; i < valueAsArray.length; i++) {
@@ -486,7 +481,6 @@ public class QueryMapper {
 					: TypeInformation.OBJECT);
 
 			Assert.state(first != null, "First value must not be null");
-
 			Assert.state(second != null, "Second value must not be null");
 
 			return Pair.of(first, second);

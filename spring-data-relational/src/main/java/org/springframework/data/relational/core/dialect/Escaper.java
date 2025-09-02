@@ -88,8 +88,7 @@ public class Escaper {
 	 * @param value value to be escaped
 	 * @return escaped value
 	 */
-	@Nullable
-	public String escape(@Nullable String value) {
+	public @Nullable String escape(@Nullable String value) {
 
 		if (value == null) {
 			return null;

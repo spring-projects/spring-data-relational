@@ -175,7 +175,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+	public <T> @Nullable Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType,
+			IdValueSource idValueSource) {
 
 		return insertSubjects.stream().map(
 				insertSubject -> insert(insertSubject.getInstance(), domainType, insertSubject.getIdentifier(), idValueSource))
@@ -278,7 +279,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> T findById(Object id, Class<T> domainType) {
+	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".findById";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
@@ -414,12 +415,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private static String toDashPath(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-
-		String dotPath = propertyPath.toDotPath();
-		if (dotPath == null) {
-			return "";
-		}
-		return dotPath.replaceAll("\\.", "-");
+		return propertyPath.toDotPath().replaceAll("\\.", "-");
 	}
 
 	private Class<?> getOwnerTyp(PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
