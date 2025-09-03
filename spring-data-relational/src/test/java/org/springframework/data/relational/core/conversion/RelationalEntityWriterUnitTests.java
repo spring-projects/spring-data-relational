@@ -84,7 +84,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -105,7 +105,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -126,7 +126,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -149,7 +149,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -172,7 +172,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -198,7 +198,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -224,7 +224,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -247,7 +247,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -270,7 +270,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -291,7 +291,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
 				DbActionTestSupport::isWithDependsOn, //
@@ -324,7 +324,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
 				DbActionTestSupport::isWithDependsOn, //
@@ -364,7 +364,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
 				DbActionTestSupport::isWithDependsOn, //
@@ -394,7 +394,7 @@ public class RelationalEntityWriterUnitTests {
 		new RelationalEntityWriter<MapContainer>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
@@ -413,7 +413,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				this::getMapKey, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
@@ -453,7 +453,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				this::getMapKey, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
@@ -483,7 +483,7 @@ public class RelationalEntityWriterUnitTests {
 		new RelationalEntityWriter<ListContainer>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
 				.containsExactly( //
@@ -502,7 +502,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				this::getListKey, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::insertIdValueSource) //
@@ -525,7 +525,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						this::getMapKey, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
@@ -548,7 +548,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						this::getListKey, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::insertIdValueSource) //
@@ -572,7 +572,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						a -> getQualifier(a, listMapContainerMaps), //
 						a -> getQualifier(a, listMapContainerElements), //
 						DbActionTestSupport::extractPath, //
@@ -599,7 +599,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						a -> getQualifier(a, noIdListMapContainerMaps), //
 						a -> getQualifier(a, noIdListMapContainerElements), //
 						DbActionTestSupport::extractPath, //
@@ -625,7 +625,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -649,7 +649,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
-						DbAction::entityType, //
+						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn, //
@@ -676,7 +676,7 @@ public class RelationalEntityWriterUnitTests {
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
 		assertThat(actions).extracting(DbAction::getClass, //
-				DbAction::entityType, //
+				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
 				DbActionTestSupport::isWithDependsOn, //
@@ -702,7 +702,7 @@ public class RelationalEntityWriterUnitTests {
 		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath,
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //
@@ -722,7 +722,7 @@ public class RelationalEntityWriterUnitTests {
 		new RelationalEntityWriter<WithReadOnlyReference>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath,
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(UpdateRoot.class, WithReadOnlyReference.class, "", WithReadOnlyReference.class, false) //

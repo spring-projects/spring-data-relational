@@ -56,7 +56,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(AcquireLockRoot.class, SomeEntity.class, ""), //
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
@@ -75,7 +75,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly(Tuple.tuple(DeleteRoot.class, SingleEntity.class, ""));
 	}
 
@@ -87,7 +87,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(AcquireLockAllRoot.class, SomeEntity.class, ""), //
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
@@ -104,7 +104,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly(Tuple.tuple(DeleteAllRoot.class, SingleEntity.class, ""));
 	}
 
@@ -119,7 +119,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteRoot.class, WithReadOnlyReference.class, "") //
 				);
@@ -136,7 +136,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		assertThat(extractActions(aggregateChange))
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAllRoot.class, WithReadOnlyReference.class, "") //
 				);

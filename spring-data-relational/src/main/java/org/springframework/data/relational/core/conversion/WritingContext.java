@@ -137,7 +137,7 @@ class WritingContext<T> {
 				Pair<Object, Object> value = (Pair) node.value();
 				qualifiers.put(node.path(), value.getFirst());
 
-				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.entityType());
+				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.getEntityType());
 
 				if (!parentEntity.hasIdProperty() && parentAction instanceof DbAction.Insert) {
 					qualifiers.putAll(((DbAction.Insert<?>) parentAction).qualifiers());

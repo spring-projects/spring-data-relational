@@ -79,7 +79,7 @@ class SaveBatchingAggregateChangeTest {
 			change.add(aggregateChange2);
 
 			assertThat(extractActions(change)) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly( //
 							Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
 							Tuple.tuple(DbAction.UpdateRoot.class, Root.class, IdValueSource.PROVIDED));
@@ -110,7 +110,7 @@ class SaveBatchingAggregateChangeTest {
 
 			List<DbAction<?>> actions = extractActions(change);
 			assertThat(actions) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly( //
 							Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED), //
 							Tuple.tuple(DbAction.UpdateRoot.class, Root.class, IdValueSource.PROVIDED));
@@ -177,7 +177,7 @@ class SaveBatchingAggregateChangeTest {
 
 			List<DbAction<?>> actions = extractActions(change);
 			assertThat(actions) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly( //
 							Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED), //
 							Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.PROVIDED));
@@ -204,7 +204,7 @@ class SaveBatchingAggregateChangeTest {
 
 			List<DbAction<?>> actions = extractActions(change);
 			assertThat(actions) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly(Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED));
 			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
 					.containsExactly(root1Insert, root2Insert);
@@ -228,14 +228,14 @@ class SaveBatchingAggregateChangeTest {
 			change.add(aggregateChange1);
 
 			assertThat(extractActions(change)) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly(Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED));
 
 			change.add(aggregateChange2);
 
 			List<DbAction<?>> actions = extractActions(change);
 			assertThat(actions) //
-					.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+					.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 					.containsExactly(Tuple.tuple(DbAction.BatchInsertRoot.class, Root.class, IdValueSource.GENERATED));
 			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
 					.containsExactly(root1Insert, root2Insert);
@@ -263,7 +263,7 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
-		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::entityType).containsExactly( //
+		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
 				Tuple.tuple(DbAction.UpdateRoot.class, Root.class), //
 				Tuple.tuple(DbAction.InsertRoot.class, Root.class), //
 				Tuple.tuple(DbAction.Delete.class, Intermediate.class));
@@ -296,7 +296,7 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange2);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions).extracting(DbAction::getClass, DbAction::entityType).containsSubsequence(
+		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence(
 				Tuple.tuple(DbAction.Delete.class, Leaf.class), //
 				Tuple.tuple(DbAction.BatchDelete.class, Intermediate.class));
 		assertThat(getBatchWithValueAction(actions, Intermediate.class, DbAction.BatchDelete.class).getActions())
@@ -321,7 +321,7 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(change);
-		assertThat(actions).extracting(DbAction::getClass, DbAction::entityType) //
+		assertThat(actions).extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
 						Tuple.tuple(DbAction.UpdateRoot.class, Root.class), //
 						Tuple.tuple(DbAction.BatchDelete.class, Intermediate.class));
@@ -354,7 +354,7 @@ class SaveBatchingAggregateChangeTest {
 		change.add(aggregateChange1);
 		change.add(aggregateChange2);
 
-		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::entityType).containsSubsequence( //
+		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsSubsequence( //
 				Tuple.tuple(DbAction.Delete.class, Intermediate.class), //
 				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
 	}
@@ -382,7 +382,7 @@ class SaveBatchingAggregateChangeTest {
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource) //
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.InsertRoot.class, Root.class, IdValueSource.GENERATED), //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.PROVIDED)) //
@@ -433,7 +433,7 @@ class SaveBatchingAggregateChangeTest {
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
 						Tuple.tuple(DbAction.BatchInsert.class, Leaf.class, IdValueSource.GENERATED));
@@ -470,7 +470,7 @@ class SaveBatchingAggregateChangeTest {
 
 		List<DbAction<?>> actions = extractActions(change);
 		assertThat(actions)
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::insertIdValueSource)
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::insertIdValueSource)
 				.containsSubsequence( //
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED),
 						Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class, IdValueSource.GENERATED));
@@ -509,7 +509,7 @@ class SaveBatchingAggregateChangeTest {
 
 		return actions.stream() //
 				.filter(dbAction -> dbAction.getClass().equals(batchActionType)) //
-				.filter(dbAction -> dbAction.entityType().equals(entityType)) //
+				.filter(dbAction -> dbAction.getEntityType().equals(entityType)) //
 				.map(dbAction -> (DbAction.BatchWithValue<T, DbAction<T>, Object>) dbAction).collect(Collectors.toList());
 	}
 

@@ -42,7 +42,7 @@ import org.springframework.util.Assert;
  */
 public interface DbAction<T> {
 
-	Class<T> entityType();
+	Class<T> getEntityType();
 
 	/**
 	 * Represents an insert statement for a single entity that is not the root of an aggregate.
@@ -66,8 +66,8 @@ public interface DbAction<T> {
 			}
 
 			@Override
-			public Class<T> entityType() {
-				return WithDependingOn.super.entityType();
+			public Class<T> getEntityType() {
+				return WithDependingOn.super.getEntityType();
 			}
 
 
@@ -177,12 +177,12 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record DeleteRoot<T>(Object id, Class<T> entityType, @Nullable Number previousVersion) implements DbAction<T> {
+		record DeleteRoot<T>(Object id, Class<T> getEntityType, @Nullable Number previousVersion) implements DbAction<T> {
 
 
 		public String toString() {
 
-				return "DbAction.DeleteRoot(id=" + this.id() + ", entityType=" + this.entityType() + ", previousVersion="
+				return "DbAction.DeleteRoot(id=" + this.id() + ", entityType=" + this.getEntityType() + ", previousVersion="
 						+ this.previousVersion() + ")";
 			}
 		}
@@ -211,11 +211,11 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record DeleteAllRoot<T>(Class<T> entityType) implements DbAction<T> {
+		record DeleteAllRoot<T>(Class<T> getEntityType) implements DbAction<T> {
 
 
 		public String toString() {
-				return "DbAction.DeleteAllRoot(entityType=" + this.entityType() + ")";
+				return "DbAction.DeleteAllRoot(entityType=" + this.getEntityType() + ")";
 			}
 		}
 
@@ -238,12 +238,12 @@ public interface DbAction<T> {
 			return this.id;
 		}
 
-		public Class<T> entityType() {
+		public Class<T> getEntityType() {
 			return this.entityType;
 		}
 
 		public String toString() {
-			return "DbAction.AcquireLockRoot(id=" + this.getId() + ", entityType=" + this.entityType() + ")";
+			return "DbAction.AcquireLockRoot(id=" + this.getId() + ", entityType=" + this.getEntityType() + ")";
 		}
 	}
 
@@ -260,12 +260,12 @@ public interface DbAction<T> {
 			this.entityType = entityType;
 		}
 
-		public Class<T> entityType() {
+		public Class<T> getEntityType() {
 			return this.entityType;
 		}
 
 		public String toString() {
-			return "DbAction.AcquireLockAllRoot(entityType=" + this.entityType() + ")";
+			return "DbAction.AcquireLockAllRoot(entityType=" + this.getEntityType() + ")";
 		}
 	}
 
@@ -301,8 +301,8 @@ public interface DbAction<T> {
 		}
 
 		@Override
-		public Class<T> entityType() {
-			return actions.get(0).entityType();
+		public Class<T> getEntityType() {
+			return actions.get(0).getEntityType();
 		}
 
 		public List<A> getActions() {
@@ -366,7 +366,7 @@ public interface DbAction<T> {
 	final class BatchDeleteRoot<T> extends BatchWithValue<T, DeleteRoot<T>, Class<T>> {
 
 		BatchDeleteRoot(List<DeleteRoot<T>> actions) {
-			super(actions, DeleteRoot::entityType);
+			super(actions, DeleteRoot::getEntityType);
 		}
 	}
 
@@ -423,8 +423,8 @@ public interface DbAction<T> {
 		}
 
 		@Override
-		default Class<T> entityType() {
-			return WithEntity.super.entityType();
+		default Class<T> getEntityType() {
+			return WithEntity.super.getEntityType();
 		}
 	}
 
@@ -443,7 +443,7 @@ public interface DbAction<T> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		default Class<T> entityType() {
+		default Class<T> getEntityType() {
 			return (Class<T>) entity().getClass();
 		}
 
@@ -479,7 +479,7 @@ public interface DbAction<T> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		default Class<T> entityType() {
+		default Class<T> getEntityType() {
 			return (Class<T>) propertyPath().getLeafProperty().getActualType();
 		}
 	}

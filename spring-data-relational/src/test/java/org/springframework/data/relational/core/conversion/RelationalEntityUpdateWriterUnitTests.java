@@ -49,7 +49,7 @@ public class RelationalEntityUpdateWriterUnitTests {
 		new RelationalEntityUpdateWriter<SingleReferenceEntity>(context).write(entity, aggregateChange);
 
 		assertThat(extractActions(aggregateChange)) //
-				.extracting(DbAction::getClass, DbAction::entityType, DbActionTestSupport::extractPath,
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(DbAction.UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
