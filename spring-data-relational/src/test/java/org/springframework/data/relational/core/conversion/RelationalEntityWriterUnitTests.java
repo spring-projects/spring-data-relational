@@ -911,7 +911,12 @@ public class RelationalEntityWriterUnitTests {
 		}
 	}
 
-	private record Element(@Id Long id) {
+	private static class Element {
+		@Id final Long id;
+
+		public Element(Long id) {
+			this.id = id;
+		}
 	}
 
 	private record ElementReference(Element element) {
