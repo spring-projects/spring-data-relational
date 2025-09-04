@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -46,6 +47,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.Assert;
@@ -69,6 +71,20 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcConverter converter;
 	private final CachedRowMapperFactory cachedRowMapperFactory;
 	private final PartTree tree;
+
+	/**
+	 * Creates a new {@link PartTreeJdbcQuery}.
+	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @since 4.0
+	 */
+	public PartTreeJdbcQuery(JdbcQueryMethod queryMethod, JdbcAggregateOperations operations,
+			org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory) {
+		this(operations.getConverter().getMappingContext(), queryMethod, operations.getDataAccessStrategy().getDialect(),
+				operations.getConverter(), operations.getDataAccessStrategy().getJdbcOperations(), rowMapperFactory);
+	}
 
 	/**
 	 * Creates a new {@link PartTreeJdbcQuery}.
@@ -192,7 +208,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation());
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
-						Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuery.getQuery(),
+						Object count = singleObjectQuery(new SingleColumnRowMapper<>(Number.class)).execute(countQuery.getQuery(),
 								countQuery.getParameterSource(dialect.getLikeEscaper()));
 
 						Long converted = converter.getConversionService().convert(count, Long.class);
@@ -312,7 +328,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
 
 		public CachedRowMapperFactory(PartTree tree,
-				org.springframework.data.jdbc.repository.query.RowMapperFactory rowMapperFactory, RelationalConverter converter,
+				RowMapperFactory rowMapperFactory, RelationalConverter converter,
 				ResultProcessor defaultResultProcessor) {
 
 			this.rowMapperFunction = processor -> {
@@ -322,7 +338,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new org.springframework.data.jdbc.repository.query.ConvertingRowMapper(
+				return new ConvertingRowMapper(
 						rowMapperFactory.create(processor.getReturnedType().getDomainType()), resultProcessingConverter);
 			};
 

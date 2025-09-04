@@ -26,6 +26,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -57,11 +58,9 @@ import org.springframework.util.Assert;
 public class JdbcRepositoryFactory extends RepositoryFactorySupport implements ApplicationEventPublisherAware {
 
 	private final JdbcAggregateOperations operations;
-	private final NamedParameterJdbcOperations jdbcOperations;
 
-	private @Nullable EntityCallbacks entityCallbacks;
-	private ApplicationEventPublisher publisher = event -> {};
 	private @Nullable BeanFactory beanFactory;
+
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 
 	/**
@@ -75,7 +74,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 		Assert.notNull(operations, "JdbcAggregateOperations must not be null");
 
 		this.operations = operations;
-		this.jdbcOperations = operations.getDataAccessStrategy().getJdbcOperations();
 	}
 
 	/**
@@ -88,7 +86,9 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 	 * @param dialect must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
 	 * @param jdbcOperations must not be {@literal null}.
+	 * @deprecated use {@link #JdbcRepositoryFactory(JdbcAggregateOperations)} for consistent configuration instead.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
 			NamedParameterJdbcOperations jdbcOperations) {
@@ -100,27 +100,27 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 		Assert.notNull(jdbcOperations, "NamedParameterJdbcOperations must not be null");
 
 		this.operations = new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
-		this.jdbcOperations = jdbcOperations;
-		this.publisher = publisher;
 	}
 
+	/**
+	 * @param publisher event publisher to be used by this object.
+	 * @deprecated no longer used nor supported. Use {@link #JdbcRepositoryFactory(JdbcAggregateOperations)} instead.
+	 */
 	@Override
+	@Deprecated(since = "4.0", forRemoval = true)
 	public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
-
-		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
-
-		this.publisher = publisher;
+		// no-op
 	}
 
 	/**
 	 * @param entityCallbacks
 	 * @since 1.1
+	 * @deprecated no longer used nor supported. Use {@link #JdbcRepositoryFactory(JdbcAggregateOperations)} instead.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
 
 		Assert.notNull(entityCallbacks, "EntityCallbacks must not be null");
-
-		this.entityCallbacks = entityCallbacks;
 	}
 
 	/**
@@ -128,12 +128,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 	 *          {@link org.springframework.jdbc.core.ResultSetExtractor} beans.
 	 */
 	public void setBeanFactory(@Nullable BeanFactory beanFactory) {
-
 		this.beanFactory = beanFactory;
-
-		if (entityCallbacks == null && beanFactory != null) {
-			setEntityCallbacks(EntityCallbacks.create(beanFactory));
-		}
 	}
 
 	/**
@@ -178,11 +173,11 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport implements A
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.@Nullable Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
 
-		DataAccessStrategy strategy = operations.getDataAccessStrategy();
-		JdbcConverter converter = operations.getConverter();
+		RowMapperFactory rowMapperFactory = beanFactory != null
+				? new BeanFactoryAwareRowMapperFactory(beanFactory, operations, queryMappingConfiguration)
+				: new DefaultRowMapperFactory(operations, queryMappingConfiguration);
 
-		return Optional.of(JdbcQueryLookupStrategy.create(key, publisher, entityCallbacks, converter, strategy.getDialect(),
-				queryMappingConfiguration, jdbcOperations, beanFactory,
+		return Optional.of(JdbcQueryLookupStrategy.create(key, operations, rowMapperFactory,
 				new CachingValueExpressionDelegate(valueExpressionDelegate)));
 	}
 
