@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Constructor;
+import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -257,10 +258,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			JdbcParameters.JdbcParameter parameter = getQueryMethod().getParameters()
 					.getParameter(bindableParameter.getIndex());
 
-			JdbcValue jdbcValue = StringValueUtil.getBindValue(converter, value, parameter.getTypeInformation(), parameter.getSqlType(), parameter.getActualSqlType());
+			JdbcValue jdbcValue = JdbcValueBindUtil.getBindValue(converter, value, parameter);
 			SQLType jdbcType = jdbcValue.getJdbcType();
 
-			if (jdbcType == null) {
+			if (jdbcType == JDBCType.OTHER) {
 				parameters.addValue(parameterName, jdbcValue.getValue());
 			} else {
 				parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());

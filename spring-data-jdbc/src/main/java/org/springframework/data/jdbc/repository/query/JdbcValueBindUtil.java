@@ -37,9 +37,26 @@ import org.springframework.data.util.TypeInformation;
  * @author Mark Paluch
  * @since 4.0
  */
-public class StringValueUtil {
+public abstract class JdbcValueBindUtil {
 
+	private JdbcValueBindUtil() {}
+
+	/**
+	 * Obtains a {@link JdbcValue} for the given {@code value} and {@link JdbcParameters.JdbcParameter} to be bound to a
+	 * query.
+	 *
+	 * @param converter
+	 * @param value
+	 * @param parameter
+	 * @return
+	 */
 	public static JdbcValue getBindValue(JdbcConverter converter, @Nullable Object value,
+			JdbcParameters.JdbcParameter parameter) {
+		return getBindValue(converter, value, parameter.getTypeInformation(), parameter.getSqlType(),
+				parameter.getActualSqlType());
+	}
+
+	private static JdbcValue getBindValue(JdbcConverter converter, @Nullable Object value,
 			TypeInformation<?> typeInformation, SQLType sqlType, SQLType actualSqlType) {
 
 		if (value == null) {
@@ -55,19 +72,19 @@ public class StringValueUtil {
 			if (actualType != null && actualType.getType().isArray() && !actualType.getType().equals(byte[].class)) {
 
 				TypeInformation<?> nestedElementType = actualType.getRequiredActualType();
-				return writeCollection(converter, collection, actualSqlType,
+				return writeCollection(collection, actualSqlType,
 						array -> writeArrayValue(converter, actualSqlType, array, nestedElementType));
 			}
 
 			// parameter expansion
-			return writeCollection(converter, collection, actualSqlType,
+			return writeCollection(collection, actualSqlType,
 					it -> converter.writeJdbcValue(it, typeInformation.getRequiredActualType(), actualSqlType));
 		}
 
 		return converter.writeJdbcValue(value, typeInformation, sqlType);
 	}
 
-	private static JdbcValue writeCollection(JdbcConverter converter, Collection<?> value, SQLType defaultType,
+	private static JdbcValue writeCollection(Collection<?> value, SQLType defaultType,
 			Function<Object, Object> mapper) {
 
 		if (value.isEmpty()) {

@@ -40,9 +40,9 @@ import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
+import org.springframework.data.jdbc.repository.query.JdbcValueBindUtil;
 import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.jdbc.repository.query.StatementFactory;
-import org.springframework.data.jdbc.repository.query.StringValueUtil;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -164,8 +164,7 @@ public class AotRepositoryFragmentSupport {
 
 	private BindValue getBindableValue(JdbcParameters.JdbcParameter parameter, @Nullable Object value) {
 
-		JdbcValue jdbcValue = StringValueUtil.getBindValue(operations.getConverter(), value,
-				parameter.getTypeInformation(), parameter.getSqlType(), parameter.getActualSqlType());
+		JdbcValue jdbcValue = JdbcValueBindUtil.getBindValue(operations.getConverter(), value, parameter);
 		SQLType jdbcType = jdbcValue.getJdbcType();
 
 		return (parameterName, parameterSource) -> {
