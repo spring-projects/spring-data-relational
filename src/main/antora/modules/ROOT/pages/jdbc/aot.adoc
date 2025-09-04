@@ -44,7 +44,7 @@ Do not use them directly in your code as generation and implementation details m
 === Running with AOT Repositories
 
 AOT is a mandatory step to transform a Spring application to a native executable, so it is automatically enabled when running in this mode.
-When AOT is enabled (either for native compilation or by setting `spring.aot.enabled=true`), AOT repositories are automatically enabled by default.
+When AOT is enabled (either for native compilation or by setting `spring.aot.enabled=true`), AOT repositories are generated as well.
 
 You can disable AOT repository generation entirely or only disable JDBC AOT repositories:
 
@@ -81,7 +81,6 @@ These are typically all query methods that are not backed by an xref:repositorie
 
 * `CrudRepository`, Querydsl, Query by Example, and other base interface methods as their implementation is provided by the base class respective fragments
 * Methods whose implementation would be overly complex
-** Methods accepting `ScrollPosition` (e.g. `Keyset` pagination)
 
 [[aot.repositories.json]]
 == Repository Metadata

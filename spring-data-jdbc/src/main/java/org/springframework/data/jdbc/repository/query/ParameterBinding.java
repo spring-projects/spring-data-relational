@@ -19,7 +19,6 @@ import static org.springframework.util.ObjectUtils.*;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
@@ -107,7 +106,6 @@ public class ParameterBinding {
 
 	/**
 	 * @return {@literal true} if the binding identifier is associated with a name.
-	 * @since 4.0
 	 */
 	boolean hasName() {
 		return identifier.hasName();
@@ -116,7 +114,6 @@ public class ParameterBinding {
 	/**
 	 * @return the name
 	 * @throws IllegalStateException if the name is not available.
-	 * @since 2.0
 	 */
 	String getRequiredName() throws IllegalStateException {
 
@@ -140,7 +137,6 @@ public class ParameterBinding {
 	/**
 	 * @return the position
 	 * @throws IllegalStateException if the position is not available.
-	 * @since 2.0
 	 */
 	int getRequiredPosition() throws IllegalStateException {
 
@@ -245,26 +241,6 @@ public class ParameterBinding {
 			return String.format("LikeBinding [identifier: %s, origin: %s, type: %s]", getIdentifier(), getOrigin(),
 					getType());
 		}
-
-		/**
-		 * Extracts the like {@link Type} from the given like expression.
-		 *
-		 * @param expression must not be {@literal null} or empty.
-		 */
-		static Type getLikeTypeFrom(String expression) {
-
-			Assert.hasText(expression, "Expression must not be null or empty");
-
-			if (expression.startsWith("%")) {
-				return expression.endsWith("%") ? Type.CONTAINING : Type.ENDING_WITH;
-			}
-
-			if (expression.endsWith("%")) {
-				return Type.STARTING_WITH;
-			}
-
-			return Type.LIKE;
-		}
 	}
 
 	/**
@@ -272,7 +248,6 @@ public class ParameterBinding {
 	 * {@link MethodInvocationArgument} origin.
 	 *
 	 * @author Mark Paluch
-	 * @since 3.1.2
 	 */
 	public sealed interface BindingIdentifier permits Named, ParameterBinding.Indexed, NamedAndIndexed {
 
@@ -349,25 +324,6 @@ public class ParameterBinding {
 			throw new IllegalStateException("No position associated");
 		}
 
-		/**
-		 * Map the name of the binding to a new name using the given {@link Function} if the binding has a name. If the
-		 * binding is not associated with a name, then the binding is returned unchanged.
-		 *
-		 * @param nameMapper must not be {@literal null}.
-		 * @return the transformed {@link BindingIdentifier} if the binding has a name, otherwise the binding itself.
-		 * @since 4.0
-		 */
-		BindingIdentifier mapName(Function<? super String, ? extends String> nameMapper);
-
-		/**
-		 * Associate a position with the binding.
-		 *
-		 * @param position
-		 * @return the new binding identifier with the position.
-		 * @since 4.0
-		 */
-		BindingIdentifier withPosition(int position);
-
 	}
 
 	private record Named(String name) implements BindingIdentifier {
@@ -387,15 +343,6 @@ public class ParameterBinding {
 			return name();
 		}
 
-		@Override
-		public BindingIdentifier mapName(Function<? super String, ? extends String> nameMapper) {
-			return new Named(nameMapper.apply(name()));
-		}
-
-		@Override
-		public BindingIdentifier withPosition(int position) {
-			return new NamedAndIndexed(name, position);
-		}
 	}
 
 	private record Indexed(int position) implements BindingIdentifier {
@@ -408,16 +355,6 @@ public class ParameterBinding {
 		@Override
 		public int getPosition() {
 			return position();
-		}
-
-		@Override
-		public BindingIdentifier mapName(Function<? super String, ? extends String> nameMapper) {
-			return this;
-		}
-
-		@Override
-		public BindingIdentifier withPosition(int position) {
-			return new Indexed(position);
 		}
 
 		@Override
@@ -449,16 +386,6 @@ public class ParameterBinding {
 		}
 
 		@Override
-		public BindingIdentifier mapName(Function<? super String, ? extends String> nameMapper) {
-			return new NamedAndIndexed(nameMapper.apply(name), position);
-		}
-
-		@Override
-		public BindingIdentifier withPosition(int position) {
-			return new NamedAndIndexed(name, position);
-		}
-
-		@Override
 		public String toString() {
 			return "[" + name() + ", " + position() + "]";
 		}
@@ -468,7 +395,6 @@ public class ParameterBinding {
 	 * Value type hierarchy to describe where a binding parameter comes from, either method call or an expression.
 	 *
 	 * @author Mark Paluch
-	 * @since 3.1.2
 	 */
 	public sealed interface ParameterOrigin permits Expression, MethodInvocationArgument, Synthetic {
 
@@ -578,7 +504,6 @@ public class ParameterBinding {
 	 *
 	 * @param expression
 	 * @author Mark Paluch
-	 * @since 3.1.2
 	 */
 	public record Expression(ValueExpression expression) implements ParameterOrigin {
 
@@ -628,7 +553,6 @@ public class ParameterBinding {
 	 *
 	 * @param identifier
 	 * @author Mark Paluch
-	 * @since 3.1.2
 	 */
 	public record MethodInvocationArgument(BindingIdentifier identifier) implements ParameterOrigin {
 
