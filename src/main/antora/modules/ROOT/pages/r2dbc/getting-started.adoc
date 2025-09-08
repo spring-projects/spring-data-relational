@@ -180,7 +180,7 @@ Alternatively, you can implement your own `Dialect`.
 
 [TIP]
 ====
-Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
+Dialects are resolved by javadoc:org.springframework.data.r2dbc./dialect.DialectResolver[] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
 + You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
