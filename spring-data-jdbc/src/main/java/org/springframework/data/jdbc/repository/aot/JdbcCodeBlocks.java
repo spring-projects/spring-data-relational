@@ -706,7 +706,7 @@ class JdbcCodeBlocks {
 				it.add("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
 			});
 
-			builder.add(ReturnStatement.returning(returnType) //
+			builder.add(ReturnStatement.forType(returnType) //
 					.whenBoolean("$L != 0", result) //
 					.whenBoxedLong("(long) $L", result) //
 					.otherwise("$L", result)//
@@ -726,7 +726,7 @@ class JdbcCodeBlocks {
 
 			builder.addStatement("$L.forEach(getOperations()::delete)", result);
 
-			builder.add(ReturnStatement.returning(returnType) //
+			builder.add(ReturnStatement.forType(returnType) //
 					.when(Collection.class.isAssignableFrom(context.getReturnType().toClass()), "($T) convertMany($L, $T.class)",
 							context.getReturnTypeName(), result, queryResultType) //
 					.when(context.getRepositoryInformation().getDomainType(),
@@ -744,7 +744,7 @@ class JdbcCodeBlocks {
 			builder.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class, result,
 					queryVariableName, parameterSourceVariableName, SingleColumnRowMapper.class);
 
-			builder.add(ReturnStatement.returning(returnType) //
+			builder.add(ReturnStatement.forType(returnType) //
 					.number(result) //
 					.otherwise("($T) convertOne($L, $T.class)", context.getReturnTypeName(), result, queryResultType) //
 					.build());
