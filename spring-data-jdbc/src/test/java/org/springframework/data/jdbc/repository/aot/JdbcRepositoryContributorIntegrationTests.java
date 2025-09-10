@@ -18,11 +18,13 @@ package org.springframework.data.jdbc.repository.aot;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -34,8 +36,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
@@ -69,6 +73,13 @@ class JdbcRepositoryContributorIntegrationTests {
 		@Bean
 		TestClass testClass() {
 			return TestClass.of(JdbcRepositoryContributorIntegrationTests.class);
+		}
+
+		@Bean
+		BeanFactoryAwareRowMapperFactory rowMapperFactory(ApplicationContext context,
+				JdbcAggregateOperations aggregateOperations, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
+			return new BeanFactoryAwareRowMapperFactory(context, aggregateOperations,
+					queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY));
 		}
 
 		@Bean

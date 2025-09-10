@@ -19,7 +19,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.mockito.Mockito;
 
@@ -34,9 +33,6 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultBeanNameGenerator;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -45,12 +41,10 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
-import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.RowMapperFactory;
-import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
@@ -71,13 +65,12 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Mark Paluch
  */
-public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProcessor, ApplicationContextAware {
+public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProcessor {
 
 	private final Class<?> repositoryInterface;
 	private final JdbcDialect dialect;
 	private final boolean registerFragmentFacade;
 	private final TestJdbcAotRepositoryContext<?> repositoryContext;
-	private ApplicationContext applicationContext;
 
 	public AotFragmentTestConfigurationSupport(Class<?> repositoryInterface, JdbcDialect dialect, Class<?> configClass) {
 		this(repositoryInterface, dialect, configClass, true);
@@ -96,13 +89,6 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 						EnableJdbcRepositories.class, new DefaultResourceLoader(), new StandardEnvironment(),
 						Mockito.mock(BeanDefinitionRegistry.class), DefaultBeanNameGenerator.INSTANCE));
 		this.registerFragmentFacade = registerFragmentFacade;
-	}
-
-	@Bean
-	BeanFactoryAwareRowMapperFactory rowMapperFactory(ApplicationContext context,
-			JdbcAggregateOperations aggregateOperations, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
-		return new BeanFactoryAwareRowMapperFactory(context, aggregateOperations,
-				queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY));
 	}
 
 	@Override
@@ -191,8 +177,4 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 		return creationContext;
 	}
 
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = applicationContext;
-	}
 }

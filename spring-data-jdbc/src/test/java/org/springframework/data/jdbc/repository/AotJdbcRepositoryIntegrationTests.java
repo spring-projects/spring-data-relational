@@ -15,16 +15,21 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.aot.AotFragmentTestConfigurationSupport;
 import org.springframework.data.jdbc.repository.aot.UserRepository;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
@@ -56,6 +61,13 @@ class AotJdbcRepositoryIntegrationTests extends JdbcRepositoryIntegrationTests {
 		static AotFragmentTestConfigurationSupport aot() {
 			return new AotFragmentTestConfigurationSupport(UserRepository.class, JdbcH2Dialect.INSTANCE, AotConfig.class,
 					false);
+		}
+
+		@Bean
+		BeanFactoryAwareRowMapperFactory rowMapperFactory(ApplicationContext context,
+				JdbcAggregateOperations aggregateOperations, Optional<QueryMappingConfiguration> queryMappingConfiguration) {
+			return new BeanFactoryAwareRowMapperFactory(context, aggregateOperations,
+					queryMappingConfiguration.orElse(QueryMappingConfiguration.EMPTY));
 		}
 
 		@Bean

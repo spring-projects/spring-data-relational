@@ -41,6 +41,7 @@ import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -67,6 +68,11 @@ class JdbcRepositoryMetadataIntegrationTests {
 		@Bean
 		RelationalMappingContext mappingContext() {
 			return new RelationalMappingContext();
+		}
+
+		@Bean
+		RowMapperFactory rowMapperFactory() {
+			return mock(RowMapperFactory.class);
 		}
 
 		@Bean

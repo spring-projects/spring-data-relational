@@ -146,6 +146,8 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 			body.add(JdbcCodeBlocks.queryBuilder(context, queryMethod).filter(aotQueries)
 					.usingQueryVariableName(queryVariable).parameterSource(parameterSourceVariable).lock(lock).build());
 
+			body.add("\n");
+
 			body.add(JdbcCodeBlocks.executionBuilder(context, queryMethod).modifying(modifying)
 					.usingQueryVariableName(queryVariable).parameterSource(parameterSourceVariable).queries(aotQueries)
 					.queryAnnotation(query).build());
