@@ -58,6 +58,7 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -697,26 +698,19 @@ class JdbcCodeBlocks {
 
 			String result = context.localVariable("result");
 
-			builder.add("$[");
+			BetterCodeBlock.BetterBuilder cb = BetterCodeBlock.of(builder);
 
-			if (!ReflectionUtils.isVoid(returnType)) {
-				builder.add("int $L = ", result);
-			}
+			cb.addStatement(it -> {
+				it.when(ReflectionUtils.isVoid(returnType)).then("int $L = ", result);
 
-			builder.add("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
-			builder.add(";\n$]");
+				it.add("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
+			});
 
-			if (returnType == boolean.class || returnType == Boolean.class) {
-				builder.addStatement("return $L != 0", result);
-			} else if (returnType == Long.class) {
-				builder.addStatement("return (long) $L", result);
-			} else if (ReflectionUtils.isVoid(returnType)) {
-				if (returnType == Void.class) {
-					builder.addStatement("return null");
-				}
-			} else {
-				builder.addStatement("return $L", result);
-			}
+			builder.add(ReturnStatement.returning(returnType) //
+					.whenBoolean("$L != 0", result) //
+					.whenBoxedLong("(long) $L", result) //
+					.otherwise("$L", result)//
+					.build());
 
 			return builder.build();
 		}
@@ -732,22 +726,15 @@ class JdbcCodeBlocks {
 
 			builder.addStatement("$L.forEach(getOperations()::delete)", result);
 
-			if (Collection.class.isAssignableFrom(context.getReturnType().toClass())) {
-				builder.addStatement("return ($T) convertMany($L, $T.class)", context.getReturnTypeName(), result,
-						queryResultType);
-			} else if (returnType == context.getRepositoryInformation().getDomainType()) {
-				builder.addStatement("return ($1T) ($2L.isEmpty() ? null : $2L.iterator().next())", actualReturnType, result);
-			} else if (returnType == boolean.class || returnType == Boolean.class) {
-				builder.addStatement("return !$L.isEmpty()", result);
-			} else if (returnType == Long.class) {
-				builder.addStatement("return (long) $L.size()", result);
-			} else if (ReflectionUtils.isVoid(returnType)) {
-				if (returnType == Void.class) {
-					builder.addStatement("return null");
-				}
-			} else {
-				builder.addStatement("return $L.size()", result);
-			}
+			builder.add(ReturnStatement.returning(returnType) //
+					.when(Collection.class.isAssignableFrom(context.getReturnType().toClass()), "($T) convertMany($L, $T.class)",
+							context.getReturnTypeName(), result, queryResultType) //
+					.when(context.getRepositoryInformation().getDomainType(),
+							"($1T) ($2L.isEmpty() ? null : $2L.iterator().next())", actualReturnType, result) //
+					.whenBoolean("!$L.isEmpty()", result) //
+					.whenBoxedLong("(long) $L.size()", result) //
+					.otherwise("$L.size()", result) //
+					.build());
 
 			return builder.build();
 		}
@@ -757,18 +744,10 @@ class JdbcCodeBlocks {
 			builder.addStatement("$1T $2L = queryForObject($3L, $4L, new $5T<>($1T.class))", Number.class, result,
 					queryVariableName, parameterSourceVariableName, SingleColumnRowMapper.class);
 
-			if (returnType == Long.class) {
-				builder.addStatement("return $1L != null ? $1L.longValue() : null", result);
-			} else if (returnType == Integer.class) {
-				builder.addStatement("return $1L != null ? $1L.intValue() : null", result);
-			} else if (returnType == Long.TYPE) {
-				builder.addStatement("return $1L != null ? $1L.longValue() : 0L", result);
-			} else if (returnType == Integer.TYPE) {
-				builder.addStatement("return $1L != null ? $1L.intValue() : 0", result);
-			} else {
-				builder.addStatement("return ($T) convertOne($L, $T.class)", context.getReturnTypeName(), result,
-						queryResultType);
-			}
+			builder.add(ReturnStatement.returning(returnType) //
+					.number(result) //
+					.otherwise("($T) convertOne($L, $T.class)", context.getReturnTypeName(), result, queryResultType) //
+					.build());
 
 			return builder.build();
 		}
@@ -783,8 +762,8 @@ class JdbcCodeBlocks {
 
 		public static boolean returnsModifying(Class<?> returnType) {
 
-			return returnType == int.class || returnType == long.class || returnType == Integer.class
-					|| returnType == Long.class;
+			return ClassUtils.resolvePrimitiveIfNecessary(returnType) == Integer.class
+					|| ClassUtils.resolvePrimitiveIfNecessary(returnType) == Long.class;
 		}
 
 	}
