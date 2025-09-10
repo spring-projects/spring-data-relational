@@ -47,6 +47,7 @@ import org.springframework.data.repository.aot.generate.AotQueryMethodGeneration
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.javapoet.CodeBlock;
 import org.springframework.javapoet.CodeBlock.Builder;
 import org.springframework.javapoet.TypeName;
@@ -591,8 +592,7 @@ class JdbcCodeBlocks {
 				String resultSetExtractor = null;
 
 				if (rowMapperClass != null) {
-					builder.addStatement("$T $L = new $T()", RowMapper.class, rowMapper,
-							rowMapperClass);
+					builder.addStatement("$T $L = new $T()", RowMapper.class, rowMapper, rowMapperClass);
 				} else if (StringUtils.hasText(rowMapperRef)) {
 					builder.addStatement("$T $L = getRowMapperFactory().getRowMapper($S)", RowMapper.class, rowMapper,
 							rowMapperRef);
@@ -697,24 +697,23 @@ class JdbcCodeBlocks {
 
 			String result = context.localVariable("result");
 
-			if (returnType == Void.TYPE || returnType == Void.class) {
+			builder.add("$[");
 
-				builder.addStatement("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
-
-				if (returnType == Void.class) {
-					builder.addStatement("return null");
-				}
-
-				return builder.build();
+			if (!ReflectionUtils.isVoid(returnType)) {
+				builder.add("int $L = ", result);
 			}
 
-			builder.addStatement("int $L = getJdbcOperations().update($L, $L)", result, queryVariableName,
-					parameterSourceVariableName);
+			builder.add("getJdbcOperations().update($L, $L)", queryVariableName, parameterSourceVariableName);
+			builder.add(";\n$]");
 
 			if (returnType == boolean.class || returnType == Boolean.class) {
 				builder.addStatement("return $L != 0", result);
 			} else if (returnType == Long.class) {
 				builder.addStatement("return (long) $L", result);
+			} else if (ReflectionUtils.isVoid(returnType)) {
+				if (returnType == Void.class) {
+					builder.addStatement("return null");
+				}
 			} else {
 				builder.addStatement("return $L", result);
 			}
@@ -728,8 +727,8 @@ class JdbcCodeBlocks {
 			builder.addStatement("$T $L = getRowMapperFactory().create($T.class)", RowMapper.class, rowMapper,
 					context.getRepositoryInformation().getDomainType());
 
-			builder.addStatement("$T $L = ($T) getJdbcOperations().query($L, $L, new $T<>($L))", List.class, result,
-					List.class, queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
+			builder.addStatement("$1T $2L = ($1T) getJdbcOperations().query($3L, $4L, new $5T<>($6L))", List.class, result,
+					queryVariableName, parameterSourceVariableName, RowMapperResultSetExtractor.class, rowMapper);
 
 			builder.addStatement("$L.forEach(getOperations()::delete)", result);
 
@@ -742,6 +741,10 @@ class JdbcCodeBlocks {
 				builder.addStatement("return !$L.isEmpty()", result);
 			} else if (returnType == Long.class) {
 				builder.addStatement("return (long) $L.size()", result);
+			} else if (ReflectionUtils.isVoid(returnType)) {
+				if (returnType == Void.class) {
+					builder.addStatement("return null");
+				}
 			} else {
 				builder.addStatement("return $L.size()", result);
 			}

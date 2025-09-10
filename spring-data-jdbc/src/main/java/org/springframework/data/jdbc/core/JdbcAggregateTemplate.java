@@ -775,13 +775,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 
 			T object = super.mapRow(resultSet, rowNumber);
 
-			if (object != null) {
+			eventDelegate.publishEvent(() -> new AfterConvertEvent<>(object));
 
-				eventDelegate.publishEvent(() -> new AfterConvertEvent<>(object));
-
-				if (entityCallbacks != null) {
-					return entityCallbacks.callback(AfterConvertCallback.class, object);
-				}
+			if (entityCallbacks != null) {
+				return entityCallbacks.callback(AfterConvertCallback.class, object);
 			}
 
 			return object;

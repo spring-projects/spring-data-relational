@@ -16,7 +16,10 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.data.aot.AotTypeConfiguration;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.AotRepositoryContext;
@@ -121,6 +125,21 @@ public class TestJdbcAotRepositoryContext<T> implements AotRepositoryContext {
 	@Override
 	public Set<Class<?>> getResolvedTypes() {
 		return Set.of(User.class);
+	}
+
+	@Override
+	public Set<Class<?>> getUserDomainTypes() {
+		return Set.of();
+	}
+
+	@Override
+	public void typeConfiguration(Class<?> type, Consumer<AotTypeConfiguration> configurationConsumer) {
+
+	}
+
+	@Override
+	public Collection<AotTypeConfiguration> typeConfigurations() {
+		return List.of();
 	}
 
 	public void setBeanFactory(ConfigurableListableBeanFactory beanFactory) {
