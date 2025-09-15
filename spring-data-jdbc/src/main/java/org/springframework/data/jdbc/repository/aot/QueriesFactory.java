@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +27,9 @@ import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.config.JdbcRepositoryConfigExtension;
 import org.springframework.data.jdbc.repository.query.JdbcCountQueryCreator;
@@ -37,11 +39,11 @@ import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
-import org.springframework.data.repository.aot.generate.AotQueryMethodGenerationContext;
 import org.springframework.data.repository.config.PropertiesBasedNamedQueriesFactoryBean;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.NamedQueries;
@@ -66,11 +68,13 @@ class QueriesFactory {
 	private final NamedQueries namedQueries;
 	private final ValueExpressionDelegate delegate;
 
-	public QueriesFactory(RepositoryConfigurationSource configurationSource, JdbcConverter converter, JdbcDialect dialect,
-			ClassLoader classLoader, ValueExpressionDelegate delegate) {
+	public QueriesFactory(RepositoryConfigurationSource configurationSource, JdbcDialect dialect,
+			RelationalMappingContext mappingContext, ClassLoader classLoader, ValueExpressionDelegate delegate) {
+
+		this.converter = new MappingJdbcConverter(mappingContext, (identifier, path) -> List.of(),
+				JdbcCustomConversions.of(dialect, List.of()), JdbcTypeFactory.unsupported());
 
 		this.namedQueries = getNamedQueries(configurationSource, classLoader);
-		this.converter = converter;
 		this.dialect = dialect;
 		this.delegate = delegate;
 	}
@@ -196,30 +200,6 @@ class QueriesFactory {
 
 		RelationalParameters bindable = parameters.getBindableParameters();
 		return PlaceholderAccessor.capture(queryMethod, parameterValues, parameters, bindable);
-	}
-
-	public static @Nullable Class<?> getQueryReturnType(AotQuery query, ReturnedType returnedType,
-			AotQueryMethodGenerationContext context) {
-
-		Method method = context.getMethod();
-		RepositoryInformation repositoryInformation = context.getRepositoryInformation();
-
-		Class<?> methodReturnType = repositoryInformation.getReturnedDomainClass(method);
-		boolean queryForEntity = repositoryInformation.getDomainType().isAssignableFrom(methodReturnType);
-
-		Class<?> result = queryForEntity ? returnedType.getDomainType() : null;
-
-		if (returnedType.isProjecting()) {
-
-			if (returnedType.getReturnedType().isInterface()) {
-
-				return result;
-			}
-
-			return returnedType.getReturnedType();
-		}
-
-		return result;
 	}
 
 	private ValueExpressionQueryRewriter.ParsedQuery parseQuery(String queryString) {

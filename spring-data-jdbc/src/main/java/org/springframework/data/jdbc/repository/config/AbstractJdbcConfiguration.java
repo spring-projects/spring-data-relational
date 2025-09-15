@@ -186,7 +186,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		Dialect dialect = applicationContext.getBeanProvider(Dialect.class).getIfAvailable();
 
 		if (dialect == null) {
-			LOG.warn("No dialect found; CustomConversions will be configured without dialect-specific types.");
+			LOG.warn("No JdbcDialect bean found; CustomConversions will be configured without dialect-specific types.");
 			return new JdbcCustomConversions();
 		}
 

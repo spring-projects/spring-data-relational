@@ -56,13 +56,11 @@ import org.springframework.lang.Contract;
 public class StatementFactory {
 
 	private final JdbcConverter converter;
-	private final Dialect dialect;
 	private final RenderContextFactory renderContextFactory;
 	private final QueryMapper queryMapper;
 	private final SqlGeneratorSource sqlGeneratorSource;
 
 	public StatementFactory(JdbcConverter converter, Dialect dialect) {
-		this.dialect = dialect;
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.converter = converter;
 		this.queryMapper = new QueryMapper(converter);

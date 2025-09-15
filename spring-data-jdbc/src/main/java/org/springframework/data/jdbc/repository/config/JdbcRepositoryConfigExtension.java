@@ -31,11 +31,15 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionValidationException;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.aot.JdbcRepositoryContributor;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.AotRepositoryContext;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
@@ -157,9 +161,22 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 
 			ConfigurableListableBeanFactory beanFactory = repositoryContext.getBeanFactory();
 			JdbcDialect dialect = beanFactory.getBean(JdbcDialect.class);
-			JdbcConverter converter = beanFactory.getBean(JdbcConverter.class);
+			RelationalMappingContext mappingContext = beanFactory.getBeanProvider(RelationalMappingContext.class)
+					.getIfAvailable(() -> {
 
-			return new JdbcRepositoryContributor(repositoryContext, dialect, converter);
+						JdbcCustomConversions customConversions = beanFactory.getBeanProvider(JdbcCustomConversions.class)
+								.getIfAvailable(() -> JdbcCustomConversions.of(dialect, Collections.emptyList()));
+
+						NamingStrategy namingStrategy = beanFactory.getBeanProvider(NamingStrategy.class)
+								.getIfAvailable(DefaultNamingStrategy::new);
+
+						JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
+						context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
+
+						return context;
+					});
+
+			return new JdbcRepositoryContributor(repositoryContext, dialect, mappingContext);
 		}
 
 	}

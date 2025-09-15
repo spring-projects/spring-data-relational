@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
@@ -99,7 +99,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 			RelationalParameterAccessor accessor, ReturnedType returnedType) {
 		this(converter.getMappingContext(), tree, converter, dialect, queryMethod.getEntityInformation(), accessor,
 				queryMethod.isSliceQuery(), returnedType, queryMethod.lookupLockAnnotation(),
-				new SqlGeneratorSource(converter.getMappingContext(), converter, dialect));
+				new SqlGeneratorSource(converter, dialect));
 	}
 
 	/**

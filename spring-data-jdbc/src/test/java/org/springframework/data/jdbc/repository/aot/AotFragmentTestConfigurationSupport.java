@@ -40,7 +40,6 @@ import org.springframework.core.test.tools.TestCompiler;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -99,7 +98,7 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 		repositoryContext.setBeanFactory(beanFactory);
 
 		JdbcRepositoryContributor jdbcRepositoryContributor = new JdbcRepositoryContributor(repositoryContext, dialect,
-				new MappingJdbcConverter(new JdbcMappingContext(), (identifier, path) -> null));
+				new JdbcMappingContext());
 		jdbcRepositoryContributor.contribute(generationContext);
 
 		AbstractBeanDefinition aotGeneratedRepository = BeanDefinitionBuilder

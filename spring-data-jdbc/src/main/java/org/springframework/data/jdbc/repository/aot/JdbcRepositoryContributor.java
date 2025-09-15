@@ -23,7 +23,6 @@ import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
@@ -62,15 +61,15 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 	private final @Nullable String jdbcAggregateOperationsRef;
 
 	public JdbcRepositoryContributor(AotRepositoryContext repositoryContext, JdbcDialect dialect,
-			JdbcConverter converter) {
+			RelationalMappingContext mappingContext) {
 
 		super(repositoryContext);
 
-		this.mappingContext = converter.getMappingContext();
+		this.mappingContext = mappingContext;
 
 		RepositoryConfigurationSource configurationSource = repositoryContext.getConfigurationSource();
 
-		this.queriesFactory = new QueriesFactory(configurationSource, converter, dialect,
+		this.queriesFactory = new QueriesFactory(configurationSource, dialect, mappingContext,
 				repositoryContext.getRequiredClassLoader(), ValueExpressionDelegate.create());
 
 		jdbcAggregateOperationsRef = configurationSource.getAttribute("jdbcAggregateOperationsRef").orElse(null);
@@ -116,9 +115,7 @@ public class JdbcRepositoryContributor extends RepositoryContributor {
 				queriesFactory.getNamedQueries(), mappingContext);
 
 		ReturnedType returnedType = queryMethod.getResultProcessor().getReturnedType();
-
 		MergedAnnotation<Query> query = MergedAnnotations.from(method).get(Query.class);
-
 		AotQueries aotQueries = queriesFactory.createQueries(getRepositoryInformation(), returnedType, query, queryMethod);
 
 		if (queryMethod.isModifyingQuery()) {
