@@ -36,6 +36,7 @@ import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.aot.JdbcRepositoryContributor;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -66,6 +67,11 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	@Override
 	public String getModuleName() {
 		return "JDBC";
+	}
+
+	@Override
+	public String getRepositoryBaseClassName() {
+		return SimpleJdbcRepository.class.getName();
 	}
 
 	@Override

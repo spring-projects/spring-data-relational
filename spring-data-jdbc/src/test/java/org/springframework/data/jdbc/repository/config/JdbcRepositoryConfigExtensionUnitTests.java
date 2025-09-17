@@ -27,6 +27,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
@@ -49,7 +50,7 @@ public class JdbcRepositoryConfigExtensionUnitTests {
 			EnableJdbcRepositories.class, loader, environment, registry, null);
 
 	@Test // DATAJPA-437
-	public void isStrictMatchOnlyIfDomainTypeIsAnnotatedWithDocument() {
+	void isStrictMatchOnlyIfDomainTypeIsAnnotatedWithDocument() {
 
 		JdbcRepositoryConfigExtension extension = new JdbcRepositoryConfigExtension();
 
@@ -58,6 +59,14 @@ public class JdbcRepositoryConfigExtensionUnitTests {
 
 		assertThat(configs).extracting(config -> config.getRepositoryInterface())
 				.containsExactly(SampleRepository.class.getName());
+	}
+
+	@Test // GH-2137
+	void reportsBaseClass() {
+
+		JdbcRepositoryConfigExtension extension = new JdbcRepositoryConfigExtension();
+
+		assertThat(extension.getRepositoryBaseClassName()).isEqualTo(SimpleJdbcRepository.class.getName());
 	}
 
 	@EnableJdbcRepositories(considerNestedRepositories = true)
