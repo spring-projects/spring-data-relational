@@ -42,8 +42,10 @@ import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Contract;
 
 /**
@@ -58,12 +60,14 @@ public class StatementFactory {
 	private final JdbcConverter converter;
 	private final RenderContextFactory renderContextFactory;
 	private final QueryMapper queryMapper;
+	private final Dialect dialect;
 	private final SqlGeneratorSource sqlGeneratorSource;
 
 	public StatementFactory(JdbcConverter converter, Dialect dialect) {
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.converter = converter;
 		this.queryMapper = new QueryMapper(converter);
+		this.dialect = dialect;
 		this.sqlGeneratorSource = new SqlGeneratorSource(converter, dialect);
 	}
 
@@ -170,6 +174,27 @@ public class StatementFactory {
 			return this;
 		}
 
+		/**
+		 * Build the SQL statement and apply the given function to the SQL string and its parameters.
+		 *
+		 * @param function SQL statement function accepting SQL string and parameters.
+		 * @return the function result.
+		 * @param <T> type of the function result.
+		 */
+		public <T extends @Nullable Object> T executeWith(StatementFunction<T> function) {
+
+			MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+			String sql = build(parameterSource);
+
+			return function.apply(sql, new EscapingParameterSource(parameterSource, dialect.getLikeEscaper()));
+		}
+
+		/**
+		 * Build the SQL statement and assign parameters to the given {@link ParametersSource}.
+		 *
+		 * @param parameterSource the parameter source to be populated.
+		 * @return the build SQL statement.
+		 */
 		public String build(MapSqlParameterSource parameterSource) {
 
 			SelectBuilder.SelectLimitOffset limitOffsetBuilder = createSelectClause(entity, table);
@@ -260,5 +285,25 @@ public class StatementFactory {
 		enum Mode {
 			COUNT, EXISTS, SELECT, SLICE
 		}
+
 	}
+
+	/**
+	 * Represents a function that accepts a SQL string and a {@link ParametersSource} as arguments and produces a result.
+	 * Ideal to run statements using {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} .
+	 */
+	@FunctionalInterface
+	public interface StatementFunction<T extends @Nullable Object> {
+
+		/**
+		 * Applies this function to the given arguments.
+		 *
+		 * @param sql the SQL string.
+		 * @param paramSource parameters for the SQL string.
+		 * @return the function result.
+		 */
+		T apply(String sql, SqlParameterSource paramSource);
+
+	}
+
 }

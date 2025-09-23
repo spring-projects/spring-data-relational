@@ -38,7 +38,6 @@ import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
-import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
 import org.springframework.data.jdbc.repository.query.JdbcValueBindUtil;
 import org.springframework.data.jdbc.repository.query.RowMapperFactory;
@@ -60,6 +59,8 @@ import org.springframework.util.ConcurrentLruCache;
 
 /**
  * Support class for JDBC AOT repository fragments.
+ * <p>
+ * This class is indented to be used by generated AOT fragments and not to be used directly.
  *
  * @author Mark Paluch
  * @since 4.0
@@ -139,10 +140,6 @@ public class AotRepositoryFragmentSupport {
 
 		List<T> results = getJdbcOperations().query(sql, paramSource, rowMapper);
 		return DataAccessUtils.uniqueResult(results);
-	}
-
-	protected SqlParameterSource escapingParameterSource(SqlParameterSource parameterSource) {
-		return new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper());
 	}
 
 	protected @Nullable Object escape(@Nullable Object value) {
