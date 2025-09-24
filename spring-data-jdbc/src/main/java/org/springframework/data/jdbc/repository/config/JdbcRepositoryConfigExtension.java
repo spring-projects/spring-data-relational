@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.aot.generate.GenerationContext;
 import org.springframework.beans.factory.aot.BeanRegistrationAotProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
@@ -42,11 +41,11 @@ import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.repository.aot.generate.RepositoryContributor;
 import org.springframework.data.repository.config.AotRepositoryContext;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryRegistrationAotProcessor;
-import org.springframework.data.util.TypeContributor;
 import org.springframework.util.StringUtils;
 
 /**
@@ -151,15 +150,8 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 
 		private static final String MODULE_NAME = "jdbc";
 
-		protected @Nullable JdbcRepositoryContributor contribute(AotRepositoryContext repositoryContext,
-				GenerationContext generationContext) {
-
-			// do some custom type registration here
-			super.contribute(repositoryContext, generationContext);
-
-			repositoryContext.getResolvedTypes().stream().forEach(type -> {
-				TypeContributor.contribute(type, it -> true, generationContext);
-			});
+		@Override
+		protected @Nullable RepositoryContributor contributeAotRepository(AotRepositoryContext repositoryContext) {
 
 			if (!repositoryContext.isGeneratedRepositoriesEnabled(MODULE_NAME)) {
 				return null;
@@ -186,4 +178,5 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		}
 
 	}
+
 }

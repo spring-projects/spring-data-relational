@@ -16,21 +16,17 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.annotation.MergedAnnotation;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.StandardEnvironment;
-import org.springframework.data.aot.AotTypeConfiguration;
+import org.springframework.data.aot.AotContext;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.AotRepositoryContext;
+import org.springframework.data.repository.config.AotRepositoryContextSupport;
 import org.springframework.data.repository.config.AotRepositoryInformation;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -43,16 +39,15 @@ import org.springframework.data.repository.core.support.RepositoryComposition;
  *
  * @author Mark Paluch
  */
-public class TestJdbcAotRepositoryContext<T> implements AotRepositoryContext {
+public class TestJdbcAotRepositoryContext<T> extends AotRepositoryContextSupport {
 
 	private final AotRepositoryInformation repositoryInformation;
-	private final Class<T> repositoryInterface;
 	private final RepositoryConfigurationSource configurationSource;
-	private @Nullable ConfigurableListableBeanFactory beanFactory;
 
-	public TestJdbcAotRepositoryContext(Class<T> repositoryInterface, @Nullable RepositoryComposition composition,
+	public TestJdbcAotRepositoryContext(BeanFactory beanFactory, Class<T> repositoryInterface,
+			@Nullable RepositoryComposition composition,
 			RepositoryConfigurationSource configurationSource) {
-		this.repositoryInterface = repositoryInterface;
+		super(AotContext.from(beanFactory));
 		this.configurationSource = configurationSource;
 
 		RepositoryMetadata metadata = AnnotationRepositoryMetadata.getMetadata(repositoryInterface);
@@ -63,35 +58,6 @@ public class TestJdbcAotRepositoryContext<T> implements AotRepositoryContext {
 				composition.append(fragments).getFragments().stream().toList());
 	}
 
-	public Class<T> getRepositoryInterface() {
-		return repositoryInterface;
-	}
-
-	@Override
-	public ConfigurableListableBeanFactory getBeanFactory() {
-		return beanFactory;
-	}
-
-	@Override
-	public Environment getEnvironment() {
-		return new StandardEnvironment();
-	}
-
-	@Override
-	public TypeIntrospector introspectType(String typeName) {
-		return null;
-	}
-
-	@Override
-	public IntrospectedBeanDefinition introspectBeanDefinition(String beanName) {
-		return null;
-	}
-
-	@Override
-	public String getBeanName() {
-		return "dummyRepository";
-	}
-
 	@Override
 	public String getModuleName() {
 		return "JDBC";
@@ -100,11 +66,6 @@ public class TestJdbcAotRepositoryContext<T> implements AotRepositoryContext {
 	@Override
 	public RepositoryConfigurationSource getConfigurationSource() {
 		return configurationSource;
-	}
-
-	@Override
-	public Set<String> getBasePackages() {
-		return Set.of("org.springframework.data.dummy.repository.aot");
 	}
 
 	@Override
@@ -127,22 +88,4 @@ public class TestJdbcAotRepositoryContext<T> implements AotRepositoryContext {
 		return Set.of(User.class);
 	}
 
-	@Override
-	public Set<Class<?>> getUserDomainTypes() {
-		return Set.of();
-	}
-
-	@Override
-	public void typeConfiguration(Class<?> type, Consumer<AotTypeConfiguration> configurationConsumer) {
-
-	}
-
-	@Override
-	public Collection<AotTypeConfiguration> typeConfigurations() {
-		return List.of();
-	}
-
-	public void setBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-		this.beanFactory = beanFactory;
-	}
 }

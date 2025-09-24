@@ -47,6 +47,8 @@ import org.springframework.data.jdbc.repository.query.RowMapperFactory;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
+import org.springframework.data.repository.config.AotRepositoryContext;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryComposition;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
@@ -68,8 +70,9 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 
 	private final Class<?> repositoryInterface;
 	private final JdbcDialect dialect;
+	private final Class<?>[] additionalFragments;
 	private final boolean registerFragmentFacade;
-	private final TestJdbcAotRepositoryContext<?> repositoryContext;
+	private final RepositoryConfigurationSource configSource;
 
 	public AotFragmentTestConfigurationSupport(Class<?> repositoryInterface, JdbcDialect dialect, Class<?> configClass) {
 		this(repositoryInterface, dialect, configClass, true);
@@ -80,14 +83,11 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 
 		this.repositoryInterface = repositoryInterface;
 		this.dialect = dialect;
-
-		RepositoryComposition composition = RepositoryComposition
-				.of((List) Arrays.stream(additionalFragments).map(RepositoryFragment::structural).toList());
-		this.repositoryContext = new TestJdbcAotRepositoryContext<>(repositoryInterface, composition,
-				new AnnotationRepositoryConfigurationSource(AnnotationMetadata.introspect(configClass),
-						EnableJdbcRepositories.class, new DefaultResourceLoader(), new StandardEnvironment(),
-						Mockito.mock(BeanDefinitionRegistry.class), DefaultBeanNameGenerator.INSTANCE));
+		this.additionalFragments = additionalFragments;
 		this.registerFragmentFacade = registerFragmentFacade;
+		this.configSource = new AnnotationRepositoryConfigurationSource(AnnotationMetadata.introspect(configClass),
+				EnableJdbcRepositories.class, new DefaultResourceLoader(), new StandardEnvironment(),
+				Mockito.mock(BeanDefinitionRegistry.class), DefaultBeanNameGenerator.INSTANCE);
 	}
 
 	@Override
@@ -95,7 +95,10 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 
 		TestGenerationContext generationContext = new TestGenerationContext(repositoryInterface);
 
-		repositoryContext.setBeanFactory(beanFactory);
+		RepositoryComposition composition = RepositoryComposition
+				.of((List) Arrays.stream(additionalFragments).map(RepositoryFragment::structural).toList());
+		AotRepositoryContext repositoryContext = new TestJdbcAotRepositoryContext<>(beanFactory, repositoryInterface,
+				composition, configSource);
 
 		JdbcRepositoryContributor jdbcRepositoryContributor = new JdbcRepositoryContributor(repositoryContext, dialect,
 				new JdbcMappingContext());
@@ -151,7 +154,7 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 	}
 
 	private RepositoryFactoryBeanSupport.FragmentCreationContext getCreationContext(
-			TestJdbcAotRepositoryContext<?> repositoryContext, Environment environment, ListableBeanFactory beanFactory) {
+			AotRepositoryContext repositoryContext, Environment environment, ListableBeanFactory beanFactory) {
 
 		RepositoryFactoryBeanSupport.FragmentCreationContext creationContext = new RepositoryFactoryBeanSupport.FragmentCreationContext() {
 			@Override
