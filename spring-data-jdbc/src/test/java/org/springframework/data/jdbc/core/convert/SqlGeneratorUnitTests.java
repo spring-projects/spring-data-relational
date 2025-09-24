@@ -939,7 +939,7 @@ class SqlGeneratorUnitTests {
 	}
 
 	@Test // GH-1192
-	void selectByQueryPaginationValidTest() {
+	void selectByQueryPlusPagination() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
 
@@ -963,6 +963,40 @@ class SqlGeneratorUnitTests {
 
 		assertThat(parameterSource.getValues()) //
 				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test // GH-2138
+	void selectByQueryWithRedundantPagination() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+		query.sort(Sort.by(Sort.Order.asc("id")));
+		query.offset(23);
+		query.limit(11);
+
+		PageRequest pageRequest = PageRequest.of(2, 1, Sort.by(Sort.Order.asc("name")));
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource, pageRequest);
+		assertThat(generatedSQL) //
+				.isNotNull() //
+				.contains(":x_name") //
+				.containsIgnoringCase("ORDER BY dummy_entity.x_name ASC") //
+				.containsIgnoringCase("LIMIT 1") //
+				.containsIgnoringCase("OFFSET 2 LIMIT 1") //
+				.doesNotContainIgnoringCase("LIMIT 11") //
+				.doesNotContainIgnoringCase("OFFSET 23");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+
+		System.out.println(generatedSQL);
 	}
 
 	@Test // GH-1161
