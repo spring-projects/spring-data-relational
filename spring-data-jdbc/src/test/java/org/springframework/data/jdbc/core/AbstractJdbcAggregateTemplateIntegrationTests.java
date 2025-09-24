@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +43,7 @@ import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
@@ -236,8 +236,28 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, two.name, 2));
+	}
+
+	@Test // GH-1601
+	void findAllByQueryWithConflictingSort() {
+
+		SimpleListParent one = template.save(SimpleListParent.of("one", "one_1"));
+		SimpleListParent two = template.save(SimpleListParent.of("two", "two_1", "two_2"));
+		SimpleListParent three = template.save(SimpleListParent.of("three", "three_1", "three_2", "three_3"));
+
+		CriteriaDefinition criteria = CriteriaDefinition.empty();
+		Query query = Query.query(criteria);
+		query.sort(Sort.by(Sort.Direction.ASC, "id"));
+
+		Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "name"));
+
+		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class, pageable);
+
+		assertThat(reloadedById) //
+				.extracting(e -> e.id) //
+				.containsExactly(two.id, three.id, one.id);
 	}
 
 	@Test // GH-1803
@@ -252,7 +272,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, null, 2));
 	}
 
@@ -1382,8 +1402,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	void mapWithEnumKey() {
 
 		EnumMapOwner enumMapOwner = template
-				.save(
-				new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+				.save(new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
 
 		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
 
@@ -2220,8 +2239,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Table("BEFORE_CONVERT_CALLBACK_FOR_SAVE_BATCH")
 	static class BeforeConvertCallbackForSaveBatch {
 
-		@Id
-		private String id;
+		@Id private String id;
 
 		private String name;
 
