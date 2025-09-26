@@ -49,6 +49,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -133,6 +134,16 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteByQuery(Query query, Class<?> domainType) {
+		collectVoid(das -> das.deleteByQuery(query, domainType));
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		collectVoid(das -> das.deleteByQuery(query, propertyPath));
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 		collectVoid(das -> das.acquireLockById(id, lockMode, domainType));
 	}
@@ -140,6 +151,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 		collectVoid(das -> das.acquireLockAll(lockMode, domainType));
+	}
+
+	@Override
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockByQuery(query, lockMode, domainType));
 	}
 
 	@Override
