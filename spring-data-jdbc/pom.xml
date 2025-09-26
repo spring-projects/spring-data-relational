@@ -149,6 +149,12 @@
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql.version}</version>
 			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>net.bytebuddy</groupId>
+					<artifactId>byte-buddy</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
