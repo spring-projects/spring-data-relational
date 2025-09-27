@@ -975,9 +975,9 @@ class SqlGeneratorUnitTests {
 
 		Criteria criteria = Criteria.where("name").is(probe.name);
 		Query query = Query.query(criteria);
-		query.sort(Sort.by(Sort.Order.asc("id")));
-		query.offset(23);
-		query.limit(11);
+        query = query.sort(Sort.by(Sort.Order.asc("id")));
+        query = query.offset(23);
+        query = query.limit(11);
 
 		PageRequest pageRequest = PageRequest.of(2, 1, Sort.by(Sort.Order.asc("name")));
 
@@ -991,7 +991,8 @@ class SqlGeneratorUnitTests {
 				.containsIgnoringCase("LIMIT 1") //
 				.containsIgnoringCase("OFFSET 2 LIMIT 1") //
 				.doesNotContainIgnoringCase("LIMIT 11") //
-				.doesNotContainIgnoringCase("OFFSET 23");
+				.doesNotContainIgnoringCase("OFFSET 23")
+                .doesNotContainIgnoringCase("dummy_entity.id1 ASC");
 
 		assertThat(parameterSource.getValues()) //
 				.containsOnly(entry("x_name", probe.name));
