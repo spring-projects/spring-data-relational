@@ -249,7 +249,9 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		CriteriaDefinition criteria = CriteriaDefinition.empty();
 		Query query = Query.query(criteria);
-		query.sort(Sort.by(Sort.Direction.ASC, "id"));
+        query = query.sort(Sort.by(Sort.Direction.ASC, "id"));
+        query = query.offset(23);
+        query = query.limit(11);
 
 		Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "name"));
 
