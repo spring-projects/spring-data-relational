@@ -26,12 +26,13 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.CheckReturnValue;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Query object representing {@link Criteria}, columns, {@link Sort}, and limit/offset for a SQL query. {@link Query} is
- * created with a fluent API creating immutable objects.
+ * Query object representing {@link Criteria}, columns, {@link Sort}, and limit/offset for a SQL query. Methods on this
+ * class are designed to be used in a fluent style creating immutable objects.
  *
  * @author Mark Paluch
  * @since 2.0
@@ -93,6 +94,7 @@ public class Query {
 	 * @param columns
 	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
 	 */
+	@CheckReturnValue
 	public Query columns(String... columns) {
 
 		Assert.notNull(columns, "Columns must not be null");
@@ -106,6 +108,7 @@ public class Query {
 	 * @param columns
 	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
 	 */
+	@CheckReturnValue
 	public Query columns(Collection<String> columns) {
 
 		Assert.notNull(columns, "Columns must not be null");
@@ -120,6 +123,7 @@ public class Query {
 	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
 	 * @since 1.1
 	 */
+	@CheckReturnValue
 	public Query columns(SqlIdentifier... columns) {
 
 		Assert.notNull(columns, "Columns must not be null");
@@ -148,6 +152,7 @@ public class Query {
 	 * @param offset
 	 * @return a new {@link Query} object containing the former settings with {@code offset} applied.
 	 */
+	@CheckReturnValue
 	public Query offset(long offset) {
 		return new Query(this.criteria, this.columns, this.sort, this.limit, offset);
 	}
@@ -158,6 +163,7 @@ public class Query {
 	 * @param limit
 	 * @return a new {@link Query} object containing the former settings with {@code limit} applied.
 	 */
+	@CheckReturnValue
 	public Query limit(int limit) {
 		return new Query(this.criteria, this.columns, this.sort, limit, this.offset);
 	}
@@ -169,6 +175,7 @@ public class Query {
 	 * @param pageable
 	 * @return a new {@link Query} object containing the former settings with {@link Pageable} applied.
 	 */
+	@CheckReturnValue
 	public Query with(Pageable pageable) {
 
 		assertNoCaseSort(pageable.getSort());
@@ -187,6 +194,7 @@ public class Query {
 	 * @param sort
 	 * @return a new {@link Query} object containing the former settings with {@link Sort} applied.
 	 */
+	@CheckReturnValue
 	public Query sort(Sort sort) {
 
 		Assert.notNull(sort, "Sort must not be null");

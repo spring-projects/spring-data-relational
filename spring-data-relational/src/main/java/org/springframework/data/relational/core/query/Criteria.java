@@ -27,13 +27,14 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Pair;
+import org.springframework.lang.CheckReturnValue;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Central class for creating queries. It follows a fluent API style so that you can easily chain together multiple
- * criteria. Static import of the {@code Criteria.property(…)} method will improve readability as in
- * {@code where(property(…).is(…)}.
+ * Central value class for creating criteria predicates. It follows a fluent (and immutable) API style so that you can
+ * easily chain together multiple criteria. Static import of the {@code Criteria.property(…)} method will improve
+ * readability as in {@code where(property(…).is(…)}.
  * <p>
  * The Criteria API supports composition with a {@link #empty() NULL object} and a {@link #from(List) static factory
  * method}. Example usage:
@@ -161,6 +162,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @param column Must not be {@literal null} or empty.
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
+	@CheckReturnValue
 	public CriteriaStep and(String column) {
 
 		Assert.hasText(column, "Column name must not be null or empty");
@@ -181,6 +183,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
+	@CheckReturnValue
 	public Criteria and(CriteriaDefinition criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
@@ -195,6 +198,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 */
 	@SuppressWarnings("unchecked")
+	@CheckReturnValue
 	public Criteria and(List<? extends CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
@@ -208,6 +212,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @param column Must not be {@literal null} or empty.
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
+	@CheckReturnValue
 	public CriteriaStep or(String column) {
 
 		Assert.hasText(column, "Column name must not be null or empty");
@@ -228,6 +233,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
+	@CheckReturnValue
 	public Criteria or(CriteriaDefinition criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
@@ -243,6 +249,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @since 1.1
 	 */
 	@SuppressWarnings("unchecked")
+	@CheckReturnValue
 	public Criteria or(List<? extends CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
@@ -256,6 +263,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @param ignoreCase {@literal true} if comparison should be done in case-insensitive way
 	 * @return a new {@link Criteria} object
 	 */
+	@CheckReturnValue
 	public Criteria ignoreCase(boolean ignoreCase) {
 		if (this.ignoreCase != ignoreCase) {
 			return new Criteria(previous, combinator, group, column, comparator, value, ignoreCase);
