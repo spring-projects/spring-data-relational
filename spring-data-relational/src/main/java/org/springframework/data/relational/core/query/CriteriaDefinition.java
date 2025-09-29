@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 2.0
+ * @see Criteria
  */
 public interface CriteriaDefinition {
 

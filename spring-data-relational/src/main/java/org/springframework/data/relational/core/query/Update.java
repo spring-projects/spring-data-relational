@@ -23,10 +23,12 @@ import java.util.StringJoiner;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.CheckReturnValue;
 import org.springframework.util.Assert;
 
 /**
- * Class to easily construct SQL update assignments.
+ * Class to easily construct SQL update assignments. Methods on this class are designed to be used in a fluent style
+ * creating immutable objects.
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
@@ -70,6 +72,7 @@ public class Update {
 	 * @param value can be {@literal null}.
 	 * @return
 	 */
+	@CheckReturnValue
 	public Update set(String column, @Nullable Object value) {
 
 		Assert.hasText(column, "Column for update must not be null or blank");
@@ -85,6 +88,7 @@ public class Update {
 	 * @return
 	 * @since 1.1
 	 */
+	@CheckReturnValue
 	public Update set(SqlIdentifier column, @Nullable Object value) {
 		return addMultiFieldOperation(column, value);
 	}
