@@ -40,7 +40,7 @@ class PersonLoadListener extends AbstractRelationalEventListener<Person> {
 }
 ----
 
-The following table describes the available events.For more details about the exact relation between process steps see the link:#jdbc.entity-callbacks[description of available callbacks] which map 1:1 to events.
+The following table describes the available events. For more details about the exact relation between process steps see the link:#jdbc.entity-callbacks[description of available callbacks] which map 1:1 to events.
 
 .Available events
 |===

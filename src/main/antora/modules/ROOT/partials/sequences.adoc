@@ -23,7 +23,7 @@ class MyEntity {
 ----
 
 When persisting this entity, before the SQL `INSERT`, Spring Data will issue an additional `SELECT` statement to fetch the next value from the sequence.
-For instance, for PostgreSQL the query, issued by Spring Data, would look like this:
+For instance, for PostgreSQL the query issued by Spring Data would look like this:
 
 .Select for next sequence value in PostgreSQL
 [source,sql]
