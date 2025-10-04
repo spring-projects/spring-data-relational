@@ -86,7 +86,7 @@ Thus, the method is with the `readOnly` flag set to `false`.
 NOTE: It is highly recommended to make query methods transactional.
 These methods might execute more than one query in order to populate an entity.
 Without a common transaction Spring Data JDBC executes the queries in different connections.
-This may put excessive strain on the connection pool and might even lead to dead locks when multiple methods request a fresh connection while holding on to one.
+This may put excessive strain on the connection pool and might even lead to deadlocks when multiple methods request a fresh connection while holding on to one.
 
 NOTE: It is definitely reasonable to mark read-only queries as such by setting the `readOnly` flag.
 This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction).
@@ -112,7 +112,7 @@ interface UserRepository extends CrudRepository<User, Long> {
 ----
 
 As you can see above, the method `findByLastname(String lastname)` will be executed with a pessimistic read lock.
-If you are using a databse with the MySQL Dialect this will result for example in the following query:
+If you are using a database with the MySQL Dialect this will result for example in the following query:
 
 .Resulting Sql query for MySQL dialect
 [source,sql]
@@ -121,7 +121,7 @@ Select * from user u where u.lastname = lastname LOCK IN SHARE MODE
 ----
 
 NOTE: `@Lock` is currently not supported on string-based queries.
-Query-methods created with `@Query`, will ignore the locking information provided by the `@Lock`,
-Using `@Lock` on string-based queries will result in the warning in logs.
+Query-methods created with `@Query` will ignore the locking information provided by the `@Lock`,
+Using `@Lock` on string-based queries will result in a warning in logs.
 Future versions will throw an exception.
 

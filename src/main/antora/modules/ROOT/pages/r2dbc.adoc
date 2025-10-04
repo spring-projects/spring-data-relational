@@ -8,7 +8,7 @@ We provide a "`template`" as a high-level abstraction for storing and querying a
 This document is the reference guide for Spring Data R2DBC support.
 It explains the concepts and semantics and syntax.
 
-This chapter points out the specialties for repository support for JDBC.
+This chapter points out the specialties for repository support for R2DBC.
 This builds on the core repository support explained in xref:repositories/introduction.adoc[Working with Spring Data Repositories].
 You should have a sound understanding of the basic concepts explained there.
 
