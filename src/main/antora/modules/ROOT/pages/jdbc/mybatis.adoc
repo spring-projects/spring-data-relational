@@ -44,7 +44,7 @@ The following table describes the available MyBatis statements:
 | Name | Purpose | CrudRepository methods that might trigger this statement | Attributes available in the `MyBatisContext`
 
 | `insert` | Inserts a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`. |
-`getInstance`: the instance to be saved
+`getInstance`: the instance to be saved.
 
 `getDomainType`: The type of the entity to be saved.
 
@@ -52,12 +52,12 @@ The following table describes the available MyBatis statements:
 
 
 | `update` | Updates a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`.|
-`getInstance`: The instance to be saved
+`getInstance`: The instance to be saved.
 
 `getDomainType`: The type of the entity to be saved.
 
 | `delete` | Deletes a single entity. | `delete`, `deleteById`.|
-`getId`: The ID of the instance to be deleted
+`getId`: The ID of the instance to be deleted.
 
 `getDomainType`: The type of the entity to be deleted.
 

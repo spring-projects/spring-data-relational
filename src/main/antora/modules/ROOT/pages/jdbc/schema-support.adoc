@@ -73,12 +73,12 @@ databaseChangeLog:
 ----
 
 Column types are computed from an object implementing the `SqlTypeMapping` strategy interface.
-Nullability is inferred from the type and set to `false` if a property type use primitive Java types.
+Nullability is inferred from the type and set to `false` if a property type uses primitive Java types.
 
 Schema support can assist you throughout the application development lifecycle.
 In differential mode, you provide an existing Liquibase `Database` to the schema writer instance and the schema writer compares existing tables to mapped entities and derives from the difference which tables and columns to create/to drop.
 By default, no tables and no columns are dropped unless you configure `dropTableFilter` and `dropColumnFilter`.
-Both filter predicate provide the table name respective column name so your code can computer which tables and columns can be dropped.
+Both filter predicates provide the table name respective column name so your code can compute which tables and columns can be dropped.
 
 [source,java]
 ----
