@@ -23,14 +23,17 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.ScrollPosition;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
@@ -63,6 +66,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author Artemiy Degtyarev
  */
 @ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {
@@ -91,14 +95,16 @@ public class PartTreeJdbcQueryUnitTests {
 			users.column("HOBBY_REFERENCE"), //
 			hobby.column("NAME").as("HATED_NAME"));
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void shouldFailForQueryByReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHated", Hobby.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // GH-922
+	@Test
+	// GH-922
 	void createQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbyReference", Hobby.class);
@@ -112,7 +118,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.hasBindValue("hobby_reference", "twentythree");
 	}
 
-	@Test // GH-922
+	@Test
+	// GH-922
 	void createQueryWithPessimisticWriteLock() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndLastName", String.class, String.class);
@@ -131,7 +138,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // GH-922
+	@Test
+	// GH-922
 	void createQueryWithPessimisticReadLock() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAge", String.class, Integer.class);
@@ -151,21 +159,24 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void shouldFailForQueryByList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbies", Object.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void shouldFailForQueryByEmbeddedList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // GH-922
+	@Test
+	// GH-922
 	void createQueryForQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaReferenceByHobbyReference", AggregateReference.class);
@@ -181,7 +192,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // GH-922
+	@Test
+	// GH-922
 	void createQueryForQueryByAggregateReferenceId() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaIdByHobbyReference", String.class);
@@ -197,7 +209,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
@@ -208,7 +221,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
-	@Test // GH-971
+	@Test
+	// GH-971
 	void createsQueryToFindAllEntitiesByProjectionAttribute() throws Exception {
 
 		when(returnedType.needsCustomConstruction()).thenReturn(true);
@@ -222,7 +236,8 @@ public class PartTreeJdbcQueryUnitTests {
 				+ " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryWithIsNullCondition() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
@@ -233,7 +248,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" IS NULL");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryWithLimitForExistsProjection() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("existsByFirstName", String.class);
@@ -244,7 +260,8 @@ public class PartTreeJdbcQueryUnitTests {
 				"SELECT " + TABLE + ".\"ID\" FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 1");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByTwoStringAttributes() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameAndFirstName", String.class, String.class);
@@ -256,7 +273,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" = :last_name AND (" + TABLE + ".\"FIRST_NAME\" = :first_name)");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByOneOfTwoStringAttributes() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameOrFirstName", String.class, String.class);
@@ -268,7 +286,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" = :last_name OR (" + TABLE + ".\"FIRST_NAME\" = :first_name)");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBetween", Date.class, Date.class);
@@ -286,7 +305,8 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeLessThan() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThan", Integer.class);
@@ -297,7 +317,8 @@ public class PartTreeJdbcQueryUnitTests {
 		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns).contains(" WHERE " + TABLE + ".\"AGE\" < :age");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeLessThanEqual() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThanEqual", Integer.class);
@@ -309,7 +330,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" <= :age");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThan() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThan", Integer.class);
@@ -320,7 +342,8 @@ public class PartTreeJdbcQueryUnitTests {
 		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns).contains(" WHERE " + TABLE + ".\"AGE\" > :age");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThanEqual() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThanEqual", Integer.class);
@@ -332,7 +355,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" >= :age");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByDateAttributeAfter() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthAfter", Date.class);
@@ -344,7 +368,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"DATE_OF_BIRTH\" > :date_of_birth");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByDateAttributeBefore() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBefore", Date.class);
@@ -356,7 +381,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"DATE_OF_BIRTH\" < :date_of_birth");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeIsNull() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNull");
@@ -368,7 +394,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" IS NULL");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeIsNotNull() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNotNull");
@@ -380,7 +407,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" IS NOT NULL");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeLike() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameLike", String.class);
@@ -392,7 +420,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeNotLike() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotLike", String.class);
@@ -404,7 +433,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeStartingWith() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
@@ -416,7 +446,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void appendsLikeOperatorParameterWithPercentSymbolForStartingWithQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
@@ -428,7 +459,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "Jo%");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeEndingWith() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
@@ -440,7 +472,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%hn");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void prependsLikeOperatorParameterWithPercentSymbolForEndingWithQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
@@ -452,7 +485,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%hn");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeContaining() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
@@ -464,7 +498,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void wrapsLikeOperatorParameterWithPercentSymbolsForContainingQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
@@ -476,7 +511,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeNotContaining() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
@@ -488,7 +524,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void wrapsLikeOperatorParameterWithPercentSymbolsForNotContainingQuery() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
@@ -500,7 +537,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" NOT LIKE :first_name").hasBindValue("first_name", "%oh%");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeWithDescendingOrderingByStringAttribute() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameDesc", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -511,7 +549,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeWithAscendingOrderingByStringAttribute() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameAsc", Integer.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -522,7 +561,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeNot() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameNot", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -533,7 +573,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"LAST_NAME\" != :last_name");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeIn() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIn", Collection.class);
@@ -546,7 +587,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" IN (:age)");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByIntegerAttributeNotIn() throws Exception {
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByAgeNotIn", Collection.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
@@ -558,7 +600,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"AGE\" NOT IN (:age)");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
@@ -570,7 +613,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
@@ -582,7 +626,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindAllEntitiesByStringAttributeIgnoringCase() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameIgnoreCase", String.class);
@@ -594,7 +639,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE UPPER(" + TABLE + ".\"FIRST_NAME\") = UPPER(:first_name)");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void throwsExceptionWhenIgnoringCaseIsImpossible() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByIdIgnoringCase", Long.class);
@@ -604,7 +650,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { 1L }), returnedType));
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void throwsExceptionWhenConditionKeywordIsUnsupported() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByIdIsEmpty");
@@ -614,7 +661,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void throwsExceptionWhenInvalidNumberOfParameterIsGiven() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
@@ -624,7 +672,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[0]), returnedType));
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryWithLimitToFindEntitiesByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findTop3ByFirstName", String.class);
@@ -636,7 +685,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 3");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findFirstByFirstName", String.class);
@@ -648,7 +698,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name LIMIT 1");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryByEmbeddedObject() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAddress", Address.class);
@@ -670,7 +721,8 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_city")).isEqualTo("World");
 	}
 
-	@Test // DATAJDBC-318
+	@Test
+	// DATAJDBC-318
 	void createsQueryByEmbeddedProperty() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAddressStreet", String.class);
@@ -682,7 +734,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(" WHERE " + TABLE + ".\"USER_STREET\" = :user_street").hasBindValue("user_street", "Hello");
 	}
 
-	@Test // DATAJDBC-534
+	@Test
+	// DATAJDBC-534
 	void createsQueryForCountProjection() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
@@ -691,6 +744,50 @@ public class PartTreeJdbcQueryUnitTests {
 
 		assertThat(query.getQuery())
 				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+	}
+
+	@Test // PR-2149
+	void createQueryForKeysetTwoKeys() throws Exception {
+		JdbcQueryMethod queryMethod = getQueryMethod("findFirst2ByOrderByIdIdAsc", ScrollPosition.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		Map<String, Object> values = new LinkedHashMap<>() {
+			{
+				put("idId", 1);
+				put("firstName", "John");
+			}
+		};
+
+		ParametrizedQuery query = jdbcQuery.createQuery(
+				(getAccessor(queryMethod, new Object[] { ScrollPosition.of(values, ScrollPosition.Direction.FORWARD) })),
+				returnedType);
+
+		QueryAssert
+				.assertThat(query).containsQuotedAliasedColumns(columns).contains(" WHERE (" + TABLE + ".\"ID\" >= :id AND ("
+						+ TABLE + ".\"ID\" > :id1 OR (" + TABLE + ".\"FIRST_NAME\" > :first_name")
+				.hasBindValue("id", 1L).hasBindValue("first_name", "John");
+	}
+
+	@Test // PR-2149
+	void createQueryForKeysetThreeKeys() throws Exception {
+		JdbcQueryMethod queryMethod = getQueryMethod("findFirst2ByOrderByIdIdAsc", ScrollPosition.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		Map<String, Object> values = new LinkedHashMap<>() {
+			{
+				put("idId", 1);
+				put("firstName", "John");
+				put("age", 18);
+			}
+		};
+
+		ParametrizedQuery query = jdbcQuery.createQuery(
+				(getAccessor(queryMethod, new Object[] { ScrollPosition.of(values, ScrollPosition.Direction.FORWARD) })),
+				returnedType);
+
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains("WHERE (" + TABLE + ".\"ID\" >= :id AND (" + TABLE + ".\"ID\" > :id1 OR (" + TABLE
+						+ ".\"FIRST_NAME\" >= :first_name AND (" + TABLE + ".\"FIRST_NAME\" > :first_name3 OR (" + TABLE
+						+ ".\"AGE\" > :age)")
+				.hasBindValue("id", 1L).hasBindValue("first_name", "John").hasBindValue("age", 18);
 	}
 
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
@@ -798,6 +895,8 @@ public class PartTreeJdbcQueryUnitTests {
 		User findByAnotherEmbeddedList(Object list);
 
 		long countByFirstName(String name);
+
+		Window<User> findFirst2ByOrderByIdIdAsc(ScrollPosition position);
 	}
 
 	@Table("users")

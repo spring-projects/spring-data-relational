@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository.query;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
@@ -47,6 +46,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author Artemiy Degtyarev
  * @since 2.0
  */
 public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
@@ -59,6 +59,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	private final ReturnedType returnedType;
 	private final Optional<Lock> lockMode;
 	private final StatementFactory statementFactory;
+	private final boolean isScrollQuery;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -73,15 +74,15 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	 * @param isSliceQuery flag denoting if the query returns a {@link org.springframework.data.domain.Slice}.
 	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
 	 * @deprecated use
-	 *             {@link JdbcQueryCreator#JdbcQueryCreator(RelationalMappingContext, PartTree, JdbcConverter, Dialect, RelationalEntityMetadata, RelationalParameterAccessor, boolean, ReturnedType, Optional, SqlGeneratorSource)}
+	 *             {@link JdbcQueryCreator#JdbcQueryCreator(RelationalMappingContext, PartTree, JdbcConverter, Dialect, RelationalEntityMetadata, RelationalParameterAccessor, boolean, ReturnedType, Optional, SqlGeneratorSource, boolean)}
 	 *             instead.
 	 */
 	@Deprecated(since = "4.0", forRemoval = true)
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType, Optional<Lock> lockMode) {
+			ReturnedType returnedType, Optional<Lock> lockMode, boolean isScrollQuery) {
 		this(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode,
-				new SqlGeneratorSource(context, converter, dialect));
+				new SqlGeneratorSource(context, converter, dialect), isScrollQuery);
 	}
 
 	/**
@@ -99,7 +100,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 			RelationalParameterAccessor accessor, ReturnedType returnedType) {
 		this(converter.getMappingContext(), tree, converter, dialect, queryMethod.getEntityInformation(), accessor,
 				queryMethod.isSliceQuery(), returnedType, queryMethod.lookupLockAnnotation(),
-				new SqlGeneratorSource(converter, dialect));
+				new SqlGeneratorSource(converter, dialect), queryMethod.isScrollQuery());
 	}
 
 	/**
@@ -117,11 +118,13 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	 * @param lockMode lock mode to be used for the query.
 	 * @param sqlGeneratorSource the source providing SqlGenerator instances for generating SQL. Must not be
 	 *          {@literal null}
+	 * @param isScrollQuery flag denoting if the query returns a {@link org.springframework.data.domain.Window}.
 	 * @since 4.0
 	 */
 	public JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType, Optional<Lock> lockMode, SqlGeneratorSource sqlGeneratorSource) {
+			ReturnedType returnedType, Optional<Lock> lockMode, SqlGeneratorSource sqlGeneratorSource,
+			boolean isScrollQuery) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -139,6 +142,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 		this.returnedType = returnedType;
 		this.lockMode = lockMode;
 		this.statementFactory = new StatementFactory(converter, dialect);
+		this.isScrollQuery = isScrollQuery;
 	}
 
 	StatementFactory getStatementFactory() {
@@ -205,6 +209,8 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 
 		selection.page(accessor.getPageable()).filter(criteria).orderBy(sort);
 
+		selection.scrollPosition(accessor.getScrollPosition());
+
 		if (this.lockMode.isPresent()) {
 			selection.lock(this.lockMode.get().value());
 		}
@@ -225,6 +231,8 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 
 		if (isSliceQuery) {
 			selection = statementFactory.slice(entity);
+		} else if (isScrollQuery) {
+			selection = statementFactory.scroll(entity);
 		} else {
 			selection = statementFactory.select(entity);
 		}
