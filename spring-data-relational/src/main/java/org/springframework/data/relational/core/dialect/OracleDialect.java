@@ -15,11 +15,10 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static java.util.Arrays.asList;
+import static java.util.Arrays.*;
 
 import java.util.Collection;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -55,7 +54,7 @@ public class OracleDialect extends AnsiDialect {
 		}
 
 		@Override
-		public String createSequenceQuery(@NotNull SqlIdentifier sequenceName) {
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
 			return "SELECT %s.nextval FROM DUAL".formatted(sequenceName.toSql(INSTANCE.getIdentifierProcessing()));
 		}
 	};
