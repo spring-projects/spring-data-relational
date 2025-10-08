@@ -17,26 +17,58 @@ package org.springframework.data.jdbc.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
+import microsoft.sql.DateTimeOffset;
+
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.dialect.Dialect;
 
 /**
  * Tests for {@link JdbcSqlServerDialect}
  *
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
 class JdbcSqlServerDialectTest {
 
 	@Test // GH-1873
 	void testCustomConversions() {
 
-		JdbcCustomConversions conversions = JdbcCustomConversions.of(JdbcSqlServerDialect.INSTANCE, List.of());
+		JdbcCustomConversions conversions = createCustomConversions(JdbcSqlServerDialect.INSTANCE);
 
-		assertThat(conversions.hasCustomReadTarget(microsoft.sql.DateTimeOffset.class, Instant.class))
+		assertThat(conversions.hasCustomReadTarget(DateTimeOffset.class, Instant.class))
 				.isTrue();
+	}
+
+	@Test // GH-2147
+	void shouldReportSimpleTypes() {
+
+		JdbcCustomConversions conversions = createCustomConversions(JdbcSqlServerDialect.INSTANCE);
+
+		assertThat(conversions.isSimpleType(DateTimeOffset.class)).isTrue();
+		assertThat(conversions.getSimpleTypeHolder().isSimpleType(DateTimeOffset.class)).isTrue();
+	}
+
+	private static JdbcCustomConversions createCustomConversions(JdbcDialect dialect) {
+
+		SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
+				List.of());
+	}
+
+	private static List<Object> storeConverters(Dialect dialect) {
+
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(dialect.getConverters());
+		converters.addAll(JdbcCustomConversions.storeConverters());
+		return converters;
 	}
 }

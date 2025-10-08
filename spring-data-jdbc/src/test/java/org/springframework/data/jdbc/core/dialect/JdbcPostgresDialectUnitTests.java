@@ -17,7 +17,12 @@ package org.springframework.data.jdbc.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.geometric.PGbox;
 import org.postgresql.geometric.PGcircle;
 import org.postgresql.geometric.PGlseg;
@@ -26,28 +31,58 @@ import org.postgresql.geometric.PGpoint;
 import org.postgresql.geometric.PGpolygon;
 import org.postgresql.util.PGobject;
 
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.dialect.Dialect;
+
 /**
  * Unit tests for {@link JdbcPostgresDialect}.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
-public class JdbcPostgresDialectUnitTests {
+class JdbcPostgresDialectUnitTests {
 
 	@Test // GH-1065
 	void pgobjectIsConsideredSimple() {
 		assertThat(JdbcPostgresDialect.INSTANCE.simpleTypes()).contains(PGobject.class);
 	}
 
-	@Test // GH-1065
-	void geometricalTypesAreConsideredSimple() {
+	@ParameterizedTest // GH-1065, GH-2147
+	@MethodSource("simpleTypes")
+	void simpleTypesAreConsideredSimple(Class<?> type) {
 
-		assertThat(JdbcPostgresDialect.INSTANCE.simpleTypes()).contains( //
-				PGpoint.class, //
+		JdbcCustomConversions conversions = createCustomConversions(JdbcPostgresDialect.INSTANCE);
+
+		assertThat(conversions.isSimpleType(type)).isTrue();
+		assertThat(conversions.getSimpleTypeHolder().isSimpleType(type)).isTrue();
+	}
+
+	static List<Class<?>> simpleTypes() {
+		return List.of(PGpoint.class, //
 				PGbox.class, //
 				PGcircle.class, //
 				org.postgresql.geometric.PGline.class, //
 				PGpath.class, //
 				PGpolygon.class, //
-				PGlseg.class);
+				PGlseg.class, //
+				PGobject.class);
+	}
+
+	private static JdbcCustomConversions createCustomConversions(JdbcDialect dialect) {
+
+		SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
+				List.of());
+	}
+
+	private static List<Object> storeConverters(Dialect dialect) {
+
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(dialect.getConverters());
+		converters.addAll(JdbcCustomConversions.storeConverters());
+		return converters;
 	}
 }
