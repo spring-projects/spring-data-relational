@@ -29,6 +29,7 @@ import org.springframework.core.convert.converter.GenericConverter.ConvertiblePa
 import org.springframework.data.convert.ConverterBuilder;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.lang.Contract;
 import org.springframework.util.Assert;
@@ -177,9 +178,8 @@ public class JdbcCustomConversions extends CustomConversions {
 			converters.addAll(dialect.getConverters());
 			converters.addAll(JdbcCustomConversions.storeConverters());
 
-			StoreConversions storeConversions = StoreConversions.of(JdbcSimpleTypes.HOLDER, converters);
-
-			return new JdbcConverterConfigurer(storeConversions);
+			SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+			return new JdbcConverterConfigurer(StoreConversions.of(simpleTypeHolder, converters));
 		}
 
 		/**

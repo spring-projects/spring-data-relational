@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
+import microsoft.sql.DateTimeOffset;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -28,6 +30,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
  * Tests for {@link JdbcSqlServerDialect}
  *
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  */
 class JdbcSqlServerDialectTest {
 
@@ -36,7 +39,16 @@ class JdbcSqlServerDialectTest {
 
 		JdbcCustomConversions conversions = JdbcCustomConversions.of(JdbcSqlServerDialect.INSTANCE, List.of());
 
-		assertThat(conversions.hasCustomReadTarget(microsoft.sql.DateTimeOffset.class, Instant.class))
+		assertThat(conversions.hasCustomReadTarget(DateTimeOffset.class, Instant.class))
 				.isTrue();
+	}
+
+	@Test // GH-2147
+	void shouldReportSimpleTypes() {
+
+		JdbcCustomConversions conversions = JdbcCustomConversions.of(JdbcSqlServerDialect.INSTANCE, List.of());
+
+		assertThat(conversions.isSimpleType(DateTimeOffset.class)).isTrue();
+		assertThat(conversions.getSimpleTypeHolder().isSimpleType(DateTimeOffset.class)).isTrue();
 	}
 }
