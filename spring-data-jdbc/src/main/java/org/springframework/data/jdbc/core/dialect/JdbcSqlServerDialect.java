@@ -22,6 +22,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
@@ -33,11 +34,19 @@ import org.springframework.data.relational.core.dialect.SqlServerDialect;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Mikhail Polivakha
+ * @author Mark Paluch
  * @since 2.3
  */
 public class JdbcSqlServerDialect extends SqlServerDialect {
 
 	public static JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
+
+	private static final Set<Class<?>> SIMPLE_TYPES = Set.of(DateTimeOffset.class);
+
+	@Override
+	public Set<Class<?>> simpleTypes() {
+		return SIMPLE_TYPES;
+	}
 
 	@Override
 	public Collection<Object> getConverters() {

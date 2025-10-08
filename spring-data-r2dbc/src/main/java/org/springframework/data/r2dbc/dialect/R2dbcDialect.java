@@ -49,7 +49,7 @@ public interface R2dbcDialect extends Dialect {
 		Set<Class<?>> simpleTypes = new HashSet<>(getSimpleTypes());
 		simpleTypes.addAll(R2dbcSimpleTypeHolder.R2DBC_SIMPLE_TYPES);
 
-		return new SimpleTypeHolder(simpleTypes, true);
+		return new SimpleTypeHolder(simpleTypes, R2dbcSimpleTypeHolder.HOLDER);
 	}
 
 	/**

@@ -22,6 +22,10 @@ import java.util.List;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.lang.Contract;
+import org.springframework.util.Assert;
 
 /**
  * Value object to capture custom conversion. {@link JdbcCustomConversions} also act as factory for
