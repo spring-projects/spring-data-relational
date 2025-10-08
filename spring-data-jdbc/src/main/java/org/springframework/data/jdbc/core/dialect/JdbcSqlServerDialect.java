@@ -27,6 +27,8 @@ import java.util.Set;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
+import org.springframework.data.util.ClassUtils;
+import org.springframework.lang.Nullable;
 
 /**
  * {@link SqlServerDialect} that registers JDBC specific converters.
@@ -41,7 +43,21 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 
 	public static final JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
 
-	private static final Set<Class<?>> SIMPLE_TYPES = Set.of(DateTimeOffset.class);
+	private static final @Nullable Class<?> DATE_TIME_OFFSET_CLASS = ClassUtils
+			.loadIfPresent("microsoft.sql.DateTimeOffset", JdbcSqlServerDialect.class.getClassLoader());
+	private static final Set<Class<?>> SIMPLE_TYPES;
+	private static final List<Object> CONVERTERS;
+
+	static {
+
+		if (DATE_TIME_OFFSET_CLASS != null) {
+			SIMPLE_TYPES = Set.of(DATE_TIME_OFFSET_CLASS);
+			CONVERTERS = List.of(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE, DateTimeOffsetToInstantConverter.INSTANCE);
+		} else {
+			SIMPLE_TYPES = Set.of();
+			CONVERTERS = List.of();
+		}
+	}
 
 	@Override
 	public Set<Class<?>> simpleTypes() {
@@ -52,8 +68,7 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 	public Collection<Object> getConverters() {
 
 		List<Object> converters = new ArrayList<>(super.getConverters());
-		converters.add(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE);
-		converters.add(DateTimeOffsetToInstantConverter.INSTANCE);
+		converters.addAll(CONVERTERS);
 		return converters;
 	}
 
