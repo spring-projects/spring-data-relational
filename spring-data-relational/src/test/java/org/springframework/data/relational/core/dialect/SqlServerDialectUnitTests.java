@@ -30,10 +30,10 @@ import org.springframework.data.relational.core.sql.LockOptions;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  */
-public class SqlServerDialectUnitTests {
+class SqlServerDialectUnitTests {
 
 	@Test // DATAJDBC-278
-	public void shouldNotSupportArrays() {
+	void shouldNotSupportArrays() {
 
 		ArrayColumns arrayColumns = SqlServerDialect.INSTANCE.getArraySupport();
 
@@ -42,7 +42,7 @@ public class SqlServerDialectUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderLimit() {
+	void shouldRenderLimit() {
 
 		LimitClause limit = SqlServerDialect.INSTANCE.limit();
 
@@ -51,7 +51,7 @@ public class SqlServerDialectUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderOffset() {
+	void shouldRenderOffset() {
 
 		LimitClause limit = SqlServerDialect.INSTANCE.limit();
 
@@ -59,7 +59,7 @@ public class SqlServerDialectUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderLimitOffset() {
+	void shouldRenderLimitOffset() {
 
 		LimitClause limit = SqlServerDialect.INSTANCE.limit();
 
@@ -67,7 +67,7 @@ public class SqlServerDialectUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderLock() {
+	void shouldRenderLock() {
 
 		LockClause lock = SqlServerDialect.INSTANCE.lock();
 		From from = mock(From.class);
