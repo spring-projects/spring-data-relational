@@ -185,11 +185,11 @@ CREATE TABLE PERSON_WITH_COMPOSITE_ID (
 
 ----
 
-<1> Entities may be represented as records without any special consideration
+<1> Entities may be represented as records without any special consideration.
 <2> `pk` is marked as id and embedded
-<3> the two columns from the embedded `Name` entity make up the primary key in the database.
+<3> The two columns from the embedded `Name` entity make up the primary key in the database.
 
-Details of table creation depends on the used database.
+Details of table creation depend on the used database.
 ====
 
 [[entity-persistence.read-only-properties]]

@@ -21,7 +21,7 @@ See also xref:repositories/core-concepts.adoc#is-new-state-detection[Entity Stat
 Spring Data JDBC offers two ways how it can load aggregates:
 
 . The traditional and before version 3.2 the only way is really simple:
-Each query loads the aggregate roots, independently if the query is based on a `CrudRepository` method, a derived query or a annotated query.
+Each query loads the aggregate roots, independently if the query is based on a `CrudRepository` method, a derived query or an annotated query.
 If the aggregate root references other entities those are loaded with separate statements.
 
 . Spring Data JDBC 3.2 allows the use of _Single Query Loading_.
@@ -36,13 +36,13 @@ The plan is to remove this constraint in the future.
 2. The aggregate must not use `AggregateReference` or embedded entities.
 The plan is to remove this constraint in the future.
 
-3. The database dialect must support it.Of the dialects provided by Spring Data JDBC all but H2 and HSQL support this.
+3. The database dialect must support it. Of the dialects provided by Spring Data JDBC all but H2 and HSQL support this.
 H2 and HSQL don't support analytic functions (aka windowing functions).
 
 4. It only works for the find methods in `CrudRepository`, not for derived queries and not for annotated queries.
 The plan is to remove this constraint in the future.
 
-5. Single Query Loading needs to be enabled in the `JdbcMappingContext`, by calling `setSingleQueryLoadingEnabled(true)`
+5. Single Query Loading needs to be enabled in the `JdbcMappingContext`, by calling `setSingleQueryLoadingEnabled(true)`.
 
 If any condition is not fulfilled Spring Data JDBC falls back to the default approach of loading aggregates.
 
@@ -77,7 +77,7 @@ Operating on single aggregates, named exactly as mentioned above, and with an `A
 
 `save` does the same as the method of same name in a repository.
 
-`insert` and `update` skip the test if the entity is new and assume a new or existing aggregate as indicated by their name.
+`insert` and `update` skip the test if the entity is new and assume a new or existing aggregate as indicated by their names.
 
 === Querying
 
