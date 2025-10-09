@@ -17,10 +17,8 @@ package org.springframework.data.jdbc.repository.query;
 
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
-import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +27,6 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
@@ -44,6 +41,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -64,7 +62,6 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * An {@link AbstractJdbcQuery} implementation based on a {@link PartTree}.
@@ -318,19 +315,17 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				if (orders.isEmpty())
 					orders = sort.get().map(Sort.Order::getProperty).toList();
 
-				orders = orders.stream().map(it -> {
-					RelationalPersistentProperty prop = tableEntity.getPersistentProperty(it);
-
+				List<RelationalPersistentProperty> properties = new ArrayList<>();
+				for (String propertyName : orders) {
+					RelationalPersistentProperty prop = tableEntity.getPersistentProperty(propertyName);
 					if (prop == null)
-						return it;
+						continue;
 
-					return prop.getName();
-				}).toList();
+					properties.add(prop);
+				}
 
-				keys = extractKeys(resultList, orders);
-
-				Map<String, Object> finalKeys = keys;
-				positionFunction = (ignoredI) -> ScrollPosition.of(finalKeys, ((KeysetScrollPosition) position).getDirection());
+				final Map<String, Object> resultKeys = extractKeys(resultList, properties);
+				positionFunction = (ignoredI) -> ScrollPosition.of(resultKeys, ((KeysetScrollPosition) position).getDirection());
 			}
 
 			if (positionFunction == null)
@@ -347,26 +342,26 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			return Window.from(resultList, positionFunction, hasNext);
 		}
 
-		private Map<String, Object> extractKeys(List<T> resultList, List<String> orders) {
+		private Map<String, Object> extractKeys(List<T> resultList, List<RelationalPersistentProperty> properties) {
 			if (resultList.isEmpty())
 				return Map.of();
 
+			Map<String, Object> result = new LinkedHashMap<>();
+
 			T last = resultList.get(resultList.size() - 1);
+			PersistentPropertyAccessor<T> accessor = tableEntity.getPropertyAccessor(last);
 
-			Field[] fields = last.getClass().getDeclaredFields();
+			for (RelationalPersistentProperty property : properties) {
+				String propertyName = property.getName();
+				Object propertyValue = accessor.getProperty(property);
 
-			// noinspection DataFlowIssue
-			return Arrays.stream(fields).filter(it -> {
-				String name = it.getName();
+				if (propertyValue == null)
+					continue;
 
-				RelationalPersistentProperty prop = tableEntity.getPersistentProperty(name);
-				if (prop != null)
-					name = prop.getName();
+				result.put(propertyName, propertyValue);
+			}
 
-				String finalName = name;
-				return orders.stream().anyMatch(order -> order.equalsIgnoreCase(finalName));
-			}).peek(ReflectionUtils::makeAccessible).collect(Collectors.toMap(Field::getName,
-					it -> ReflectionUtils.getField(it, last), (e1, e2) -> e1, LinkedHashMap::new));
+			return result;
 		}
 	}
 

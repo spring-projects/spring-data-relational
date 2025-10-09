@@ -237,30 +237,19 @@ public class StatementFactory {
 			if (!(scrollPosition instanceof KeysetScrollPosition) || scrollPosition.isInitial())
 				return sort;
 
-			Set<String> orders = sort.get().map(Sort.Order::getProperty).map(it -> {
-				RelationalPersistentProperty prop = entity.getPersistentProperty(it);
-				if (prop == null)
-					return it;
-
-				return prop.getName();
-			}).collect(Collectors.toSet());
+			Set<String> sortedProperties = sort.get().map(Sort.Order::getProperty).collect(Collectors.toSet());
 
 			Set<String> keys = ((KeysetScrollPosition) scrollPosition).getKeys().keySet();
 
-			Set<String> notSorted = keys.stream().map(it -> {
-				RelationalPersistentProperty prop = entity.getPersistentProperty(it);
-				if (prop == null)
-					return it;
+			Set<String> notSortedProperties
+				= keys.stream().filter(it -> !sortedProperties.contains(it)).collect(Collectors.toSet());
 
-				return prop.getName();
-			}).filter(it -> orders.stream().noneMatch(order -> order.equalsIgnoreCase(it))).collect(Collectors.toSet());
-
-			if (notSorted.isEmpty())
+			if (notSortedProperties.isEmpty())
 				return sort;
 
 			Sort.Direction defaultSort = sort.get().map(Sort.Order::getDirection).findAny().orElse(Sort.DEFAULT_DIRECTION);
 
-			return sort.and(Sort.by(defaultSort, notSorted.toArray(new String[0])));
+			return sort.and(Sort.by(defaultSort, notSortedProperties.toArray(new String[0])));
 		}
 
 		Criteria applyScrollCriteria(@Nullable ScrollPosition position, Sort sort) {
