@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -517,7 +516,6 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 			}
 
-			@NotNull
 			@Override
 			public Iterator<String> iterator() {
 				return List.of(value).iterator();
