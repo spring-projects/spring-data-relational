@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -102,6 +103,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Christopher Klein
  * @author Mikhail Polivakha
  * @author Paul Jones
+ * @author Artemiy Degtyarev
  */
 @IntegrationTest
 public class JdbcRepositoryIntegrationTests {
@@ -1461,6 +1463,159 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting("idProp").containsExactly(two.idProp);
 	}
 
+	@Test
+	void queryByWindowOffset() {
+		repository.save(createEntity("one"));
+		repository.save(createEntity("two"));
+		DummyEntity three = repository.save(createEntity("three"));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAsc(position))
+				.startingAt(ScrollPosition.offset());
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(three.idProp);
+	}
+
+	@Test
+	void queryByWindowKeyset() {
+		repository.save(createEntity("one"));
+		repository.save(createEntity("two"));
+		DummyEntity three = repository.save(createEntity("three"));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAsc(position))
+				.startingAt(ScrollPosition.keyset());
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(three.idProp);
+	}
+
+	@Test
+	void queryByWindowKeySetDesc() {
+		DummyEntity one = repository.save(createEntity("one"));
+		repository.save(createEntity("two"));
+		repository.save(createEntity("three"));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropDesc(position))
+				.startingAt(ScrollPosition.keyset());
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(one.idProp);
+	}
+
+	@Test
+	void queryByWindowKeySetDescBackward() {
+		repository.save(createEntity("one"));
+		repository.save(createEntity("two"));
+		repository.save(createEntity("three"));
+		repository.save(createEntity("four"));
+		DummyEntity five = repository.save(createEntity("five"));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropDesc(position))
+				.startingAt(ScrollPosition.backward(Map.of("idProp", 3)));
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(five.idProp);
+	}
+
+	@Test
+	void queryByWindowKeySetAscBackward() {
+		DummyEntity one = repository.save(createEntity("one"));
+		repository.save(createEntity("two"));
+		repository.save(createEntity("three"));
+		repository.save(createEntity("four"));
+		repository.save(createEntity("five"));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAsc(position))
+				.startingAt(ScrollPosition.backward(Map.of("idProp", 5)));
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(one.idProp);
+	}
+
+	@Test
+	void queryByWindowKeySetEmptyDb() {
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAsc(position))
+				.startingAt(ScrollPosition.backward(Map.of("idProp", 5)));
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).isEmpty();
+	}
+
+	@Test
+	void queryByWindowKeySetTwoKeys() {
+		repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
+		repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
+		repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
+		repository.save(createEntity("four", it -> it.setPointInTime(Instant.ofEpochSecond(4000))));
+		DummyEntity five = repository.save(createEntity("five", it -> it.setPointInTime(Instant.ofEpochSecond(5000))));
+
+		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAsc(position))
+				.startingAt(ScrollPosition.forward(Map.of("idProp", 1, "pointInTime", Instant.ofEpochSecond(1000))));
+
+		List<DummyEntity> entities = new ArrayList<>();
+		while (iter.hasNext())
+			entities.add(iter.next());
+
+		assertThat(entities).extracting("idProp").contains(five.idProp);
+	}
+
+	@Test
+	void queryByWindowOffsetPosition() {
+		repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
+		repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
+		repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
+
+		Window<DummyEntity> result = repository.findFirst2ByOrderByIdPropAsc(ScrollPosition.offset());
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(result.hasNext()).isTrue();
+			softAssertions.assertThat(result.size()).isEqualTo(2);
+
+			ScrollPosition position = result.positionAt(1);
+			softAssertions.assertThat(position.isInitial()).isFalse();
+			softAssertions.assertThat(((OffsetScrollPosition) position).getOffset()).isEqualTo(1);
+		});
+	}
+
+	@Test
+	void queryByWindowKeysetPosition() {
+		repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
+		repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
+		repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
+
+		Window<DummyEntity> result = repository.findFirst2ByOrderByIdPropAsc(ScrollPosition.keyset());
+		assertSoftly(softAssertions -> {
+			softAssertions.assertThat(result.hasNext()).isTrue();
+			softAssertions.assertThat(result.size()).isEqualTo(2);
+
+			ScrollPosition position = result.positionAt(0);
+			softAssertions.assertThat(position.isInitial()).isFalse();
+
+			Map<String, Object> keys = ((KeysetScrollPosition) position).getKeys();
+			softAssertions.assertThat(keys.containsKey("idProp")).isTrue();
+
+			Long idProp = (Long) keys.get("idProp");
+			softAssertions.assertThat(idProp).isEqualTo(2);
+		});
+	}
+
 	private Root createRoot(String namePrefix) {
 
 		return new Root(null, namePrefix,
@@ -1606,6 +1761,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE BYTES = :bytes")
 		List<DummyEntity> findByBytes(byte[] bytes);
+
+		Window<DummyEntity> findFirst2ByOrderByIdPropAsc(ScrollPosition position);
+
+		Window<DummyEntity> findFirst2ByOrderByIdPropDesc(ScrollPosition position);
 	}
 
 	public interface RootRepository extends ListCrudRepository<Root, Long> {
@@ -1699,60 +1858,59 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	record Root(@Id Long id, String name, Intermediate intermediate,
-				@MappedCollection(idColumn = "ROOT_ID", keyColumn = "ROOT_KEY") List<Intermediate> intermediates) {
+			@MappedCollection(idColumn = "ROOT_ID", keyColumn = "ROOT_KEY") List<Intermediate> intermediates) {
 
 		@Override
 		public Long id() {
-				return this.id;
-			}
-
+			return this.id;
+		}
 
 		@Override
 		public List<Intermediate> intermediates() {
-				return this.intermediates;
-			}
-
-			public boolean equals(final Object o) {
-				if (o == this)
-					return true;
-				if (!(o instanceof final Root other))
-					return false;
-				final Object this$id = this.id();
-				final Object other$id = other.id();
-				if (!Objects.equals(this$id, other$id))
-					return false;
-				final Object this$name = this.name();
-				final Object other$name = other.name();
-				if (!Objects.equals(this$name, other$name))
-					return false;
-				final Object this$intermediate = this.intermediate();
-				final Object other$intermediate = other.intermediate();
-				if (!Objects.equals(this$intermediate, other$intermediate))
-					return false;
-				final Object this$intermediates = this.intermediates();
-				final Object other$intermediates = other.intermediates();
-				return Objects.equals(this$intermediates, other$intermediates);
-			}
-
-			public int hashCode() {
-				final int PRIME = 59;
-				int result = 1;
-				final Object $id = this.id();
-				result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-				final Object $name = this.name();
-				result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-				final Object $intermediate = this.intermediate();
-				result = result * PRIME + ($intermediate == null ? 43 : $intermediate.hashCode());
-				final Object $intermediates = this.intermediates();
-				result = result * PRIME + ($intermediates == null ? 43 : $intermediates.hashCode());
-				return result;
-			}
-
-			public String toString() {
-				return "JdbcRepositoryIntegrationTests.Root(id=" + this.id() + ", name=" + this.name() + ", intermediate="
-						+ this.intermediate() + ", intermediates=" + this.intermediates() + ")";
-			}
+			return this.intermediates;
 		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof final Root other))
+				return false;
+			final Object this$id = this.id();
+			final Object other$id = other.id();
+			if (!Objects.equals(this$id, other$id))
+				return false;
+			final Object this$name = this.name();
+			final Object other$name = other.name();
+			if (!Objects.equals(this$name, other$name))
+				return false;
+			final Object this$intermediate = this.intermediate();
+			final Object other$intermediate = other.intermediate();
+			if (!Objects.equals(this$intermediate, other$intermediate))
+				return false;
+			final Object this$intermediates = this.intermediates();
+			final Object other$intermediates = other.intermediates();
+			return Objects.equals(this$intermediates, other$intermediates);
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.id();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.name();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $intermediate = this.intermediate();
+			result = result * PRIME + ($intermediate == null ? 43 : $intermediate.hashCode());
+			final Object $intermediates = this.intermediates();
+			result = result * PRIME + ($intermediates == null ? 43 : $intermediates.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Root(id=" + this.id() + ", name=" + this.name() + ", intermediate="
+					+ this.intermediate() + ", intermediates=" + this.intermediates() + ")";
+		}
+	}
 
 	@Table("WITH_DELIMITED_COLUMN")
 	static class WithDelimitedColumn {
@@ -1786,97 +1944,95 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	record Intermediate(@Id Long id, String name, Leaf leaf,
-						@MappedCollection(idColumn = "INTERMEDIATE_ID", keyColumn = "INTERMEDIATE_KEY") List<Leaf> leaves) {
+			@MappedCollection(idColumn = "INTERMEDIATE_ID", keyColumn = "INTERMEDIATE_KEY") List<Leaf> leaves) {
 
 		@Override
 		public Long id() {
-				return this.id;
-			}
-
+			return this.id;
+		}
 
 		@Override
 		public List<Leaf> leaves() {
-				return this.leaves;
-			}
-
-			public boolean equals(final Object o) {
-				if (o == this)
-					return true;
-				if (!(o instanceof final Intermediate other))
-					return false;
-				final Object this$id = this.id();
-				final Object other$id = other.id();
-				if (!Objects.equals(this$id, other$id))
-					return false;
-				final Object this$name = this.name();
-				final Object other$name = other.name();
-				if (!Objects.equals(this$name, other$name))
-					return false;
-				final Object this$leaf = this.leaf();
-				final Object other$leaf = other.leaf();
-				if (!Objects.equals(this$leaf, other$leaf))
-					return false;
-				final Object this$leaves = this.leaves();
-				final Object other$leaves = other.leaves();
-				return Objects.equals(this$leaves, other$leaves);
-			}
-
-			public int hashCode() {
-				final int PRIME = 59;
-				int result = 1;
-				final Object $id = this.id();
-				result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-				final Object $name = this.name();
-				result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-				final Object $leaf = this.leaf();
-				result = result * PRIME + ($leaf == null ? 43 : $leaf.hashCode());
-				final Object $leaves = this.leaves();
-				result = result * PRIME + ($leaves == null ? 43 : $leaves.hashCode());
-				return result;
-			}
-
-			public String toString() {
-				return "JdbcRepositoryIntegrationTests.Intermediate(id=" + this.id() + ", name=" + this.name() + ", leaf="
-						+ this.leaf() + ", leaves=" + this.leaves() + ")";
-			}
+			return this.leaves;
 		}
+
+		public boolean equals(final Object o) {
+			if (o == this)
+				return true;
+			if (!(o instanceof final Intermediate other))
+				return false;
+			final Object this$id = this.id();
+			final Object other$id = other.id();
+			if (!Objects.equals(this$id, other$id))
+				return false;
+			final Object this$name = this.name();
+			final Object other$name = other.name();
+			if (!Objects.equals(this$name, other$name))
+				return false;
+			final Object this$leaf = this.leaf();
+			final Object other$leaf = other.leaf();
+			if (!Objects.equals(this$leaf, other$leaf))
+				return false;
+			final Object this$leaves = this.leaves();
+			final Object other$leaves = other.leaves();
+			return Objects.equals(this$leaves, other$leaves);
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.id();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.name();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			final Object $leaf = this.leaf();
+			result = result * PRIME + ($leaf == null ? 43 : $leaf.hashCode());
+			final Object $leaves = this.leaves();
+			result = result * PRIME + ($leaves == null ? 43 : $leaves.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Intermediate(id=" + this.id() + ", name=" + this.name() + ", leaf="
+					+ this.leaf() + ", leaves=" + this.leaves() + ")";
+		}
+	}
 
 	record Leaf(@Id Long id, String name) {
 
 		@Override
 		public Long id() {
-				return this.id;
-			}
-
+			return this.id;
+		}
 
 		public boolean equals(final Object o) {
-				if (o == this)
-					return true;
-				if (!(o instanceof final Leaf other))
-					return false;
-				final Object this$id = this.id();
-				final Object other$id = other.id();
-				if (!Objects.equals(this$id, other$id))
-					return false;
-				final Object this$name = this.name();
-				final Object other$name = other.name();
-				return Objects.equals(this$name, other$name);
-			}
-
-			public int hashCode() {
-				final int PRIME = 59;
-				int result = 1;
-				final Object $id = this.id();
-				result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-				final Object $name = this.name();
-				result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-				return result;
-			}
-
-			public String toString() {
-				return "JdbcRepositoryIntegrationTests.Leaf(id=" + this.id() + ", name=" + this.name() + ")";
-			}
+			if (o == this)
+				return true;
+			if (!(o instanceof final Leaf other))
+				return false;
+			final Object this$id = this.id();
+			final Object other$id = other.id();
+			if (!Objects.equals(this$id, other$id))
+				return false;
+			final Object this$name = this.name();
+			final Object other$name = other.name();
+			return Objects.equals(this$name, other$name);
 		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $id = this.id();
+			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
+			final Object $name = this.name();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.Leaf(id=" + this.id() + ", name=" + this.name() + ")";
+		}
+	}
 
 	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
 
@@ -2130,29 +2286,28 @@ public class JdbcRepositoryIntegrationTests {
 
 	record DtoProjection(String name) {
 
-
 		public boolean equals(final Object o) {
-				if (o == this)
-					return true;
-				if (!(o instanceof final DtoProjection other))
-					return false;
-				final Object this$name = this.name();
-				final Object other$name = other.name();
-				return Objects.equals(this$name, other$name);
-			}
-
-			public int hashCode() {
-				final int PRIME = 59;
-				int result = 1;
-				final Object $name = this.name();
-				result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-				return result;
-			}
-
-			public String toString() {
-				return "JdbcRepositoryIntegrationTests.DtoProjection(name=" + this.name() + ")";
-			}
+			if (o == this)
+				return true;
+			if (!(o instanceof final DtoProjection other))
+				return false;
+			final Object this$name = this.name();
+			final Object other$name = other.name();
+			return Objects.equals(this$name, other$name);
 		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $name = this.name();
+			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "JdbcRepositoryIntegrationTests.DtoProjection(name=" + this.name() + ")";
+		}
+	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {
 

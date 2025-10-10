@@ -30,7 +30,6 @@ import java.util.function.LongSupplier;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
