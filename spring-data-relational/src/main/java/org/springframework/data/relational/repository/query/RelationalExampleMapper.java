@@ -82,6 +82,7 @@ public class RelationalExampleMapper {
 		ExampleMatcherAccessor matcherAccessor = new ExampleMatcherAccessor(example.getMatcher());
 
 		final List<Criteria> criteriaBasedOnProperties = buildCriteria( //
+				null, //
 				persistentEntity, //
 				matcherAccessor, //
 				probePropertyAccessor //
@@ -103,21 +104,23 @@ public class RelationalExampleMapper {
 	}
 
 	private <T> List<Criteria> buildCriteria( //
+			@Nullable PropertyPath propertyPath, //
 			RelationalPersistentEntity<?> persistentEntity, //
 			ExampleMatcherAccessor matcherAccessor, //
 			PersistentPropertyAccessor<T> probePropertyAccessor //
 	) {
 		final List<Criteria> criteriaBasedOnProperties = new ArrayList<>();
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+		for (RelationalPersistentProperty property : persistentEntity) {
 			potentiallyEnrichCriteria(
-					null,
+					propertyPath,
 					matcherAccessor,  //
 					probePropertyAccessor, //
 					property, //
 					criteriaBasedOnProperties //
 			);
-		});
+		}
+
 		return criteriaBasedOnProperties;
 	}
 
@@ -158,12 +161,15 @@ public class RelationalExampleMapper {
 		Object actualPropertyValue = entityPropertiesAccessor.getProperty(property);
 
 		if (property.isEmbedded() && actualPropertyValue != null) {
-			processEmbeddedRecursively( //
-					matcherAccessor, //
-					actualPropertyValue,
-					property, //
-					criteriaBasedOnProperties, //
-					currentPropertyPath //
+			RelationalPersistentEntity<?> embeddedPersistentEntity = mappingContext.getRequiredPersistentEntity(property.getTypeInformation());
+
+			criteriaBasedOnProperties.addAll(
+					buildCriteria(
+							currentPropertyPath,
+							embeddedPersistentEntity,
+							matcherAccessor,
+							embeddedPersistentEntity.getPropertyAccessor(actualPropertyValue)
+					)
 			);
 		} else {
 			Optional<?> optionalConvertedPropValue = matcherAccessor //
@@ -207,37 +213,6 @@ public class RelationalExampleMapper {
 			}
 		}
 
-	}
-
-	/**
-	 * Processes an embedded entity's properties recursively.
-	 *
-	 * @param matcherAccessor the input matcher on the {@link Example#getProbe() original probe}.
-	 * @param value the actual embedded object.
-	 * @param property the embedded property.
-	 * @param criteriaBasedOnProperties collection of {@link Criteria} objects to potentially enrich.
-	 * @param currentPropertyPath the dot-separated path of the passed {@code property}.
-	 */
-	private void processEmbeddedRecursively(
-			ExampleMatcherAccessor matcherAccessor,
-			Object value,
-			RelationalPersistentProperty property,
-			List<Criteria> criteriaBasedOnProperties,
-			PropertyPath currentPropertyPath
-	) {
-		RelationalPersistentEntity<?> embeddedPersistentEntity = mappingContext.getPersistentEntity(property.getTypeInformation());
-
-		PersistentPropertyAccessor<?> embeddedEntityPropertyAccessor = embeddedPersistentEntity.getPropertyAccessor(value);
-
-		embeddedPersistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) embeddedProperty ->
-						potentiallyEnrichCriteria(
-								currentPropertyPath,
-								matcherAccessor,
-								embeddedEntityPropertyAccessor,
-								embeddedProperty,
-								criteriaBasedOnProperties
-						)
-		);
 	}
 
 	private static PropertyPath resolveCurrentPropertyPath(@Nullable PropertyPath propertyPath, RelationalPersistentProperty property) {
