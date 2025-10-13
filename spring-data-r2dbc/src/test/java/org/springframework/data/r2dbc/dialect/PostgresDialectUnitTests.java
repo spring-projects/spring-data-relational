@@ -18,6 +18,8 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 
+import io.r2dbc.postgresql.codec.Box;
+
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,7 @@ class PostgresDialectUnitTests {
 			it.assertThat(holder.isSimpleType(String.class)).isTrue();
 			it.assertThat(holder.isSimpleType(int.class)).isTrue();
 			it.assertThat(holder.isSimpleType(Integer.class)).isTrue();
+			it.assertThat(holder.isSimpleType(Box.class)).isTrue();
 		});
 	}
 

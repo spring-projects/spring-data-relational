@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.aot.JdbcRepositoryContributor;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
@@ -158,7 +159,7 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 			}
 
 			ConfigurableListableBeanFactory beanFactory = repositoryContext.getBeanFactory();
-			JdbcDialect dialect = beanFactory.getBean(JdbcDialect.class);
+			JdbcDialect dialect = beanFactory.getBeanProvider(JdbcDialect.class).getIfAvailable(() -> JdbcH2Dialect.INSTANCE);
 			RelationalMappingContext mappingContext = beanFactory.getBeanProvider(RelationalMappingContext.class)
 					.getIfAvailable(() -> {
 

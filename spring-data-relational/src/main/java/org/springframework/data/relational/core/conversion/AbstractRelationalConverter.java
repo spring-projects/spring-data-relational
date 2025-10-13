@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -76,7 +75,6 @@ public abstract class AbstractRelationalConverter implements RelationalConverter
 		conversions.registerConvertersIn(this.conversionService);
 	}
 
-	@NotNull
 	private static DefaultConversionService createBaseConversionService() {
 
 		DefaultConversionService conversionService = new DefaultConversionService();
