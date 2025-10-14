@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.sql.JDBCType;
+import java.util.Collection;
 
 import org.jspecify.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import org.springframework.util.Assert;
  * Utility to access placeholders in AOT processing.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 4.0
  */
 class PlaceholderAccessor {
@@ -77,6 +79,10 @@ class PlaceholderAccessor {
 
 		if (value instanceof CapturingJdbcValue cp) {
 			return cp;
+		}
+
+		if(value instanceof Collection<?> c && c.iterator().hasNext()) {
+			return unwrap(c.iterator().next());
 		}
 
 		throw new IllegalArgumentException("Cannot unwrap value: '%s' to CapturingJdbcValue".formatted(value));

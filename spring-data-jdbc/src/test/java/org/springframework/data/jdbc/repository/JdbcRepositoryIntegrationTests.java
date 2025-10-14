@@ -102,6 +102,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Christopher Klein
  * @author Mikhail Polivakha
  * @author Paul Jones
+ * @author Christoph Strobl
  */
 @IntegrationTest
 public class JdbcRepositoryIntegrationTests {
@@ -573,6 +574,15 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findByNameContains("a", Limit.of(2))).hasSize(2);
 		assertThat(repository.findByNameContains("a", Limit.unlimited())).hasSize(3);
+	}
+
+	@Test // GH-2155
+	public void selectContainingIgnoreCase() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("1a1"), new DummyEntity("1B1"), new DummyEntity("1c1")));
+
+		Optional<DummyEntity> result = repository.findByNameContainingIgnoreCase("b");
+		assertThat(result).map(DummyEntity::getName).contains("1B1");
 	}
 
 	@Test // GH-774
@@ -1566,6 +1576,8 @@ public class JdbcRepositoryIntegrationTests {
 		Page<DummyEntity> findPageByNameContains(String name, Pageable pageable);
 
 		List<DummyEntity> findByNameContains(String name, Limit limit);
+
+		Optional<DummyEntity> findByNameContainingIgnoreCase(String partialName);
 
 		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
 
