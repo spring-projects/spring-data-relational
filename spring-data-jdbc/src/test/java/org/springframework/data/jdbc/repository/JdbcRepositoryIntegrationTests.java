@@ -2104,7 +2104,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class DummyDto {
+	public static class DummyDto {
 		@Id Long idProp;
 		String name;
 		AggregateReference<DummyEntity, Long> ref;
@@ -2120,7 +2120,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class DummyAllArgsDto {
+	public static class DummyAllArgsDto {
 		@Id Long idProp;
 		String name;
 		AggregateReference<DummyEntity, Long> ref;
@@ -2140,7 +2140,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	record DtoProjection(String name) {
+	public record DtoProjection(String name) {
 
 
 		public boolean equals(final Object o) {
@@ -2166,7 +2166,7 @@ public class JdbcRepositoryIntegrationTests {
 			}
 		}
 
-	static class CustomRowMapper implements RowMapper<DummyEntity> {
+	public static class CustomRowMapper implements RowMapper<DummyEntity> {
 
 		@Override
 		public DummyEntity mapRow(ResultSet rs, int rowNum) {
