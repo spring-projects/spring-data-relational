@@ -557,6 +557,7 @@ class JdbcCodeBlocks {
 			return doBuild();
 		}
 
+		@SuppressWarnings("NullAway")
 		private CodeBlock doBuild() {
 
 			MethodReturn methodReturn = context.getMethodReturn();
