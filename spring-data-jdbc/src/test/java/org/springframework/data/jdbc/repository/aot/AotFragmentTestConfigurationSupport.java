@@ -65,6 +65,7 @@ import org.springframework.util.ReflectionUtils;
  * invocations to the backing AOT fragment. Note that {@code repositoryInterface} is not a repository proxy.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProcessor {
 
@@ -105,7 +106,7 @@ public class AotFragmentTestConfigurationSupport implements BeanFactoryPostProce
 		jdbcRepositoryContributor.contribute(generationContext);
 
 		AbstractBeanDefinition aotGeneratedRepository = BeanDefinitionBuilder
-				.genericBeanDefinition(repositoryInterface.getName() + "Impl__AotRepository")
+				.genericBeanDefinition(repositoryInterface.getPackageName() + "." + repositoryInterface.getSimpleName() + "Impl__AotRepository")
 				.addConstructorArgValue(new RuntimeBeanReference(JdbcAggregateOperations.class))
 				.addConstructorArgValue(new RuntimeBeanReference(RowMapperFactory.class))
 				.addConstructorArgValue(

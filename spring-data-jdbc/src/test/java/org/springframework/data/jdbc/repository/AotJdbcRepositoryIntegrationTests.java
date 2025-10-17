@@ -40,6 +40,7 @@ import org.springframework.data.repository.core.support.RepositoryComposition;
  * Integration test for {@link DummyEntityRepository} using JavaConfig with mounted AOT-generated repository methods.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.H2)
@@ -59,7 +60,7 @@ class AotJdbcRepositoryIntegrationTests extends JdbcRepositoryIntegrationTests {
 
 		@Bean
 		static AotFragmentTestConfigurationSupport aot() {
-			return new AotFragmentTestConfigurationSupport(UserRepository.class, JdbcH2Dialect.INSTANCE, AotConfig.class,
+			return new AotFragmentTestConfigurationSupport(DummyEntityRepository.class, JdbcH2Dialect.INSTANCE, AotConfig.class,
 					false);
 		}
 
