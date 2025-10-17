@@ -30,6 +30,17 @@ Here is a quick teaser of an application using Spring Data JDBC Repositories in 
 
 [source,java]
 ----
+@Table("person")
+public class Person {
+
+    @Id
+    private Long id;
+    private String firstname;
+    private String lastname;
+
+    // getters and setters
+}
+
 interface PersonRepository extends CrudRepository<Person, Long> {
 
     @Query("SELECT * FROM person WHERE lastname = :lastname")
