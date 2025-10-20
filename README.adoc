@@ -30,7 +30,7 @@ Here is a quick teaser of an application using Spring Data JDBC Repositories in 
 
 [source,java]
 ----
-@Table("person")
+@Table
 public class Person {
 
     @Id
