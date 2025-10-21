@@ -164,7 +164,7 @@ interface UserRepository extends CrudRepository<User, Long> {
 For converting the query result into entities the same `RowMapper` is used by default as for the queries Spring Data JDBC generates itself.
 The query you provide must match the format the `RowMapper` expects.
 Columns for all properties that are used in the constructor of an entity must be provided.
-Columns for properties that get set via setter or field access are optional.
+Columns for properties that get set via setter, wither or field access are optional.
 Properties that don't have a matching column in the result will not be set.
 The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
 Separate queries are generated for maps, lists, sets and arrays of entities.
