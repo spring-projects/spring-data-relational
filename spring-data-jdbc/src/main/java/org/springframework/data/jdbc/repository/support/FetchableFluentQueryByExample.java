@@ -36,6 +36,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -130,8 +131,15 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	@Override
 	public Page<R> page(Pageable pageable) {
 
-		return this.entityOperations.findAll(createQuery(p -> p.with(pageable)), getExampleType(), pageable)
-				.map(item -> this.getConversionFunction().apply(item));
+		Query contentQuery = createQuery(p -> p.with(pageable));
+		List<S> content = this.entityOperations.findAll(contentQuery, getExampleType());
+
+		List<R> result = new ArrayList<>(content.size());
+		for (S s : content) {
+			result.add(getConversionFunction().apply(s));
+		}
+
+		return PageableExecutionUtils.getPage(result, pageable, () -> this.entityOperations.count(createQuery(), getExampleType()));
 	}
 
 	@Override

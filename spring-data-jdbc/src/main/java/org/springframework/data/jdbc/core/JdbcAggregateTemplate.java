@@ -313,6 +313,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return allStreamable.map(this::triggerAfterConvert);
 	}
 
+	@Deprecated
 	@Override
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
@@ -342,6 +343,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.streamAll(query, domainType).map(this::triggerAfterConvert);
 	}
 
+	@Deprecated
 	@Override
 	public <T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 

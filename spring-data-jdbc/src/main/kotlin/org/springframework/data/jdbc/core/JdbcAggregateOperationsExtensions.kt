@@ -80,6 +80,7 @@ inline fun <reified T> JdbcAggregateOperations.findAll(sort: Sort): List<T> =
 /**
  * Extension for [JdbcAggregateOperations.findAll] with pagination.
  */
+@Deprecated("Use a combination of operations of this class to construct results of type Page")
 inline fun <reified T> JdbcAggregateOperations.findAll(pageable: Pageable): Page<T> =
 		findAll(T::class.java, pageable)
 

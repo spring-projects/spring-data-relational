@@ -63,6 +63,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.RelationalEvent;
 import org.springframework.data.relational.core.mapping.event.WithId;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -277,7 +278,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
 
-		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(), any(Pageable.class));
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(Query.class), any(Class.class));
 		doReturn(2L).when(dataAccessStrategy).count(any());
 
 		repository.findAll(PageRequest.of(0, 20));
