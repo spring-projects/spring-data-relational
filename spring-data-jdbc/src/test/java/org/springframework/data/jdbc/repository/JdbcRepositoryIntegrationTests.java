@@ -119,6 +119,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	public static Stream<Arguments> findAllByExamplePageableSource() {
 
+		// Pageable pageRequest, int size, int totalPages, List<String> notContains
 		return Stream.of( //
 				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
 				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
@@ -126,7 +127,8 @@ public class JdbcRepositoryIntegrationTests {
 				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
 				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
 				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
+				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()), //
+				Arguments.of(Pageable.unpaged(), 100, 1, Collections.emptyList()) //
 		);
 	}
 
