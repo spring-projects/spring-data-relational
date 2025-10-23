@@ -313,8 +313,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return allStreamable.map(this::triggerAfterConvert);
 	}
 
-	@Deprecated
 	@Override
+	@Deprecated(since = "3.5.6")
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
 		Assert.notNull(domainType, "Domain type must not be null");
@@ -343,8 +343,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.streamAll(query, domainType).map(this::triggerAfterConvert);
 	}
 
-	@Deprecated
 	@Override
+	@Deprecated(since = "3.5.6")
 	public <T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
 		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(query, domainType, pageable));

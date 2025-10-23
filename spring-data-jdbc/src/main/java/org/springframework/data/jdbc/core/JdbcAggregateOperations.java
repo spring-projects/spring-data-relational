@@ -226,9 +226,11 @@ public interface JdbcAggregateOperations {
 	 * @param pageable the pagination information. Must not be {@code null}.
 	 * @return Guaranteed to be not {@code null}.
 	 * @since 2.0
-	 * @deprecated use a combination of other methods of this class to construct results of type {@link Page}.
+	 * @deprecated since 3.5.6. Use {@link #findAll(Class, Sort)} together with {@link #count(Class)} to construct results
+	 *             of type {@link Page}.The API design is conflicts regarding pagination information. Also, pagination is
+	 *             primarily a feature of the repository and not the template API.
 	 */
-	@Deprecated(since = "4.0")
+	@Deprecated(since = "3.5.6")
 	<T> Page<T> findAll(Class<T> domainType, Pageable pageable);
 
 	/**
@@ -273,9 +275,11 @@ public interface JdbcAggregateOperations {
 	 * @param pageable can be null.
 	 * @return a {@link Page} of entities matching the given {@link Example}.
 	 * @since 3.0
-	 * @deprecated use a combination of other methods of this class to construct results of type {@link Page}.
+	 * @deprecated since 3.5.6. Use {@link #findAll(Query, Class)} together with {@link #count(Query, Class)} to construct
+	 *             results of type {@link Page}. The API design is conflicts regarding pagination information. Also,
+	 *             pagination is primarily a feature of the repository and not the template API.
 	 */
-	@Deprecated(since = "4.0")
+	@Deprecated(since = "3.5.6")
 	<T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable);
 
 	/**
