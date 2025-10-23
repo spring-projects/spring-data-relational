@@ -145,7 +145,10 @@ public class SimpleJdbcRepository<T, ID>
 
 		Assert.notNull(pageable, "Pageable must not be null");
 
-		Query query = applyPageable(Query.query(CriteriaDefinition.empty()), pageable);
+		Query query1 = Query.query(CriteriaDefinition.empty());
+
+
+		Query query = query1.with(pageable);
 		List<T> content = entityOperations.findAll(query, entity.getType());
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> entityOperations.count(entity.getType()));
@@ -184,7 +187,9 @@ public class SimpleJdbcRepository<T, ID>
 		Assert.notNull(pageable, "Pageable must not be null");
 
 		Query mappedQuery = this.exampleMapper.getMappedExample(example);
-		Query contentQuery = applyPageable(mappedQuery, pageable);
+
+
+		Query contentQuery = mappedQuery.with(pageable);
 
 		List<S> content = this.entityOperations.findAll(contentQuery, example.getProbeType());
 
@@ -219,12 +224,4 @@ public class SimpleJdbcRepository<T, ID>
 		return queryFunction.apply(fluentQuery);
 	}
 
-	private Query applyPageable(Query query, Pageable pageable) {
-
-		if (pageable.isPaged()) {
-			query = query.limit(pageable.getPageSize()).offset(pageable.getOffset());
-		}
-
-		return query.sort(pageable.getSort());
-	}
 }
