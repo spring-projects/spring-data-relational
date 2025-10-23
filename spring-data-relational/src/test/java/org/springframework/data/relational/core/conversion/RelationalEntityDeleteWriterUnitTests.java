@@ -28,6 +28,8 @@ import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Jaeyeon Kim
  */
 @ExtendWith(MockitoExtension.class)
 public class RelationalEntityDeleteWriterUnitTests {
@@ -139,6 +142,42 @@ public class RelationalEntityDeleteWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAllRoot.class, WithReadOnlyReference.class, "") //
+				);
+	}
+
+	@Test // GH-1978
+	void writeForQueryDeletesEntitiesByQueryAndReferencedEntities() {
+
+		MutableAggregateChange<SomeEntity> aggregateChange = MutableAggregateChange.forDelete(SomeEntity.class);
+		Query query = Query.query(Criteria.where("id").is(23L));
+
+		converter.writeForQuery(query, aggregateChange);
+
+		assertThat(extractActions(aggregateChange))
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath)
+				.containsExactly(
+						Tuple.tuple(DbAction.AcquireLockAllRootByQuery.class, SomeEntity.class, ""),
+						Tuple.tuple(DbAction.DeleteByQuery.class, YetAnother.class, "other.yetAnother"),
+						Tuple.tuple(DbAction.DeleteByQuery.class, OtherEntity.class, "other"),
+						Tuple.tuple(DbAction.DeleteRootByQuery.class, SomeEntity.class, "")
+				);
+	}
+
+	@Test // GH-1978
+	void writeForQueryDeletesEntitiesByEmptyQueryAndReferencedEntities() {
+
+		MutableAggregateChange<SomeEntity> aggregateChange = MutableAggregateChange.forDelete(SomeEntity.class);
+		Query query = Query.query(Criteria.empty());
+
+		converter.writeForQuery(query, aggregateChange);
+
+		assertThat(extractActions(aggregateChange))
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath)
+				.containsExactly(
+						Tuple.tuple(DbAction.AcquireLockAllRoot.class, SomeEntity.class, ""),
+						Tuple.tuple(DbAction.DeleteAll.class, YetAnother.class, "other.yetAnother"),
+						Tuple.tuple(DbAction.DeleteAll.class, OtherEntity.class, "other"),
+						Tuple.tuple(DbAction.DeleteAllRoot.class, SomeEntity.class, "")
 				);
 	}
 

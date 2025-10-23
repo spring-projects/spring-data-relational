@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Myeonghyeon Lee
  * @author Sergey Korotaev
  * @author Tomohiko Ozawa
+ * @author Jaeyeon Kim
  */
 public interface JdbcAggregateOperations {
 
@@ -336,6 +337,15 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate roots.
 	 */
 	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
+
+	/**
+	 * Deletes all aggregates of the given type that match the provided query.
+	 *
+	 * @param query Must not be {@code null}.
+	 * @param domainType the type of the aggregate root. Must not be {@code null}.
+	 * @param <T> the type of the aggregate root.
+	 */
+	<T> void deleteAllByQuery(Query query, Class<T> domainType);
 
 	/**
 	 * Returns the {@link JdbcConverter}.
