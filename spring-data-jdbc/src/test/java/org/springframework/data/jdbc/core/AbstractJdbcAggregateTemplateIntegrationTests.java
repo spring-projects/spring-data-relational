@@ -24,7 +24,6 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;

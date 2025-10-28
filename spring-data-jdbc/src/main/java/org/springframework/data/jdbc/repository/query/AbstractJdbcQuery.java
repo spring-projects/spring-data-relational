@@ -20,7 +20,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;

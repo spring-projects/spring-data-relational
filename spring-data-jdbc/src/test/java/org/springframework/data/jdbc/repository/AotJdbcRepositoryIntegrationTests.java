@@ -27,7 +27,6 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.repository.aot.AotFragmentTestConfigurationSupport;
-import org.springframework.data.jdbc.repository.aot.UserRepository;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
