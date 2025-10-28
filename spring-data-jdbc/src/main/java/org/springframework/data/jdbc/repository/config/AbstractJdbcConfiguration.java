@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,8 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -32,34 +29,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategyFactory;
-import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.DialectResolver;
-import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.RelationalManagedTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.util.TypeScanner;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.StringUtils;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.
@@ -76,8 +62,6 @@ import org.springframework.util.StringUtils;
  */
 @Configuration(proxyBeanMethods = false)
 public class AbstractJdbcConfiguration implements ApplicationContextAware {
-
-	private static final Log LOG = LogFactory.getLog(AbstractJdbcConfiguration.class);
 
 	@SuppressWarnings("NullAway.Init") private ApplicationContext applicationContext;
 
@@ -96,7 +80,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	protected Collection<String> getMappingBasePackages() {
 
 		Package mappingBasePackage = getClass().getPackage();
-		return Collections.singleton(mappingBasePackage == null ? null : mappingBasePackage.getName());
+		return mappingBasePackage == null ? List.of() : List.of(mappingBasePackage.getName());
 	}
 
 	/**
@@ -124,13 +108,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			JdbcCustomConversions customConversions, RelationalManagedTypes jdbcManagedTypes) {
-
-		JdbcMappingContext mappingContext = JdbcMappingContext
-				.forQuotedIdentifiers(namingStrategy.orElse(DefaultNamingStrategy.INSTANCE));
-		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
-		mappingContext.setManagedTypes(jdbcManagedTypes);
-
-		return mappingContext;
+		return JdbcConfiguration.createMappingContext(jdbcManagedTypes, customConversions, namingStrategy.orElse(null));
 	}
 
 	/**
@@ -143,7 +121,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public IdGeneratingEntityCallback idGeneratingBeforeSaveCallback(JdbcMappingContext mappingContext,
-			NamedParameterJdbcOperations operations, Dialect dialect) {
+			NamedParameterJdbcOperations operations, JdbcDialect dialect) {
 		return new IdGeneratingEntityCallback(mappingContext, dialect, operations);
 	}
 
@@ -157,25 +135,14 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
-			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
-
-		JdbcArrayColumns arrayColumns = JdbcDialect.getArraySupport(dialect);
-		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
-
-		MappingJdbcConverter mappingJdbcConverter = new MappingJdbcConverter(mappingContext, relationResolver, conversions,
-				jdbcTypeFactory);
-
-		if (operations.getJdbcOperations() instanceof JdbcTemplate jdbcTemplate) {
-			mappingJdbcConverter.setExceptionTranslator(jdbcTemplate.getExceptionTranslator());
-		}
-
-		return mappingJdbcConverter;
+			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, JdbcDialect dialect) {
+		return JdbcConfiguration.createConverter(mappingContext, operations, relationResolver, conversions, dialect);
 	}
 
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
 	 * {@link JdbcCustomConversions} will be registered with the
-	 * {@link #jdbcConverter(JdbcMappingContext, NamedParameterJdbcOperations, RelationResolver, JdbcCustomConversions, Dialect)}.
+	 * {@link #jdbcConverter(JdbcMappingContext, NamedParameterJdbcOperations, RelationResolver, JdbcCustomConversions, JdbcDialect)}.
 	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return will never be {@literal null}.
@@ -183,29 +150,12 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	@Bean
 	public JdbcCustomConversions jdbcCustomConversions() {
 
-		Dialect dialect = applicationContext.getBeanProvider(Dialect.class).getIfAvailable();
-
-		if (dialect == null) {
-			LOG.warn("No JdbcDialect bean found; CustomConversions will be configured without dialect-specific types.");
-			return new JdbcCustomConversions();
-		}
-
-		SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
-
-		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
-				userConverters());
+		JdbcDialect dialect = applicationContext.getBean(JdbcDialect.class);
+		return JdbcConfiguration.createCustomConversions(dialect, userConverters());
 	}
 
 	protected List<?> userConverters() {
 		return Collections.emptyList();
-	}
-
-	private List<Object> storeConverters(Dialect dialect) {
-
-		List<Object> converters = new ArrayList<>();
-		converters.addAll(dialect.getConverters());
-		converters.addAll(JdbcCustomConversions.storeConverters());
-		return converters;
 	}
 
 	/**
@@ -232,8 +182,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 */
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
-			JdbcMappingContext context, Dialect dialect) {
-		return new DataAccessStrategyFactory(jdbcConverter, operations, dialect, this.queryMappingConfiguration).create();
+			JdbcMappingContext context, JdbcDialect dialect) {
+		return JdbcConfiguration.createDataAccessStrategy(operations, jdbcConverter, queryMappingConfiguration, dialect);
 	}
 
 	/**
@@ -245,7 +195,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @throws DialectResolver.NoDialectException if the {@link Dialect} cannot be determined.
 	 */
 	@Bean
-	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+	public JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
 
@@ -286,16 +236,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @return a set of classes identified as entities.
 	 * @since 3.0
 	 */
-	@SuppressWarnings("unchecked")
 	protected Set<Class<?>> scanForEntities(String basePackage) {
-
-		if (!StringUtils.hasText(basePackage)) {
-			return Collections.emptySet();
-		}
-
-		return TypeScanner.typeScanner(AbstractJdbcConfiguration.class.getClassLoader()) //
-				.forTypesAnnotatedWith(Table.class) //
-				.scanPackages(basePackage) //
-				.collectAsSet();
+		return JdbcConfiguration.scanForEntities(basePackage);
 	}
 }

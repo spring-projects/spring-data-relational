@@ -172,15 +172,15 @@ This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instanc
 [[r2dbc.dialects]]
 == Dialects
 
-Spring Data R2DBC uses a `Dialect` to encapsulate behavior that is specific to a database or its driver.
+Spring Data R2DBC uses a `R2dbcDialect` to encapsulate behavior that is specific to a database or its driver.
 Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
 If you use a database for which no dialect is available, then your application won’t start up.
-In that case, you’ll have to ask your vendor to provide a `Dialect` implementation.
-Alternatively, you can implement your own `Dialect`.
+In that case, you’ll have to ask your vendor to provide a `R2dbcDialect` implementation.
+Alternatively, you can implement your own `R2dbcDialect`.
 
 [TIP]
 ====
-Dialects are resolved by javadoc:org.springframework.data.r2dbc./dialect.DialectResolver[] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
+Dialects are resolved by javadoc:org.springframework.data.r2dbc.dialect.DialectResolver[] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
 + You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:

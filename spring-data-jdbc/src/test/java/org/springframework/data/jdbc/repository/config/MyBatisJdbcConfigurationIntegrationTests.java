@@ -22,14 +22,14 @@ import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -70,7 +70,7 @@ public class MyBatisJdbcConfigurationIntegrationTests extends AbstractJdbcConfig
 
 		@Override
 		@Bean
-		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+		public JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 			return JdbcHsqlDbDialect.INSTANCE;
 		}
 	}
