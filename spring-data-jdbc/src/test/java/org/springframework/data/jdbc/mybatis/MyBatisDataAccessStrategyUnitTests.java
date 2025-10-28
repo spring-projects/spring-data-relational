@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.mybatis;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
