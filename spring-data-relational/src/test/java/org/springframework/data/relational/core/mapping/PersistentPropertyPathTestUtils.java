@@ -17,8 +17,6 @@ package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * @author Jens Schauder
