@@ -53,7 +53,7 @@ You can do so by overriding `r2dbcMappingContext(Optional<NamingStrategy>)` of `
 Spring Data converts the letter casing of such a name to that form which is also used by the configured database when no quoting is used.
 Therefore, you can use unquoted names when creating tables, as long as you do not use keywords or special characters in your names.
 For databases that adhere to the SQL standard, this means that names are converted to upper case.
-The quoting character and the way names get capitalized is controlled by the used `Dialect`.
+The quoting character and the way names get capitalized is controlled by the used `R2dbcDialect`.
 See xref:r2dbc/getting-started.adoc#r2dbc.dialects[R2DBC Drivers] for how to configure custom dialects.
 
 .@Configuration class to configure R2DBC mapping support
