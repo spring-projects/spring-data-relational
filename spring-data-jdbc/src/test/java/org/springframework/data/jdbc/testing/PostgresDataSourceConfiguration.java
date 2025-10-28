@@ -21,7 +21,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * {@link DataSource} setup for PostgreSQL. Starts a docker container with a Postgres database.
@@ -35,7 +35,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @ConditionalOnDatabase(DatabaseType.POSTGRES)
 public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
+	private static PostgreSQLContainer POSTGRESQL_CONTAINER;
 
 	public PostgresDataSourceConfiguration(TestClass testClass, Environment environment) {
 		super(testClass, environment);
@@ -46,7 +46,7 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (POSTGRESQL_CONTAINER == null) {
 
-			PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:14.3");
+			PostgreSQLContainer container = new PostgreSQLContainer("postgres:14.3");
 			container.start();
 
 			POSTGRESQL_CONTAINER = container;

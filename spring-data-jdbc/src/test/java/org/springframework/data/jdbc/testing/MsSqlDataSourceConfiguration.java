@@ -20,7 +20,7 @@ import javax.sql.DataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
@@ -39,7 +39,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 	public static final String MS_SQL_SERVER_VERSION = "mcr.microsoft.com/mssql/server:2022-latest";
-	private static MSSQLServerContainer<?> MSSQL_CONTAINER;
+	private static MSSQLServerContainer MSSQL_CONTAINER;
 
 	public MsSqlDataSourceConfiguration(TestClass testClass, Environment environment) {
 		super(testClass, environment);
@@ -50,7 +50,7 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MSSQL_CONTAINER == null) {
 
-			MSSQLServerContainer<?> container = new MSSQLServerContainer<>(MS_SQL_SERVER_VERSION) //
+			MSSQLServerContainer container = new MSSQLServerContainer(MS_SQL_SERVER_VERSION) //
 					.withReuse(true);
 			container.start();
 

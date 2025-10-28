@@ -27,7 +27,7 @@ import javax.sql.DataSource;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.mariadb.r2dbc.MariadbConnectionFactoryProvider;
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -123,7 +123,7 @@ public class MariaDbTestSupport {
 						.asCompatibleSubstituteFor("mariadb");
 
 				DockerImageName mariadb = DockerImageName.parse("mariadb").withTag("10.3.6");
-				var container = new MariaDBContainer<>("aarch64".equals(osArch) ? armImageName : mariadb);
+				var container = new MariaDBContainer("aarch64".equals(osArch) ? armImageName : mariadb);
 
 				container.start();
 

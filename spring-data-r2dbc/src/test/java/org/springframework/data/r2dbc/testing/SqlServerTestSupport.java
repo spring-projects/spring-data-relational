@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
@@ -124,7 +124,7 @@ public class SqlServerTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				MSSQLServerContainer<?> container = new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2022-latest") {
+				MSSQLServerContainer container = new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2022-latest") {
 					@Override
 					public String getDatabaseName() {
 						return "master";

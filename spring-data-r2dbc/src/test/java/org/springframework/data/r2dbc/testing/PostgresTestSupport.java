@@ -24,7 +24,7 @@ import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Utility class for testing against Postgres.

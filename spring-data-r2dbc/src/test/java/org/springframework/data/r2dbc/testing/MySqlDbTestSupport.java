@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -116,7 +116,7 @@ public class MySqlDbTestSupport {
 
 			try {
 
-				var container = new MySQLContainer<>("mysql:8.0.32").withUsername("test").withPassword("test")
+				var container = new MySQLContainer("mysql:8.0.32").withUsername("test").withPassword("test")
 						.withConfigurationOverride("");
 
 				container.start();

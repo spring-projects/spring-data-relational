@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.mariadb.MariaDBContainer;
 
 /**
  * {@link DataSource} setup for MariaDB. Starts a Docker-container with a MariaDB database, and sets up database "test".
@@ -39,7 +39,7 @@ import org.testcontainers.containers.MariaDBContainer;
 @ConditionalOnDatabase(DatabaseType.MARIADB)
 class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
-	private static MariaDBContainer<?> MARIADB_CONTAINER;
+	private static MariaDBContainer MARIADB_CONTAINER;
 
 	public MariaDBDataSourceConfiguration(TestClass testClass, Environment environment) {
 		super(testClass, environment);
@@ -50,7 +50,7 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements 
 
 		if (MARIADB_CONTAINER == null) {
 
-			MariaDBContainer<?> container = new MariaDBContainer<>("mariadb:10.8.3").withUsername("root").withPassword("")
+			MariaDBContainer container = new MariaDBContainer("mariadb:10.8.3").withUsername("root").withPassword("")
 					.withConfigurationOverride("");
 			container.start();
 
