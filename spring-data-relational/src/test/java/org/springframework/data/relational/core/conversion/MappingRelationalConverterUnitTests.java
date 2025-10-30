@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
@@ -40,13 +41,13 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link MappingRelationalConverter}.

@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
 /**

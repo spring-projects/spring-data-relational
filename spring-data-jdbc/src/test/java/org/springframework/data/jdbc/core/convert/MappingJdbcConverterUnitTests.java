@@ -38,9 +38,11 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
@@ -49,7 +51,6 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link MappingJdbcConverter}.

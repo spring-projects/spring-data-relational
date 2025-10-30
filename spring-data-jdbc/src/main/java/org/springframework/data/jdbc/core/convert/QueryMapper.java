@@ -24,13 +24,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.core.PropertyPath;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -41,7 +43,6 @@ import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;

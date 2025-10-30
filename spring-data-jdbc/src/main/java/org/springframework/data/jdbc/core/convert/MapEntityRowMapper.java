@@ -20,10 +20,10 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 

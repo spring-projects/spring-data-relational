@@ -25,6 +25,8 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.sql.LockMode;
@@ -32,7 +34,6 @@ import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
