@@ -24,11 +24,11 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Utility to obtain {@link JdbcValue} instances for string values, collections, and arrays for string-based query

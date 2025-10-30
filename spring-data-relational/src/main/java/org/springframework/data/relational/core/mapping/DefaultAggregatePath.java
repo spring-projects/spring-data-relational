@@ -20,9 +20,10 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentLruCache;
 

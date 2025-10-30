@@ -148,13 +148,13 @@ There are a couple of things one might want to customize in this setup.
 [[jdbc.dialects]]
 == Dialects
 
-Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
-By default, the javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `Dialect`.
+Spring Data JDBC uses implementations of the interface `JdbcDialect` to encapsulate behavior that is specific to a database or its JDBC driver.
+By default, the javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `JdbcDialect`.
 You override `AbstractJdbcConfiguration.jdbcDialect(NamedParameterJdbcOperations)` to customize dialect selection.
 
 If you use a database for which no dialect is available, then your application won’t start up.
-In that case, you’ll have to ask your vendor to provide a `Dialect` implementation.
-Alternatively, you can implement your own `Dialect`.
+In that case, you’ll have to ask your vendor to provide a `JdbcDialect` implementation.
+Alternatively, you can implement your own `JdbcDialect`.
 
 [TIP]
 ====
@@ -163,8 +163,8 @@ You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
 
-. Implement your own `Dialect`.
-. Implement a `JdbcDialectProvider` returning the `Dialect`.
+. Implement your own `JdbcDialect`.
+. Implement a `JdbcDialectProvider` returning the `JdbcDialect`.
 . Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
 `org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider`=<fully qualified name of your JdbcDialectProvider>`.
 ====

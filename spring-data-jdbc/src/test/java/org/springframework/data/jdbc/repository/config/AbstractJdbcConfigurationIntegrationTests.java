@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -36,9 +37,9 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.RelationalManagedTypes;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -142,7 +143,7 @@ class AbstractJdbcConfigurationIntegrationTests {
 
 		@Override
 		@Bean
-		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+		public JdbcDialect jdbcDialect(NamedParameterJdbcOperations operations) {
 			return new DummyDialect();
 		}
 
@@ -165,7 +166,7 @@ class AbstractJdbcConfigurationIntegrationTests {
 
 		private static class Blubb {}
 
-		private static class DummyDialect implements Dialect {
+		private static class DummyDialect implements JdbcDialect {
 			@Override
 			public LimitClause limit() {
 				return null;

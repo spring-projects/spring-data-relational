@@ -20,9 +20,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.ObjectUtils;
 
 /**
