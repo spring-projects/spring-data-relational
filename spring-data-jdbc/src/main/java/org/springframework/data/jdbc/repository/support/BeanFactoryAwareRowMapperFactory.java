@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;

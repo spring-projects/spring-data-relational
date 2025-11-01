@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;

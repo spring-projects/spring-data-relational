@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 
