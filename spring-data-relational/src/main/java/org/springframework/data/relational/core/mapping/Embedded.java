@@ -47,7 +47,7 @@ public @interface Embedded {
 	 * {@link Nullable @Embedded.Nullable} and {@link Empty @Embedded.Empty} offer shortcuts for this.
 	 * </p>
 	 * 
-	 * @return never {@link} null.
+	 * @return never {@literal null}.
 	 */
 	OnEmpty onEmpty();
 
