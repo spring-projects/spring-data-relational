@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.aot;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +39,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.BeanFactoryAwareRowMapperFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
@@ -102,8 +104,12 @@ class JdbcRepositoryContributorIntegrationTests {
 		operations.insert(new User("Walter", 52));
 		operations.insert(new User("Skyler", 40));
 		operations.insert(new User("Flynn", 16));
-		operations.insert(new User("Mike", 62));
-		operations.insert(new User("Gustavo", 51));
+		User mike = operations.insert(new User("Mike", 62));
+		User gus = operations.insert(new User("Gustavo", 51));
+
+		mike.setFriend(AggregateReference.to(gus.getId()));
+		operations.save(mike);
+
 		operations.insert(new User("Hector", 83));
 	}
 
@@ -156,6 +162,22 @@ class JdbcRepositoryContributorIntegrationTests {
 		walter = fragment.findByFirstnameEndingWith("$lter");
 
 		assertThat(walter).isNull(); // % is escaped
+	}
+
+	@Test // GH-2174
+	void shouldSupportDerivedQueryWithConverter() {
+
+		List<User> users = fragment.findByCreatedBefore(Instant.now().plusSeconds(180));
+
+		assertThat(users).hasSize(6);
+	}
+
+	@Test // GH-2174
+	void shouldSupportDerivedQueryBetweenWithConverter() {
+
+		List<User> users = fragment.findByCreatedBetween(Instant.now().minusSeconds(180), Instant.now().plusSeconds(180));
+
+		assertThat(users).hasSize(6);
 	}
 
 	@Test // GH-2121
@@ -281,6 +303,23 @@ class JdbcRepositoryContributorIntegrationTests {
 		int result = fragment.findUsingAndResultSetExtractorRef("Walter");
 
 		assertThat(result).isOne();
+	}
+
+	@Test // GH-2174
+	void shouldSupportDeclaredQueryWithConverter() {
+
+		List<User> users = fragment.findCreatedBefore(Instant.now().plusSeconds(180));
+
+		assertThat(users).hasSize(6);
+	}
+
+	@Test // GH-2174
+	void shouldSupportDeclaredQueryWithAggregateReference() {
+
+		User gus = fragment.findByFirstname("Gustavo");
+		List<User> users = fragment.findByFriend(AggregateReference.to(gus.getId()));
+
+		assertThat(users).hasSize(1);
 	}
 
 	@Test // GH-2121

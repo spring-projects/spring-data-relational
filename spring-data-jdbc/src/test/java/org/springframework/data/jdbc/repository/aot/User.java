@@ -15,7 +15,12 @@
  */
 package org.springframework.data.jdbc.repository.aot;
 
+import java.time.Instant;
+
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
@@ -27,6 +32,8 @@ public class User {
 	private @Id long id;
 	private String firstname;
 	private int age;
+	private Instant created = Instant.now();
+	private @Nullable AggregateReference<User, Long> friend;
 
 	public User(String firstname, int age) {
 		this.firstname = firstname;
@@ -56,4 +63,21 @@ public class User {
 	public void setAge(int age) {
 		this.age = age;
 	}
+
+	public Instant getCreated() {
+		return created;
+	}
+
+	public void setCreated(Instant created) {
+		this.created = created;
+	}
+
+	public @Nullable AggregateReference<User, Long> getFriend() {
+		return friend;
+	}
+
+	public void setFriend(AggregateReference<User, Long> friend) {
+		this.friend = friend;
+	}
+
 }

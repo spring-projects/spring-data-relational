@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.aot;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -22,6 +23,7 @@ import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -40,6 +42,12 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	User findByFirstnameStartingWith(String name);
 
 	User findByFirstnameEndingWith(String name);
+
+	List<User> findByCreatedBefore(Instant instant);
+
+	List<User> findByCreatedBetween(Instant from, Instant to);
+
+	List<User> findByFriend(AggregateReference<User, Long> friend);
 
 	List<User> findAllByAgeBetween(int start, int end);
 
@@ -85,6 +93,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name", resultSetExtractorRef = "simpleResultSetExtractor")
 	int findUsingAndResultSetExtractorRef(String name);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE created < :instant")
+	List<User> findCreatedBefore(Instant instant);
 
 	// -------------------------------------------------------------------------
 	// Parameter naming
