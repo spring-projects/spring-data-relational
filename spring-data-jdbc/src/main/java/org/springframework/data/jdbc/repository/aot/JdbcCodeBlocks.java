@@ -49,6 +49,7 @@ import org.springframework.data.repository.aot.generate.MethodReturn;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Pair;
+import org.springframework.data.util.Streamable;
 import org.springframework.javapoet.CodeBlock;
 import org.springframework.javapoet.CodeBlock.Builder;
 import org.springframework.javapoet.TypeName;
@@ -811,8 +812,14 @@ class JdbcCodeBlocks {
 					return builder.build();
 				}
 
-				builder.addStatement("return ($T) convertMany($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
-						methodReturn.getTypeName(), result, queryResultTypeRef);
+				if (methodReturn.toClass().equals(Streamable.class)) {
+					builder.addStatement(
+							"return ($1T) $1T.of(($2T) convertMany($3L, %s))".formatted(dynamicProjection ? "$4L" : "$4T.class"),
+							Streamable.class, Iterable.class, result, queryResultTypeRef);
+				} else {
+					builder.addStatement("return ($T) convertMany($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
+							methodReturn.getTypeName(), result, queryResultTypeRef);
+				}
 			} else if (queryMethod.isStreamQuery()) {
 
 				builder.addStatement("$1T $2L = " + decorator.decorate("getJdbcOperations().queryForStream($3L, $4L, $5L)"),

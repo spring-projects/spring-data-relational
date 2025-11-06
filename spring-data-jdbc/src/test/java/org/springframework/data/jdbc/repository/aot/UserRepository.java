@@ -28,6 +28,7 @@ import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.util.Streamable;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
 
@@ -51,6 +52,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	List<User> findAllByAgeBetween(int start, int end);
 
+	Streamable<User> findStreamableByAgeBetween(int start, int end);
+
 	Optional<User> findOptionalByFirstname(String name);
 
 	Stream<User> streamByAgeGreaterThan(int age);
@@ -66,6 +69,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	Slice<User> findSliceByAgeGreaterThan(Pageable pageable, int age);
 
 	Page<User> findPageByAgeGreaterThan(Pageable pageable, int age);
+
+	Streamable<User> findStreamableByAgeGreaterThan(Pageable pageable, int age);
 
 	// -------------------------------------------------------------------------
 	// Declared Queries
@@ -96,6 +101,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	@Query(value = "SELECT * FROM MY_USER WHERE created < :instant")
 	List<User> findCreatedBefore(Instant instant);
+
+	@Query(value = "SELECT * FROM MY_USER WHERE created < :instant")
+	Streamable<User> findStreamableCreatedBefore(Instant instant);
 
 	// -------------------------------------------------------------------------
 	// Parameter naming
