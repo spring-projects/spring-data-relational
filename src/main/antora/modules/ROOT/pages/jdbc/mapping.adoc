@@ -42,7 +42,7 @@ The properties of the following types are currently supported:
 
 * All primitive types and their boxed types (`int`, `float`, `Integer`, `Float`, and so on)
 
-* Enums get mapped to their name.
+* Enums get mapped to their names.
 
 * `String`
 
@@ -135,7 +135,7 @@ p1.bestFriend = AggregateReference.to(p2.id);
 ----
 
 You should not include attributes in your entities to hold the actual value of a back reference, nor of the key column of maps or lists.
-If you want these value to be available in your domain model we recommend to do this in a `AfterConvertCallback` and store the values in transient values.
+If you want these values to be available in your domain model we recommend to do this in an `AfterConvertCallback` and store the values in transient values.
 
 :mapped-collection: true
 :embedded-entities: true
@@ -208,13 +208,13 @@ class MyJdbcConfiguration extends AbstractJdbcConfiguration {
 ----
 
 NOTE: In previous versions of Spring Data JDBC it was recommended to directly overwrite `AbstractJdbcConfiguration.jdbcCustomConversions()`.
-This is no longer necessary or even recommended, since that method assembles conversions intended for all databases, conversions registered by the `Dialect` used and conversions registered by the user.
-If you are migrating from an older version of Spring Data JDBC and have `AbstractJdbcConfiguration.jdbcCustomConversions()` overwritten conversions from your `Dialect` will not get registered.
+This is no longer necessary or even recommended, since that method assembles conversions intended for all databases, conversions registered by the `JdbcDialect` used and conversions registered by the user.
+If you are migrating from an older version of Spring Data JDBC and have `AbstractJdbcConfiguration.jdbcCustomConversions()` overwritten conversions from your `JdbcDialect` will not get registered.
 
 [TIP]
 ====
 If you want to rely on https://spring.io/projects/spring-boot[Spring Boot] to bootstrap Spring Data JDBC, but still want to override certain aspects of the configuration, you may want to expose beans of that type.
-For custom conversions you may e.g. choose to register a bean of type `JdbcCustomConversions` that will be picked up the by the Boot infrastructure.
+For custom conversions you may e.g. choose to register a bean of type `JdbcCustomConversions` that will be picked up by the Boot infrastructure.
 To learn more about this please make sure to read the Spring Boot https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#data.sql.jdbc[Reference Documentation].
 ====
 

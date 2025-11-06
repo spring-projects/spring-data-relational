@@ -16,9 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.any;
 
 import java.util.UUID;
 

@@ -16,7 +16,9 @@
 package org.springframework.data.relational.core.conversion;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPathAccessor;
@@ -27,7 +29,6 @@ import org.springframework.data.projection.EntityProjectionIntrospector;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * A {@link RelationalConverter} is responsible for converting for values to the native relational representation and

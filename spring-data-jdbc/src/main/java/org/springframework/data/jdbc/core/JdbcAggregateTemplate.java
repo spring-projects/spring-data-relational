@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -41,7 +42,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.QueryMappingConfiguration;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.EntityLifecycleEventDelegate;
@@ -78,6 +78,7 @@ import org.springframework.util.ClassUtils;
  * @author Sergey Korotaev
  * @author Mikhail Polivakha
  */
+@SuppressWarnings("removal")
 public class JdbcAggregateTemplate implements JdbcAggregateOperations, ApplicationContextAware {
 
 	private final EntityLifecycleEventDelegate eventDelegate = new EntityLifecycleEventDelegate();
@@ -88,7 +89,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	private final JdbcConverter converter;
 
 	private @Nullable EntityCallbacks entityCallbacks;
-	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link RelationalMappingContext} and {@link DataAccessStrategy}.
@@ -360,6 +360,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	}
 
 	@Override
+	@Deprecated(since = "4.0", forRemoval = true)
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
 		Assert.notNull(domainType, "Domain type must not be null");
@@ -389,6 +390,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	}
 
 	@Override
+	@Deprecated(since = "4.0", forRemoval = true)
 	public <T> Page<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
 		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(query, domainType, pageable));

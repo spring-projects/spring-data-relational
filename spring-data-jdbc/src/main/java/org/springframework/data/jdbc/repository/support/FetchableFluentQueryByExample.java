@@ -16,13 +16,11 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.OffsetScrollPosition;
@@ -35,6 +33,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -88,16 +87,8 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 
 	private List<R> findAll(Query query) {
 
-		Function<Object, R> conversionFunction = this.getConversionFunction();
-		Iterable<S> raw = this.entityOperations.findAll(query, getExampleType());
-
-		List<R> result = new ArrayList<>(raw instanceof Collections ? ((Collection<?>) raw).size() : 16);
-
-		for (S s : raw) {
-			result.add(conversionFunction.apply(s));
-		}
-
-		return result;
+		List<S> raw = this.entityOperations.findAll(query, getExampleType());
+		return mapContent(raw);
 	}
 
 	@Override
@@ -126,16 +117,35 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	@Override
 	public Page<R> page(Pageable pageable) {
 
-		return this.entityOperations.findAll(createQuery(p -> p.with(pageable)), getExampleType(), pageable)
-				.map(item -> this.getConversionFunction().apply(item));
+		Query contentQuery = createQuery(p -> p.with(pageable));
+		List<S> content = this.entityOperations.findAll(contentQuery, getExampleType());
+		List<R> result = mapContent(content);
+
+		return PageableExecutionUtils.getPage(result, pageable,
+				() -> this.entityOperations.count(createQuery(), getExampleType()));
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<R> mapContent(List<S> content) {
+
+		Function<Object, R> conversionFunction = getConversionFunction();
+
+		if (conversionFunction == Function.identity()) {
+			return (List<R>) content;
+		}
+
+		List<R> result = new ArrayList<>(content.size());
+		for (S s : content) {
+			result.add(conversionFunction.apply(s));
+		}
+
+		return result;
 	}
 
 	@Override
 	public Stream<R> stream() {
-
-		return StreamSupport
-				.stream(this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).spliterator(), false)
-				.map(item -> this.getConversionFunction().apply(item));
+		return this.entityOperations.streamAll(createQuery().sort(getSort()), getExampleType())
+				.map(getConversionFunction());
 	}
 
 	@Override
@@ -161,7 +171,6 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 		}
 
 		query = query.limit(getLimit());
-
 		query = queryCustomizer.apply(query);
 
 		return query;

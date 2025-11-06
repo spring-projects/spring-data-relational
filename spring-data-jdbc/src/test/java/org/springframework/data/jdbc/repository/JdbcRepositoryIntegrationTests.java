@@ -104,6 +104,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Mikhail Polivakha
  * @author Paul Jones
  * @author Artemiy Degtyarev
+ * @author Christoph Strobl
  */
 @IntegrationTest
 public class JdbcRepositoryIntegrationTests {
@@ -120,6 +121,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	public static Stream<Arguments> findAllByExamplePageableSource() {
 
+		// Pageable pageRequest, int size, int totalPages, List<String> notContains
 		return Stream.of( //
 				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
 				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
@@ -127,7 +129,8 @@ public class JdbcRepositoryIntegrationTests {
 				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
 				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
 				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
+				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()), //
+				Arguments.of(Pageable.unpaged(), 100, 1, Collections.emptyList()) //
 		);
 	}
 
@@ -575,6 +578,15 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findByNameContains("a", Limit.of(2))).hasSize(2);
 		assertThat(repository.findByNameContains("a", Limit.unlimited())).hasSize(3);
+	}
+
+	@Test // GH-2155
+	public void selectContainingIgnoreCase() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("1a1"), new DummyEntity("1B1"), new DummyEntity("1c1")));
+
+		Optional<DummyEntity> result = repository.findByNameContainingIgnoreCase("b");
+		assertThat(result).map(DummyEntity::getName).contains("1B1");
 	}
 
 	@Test // GH-774
@@ -1722,6 +1734,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		List<DummyEntity> findByNameContains(String name, Limit limit);
 
+		Optional<DummyEntity> findByNameContainingIgnoreCase(String partialName);
+
 		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
 
 		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
@@ -2248,7 +2262,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class DummyDto {
+	public static class DummyDto {
 		@Id Long idProp;
 		String name;
 		AggregateReference<DummyEntity, Long> ref;
@@ -2264,7 +2278,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class DummyAllArgsDto {
+	public static class DummyAllArgsDto {
 		@Id Long idProp;
 		String name;
 		AggregateReference<DummyEntity, Long> ref;
@@ -2284,7 +2298,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	record DtoProjection(String name) {
+	public record DtoProjection(String name) {
 
 		public boolean equals(final Object o) {
 			if (o == this)
@@ -2309,7 +2323,7 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class CustomRowMapper implements RowMapper<DummyEntity> {
+	public static class CustomRowMapper implements RowMapper<DummyEntity> {
 
 		@Override
 		public DummyEntity mapRow(ResultSet rs, int rowNum) {

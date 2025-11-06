@@ -19,7 +19,6 @@ package org.springframework.data.jdbc.repository;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -91,7 +90,7 @@ public class DeclaredQueryRepositoryUnitTests {
 		return queryCaptor.getValue();
 	}
 
-	private @NotNull <T extends CrudRepository> T repository(Class<T> repositoryInterface) {
+	private <T extends CrudRepository> T repository(Class<T> repositoryInterface) {
 
 		Dialect dialect = JdbcHsqlDbDialect.INSTANCE;
 

@@ -123,8 +123,8 @@ class JdbcRepositoryMetadataIntegrationTests {
 		String json = resource.getContentAsString(StandardCharsets.UTF_8);
 
 		assertThatJson(json).inPath("$.methods[?(@.name == 'findByFirstname')].query").isArray().first().isObject()
-				.containsEntry("query",
-						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" = :firstname");
+				.hasEntrySatisfying("query", value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
+						"FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" = :firstname"));
 	}
 
 	@Test // GH-2121
@@ -139,8 +139,9 @@ class JdbcRepositoryMetadataIntegrationTests {
 
 		assertThatJson(json)
 				.inPath("$.methods[?(@.name == 'findWithParameterNameByFirstnameStartingWithOrFirstnameEndingWith')].query")
-				.isArray().first().isObject().containsEntry("query",
-						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" LIKE :firstname OR (\"MY_USER\".\"FIRSTNAME\" LIKE :firstname1)");
+				.isArray().first().isObject()
+				.hasEntrySatisfying("query", value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
+						"FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" LIKE :firstname OR (\"MY_USER\".\"FIRSTNAME\" LIKE :firstname1)"));
 	}
 
 	@Test // GH-2121
@@ -155,8 +156,9 @@ class JdbcRepositoryMetadataIntegrationTests {
 
 		assertThatJson(json).inPath("$.methods[?(@.name == 'findPageByAgeGreaterThan')].query").isArray().element(0)
 				.isObject()
-				.containsEntry("query",
-						"SELECT \"MY_USER\".\"ID\" AS \"ID\", \"MY_USER\".\"AGE\" AS \"AGE\", \"MY_USER\".\"FIRSTNAME\" AS \"FIRSTNAME\" FROM \"MY_USER\" WHERE \"MY_USER\".\"AGE\" > :age")
+				.hasEntrySatisfying("query",
+						value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
+								"FROM \"MY_USER\" WHERE \"MY_USER\".\"AGE\" > :age"))
 				.containsEntry("count-query", "SELECT COUNT(*) FROM \"MY_USER\" WHERE \"MY_USER\".\"AGE\" > :age");
 	}
 

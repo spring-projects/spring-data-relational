@@ -16,10 +16,10 @@
 package org.springframework.data.r2dbc.mapping;
 
 import org.springframework.core.KotlinDetector;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.util.KotlinReflectionUtils;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * R2DBC-specific extension to {@link RelationalMappingContext}.

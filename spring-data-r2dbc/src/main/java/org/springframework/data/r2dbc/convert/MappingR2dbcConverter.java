@@ -32,9 +32,11 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
@@ -46,7 +48,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -200,7 +201,7 @@ public class MappingR2dbcConverter extends MappingRelationalConverter implements
 
 	/**
 	 * write the values of the properties of an {@link RelationalPersistentEntity} to an {@link OutboundRow}.
-	 * 
+	 *
 	 * @param sink must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
 	 * @param accessor used for accessing the property values of {@literal entity}. May be {@literal null}. A

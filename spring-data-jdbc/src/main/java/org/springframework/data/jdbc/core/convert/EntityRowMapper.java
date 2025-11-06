@@ -18,10 +18,10 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.domain.RowDocument;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**

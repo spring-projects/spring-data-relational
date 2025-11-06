@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.testcontainers.containers.Db2Container;
+import org.testcontainers.db2.Db2Container;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * {@link DataSource} setup for DB2.
@@ -50,7 +51,9 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 		if (DB_2_CONTAINER == null) {
 
 			LOG.info("DB2 starting...");
-			Db2Container container = new Db2Container(DOCKER_IMAGE_NAME).withReuse(true);
+			Db2Container container = new Db2Container(
+					DockerImageName.parse(DOCKER_IMAGE_NAME).asCompatibleSubstituteFor("icr.io/db2_community/db2"))
+					.withReuse(true);
 			container.start();
 			LOG.info("DB2 started");
 

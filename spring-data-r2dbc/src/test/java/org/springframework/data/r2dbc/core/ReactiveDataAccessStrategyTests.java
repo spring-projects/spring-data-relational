@@ -22,7 +22,6 @@ import static org.springframework.data.r2dbc.testing.Assertions.*;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;

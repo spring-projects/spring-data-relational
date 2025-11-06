@@ -21,7 +21,7 @@ Spring Data JDBC includes direct support for the following databases:
 * Microsoft SQL Server
 * MySQL
 * Oracle
-* Postgres
+* PostgreSQL
 
 If you use a different database then your application won’t start up.
 The <<jdbc.dialects,dialect>> section contains further detail on how to proceed in such case.
@@ -33,7 +33,7 @@ To create a Spring project in STS:
 
 . Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted.
 Then enter a project and a package name, such as `org.spring.jdbc.example`.
-. Add the following to the `pom.xml` files `dependencies` element:
+. Add the following to the `pom.xml` file `dependencies` element:
 +
 [source,xml,subs="+attributes"]
 ----
@@ -77,7 +77,7 @@ The repository is also https://repo.spring.io/milestone/org/springframework/data
 
 Spring Data JDBC does little to no logging on its own.
 Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
-Thus, if you want to inspect what SQL statements are run, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Thus, if you want to inspect what SQL statements are run, activate logging for Spring's {spring-framework-docs}/data-access/jdbc/core.html#jdbc-NamedParameterJdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 You may also want to set the logging level to `DEBUG` to see some additional information.
 To do so, edit the `application.properties` file to have the following content:
@@ -125,8 +125,8 @@ class ApplicationConfig extends AbstractJdbcConfiguration {                     
 }
 ----
 
-<1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`
-<2> javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] provides various default beans required by Spring Data JDBC
+<1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`.
+<2> javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] provides various default beans required by Spring Data JDBC.
 <3> Creates a `DataSource` connecting to a database.
 This is required by the following two bean methods.
 <4> Creates the `NamedParameterJdbcOperations` used by Spring Data JDBC to access the database.
@@ -148,23 +148,23 @@ There are a couple of things one might want to customize in this setup.
 [[jdbc.dialects]]
 == Dialects
 
-Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
-By default, the javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `Dialect`.
+Spring Data JDBC uses implementations of the interface `JdbcDialect` to encapsulate behavior that is specific to a database or its JDBC driver.
+By default, the javadoc:org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration[] attempts to determine the dialect from the database configuration by obtaining a connection and registering the correct `JdbcDialect`.
 You override `AbstractJdbcConfiguration.jdbcDialect(NamedParameterJdbcOperations)` to customize dialect selection.
 
 If you use a database for which no dialect is available, then your application won’t start up.
-In that case, you’ll have to ask your vendor to provide a `Dialect` implementation.
-Alternatively, you can implement your own `Dialect`.
+In that case, you’ll have to ask your vendor to provide a `JdbcDialect` implementation.
+Alternatively, you can implement your own `JdbcDialect`.
 
 [TIP]
 ====
-Dialects are resolved by javadoc:org.springframework.data.jdbc.core.dialect.DialectResolver[] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`.
-+ You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core.dialect.JdbcDialect[] by registering a class that implements `org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+Dialects are resolved by javadoc:org.springframework.data.jdbc.core.dialect.DialectResolver[] from a `JdbcOperations` instance, typically by inspecting `Connection.getMetaData()`. +
+You can let Spring auto-discover your javadoc:org.springframework.data.jdbc.core.dialect.JdbcDialect[] by registering a class that implements `org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
 
-. Implement your own `Dialect`.
-. Implement a `JdbcDialectProvider` returning the `Dialect`.
+. Implement your own `JdbcDialect`.
+. Implement a `JdbcDialectProvider` returning the `JdbcDialect`.
 . Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
-`org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider`=<fully qualified name of your JdbcDialectProvider>`
+`org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider`=<fully qualified name of your JdbcDialectProvider>`.
 ====

@@ -80,6 +80,7 @@ inline fun <reified T : Any> JdbcAggregateOperations.findAll(sort: Sort): List<T
 /**
  * Extension for [JdbcAggregateOperations.findAll] with pagination.
  */
+@Deprecated("Since 4.0, use a findAll<T>() and count<T>() to construct results of type Page")
 inline fun <reified T : Any> JdbcAggregateOperations.findAll(pageable: Pageable): Page<T> =
     findAll(T::class.java, pageable)
 
@@ -98,6 +99,7 @@ inline fun <reified T : Any> JdbcAggregateOperations.findAll(query: Query): List
 /**
  * Extension for [JdbcAggregateOperations.findAll] with query and pagination.
  */
+@Deprecated("Since 4.0, use a findAll<T>(Query) and count<T>(Query) to construct results of type Page")
 inline fun <reified T : Any> JdbcAggregateOperations.findAll(
     query: Query,
     pageable: Pageable

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.io.IOException;
+import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,13 +25,17 @@ import java.util.Properties;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.config.JdbcRepositoryConfigExtension;
 import org.springframework.data.jdbc.repository.query.JdbcCountQueryCreator;
 import org.springframework.data.jdbc.repository.query.JdbcParameters;
@@ -39,7 +44,13 @@ import org.springframework.data.jdbc.repository.query.JdbcQueryMethod;
 import org.springframework.data.jdbc.repository.query.ParameterBinding;
 import org.springframework.data.jdbc.repository.query.ParametrizedQuery;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentPropertyPathAccessor;
+import org.springframework.data.mapping.model.EntityInstantiators;
+import org.springframework.data.projection.EntityProjection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.RowDocument;
 import org.springframework.data.relational.repository.query.ParameterMetadataProvider;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
@@ -161,7 +172,8 @@ class QueriesFactory {
 		PartTree partTree = new PartTree(queryMethod.getName(), repositoryInformation.getDomainType());
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod);
 
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, converter, dialect, queryMethod, accessor,
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(partTree, new AotPassThruJdbcConverter(converter), dialect,
+				queryMethod, accessor,
 				returnedType) {
 
 			@Override
@@ -224,6 +236,97 @@ class QueriesFactory {
 		});
 
 		return bindings;
+	}
+
+	/**
+	 * Pass-thru implementation for {@link JdbcValue} objects to allow capturing parameter placeholders without applying
+	 * conversion.
+	 *
+	 * @param delegate
+	 */
+	record AotPassThruJdbcConverter(JdbcConverter delegate) implements JdbcConverter {
+
+		@Override
+		public Class<?> getColumnType(RelationalPersistentProperty property) {
+			return delegate.getColumnType(property);
+		}
+
+		@Override
+		public SQLType getTargetSqlType(RelationalPersistentProperty property) {
+			return delegate.getTargetSqlType(property);
+		}
+
+		@Override
+		public RelationalMappingContext getMappingContext() {
+			return delegate.getMappingContext();
+		}
+
+		@Override
+		public ConversionService getConversionService() {
+			return delegate.getConversionService();
+		}
+
+		@Override
+		public EntityInstantiators getEntityInstantiators() {
+			return delegate.getEntityInstantiators();
+		}
+
+		@Override
+		public <T> PersistentPropertyPathAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity,
+				T instance) {
+			return delegate.getPropertyAccessor(persistentEntity, instance);
+		}
+
+		@Override
+		public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, SQLType sqlType) {
+			return value instanceof JdbcValue jdbcValue ? jdbcValue : delegate.writeJdbcValue(value, type, sqlType);
+		}
+
+		@Override
+		public JdbcValue writeJdbcValue(@Nullable Object value, TypeInformation<?> type, SQLType sqlType) {
+			return value instanceof JdbcValue jdbcValue ? jdbcValue : delegate.writeJdbcValue(value, type, sqlType);
+		}
+
+		@Override
+		public @Nullable Object writeValue(@Nullable Object value, TypeInformation<?> type) {
+			return value;
+		}
+
+		@Override
+		public <R> R readAndResolve(Class<R> type, RowDocument source) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <R> R readAndResolve(Class<R> type, RowDocument source, Identifier identifier) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <R> R readAndResolve(TypeInformation<R> type, RowDocument source, Identifier identifier) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <M, D> EntityProjection<M, D> introspectProjection(Class<M> resultType, Class<D> entityType) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <R> R project(EntityProjection<R, ?> descriptor, RowDocument document) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <R> R read(Class<R> type, RowDocument source) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public @Nullable Object readValue(@Nullable Object value, TypeInformation<?> type) {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 }

@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -41,7 +41,7 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 @ConditionalOnDatabase(DatabaseType.MYSQL)
 class MySqlDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
-	private static MySQLContainer<?> MYSQL_CONTAINER;
+	private static MySQLContainer MYSQL_CONTAINER;
 
 	public MySqlDataSourceConfiguration(TestClass testClass, Environment environment) {
 		super(testClass, environment);
@@ -52,7 +52,7 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration implements In
 
 		if (MYSQL_CONTAINER == null) {
 
-			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.29").withUsername("test").withPassword("test")
+			MySQLContainer container = new MySQLContainer("mysql:8.0.29").withUsername("test").withPassword("test")
 					.withConfigurationOverride("");
 
 			container.start();

@@ -64,6 +64,7 @@ import org.springframework.util.StringUtils;
  * Common code blocks for JDBC AOT Fragment generation.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 4.0
  */
 class JdbcCodeBlocks {
@@ -367,7 +368,7 @@ class JdbcCodeBlocks {
 			}
 
 			if (current.isIgnoreCase()) {
-				builder.addStatement(".ignoreCase(true)");
+				builder.add(".ignoreCase(true)");
 			}
 		}
 
@@ -555,6 +556,7 @@ class JdbcCodeBlocks {
 			return doBuild();
 		}
 
+		@SuppressWarnings("NullAway")
 		private CodeBlock doBuild() {
 
 			MethodReturn methodReturn = context.getMethodReturn();

@@ -25,7 +25,6 @@
 		<java-module-name>spring.data.r2dbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
-		<degraph-check.version>0.1.4</degraph-check.version>
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
 		<netty>4.2.3.Final</netty>
@@ -35,13 +34,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>org.testcontainers</groupId>
-				<artifactId>testcontainers-bom</artifactId>
-				<version>${testcontainers}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-bom</artifactId>
@@ -248,8 +240,15 @@
 		<!-- Testcontainers -->
 
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.19.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>mysql</artifactId>
+			<artifactId>testcontainers-mysql</artifactId>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -261,7 +260,7 @@
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>mariadb</artifactId>
+			<artifactId>testcontainers-mariadb</artifactId>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -273,7 +272,7 @@
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>mssqlserver</artifactId>
+			<artifactId>testcontainers-mssqlserver</artifactId>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -285,20 +284,13 @@
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>oracle-free</artifactId>
+			<artifactId>testcontainers-oracle-free</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>de.schauderhaft.degraph</groupId>
-			<artifactId>degraph-check</artifactId>
-			<version>${degraph-check.version}</version>
+			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
 

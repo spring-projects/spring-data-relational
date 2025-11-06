@@ -3,7 +3,7 @@
 
 This section offers some specific information about the implementation and use of Spring Data JDBC.
 
-Most of the data access operations you usually trigger on a repository result in a query being run against the databases.
+Most of the data access operations you usually trigger on a repository result in a query being run against the database.
 Defining such a query is a matter of declaring a method on the repository interface, as the following example shows:
 
 .PersonRepository with query methods
@@ -36,7 +36,7 @@ interface PersonRepository extends PagingAndSortingRepository<Person, String> {
 The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`.
 Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
 <2> Use `Pageable` to pass offset and sorting parameters to the database.
-<3> Return a `Slice<Person>`.Selects `LIMIT+1` rows to determine whether there's more data to consume. `ResultSetExtractor` customization is not supported.
+<3> Return a `Slice<Person>`. Selects `LIMIT+1` rows to determine whether there's more data to consume. `ResultSetExtractor` customization is not supported.
 <4> Run a paginated query returning `Page<Person>`.Selects only data within the given page bounds and potentially a count query to determine the total count. `ResultSetExtractor` customization is not supported.
 <5> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
@@ -143,7 +143,7 @@ NOTE: Query derivation is limited to properties that can be used in a `WHERE` cl
 
 The JDBC module supports defining a query manually as a String in a `@Query` annotation or as named query in a property file.
 
-Deriving a query from the name of the method is is currently limited to simple properties, that means properties present in the aggregate root directly.
+Deriving a query from the name of the method is currently limited to simple properties, that means properties present in the aggregate root directly.
 Also, only select queries are supported by this approach.
 
 [[jdbc.query-methods.at-query]]
@@ -169,7 +169,7 @@ Properties that don't have a matching column in the result will not be set.
 The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
 Separate queries are generated for maps, lists, sets and arrays of entities.
 
-Properties one-to-one relationships must have there name prefixed by the name of the relationship plus `_`.
+Properties one-to-one relationships must have their name prefixed by the name of the relationship plus `_`.
 For example if the `User` from the example above has an `address` with the property `city` the column for that `city` must be labeled `address_city`.
 
 
@@ -190,7 +190,7 @@ Person findWithSpEL(PersonRef person);
 ----
 
 This can be used to access members of a parameter, as demonstrated in the example above.
-For more involved use cases an `EvaluationContextExtension` can be made available in the application context, which in turn can make any object available in to the SpEL.
+For more involved use cases an `EvaluationContextExtension` can be made available in the application context, which in turn can make any object available in the SpEL.
 
 The other variant can be used anywhere in the query and the result of evaluating the query will replace the expression in the query string.
 

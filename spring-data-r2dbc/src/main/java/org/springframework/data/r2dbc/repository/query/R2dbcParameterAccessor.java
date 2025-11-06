@@ -26,9 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+
+import org.springframework.data.core.ReactiveWrappers;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
-import org.springframework.data.util.ReactiveWrappers;
 
 /**
  * Reactive {@link org.springframework.data.repository.query.ParametersParameterAccessor} implementation that subscribes

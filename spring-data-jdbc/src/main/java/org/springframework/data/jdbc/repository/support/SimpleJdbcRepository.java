@@ -27,11 +27,14 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -139,7 +142,13 @@ public class SimpleJdbcRepository<T, ID>
 
 	@Override
 	public Page<T> findAll(Pageable pageable) {
-		return entityOperations.findAll(entity.getType(), pageable);
+
+		Assert.notNull(pageable, "Pageable must not be null");
+
+		Query query = Query.query(CriteriaDefinition.empty()).with(pageable);
+		List<T> content = entityOperations.findAll(query, entity.getType());
+
+		return PageableExecutionUtils.getPage(content, pageable, () -> entityOperations.count(entity.getType()));
 	}
 
 	@Override
@@ -172,9 +181,13 @@ public class SimpleJdbcRepository<T, ID>
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
 
 		Assert.notNull(example, "Example must not be null");
+		Assert.notNull(pageable, "Pageable must not be null");
 
-		return this.entityOperations.findAll(this.exampleMapper.getMappedExample(example), example.getProbeType(),
-				pageable);
+		Query mappedQuery = this.exampleMapper.getMappedExample(example);
+		List<S> content = this.entityOperations.findAll(mappedQuery.with(pageable), example.getProbeType());
+
+		return PageableExecutionUtils.getPage(content, pageable,
+				() -> this.entityOperations.count(mappedQuery, example.getProbeType()));
 	}
 
 	@Override
@@ -203,4 +216,5 @@ public class SimpleJdbcRepository<T, ID>
 
 		return queryFunction.apply(fluentQuery);
 	}
+
 }

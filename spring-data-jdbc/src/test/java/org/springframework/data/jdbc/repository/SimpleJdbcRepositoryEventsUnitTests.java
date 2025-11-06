@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.groups.Tuple.tuple;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
@@ -51,6 +49,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.RelationalEvent;
 import org.springframework.data.relational.core.mapping.event.WithId;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -264,7 +263,7 @@ class SimpleJdbcRepositoryEventsUnitTests {
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
 
-		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(), any(Pageable.class));
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(Query.class), any(Class.class));
 		doReturn(2L).when(dataAccessStrategy).count(any());
 
 		repository.findAll(PageRequest.of(0, 20));

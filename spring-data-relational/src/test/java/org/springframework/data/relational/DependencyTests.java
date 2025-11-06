@@ -67,6 +67,8 @@ public class DependencyTests {
 						"org.springframework.data" // Spring Data Commons
 				).that(onlySpringData()) //
 				.that(ignorePackage("org.springframework.data.aot.hint")) // ignoring aot, since it causes cycles in commons
+				.that(ignorePackageAndSubpackages("org.springframework.data.relational.core")) // core package of commons vs.
+																																												// module design skew
 				.that(ignorePackage("org.springframework.data.aot")); // ignoring aot, since it causes cycles in commons;
 
 		ArchRule rule = SlicesRuleDefinition.slices() //
@@ -121,6 +123,16 @@ public class DependencyTests {
 			@Override
 			public boolean test(JavaClass input) {
 				return !input.getPackageName().equals(type);
+			}
+		};
+	}
+
+	private DescribedPredicate<JavaClass> ignorePackageAndSubpackages(String type) {
+
+		return new DescribedPredicate<>("ignored class " + type) {
+			@Override
+			public boolean test(JavaClass input) {
+				return !input.getPackageName().startsWith(type);
 			}
 		};
 	}
