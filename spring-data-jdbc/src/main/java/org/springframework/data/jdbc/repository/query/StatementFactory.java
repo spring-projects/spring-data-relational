@@ -118,7 +118,7 @@ public class StatementFactory {
 
 		private SelectionBuilder(RelationalPersistentEntity<?> entity, Mode mode) {
 			this.entity = entity;
-			this.table = Table.create(entity.getTableName());
+			this.table = Table.create(entity.getQualifiedTableName());
 			this.mode = mode;
 		}
 
