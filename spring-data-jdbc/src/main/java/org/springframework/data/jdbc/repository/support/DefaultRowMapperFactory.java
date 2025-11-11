@@ -30,8 +30,9 @@ import org.springframework.util.Assert;
  * <p>
  * This implementation is not capable of loading the {@link RowMapper} or {@link ResultSetExtractor} by reference via
  * corresponding methods from {@link RowMapperFactory}.
+ * <p>
+ * Implementation is thread-safe.
  *
- * @implNote Public APIs of this class are thread-safe.
  * @author Mikhail Polivakha
  * @since 4.0
  */
