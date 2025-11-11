@@ -34,16 +34,14 @@ import org.springframework.jdbc.core.RowMapper;
  * annotation you can set to do that:
  * <p>
  * <ol>
- * <li> {@link #resultSetExtractorRef()}
- * </li><li> {@link #resultSetExtractorClass()}
- * </li><li> {@link #rowMapperRef()}
- * </li><li> {@link #rowMapperClass()}
- * </li>
- *</ol>
- *
+ * <li>{@link #resultSetExtractorRef()}</li>
+ * <li>{@link #resultSetExtractorClass()}</li>
+ * <li>{@link #rowMapperRef()}</li>
+ * <li>{@link #rowMapperClass()}</li>
+ * </ol>
  * The annotation attributes above are listed in their preference order, that is - the {@link #resultSetExtractorRef()},
- * has the highest privilege and, will suppress any other 3 attribute from above, and consequently {@link #rowMapperClass()}
- * has the lowest privilege and will be used if any of three above are not specified.
+ * has the highest privilege and, will suppress any other 3 attribute from above, and consequently
+ * {@link #rowMapperClass()} has the lowest privilege and will be used if any of three above are not specified.
  *
  * @author Jens Schauder
  * @author Moises Cisneros
