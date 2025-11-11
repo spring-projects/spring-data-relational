@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.javapoet.LordOfTheStrings;
@@ -812,11 +814,22 @@ class JdbcCodeBlocks {
 					return builder.build();
 				}
 
-				if (methodReturn.toClass().equals(Streamable.class)) {
+				if (isStreamable(methodReturn)) {
 					builder.addStatement(
 							"return ($1T) $1T.of(($2T) convertMany($3L, %s))".formatted(dynamicProjection ? "$4L" : "$4T.class"),
 							Streamable.class, Iterable.class, result, queryResultTypeRef);
+				} else if (isStreamableWrapper(methodReturn) && canConvert(Streamable.class, methodReturn)) {
+
+					builder.addStatement(
+							"$1T $2L = ($1T) convertMany($3L, %s)".formatted(dynamicProjection ? "$4L" : "$4T.class"), Iterable.class,
+							context.localVariable("converted"), result, queryResultTypeRef);
+
+					builder.addStatement(
+							"return ($1T) $2T.getSharedInstance().convert($3T.of($4L), $5T.valueOf($3T.class), $5T.valueOf($1T.class))",
+							methodReturn.toClass(), DefaultConversionService.class, Streamable.class,
+							context.localVariable("converted"), TypeDescriptor.class);
 				} else {
+
 					builder.addStatement("return ($T) convertMany($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
 							methodReturn.getTypeName(), result, queryResultTypeRef);
 				}
@@ -841,6 +854,18 @@ class JdbcCodeBlocks {
 				}
 			}
 			return builder.build();
+		}
+
+		private boolean canConvert(Class<?> from, MethodReturn methodReturn) {
+			return DefaultConversionService.getSharedInstance().canConvert(from, methodReturn.toClass());
+		}
+
+		private static boolean isStreamable(MethodReturn methodReturn) {
+			return methodReturn.toClass().equals(Streamable.class);
+		}
+
+		private static boolean isStreamableWrapper(MethodReturn methodReturn) {
+			return !isStreamable(methodReturn) && Streamable.class.isAssignableFrom(methodReturn.toClass());
 		}
 
 		public static boolean returnsModifying(Class<?> returnType) {

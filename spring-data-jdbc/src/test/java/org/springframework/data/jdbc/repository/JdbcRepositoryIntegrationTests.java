@@ -30,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -601,6 +602,16 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(slice.getContent()).hasSize(2);
 		assertThat(slice.hasNext()).isTrue();
+	}
+
+	@Test // GH-2175
+	public void streamableWrapperByNameShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		DummyEntities entities = repository.findEntitiesByNameContains("a", Limit.of(5));
+
+		assertThat(entities).hasSize(3);
 	}
 
 	@Test // GH-935
@@ -1585,6 +1596,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
 
+		DummyEntities findEntitiesByNameContains(String name, Limit limit);
+
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE OFFSET_DATE_TIME > :threshhold")
 		List<DummyEntity> findByOffsetDateTime(@Param("threshhold") OffsetDateTime threshhold);
 
@@ -1620,6 +1633,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE BYTES = :bytes")
 		List<DummyEntity> findByBytes(byte[] bytes);
+
 	}
 
 	public interface RootRepository extends ListCrudRepository<Root, Long> {
@@ -1999,6 +2013,20 @@ public class JdbcRepositoryIntegrationTests {
 		@Override
 		public boolean isNew() {
 			return isNew;
+		}
+	}
+
+	public static class DummyEntities implements Streamable<DummyEntity> {
+
+		private final Streamable<DummyEntity> delegate;
+
+		public DummyEntities(Streamable<DummyEntity> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public Iterator<DummyEntity> iterator() {
+			return delegate.iterator();
 		}
 	}
 
