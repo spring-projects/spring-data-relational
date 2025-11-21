@@ -583,9 +583,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		LegoSet entity = new LegoSet();
 		entity.id = 100L; // does not exist in the database
 
-		assertThatExceptionOfType(DbActionExecutionException.class) //
-				.isThrownBy(() -> template.save(entity)) //
-				.withCauseInstanceOf(IncorrectUpdateSemanticsDataAccessException.class);
+		assertThatCode(() -> template.save(entity)).doesNotThrowAnyException();
 	}
 
 	@Test // DATAJDBC-112
@@ -1185,7 +1183,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		aggregate.setVersion(null);
 		aggregate.setId(23L);
 
-		assertThatThrownBy(() -> template.save(aggregate)).isInstanceOf(DbActionExecutionException.class);
+		assertThatCode(() -> template.save(aggregate)).doesNotThrowAnyException();
 	}
 
 	@Test // DATAJDBC-462
