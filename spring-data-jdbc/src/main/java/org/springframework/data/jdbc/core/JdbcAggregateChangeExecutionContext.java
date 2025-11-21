@@ -348,12 +348,7 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	private <T> void updateWithoutVersion(DbAction.UpdateRoot<T> update) {
-
-		if (!accessStrategy.update(update.entity(), update.getEntityType())) {
-
-			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.entity(), getIdFrom(update)));
-		}
+		accessStrategy.update(update.entity(), update.getEntityType());
 	}
 
 	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update) {
