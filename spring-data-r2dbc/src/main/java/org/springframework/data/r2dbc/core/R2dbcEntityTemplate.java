@@ -41,8 +41,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -59,6 +57,7 @@ import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
+import org.springframework.data.relational.core.mapping.OptimisticLockingUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -605,15 +604,22 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
 
 			T entityToUse;
+			Object version;
 			Criteria matchingVersionCriteria;
 
 			if (persistentEntity.hasVersionProperty()) {
 
+				PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
+				RelationalPersistentProperty versionProperty = persistentEntity.getRequiredVersionProperty();
+
+				version = propertyAccessor.getProperty(versionProperty);
 				matchingVersionCriteria = createMatchingVersionCriteria(onBeforeConvert, persistentEntity);
+
 				entityToUse = incrementVersion(persistentEntity, onBeforeConvert);
 			} else {
 
 				entityToUse = onBeforeConvert;
+				version = null;
 				matchingVersionCriteria = null;
 			}
 
@@ -637,17 +643,17 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 							criteria = criteria.and(matchingVersionCriteria);
 						}
 
-						return doUpdate(onBeforeSave, tableName, persistentEntity, criteria, outboundRow);
+						return doUpdate(onBeforeSave, version, tableName, persistentEntity, criteria, outboundRow);
 					});
 		});
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> Mono<T> doUpdate(T entity, SqlIdentifier tableName, RelationalPersistentEntity<T> persistentEntity,
+	private <T> Mono<T> doUpdate(T entity, @Nullable Object version, SqlIdentifier tableName,
+			RelationalPersistentEntity<T> persistentEntity,
 			Criteria criteria, OutboundRow outboundRow) {
 
 		Update update = Update.from((Map) outboundRow);
-
 		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 		StatementMapper.UpdateSpec updateSpec = mapper.createUpdate(tableName, update).withCriteria(criteria);
 
@@ -664,25 +670,9 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 					}
 
 					if (persistentEntity.hasVersionProperty()) {
-						sink.error(new OptimisticLockingFailureException(
-								formatOptimisticLockingExceptionMessage(entity, persistentEntity)));
-					} else {
-						sink.error(new TransientDataAccessResourceException(
-								formatTransientEntityExceptionMessage(entity, persistentEntity)));
+						sink.error(OptimisticLockingUtils.updateFailed(entity, version, persistentEntity));
 					}
 				}).then(maybeCallAfterSave(entity, outboundRow, tableName));
-	}
-
-	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
-
-		return String.format("Failed to update table [%s]; Version does not match for row with Id [%s]",
-				persistentEntity.getQualifiedTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
-	}
-
-	private <T> String formatTransientEntityExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
-
-		return String.format("Failed to update table [%s]; Row with Id [%s] does not exist",
-				persistentEntity.getQualifiedTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -706,7 +696,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	private <T> Criteria createMatchingVersionCriteria(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
-		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+		RelationalPersistentProperty versionProperty = persistentEntity.getRequiredVersionProperty();
 
 		Object version = propertyAccessor.getProperty(versionProperty);
 		Criteria.CriteriaStep versionColumn = Criteria.where(dataAccessStrategy.toSql(versionProperty.getColumnName()));
@@ -724,7 +714,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<?> persistentEntity = getRequiredEntity(entity);
 
-		return delete(getByIdQuery(entity, persistentEntity), persistentEntity.getType()).thenReturn(entity);
+		Mono<Long> delete = delete(getByIdQuery(entity, persistentEntity), persistentEntity.getType());
+		if (persistentEntity.hasVersionProperty()) {
+			delete = delete.flatMap(
+					it -> it == 0 ? Mono.error(OptimisticLockingUtils.deleteFailed(entity, persistentEntity)) : Mono.just(it));
+		}
+
+		return delete.thenReturn(entity);
 	}
 
 	protected <T> Mono<T> maybeCallBeforeConvert(T object, SqlIdentifier table) {
@@ -771,8 +767,17 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		IdentifierAccessor identifierAccessor = persistentEntity.getIdentifierAccessor(entity);
 		Object id = identifierAccessor.getRequiredIdentifier();
+		Criteria criteria = Criteria.where(persistentEntity.getRequiredIdProperty().getName()).is(id);
 
-		return Query.query(Criteria.where(persistentEntity.getRequiredIdProperty().getName()).is(id));
+		if (persistentEntity.hasVersionProperty()) {
+
+			RelationalPersistentProperty versionProperty = persistentEntity.getRequiredVersionProperty();
+			Object version = persistentEntity.getPropertyAccessor(entity).getProperty(versionProperty);
+			Criteria.CriteriaStep versionColumn = Criteria.where(versionProperty.getName());
+			criteria = version == null ? criteria.and(versionColumn.isNull()) : criteria.and(versionColumn.is(version));
+		}
+
+		return Query.query(criteria);
 	}
 
 	SqlIdentifier getTableName(Class<?> entityClass) {

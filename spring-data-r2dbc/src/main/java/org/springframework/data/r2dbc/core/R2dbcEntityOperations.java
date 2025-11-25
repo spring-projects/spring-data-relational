@@ -273,6 +273,8 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @return the updated entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 * @throws TransientDataAccessResourceException if the update did not affect any rows.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> Mono<T> update(T entity) throws DataAccessException;
 
@@ -282,6 +284,9 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @param entity must not be {@literal null}.
 	 * @return the deleted entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> Mono<T> delete(T entity) throws DataAccessException;
+
 }
