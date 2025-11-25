@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestClass;
@@ -155,11 +154,6 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			try {
 				return repository.save(e);
 			} catch (Exception ex) {
-				// When the delete execution is complete, the Update execution throws an
-				// IncorrectUpdateSemanticsDataAccessException.
-				if (ex instanceof IncorrectUpdateSemanticsDataAccessException) {
-					return null;
-				}
 				throw ex;
 			}
 		};
@@ -189,11 +183,6 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			try {
 				return repository.save(e);
 			} catch (Exception ex) {
-				// When the delete execution is complete, the Update execution throws an
-				// IncorrectUpdateSemanticsDataAccessException.
-				if (ex instanceof IncorrectUpdateSemanticsDataAccessException) {
-					return null;
-				}
 				throw ex;
 			}
 		};

@@ -25,8 +25,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -34,6 +34,7 @@ import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.AggregatePath.TableInfo;
+import org.springframework.data.relational.core.mapping.OptimisticLockingUtils;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -164,8 +165,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 
-		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
-
 		// Adjust update statement to set the new version and use the old version in where clause.
 		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
@@ -173,9 +172,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(), parameterSource);
 
 		if (affectedRows == 0) {
-
-			throw new OptimisticLockingFailureException(
-					String.format("Optimistic lock exception on saving entity of type %s", persistentEntity.getName()));
+			RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+			throw OptimisticLockingUtils.updateFailed(instance, previousVersion, persistentEntity);
 		}
 
 		return true;
@@ -211,8 +209,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
 
 		if (affectedRows == 0) {
-			throw new OptimisticLockingFailureException(
-					String.format("Optimistic lock exception deleting entity of type %s", persistentEntity.getName()));
+			throw OptimisticLockingUtils.deleteFailed(id, previousVersion, persistentEntity);
 		}
 	}
 
