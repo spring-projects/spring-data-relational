@@ -27,10 +27,10 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
@@ -92,7 +92,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		return H2TestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
 	}
 
-	@Test // gh-90
+	@Test // GH-90
 	void shouldInsertNewObjectWithGivenId() {
 
 		try {
@@ -122,18 +122,15 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsKey("id");
 	}
 
-	@Test // gh-232
-	void updateShouldFailIfRowDoesNotExist() {
+	@Test // GH-232, GH-2176
+	void updateShouldNotFailIfRowDoesNotExist() {
 
 		LegoSet legoSet = new LegoSet(9999, "SCHAUFELRADBAGGER", 12);
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
-				.verifyErrorSatisfies(actual -> {
-
-					assertThat(actual).isInstanceOf(TransientDataAccessException.class)
-							.hasMessage("Failed to update table [legoset]; Row with Id [9999] does not exist");
-				});
+				.expectNextCount(1) //
+				.verifyComplete();
 	}
 
 	static class AlwaysNew implements Persistable<Long> {

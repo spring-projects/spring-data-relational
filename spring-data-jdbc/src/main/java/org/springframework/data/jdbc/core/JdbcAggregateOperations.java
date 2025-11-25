@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,8 +49,8 @@ public interface JdbcAggregateOperations {
 	 * @param instance the aggregate root of the aggregate to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instance.
-	 * @throws IncorrectUpdateSemanticsDataAccessException when the instance is determined to be not new and the resulting
-	 *           update does not update any rows.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> T save(T instance);
 
@@ -61,8 +60,8 @@ public interface JdbcAggregateOperations {
 	 * @param instances the aggregate roots to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instances.
-	 * @throws IncorrectUpdateSemanticsDataAccessException when at least one instance is determined to be not new and the
-	 *           resulting update does not update any rows.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 * @since 3.0
 	 */
 	<T> List<T> saveAll(Iterable<T> instances);
@@ -99,6 +98,8 @@ public interface JdbcAggregateOperations {
 	 * @param instance the aggregate root of the aggregate to be inserted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instance.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> T update(T instance);
 
@@ -108,6 +109,8 @@ public interface JdbcAggregateOperations {
 	 * @param instances the aggregate roots to be inserted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instances.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 * @since 3.1
 	 */
 	<T> List<T> updateAll(Iterable<T> instances);
@@ -319,6 +322,8 @@ public interface JdbcAggregateOperations {
 	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> void delete(T aggregateRoot);
 
@@ -334,6 +339,8 @@ public interface JdbcAggregateOperations {
 	 *
 	 * @param aggregateRoots to delete. Must not be {@code null}.
 	 * @param <T> the type of the aggregate roots.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException in case of version mismatch in case a
+	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> void deleteAll(Iterable<? extends T> aggregateRoots);
 
