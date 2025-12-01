@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Alexander Tochin
  */
 public class EscaperUnitTests {
 
@@ -70,5 +71,17 @@ public class EscaperUnitTests {
 	@Test // DATAJDBC-514
 	public void escapesAdditionalCharacters() {
 		assertThat(Escaper.DEFAULT.withRewriteFor("[", "]").escape("Hello Wo[Rr]ld")).isEqualTo("Hello Wo\\[Rr\\]ld");
+	}
+
+	@Test // GH-2182
+	public void escapesCharactersUsingDefaultEscapeCharacter() {
+		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
+		//assertThat(Escaper.of('$').escape("_%")).isEqualTo("$_$%");
+	}
+
+	@Test // GH-2182
+	public void escapesCharactersUsingCustomEscapeCharacter() {
+		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
+		assertThat(Escaper.of('$').escape("%te$st_")).isEqualTo("$%te$$st$_");
 	}
 }
