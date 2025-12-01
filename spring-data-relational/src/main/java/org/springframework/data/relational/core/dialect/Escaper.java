@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Alexander Tochin
  * @since 2.0
  */
 public class Escaper {
@@ -84,6 +85,7 @@ public class Escaper {
 
 	/**
 	 * Escapes all special like characters ({@code _}, {@code %}) using the configured escape character.
+	 * Escape character itself is also escaped.
 	 *
 	 * @param value value to be escaped
 	 * @return escaped value
@@ -94,6 +96,11 @@ public class Escaper {
 			return null;
 		}
 
-		return toReplace.stream().reduce(value, (it, character) -> it.replace(character, escapeCharacter + character));
+		String escapeCharString = String.valueOf(escapeCharacter);
+		String escapedValue = value.replace(escapeCharString, escapeCharString.repeat(2));
+		for (String character : toReplace) {
+			escapedValue = escapedValue.replace(character, escapeCharacter + character);
+		}
+		return escapedValue;
 	}
 }
