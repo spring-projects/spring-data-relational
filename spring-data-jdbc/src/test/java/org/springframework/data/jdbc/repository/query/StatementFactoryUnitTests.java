@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
@@ -41,30 +43,76 @@ class StatementFactoryUnitTests {
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
 	MappingJdbcConverter converter;
 
+	MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+	StatementFactory statementFactory;
+
 	@BeforeEach
 	void setUp() {
 
 		JdbcCustomConversions conversions = JdbcCustomConversions.of(JdbcH2Dialect.INSTANCE, List.of());
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		mappingContext.setForceQuote(false);
 		mappingContext.afterPropertiesSet();
 		converter = new MappingJdbcConverter(mappingContext, (identifier, path) -> null, conversions,
 				JdbcTypeFactory.unsupported());
+		statementFactory = new StatementFactory(converter, JdbcH2Dialect.INSTANCE);
+	}
+
+	@Test // GH-2162
+	void sliceConsiderSort() {
+
+		StatementFactory.SelectionBuilder selection = statementFactory.slice(User.class);
+		selection.page(PageRequest.of(0, 1, Sort.by("id")));
+
+		String sql = selection.build(parameterSource);
+		assertThat(sql).contains("SELECT user.ID").contains("ORDER BY user.ID");
+	}
+
+	@Test // GH-2162
+	void selectConsiderSort() {
+
+		StatementFactory.SelectionBuilder selection = statementFactory.select(User.class);
+		selection.page(PageRequest.of(0, 1, Sort.by("id")));
+
+		String sql = selection.build(parameterSource);
+		assertThat(sql).contains("SELECT user.ID").contains("ORDER BY user.ID");
+	}
+
+	@Test // GH-2162
+	void countDoesNotConsiderSort() {
+
+		StatementFactory.SelectionBuilder selection = statementFactory.count(User.class);
+		selection.page(PageRequest.of(0, 1, Sort.by("id")));
+
+		String sql = selection.build(parameterSource);
+		assertThat(sql).isEqualTo("SELECT COUNT(*) FROM user");
+	}
+
+	@Test // GH-2162
+	void existsDoesNotConsiderSort() {
+
+		StatementFactory.SelectionBuilder selection = statementFactory.exists(User.class);
+		selection.page(PageRequest.of(0, 1, Sort.by("id")));
+
+		String sql = selection.build(parameterSource);
+		assertThat(sql).isEqualTo("SELECT user.ID FROM user OFFSET 0 ROWS FETCH FIRST 1 ROWS ONLY");
 	}
 
 	@Test // GH-2162
 	void statementFactoryConsidersQualifiedTableName() {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-
-		StatementFactory statementFactory = new StatementFactory(converter, JdbcH2Dialect.INSTANCE);
 		StatementFactory.SelectionBuilder selection = statementFactory.select(Media.class);
 
 		String sql = selection.build(parameterSource);
-		assertThat(sql).contains("SELECT \"archive\".\"media\".").contains("ROM \"archive\".\"media\"");
+		assertThat(sql).contains("SELECT archive.media.").contains("ROM archive.media");
 	}
 
 	@Table(schema = "archive", name = "media")
 	public record Media(@Id Long id, String objectType, Long objectId) {
+	}
+
+	@Table(name = "user")
+	public record User(@Id Long id, String objectType, Long objectId) {
 	}
 
 }
