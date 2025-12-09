@@ -201,7 +201,10 @@ public class StatementFactory {
 			SelectBuilder.SelectWhere whereBuilder = applyLimitAndOffset(limitOffsetBuilder);
 			SelectBuilder.SelectOrdered selectOrderBuilder = applyCriteria(criteria, entity, table, parameterSource,
 					whereBuilder);
-			selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
+
+			if (mode == Mode.SLICE || mode == Mode.SELECT) {
+				selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
+			}
 
 			SelectBuilder.BuildSelect completedBuildSelect = selectOrderBuilder;
 			if (this.lockMode != null) {
