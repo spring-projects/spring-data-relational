@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test to verify that <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE)</code> works
@@ -35,6 +37,7 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
  * @author Jens Schauder
  */
 @IntegrationTest
+@ContextConfiguration(classes = JdbcRepositoryCreateLookUpStrategyTests.Config.class)
 class JdbcRepositoryCreateLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Test // GH-1043

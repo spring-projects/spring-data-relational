@@ -34,6 +34,7 @@ import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.repository.core.support.RepositoryComposition;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Integration test for {@link DummyEntityRepository} using JavaConfig with mounted AOT-generated repository methods.
@@ -42,6 +43,7 @@ import org.springframework.data.repository.core.support.RepositoryComposition;
  * @author Christoph Strobl
  */
 @IntegrationTest
+@ContextConfiguration(classes = AotJdbcRepositoryIntegrationTests.AotConfig.class)
 @EnabledOnDatabase(DatabaseType.H2)
 class AotJdbcRepositoryIntegrationTests extends JdbcRepositoryIntegrationTests {
 
