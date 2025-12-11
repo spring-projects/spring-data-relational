@@ -13,6 +13,7 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test to verify that
@@ -21,6 +22,7 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
  *
  * @author Diego Krupitza
  */
+@ContextConfiguration(classes = JdbcRepositoryDeclaredLookUpStrategyTests.Config.class)
 class JdbcRepositoryDeclaredLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Test // GH-1043

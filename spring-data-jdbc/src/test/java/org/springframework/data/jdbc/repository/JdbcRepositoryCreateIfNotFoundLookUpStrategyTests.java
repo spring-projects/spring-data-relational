@@ -26,6 +26,7 @@ import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test to verify that
@@ -36,6 +37,7 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
  * @author Jens Schauder
  */
 @IntegrationTest
+@ContextConfiguration(classes = JdbcRepositoryCreateIfNotFoundLookUpStrategyTests.Config.class)
 class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Test // GH-1043
