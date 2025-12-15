@@ -69,6 +69,7 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	@Autowired SimpleSeqRepository simpleSeqRepository;
 	@Autowired PersistableSeqRepository persistableSeqRepository;
 	@Autowired PrimitiveIdSeqRepository primitiveIdSeqRepository;
+	@Autowired PrimitiveIdSeqWithVersionRepository primitiveIdSeqWithVersionRepository;
 	@Autowired IdGeneratingEntityCallback idGeneratingCallback;
 
 	@Test // DATAJDBC-98
@@ -173,6 +174,22 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		assertThat(saved.id).isEqualTo(1L); // sequence starts with 1
 	}
 
+	@Test // DATAJDBC-2199
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_SEQUENCES)
+	void testInsertAggregateWithSequenceAndVersionField() {
+
+		IdSeqWithVersion entity = new IdSeqWithVersion();
+		entity.name = "some name";
+		CompletableFuture<IdSeqWithVersion> afterCallback = mockIdGeneratingCallback(entity);
+
+		IdSeqWithVersion saved = primitiveIdSeqWithVersionRepository.save(entity);
+
+		// 1. Select from sequence
+		// 2. Actual INSERT
+		assertThat(afterCallback.join().id).isEqualTo(1L);
+		assertThat(saved.id).isEqualTo(1L); // sequence starts with 1
+	}
+
 	@SuppressWarnings("unchecked")
 	private <T> CompletableFuture<T> mockIdGeneratingCallback(T entity) {
 
@@ -197,6 +214,8 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 	interface PersistableSeqRepository extends ListCrudRepository<PersistableSeq, Long> {}
 
 	interface PrimitiveIdSeqRepository extends ListCrudRepository<PrimitiveIdSeq, Long> {}
+
+	interface PrimitiveIdSeqWithVersionRepository extends ListCrudRepository<IdSeqWithVersion, Long> {}
 
 	record ReadOnlyIdEntity(@Id Long id, String name) {
 	}
@@ -249,6 +268,15 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 
 		private String name;
 
+	}
+
+	static class IdSeqWithVersion {
+
+		@Id
+		@Sequence(value = "seq_with_version_seq") private long id;
+
+		private String name;
+		private Long version;
 	}
 
 	static class PrimitiveIdEntity {
