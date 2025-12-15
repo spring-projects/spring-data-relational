@@ -59,7 +59,7 @@ public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
 		RelationalPersistentProperty property = entity.getRequiredIdProperty();
 		PersistentPropertyAccessor<Object> accessor = entity.getPropertyAccessor(aggregate);
 
-		if (!entity.isNew(aggregate) || delegate.hasValue(property, accessor) || !property.hasSequence()) {
+		if (delegate.hasValue(property, accessor) || !property.hasSequence()) {
 			return aggregate;
 		}
 
