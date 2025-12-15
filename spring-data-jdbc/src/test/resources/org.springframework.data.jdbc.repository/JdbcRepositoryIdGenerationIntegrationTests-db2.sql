@@ -9,6 +9,8 @@ DROP TABLE PersistableSeq;
 DROP SEQUENCE persistable_seq_seq;
 DROP TABLE PrimitiveIdSeq;
 DROP SEQUENCE "primitive_seq_seq";
+DROP TABLE IdSeqWithVersion;
+DROP SEQUENCE "seq_with_version_seq";
 
 CREATE TABLE ReadOnlyIdEntity
 (
@@ -43,3 +45,10 @@ CREATE TABLE PrimitiveIdSeq
     NAME VARCHAR(100)
 );
 CREATE SEQUENCE "primitive_seq_seq" START WITH 1;
+CREATE TABLE IdSeqWithVersion
+(
+    ID   BIGINT NOT NULL PRIMARY KEY,
+    NAME VARCHAR(100),
+    VERSION BIGINT
+);
+CREATE SEQUENCE "seq_with_version_seq" START WITH 1;
