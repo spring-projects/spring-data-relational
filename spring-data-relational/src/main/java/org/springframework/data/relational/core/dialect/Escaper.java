@@ -22,7 +22,7 @@ import java.util.List;
 import org.springframework.lang.Nullable;
 
 /**
- * Helper class encapsulating an escape character for LIKE queries and the actually usage of it in escaping
+ * Helper class encapsulating an escape character for LIKE queries and the actual usage of it in escaping
  * {@link String}s.
  *
  * @author Roman Chigvintsev
@@ -49,11 +49,11 @@ public class Escaper {
 	}
 
 	/**
-	 * Creates new instance of this class with the given escape character.
+	 * Creates a new instance of this class with the given escape character.
 	 *
 	 * @param escapeCharacter escape character
 	 * @return new instance of {@link Escaper}.
-	 * @throws IllegalArgumentException if escape character is one of special characters ('_' and '%')
+	 * @throws IllegalArgumentException if the escape character is one of special characters ('_' and '%')
 	 */
 	public static Escaper of(char escapeCharacter) {
 		return new Escaper(escapeCharacter, Arrays.asList("_", "%"));
@@ -63,7 +63,7 @@ public class Escaper {
 	 * Apply the {@link Escaper} to the given {@code chars}.
 	 *
 	 * @param chars characters/char sequences that should be escaped.
-	 * @return
+	 * @return a new {@link Escaper} instance with the given characters added to the list of characters to be escaped.
 	 */
 	public Escaper withRewriteFor(String... chars) {
 
@@ -102,6 +102,7 @@ public class Escaper {
 		for (String character : toReplace) {
 			escapedValue = escapedValue.replace(character, escapeCharacter + character);
 		}
+
 		return escapedValue;
 	}
 }
