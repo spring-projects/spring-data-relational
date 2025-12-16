@@ -76,11 +76,11 @@ public class EscaperUnitTests {
 	@Test // GH-2182
 	public void escapesCharactersUsingDefaultEscapeCharacter() {
 		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
-		//assertThat(Escaper.of('$').escape("_%")).isEqualTo("$_$%");
 	}
 
 	@Test // GH-2182
 	public void escapesCharactersUsingCustomEscapeCharacter() {
+
 		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
 		assertThat(Escaper.of('$').escape("%te$st_")).isEqualTo("$%te$$st$_");
 	}
