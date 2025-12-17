@@ -130,7 +130,7 @@ public class StatementFactory {
 
 		private SelectionBuilder(RelationalPersistentEntity<?> entity, Mode mode) {
 			this.entity = entity;
-			this.table = Table.create(entity.getTableName());
+			this.table = Table.create(entity.getQualifiedTableName());
 			this.mode = mode;
 		}
 
@@ -221,7 +221,9 @@ public class StatementFactory {
 			SelectBuilder.SelectOrdered selectOrderBuilder = applyCriteria(criteria, entity, table, parameterSource,
 					whereBuilder);
 
-			selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
+			if (mode == Mode.SLICE || mode == Mode.SELECT || mode == Mode.SCROLL) {
+				selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
+			}
 
 			SelectBuilder.BuildSelect completedBuildSelect = selectOrderBuilder;
 			if (this.lockMode != null) {

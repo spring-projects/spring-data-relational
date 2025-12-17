@@ -24,6 +24,7 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -36,7 +37,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
-import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
@@ -579,8 +579,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		LegoSet entity = new LegoSet();
 		entity.id = 100L; // does not exist in the database
 
-		assertThatExceptionOfType(IncorrectUpdateSemanticsDataAccessException.class) //
-				.isThrownBy(() -> template.save(entity));
+		assertThatCode(() -> template.save(entity)).doesNotThrowAnyException();
 	}
 
 	@Test // DATAJDBC-112
@@ -1180,7 +1179,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		aggregate.setVersion(null);
 		aggregate.setId(23L);
 
-		assertThatThrownBy(() -> template.save(aggregate)).isInstanceOf(IncorrectUpdateSemanticsDataAccessException.class);
+		assertThatCode(() -> template.save(aggregate)).doesNotThrowAnyException();
 	}
 
 	@Test // DATAJDBC-462

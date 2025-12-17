@@ -47,6 +47,7 @@ import org.springframework.data.jdbc.testing.EnabledOnDatabase;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.util.Streamable;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
@@ -188,6 +189,14 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(users).hasSize(2);
 	}
 
+	@Test // GH-2175
+	void shouldReturnStreamable() {
+
+		Streamable<User> users = fragment.findStreamableByAgeBetween(40, 51);
+
+		assertThat(users).hasSize(2);
+	}
+
 	@Test // GH-2121
 	void streamByAgeGreaterThan() {
 		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
@@ -219,6 +228,14 @@ class JdbcRepositoryContributorIntegrationTests {
 
 		assertThat(page).hasSize(2);
 		assertThat(page.hasNext()).isFalse();
+	}
+
+	@Test // GH-2175
+	void shouldReturnPagedStreamable() {
+
+		Streamable<User> result = fragment.findStreamableByAgeGreaterThan(PageRequest.of(0, 4, Sort.by("age")), 10);
+
+		assertThat(result).hasSize(4);
 	}
 
 	@Test // GH-2121
@@ -309,6 +326,14 @@ class JdbcRepositoryContributorIntegrationTests {
 	void shouldSupportDeclaredQueryWithConverter() {
 
 		List<User> users = fragment.findCreatedBefore(Instant.now().plusSeconds(180));
+
+		assertThat(users).hasSize(6);
+	}
+
+	@Test // GH-2175
+	void shouldReturnStreamableFromDeclaredQuery() {
+
+		Streamable<User> users = fragment.findStreamableCreatedBefore(Instant.now().plusSeconds(180));
 
 		assertThat(users).hasSize(6);
 	}
