@@ -416,6 +416,18 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(paramSource.getValue().getValue("__$synthetic$__2")).isEqualTo("test-value2");
 	}
 
+	@Test // GH-2188
+	void shouldPreserveJdbcTypeOtherFromJdbcValueInStringBasedQuery() {
+
+		SqlParameterSource parameterSource = forMethod("findByCustomValue", Direction.class)
+				.withCustomConverters(DirectionToOtherJdbcTypeConverter.INSTANCE)
+				.withArguments(Direction.LEFT)
+				.extractParameterSource();
+
+		assertThat(parameterSource.getSqlType("value"))
+				.isEqualTo(JDBCType.OTHER.getVendorTypeNumber());
+	}
+
 	QueryFixture forMethod(String name, Class... paramTypes) {
 		return new QueryFixture(createMethod(name, paramTypes));
 	}
@@ -562,6 +574,9 @@ class StringBasedJdbcQueryUnitTests {
 		@Lock(value = LockMode.PESSIMISTIC_READ)
 		@Query("SELECT * FROM person WHERE id = :id")
 		DummyEntity unsupportedWithLock(Long id);
+
+		@Query(value = "some sql statement") // GH-2188
+		List<DummyEntity> findByCustomValue(@Param("value") Direction value);
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
@@ -652,6 +667,17 @@ class StringBasedJdbcQueryUnitTests {
 		@Override
 		public String convert(ListContainer source) {
 			return source.values.get(0);
+		}
+	}
+
+	@WritingConverter // GH-2188
+	enum DirectionToOtherJdbcTypeConverter implements Converter<Direction, JdbcValue> {
+
+		INSTANCE;
+
+		@Override
+		public JdbcValue convert(Direction source) {
+			return JdbcValue.of(source.name(), JDBCType.OTHER);
 		}
 	}
 
