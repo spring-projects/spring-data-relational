@@ -108,3 +108,6 @@ Do not use this for creating Ids for new aggregates. Use `BeforeConvertCallback`
 |===
 
 We encourage the use of callbacks over events since they support the use of immutable classes and therefore are more powerful and versatile than events.
+
+The delete and save related callbacks do not get invoked for derived query methods or annotated queries.
+In general Spring Data JDBC does not have an efficient way to determine what aggregates are affected by these operations and therefore can't provide callbacks or events.
