@@ -16,10 +16,12 @@
 package org.springframework.data.relational.core.mapping;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
@@ -44,6 +46,8 @@ import org.springframework.util.Assert;
  */
 public class RelationalMappingContext
 		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
+
+	private static final Logger logger = LoggerFactory.getLogger(RelationalMappingContext.class);
 
 	private final NamingStrategy namingStrategy;
 	private final Map<AggregatePathCacheKey, AggregatePath> aggregatePathCache = new ConcurrentHashMap<>();
@@ -142,6 +146,9 @@ public class RelationalMappingContext
 				this.namingStrategy, this.sqlIdentifierExpressionEvaluator);
 		entity.setForceQuote(isForceQuote());
 
+		// Validate Set<T> properties in @MappedCollection context
+		validateSetMappedCollectionProperties(entity);
+
 		return entity;
 	}
 
@@ -217,6 +224,78 @@ public class RelationalMappingContext
 		}
 
 		return aggregatePath;
+	}
+
+	/**
+	 * Validates Set<T> properties in nested @MappedCollection scenarios.
+	 * 
+	 * @param entity the entity to validate
+	 */
+	private <T> void validateSetMappedCollectionProperties(RelationalPersistentEntity<T> entity) {
+		for (RelationalPersistentProperty property : entity) {
+			if (isSetMappedCollection(property)) {
+				validateSetMappedCollectionProperty(property);
+			}
+		}
+	}
+
+	/**
+	 * Checks if a property is a Set with @MappedCollection annotation.
+	 */
+	private boolean isSetMappedCollection(RelationalPersistentProperty property) {
+		return property.isCollectionLike() 
+			&& Set.class.isAssignableFrom(property.getType())
+			&& property.isAnnotationPresent(MappedCollection.class);
+	}
+
+	/**
+	 * Validates a Set<T> property in @MappedCollection context.
+	 * 
+	 * @param property the Set property to validate
+	 */
+	private void validateSetMappedCollectionProperty(RelationalPersistentProperty property) {
+		Class<?> elementType = property.getComponentType();
+		if (elementType == null) {
+			return;
+		}
+		
+		RelationalPersistentEntity<?> elementEntity = getPersistentEntity(elementType);
+		if (elementEntity == null) {
+			return;
+		}
+		
+		boolean hasId = elementEntity.hasIdProperty();
+		boolean hasEntityOrCollectionReferences = hasEntityOrCollectionReferences(elementEntity);
+		
+		if (!hasId && hasEntityOrCollectionReferences) {
+			String message = String.format(
+				"Invalid @MappedCollection usage: Set<%s> in %s.%s. " +
+				"Set elements without @Id must not contain entity or collection references. " +
+				"Consider using List instead or add @Id to %s.",
+				elementType.getSimpleName(),
+				property.getOwner().getType().getSimpleName(),
+				property.getName(),
+				elementType.getSimpleName()
+			);
+			
+			logger.warn(message);
+		}
+	}
+
+	/**
+	 * Checks if an entity has any properties that are entities or collections.
+	 */
+	private boolean hasEntityOrCollectionReferences(RelationalPersistentEntity<?> entity) {
+		for (RelationalPersistentProperty prop : entity) {
+			if (prop.isIdProperty() || prop.isVersionProperty()) {
+				continue;
+			}
+			
+			if (prop.isEntity() || prop.isCollectionLike()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private record AggregatePathCacheKey(RelationalPersistentEntity<?> root,
