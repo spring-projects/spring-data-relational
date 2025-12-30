@@ -63,7 +63,7 @@ class NameRenderer {
 	}
 
 	/**
-	 * Render the {@link Table#getReferenceName()} table reference name} with considering the
+	 * Render the {@link Table#getReferenceName() table reference name} with considering the
 	 * {@link RenderNamingStrategy#getReferenceName(TableLike) naming strategy}.
 	 */
 	static CharSequence reference(RenderContext context, TableLike table) {
@@ -71,7 +71,7 @@ class NameRenderer {
 	}
 
 	/**
-	 * Render the {@link Column#getReferenceName()} column reference name} with considering the
+	 * Render the {@link Column#getReferenceName() column reference name} with considering the
 	 * {@link RenderNamingStrategy#getReferenceName(Column) naming strategy}.
 	 */
 	static CharSequence reference(RenderContext context, Column column) {

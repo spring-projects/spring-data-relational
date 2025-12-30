@@ -96,7 +96,7 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 	 * expression:
 	 *
 	 * <pre class="code">
-	 * row.append("a", 1).append("b", 2)}
+	 * row.append("a", 1).append("b", 2)
 	 * </pre>
 	 *
 	 * @param key key.
@@ -113,7 +113,7 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 	 * expression:
 	 *
 	 * <pre class="code">
-	 * row.append("a", 1).append("b", 2)}
+	 * row.append("a", 1).append("b", 2)
 	 * </pre>
 	 *
 	 * @param key key.
