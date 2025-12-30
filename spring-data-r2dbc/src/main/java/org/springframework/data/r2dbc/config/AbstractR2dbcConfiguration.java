@@ -218,7 +218,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 	/**
 	 * Creates a {@link org.springframework.data.r2dbc.convert.R2dbcConverter} using the configured
-	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes)} R2dbcMappingContext}.
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions, RelationalManagedTypes) R2dbcMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link R2dbcMappingContext}.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
