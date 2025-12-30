@@ -81,7 +81,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * Creates a new {@link MappingJdbcConverter} given {@link MappingContext} and a {@link JdbcTypeFactory#unsupported()
 	 * no-op type factory} throwing {@link UnsupportedOperationException} on type creation. Use
 	 * {@link #MappingJdbcConverter(RelationalMappingContext, RelationResolver, CustomConversions, JdbcTypeFactory)}
-	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
+	 * to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
