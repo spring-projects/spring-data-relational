@@ -615,6 +615,14 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		return false;
 	}
 
+	/**
+	 * Read and convert a single value that is coming from a database to the {@literal targetType} expected by the domain
+	 * model.
+	 *
+	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@literal null}.
+	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@literal null}.
+	 * @return The converted value. May be {@literal null}.
+	 */
 	@Override
 	@Nullable
 	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
@@ -649,9 +657,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 * Checks whether we have a custom conversion for the given simple object. Converts the given value if so, applies
 	 * {@link Enum} handling or returns the value as is.
 	 *
-	 * @param value to be converted. May be {@code null}..
-	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
-	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
+	 * @param value to be converted. Must not be {@literal null}.
+	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@literal null}.
+	 * @return the converted value if a conversion applies or the original value. Must not be {@literal null}.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
