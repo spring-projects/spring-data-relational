@@ -24,7 +24,7 @@ import org.springframework.test.context.ActiveProfilesResolver;
 import org.springframework.test.context.support.DefaultActiveProfilesResolver;
 
 /**
- * A {@link ActiveProfilesResolver} combining the profile configurations from environement, system properties and
+ * A {@link ActiveProfilesResolver} combining the profile configurations from environment, system properties and
  * {@link org.springframework.test.context.ActiveProfiles} annotations.
  *
  * @author Jens Schauder

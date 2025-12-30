@@ -20,7 +20,7 @@ import org.springframework.util.Assert;
 /**
  * Assign a {@link Expression} to a {@link Column}.
  * <p>
- * Results in a rendered assignment: {@code <column> = <value>} (e.g. {@code col = 'foo'}.
+ * Results in a rendered assignment: {@code <column> = <value>} (e.g. {@code col = 'foo'}).
  * </p>
  * @author Mark Paluch
  * @since 1.1
