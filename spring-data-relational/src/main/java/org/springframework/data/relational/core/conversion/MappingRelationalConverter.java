@@ -660,7 +660,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 *
 	 * @param value to be converted. Must not be {@literal null}.
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@literal null}.
-	 * @return the converted value if a conversion applies or the original value. Must not be {@literal null}.
+	 * @return the converted value if a conversion applies or the original value. Guaranteed not to be {@literal null}.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
