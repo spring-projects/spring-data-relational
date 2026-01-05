@@ -101,7 +101,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	}
 
 	/**
-	 * Returns the a {@link RelationalManagedTypes} object holding the initial entity set.
+	 * Returns a {@link RelationalManagedTypes} object holding the initial entity set.
 	 *
 	 * @return new instance of {@link RelationalManagedTypes}.
 	 * @throws ClassNotFoundException
