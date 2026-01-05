@@ -84,7 +84,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	}
 
 	/**
-	 * Returns the a {@link RelationalManagedTypes} object holding the initial entity set.
+	 * Returns a {@link RelationalManagedTypes} object holding the initial entity set.
 	 *
 	 * @return new instance of {@link RelationalManagedTypes}.
 	 * @throws ClassNotFoundException
