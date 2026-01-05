@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Jaeyeon Kim
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -127,6 +128,16 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public void deleteByQuery(Query query, Class<?> domainType) {
+		delegate.deleteByQuery(query, domainType);
+	}
+
+	@Override
+	public void deleteByQuery(Query query, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		delegate.deleteByQuery(query, propertyPath);
+	}
+
+	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 		delegate.acquireLockById(id, lockMode, domainType);
 	}
@@ -134,6 +145,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 		delegate.acquireLockAll(lockMode, domainType);
+	}
+
+	@Override
+	public <T> void acquireLockByQuery(Query query, LockMode lockMode, Class<T> domainType) {
+		delegate.acquireLockByQuery(query, lockMode, domainType);
 	}
 
 	@Override
