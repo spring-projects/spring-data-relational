@@ -268,7 +268,7 @@ This will ignore the tests that require an explicit license acceptance.
 ./mvnw clean install -Pall-dbs,ignore-missing-license
 ----
 
-If you want to run an integration tests against a different database you can do so by activating an apropriate Spring Profile.
+If you want to run an integration tests against a different database you can do so by activating an appropriate Spring Profile.
 Available are the following Spring Profiles:
 
 `db2`, `h2`, `hsql` (default), `mariadb`, `mssql`, `mysql`, `oracle`, `postgres`

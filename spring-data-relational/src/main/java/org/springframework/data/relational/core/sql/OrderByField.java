@@ -67,7 +67,7 @@ public class OrderByField extends AbstractSegment {
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a the current one using ascending sorting.
+	 * Creates a new {@link OrderByField} from the current one using ascending sorting.
 	 *
 	 * @return the new {@link OrderByField} with ascending sorting.
 	 * @see #desc()
@@ -77,7 +77,7 @@ public class OrderByField extends AbstractSegment {
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a the current one using descending sorting.
+	 * Creates a new {@link OrderByField} from the current one using descending sorting.
 	 *
 	 * @return the new {@link OrderByField} with descending sorting.
 	 * @see #asc()

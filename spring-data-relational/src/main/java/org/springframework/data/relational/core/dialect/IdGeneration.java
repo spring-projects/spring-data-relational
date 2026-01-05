@@ -52,7 +52,7 @@ public interface IdGeneration {
 	 * <p>
 	 * This should be {@literal false} for most dialects. One notable exception is Oracle.
 	 *
-	 * @return {@literal true} if the a list of column names should get passed to the JDBC driver for which ids shall be
+	 * @return {@literal true} if a list of column names should get passed to the JDBC driver for which ids shall be
 	 *         generated.
 	 * @see Connection#prepareStatement(String, String[])
 	 */
