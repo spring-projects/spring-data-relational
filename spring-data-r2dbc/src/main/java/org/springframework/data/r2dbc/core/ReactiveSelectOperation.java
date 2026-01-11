@@ -27,7 +27,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * <p>
  * The starting {@literal domainType} is used for mapping the {@link Query} provided via {@code matching}. By default,
  * the originating {@literal domainType} is also used for mapping back the result from the {@link io.r2dbc.spi.Row}.
- * However, it is possible to define an different {@literal returnType} via {@code as} to mapping the result.
+ * However, it is possible to define a different {@literal returnType} via {@code as} to mapping the result.
  * <p>
  * By default, the table to operate on is derived from the initial {@literal domainType} and can be defined there via
  * the {@link org.springframework.data.relational.core.mapping.Table} annotation. Using {@code inTable} allows to
@@ -120,7 +120,7 @@ public interface ReactiveSelectOperation {
 		/**
 		 * Specifies the fetch size for this query.
 		 *
-		 * @param fetchSize
+		 * @param fetchSize the fetch size
 		 * @return new instance of {@link SelectWithQuery}.
 		 * @since 3.4
 		 * @see io.r2dbc.spi.Statement#fetchSize(int)

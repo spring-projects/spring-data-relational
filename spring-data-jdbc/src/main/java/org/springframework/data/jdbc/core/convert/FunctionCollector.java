@@ -92,7 +92,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 
 	/**
 	 * Stores intermediate results. I.e. a list of exceptions caught so far, any actual result and the fact, if there
-	 * actually is an result.
+	 * actually is a result.
 	 */
 	static class ResultOrException<T> {
 

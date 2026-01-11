@@ -35,7 +35,7 @@ public abstract class NamingStrategies {
 	private NamingStrategies() {}
 
 	/**
-	 * Creates a as-is {@link RenderNamingStrategy} that preserves {@link Column} and {@link Table} names as they were
+	 * Creates an as-is {@link RenderNamingStrategy} that preserves {@link Column} and {@link Table} names as they were
 	 * expressed during their declaration.
 	 *
 	 * @return as-is {@link RenderNamingStrategy}.

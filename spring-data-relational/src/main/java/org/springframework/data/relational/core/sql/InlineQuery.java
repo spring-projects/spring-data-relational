@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.sql;
 import org.springframework.util.Assert;
 
 /**
- * Represents a inline query within a SQL statement. Typically, used in {@code FROM} or {@code JOIN} clauses.
+ * Represents an inline query within a SQL statement. Typically, used in {@code FROM} or {@code JOIN} clauses.
  * <p>
  * Renders to: {@code (&gt;SELECT&lt;) AS &gt;ALIAS&lt;} in a from or join clause, and to {@code &gt;ALIAS&lt;} when
  * used in an expression.
