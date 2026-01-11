@@ -92,7 +92,7 @@ public interface StatementMapper {
 	PreparedOperation<?> getMappedObject(SelectSpec selectSpec);
 
 	/**
-	 * Map a insert specification to a {@link PreparedOperation}.
+	 * Map an insert specification to a {@link PreparedOperation}.
 	 *
 	 * @param insertSpec the insert operation definition, must not be {@literal null}.
 	 * @return the {@link PreparedOperation} for {@link InsertSpec}.
@@ -100,7 +100,7 @@ public interface StatementMapper {
 	PreparedOperation<?> getMappedObject(InsertSpec insertSpec);
 
 	/**
-	 * Map a update specification to a {@link PreparedOperation}.
+	 * Map an update specification to a {@link PreparedOperation}.
 	 *
 	 * @param updateSpec the update operation definition, must not be {@literal null}.
 	 * @return the {@link PreparedOperation} for {@link UpdateSpec}.
