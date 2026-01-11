@@ -169,7 +169,7 @@ public interface DbAction<T> {
 		}
 
 	/**
-	 * Represents a delete statement for a aggregate root when only the ID is known.
+	 * Represents a delete statement for an aggregate root when only the ID is known.
 	 * <p>
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
@@ -220,7 +220,7 @@ public interface DbAction<T> {
 		}
 
 	/**
-	 * Represents an acquire lock statement for a aggregate root when only the ID is known.
+	 * Represents an acquire lock statement for an aggregate root when only the ID is known.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
