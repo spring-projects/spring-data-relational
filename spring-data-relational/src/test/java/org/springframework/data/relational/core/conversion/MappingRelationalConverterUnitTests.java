@@ -55,6 +55,7 @@ import org.springframework.data.relational.domain.RowDocument;
  * @author Mark Paluch
  * @author Lukáš Křečan
  * @author Jens Schauder
+ * @author Ki Hoon You
  */
 class MappingRelationalConverterUnitTests {
 
@@ -237,6 +238,34 @@ class MappingRelationalConverterUnitTests {
 		});
 	}
 
+    @Test // GH-2201
+    void shouldReadEntityWithClassBasedCompositeId() {
+
+        RowDocument document = new RowDocument().append("uid", "1").append("tid", "2").append("alias", "test-alias");
+
+        TenantUser result = converter.read(TenantUser.class, document);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id).isNotNull();
+        assertThat(result.id.uid).isEqualTo("1");
+        assertThat(result.id.tid).isEqualTo("2");
+        assertThat(result.alias).isEqualTo("test-alias");
+    }
+
+    @Test // GH-2201
+    void shouldReadEntityWithRecordBasedCompositeId() {
+
+        RowDocument document = new RowDocument().append("uid", "1").append("tid", "2").append("alias", "test-alias");
+
+        TenantUserRecord result = converter.read(TenantUserRecord.class, document);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isNotNull();
+        assertThat(result.id().uid()).isEqualTo("1");
+        assertThat(result.id().tid()).isEqualTo("2");
+        assertThat(result.alias()).isEqualTo("test-alias");
+    }
+
 	static class SimpleType {
 
 		@Id String id;
@@ -416,5 +445,19 @@ class MappingRelationalConverterUnitTests {
 
 	public record GenericClass<T>(T value) {
 	}
+
+    // GH-2201: Test entities for composite ID issue
+    static class TenantUser {
+
+        @Id
+        TenantUserID id;
+        String alias;
+    }
+
+    record TenantUserID(String uid, String tid) {
+    }
+
+    record TenantUserRecord(@Id TenantUserID id, String alias) {
+    }
 
 }

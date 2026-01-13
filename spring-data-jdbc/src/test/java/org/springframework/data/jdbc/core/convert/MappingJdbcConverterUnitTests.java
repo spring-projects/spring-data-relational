@@ -57,6 +57,7 @@ import org.springframework.data.relational.domain.RowDocument;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Ki Hoon You
  */
 class MappingJdbcConverterUnitTests {
 
@@ -187,6 +188,38 @@ class MappingJdbcConverterUnitTests {
 
 	}
 
+    @Test // GH-2201
+    void shouldReadEntityWithClassBasedCompositeIdUsingReadAndResolve() {
+
+        // This test verifies that ResolvingRelationalPropertyValueProvider.potentiallyAppendIdentifier
+        // correctly handles embedded composite IDs without throwing "Cannot obtain ColumnInfo for embedded path"
+        RowDocument rowdocument = new RowDocument(Map.of("UID", "1", "TID", "2", "ALIAS", "test-alias"));
+
+        TenantUserWithClassId result = converter.readAndResolve(TenantUserWithClassId.class, rowdocument);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id).isNotNull();
+        assertThat(result.id.uid).isEqualTo("1");
+        assertThat(result.id.tid).isEqualTo("2");
+        assertThat(result.alias).isEqualTo("test-alias");
+    }
+
+    @Test // GH-2201
+    void shouldReadEntityWithRecordBasedCompositeIdUsingReadAndResolve() {
+
+        // This test verifies that ResolvingRelationalPropertyValueProvider.potentiallyAppendIdentifier
+        // correctly handles embedded composite IDs without throwing "Cannot obtain ColumnInfo for embedded path"
+        RowDocument rowdocument = new RowDocument(Map.of("UID", "1", "TID", "2", "ALIAS", "test-alias"));
+
+        TenantUserWithRecordId result = converter.readAndResolve(TenantUserWithRecordId.class, rowdocument);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isNotNull();
+        assertThat(result.id().uid()).isEqualTo("1");
+        assertThat(result.id().tid()).isEqualTo("2");
+        assertThat(result.alias()).isEqualTo("test-alias");
+    }
+
 	private static void checkReadConversion(SoftAssertions softly, MappingJdbcConverter converter, String propertyName,
 			Object expected) {
 
@@ -278,6 +311,19 @@ class MappingJdbcConverterUnitTests {
 
 	private record ReferencedByUuid(@Id UUID id) {
 	}
+
+    // GH-2201: Test entities for composite ID issue
+    static class TenantUserWithClassId {
+        @Id
+        TenantUserID id;
+        String alias;
+    }
+
+    record TenantUserID(String uid, String tid) {
+    }
+
+    record TenantUserWithRecordId(@Id TenantUserID id, String alias) {
+    }
 
 	static class ByteArrayToUuid implements Converter<byte[], UUID> {
 		@Override
