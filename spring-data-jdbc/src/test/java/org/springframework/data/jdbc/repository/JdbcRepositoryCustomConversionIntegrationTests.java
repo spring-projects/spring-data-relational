@@ -21,6 +21,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -176,6 +177,19 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		EntityWithDirections saved = repositoryWithDirections
 				.save(new EntityWithDirections(null, List.of(Direction.CENTER, Direction.RIGHT)));
+
+		EntityWithDirections reloaded = repositoryWithDirections.findById(saved.id).orElseThrow();
+
+		assertThat(reloaded).isEqualTo(saved);
+	}
+
+	@Test
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_ARRAYS)
+	void saveAndLoadListOfNullAsArray() {
+		var list = new ArrayList<Direction>();
+		list.add(null);
+
+		EntityWithDirections saved = repositoryWithDirections.save(new EntityWithDirections(null, list));
 
 		EntityWithDirections reloaded = repositoryWithDirections.findById(saved.id).orElseThrow();
 
