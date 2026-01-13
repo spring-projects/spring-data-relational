@@ -21,6 +21,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -69,6 +70,11 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 
 		@Bean
+		EntityWithIdsRepository repositoryWithIds(JdbcRepositoryFactory factory) {
+			return factory.getRepository(EntityWithIdsRepository.class);
+		}
+
+		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
 			return new JdbcCustomConversions(asList(StringToBigDecimalConverter.INSTANCE, BigDecimalToString.INSTANCE,
 					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE, DirectionToIntegerConverter.INSTANCE,
@@ -78,6 +84,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 	@Autowired EntityWithStringyBigDecimalRepository repository;
 	@Autowired EntityWithDirectionsRepository repositoryWithDirections;
+	@Autowired EntityWithIdsRepository repositoryWithIds;
 
 	/**
 	 * In PostrgreSQL this fails if a simple converter like the following is used.
@@ -182,6 +189,19 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		assertThat(reloaded).isEqualTo(saved);
 	}
 
+	@Test // GH-2215
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.SUPPORTS_ARRAYS)
+	void saveAndLoadListOfNullAsArray() {
+		var list = new ArrayList<Integer>();
+		list.add(null);
+
+		EntityWithIds saved = repositoryWithIds.save(new EntityWithIds(null, list));
+
+		EntityWithIds reloaded = repositoryWithIds.findById(saved.id).orElseThrow();
+
+		assertThat(reloaded).isEqualTo(saved);
+	}
+
 	interface EntityWithStringyBigDecimalRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {
 
 		@Query("SELECT * FROM ENTITY_WITH_STRINGY_BIG_DECIMAL WHERE DIRECTION IN (:types)")
@@ -192,6 +212,8 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	}
 
 	interface EntityWithDirectionsRepository extends CrudRepository<EntityWithDirections, Long> {}
+
+	interface EntityWithIdsRepository extends CrudRepository<EntityWithIds, Long> {}
 
 	private static class EntityWithStringyBigDecimal {
 
@@ -221,6 +243,9 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 	enum Direction {
 		LEFT, CENTER, RIGHT
+	}
+
+	record EntityWithIds(@Id Long id, List<Integer> ids) {
 	}
 
 	@WritingConverter
