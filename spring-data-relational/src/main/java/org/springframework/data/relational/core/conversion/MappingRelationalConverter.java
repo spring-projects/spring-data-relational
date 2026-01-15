@@ -424,7 +424,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 * @param targetType the {@link Map} {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
 	 * @return the converted {@link Collection} or array, will never be {@literal null}.
 	 */
-	protected Object readCollectionOrArray(ConversionContext context, Collection<?> source,
+	protected @Nullable Object readCollectionOrArray(ConversionContext context, Collection<?> source,
 			TypeInformation<?> targetType) {
 
 		Assert.notNull(targetType, "Target type must not be null");
@@ -443,12 +443,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				: CollectionFactory.createCollection(collectionType, rawComponentType, source.size());
 
 		if (source.isEmpty()) {
-
-			Object converted = getPotentiallyConvertedSimpleRead(items, targetType);
-
-			Assert.state(converted != null, "Converted must not be null");
-
-			return converted;
+			return getPotentiallyConvertedSimpleRead(items, targetType);
 		}
 
 		for (Object element : source) {
@@ -660,20 +655,17 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 *
 	 * @param value to be converted. Must not be {@literal null}.
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@literal null}.
-	 * @return the converted value if a conversion applies or the original value. Guaranteed not to be {@literal null}.
+	 * @return the converted value if a conversion applies or the original value. Can be {@literal null} if the conversion
+	 *         returns a {@literal null} value.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
+	protected @Nullable Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
 
 		Class<?> target = type.getType();
 
 		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
-			Object converted = getConversionService().convert(value, TypeDescriptor.forObject(value),
+			return getConversionService().convert(value, TypeDescriptor.forObject(value),
 					createTypeDescriptor(type));
-
-			Assert.state(converted != null, "Converted must not be null");
-
-			return converted;
 		}
 
 		if (ClassUtils.isAssignableValue(target, value)) {
@@ -684,12 +676,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
 
-		Object converted = getConversionService().convert(value, TypeDescriptor.forObject(value),
+		return getConversionService().convert(value, TypeDescriptor.forObject(value),
 				createTypeDescriptor(type));
-
-		Assert.state(converted != null, "Converted must not be null");
-
-		return converted;
 	}
 
 	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
@@ -944,6 +932,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		 */
 		protected interface ValueConverter<T> {
 
+			@Nullable
 			Object convert(T source, TypeInformation<?> typeHint);
 
 		}

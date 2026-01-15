@@ -237,6 +237,16 @@ class MappingRelationalConverterUnitTests {
 		});
 	}
 
+	@Test // GH-2217
+	void convertsEmptyStringToNullInteger() {
+
+		converter = new MappingRelationalConverter(converter.getMappingContext(),
+				new CustomConversions(StoreConversions.NONE, List.of(GenericTypeConverter.INSTANCE)));
+
+		assertThat(converter.getPotentiallyConvertedSimpleRead("", TypeInformation.of(Integer.class))).isNull();
+		assertThat(converter.getPotentiallyConvertedSimpleRead("1", TypeInformation.of(Integer.class))).isEqualTo(1);
+	}
+
 	static class SimpleType {
 
 		@Id String id;
