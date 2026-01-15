@@ -351,9 +351,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		if (getConversions().hasCustomReadTarget(RowDocument.class, rawType)) {
 
 			S converted = doConvert(documentAccessor.getDocument(), rawType, typeHint.getType());
-
 			Assert.state(converted != null, "Converted must not be null");
-
 			return converted;
 		}
 
@@ -362,7 +360,10 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		if (typeHint.isMap()) {
-			return context.convert(documentAccessor, typeHint);
+
+			S converted = context.convert(documentAccessor, typeHint);
+			Assert.state(converted != null, "Converted must not be null");
+			return converted;
 		}
 
 		RelationalPersistentEntity<?> entity = getMappingContext().getPersistentEntity(typeHint);
@@ -424,7 +425,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 * @param targetType the {@link Map} {@link TypeInformation} to be used to unmarshall this {@link RowDocument}.
 	 * @return the converted {@link Collection} or array, will never be {@literal null}.
 	 */
-	protected @Nullable Object readCollectionOrArray(ConversionContext context, Collection<?> source,
+	protected Object readCollectionOrArray(ConversionContext context, Collection<?> source,
 			TypeInformation<?> targetType) {
 
 		Assert.notNull(targetType, "Target type must not be null");
@@ -443,14 +444,14 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				: CollectionFactory.createCollection(collectionType, rawComponentType, source.size());
 
 		if (source.isEmpty()) {
-			return getPotentiallyConvertedSimpleRead(items, targetType);
+			return getRequiredPotentiallyConvertedSimpleRead(items, targetType);
 		}
 
 		for (Object element : source) {
 			items.add(element != null ? context.convert(element, componentType) : element);
 		}
 
-		return getPotentiallyConvertedSimpleRead(items, targetType);
+		return getRequiredPotentiallyConvertedSimpleRead(items, targetType);
 	}
 
 	private <T> @Nullable T doConvert(Object value, Class<? extends T> target) {
@@ -636,17 +637,17 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	 *
 	 * @param value a value as it is returned by the driver accessing the persistence store. May be {@literal null}.
 	 * @param targetType {@link TypeInformation} into which the value is to be converted. Must not be {@literal null}.
-	 * @return The converted value. May be {@literal null}.
+	 * @return the converted value, can be {@literal null}.
 	 */
 	@Override
-	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
+	public @Nullable Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
+		return null == value ? null : getPotentiallyConvertedSimpleRead(value, targetType);
+	}
 
-		if (null == value) {
-			return null;
-		}
-
-		return getPotentiallyConvertedSimpleRead(value, targetType);
+	private Object getRequiredPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
+		Object result = getPotentiallyConvertedSimpleRead(value, type);
+		Assert.state(result != null, "Converted must not be null");
+		return result;
 	}
 
 	/**
@@ -864,7 +865,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
+		public <S> @Nullable S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
 
 			Assert.notNull(source, "Source must not be null");
 			Assert.notNull(typeHint, "TypeInformation must not be null");
@@ -874,7 +875,6 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			}
 
 			if (source instanceof Collection<?> collection) {
-
 				if (typeHint.isCollectionLike() || typeHint.getType().isAssignableFrom(Collection.class)) {
 					return (S) collectionConverter.convert(context, collection, typeHint);
 				}
@@ -1010,9 +1010,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		 *
 		 * @param source must not be {@literal null}.
 		 * @param typeHint must not be {@literal null}.
-		 * @return the converted object.
+		 * @return the converted object, can be {@literal null}.
 		 */
-		default <S> S convert(Object source, TypeInformation<? extends S> typeHint) {
+		default <S> @Nullable S convert(Object source, TypeInformation<? extends S> typeHint) {
 			return convert(source, typeHint, this);
 		}
 
@@ -1022,9 +1022,9 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		 * @param source must not be {@literal null}.
 		 * @param typeHint must not be {@literal null}.
 		 * @param context must not be {@literal null}.
-		 * @return the converted object.
+		 * @return the converted object, can be {@literal null}.
 		 */
-		<S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context);
+		<S> @Nullable S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context);
 
 		/**
 		 * Obtain a {@link ConversionContext} for the given property {@code name}.
@@ -1185,9 +1185,8 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		@Override
-		@Nullable
 		@SuppressWarnings("unchecked")
-		public <T> T getPropertyValue(RelationalPersistentProperty property) {
+		public <T> @Nullable T getPropertyValue(RelationalPersistentProperty property) {
 
 			String expression = property.getSpelExpression();
 			Object value = expression != null ? evaluator.evaluate(expression) : accessor.get(property);
@@ -1318,7 +1317,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		}
 
 		@Override
-		protected <T> T potentiallyConvertExpressionValue(Object object,
+		protected <T> @Nullable T potentiallyConvertExpressionValue(Object object,
 				Parameter<T, RelationalPersistentProperty> parameter) {
 			return context.convert(object, parameter.getType());
 		}

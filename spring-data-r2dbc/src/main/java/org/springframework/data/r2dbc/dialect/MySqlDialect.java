@@ -80,12 +80,13 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	 * @author Michael Berry
 	 */
 	@ReadingConverter
-	public enum ByteToBooleanConverter implements Converter<Byte, Boolean> {
+	@SuppressWarnings("NullAway")
+	public enum ByteToBooleanConverter implements Converter<Byte, @Nullable Boolean> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable Boolean convert(@Nullable Byte s) {
+		public Boolean convert(@Nullable Byte s) {
 
 			if (s == null) {
 				return null;

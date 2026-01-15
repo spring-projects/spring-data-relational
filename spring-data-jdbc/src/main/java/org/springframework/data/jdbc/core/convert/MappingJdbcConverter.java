@@ -200,8 +200,7 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	 * @return
 	 */
 	@Override
-	@Nullable
-	public Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
+	public @Nullable Object readValue(@Nullable Object value, TypeInformation<?> targetType) {
 
 		if (null == value) {
 			return null;
@@ -573,12 +572,12 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			Identifier identifier) implements ConversionContext {
 
 		@Override
-		public <S> S convert(Object source, TypeInformation<? extends S> typeHint) {
+		public <S> @Nullable S convert(Object source, TypeInformation<? extends S> typeHint) {
 			return delegate.convert(source, typeHint);
 		}
 
 		@Override
-		public <S> S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
+		public <S> @Nullable S convert(Object source, TypeInformation<? extends S> typeHint, ConversionContext context) {
 			return delegate.convert(source, typeHint, context);
 		}
 

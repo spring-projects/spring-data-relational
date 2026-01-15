@@ -70,12 +70,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToBooleanConverter implements Converter<Row, Boolean> {
+	public enum RowToBooleanConverter implements Converter<Row, @Nullable Boolean> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable Boolean convert(Row row) {
+		public Boolean convert(Row row) {
 			return row.get(0, Boolean.class);
 		}
 	}
@@ -85,12 +85,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToLocalDateConverter implements Converter<Row, LocalDate> {
+	public enum RowToLocalDateConverter implements Converter<Row, @Nullable LocalDate> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable LocalDate convert(Row row) {
+		public LocalDate convert(Row row) {
 			return row.get(0, LocalDate.class);
 		}
 	}
@@ -100,12 +100,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToLocalDateTimeConverter implements Converter<Row, LocalDateTime> {
+	public enum RowToLocalDateTimeConverter implements Converter<Row, @Nullable LocalDateTime> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable LocalDateTime convert(Row row) {
+		public LocalDateTime convert(Row row) {
 			return row.get(0, LocalDateTime.class);
 		}
 	}
@@ -115,12 +115,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToLocalTimeConverter implements Converter<Row, LocalTime> {
+	public enum RowToLocalTimeConverter implements Converter<Row, @Nullable LocalTime> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable LocalTime convert(Row row) {
+		public LocalTime convert(Row row) {
 			return row.get(0, LocalTime.class);
 		}
 	}
@@ -141,20 +141,21 @@ abstract class R2dbcConverters {
 	 * @see java.math.BigDecimal
 	 * @author Hebert Coelho
 	 */
-	public enum RowToNumberConverterFactory implements ConverterFactory<Row, Number> {
+	public enum RowToNumberConverterFactory implements ConverterFactory<Row, @Nullable Number> {
 
 		INSTANCE;
 
 		@Override
-		public <T extends Number> Converter<Row, T> getConverter(Class<T> targetType) {
+		public <T extends @Nullable Number> Converter<Row, T> getConverter(Class<T> targetType) {
 			Assert.notNull(targetType, "Target type must not be null");
 			return new RowToNumber<>(targetType);
 		}
 
-		record RowToNumber<T extends Number>(Class<T> targetType) implements Converter<Row, T> {
+		@SuppressWarnings("NullAway")
+		record RowToNumber<T extends @Nullable Number>(Class<T> targetType) implements Converter<Row, @Nullable T> {
 
 			@Override
-			public @Nullable T convert(Row source) {
+			public T convert(Row source) {
 
 				Object object = source.get(0);
 
@@ -168,12 +169,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToOffsetDateTimeConverter implements Converter<Row, OffsetDateTime> {
+	public enum RowToOffsetDateTimeConverter implements Converter<Row, @Nullable OffsetDateTime> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable OffsetDateTime convert(Row row) {
+		public OffsetDateTime convert(Row row) {
 			return row.get(0, OffsetDateTime.class);
 		}
 	}
@@ -183,12 +184,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToStringConverter implements Converter<Row, String> {
+	public enum RowToStringConverter implements Converter<Row, @Nullable String> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable String convert(Row row) {
+		public String convert(Row row) {
 			return row.get(0, String.class);
 		}
 	}
@@ -198,12 +199,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToUuidConverter implements Converter<Row, UUID> {
+	public enum RowToUuidConverter implements Converter<Row, @Nullable UUID> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable UUID convert(Row row) {
+		public UUID convert(Row row) {
 			return row.get(0, UUID.class);
 		}
 	}
@@ -213,12 +214,12 @@ abstract class R2dbcConverters {
 	 *
 	 * @author Hebert Coelho
 	 */
-	public enum RowToZonedDateTimeConverter implements Converter<Row, ZonedDateTime> {
+	public enum RowToZonedDateTimeConverter implements Converter<Row, @Nullable ZonedDateTime> {
 
 		INSTANCE;
 
 		@Override
-		public @Nullable ZonedDateTime convert(Row row) {
+		public ZonedDateTime convert(Row row) {
 			return row.get(0, ZonedDateTime.class);
 		}
 	}
