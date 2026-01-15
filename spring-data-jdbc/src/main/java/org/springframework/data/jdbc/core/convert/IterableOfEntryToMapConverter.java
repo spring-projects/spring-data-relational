@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.ConditionalConverter;
 import org.springframework.core.convert.converter.Converter;
@@ -32,16 +31,14 @@ import org.springframework.util.Assert;
  */
 class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<Iterable<?>, Map<?, ?>> {
 
-	@SuppressWarnings("unchecked")
-	@Nullable
 	@Override
 	public Map<?, ?> convert(Iterable<?> source) {
 
-		Map result = new HashMap();
+		Map<Object, Object> result = new HashMap<>();
 
 		source.forEach(element -> {
 
-			if (element instanceof Entry entry) {
+			if (element instanceof Entry<?, ?> entry) {
 				result.put(entry.getKey(), entry.getValue());
 				return;
 			}

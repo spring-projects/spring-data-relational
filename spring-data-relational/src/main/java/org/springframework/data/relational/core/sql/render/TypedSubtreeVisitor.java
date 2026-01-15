@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
@@ -50,23 +51,19 @@ abstract class TypedSubtreeVisitor<T extends Visitable> extends DelegatingVisito
 	private final ResolvableType type;
 	private @Nullable Visitable currentSegment;
 
-	enum Assignable {
-		YES, NO,
-	}
-
 	/**
 	 * Creates a new {@link TypedSubtreeVisitor}.
 	 */
 	TypedSubtreeVisitor() {
-		this.type = refCache.computeIfAbsent(this.getClass(),
-				key -> ResolvableType.forClass(key).as(TypedSubtreeVisitor.class).getGeneric(0));
+		this.type = Objects.requireNonNull(refCache.computeIfAbsent(this.getClass(),
+				key -> ResolvableType.forClass(key).as(TypedSubtreeVisitor.class).getGeneric(0)));
 	}
 
 	/**
 	 * Creates a new {@link TypedSubtreeVisitor} with an explicitly provided type.
 	 */
 	TypedSubtreeVisitor(Class<T> type) {
-		this.type = refCache.computeIfAbsent(type, key -> ResolvableType.forClass(type));
+		this.type = Objects.requireNonNull(refCache.computeIfAbsent(type, key -> ResolvableType.forClass(type)));
 	}
 
 	/**
