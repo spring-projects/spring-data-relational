@@ -1213,11 +1213,26 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		@Nullable
 		@Override
 		public Object getValue(AggregatePath path) {
-			return document.get(path.getColumnInfo().alias().getReference());
+			return path.isEmbedded() ? null : document.get(path.getColumnInfo().alias().getReference());
 		}
 
 		@Override
 		public boolean hasValue(AggregatePath path) {
+
+			// Embedded paths (e.g., composite ids) cannot have a single ColumnInfo
+			// Check if any of the embedded properties have values
+			if (path.isEmbedded()) {
+				RelationalPersistentEntity<?> leafEntity = path.getLeafEntity();
+				if (leafEntity != null) {
+					for (RelationalPersistentProperty property : leafEntity) {
+						AggregatePath propertyPath = path.append(property);
+						if (hasValue(propertyPath)) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
 
 			Object value = document.get(path.getColumnInfo().alias().getReference());
 
@@ -1234,6 +1249,21 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		@Override
 		public boolean hasNonEmptyValue(AggregatePath path) {
+
+			// Embedded paths (e.g., composite ids) cannot have a single ColumnInfo
+			// Check if any of the embedded properties have non-empty values
+			if (path.isEmbedded()) {
+				RelationalPersistentEntity<?> leafEntity = path.getLeafEntity();
+				if (leafEntity != null) {
+					for (RelationalPersistentProperty property : leafEntity) {
+						AggregatePath propertyPath = path.append(property);
+						if (hasNonEmptyValue(propertyPath)) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
 
 			if (!hasValue(path)) {
 				return false;
