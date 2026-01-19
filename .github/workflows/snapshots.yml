@@ -1,0 +1,28 @@
+name: Snapshots
+
+on:
+  push:
+    branches: [ main, 4.0.x, 3.5.x, 'issue/**' ]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  build-snapshots:
+    name: Build and deploy snapshots
+    if: ${{ github.repository_owner == 'spring-projects' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java and Maven
+        uses: spring-projects/spring-data-release/actions/setup-maven@main
+        with:
+          develocity-access-key: '${{ secrets.DEVELOCITY_ACCESS_KEY }}'
+      - name: Prepare Docker Container Licenses
+        run: ./ci/accept-third-party-license.sh
+      - name: Deploy to Artifactory
+        uses: spring-projects/spring-data-release/actions/maven-artifactory-deploy@main
+        with:
+          build-name: 'spring-data-relational'
+          username: '${{ secrets.ARTIFACTORY_USERNAME }}'
+          password: '${{ secrets.ARTIFACTORY_PASSWORD }}'
