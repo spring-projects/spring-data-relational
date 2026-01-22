@@ -23,9 +23,6 @@ jobs:
       - name: Prepare Docker Container Licenses
         run: ./ci/accept-third-party-license.sh
       - name: Build
-        run: ./mvnw -Dsort -B -U -Pall-dbs clean dependency:list verify
-      - name: Test Summary
-        uses: test-summary/action@v2.2
+        uses: spring-projects/spring-data-release/actions/maven-build@main
         with:
-          paths: '**/TEST-*.xml'
-        if: always()
+          run: ./mvnw -Dsort -B -U -Pall-dbs clean dependency:list verify
