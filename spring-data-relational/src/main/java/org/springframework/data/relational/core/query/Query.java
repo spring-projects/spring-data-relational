@@ -22,8 +22,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -35,6 +37,7 @@ import org.springframework.util.Assert;
  * class are designed to be used in a fluent style creating immutable objects.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 2.0
  * @see Criteria
  * @see Sort
@@ -114,7 +117,19 @@ public class Query {
 
 		Assert.notNull(columns, "Columns must not be null");
 
-		return withColumns(columns.stream().map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+		return withColumns(columns.stream());
+	}
+
+	/**
+	 * Add columns to the query.
+	 *
+	 * @param properties
+	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+	 * @since 4.1
+	 */
+	@CheckReturnValue
+	public <T> Query columnsOf(Collection<TypedPropertyPath<T,?>> properties) {
+		return withColumns(properties.stream().map(TypedPropertyPath::of).map(TypedPropertyPath::toDotPath));
 	}
 
 	/**
@@ -130,6 +145,10 @@ public class Query {
 		Assert.notNull(columns, "Columns must not be null");
 
 		return withColumns(Arrays.asList(columns));
+	}
+
+	private Query withColumns(Stream<String> columns) {
+		return withColumns(columns.map(SqlIdentifier::unquoted).collect(Collectors.toList()));
 	}
 
 	/**

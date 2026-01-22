@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.*;
  * Unit tests for {@link Update}.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 public class UpdateUnitTests {
 
@@ -30,5 +31,23 @@ public class UpdateUnitTests {
 	public void shouldRenderUpdateToString() {
 
 		assertThat(Update.update("foo", "baz").set("bar", 42)).hasToString("SET foo = 'baz', bar = 42");
+	}
+
+	@Test // GH-2226
+	public void shouldRenderUpdateWithTypedPropertyPathToString() {
+		assertThat(Update.update(Person::getFirstName, "baz").set("bar", 42)).hasToString("SET firstName = 'baz', bar = 42");
+	}
+
+	static class Person {
+		private String firstName;
+		private String lastName;
+
+		public String getFirstName() {
+			return firstName;
+		}
+
+		public String getLastName() {
+			return lastName;
+		}
 	}
 }

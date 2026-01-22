@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.CheckReturnValue;
@@ -32,6 +33,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
+ * @author Christoph Strobl
  * @since 2.0
  */
 public class Update {
@@ -66,6 +68,18 @@ public class Update {
 	}
 
 	/**
+	 * Static factory method to create an {@link Update} using the provided path.
+	 *
+	 * @param property must not be {@literal null}.
+	 * @param value can be {@literal null}.
+	 * @return new instance of {@link Update}.
+	 * @since 4.1
+	 */
+	public static <T,P> Update update(TypedPropertyPath<T,P> property, @Nullable Object value) {
+		return update(property.toDotPath(), value);
+	}
+
+	/**
 	 * Update a column by assigning a value.
 	 *
 	 * @param column must not be {@literal null}.
@@ -78,6 +92,19 @@ public class Update {
 		Assert.hasText(column, "Column for update must not be null or blank");
 
 		return addMultiFieldOperation(SqlIdentifier.unquoted(column), value);
+	}
+
+	/**
+	 * Update a path by assigning a value.
+	 *
+	 * @param property must not be {@literal null}.
+	 * @param value can be {@literal null}.
+	 * @return new instance of {@link Update}.
+	 * @since 4.1
+	 */
+	@CheckReturnValue
+	public <T,P> Update set(TypedPropertyPath<T,P> property, @Nullable Object value) {
+		return set(property.toDotPath(), value);
 	}
 
 	/**
