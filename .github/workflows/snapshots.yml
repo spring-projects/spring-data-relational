@@ -17,6 +17,8 @@ jobs:
         uses: spring-projects/spring-data-release/actions/setup-maven@main
         with:
           develocity-access-key: '${{ secrets.DEVELOCITY_ACCESS_KEY }}'
+      - name: Prepare Docker Container Licenses
+        run: ./ci/accept-third-party-license.sh
       - name: Deploy to Artifactory
         uses: spring-projects/spring-data-release/actions/maven-artifactory-deploy@main
         with:
