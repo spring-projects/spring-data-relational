@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 class CriteriaUnitTests {
 
-	@Test // gh-289
+	@Test // GH-289
 	void fromCriteria() {
 
 		Criteria nested1 = where("foo").isNotNull();
@@ -46,7 +46,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getPrevious()).isEqualTo(Criteria.empty());
 	}
 
-	@Test // gh-289
+	@Test // GH-289
 	void fromCriteriaOptimized() {
 
 		Criteria nested = where("foo").is("bar").and("baz").isNotNull();
@@ -55,7 +55,7 @@ class CriteriaUnitTests {
 		assertThat(criteria).isSameAs(nested);
 	}
 
-	@Test // gh-289
+	@Test // GH-289
 	void isEmpty() {
 
 		SoftAssertions.assertSoftly(softly -> {
@@ -77,7 +77,7 @@ class CriteriaUnitTests {
 		});
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void andChainedCriteria() {
 
 		Criteria criteria = where("foo").is("bar").and("baz").isNotNull();
@@ -95,7 +95,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
-	@Test // gh-289
+	@Test // GH-289
 	void andGroupedCriteria() {
 
 		Criteria criteria = where("foo").is("bar").and(where("foo").is("baz"));
@@ -113,7 +113,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void orChainedCriteria() {
 
 		Criteria criteria = where("foo").is("bar").or("baz").isNotNull();
@@ -128,7 +128,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
-	@Test // gh-289
+	@Test // GH-289
 	void orGroupedCriteria() {
 
 		Criteria criteria = where("foo").is("bar").or(where("foo").is("baz"));
@@ -146,7 +146,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildEqualsCriteria() {
 
 		Criteria criteria = where("foo").is("bar");
@@ -166,7 +166,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.isIgnoreCase()).isTrue();
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildNotEqualsCriteria() {
 
 		Criteria criteria = where("foo").not("bar");
@@ -176,7 +176,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildInCriteria() {
 
 		Criteria criteria = where("foo").in("bar", "baz");
@@ -186,7 +186,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(Arrays.asList("bar", "baz"));
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildNotInCriteria() {
 
 		Criteria criteria = where("foo").notIn("bar", "baz");
@@ -196,7 +196,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(Arrays.asList("bar", "baz"));
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildGtCriteria() {
 
 		Criteria criteria = where("foo").greaterThan(1);
@@ -206,7 +206,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildGteCriteria() {
 
 		Criteria criteria = where("foo").greaterThanOrEquals(1);
@@ -216,7 +216,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildLtCriteria() {
 
 		Criteria criteria = where("foo").lessThan(1);
@@ -226,7 +226,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildLteCriteria() {
 
 		Criteria criteria = where("foo").lessThanOrEquals(1);
@@ -236,7 +236,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildLikeCriteria() {
 
 		Criteria criteria = where("foo").like("hello%");
@@ -255,7 +255,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("hello%");
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildIsNullCriteria() {
 
 		Criteria criteria = where("foo").isNull();
@@ -264,7 +264,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NULL);
 	}
 
-	@Test // gh-64
+	@Test // GH-64
 	void shouldBuildIsNotNullCriteria() {
 
 		Criteria criteria = where("foo").isNotNull();
@@ -273,7 +273,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NOT_NULL);
 	}
 
-	@Test // gh-282
+	@Test // GH-282
 	void shouldBuildIsTrueCriteria() {
 
 		Criteria criteria = where("foo").isTrue();
@@ -282,7 +282,7 @@ class CriteriaUnitTests {
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_TRUE);
 	}
 
-	@Test // gh-282
+	@Test // GH-282
 	void shouldBuildIsFalseCriteria() {
 
 		Criteria criteria = where("foo").isFalse();

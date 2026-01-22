@@ -26,6 +26,7 @@ import java.util.StringJoiner;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Pair;
@@ -54,6 +55,7 @@ import org.springframework.util.Assert;
  * @author Oliver Drotbohm
  * @author Roman Chigvintsev
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 2.0
  */
 public class Criteria implements CriteriaDefinition {
@@ -158,6 +160,17 @@ public class Criteria implements CriteriaDefinition {
 	}
 
 	/**
+	 * Static factory method to create a Criteria using the provided {@code path}.
+	 *
+	 * @param property Must not be {@literal null}.
+	 * @return a new {@link CriteriaStep} object to complete the first {@link Criteria}.
+	 * @since 4.1
+	 */
+	public static <T, P> CriteriaStep where(TypedPropertyPath<T,P> property) {
+		return where(TypedPropertyPath.of(property).toDotPath());
+	}
+
+	/**
 	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code column} name.
 	 *
 	 * @param column Must not be {@literal null} or empty.
@@ -175,6 +188,18 @@ public class Criteria implements CriteriaDefinition {
 				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code path}.
+	 *
+	 * @param property Must not be {@literal null}.
+	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
+	 * @since 4.1
+	 */
+	@CheckReturnValue
+	public <T,P> CriteriaStep and(TypedPropertyPath<T,P> property) {
+		return and(TypedPropertyPath.of(property).toDotPath());
 	}
 
 	/**
@@ -225,6 +250,18 @@ public class Criteria implements CriteriaDefinition {
 				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it with {@code OR} using the provided {@code path}.
+	 *
+	 * @param property Must not be {@literal null}.
+	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
+	 * @since 4.1
+	 */
+	@CheckReturnValue
+	public <T,P> CriteriaStep or(TypedPropertyPath<T,P> property) {
+		return or(TypedPropertyPath.of(property).toDotPath());
 	}
 
 	/**
