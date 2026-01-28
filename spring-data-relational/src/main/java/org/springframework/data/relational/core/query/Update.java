@@ -75,7 +75,7 @@ public class Update {
 	 * @return new instance of {@link Update}.
 	 * @since 4.1
 	 */
-	public static <T,P> Update update(TypedPropertyPath<T,P> property, @Nullable Object value) {
+	public static <T, P> Update update(TypedPropertyPath<T, P> property, @Nullable Object value) {
 		return update(TypedPropertyPath.of(property).toDotPath(), value);
 	}
 
@@ -103,7 +103,7 @@ public class Update {
 	 * @since 4.1
 	 */
 	@CheckReturnValue
-	public <T,P> Update set(TypedPropertyPath<T,P> property, @Nullable Object value) {
+	public <T, P> Update set(TypedPropertyPath<T, P> property, @Nullable Object value) {
 		return set(TypedPropertyPath.of(property).toDotPath(), value);
 	}
 

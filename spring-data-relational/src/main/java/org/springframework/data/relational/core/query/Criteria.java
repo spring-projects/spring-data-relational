@@ -166,7 +166,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link CriteriaStep} object to complete the first {@link Criteria}.
 	 * @since 4.1
 	 */
-	public static <T, P> CriteriaStep where(TypedPropertyPath<T,P> property) {
+	public static <T, P> CriteriaStep where(TypedPropertyPath<T, P> property) {
 		return where(TypedPropertyPath.of(property).toDotPath());
 	}
 
@@ -198,8 +198,8 @@ public class Criteria implements CriteriaDefinition {
 	 * @since 4.1
 	 */
 	@CheckReturnValue
-	public <T,P> CriteriaStep and(TypedPropertyPath<T,P> property) {
-		return and(TypedPropertyPath.of(property).toDotPath());
+	public <T, P> CriteriaStep and(TypedPropertyPath<T, P> property) {
+		return and(property.toDotPath());
 	}
 
 	/**
@@ -260,8 +260,8 @@ public class Criteria implements CriteriaDefinition {
 	 * @since 4.1
 	 */
 	@CheckReturnValue
-	public <T,P> CriteriaStep or(TypedPropertyPath<T,P> property) {
-		return or(TypedPropertyPath.of(property).toDotPath());
+	public <T, P> CriteriaStep or(TypedPropertyPath<T, P> property) {
+		return or(property.toDotPath());
 	}
 
 	/**
@@ -524,11 +524,9 @@ public class Criteria implements CriteriaDefinition {
 		}
 
 		SqlIdentifier column = criteria.getColumn();
-
 		Assert.state(column != null, "Column must not be null");
 
 		Comparator comparator = criteria.getComparator();
-
 		Assert.state(comparator != null, "Comparator must not be null");
 
 		stringBuilder.append(column.toSql(IdentifierProcessing.NONE)).append(' ').append(comparator.getComparator());

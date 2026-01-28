@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Roman Chigvintsev
+ * @author Christoph Strobl
  */
 class CriteriaUnitTests {
 
@@ -44,6 +45,11 @@ class CriteriaUnitTests {
 		assertThat(criteria.getGroup()).containsExactly(nested1, nested2);
 		assertThat(criteria.getPrevious()).isEqualTo(Criteria.empty());
 		assertThat(criteria).hasToString("(foo IS NOT NULL AND foo IS NULL)");
+	}
+
+	@Test // GH-2226
+	void whereWithTypedPropertyPathIsEqualToStringColumnName() {
+		assertThat(where(Person::getName).is("o")).isEqualTo(where("name").is("o"));
 	}
 
 	@Test // DATAJDBC-513
@@ -95,6 +101,13 @@ class CriteriaUnitTests {
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 
+	@Test // GH-2226
+	void andChainedCriteriaWithTypedPropertyPathIsEqualToStringColumnName() {
+
+		assertThat(where(Person::getName).is("o").and(Person::getAge).isNotNull())
+				.isEqualTo(where("name").is("o").and("age").isNotNull());
+	}
+
 	@Test // DATAJDBC-513
 	void andGroupedCriteria() {
 
@@ -129,6 +142,13 @@ class CriteriaUnitTests {
 		assertThat(criteria).isNotNull();
 		assertThat(criteria.getPrevious()).isNull();
 		assertThat(criteria.getValue()).isEqualTo("bar");
+	}
+
+	@Test // GH-2226
+	void orChainedCriteriaWithTypedPropertyPathIsEqualToStringColumnName() {
+
+		assertThat(where(Person::getName).is("o").or(Person::getAge).isNotNull())
+				.isEqualTo(where("name").is("o").or("age").isNotNull());
 	}
 
 	@Test // DATAJDBC-513
@@ -321,6 +341,20 @@ class CriteriaUnitTests {
 				assertThat(criteria[i]).isNotEqualTo(criteria[j]);
 				assertThat(criteria[i].hashCode()).isNotEqualTo(criteria[j].hashCode());
 			}
+		}
+	}
+
+	static class Person {
+
+		private String name;
+		private Integer age;
+
+		public String getName() {
+			return name;
+		}
+
+		public Integer getAge() {
+			return this.age;
 		}
 	}
 }
