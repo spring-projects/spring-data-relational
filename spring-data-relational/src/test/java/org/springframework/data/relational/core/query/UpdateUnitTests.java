@@ -15,9 +15,9 @@
  */
 package org.springframework.data.relational.core.query;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link Update}.
@@ -28,13 +28,12 @@ import static org.assertj.core.api.Assertions.*;
 public class UpdateUnitTests {
 
 	@Test // DATAJDBC-513
-	public void shouldRenderUpdateToString() {
-
+	void shouldRenderUpdateToString() {
 		assertThat(Update.update("foo", "baz").set("bar", 42)).hasToString("SET foo = 'baz', bar = 42");
 	}
 
 	@Test // GH-2226
-	public void shouldRenderUpdateWithTypedPropertyPathToString() {
+	void shouldRenderUpdateWithTypedPropertyPathToString() {
 		assertThat(Update.update(Person::getFirstName, "baz").set("bar", 42)).hasToString("SET firstName = 'baz', bar = 42");
 	}
 
@@ -42,7 +41,7 @@ public class UpdateUnitTests {
 		private String firstName;
 		private String lastName;
 
-		public String getFirstName() {
+		String getFirstName() {
 			return firstName;
 		}
 
