@@ -76,7 +76,7 @@ public class Update {
 	 * @since 4.1
 	 */
 	public static <T, P> Update update(TypedPropertyPath<T, P> property, @Nullable Object value) {
-		return update(TypedPropertyPath.of(property).toDotPath(), value);
+		return update(property.toDotPath(), value);
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class Update {
 	 */
 	@CheckReturnValue
 	public <T, P> Update set(TypedPropertyPath<T, P> property, @Nullable Object value) {
-		return set(TypedPropertyPath.of(property).toDotPath(), value);
+		return set(property.toDotPath(), value);
 	}
 
 	/**
