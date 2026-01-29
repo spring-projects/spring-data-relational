@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.Year;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.LinkedHashMap;
@@ -40,6 +41,7 @@ public enum JdbcColumnTypes {
 
 		private final ConcurrentLruCache<Class<?>, Class<?>> cache = new ConcurrentLruCache<>(64, this::doResolve);
 
+		@Override
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Class<?> resolvePrimitiveType(Class<?> type) {
 			return cache.get(type);
@@ -62,6 +64,7 @@ public enum JdbcColumnTypes {
 		javaToDbType.put(ZonedDateTime.class, String.class);
 		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(LocalDateTime.class, LocalDateTime.class);
+		javaToDbType.put(Year.class, Integer.class);
 		javaToDbType.put(Temporal.class, Timestamp.class);
 	}
 
