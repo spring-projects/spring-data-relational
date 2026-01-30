@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
  * Delegate to run {@link ScrollPosition scroll queries} and create result {@link Window}.
  *
  * @author Mark Paluch
+ * @author Artemij Degtyarev
  * @since 3.1.4
  */
 public class ScrollDelegate {
