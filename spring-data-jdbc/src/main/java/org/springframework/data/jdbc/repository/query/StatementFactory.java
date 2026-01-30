@@ -19,12 +19,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
-
+import org.springframework.data.domain.KeysetScrollPosition;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.OffsetScrollPosition;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.QueryMapper;
@@ -33,6 +37,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expressions;
@@ -53,6 +58,7 @@ import org.springframework.lang.Contract;
  * utility and should not be used outside of the framework as it can change without deprecation notice.
  *
  * @author Mark Paluch
+ * @author Artemiy Degtyarev
  * @since 4.0
  */
 public class StatementFactory {
@@ -103,6 +109,10 @@ public class StatementFactory {
 		return new SelectionBuilder(entity, SelectionBuilder.Mode.SLICE);
 	}
 
+	public SelectionBuilder scroll(RelationalPersistentEntity<?> entity) {
+		return new SelectionBuilder(entity, SelectionBuilder.Mode.SCROLL);
+	}
+
 	public class SelectionBuilder {
 
 		private final RelationalPersistentEntity<?> entity;
@@ -115,11 +125,18 @@ public class StatementFactory {
 		private Sort sort = Sort.unsorted();
 		private Criteria criteria = Criteria.empty();
 		private List<String> properties = new ArrayList<>();
+		private @Nullable ScrollPosition scrollPosition;
 
 		private SelectionBuilder(RelationalPersistentEntity<?> entity, Mode mode) {
 			this.entity = entity;
 			this.table = Table.create(entity.getQualifiedTableName());
 			this.mode = mode;
+		}
+
+		@Contract("_ -> this")
+		public SelectionBuilder scrollPosition(ScrollPosition position) {
+			this.scrollPosition = position;
+			return this;
 		}
 
 		@Contract("_ -> this")
@@ -199,10 +216,11 @@ public class StatementFactory {
 
 			SelectBuilder.SelectLimitOffset limitOffsetBuilder = createSelectClause(entity, table);
 			SelectBuilder.SelectWhere whereBuilder = applyLimitAndOffset(limitOffsetBuilder);
+
 			SelectBuilder.SelectOrdered selectOrderBuilder = applyCriteria(criteria, entity, table, parameterSource,
 					whereBuilder);
 
-			if (mode == Mode.SLICE || mode == Mode.SELECT) {
+			if (mode == Mode.SLICE || mode == Mode.SELECT || mode == Mode.SCROLL) {
 				selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
 			}
 
@@ -216,9 +234,55 @@ public class StatementFactory {
 			return SqlRenderer.create(renderContextFactory.createRenderContext()).render(select);
 		}
 
+		Criteria applyScrollCriteria(@Nullable ScrollPosition position, Sort sort) {
+			if (!(position instanceof KeysetScrollPosition keyset) || position.isInitial() || keyset.getKeys().isEmpty()) {
+				return Criteria.empty();
+			}
+
+			Map<String, Object> keys = keyset.getKeys();
+			List<String> columns = new ArrayList<>(keys.keySet());
+			List<Object> values = new ArrayList<>(keys.values());
+
+			if (columns.isEmpty() || values.isEmpty())
+				return Criteria.empty();
+
+			Map<String, Sort.Direction> directions = sort.stream()
+					.collect(Collectors.toMap(Sort.Order::getProperty, Sort.Order::getDirection));
+
+			Sort.Direction dir = directions.getOrDefault(columns.get(0), Sort.DEFAULT_DIRECTION);
+
+			return buildKeysetCriteria(columns, values, keyset.scrollsForward(), dir);
+		}
+
+		Criteria buildKeysetCriteria(List<String> columns, List<Object> values, boolean isForward, Sort.Direction dir) {
+			if (columns.isEmpty())
+				return Criteria.empty();
+
+			String column = columns.get(0);
+			RelationalPersistentProperty prop = entity.getPersistentProperty(column);
+			if (prop != null)
+				column = prop.getName();
+
+			Object value = values.get(0);
+
+			boolean isAscending = isForward ^ dir.isDescending();
+
+			Criteria gte = isAscending ? Criteria.where(column).greaterThanOrEquals(value)
+					: Criteria.where(column).lessThanOrEquals(value);
+
+			Criteria gt = isAscending ? Criteria.where(column).greaterThan(value) : Criteria.where(column).lessThan(value);
+
+			if (columns.size() == 1)
+				return gt;
+
+			Criteria nested = buildKeysetCriteria(columns.subList(1, columns.size()), values.subList(1, values.size()),
+					isForward, dir);
+
+			return gte.and(gt.or(nested));
+		}
+
 		SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
 				SelectBuilder.SelectOrdered selectOrdered) {
-
 			return sort.isSorted() ? //
 					selectOrdered.orderBy(queryMapper.getMappedSort(table, sort, entity)) //
 					: selectOrdered;
@@ -227,8 +291,11 @@ public class StatementFactory {
 		SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
 				Table table, MapSqlParameterSource parameterSource, SelectBuilder.SelectWhere whereBuilder) {
 
-			return criteria != null && !criteria.isEmpty() //
-					? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
+			Criteria resultCriteria = criteria == null ? applyScrollCriteria(scrollPosition, sort)
+					: criteria.and(applyScrollCriteria(scrollPosition, sort));
+
+			return !resultCriteria.isEmpty()
+					? whereBuilder.where(queryMapper.getMappedObject(parameterSource, resultCriteria, table, entity)) //
 					: whereBuilder;
 		}
 
@@ -248,6 +315,20 @@ public class StatementFactory {
 				limitOffsetBuilder = limitOffsetBuilder
 						.limit(mode == Mode.SLICE ? pageable.getPageSize() + 1 : pageable.getPageSize())
 						.offset(pageable.getOffset());
+			}
+
+			if (mode == Mode.SCROLL) {
+				int pageSize = limit.isLimited() ? limit.max() : 0;
+
+				limitOffsetBuilder = limitOffsetBuilder
+					.limit(pageSize + 1);
+			}
+
+			if (mode == Mode.SCROLL && scrollPosition != null && scrollPosition instanceof OffsetScrollPosition
+					&& !scrollPosition.isInitial()) {
+				int pageSize = limit.isLimited() ? limit.max() : 0;
+
+				limitOffsetBuilder = limitOffsetBuilder.offset(((OffsetScrollPosition) scrollPosition).getOffset() * pageSize);
 			}
 
 			return (SelectBuilder.SelectWhere) limitOffsetBuilder;
@@ -286,7 +367,7 @@ public class StatementFactory {
 		}
 
 		enum Mode {
-			COUNT, EXISTS, SELECT, SLICE
+			COUNT, EXISTS, SELECT, SLICE, SCROLL
 		}
 
 	}

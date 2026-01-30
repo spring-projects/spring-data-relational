@@ -25,17 +25,23 @@ import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.repository.support.ScrollDelegate;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -61,6 +67,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author Artemij Degtyarev
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -157,7 +164,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 	@Override
 	@Nullable
-	public Object execute(Object[] values) {
+	public Object execute(@Nullable Object[] values) {
 
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
@@ -191,21 +198,29 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 		JdbcQueryExecution<?> queryExecution = getJdbcQueryExecution(extractor, rowMapper);
 
+		if (getQueryMethod().isScrollQuery()) {
+			// noinspection unchecked
+			return new ScrollQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution,
+					accessor.getScrollPosition(), tree.getSort(), tree.getResultLimit(),
+					getQueryMethod().getEntityInformation().getTableEntity());
+		}
+
 		if (getQueryMethod().isSliceQuery()) {
 			// noinspection unchecked
-			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable());
+			return new SliceQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution, accessor.getPageable());
 		}
 
 		if (getQueryMethod().isPageQuery()) {
 
 			// noinspection unchecked
-			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable(),
+			return new PageQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution, accessor.getPageable(),
 					() -> {
 
 						RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 
 						JdbcCountQueryCreator queryCreator = new JdbcCountQueryCreator(context, tree, converter, dialect,
-								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation());
+								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation(),
+								false);
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
 						Object count = singleObjectQuery(new SingleColumnRowMapper<>(Number.class)).execute(countQuery.getQuery(),
@@ -223,11 +238,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(tree, converter, dialect, getQueryMethod(), accessor, returnedType);
 
-		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
-				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation());
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
@@ -243,7 +255,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	private JdbcQueryExecution<?> getJdbcQueryExecution(@Nullable ResultSetExtractor<Boolean> extractor,
 			Supplier<RowMapper<?>> rowMapper) {
 
-		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery()) {
+		if (getQueryMethod().isPageQuery() || getQueryMethod().isSliceQuery() || getQueryMethod().isScrollQuery()) {
 			return collectionQuery(rowMapper.get());
 		} else {
 
@@ -252,6 +264,35 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			} else {
 				return createReadingQueryExecution(extractor, rowMapper);
 			}
+		}
+	}
+
+	/**
+	 * {@link JdbcQueryExecution} returning a {@link org.springframework.data.domain.Window}
+	 *
+	 * @param <T>
+	 */
+	static class ScrollQueryExecution<T> implements JdbcQueryExecution<Window<T>> {
+		private final JdbcQueryExecution<? extends Collection<T>> delegate;
+		private final @Nullable ScrollPosition position;
+		private final Sort sort;
+		private final Limit limit;
+		private final RelationalPersistentEntity<?> tableEntity;
+
+		ScrollQueryExecution(JdbcQueryExecution<? extends Collection<T>> delegate, @Nullable ScrollPosition position,
+							 Sort sort, Limit limit, RelationalPersistentEntity<?> tableEntity) {
+			this.delegate = delegate;
+			this.position = position;
+			this.sort = sort;
+			this.limit = limit;
+			this.tableEntity = tableEntity;
+		}
+
+		@Override
+		public @Nullable Window<T> execute(String query, SqlParameterSource parameter) {
+			Collection<T> result = delegate.execute(query, parameter);
+
+			return ScrollDelegate.scroll(result, position, limit, sort, tableEntity);
 		}
 	}
 
@@ -327,8 +368,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Lazy<RowMapper<?>> rowMapper;
 		private final Function<ResultProcessor, RowMapper<?>> rowMapperFunction;
 
-		public CachedRowMapperFactory(PartTree tree,
-				RowMapperFactory rowMapperFactory, RelationalConverter converter,
+		public CachedRowMapperFactory(PartTree tree, RowMapperFactory rowMapperFactory, RelationalConverter converter,
 				ResultProcessor defaultResultProcessor) {
 
 			this.rowMapperFunction = processor -> {
@@ -338,8 +378,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				}
 				Converter<Object, Object> resultProcessingConverter = new ResultProcessingConverter(processor,
 						converter.getMappingContext(), converter.getEntityInstantiators());
-				return new ConvertingRowMapper(
-						rowMapperFactory.create(processor.getReturnedType().getDomainType()), resultProcessingConverter);
+				return new ConvertingRowMapper(rowMapperFactory.create(processor.getReturnedType().getDomainType()),
+						resultProcessingConverter);
 			};
 
 			this.rowMapper = Lazy.of(() -> this.rowMapperFunction.apply(defaultResultProcessor));
