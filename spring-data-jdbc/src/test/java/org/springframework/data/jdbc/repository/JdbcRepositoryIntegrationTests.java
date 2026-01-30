@@ -1558,10 +1558,10 @@ public class JdbcRepositoryIntegrationTests {
 		repository.save(createEntity("two"));
 		repository.save(createEntity("three"));
 		repository.save(createEntity("four"));
-		repository.save(createEntity("five"));
+		DummyEntity five = repository.save(createEntity("five"));
 
 		WindowIterator<DummyEntity> iter = WindowIterator.of(position -> repository.findFirst2ByOrderByIdPropAscPointInTimeAsc(position))
-				.startingAt(ScrollPosition.backward(Map.of("idProp", 5)));
+				.startingAt(ScrollPosition.backward(Map.of("idProp", five.idProp)));
 
 		List<DummyEntity> entities = new ArrayList<>();
 		while (iter.hasNext())
@@ -1619,9 +1619,9 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Test
 	void queryByWindowKeysetPosition() {
-		repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
-		repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
-		repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
+		DummyEntity one = repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
+		DummyEntity two = repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
+		DummyEntity three = repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
 
 		Window<DummyEntity> result = repository.findFirst2ByOrderByIdPropAscPointInTimeAsc(ScrollPosition.keyset());
 		assertSoftly(softAssertions -> {
@@ -1635,7 +1635,7 @@ public class JdbcRepositoryIntegrationTests {
 			softAssertions.assertThat(keys.containsKey("idProp")).isTrue();
 
 			Long idProp = (Long) keys.get("idProp");
-			softAssertions.assertThat(idProp).isEqualTo(2);
+			softAssertions.assertThat(idProp).isEqualTo(two.idProp);
 		});
 	}
 
