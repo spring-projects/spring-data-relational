@@ -20,19 +20,15 @@ import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.domain.KeysetScrollPosition;
 import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.OffsetScrollPosition;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Slice;
@@ -41,12 +37,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.jdbc.repository.support.ScrollDelegate;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -169,7 +164,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 	@Override
 	@Nullable
-	public Object execute(Object[] values) {
+	public Object execute(@Nullable Object[] values) {
 
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
@@ -205,20 +200,20 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 		if (getQueryMethod().isScrollQuery()) {
 			// noinspection unchecked
-			return new ScrollQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution,
-					accessor.getScrollPosition(), this.tree.getMaxResults(), tree.getSort(), tree.getResultLimit(),
+			return new ScrollQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution,
+					accessor.getScrollPosition(), tree.getSort(), tree.getResultLimit(),
 					getQueryMethod().getEntityInformation().getTableEntity());
 		}
 
 		if (getQueryMethod().isSliceQuery()) {
 			// noinspection unchecked
-			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable());
+			return new SliceQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution, accessor.getPageable());
 		}
 
 		if (getQueryMethod().isPageQuery()) {
 
 			// noinspection unchecked
-			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable(),
+			return new PageQueryExecution<>((JdbcQueryExecution<@NonNull Collection<Object>>) queryExecution, accessor.getPageable(),
 					() -> {
 
 						RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
@@ -243,12 +238,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(tree, converter, dialect, getQueryMethod(), accessor, returnedType);
 
-		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
-				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation(),
-				getQueryMethod().isScrollQuery());
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
@@ -284,16 +275,14 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	static class ScrollQueryExecution<T> implements JdbcQueryExecution<Window<T>> {
 		private final JdbcQueryExecution<? extends Collection<T>> delegate;
 		private final @Nullable ScrollPosition position;
-		private final @Nullable Integer maxResults;
 		private final Sort sort;
 		private final Limit limit;
 		private final RelationalPersistentEntity<?> tableEntity;
 
 		ScrollQueryExecution(JdbcQueryExecution<? extends Collection<T>> delegate, @Nullable ScrollPosition position,
-				@Nullable Integer maxResults, Sort sort, Limit limit, RelationalPersistentEntity<?> tableEntity) {
+							 Sort sort, Limit limit, RelationalPersistentEntity<?> tableEntity) {
 			this.delegate = delegate;
 			this.position = position;
-			this.maxResults = maxResults;
 			this.sort = sort;
 			this.limit = limit;
 			this.tableEntity = tableEntity;
@@ -303,65 +292,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		public @Nullable Window<T> execute(String query, SqlParameterSource parameter) {
 			Collection<T> result = delegate.execute(query, parameter);
 
-			List<T> resultList = result instanceof List ? (List<T>) result : new ArrayList<>(result);
-			IntFunction<? extends ScrollPosition> positionFunction = null;
-			if (position instanceof OffsetScrollPosition)
-				positionFunction = ((OffsetScrollPosition) position).positionFunction();
-
-			if (position instanceof KeysetScrollPosition) {
-				Map<String, Object> keys = ((KeysetScrollPosition) position).getKeys();
-				List<String> orders = new ArrayList<>(keys.keySet());
-
-				if (orders.isEmpty())
-					orders = sort.get().map(Sort.Order::getProperty).toList();
-
-				List<RelationalPersistentProperty> properties = new ArrayList<>();
-				for (String propertyName : orders) {
-					RelationalPersistentProperty prop = tableEntity.getPersistentProperty(propertyName);
-					if (prop == null)
-						continue;
-
-					properties.add(prop);
-				}
-
-				final Map<String, Object> resultKeys = extractKeys(resultList, properties);
-				positionFunction = (ignoredI) -> ScrollPosition.of(resultKeys, ((KeysetScrollPosition) position).getDirection());
-			}
-
-			if (positionFunction == null)
-				throw new UnsupportedOperationException("Not supported scroll type.");
-
-			boolean hasNext;
-			if (maxResults != null)
-				hasNext = resultList.size() >= maxResults;
-			else if (limit.isLimited())
-				hasNext = resultList.size() >= limit.max();
-			else
-				hasNext = !resultList.isEmpty();
-
-			return Window.from(resultList, positionFunction, hasNext);
-		}
-
-		private Map<String, Object> extractKeys(List<T> resultList, List<RelationalPersistentProperty> properties) {
-			if (resultList.isEmpty())
-				return Map.of();
-
-			Map<String, Object> result = new LinkedHashMap<>();
-
-			T last = resultList.get(resultList.size() - 1);
-			PersistentPropertyAccessor<T> accessor = tableEntity.getPropertyAccessor(last);
-
-			for (RelationalPersistentProperty property : properties) {
-				String propertyName = property.getName();
-				Object propertyValue = accessor.getProperty(property);
-
-				if (propertyValue == null)
-					continue;
-
-				result.put(propertyName, propertyValue);
-			}
-
-			return result;
+			return ScrollDelegate.scroll(result, position, limit, sort, tableEntity);
 		}
 	}
 

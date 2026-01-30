@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -235,25 +234,6 @@ public class StatementFactory {
 			return SqlRenderer.create(renderContextFactory.createRenderContext()).render(select);
 		}
 
-		Sort applyScrollOrderBy(Sort sort, @Nullable ScrollPosition scrollPosition) {
-			if (!(scrollPosition instanceof KeysetScrollPosition) || scrollPosition.isInitial())
-				return sort;
-
-			Set<String> sortedProperties = sort.get().map(Sort.Order::getProperty).collect(Collectors.toSet());
-
-			Set<String> keys = ((KeysetScrollPosition) scrollPosition).getKeys().keySet();
-
-			Set<String> notSortedProperties
-				= keys.stream().filter(it -> !sortedProperties.contains(it)).collect(Collectors.toSet());
-
-			if (notSortedProperties.isEmpty())
-				return sort;
-
-			Sort.Direction defaultSort = sort.get().map(Sort.Order::getDirection).findAny().orElse(Sort.DEFAULT_DIRECTION);
-
-			return sort.and(Sort.by(defaultSort, notSortedProperties.toArray(new String[0])));
-		}
-
 		Criteria applyScrollCriteria(@Nullable ScrollPosition position, Sort sort) {
 			if (!(position instanceof KeysetScrollPosition keyset) || position.isInitial() || keyset.getKeys().isEmpty()) {
 				return Criteria.empty();
@@ -303,11 +283,8 @@ public class StatementFactory {
 
 		SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
 				SelectBuilder.SelectOrdered selectOrdered) {
-
-			Sort resultSort = applyScrollOrderBy(sort, scrollPosition);
-
-			return resultSort.isSorted() ? //
-					selectOrdered.orderBy(queryMapper.getMappedSort(table, resultSort, entity)) //
+			return sort.isSorted() ? //
+					selectOrdered.orderBy(queryMapper.getMappedSort(table, sort, entity)) //
 					: selectOrdered;
 		}
 
@@ -340,9 +317,16 @@ public class StatementFactory {
 						.offset(pageable.getOffset());
 			}
 
+			if (mode == Mode.SCROLL) {
+				int pageSize = limit.isLimited() ? limit.max() : 0;
+
+				limitOffsetBuilder = limitOffsetBuilder
+					.limit(pageSize + 1);
+			}
+
 			if (mode == Mode.SCROLL && scrollPosition != null && scrollPosition instanceof OffsetScrollPosition
 					&& !scrollPosition.isInitial()) {
-				int pageSize = limit.isLimited() ? limit.max() : Integer.MAX_VALUE;
+				int pageSize = limit.isLimited() ? limit.max() : 0;
 
 				limitOffsetBuilder = limitOffsetBuilder.offset(((OffsetScrollPosition) scrollPosition).getOffset() * pageSize);
 			}
