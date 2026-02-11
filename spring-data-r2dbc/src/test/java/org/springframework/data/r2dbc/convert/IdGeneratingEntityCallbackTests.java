@@ -16,18 +16,23 @@
 
 package org.springframework.data.r2dbc.convert;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
@@ -42,8 +47,9 @@ import org.springframework.r2dbc.core.Parameter;
  *
  * @author Mikhail Polivakha
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
-class IdGeneratingEntityCallbackTest {
+class IdGeneratingEntityCallbackTests {
 
 	R2dbcMappingContext r2dbcMappingContext = new R2dbcMappingContext();
 	DatabaseClient databaseClient = mock(DatabaseClient.class, RETURNS_DEEP_STUBS);
@@ -52,8 +58,7 @@ class IdGeneratingEntityCallbackTest {
 	void testIdGenerationIsNotSupported() {
 
 		MySqlDialect dialect = MySqlDialect.INSTANCE;
-		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
-				databaseClient);
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect, databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		SimpleEntity entity = new SimpleEntity();
@@ -68,8 +73,7 @@ class IdGeneratingEntityCallbackTest {
 
 		PostgresDialect dialect = PostgresDialect.INSTANCE;
 
-		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
-				databaseClient);
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect, databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		SimpleEntity entity = new SimpleEntity();
@@ -86,11 +90,10 @@ class IdGeneratingEntityCallbackTest {
 		PostgresDialect dialect = PostgresDialect.INSTANCE;
 		long generatedId = 1L;
 
-		when(databaseClient.sql(Mockito.anyString()).map(Mockito.any(BiFunction.class)).one()).thenReturn(
-				Mono.just(generatedId));
+		when(databaseClient.sql(Mockito.anyString()).map(Mockito.any(BiFunction.class)).one())
+				.thenReturn(Mono.just(generatedId));
 
-		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect,
-				databaseClient);
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect, databaseClient);
 
 		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
 		WithSequence entity = new WithSequence();
@@ -99,14 +102,57 @@ class IdGeneratingEntityCallbackTest {
 				.expectNext(entity).verifyComplete();
 
 		assertThat(row).hasSize(2)
-				.containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(generatedId));
+
+				.satisfies(it -> {
+
+					SqlIdentifier id = getIdSqlIdentifier(it);
+					assertThat(it.get(id)).isEqualTo(Parameter.from(generatedId));
+				});
 		assertThat(entity.id).isEqualTo(generatedId);
+	}
+
+	@Test // GH-2199
+	void testIdGeneratedFromSequenceWhenEntityVersionAlreadySet() {
+
+		PostgresDialect dialect = PostgresDialect.INSTANCE;
+		long generatedId = 1L;
+
+		when(databaseClient.sql(Mockito.anyString()).map(Mockito.any(BiFunction.class)).one())
+				.thenReturn(Mono.just(generatedId));
+
+		IdGeneratingEntityCallback callback = new IdGeneratingEntityCallback(r2dbcMappingContext, dialect, databaseClient);
+
+		OutboundRow row = new OutboundRow("name", Parameter.from("my_name"));
+		WithSequenceAndVersion entity = new WithSequenceAndVersion();
+		entity.version = 0L;
+
+		callback.onBeforeSave(entity, row, SqlIdentifier.unquoted("simple_entity")).as(StepVerifier::create)
+				.expectNext(entity).verifyComplete();
+
+		assertThat(row).hasSize(2)
+
+				.satisfies(it -> {
+
+					SqlIdentifier id = getIdSqlIdentifier(it);
+					assertThat(it.get(id)).isEqualTo(Parameter.from(generatedId));
+				});
+		assertThat(entity.id).isEqualTo(generatedId);
+	}
+
+	private static SqlIdentifier getIdSqlIdentifier(Map<SqlIdentifier, Parameter> it) {
+
+		Optional<SqlIdentifier> id = it.keySet().stream().filter(entry -> entry.getReference().equalsIgnoreCase("id"))
+				.findFirst();
+
+		if (id.isEmpty()) {
+			fail("Missing id for entity " + it.keySet());
+		}
+		return id.get();
 	}
 
 	static class SimpleEntity {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 
 		private String name;
 	}
@@ -114,8 +160,17 @@ class IdGeneratingEntityCallbackTest {
 	static class WithSequence {
 
 		@Id
-		@Sequence(sequence = "seq_name")
-		private Long id;
+		@Sequence(sequence = "seq_name") private Long id;
+
+		private String name;
+	}
+
+	static class WithSequenceAndVersion {
+
+		@Id
+		@Sequence(sequence = "seq_name") private Long id;
+
+		@Version private Long version;
 
 		private String name;
 	}

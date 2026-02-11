@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  *
  * @author Mikhail Polivakha
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 3.5
  */
 public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
@@ -52,19 +53,17 @@ public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(aggregate.getClass());
 
-		if (!entity.hasIdProperty()) {
+		RelationalPersistentProperty idProperty = entity.getIdProperty();
+		if (idProperty == null || !idProperty.hasSequence()) {
 			return aggregate;
 		}
 
-		RelationalPersistentProperty property = entity.getRequiredIdProperty();
 		PersistentPropertyAccessor<Object> accessor = entity.getPropertyAccessor(aggregate);
-
-		if (delegate.hasValue(property, accessor) || !property.hasSequence()) {
+		if (delegate.hasValue(idProperty, accessor)) {
 			return aggregate;
 		}
 
-		delegate.generateSequenceValue(property, accessor);
-
+		delegate.generateSequenceValue(idProperty, accessor);
 		return accessor.getBean();
 	}
 
