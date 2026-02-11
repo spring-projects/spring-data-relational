@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
  *
  * @author Mikhail Polivakha
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 3.5
  */
 public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
@@ -56,19 +57,18 @@ public class IdGeneratingEntityCallback implements BeforeSaveCallback<Object> {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(entity.getClass());
 
-		if (!persistentEntity.hasIdProperty()) {
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty == null || !idProperty.hasSequence()) {
 			return Mono.just(entity);
 		}
 
-		RelationalPersistentProperty property = persistentEntity.getRequiredIdProperty();
 		PersistentPropertyAccessor<Object> accessor = persistentEntity.getPropertyAccessor(entity);
 
-		if (!persistentEntity.isNew(entity) || delegate.hasValue(property, accessor) || !property.hasSequence()) {
+		if (delegate.hasValue(idProperty, accessor)) {
 			return Mono.just(entity);
 		}
 
-		Mono<Object> idGenerator = delegate.generateSequenceValue(property, row, accessor);
-
+		Mono<Object> idGenerator = delegate.generateSequenceValue(idProperty, row, accessor);
 		return idGenerator.defaultIfEmpty(entity);
 	}
 
