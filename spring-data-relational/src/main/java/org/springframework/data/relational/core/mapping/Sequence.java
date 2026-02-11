@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
 
 /**
- * Specify the sequence from which the value for the {@link org.springframework.data.annotation.Id} should be fetched.
+ * Specify the sequence from which the value for e.g. an {@link org.springframework.data.annotation.Id} should be fetched.
  *
  * @author Mikhail Polivakha
  * @since 3.5
@@ -20,7 +20,7 @@ import org.springframework.core.annotation.AliasFor;
 public @interface Sequence {
 
 	/**
-	 * The name of the sequence from which the id should be fetched
+	 * The name of the sequence from which the value should be fetched.
 	 */
 	@AliasFor("sequence")
 	String value() default "";

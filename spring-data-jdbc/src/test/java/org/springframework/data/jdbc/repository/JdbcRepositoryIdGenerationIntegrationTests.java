@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jdbc.core.convert.IdGeneratingEntityCallback;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -276,6 +277,8 @@ class JdbcRepositoryIdGenerationIntegrationTests {
 		@Sequence(value = "seq_with_version_seq") private long id;
 
 		private String name;
+
+		@Version
 		private Long version;
 	}
 
