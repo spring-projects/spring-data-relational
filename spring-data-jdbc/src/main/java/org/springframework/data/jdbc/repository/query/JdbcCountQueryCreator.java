@@ -33,6 +33,7 @@ import org.springframework.data.repository.query.parser.PartTree;
  *
  * @author Mark Paluch
  * @author Diego Krupitza
+ * @author Artemiy Degtyarev
  * @since 2.2
  */
 public class JdbcCountQueryCreator extends JdbcQueryCreator {
@@ -44,8 +45,9 @@ public class JdbcCountQueryCreator extends JdbcQueryCreator {
 
 	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType, Optional<Lock> lockMode) {
-		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode);
+			ReturnedType returnedType, Optional<Lock> lockMode, boolean isScrollQuery) {
+		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode,
+				isScrollQuery);
 	}
 
 	@Override
