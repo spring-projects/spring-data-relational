@@ -395,7 +395,7 @@ class QueryMapperUnitTests {
 				"(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2]) OR (withcompositeid.tenant != ?[$3] AND withcompositeid.name != ?[$4])");
 
 		criteria = Criteria.where("id").notIn();
-		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString("1 = 0");
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString("1 = 1");
 	}
 
 	@Test
