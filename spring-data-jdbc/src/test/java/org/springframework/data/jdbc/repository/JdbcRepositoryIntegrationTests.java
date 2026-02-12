@@ -46,19 +46,28 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.*;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -68,6 +77,7 @@ import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Sequence;
@@ -109,7 +119,9 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired JdbcAggregateOperations aggregateOperations;
 	@Autowired DummyEntityRepository repository;
+	@Autowired WithIdentifierConversion withIdentifierConversion;
 
 	@Autowired ProvidedIdEntityRepository providedIdEntityRepository;
 	@Autowired MyEventListener eventListener;
@@ -248,6 +260,46 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllById(asList(entity.getIdProp(), other.getIdProp())))//
 				.extracting(DummyEntity::getIdProp)//
 				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
+
+	@Test // GH-2225
+	void findAllByIdWithIdConverter() {
+
+		DummyEntity one = this.repository.save(createEntity("one"));
+		DummyEntity two = this.repository.save(createEntity("two"));
+		DummyEntity three = this.repository.save(createEntity("three"));
+
+		List<WithConvertedIdentifier> result = withIdentifierConversion.findAllById(
+				List.of(new LongIdentifier(one.idProp), new LongIdentifier(two.idProp), new LongIdentifier(three.idProp)));
+
+		assertThat(result).hasSize(3);
+	}
+
+	@Test // GH-2225
+	void deleteAllByIdWithIdConverter() {
+
+		DummyEntity one = this.repository.save(createEntity("one"));
+		DummyEntity two = this.repository.save(createEntity("two"));
+		DummyEntity three = this.repository.save(createEntity("three"));
+
+		withIdentifierConversion.deleteAllById(
+				List.of(new LongIdentifier(one.idProp), new LongIdentifier(two.idProp), new LongIdentifier(three.idProp)));
+
+		assertThat(withIdentifierConversion.count()).isZero();
+	}
+
+	@Test // GH-2225
+	void deleteAllWithIdConverter() {
+
+		DummyEntity one = this.repository.save(createEntity("one"));
+		DummyEntity two = this.repository.save(createEntity("two"));
+		DummyEntity three = this.repository.save(createEntity("three"));
+
+		List<WithConvertedIdentifier> result = withIdentifierConversion.findAllById(
+				List.of(new LongIdentifier(one.idProp), new LongIdentifier(two.idProp), new LongIdentifier(three.idProp)));
+		withIdentifierConversion.deleteAll(result);
+
+		assertThat(withIdentifierConversion.count()).isZero();
 	}
 
 	@Test // GH-831
@@ -1671,6 +1723,11 @@ public class JdbcRepositoryIntegrationTests {
 		}
 
 		@Bean
+		WithIdentifierConversion withIdentifierConversion() {
+			return factory.getRepository(WithIdentifierConversion.class);
+		}
+
+		@Bean
 		ProvidedIdEntityRepository providedIdEntityRepository() {
 			return factory.getRepository(ProvidedIdEntityRepository.class);
 		}
@@ -1678,6 +1735,13 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		RootRepository rootRepository() {
 			return factory.getRepository(RootRepository.class);
+		}
+
+		@Bean
+		@Primary
+		CustomConversions jdbcCustomConversions(Dialect dialect) {
+			return JdbcConfiguration.createCustomConversions((JdbcDialect) dialect,
+					List.of(LongIdentifierToLongConverter.INSTANCE, LongToLongIdentifierConverter.INSTANCE));
 		}
 
 		@Bean
@@ -2029,6 +2093,56 @@ public class JdbcRepositoryIntegrationTests {
 			return delegate.iterator();
 		}
 	}
+
+	record LongIdentifier(Long id) {
+	}
+
+	@WritingConverter
+	enum LongIdentifierToLongConverter implements Converter<LongIdentifier, Long> {
+
+		INSTANCE;
+
+		@Override
+		public Long convert(LongIdentifier source) {
+			return source.id;
+		}
+	}
+
+	@ReadingConverter
+	enum LongToLongIdentifierConverter implements Converter<Long, LongIdentifier> {
+
+		INSTANCE;
+
+		@Override
+		public LongIdentifier convert(Long source) {
+			return new LongIdentifier(source);
+		}
+	}
+
+	@Table("DUMMY_ENTITY")
+	public static class WithConvertedIdentifier {
+
+		@Id LongIdentifier idProp;
+		String name;
+
+		public LongIdentifier getIdProp() {
+			return idProp;
+		}
+
+		public void setIdProp(LongIdentifier idProp) {
+			this.idProp = idProp;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	interface WithIdentifierConversion extends ListCrudRepository<WithConvertedIdentifier, LongIdentifier> {}
 
 	public static class DummyEntity {
 

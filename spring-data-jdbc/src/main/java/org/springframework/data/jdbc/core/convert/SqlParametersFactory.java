@@ -158,20 +158,32 @@ public class SqlParametersFactory {
 		return doWithIdentifiers(domainType, (columns, idProperty, complexId) -> {
 
 			SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
-
 			BiFunction<Object, AggregatePath, Object> valueExtractor = getIdMapper(complexId);
 
-			List<Object[]> parameterValues = new ArrayList<>(ids instanceof Collection<?> c ? c.size() : 16);
-			for (Object id : ids) {
+			List<@Nullable Object> parameterValues = new ArrayList<>(ids instanceof Collection<?> c ? c.size() : 16);
 
-				Object[] tupleList = new Object[columns.size()];
+			if (complexId == null || columns.size() == 1) {
 
-				int i = 0;
-				for (AggregatePath path : columns.paths()) {
-					tupleList[i++] = valueExtractor.apply(id, path);
+				for (Object id : ids) {
+
+					columns.forEach((ap, ci) -> {
+						JdbcValue writeValue = getWriteValue(ap.getRequiredLeafProperty(), valueExtractor.apply(id, ap));
+						parameterValues.add(writeValue.getValue());
+					});
 				}
+			} else {
+				for (Object id : ids) {
 
-				parameterValues.add(tupleList);
+					@Nullable
+					Object[] tupleList = new Object[columns.size()];
+
+					int i = 0;
+					for (AggregatePath path : columns.paths()) {
+						tupleList[i++] = getWriteValue(path.getRequiredLeafProperty(), valueExtractor.apply(id, path)).getValue();
+					}
+
+					parameterValues.add(tupleList);
+				}
 			}
 
 			parameterSource.addValue(SqlGenerator.IDS_SQL_PARAMETER, parameterValues);
@@ -232,25 +244,20 @@ public class SqlParametersFactory {
 				converter.getTargetSqlType(property));
 	}
 
+	private JdbcValue getWriteValue(RelationalPersistentProperty property, @Nullable Object value) {
+		return converter.writeJdbcValue(value, converter.getColumnType(property), converter.getTargetSqlType(property));
+	}
+
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
 			Class<?> javaType) {
-
 		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.targetSqlTypeFor(javaType));
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
 			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
-		JdbcValue jdbcValue = converter.writeJdbcValue( //
-				value, //
-				javaType, //
-				sqlType //
-		);
-
-		parameterSource.addValue( //
-				paramName, //
-				jdbcValue.getValue(), //
-				jdbcValue.getJdbcType().getVendorTypeNumber());
+		JdbcValue jdbcValue = converter.writeJdbcValue(value, javaType, sqlType);
+		parameterSource.addValue(paramName, jdbcValue);
 	}
 
 	@SuppressWarnings("unchecked")

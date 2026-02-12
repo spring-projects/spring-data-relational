@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,12 +31,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DataAccessException;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
@@ -44,6 +50,8 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -60,6 +68,8 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 
 	@Autowired private R2dbcEntityTemplate entityTemplate;
 
+	@Autowired private WithIdentifierConversion withIdentifierConversion;
+
 	@Autowired private RelationalMappingContext mappingContext;
 
 	@Configuration
@@ -68,6 +78,11 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
+		}
+
+		@Bean
+		WithIdentifierConversion withIdentifierConversion(R2dbcEntityOperations operations) {
+			return new R2dbcRepositoryFactory(operations).getRepository(WithIdentifierConversion.class);
 		}
 
 		@Override
@@ -79,6 +94,12 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 			context.setForceQuote(false);
 
 			return context;
+		}
+
+		@Override
+		protected List<Object> getCustomConverters() {
+			return List.of(LongToLongIdentifierConverter.INSTANCE, LongIdentifierToLongConverter.INSTANCE,
+					IntegerToLongIdentifierConverter.INSTANCE);
 		}
 	}
 
@@ -92,17 +113,30 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		return H2TestSupport.CREATE_TABLE_LEGOSET_WITH_ID_GENERATION;
 	}
 
-	@Test // GH-90
-	void shouldInsertNewObjectWithGivenId() {
+	@Override
+	void dropTables(JdbcOperations jdbc) {
+		super.dropTables(jdbc);
+		this.jdbc.execute("DROP TABLE IF EXISTS always_new");
+		this.jdbc.execute("DROP TABLE IF EXISTS with_converted_identifier");
+	}
 
-		try {
-			this.jdbc.execute("DROP TABLE always_new");
-		} catch (DataAccessException e) {}
+	@Override
+	void createTables(JdbcOperations jdbc) {
+		super.createTables(jdbc);
 
 		this.jdbc.execute("CREATE TABLE always_new (\n" //
 				+ "    id          integer PRIMARY KEY,\n" //
 				+ "    name        varchar(255) NOT NULL\n" //
 				+ ");");
+
+		this.jdbc.execute("CREATE TABLE with_converted_identifier (\n" //
+				+ "    id          serial PRIMARY KEY,\n" //
+				+ "    name        varchar(255) NOT NULL\n" //
+				+ ");");
+	}
+
+	@Test // GH-90
+	void shouldInsertNewObjectWithGivenId() {
 
 		RelationalEntityInformation<AlwaysNew, Long> entityInformation = new MappingRelationalEntityInformation<>(
 				(RelationalPersistentEntity<AlwaysNew>) mappingContext.getRequiredPersistentEntity(AlwaysNew.class));
@@ -133,6 +167,70 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 				.verifyComplete();
 	}
 
+	@Test // GH-2225
+	void findAllByIdWithIdConverter() {
+
+		List<WithConvertedIdentifier> result = new ArrayList<>();
+		this.withIdentifierConversion
+				.saveAll(List.of(new WithConvertedIdentifier("one"), new WithConvertedIdentifier("two"),
+						new WithConvertedIdentifier("three")))
+				.as(StepVerifier::create) //
+				.recordWith(() -> result) //
+				.expectNextCount(3) //
+				.verifyComplete();
+
+		assertThat(result).hasSize(3);
+		withIdentifierConversion.findAllById(result.stream().map(WithConvertedIdentifier::getId).toList())
+				.as(StepVerifier::create) //
+				.expectNextCount(3) //
+				.verifyComplete();
+	}
+
+	@Test // GH-2225
+	void deleteAllByIdWithIdConverter() {
+
+		List<WithConvertedIdentifier> result = new ArrayList<>();
+		this.withIdentifierConversion
+				.saveAll(List.of(new WithConvertedIdentifier("one"), new WithConvertedIdentifier("two"),
+						new WithConvertedIdentifier("three")))
+				.as(StepVerifier::create) //
+				.recordWith(() -> result) //
+				.expectNextCount(3) //
+				.verifyComplete();
+
+		assertThat(result).hasSize(3);
+		withIdentifierConversion.deleteAllById(result.stream().map(WithConvertedIdentifier::getId).toList())
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		withIdentifierConversion.count() //
+				.as(StepVerifier::create) //
+				.expectNext(0L) //
+				.verifyComplete();
+	}
+
+	@Test // GH-2225
+	void deleteAllWithIdConverter() {
+
+		List<WithConvertedIdentifier> result = new ArrayList<>();
+		this.withIdentifierConversion
+				.saveAll(List.of(new WithConvertedIdentifier("one"), new WithConvertedIdentifier("two"),
+						new WithConvertedIdentifier("three")))
+				.as(StepVerifier::create) //
+				.recordWith(() -> result) //
+				.expectNextCount(3) //
+				.verifyComplete();
+
+		assertThat(result).hasSize(3);
+		withIdentifierConversion.deleteAll(result) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		withIdentifierConversion.count().as(StepVerifier::create) //
+				.expectNext(0L) //
+				.verifyComplete();
+	}
+
 	static class AlwaysNew implements Persistable<Long> {
 
 		@Id Long id;
@@ -153,4 +251,70 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 			return true;
 		}
 	}
+
+	record LongIdentifier(Long id) {
+	}
+
+	@WritingConverter
+	enum LongIdentifierToLongConverter implements Converter<LongIdentifier, Long> {
+
+		INSTANCE;
+
+		@Override
+		public Long convert(LongIdentifier source) {
+			return source.id;
+		}
+	}
+
+	@ReadingConverter
+	enum LongToLongIdentifierConverter implements Converter<Long, LongIdentifier> {
+
+		INSTANCE;
+
+		@Override
+		public LongIdentifier convert(Long source) {
+			return new LongIdentifier(source);
+		}
+	}
+
+	@ReadingConverter
+	enum IntegerToLongIdentifierConverter implements Converter<Integer, LongIdentifier> {
+
+		INSTANCE;
+
+		@Override
+		public LongIdentifier convert(Integer source) {
+			return new LongIdentifier(source.longValue());
+		}
+	}
+
+	public static class WithConvertedIdentifier {
+
+		@Id LongIdentifier id;
+		String name;
+
+		public WithConvertedIdentifier() {}
+
+		public WithConvertedIdentifier(String name) {
+			this.name = name;
+		}
+
+		public LongIdentifier getId() {
+			return id;
+		}
+
+		public void setId(LongIdentifier id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	interface WithIdentifierConversion extends ReactiveCrudRepository<WithConvertedIdentifier, LongIdentifier> {}
 }

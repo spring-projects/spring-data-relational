@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
 
@@ -38,6 +40,17 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
 	private final Set<SqlIdentifier> identifiers = new HashSet<>(16, 1f);
 	private final Map<String, Object> namesToValues = new HashMap<>(16, 1f);
+
+	/**
+	 * Add a {@link JdbcValue} using its {@link SqlIdentifier parameter nname} and type information to this parameter
+	 * source.
+	 *
+	 * @param paramName
+	 * @param jdbcValue
+	 */
+	public void addValue(SqlIdentifier paramName, JdbcValue jdbcValue) {
+		addValue(paramName, jdbcValue.getValue(), jdbcValue.getJdbcType().getVendorTypeNumber());
+	}
 
 	@Override
 	public boolean hasValue(String paramName) {
