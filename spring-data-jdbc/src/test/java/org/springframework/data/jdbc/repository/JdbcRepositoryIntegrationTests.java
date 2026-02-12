@@ -64,7 +64,6 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.*;
-import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
@@ -79,7 +78,10 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
 import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
@@ -119,7 +121,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired JdbcAggregateOperations aggregateOperations;
+	@Autowired RelationalMappingContext mappingContext;
 	@Autowired DummyEntityRepository repository;
 	@Autowired WithIdentifierConversion withIdentifierConversion;
 
@@ -1741,7 +1743,7 @@ public class JdbcRepositoryIntegrationTests {
 		@Primary
 		CustomConversions jdbcCustomConversions(Dialect dialect) {
 			return JdbcConfiguration.createCustomConversions((JdbcDialect) dialect,
-					List.of(LongIdentifierToLongConverter.INSTANCE, LongToLongIdentifierConverter.INSTANCE));
+					List.of(LongIdentifierToLongConverter.INSTANCE, NumberToLongIdentifierConverter.INSTANCE));
 		}
 
 		@Bean
@@ -1786,6 +1788,22 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		public EvaluationContextExtension evaluationContextExtension() {
 			return new MyIdContextProvider();
+		}
+
+		@Bean
+		NamingStrategy namingStrategy() {
+
+			return new DefaultNamingStrategy() {
+				@Override
+				public String getTableName(Class<?> type) {
+
+					if (type == WithConvertedIdentifier.class) {
+						return super.getTableName(DummyEntity.class);
+					}
+
+					return super.getTableName(type);
+				}
+			};
 		}
 
 	}
@@ -2010,17 +2028,16 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@ReadingConverter
-	enum LongToLongIdentifierConverter implements Converter<Long, LongIdentifier> {
+	enum NumberToLongIdentifierConverter implements Converter<Number, LongIdentifier> {
 
 		INSTANCE;
 
 		@Override
-		public LongIdentifier convert(Long source) {
-			return new LongIdentifier(source);
+		public LongIdentifier convert(Number source) {
+			return new LongIdentifier(source.longValue());
 		}
 	}
 
-	@Table("DUMMY_ENTITY")
 	public static class WithConvertedIdentifier {
 
 		@Id LongIdentifier idProp;
