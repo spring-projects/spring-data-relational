@@ -489,22 +489,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> void deleteAll(Iterable<? extends T> instances) {
 
 		if (!instances.iterator().hasNext()) {
 			return;
 		}
 
-		Map<Class, List<Object>> groupedByType = new HashMap<>();
-
+		Map<Class<Object>, List<Object>> groupedByType = new HashMap<>();
 		for (T instance : instances) {
-
-			Class<?> type = instance.getClass();
-			final List<Object> list = groupedByType.computeIfAbsent(type, __ -> new ArrayList<>());
-			list.add(instance);
+			groupedByType.computeIfAbsent((Class) instance.getClass(), __ -> new ArrayList<>()).add(instance);
 		}
 
-		for (Class type : groupedByType.keySet()) {
+		for (Class<Object> type : groupedByType.keySet()) {
 			doDeleteAll(groupedByType.get(type), type);
 		}
 	}

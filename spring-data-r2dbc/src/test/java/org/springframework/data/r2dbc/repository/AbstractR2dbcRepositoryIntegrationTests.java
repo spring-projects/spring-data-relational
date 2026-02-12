@@ -25,7 +25,6 @@ import reactor.test.StepVerifier;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 import javax.sql.DataSource;
@@ -33,6 +32,7 @@ import javax.sql.DataSource;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -566,29 +566,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		public String getUnknown() {
 			return this.unknown;
-		}
-
-		public boolean equals(final Object o) {
-			if (o == this) return true;
-			if (!(o instanceof final LegoDto other))
-				return false;
-			final Object this$name = this.getName();
-			final Object other$name = other.getName();
-			if (!Objects.equals(this$name, other$name))
-				return false;
-			final Object this$unknown = this.getUnknown();
-			final Object other$unknown = other.getUnknown();
-			return Objects.equals(this$unknown, other$unknown);
-		}
-
-		public int hashCode() {
-			final int PRIME = 59;
-			int result = 1;
-			final Object $name = this.getName();
-			result = result * PRIME + ($name == null ? 43 : $name.hashCode());
-			final Object $unknown = this.getUnknown();
-			result = result * PRIME + ($unknown == null ? 43 : $unknown.hashCode());
-			return result;
 		}
 
 		public String toString() {
