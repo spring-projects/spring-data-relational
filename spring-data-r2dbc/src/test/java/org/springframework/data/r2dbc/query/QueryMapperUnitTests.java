@@ -28,6 +28,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -357,6 +358,21 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getCondition()).hasToString("person.name IN (?[$1], ?[$2], ?[$3])");
 	}
 
+	@Test // GH-2208
+	void shouldMapInComposite() {
+
+		Criteria criteria = Criteria.where("id").in(new CompositeId(1, "a"));
+		assertThat(map(criteria, WithCompositeId.class).getCondition())
+				.hasToString("(withcompositeid.tenant = ?[$1] AND withcompositeid.name = ?[$2])");
+
+		criteria = Criteria.where("id").in(new CompositeId(1, "a"), new CompositeId(2, "b"));
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
+				"(withcompositeid.tenant = ?[$1] AND withcompositeid.name = ?[$2]) OR (withcompositeid.tenant = ?[$3] AND withcompositeid.name = ?[$4])");
+
+		criteria = Criteria.where("id").in();
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString("1 = 0");
+	}
+
 	@Test // gh-64, gh-177
 	void shouldMapIsNotIn() {
 
@@ -365,6 +381,21 @@ class QueryMapperUnitTests {
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition()).hasToString("person.name NOT IN (?[$1], ?[$2], ?[$3])");
+	}
+
+	@Test // GH-2208
+	void shouldMapNotInComposite() {
+
+		Criteria criteria = Criteria.where("id").notIn(new CompositeId(1, "a"));
+		assertThat(map(criteria, WithCompositeId.class).getCondition())
+				.hasToString("(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2])");
+
+		criteria = Criteria.where("id").notIn(new CompositeId(1, "a"), new CompositeId(2, "b"));
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
+				"(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2]) OR (withcompositeid.tenant != ?[$3] AND withcompositeid.name != ?[$4])");
+
+		criteria = Criteria.where("id").notIn();
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString("1 = 0");
 	}
 
 	@Test
@@ -643,6 +674,13 @@ class QueryMapperUnitTests {
 		boolean state;
 
 		JsonNode jsonNode;
+	}
+
+	record CompositeId(int tenant, String name) {
+	}
+
+	record WithCompositeId(@Id CompositeId id) {
+
 	}
 
 	static class WithEmbeddable {

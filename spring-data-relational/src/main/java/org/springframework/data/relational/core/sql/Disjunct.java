@@ -35,4 +35,9 @@ enum Disjunct implements Condition {
 		return Condition.super.not();
 	}
 
+	@Override
+	public String toString() {
+		return "1 = 0";
+	}
+
 }

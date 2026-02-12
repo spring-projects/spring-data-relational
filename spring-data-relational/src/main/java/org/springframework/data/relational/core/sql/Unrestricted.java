@@ -39,4 +39,9 @@ enum Unrestricted implements Condition {
 	public Condition not() {
 		return Disjunct.INSTANCE;
 	}
+
+	@Override
+	public String toString() {
+		return "1 = 1";
+	}
 }

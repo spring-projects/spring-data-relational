@@ -284,7 +284,7 @@ public class QueryMapper {
 
 			Condition condition = getCondition(criterion, bindings, table, entity);
 			if (condition != null) {
-				result = combine(criterion, mapped, criterion.getCombinator(), condition);
+				result = combine(mapped, criterion.getCombinator(), condition);
 			}
 
 			if (result != null) {
@@ -313,8 +313,7 @@ public class QueryMapper {
 			}
 
 			Condition condition = unroll(criterion, table, entity, bindings);
-
-			mapped = combine(criterion, mapped, combinator, condition);
+			mapped = combine(mapped, combinator, condition);
 		}
 
 		return mapped;
@@ -331,14 +330,13 @@ public class QueryMapper {
 		if (criteria.isGroup()) {
 
 			Condition condition = unrollGroup(criteria.getGroup(), table, criteria.getCombinator(), entity, bindings);
-
 			return condition == null ? null : Conditions.nest(condition);
 		}
 
 		return mapCondition(criteria, bindings, table, entity);
 	}
 
-	private Condition combine(CriteriaDefinition criteria, @Nullable Condition currentCondition,
+	private Condition combine(@Nullable Condition currentCondition,
 			CriteriaDefinition.Combinator combinator, Condition nextCondition) {
 
 		if (currentCondition == null) {
@@ -360,14 +358,49 @@ public class QueryMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		SqlIdentifier criteriaColumn = criteria.getColumn();
-
 		Assert.notNull(criteriaColumn, "CriteriaColumn must not be null");
-
 		Field propertyField = createPropertyField(entity, criteriaColumn, this.mappingContext);
+		Comparator comparator = criteria.getComparator();
+		Object value = criteria.getValue();
 
 		if (propertyField.isEmbedded() && entity != null) {
 
-			Object value = criteria.getValue();
+			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
+					&& value instanceof Collection<?> collection) {
+
+				Condition condition = null;
+
+				for (Object o : collection) {
+
+					CriteriaWrapper cw = new CriteriaWrapper(criteria) {
+
+						@Override
+						public @Nullable Comparator getComparator() {
+							return Comparator.IN.equals(comparator) ? Comparator.EQ : Comparator.NEQ;
+						}
+
+						@Nullable
+						@Override
+						public Object getValue() {
+							return o;
+						}
+
+						@Override
+						public @Nullable SqlIdentifier getColumn() {
+							return criteriaColumn;
+						}
+					};
+
+					Condition c = Conditions.nest(mapCondition(cw, bindings, table, entity));
+					condition = condition == null ? c : condition.or(c);
+				}
+
+				if (condition == null) {
+					return Conditions.unrestricted().not();
+				}
+
+				return condition;
+			}
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
 					.getRequiredPersistentEntity(propertyField.getRequiredProperty());
@@ -407,8 +440,6 @@ public class QueryMapper {
 		Object mappedValue;
 		Class<?> typeHint;
 
-		Comparator comparator = criteria.getComparator();
-
 		Assert.state(comparator != null, "CriteriaComparator must not be null");
 
 		if (criteria.getValue() instanceof Parameter parameter) {
@@ -428,7 +459,6 @@ public class QueryMapper {
 		}
 
 		return createCondition(column, mappedValue, typeHint, bindings, comparator, criteria.isIgnoreCase());
-
 	}
 
 	static PersistentPropertyAccessor<Object> getEmbeddedPropertyAccessor(@Nullable Object value,

@@ -53,6 +53,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.query.FluentQuery;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -95,11 +96,18 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				strategy);
 
 		this.jdbc = createJdbcTemplate(createDataSource());
-		try {
-			this.jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {}
+		dropTables(this.jdbc);
+		createTables(this.jdbc);
+	}
 
+	void createTables(JdbcOperations jdbc) {
 		this.jdbc.execute(getCreateTableStatement());
+	}
+
+	void dropTables(JdbcOperations jdbc) {
+		try {
+			jdbc.execute("DROP TABLE legoset");
+		} catch (DataAccessException e) {}
 	}
 
 	/**
