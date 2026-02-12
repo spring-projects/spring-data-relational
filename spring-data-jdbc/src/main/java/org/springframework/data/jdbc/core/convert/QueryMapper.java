@@ -55,6 +55,7 @@ import org.springframework.util.ClassUtils;
  * @author Jens Schauder
  * @author Yan Qiang
  * @author Mikhail Fedorov
+ * @author Christoph Strobl
  * @since 3.0
  */
 public class QueryMapper {
@@ -277,9 +278,50 @@ public class QueryMapper {
 		Assert.notNull(criteriaColumn, "Column must not be null");
 
 		Field propertyField = createPropertyField(entity, criteriaColumn, this.mappingContext);
+		Comparator comparator = criteria.getComparator();
+		Object value = criteria.getValue();
 
 		// Single embedded entity
 		if (propertyField.isEmbedded()) {
+
+			// IN/NOT_IN with collection of composite/embedded values: expand to (… AND …) OR (…)
+			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
+				&& value instanceof Collection<?> collection) {
+
+				Condition condition = null;
+
+				for (Object o : collection) {
+
+					CriteriaWrapper cw = new CriteriaWrapper(criteria) {
+
+						@Override
+						public @Nullable Comparator getComparator() {
+							return Comparator.IN.equals(comparator) ? Comparator.EQ : Comparator.NEQ;
+						}
+
+						@Nullable
+						@Override
+						public Object getValue() {
+							return o;
+						}
+
+						@Override
+						public @Nullable SqlIdentifier getColumn() {
+							return criteriaColumn;
+						}
+					};
+
+					Condition c = mapCondition(cw, parameterSource, table, entity);
+					condition = condition == null ? c : condition.or(c);
+				}
+
+				if (condition == null) {
+					return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
+				}
+
+				return condition;
+			}
+
 			PersistentPropertyPath<RelationalPersistentProperty> path = ((MetadataBackedField) propertyField).getPath();
 
 			Assert.state(path != null, "Path must not be null");
@@ -291,7 +333,6 @@ public class QueryMapper {
 		Column column = table.column(propertyField.getMappedColumnName());
 		Object mappedValue;
 		SQLType sqlType;
-		Comparator comparator = criteria.getComparator();
 
 		Assert.notNull(comparator, "Comparator must not be null");
 
@@ -678,6 +719,69 @@ public class QueryMapper {
 		} while (values.containsKey(uniqueName));
 
 		return uniqueName;
+	}
+
+	abstract static class CriteriaWrapper implements CriteriaDefinition {
+
+		private final CriteriaDefinition delegate;
+
+		public CriteriaWrapper(CriteriaDefinition delegate) {
+			this.delegate = delegate;
+		}
+
+		@Nullable
+		@Override
+		public Comparator getComparator() {
+			return delegate.getComparator();
+		}
+
+		@Override
+		public boolean isIgnoreCase() {
+			return delegate.isIgnoreCase();
+		}
+		@Override
+		public boolean isGroup() {
+			return false;
+		}
+
+		@Override
+		public List<CriteriaDefinition> getGroup() {
+			return List.of();
+		}
+
+		@Nullable
+		@Override
+		public SqlIdentifier getColumn() {
+			return null;
+		}
+
+
+		@Nullable
+		@Override
+		public Object getValue() {
+			return null;
+		}
+
+		@Nullable
+		@Override
+		public CriteriaDefinition getPrevious() {
+			return null;
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return false;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return false;
+		}
+
+		@Override
+		public Combinator getCombinator() {
+			throw new UnsupportedOperationException("No combinator for AbstractCriteria");
+		}
 	}
 
 	/**

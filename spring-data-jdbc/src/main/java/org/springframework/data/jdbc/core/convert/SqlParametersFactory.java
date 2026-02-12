@@ -154,7 +154,7 @@ public class SqlParametersFactory {
 			ParameterSourceHolder holder = new ParameterSourceHolder();
 			BiFunction<Object, AggregatePath, Object> valueExtractor = getIdMapper(complexId);
 
-			List<@Nullable Object> parameterValues = new ArrayList<>(ids instanceof Collection<?> c ? c.size() : 16);
+			List<Object> parameterValues = new ArrayList<>(ids instanceof Collection<?> c ? c.size() : 16);
 
 			if (complexId == null || columns.size() == 1) {
 
@@ -164,7 +164,7 @@ public class SqlParametersFactory {
 			} else {
 				for (Object id : ids) {
 
-					List<@Nullable Object> tuple = new ArrayList<>(columns.size());
+					List<Object> tuple = new ArrayList<>(columns.size());
 					appendIdentifier(holder, columns, id, valueExtractor, tuple);
 					parameterValues.add(tuple.toArray(new Object[0]));
 				}

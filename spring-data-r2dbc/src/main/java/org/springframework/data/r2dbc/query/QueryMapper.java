@@ -396,7 +396,7 @@ public class QueryMapper {
 				}
 
 				if (condition == null) {
-					return Conditions.unrestricted().not();
+					return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
 				}
 
 				return condition;

@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
@@ -47,6 +48,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Mikhail Fedorov
+ * @author Christoph Strobl
  */
 public class QueryMapperUnitTests {
 
@@ -322,6 +324,36 @@ public class QueryMapperUnitTests {
 		assertThat(condition).hasToString("person.\"NAME\" NOT IN (?[:name], ?[:name1], ?[:name2])");
 	}
 
+	@Test // GH-2208
+	void shouldMapInComposite() {
+
+		Criteria criteria = Criteria.where("id").in(new CompositeId(1, "a"));
+		assertThat(map(criteria, WithCompositeId.class))
+				.hasToString("(withcompositeid.\"TENANT\" = ?[:tenant] AND withcompositeid.\"NAME\" = ?[:name])");
+
+		criteria = Criteria.where("id").in(new CompositeId(1, "a"), new CompositeId(2, "b"));
+		assertThat(map(criteria, WithCompositeId.class)).hasToString(
+				"(withcompositeid.\"TENANT\" = ?[:tenant2] AND withcompositeid.\"NAME\" = ?[:name3]) OR (withcompositeid.\"TENANT\" = ?[:tenant4] AND withcompositeid.\"NAME\" = ?[:name5])");
+
+		criteria = Criteria.where("id").in();
+		assertThat(map(criteria, WithCompositeId.class)).hasToString("1 = 0");
+	}
+
+	@Test // GH-2208
+	void shouldMapNotInComposite() {
+
+		Criteria criteria = Criteria.where("id").notIn(new CompositeId(1, "a"));
+		assertThat(map(criteria, WithCompositeId.class))
+				.hasToString("(withcompositeid.\"TENANT\" != ?[:tenant] AND withcompositeid.\"NAME\" != ?[:name])");
+
+		criteria = Criteria.where("id").notIn(new CompositeId(1, "a"), new CompositeId(2, "b"));
+		assertThat(map(criteria, WithCompositeId.class)).hasToString(
+				"(withcompositeid.\"TENANT\" != ?[:tenant2] AND withcompositeid.\"NAME\" != ?[:name3]) OR (withcompositeid.\"TENANT\" != ?[:tenant4] AND withcompositeid.\"NAME\" != ?[:name5])");
+
+		criteria = Criteria.where("id").notIn();
+		assertThat(map(criteria, WithCompositeId.class)).hasToString("1 = 1");
+	}
+
 	@Test
 	void shouldMapIsNotInWithCollectionToStringConverter() {
 
@@ -464,10 +496,22 @@ public class QueryMapperUnitTests {
 				context.getRequiredPersistentEntity(Person.class));
 	}
 
+	private Condition map(Criteria criteria, Class<?> entityType) {
+
+		return mapper.getMappedObject(parameterSource, criteria, Table.create("withcompositeid"),
+				context.getRequiredPersistentEntity(entityType));
+	}
+
 	static class Person {
 
 		String name;
 		@Column("another_name") String alternative;
+	}
+
+	record CompositeId(int tenant, String name) {
+	}
+
+	record WithCompositeId(@Id CompositeId id) {
 	}
 
 	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
