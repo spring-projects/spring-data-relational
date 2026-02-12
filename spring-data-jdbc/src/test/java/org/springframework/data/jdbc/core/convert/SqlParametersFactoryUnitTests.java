@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * Unit tests for {@link SqlParametersFactory}.
  *
  * @author Chirag Tailor
+ * @author Mark Paluch
  */
 class SqlParametersFactoryUnitTests {
 
@@ -52,17 +53,22 @@ class SqlParametersFactoryUnitTests {
 	MappingJdbcConverter converter = new MappingJdbcConverter(context, relationResolver);
 	SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter);
 
-	@Test // DATAJDBC-412
+	@Test // DATAJDBC-412, GH-2225
 	void considersConfiguredWriteConverterForIdValueObjects_onRead() {
 
 		SqlParametersFactory sqlParametersFactory = createSqlParametersFactoryWithConverters(
 				singletonList(IdValueToStringConverter.INSTANCE));
 
 		String rawId = "batman";
-		SqlIdentifierParameterSource sqlParameterSource = sqlParametersFactory.forQueryById(new IdValue(rawId),
+		SqlIdentifierParameterSource findById = sqlParametersFactory.forQueryById(new IdValue(rawId),
 				WithValueObjectId.class);
 
-		assertThat(sqlParameterSource.getValue("id")).isEqualTo(rawId);
+		assertThat(findById.getValue("id")).isEqualTo(rawId);
+
+		SqlIdentifierParameterSource findByIds = sqlParametersFactory.forQueryByIds(List.of(new IdValue(rawId)),
+				WithValueObjectId.class);
+
+		assertThat(findByIds.getValue("ids")).isEqualTo(List.of(rawId));
 	}
 
 	@Test // DATAJDBC-349
