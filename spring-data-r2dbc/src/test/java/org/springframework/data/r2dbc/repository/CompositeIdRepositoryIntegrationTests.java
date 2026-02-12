@@ -22,6 +22,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,12 +59,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for repositories of entities with a composite id.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 @ExtendWith(SpringExtension.class)
 public class CompositeIdRepositoryIntegrationTests {
 
-	@Autowired private WithCompositeIdRepository repository;
-	private JdbcTemplate jdbc;
+	@Autowired WithCompositeIdRepository repository;
+
+	JdbcTemplate jdbc;
 
 	@Configuration
 	@EnableR2dbcRepositories(includeFilters = @ComponentScan.Filter(value = WithCompositeIdRepository.class,
@@ -203,6 +207,29 @@ public class CompositeIdRepositoryIntegrationTests {
 
 		// nothing to be found under the old name
 		repository.findByName("Jane Margolis").as(StepVerifier::create).verifyComplete();
+	}
+
+	@Test // GH-2208
+	void deleteAll() {
+
+		List<WithCompositeId> objects = new ArrayList<>();
+		repository.findAll().as(StepVerifier::create) //
+				.recordWith(() -> objects) //
+				.expectNextCount(2) //
+				.verifyComplete();
+
+		repository.deleteAll(objects).as(StepVerifier::create).verifyComplete();
+		repository.findAll().as(StepVerifier::create).verifyComplete();
+	}
+
+	@Test // GH-2208
+	void emptyDeleteAllDoesNotDeleteItems() {
+
+		repository.deleteAll(List.of()).as(StepVerifier::create).verifyComplete();
+
+		repository.findAll().as(StepVerifier::create) //
+				.expectNextCount(2) //
+				.verifyComplete();
 	}
 
 	interface WithCompositeIdRepository extends ReactiveCrudRepository<WithCompositeId, CompositeId> {
