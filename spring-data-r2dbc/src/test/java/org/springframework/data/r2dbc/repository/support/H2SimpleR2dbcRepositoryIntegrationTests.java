@@ -316,5 +316,5 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 		}
 	}
 
-	interface WithIdentifierConversion extends ReactiveCrudRepository<WithConvertedIdentifier, LongIdentifier> {}
+	public interface WithIdentifierConversion extends ReactiveCrudRepository<WithConvertedIdentifier, LongIdentifier> {}
 }
