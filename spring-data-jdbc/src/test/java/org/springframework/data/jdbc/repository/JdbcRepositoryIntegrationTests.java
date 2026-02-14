@@ -1619,9 +1619,9 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Test
 	void queryByWindowKeysetPosition() {
-		DummyEntity one = repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
+		repository.save(createEntity("one", it -> it.setPointInTime(Instant.ofEpochSecond(1000))));
 		DummyEntity two = repository.save(createEntity("two", it -> it.setPointInTime(Instant.ofEpochSecond(2000))));
-		DummyEntity three = repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
+		repository.save(createEntity("three", it -> it.setPointInTime(Instant.ofEpochSecond(3000))));
 
 		Window<DummyEntity> result = repository.findFirst2ByOrderByIdPropAscPointInTimeAsc(ScrollPosition.keyset());
 		assertSoftly(softAssertions -> {

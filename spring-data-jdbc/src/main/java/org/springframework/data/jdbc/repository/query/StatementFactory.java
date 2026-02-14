@@ -52,6 +52,7 @@ import org.springframework.data.util.Predicates;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Contract;
+import org.springframework.util.Assert;
 
 /**
  * Utility to render SQL statements for entities, count/exists projections, and slice queries. This is an internal
@@ -249,12 +250,10 @@ public class StatementFactory {
 			Map<String, Sort.Direction> directions = sort.stream()
 					.collect(Collectors.toMap(Sort.Order::getProperty, Sort.Order::getDirection));
 
-			Sort.Direction dir = directions.getOrDefault(columns.get(0), Sort.DEFAULT_DIRECTION);
-
-			return buildKeysetCriteria(columns, values, keyset.scrollsForward(), dir);
+			return buildKeysetCriteria(columns, values, keyset.scrollsForward(), directions);
 		}
 
-		Criteria buildKeysetCriteria(List<String> columns, List<Object> values, boolean isForward, Sort.Direction dir) {
+		Criteria buildKeysetCriteria(List<String> columns, List<Object> values, boolean isForward, Map<String, Sort.Direction> directions) {
 			if (columns.isEmpty())
 				return Criteria.empty();
 
@@ -263,22 +262,29 @@ public class StatementFactory {
 			if (prop != null)
 				column = prop.getName();
 
-			Object value = values.get(0);
+			Object val = values.get(0);
+			Assert.notNull(val, "ScrollPosition key value should be not null.");
 
-			boolean isAscending = isForward ^ dir.isDescending();
+			columns = columns.subList(1, columns.size());
+			values = values.subList(1, values.size());
 
-			Criteria gte = isAscending ? Criteria.where(column).greaterThanOrEquals(value)
-					: Criteria.where(column).lessThanOrEquals(value);
+			Sort.Direction direction = directions.get(column);
+			Assert.notNull(direction, "ScrollPosition key should be sorted.");
 
-			Criteria gt = isAscending ? Criteria.where(column).greaterThan(value) : Criteria.where(column).lessThan(value);
+			boolean isAscending = isForward ^ direction.isDescending();
 
-			if (columns.size() == 1)
+			Criteria gt
+				= isAscending ? Criteria.where(column).greaterThan(val) : Criteria.where(column).lessThan(val);
+
+			if (columns.isEmpty())
 				return gt;
 
-			Criteria nested = buildKeysetCriteria(columns.subList(1, columns.size()), values.subList(1, values.size()),
-					isForward, dir);
+			Criteria gte
+				= isAscending ? Criteria.where(column).greaterThanOrEquals(val) : Criteria.where(column).lessThanOrEquals(val);
 
-			return gte.and(gt.or(nested));
+			Criteria nested = gt.or(buildKeysetCriteria(columns, values, isForward, directions));
+
+			return gte.and(nested);
 		}
 
 		SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,

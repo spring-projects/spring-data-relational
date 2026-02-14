@@ -207,9 +207,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 
 		StatementFactory.SelectionBuilder selection = getSelection(entity);
 
-		selection.page(accessor.getPageable()).filter(criteria).orderBy(sort);
-
-		selection.scrollPosition(accessor.getScrollPosition());
+		selection.page(accessor.getPageable()).filter(criteria).orderBy(sort).scrollPosition(accessor.getScrollPosition());
 
 		if (this.lockMode.isPresent()) {
 			selection.lock(this.lockMode.get().value());
