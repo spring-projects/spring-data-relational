@@ -1,9 +1,9 @@
 name: Snapshots
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, 4.0.x, 3.5.x, 'issue/**' ]
-  workflow_dispatch:
 
 permissions: read-all
 
@@ -15,13 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Setup Java and Maven
-        uses: spring-projects/spring-data-release/actions/setup-maven@main
+        uses: spring-projects/spring-data-build/actions/setup-maven@main
         with:
           develocity-access-key: '${{ secrets.DEVELOCITY_ACCESS_KEY }}'
       - name: Prepare Docker Container Licenses
         run: ./ci/accept-third-party-license.sh
       - name: Deploy to Artifactory
-        uses: spring-projects/spring-data-release/actions/maven-artifactory-deploy@main
+        uses: spring-projects/spring-data-build/actions/maven-artifactory-deploy@main
         with:
           build-name: 'spring-data-relational'
           username: '${{ secrets.ARTIFACTORY_USERNAME }}'

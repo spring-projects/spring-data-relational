@@ -1,9 +1,9 @@
 name: CI Build
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, 4.0.x, 3.5.x, 'issue/**' ]
-  workflow_dispatch:
 
 permissions: read-all
 
@@ -17,13 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Setup Java and Maven
-        uses: spring-projects/spring-data-release/actions/setup-maven@main
+        uses: spring-projects/spring-data-build/actions/setup-maven@main
         with:
           java-version: ${{ matrix.java-version }}
           develocity-access-key: '${{ secrets.DEVELOCITY_ACCESS_KEY }}'
       - name: Prepare Docker Container Licenses
         run: ./ci/accept-third-party-license.sh
       - name: Build
-        uses: spring-projects/spring-data-release/actions/maven-build@main
+        uses: spring-projects/spring-data-build/actions/maven-build@main
         with:
           run: ./mvnw -Dsort -B -U -Pall-dbs clean dependency:list verify
