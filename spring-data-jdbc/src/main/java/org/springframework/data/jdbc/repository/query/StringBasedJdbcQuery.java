@@ -261,10 +261,10 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			JdbcValue jdbcValue = JdbcValueBindUtil.getBindValue(converter, value, parameter);
 			SQLType jdbcType = jdbcValue.getJdbcType();
 
-			if (jdbcType == JDBCType.OTHER) {
-				parameters.addValue(parameterName, jdbcValue.getValue());
-			} else {
+			if (jdbcType != null) {
 				parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
+			} else {
+				parameters.addValue(parameterName, jdbcValue.getValue());
 			}
 		}
 
