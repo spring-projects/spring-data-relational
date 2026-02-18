@@ -24,6 +24,7 @@ import static org.springframework.data.domain.ExampleMatcher.StringMatcher.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 
 /**
@@ -39,6 +42,7 @@ import org.springframework.data.relational.core.query.Query;
  *
  * @author Greg Turnquist
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 class RelationalExampleMapperTests {
 
@@ -201,7 +205,7 @@ class RelationalExampleMapperTests {
 
 		Person person = new Person(null, "do", null, null, null, null);
 
-		ExampleMatcher matcher = matching().withStringMatcher(ExampleMatcher.StringMatcher.REGEX);
+		ExampleMatcher matcher = matching().withStringMatcher(REGEX);
 		Example<Person> example = Example.of(person, matcher);
 
 		assertThatIllegalStateException().isThrownBy(() -> exampleMapper.getMappedExample(example))
@@ -413,8 +417,100 @@ class RelationalExampleMapperTests {
 		assertThat(query.getCriteria().orElseThrow().toString()).doesNotContainIgnoringCase("address");
 	}
 
-	record Person(@Id @Nullable String id, @Nullable String firstname, @Nullable String lastname, @Nullable String secret,
-			@Nullable List<Possession> possessions, @Nullable Map<String, Address> addresses) {
+	// GH-1986
+	@Test
+	void shouldConsiderNullabilityForEmbeddedProperties() {
+		Example<EnclosingObject> example = Example.of( //
+                new EnclosingObject( //
+                        12L, //
+                        null, //
+                        new EmbeddableObject(null, "Potsdam", null)
+                ),
+				matching().withIgnorePaths("id").withIgnoreNullValues()
+		);
+
+		Query mappedExample = exampleMapper.getMappedExample(example);
+
+		Optional<CriteriaDefinition> criteria = mappedExample.getCriteria();
+
+		assertThat(criteria).isPresent();
+		assertThat(criteria.get().toString()).isEqualTo("(city = 'Potsdam')");
+	}
+
+	// GH-2099
+	@Test
+	void shouldConsiderDeeplyEmbeddedPropertiesWithSpecifiers() {
+		Example<EnclosingObject> example = Example.of( //
+                new EnclosingObject( //
+                        12L, // explicitly ignored
+                        null, // ignored because it is null
+                        new EmbeddableObject(
+								null, // ignored because it is null
+								"Potsdam", // should be included
+								new SecondLevelEmbeddable(
+										"postCodeContains", // should be included
+										"regionThatShouldBeIgnored", // explicitly ignored
+										12L // should be included with value being transformed
+								)
+						)
+                ),
+				matchingAny()
+						.withIgnorePaths(
+								"id",
+								"embeddableObject.secondLevelEmbeddable.region"
+						)
+						.withMatcher(
+								"embeddableObject.secondLevelEmbeddable.postCode",
+								matcher -> matcher.ignoreCase().contains()
+						)
+						.withMatcher(
+								"embeddableObject.secondLevelEmbeddable.forTransformation",
+								matcher -> matcher.transform(o ->
+										o.map(value -> (long) value * (long) value)
+								)
+						)
+						.withIgnoreNullValues()
+		);
+
+		Query mappedExample = exampleMapper.getMappedExample(example);
+
+		Optional<CriteriaDefinition> criteria = mappedExample.getCriteria();
+
+		assertThat(criteria).isPresent();
+		assertThat(criteria.get().toString()).isEqualTo("(city = 'Potsdam') OR (postCode LIKE '%postCodeContains%') OR (forTransformation = 144)");
+	}
+
+	record Person(
+			@Id @Nullable String id,
+			@Nullable String firstname,
+			@Nullable String lastname,
+			@Nullable String secret,
+			@Nullable List<Possession> possessions,
+			@Nullable Map<String, Address> addresses
+	) {
+	}
+
+	public static class EnclosingObject {
+		Long id;
+		String name;
+		@Embedded.Nullable EmbeddableObject embeddableObject;
+
+		public EnclosingObject(Long id, String name, EmbeddableObject embeddableObject) {
+			this.id = id;
+			this.name = name;
+			this.embeddableObject = embeddableObject;
+		}
+	}
+
+	record EmbeddableObject( //
+			String street, //
+			String city, //
+			@Embedded.Nullable SecondLevelEmbeddable secondLevelEmbeddable) {
+
+	}
+
+	record SecondLevelEmbeddable(String postCode, String region, Long forTransformation) {
+
 	}
 
 	record Possession(String name) {
