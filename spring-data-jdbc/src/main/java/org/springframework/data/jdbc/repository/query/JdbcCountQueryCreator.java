@@ -15,15 +15,10 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.repository.Lock;
-import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
@@ -40,12 +35,6 @@ public class JdbcCountQueryCreator extends JdbcQueryCreator {
 	public JdbcCountQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect, JdbcQueryMethod queryMethod,
 			RelationalParameterAccessor accessor, ReturnedType returnedType) {
 		super(tree, converter, dialect, queryMethod, accessor, returnedType);
-	}
-
-	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType, Optional<Lock> lockMode) {
-		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode);
 	}
 
 	@Override

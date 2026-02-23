@@ -202,10 +202,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) queryExecution, accessor.getPageable(),
 					() -> {
 
-						RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-
-						JdbcCountQueryCreator queryCreator = new JdbcCountQueryCreator(context, tree, converter, dialect,
-								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation());
+						JdbcCountQueryCreator queryCreator = new JdbcCountQueryCreator(tree, converter, dialect, getQueryMethod(),
+								accessor, processor.getReturnedType());
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
 						Object count = singleObjectQuery(new SingleColumnRowMapper<>(Number.class)).execute(countQuery.getQuery(),
@@ -224,10 +222,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 	ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor, ReturnedType returnedType) {
 
-		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
-				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation());
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(tree, converter, dialect, getQueryMethod(), accessor,
+				returnedType);
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
