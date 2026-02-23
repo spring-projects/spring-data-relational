@@ -31,6 +31,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
@@ -604,6 +607,32 @@ public class PartTreeJdbcQueryUnitTests {
 				.isThrownBy(() -> jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { 1L }), returnedType));
 	}
 
+	@Test // GH-2228
+	void createsPagedQuery() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class, Pageable.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
+				new Object[] { "John", PageRequest.of(0, 10, Sort.by("lastModified")) });
+		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
+
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains("ORDER BY \"users\".lastModified ASC OFFSET 0");
+	}
+
+	@Test // GH-2228
+	void createsSortedQuery() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class, Sort.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
+				new Object[] { "John", Sort.by("lastModified") });
+		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
+
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns);
+		assertThat(query.getQuery()).endsWith("ORDER BY \"users\".lastModified ASC");
+	}
+
 	@Test // DATAJDBC-318
 	void throwsExceptionWhenConditionKeywordIsUnsupported() throws Exception {
 
@@ -782,6 +811,10 @@ public class PartTreeJdbcQueryUnitTests {
 		List<User> findAllByActiveFalse();
 
 		List<User> findAllByFirstNameIgnoreCase(String firstName);
+
+		List<User> findAllByFirstName(String firstName, Pageable pageable);
+
+		List<User> findAllByFirstName(String firstName, Sort sort);
 
 		User findByIdIgnoringCase(Long id);
 
