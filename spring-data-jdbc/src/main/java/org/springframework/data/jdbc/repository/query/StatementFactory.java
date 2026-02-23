@@ -145,7 +145,6 @@ public class StatementFactory {
 
 			if (pageable != null) {
 				this.pageable = pageable;
-				orderBy(pageable.getSort());
 			}
 			return this;
 		}
@@ -201,6 +200,11 @@ public class StatementFactory {
 			SelectBuilder.SelectWhere whereBuilder = applyLimitAndOffset(limitOffsetBuilder);
 			SelectBuilder.SelectOrdered selectOrderBuilder = applyCriteria(criteria, entity, table, parameterSource,
 					whereBuilder);
+
+			Sort sort = this.sort;
+			if (sort.isUnsorted()) {
+				sort = pageable.getSort();
+			}
 
 			if (mode == Mode.SLICE || mode == Mode.SELECT) {
 				selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
