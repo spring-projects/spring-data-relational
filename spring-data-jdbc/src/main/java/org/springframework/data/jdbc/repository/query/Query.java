@@ -32,7 +32,6 @@ import org.springframework.jdbc.core.RowMapper;
  * <p>
  * You can also specify the way to extract data from {@link java.sql.ResultSet}. There are 4 attribute of this
  * annotation you can set to do that:
- * <p>
  * <ol>
  * <li>{@link #resultSetExtractorRef()}</li>
  * <li>{@link #resultSetExtractorClass()}</li>
