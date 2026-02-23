@@ -333,7 +333,7 @@ public class QueryMapper {
 			return condition == null ? null : Conditions.nest(condition);
 		}
 
-		return mapCondition(criteria, bindings, table, entity);
+		return mapCondition(criteria, bindings, table, entity, false);
 	}
 
 	private Condition combine(@Nullable Condition currentCondition,
@@ -355,7 +355,7 @@ public class QueryMapper {
 	}
 
 	private Condition mapCondition(CriteriaDefinition criteria, MutableBindings bindings, Table table,
-			@Nullable RelationalPersistentEntity<?> entity) {
+			@Nullable RelationalPersistentEntity<?> entity, boolean embedded) {
 
 		SqlIdentifier criteriaColumn = criteria.getColumn();
 		Assert.notNull(criteriaColumn, "CriteriaColumn must not be null");
@@ -391,7 +391,7 @@ public class QueryMapper {
 						}
 					};
 
-					Condition c = Conditions.nest(mapCondition(cw, bindings, table, entity));
+					Condition c = Conditions.nest(mapCondition(cw, bindings, table, entity, true));
 					condition = condition == null ? c : condition.or(c);
 				}
 
@@ -427,11 +427,11 @@ public class QueryMapper {
 					}
 				};
 
-				Condition mapped = mapCondition(cw, bindings, table, embeddedEntity);
+				Condition mapped = mapCondition(cw, bindings, table, embeddedEntity, true);
 				condition = condition.and(mapped);
 			}
 
-			return condition;
+			return embedded || !(condition instanceof AndCondition) ? condition : Conditions.nest(condition);
 		}
 
 		Column column = table.column(propertyField.getMappedColumnName());
