@@ -415,13 +415,14 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 		static Identifier potentiallyAppendIdentifier(Identifier base, RelationalPersistentEntity<?> entity,
 				Function<RelationalPersistentProperty, Object> getter) {
 
-			if (entity.hasIdProperty()) {
+			RelationalPersistentProperty property = entity.getIdProperty();
 
-				RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
-				Object propertyValue = getter.apply(idProperty);
+			if (property != null && !property.isEmbedded()) {
+
+				Object propertyValue = getter.apply(property);
 
 				if (propertyValue != null) {
-					return base.withPart(idProperty.getColumnName(), propertyValue, idProperty.getType());
+					return base.withPart(property.getColumnName(), propertyValue, property.getType());
 				}
 			}
 

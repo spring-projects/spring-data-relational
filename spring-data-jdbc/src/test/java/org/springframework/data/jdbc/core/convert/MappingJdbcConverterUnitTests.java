@@ -50,6 +50,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.RowDocument;
 
 /**
@@ -184,7 +185,17 @@ class MappingJdbcConverterUnitTests {
 			checkReadConversion(softly, converter, "uuid", UUID);
 			checkReadConversion(softly, converter, "optionalUuid", Optional.of(UUID));
 		});
+	}
 
+	@Test // GH-2188
+	void shouldReadResolveEntityWithCompositeId() {
+
+		RowDocument rowDocument = new RowDocument();
+		rowDocument.put("id", 123L);
+		CustomIdEntity entity = converter.readAndResolve(TypeInformation.of(CustomIdEntity.class), rowDocument,
+				Identifier.of(SqlIdentifier.quoted("id"), "123", String.class));
+
+		assertThat(entity.id.id).isEqualTo(123);
 	}
 
 	private static void checkReadConversion(SoftAssertions softly, MappingJdbcConverter converter, String propertyName,
@@ -299,4 +310,5 @@ class MappingJdbcConverterUnitTests {
 			return source.id;
 		}
 	}
+
 }
