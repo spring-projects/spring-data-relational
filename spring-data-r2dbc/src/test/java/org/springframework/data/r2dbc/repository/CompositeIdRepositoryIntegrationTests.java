@@ -47,6 +47,7 @@ import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.relational.RelationalManagedTypes;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.Table;
@@ -118,10 +119,10 @@ public class CompositeIdRepositoryIntegrationTests {
 
 		this.jdbc.execute("""
 				CREATE TABLE with_composite_id (
-				    one int,
-				    two varchar(255),
+				    col_one int,
+				    col_two varchar(255),
 				    name varchar(255),
-				    primary key (one, two))""");
+				    primary key (col_one, col_two))""");
 		this.jdbc.execute("INSERT INTO with_composite_id VALUES (42, 'HBAR','Walter')");
 		this.jdbc.execute("INSERT INTO with_composite_id VALUES (23, '2PI','Jesse')");
 	}
@@ -240,7 +241,7 @@ public class CompositeIdRepositoryIntegrationTests {
 	record WithCompositeId(@Id @Embedded.Nullable CompositeId pk, String name) {
 	}
 
-	record CompositeId(Integer one, String two) {
+	record CompositeId(@Column("col_one") Integer one, @Column("col_two") String two) {
 	}
 
 }
