@@ -214,6 +214,20 @@ class QueryMapperUnitTests {
 		verify(bindTarget).bind(0, "foo");
 	}
 
+	@Test // GH-2191
+	void shouldMapCompositeIdCriteria() {
+
+		Criteria criteria = Criteria.where("id").is(new CompositeId(1, "a")).or("foo").is("bar");
+
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
+				"(withcompositeid.tenant = ?[$1] AND withcompositeid.name = ?[$2]) OR withcompositeid.foo = ?[$3]");
+
+		criteria = Criteria.where("id").not(new CompositeId(1, "a")).or("foo").is("bar");
+
+		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
+				"(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2]) OR withcompositeid.foo = ?[$3]");
+	}
+
 	@Test // gh-300
 	void shouldMapExpression() {
 
@@ -583,7 +597,7 @@ class QueryMapperUnitTests {
 		BoundCondition bindings = map(criteria, WithEmbeddable.class);
 
 		assertThat(bindings.getCondition())
-				.hasToString("withembeddable.home_country_name = ?[$1] AND withembeddable.home_street = ?[$2]");
+				.hasToString("(withembeddable.home_country_name = ?[$1] AND withembeddable.home_street = ?[$2])");
 	}
 
 	@Test // GH-2096

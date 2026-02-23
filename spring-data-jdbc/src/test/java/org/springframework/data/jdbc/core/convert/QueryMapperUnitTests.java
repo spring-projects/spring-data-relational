@@ -28,16 +28,19 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -52,11 +55,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  */
 public class QueryMapperUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
+	private JdbcMappingContext context = new JdbcMappingContext();
+	private JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 
-	QueryMapper mapper = new QueryMapper(converter);
-	MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+	private QueryMapper mapper = new QueryMapper(converter);
+	private MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
 	QueryMapper createMapper(Converter<?, ?>... converters) {
 
@@ -69,7 +72,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldNotMapEmptyCriteria() {
+	void shouldNotMapEmptyCriteria() {
 
 		Criteria criteria = Criteria.empty();
 
@@ -77,7 +80,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldNotMapEmptyAndCriteria() {
+	void shouldNotMapEmptyAndCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList());
 
@@ -85,7 +88,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldNotMapEmptyNestedCriteria() {
+	void shouldNotMapEmptyNestedCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList()).and(Criteria.empty().and(Criteria.empty()));
 
@@ -94,7 +97,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapSomeNestedCriteria() {
+	void shouldMapSomeNestedCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList())
 				.and(Criteria.empty().and(Criteria.where("name").is("Hank")));
@@ -107,7 +110,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapNestedGroup() {
+	void shouldMapNestedGroup() {
 
 		Criteria initial = Criteria.empty();
 
@@ -128,7 +131,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapFrom() {
+	void shouldMapFrom() {
 
 		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo")) //
 				.and(Criteria.where("name").is("Bar") //
@@ -144,7 +147,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-560
-	public void shouldMapFromConcat() {
+	void shouldMapFromConcat() {
 
 		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
 				.or("age").lessThan(49));
@@ -158,7 +161,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapSimpleCriteria() {
+	void shouldMapSimpleCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo");
 
@@ -168,7 +171,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapSimpleCriteriaWithoutEntity() {
+	void shouldMapSimpleCriteriaWithoutEntity() {
 
 		Criteria criteria = Criteria.where("name").is("foo");
 
@@ -177,8 +180,22 @@ public class QueryMapperUnitTests {
 		assertThat(condition).hasToString("person.name = ?[:name]");
 	}
 
+	@Test // GH-2191
+	void shouldMapCompositeIdCriteria() {
+
+		Criteria criteria = Criteria.where("id").is(new CompositeId(1, "a")).or("foo").is("bar");
+
+		assertThat(map(criteria, WithCompositeId.class)).hasToString(
+				"(withcompositeid.\"TENANT\" = ?[:tenant] AND withcompositeid.\"NAME\" = ?[:name]) OR withcompositeid.foo = ?[:foo]");
+
+		criteria = Criteria.where("id").not(new CompositeId(1, "a")).or("foo").is("bar");
+
+		assertThat(map(criteria, WithCompositeId.class)).hasToString(
+				"(withcompositeid.\"TENANT\" != ?[:tenant3] AND withcompositeid.\"NAME\" != ?[:name4]) OR withcompositeid.foo = ?[:foo5]");
+	}
+
 	@Test // DATAJDBC-318
-	public void shouldMapExpression() {
+	void shouldMapExpression() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -189,7 +206,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapCountFunction() {
+	void shouldMapCountFunction() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -200,7 +217,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapExpressionToUnknownColumn() {
+	void shouldMapExpressionToUnknownColumn() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -211,7 +228,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapExpressionWithoutEntity() {
+	void shouldMapExpressionWithoutEntity() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -221,7 +238,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapSimpleNullableCriteria() {
+	void shouldMapSimpleNullableCriteria() {
 
 		Criteria criteria = Criteria.where("name").isNull();
 
@@ -231,7 +248,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldConsiderColumnName() {
+	void shouldConsiderColumnName() {
 
 		Criteria criteria = Criteria.where("alternative").is("foo");
 
@@ -241,7 +258,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapAndCriteria() {
+	void shouldMapAndCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo").and("bar").is("baz");
 
@@ -251,7 +268,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapOrCriteria() {
+	void shouldMapOrCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo").or("bar").is("baz");
 
@@ -261,7 +278,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapAndOrCriteria() {
+	void shouldMapAndOrCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo") //
 				.and("name").isNotNull() //
@@ -275,7 +292,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapNeq() {
+	void shouldMapNeq() {
 
 		Criteria criteria = Criteria.where("name").not("foo");
 
@@ -285,7 +302,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsNull() {
+	void shouldMapIsNull() {
 
 		Criteria criteria = Criteria.where("name").isNull();
 
@@ -295,7 +312,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsNotNull() {
+	void shouldMapIsNotNull() {
 
 		Criteria criteria = Criteria.where("name").isNotNull();
 
@@ -305,7 +322,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsIn() {
+	void shouldMapIsIn() {
 
 		Criteria criteria = Criteria.where("name").in("a", "b", "c");
 
@@ -315,7 +332,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsNotIn() {
+	void shouldMapIsNotIn() {
 
 		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
 
@@ -367,7 +384,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsGt() {
+	void shouldMapIsGt() {
 
 		Criteria criteria = Criteria.where("name").greaterThan("a");
 
@@ -377,7 +394,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsGte() {
+	void shouldMapIsGte() {
 
 		Criteria criteria = Criteria.where("name").greaterThanOrEquals("a");
 
@@ -387,7 +404,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsLt() {
+	void shouldMapIsLt() {
 
 		Criteria criteria = Criteria.where("name").lessThan("a");
 
@@ -397,7 +414,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsLte() {
+	void shouldMapIsLte() {
 
 		Criteria criteria = Criteria.where("name").lessThanOrEquals("a");
 
@@ -407,7 +424,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapBetween() {
+	void shouldMapBetween() {
 
 		Criteria criteria = Criteria.where("name").between("a", "b");
 
@@ -417,7 +434,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapIsLike() {
+	void shouldMapIsLike() {
 
 		Criteria criteria = Criteria.where("name").like("a");
 
@@ -427,7 +444,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-318
-	public void shouldMapSort() {
+	void shouldMapSort() {
 
 		Sort sort = Sort.by(desc("alternative"));
 
@@ -440,7 +457,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // GH-1507
-	public void shouldMapSortWithUnknownField() {
+	void shouldMapSortWithUnknownField() {
 
 		Sort sort = Sort.by(desc("unknownField"));
 
@@ -453,7 +470,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // GH-1507
-	public void shouldMapSortWithAllowedSpecialCharacters() {
+	void shouldMapSortWithAllowedSpecialCharacters() {
 
 		Sort sort = Sort.by(desc("x(._)x"));
 
@@ -467,7 +484,7 @@ public class QueryMapperUnitTests {
 
 	@ParameterizedTest // GH-1507
 	@ValueSource(strings = { " ", ";", "--" })
-	public void shouldNotMapSortWithIllegalExpression(String input) {
+	void shouldNotMapSortWithIllegalExpression(String input) {
 
 		Sort sort = Sort.by(desc("unknown" + input + "Field"));
 
@@ -477,7 +494,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // GH-1507
-	public void shouldMapSortWithUnsafeExpression() {
+	void shouldMapSortWithUnsafeExpression() {
 
 		String unsafeExpression = "arbitrary expression that may include evil stuff like ; & --";
 		Sort sort = SqlSort.unsafe(unsafeExpression);
@@ -488,6 +505,68 @@ public class QueryMapperUnitTests {
 		assertThat(fields) //
 				.extracting(Objects::toString) //
 				.containsExactly(unsafeExpression + " ASC");
+	}
+
+	@Test // GH-2096
+	void shouldMapPathToEmbeddable() {
+
+		Criteria criteria = Criteria.where("home").is(new Address(new Country("DE")));
+
+		Condition condition = map(criteria, WithEmbeddable.class);
+
+		assertThat(condition).hasToString(
+				"(withcompositeid.\"HOME_COUNTRY_NAME\" = ?[:home_country_name] AND withcompositeid.\"HOME_STREET\" = ?[:home_street])");
+	}
+
+	@Test // GH-2096
+	void shouldMapPathToNestedEmbeddable() {
+
+		Criteria criteria = Criteria.where("home.country").is(new Country("DE"));
+
+		Condition condition = map(criteria, WithEmbeddable.class);
+
+		assertThat(condition).hasToString("withcompositeid.\"HOME_COUNTRY_NAME\" = ?[:home_country_name]");
+	}
+
+	@Test // GH-2096
+	void shouldMapPathIntoEmbeddable() {
+
+		Criteria criteria = Criteria.where("home.country.name").is("DE");
+
+		Condition condition = map(criteria, WithEmbeddable.class);
+
+		assertThat(condition).hasToString("withcompositeid.\"HOME_COUNTRY_NAME\" = ?[:home_country_name]");
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathForEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields)
+				.contains(OrderByField.from(table.column(SqlIdentifier.quoted("HOME_COUNTRY_NAME")), Sort.Direction.ASC))
+				.contains(OrderByField.from(table.column(SqlIdentifier.quoted("HOME_STREET")), Sort.Direction.ASC));
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathIntoNestedEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home.country"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields)
+				.contains(OrderByField.from(table.column(SqlIdentifier.quoted("HOME_COUNTRY_NAME")), Sort.Direction.ASC));
+	}
+
+	@Test // GH-2096
+	void shouldMapSortPathIntoEmbeddable() {
+
+		List<OrderByField> orderByFields = map(Sort.by("home.country.name"), WithEmbeddable.class);
+
+		Table table = Table.create("withembeddable");
+		assertThat(orderByFields)
+				.contains(OrderByField.from(table.column(SqlIdentifier.quoted("HOME_COUNTRY_NAME")), Sort.Direction.ASC));
 	}
 
 	private Condition map(Criteria criteria) {
@@ -502,16 +581,48 @@ public class QueryMapperUnitTests {
 				context.getRequiredPersistentEntity(entityType));
 	}
 
+	private List<OrderByField> map(Sort sort, Class<?> entityType) {
+
+		return mapper.getMappedSort(Table.create(entityType.getSimpleName().toLowerCase()), sort,
+				mapper.getMappingContext().getRequiredPersistentEntity(entityType));
+	}
+
 	static class Person {
 
 		String name;
 		@Column("another_name") String alternative;
 	}
 
-	record CompositeId(int tenant, String name) {
+	private record CompositeId(int tenant, String name) {
 	}
 
-	record WithCompositeId(@Id CompositeId id) {
+	private record WithCompositeId(@Id CompositeId id) {
+	}
+
+	static class WithEmbeddable {
+
+		@Embedded.Nullable(prefix = "home_") Address home;
+
+		@Embedded.Nullable(prefix = "work_") Address work;
+	}
+
+	static class Address {
+
+		@Embedded.Nullable(prefix = "country_") Country country;
+		String street;
+
+		public Address(Country country) {
+			this.country = country;
+		}
+	}
+
+	static class Country {
+
+		String name;
+
+		public Country(String name) {
+			this.name = name;
+		}
 	}
 
 	enum CollectionToStringConverter implements Converter<Collection<?>, String> {
