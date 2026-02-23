@@ -18,12 +18,14 @@ package org.springframework.data.r2dbc.repository.support;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.OffsetScrollPosition;
 import org.springframework.data.domain.Page;
@@ -31,8 +33,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
@@ -199,9 +199,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 				return Flux.empty();
 			}
 
-			String idProperty = getIdProperty().getName();
-
-			return this.entityOperations.select(Query.query(Criteria.where(idProperty).in(ids)), this.entity.getJavaType());
+			return this.entityOperations.select(getIdsQuery(ids), this.entity.getJavaType());
 		});
 	}
 
@@ -231,9 +229,7 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 				return Flux.empty();
 			}
 
-			String idProperty = getIdProperty().getName();
-
-			return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(ids)), this.entity.getJavaType());
+			return this.entityOperations.delete(getIdsQuery(ids), this.entity.getJavaType());
 		}).then();
 	}
 
@@ -251,9 +247,8 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 
 		Assert.notNull(ids, "The iterable of Id's must not be null");
 
-		List<? extends ID> idsList = Streamable.of(ids).toList();
-		String idProperty = getIdProperty().getName();
-		return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(idsList)), this.entity.getJavaType())
+		Collection<?> idsList = ids instanceof Collection<?> c ? c : Streamable.of(ids).toList();
+		return this.entityOperations.delete(getIdsQuery(idsList), this.entity.getJavaType())
 				.then();
 	}
 
@@ -364,33 +359,13 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 	}
 
 	private Query getIdQuery(Object id) {
-
-		Criteria criteria;
-
 		RelationalPersistentProperty idProperty = getIdProperty();
-		if (idProperty.isEmbedded()) {
+		return Query.query(Criteria.where(idProperty.getName()).is(id));
+	}
 
-			Criteria[] criteriaHolder = new Criteria[] { Criteria.empty() };
-
-			RelationalPersistentEntity<?> idEntity = mappingContext.getRequiredPersistentEntity(idProperty.getType());
-			PersistentPropertyAccessor<Object> accessor = idEntity.getPropertyAccessor(id);
-			idEntity.doWithProperties(new PropertyHandler<RelationalPersistentProperty>() {
-				@Override
-				public void doWithPersistentProperty(RelationalPersistentProperty persistentProperty) {
-
-					Object property = accessor.getProperty(persistentProperty);
-
-					Assert.state(property != null, () -> "Property '%s' must not be null".formatted(persistentProperty));
-
-					criteriaHolder[0] = criteriaHolder[0].and(persistentProperty.getName()).is(property);
-				}
-			});
-			criteria = criteriaHolder[0];
-		} else {
-			criteria = Criteria.where(idProperty.getName()).is(id);
-		}
-
-		return Query.query(criteria);
+	private Query getIdsQuery(Collection<?> ids) {
+		RelationalPersistentProperty idProperty = getIdProperty();
+		return Query.query(Criteria.where(idProperty.getName()).in(ids));
 	}
 
 	/**
