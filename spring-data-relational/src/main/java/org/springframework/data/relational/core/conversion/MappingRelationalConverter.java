@@ -1213,10 +1213,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		@Nullable
 		@Override
 		public Object getValue(AggregatePath path) {
-
-			Object value = document.get(path.getColumnInfo().alias().getReference());
-
-			return value;
+			return document.get(path.getColumnInfo().alias().getReference());
 		}
 
 		@Override
