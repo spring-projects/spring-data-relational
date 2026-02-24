@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -665,8 +666,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		Class<?> target = type.getType();
 
 		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
-			return getConversionService().convert(value, TypeDescriptor.forObject(value),
-					createTypeDescriptor(type));
+			return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
 		}
 
 		if (ClassUtils.isAssignableValue(target, value)) {
@@ -677,8 +677,7 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
 
-		return getConversionService().convert(value, TypeDescriptor.forObject(value),
-				createTypeDescriptor(type));
+		return getConversionService().convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
 	}
 
 	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
@@ -1218,66 +1217,39 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 		@Override
 		public boolean hasValue(AggregatePath path) {
-
-			// Embedded paths (e.g., composite ids) cannot have a single ColumnInfo
-			// Check if any of the embedded properties have values
-			if (path.isEmbedded()) {
-				RelationalPersistentEntity<?> leafEntity = path.getLeafEntity();
-				if (leafEntity != null) {
-					for (RelationalPersistentProperty property : leafEntity) {
-						AggregatePath propertyPath = path.append(property);
-						if (hasValue(propertyPath)) {
-							return true;
-						}
-					}
-				}
-				return false;
-			}
-
-			Object value = document.get(path.getColumnInfo().alias().getReference());
-
-			if (value == null) {
-				return false;
-			}
-
-			if (!path.isCollectionLike()) {
-				return true;
-			}
-
-			return true;
+			return hasValue(path, Objects::nonNull);
 		}
 
 		@Override
 		public boolean hasNonEmptyValue(AggregatePath path) {
 
-			// Embedded paths (e.g., composite ids) cannot have a single ColumnInfo
-			// Check if any of the embedded properties have non-empty values
-			if (path.isEmbedded()) {
-				RelationalPersistentEntity<?> leafEntity = path.getLeafEntity();
-				if (leafEntity != null) {
-					for (RelationalPersistentProperty property : leafEntity) {
-						AggregatePath propertyPath = path.append(property);
-						if (hasNonEmptyValue(propertyPath)) {
-							return true;
-						}
-					}
+			return hasValue(path, value -> {
+
+				if (value == null) {
+					return false;
 				}
-				return false;
+
+				if (value instanceof Collection<?> || value.getClass().isArray()) {
+					return !ObjectUtils.isEmpty(value);
+				}
+
+				return true;
+			});
+		}
+
+		public boolean hasValue(AggregatePath path, Predicate<@Nullable Object> hasValue) {
+
+			if (!path.isEmbedded()) {
+				return hasValue.test(document.get(path.getColumnInfo().alias().getReference()));
 			}
 
-			if (!hasValue(path)) {
-				return false;
+			for (RelationalPersistentProperty property : path.getRequiredLeafEntity()) {
+				if (hasValue(path.append(property), hasValue)) {
+					return true;
+				}
 			}
 
-			Object value = document.get(path.getColumnInfo().alias().getReference());
-
-			Assert.state(value != null, "Value must not be null");
-
-			if (value instanceof Collection<?> || value.getClass().isArray()) {
-				return !ObjectUtils.isEmpty(value);
-			}
-
-			return true;
+			return false;
 		}
 
 		@Override
