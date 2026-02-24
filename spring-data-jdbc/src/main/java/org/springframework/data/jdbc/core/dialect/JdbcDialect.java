@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import java.sql.SQLType;
+
 import org.springframework.data.relational.core.dialect.Dialect;
 
 /**
@@ -48,6 +50,17 @@ public interface JdbcDialect extends Dialect {
 	static JdbcArrayColumns getArraySupport(Dialect dialect) {
 		return dialect instanceof JdbcDialect jdbcDialect ? jdbcDialect.getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;
+	}
+
+	/**
+	 * Creates a {@link SQLType} for the given name and vendor type number.
+	 *
+	 * @param name type name that represents a SQL data type.
+	 * @param vendorTypeNumber vendor-specific type number for the data type.
+	 * @return a new {@link SQLType} for the given name and vendor type number.
+	 */
+	default SQLType createSqlType(String name, int vendorTypeNumber) {
+		return new CustomSQLType(name, "Spring", vendorTypeNumber);
 	}
 
 }

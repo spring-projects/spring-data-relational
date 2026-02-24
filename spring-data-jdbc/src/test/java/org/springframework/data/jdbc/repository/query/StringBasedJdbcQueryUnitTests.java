@@ -320,12 +320,8 @@ class StringBasedJdbcQueryUnitTests {
 				.map(n -> tuple(sqlParameterSource.getValue(n), sqlParameterSource.getSqlType(n))) //
 				.collect(Collectors.toSet());
 
-		assertThat(valueTypePairs).containsExactlyInAnyOrder(
-				tuple(type, Types.VARCHAR),
-				tuple(score, Types.INTEGER),
-				tuple(creationDate, Types.TIMESTAMP),
-				tuple(dayOfWeek, Types.VARCHAR)
-		);
+		assertThat(valueTypePairs).containsExactlyInAnyOrder(tuple(type, Types.VARCHAR), tuple(score, Types.INTEGER),
+				tuple(creationDate, Types.TIMESTAMP), tuple(dayOfWeek, Types.VARCHAR));
 	}
 
 	@Test // GH-1212
@@ -416,16 +412,15 @@ class StringBasedJdbcQueryUnitTests {
 		assertThat(paramSource.getValue().getValue("__$synthetic$__2")).isEqualTo("test-value2");
 	}
 
-	@Test // GH-2188
+	@Test // GH-2187
 	void shouldPreserveJdbcTypeOtherFromJdbcValueInStringBasedQuery() {
 
 		SqlParameterSource parameterSource = forMethod("findByCustomValue", Direction.class)
-				.withCustomConverters(DirectionToOtherJdbcTypeConverter.INSTANCE)
-				.withArguments(Direction.LEFT)
+				.withCustomConverters(DirectionToOtherJdbcTypeConverter.INSTANCE) //
+				.withArguments(Direction.LEFT) //
 				.extractParameterSource();
 
-		assertThat(parameterSource.getSqlType("value"))
-				.isEqualTo(JDBCType.OTHER.getVendorTypeNumber());
+		assertThat(parameterSource.getSqlType("value")).isEqualTo(JDBCType.OTHER.getVendorTypeNumber());
 	}
 
 	QueryFixture forMethod(String name, Class... paramTypes) {
@@ -575,7 +570,7 @@ class StringBasedJdbcQueryUnitTests {
 		@Query("SELECT * FROM person WHERE id = :id")
 		DummyEntity unsupportedWithLock(Long id);
 
-		@Query(value = "some sql statement") // GH-2188
+		@Query(value = "some sql statement")
 		List<DummyEntity> findByCustomValue(@Param("value") Direction value);
 	}
 
@@ -606,7 +601,7 @@ class StringBasedJdbcQueryUnitTests {
 		}
 	}
 
-	private enum Direction {
+	enum Direction {
 		LEFT, CENTER, RIGHT
 	}
 
@@ -670,7 +665,7 @@ class StringBasedJdbcQueryUnitTests {
 		}
 	}
 
-	@WritingConverter // GH-2188
+	@WritingConverter
 	enum DirectionToOtherJdbcTypeConverter implements Converter<Direction, JdbcValue> {
 
 		INSTANCE;
