@@ -26,20 +26,27 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.MappingJdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -74,7 +81,7 @@ public class PartTreeJdbcQueryUnitTests {
 	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USERS_ID\" = \"users\".\"ID\" AND \"hated\".\"USERS_SUB_ID\" = \"users\".\"SUB_ID\"";
 
 	private JdbcMappingContext mappingContext = new JdbcMappingContext();
-	private JdbcConverter converter = new MappingJdbcConverter(mappingContext, mock(RelationResolver.class));
+	private JdbcConverter converter;
 	private ReturnedType returnedType = mock(ReturnedType.class);
 
 	private org.springframework.data.relational.core.sql.Table users = org.springframework.data.relational.core.sql.Table
@@ -93,6 +100,18 @@ public class PartTreeJdbcQueryUnitTests {
 			users.column("DATE_OF_BIRTH"), //
 			users.column("HOBBY_REFERENCE"), //
 			hobby.column("NAME").as("HATED_NAME"));
+
+	@BeforeEach
+	void setUp() {
+
+		JdbcCustomConversions conversions = JdbcCustomConversions.create(JdbcPostgresDialect.INSTANCE, it -> {
+			it.registerConverter(DirectionToOtherJdbcTypeConverter.INSTANCE);
+		});
+
+		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		converter = new MappingJdbcConverter(mappingContext, mock(RelationResolver.class), conversions,
+				JdbcTypeFactory.unsupported());
+	}
 
 	@Test // DATAJDBC-318
 	void shouldFailForQueryByReference() throws Exception {
@@ -699,6 +718,18 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_city")).isEqualTo("World");
 	}
 
+	@Test // GH-2187
+	void createsQueryByConvertedEnumAttribute() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDirection", Direction.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { Direction.RIGHT });
+		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
+
+		QueryAssert.assertThat(query).containsQuotedAliasedColumns(columns)
+				.contains(" WHERE " + TABLE + ".\"DIRECTION\" = :direction").hasBindValue("direction", 2);
+	}
+
 	@Test // DATAJDBC-318
 	void createsQueryByEmbeddedProperty() throws Exception {
 
@@ -810,6 +841,8 @@ public class PartTreeJdbcQueryUnitTests {
 
 		List<User> findAllByActiveFalse();
 
+		List<User> findAllByDirection(Direction direction);
+
 		List<User> findAllByFirstNameIgnoreCase(String firstName);
 
 		List<User> findAllByFirstName(String firstName, Pageable pageable);
@@ -849,6 +882,7 @@ public class PartTreeJdbcQueryUnitTests {
 
 		List<Hobby> hobbies;
 		Hobby hated;
+		Direction direction;
 
 		AggregateReference<Hobby, String> hobbyReference;
 	}
@@ -864,5 +898,20 @@ public class PartTreeJdbcQueryUnitTests {
 
 	static class Hobby {
 		@Id String name;
+	}
+
+	enum Direction {
+		LEFT, CENTER, RIGHT
+	}
+
+	@WritingConverter
+	enum DirectionToOtherJdbcTypeConverter implements Converter<Direction, JdbcValue> {
+
+		INSTANCE;
+
+		@Override
+		public JdbcValue convert(Direction source) {
+			return JdbcValue.of(source.ordinal(), JdbcPostgresDialect.INSTANCE.createSqlType("foo", 4711));
+		}
 	}
 }

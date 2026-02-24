@@ -79,6 +79,18 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	}
 
 	/**
+	 * Creates a Postgres {@link SQLType} for the given name and vendor type number.
+	 *
+	 * @param name type name that represents a SQL data type.
+	 * @param vendorTypeNumber vendor-specific type number for the data type.
+	 * @return a new {@link SQLType} for the given name and vendor type number.
+	 */
+	@Override
+	public SQLType createSqlType(String name, int vendorTypeNumber) {
+		return new CustomSQLType(name, "Postgres", vendorTypeNumber);
+	}
+
+	/**
 	 * If the class is present on the class path, invoke the specified consumer {@code action} with the class object,
 	 * otherwise do nothing.
 	 *
@@ -184,7 +196,7 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 						continue;
 					}
 
-					arrayTypes.put(javaClass, new PGSQLType(pgTypeName, arrayOid));
+					arrayTypes.put(javaClass, JdbcPostgresDialect.INSTANCE.createSqlType(pgTypeName, arrayOid));
 				}
 			} catch (SQLException | ClassNotFoundException e) {
 				throw new IllegalStateException("Cannot create type info mapping", e);
@@ -200,22 +212,5 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 			return arrayTypes;
 		}
 
-		record PGSQLType(String name, int oid) implements SQLType {
-
-			@Override
-			public String getName() {
-				return name;
-			}
-
-			@Override
-			public String getVendor() {
-				return "Postgres";
-			}
-
-			@Override
-			public Integer getVendorTypeNumber() {
-				return oid;
-			}
-		}
 	}
 }
