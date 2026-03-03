@@ -51,6 +51,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * Integration tests for the {@link UserRepository} JSON metadata via {@link JdbcRepositoryContributor}.
  *
  * @author Mark Paluch
+ * @author wonderfulrosemari
  */
 @SpringJUnitConfig(classes = JdbcRepositoryMetadataIntegrationTests.JdbcRepositoryContributorConfiguration.class)
 class JdbcRepositoryMetadataIntegrationTests {
@@ -125,6 +126,22 @@ class JdbcRepositoryMetadataIntegrationTests {
 		assertThatJson(json).inPath("$.methods[?(@.name == 'findByFirstname')].query").isArray().first().isObject()
 				.hasEntrySatisfying("query", value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
 						"FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" = :firstname"));
+	}
+
+	@Test // GH-2239
+	void shouldDocumentDerivedQueryWithIgnoreCase() throws IOException {
+
+		Resource resource = getResource();
+
+		assertThat(resource).isNotNull();
+		assertThat(resource.exists()).isTrue();
+
+		String json = resource.getContentAsString(StandardCharsets.UTF_8);
+
+		assertThatJson(json).inPath("$.methods[?(@.name == 'findByFirstnameIgnoreCase')].query").isArray().first()
+				.isObject()
+				.hasEntrySatisfying("query", value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
+						"FROM \"MY_USER\" WHERE UPPER(\"MY_USER\".\"FIRSTNAME\") = UPPER(:firstname)"));
 	}
 
 	@Test // GH-2121

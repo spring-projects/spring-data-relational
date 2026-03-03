@@ -57,6 +57,7 @@ import org.springframework.util.ClassUtils;
  * @author Yan Qiang
  * @author Mikhail Fedorov
  * @author Christoph Strobl
+ * @author wonderfulrosemari
  * @since 3.0
  */
 public class QueryMapper {
@@ -692,18 +693,16 @@ public class QueryMapper {
 		}
 
 		Object settableValueValue = settableValue.getValue();
+		@Nullable
+		SQLType jdbcType = settableValue.getJdbcType();
 
 		Assert.state(settableValueValue != null, "Settable value must not be null");
 
 		if (mappedValue.getClass().equals(settableValueValue.getClass())) {
-			return JdbcUtil.TYPE_UNKNOWN;
+			return jdbcType != null ? jdbcType : JdbcUtil.TYPE_UNKNOWN;
 		}
 
-		SQLType jdbcType = settableValue.getJdbcType();
-
-		Assert.state(jdbcType != null, "JDBC type must not be null");
-
-		return jdbcType;
+		return jdbcType != null ? jdbcType : JdbcUtil.TYPE_UNKNOWN;
 	}
 
 	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource,

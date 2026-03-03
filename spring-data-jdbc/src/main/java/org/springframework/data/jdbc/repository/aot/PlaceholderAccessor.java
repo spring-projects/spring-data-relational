@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author wonderfulrosemari
  * @since 4.0
  */
 class PlaceholderAccessor {
@@ -81,7 +82,7 @@ class PlaceholderAccessor {
 			return cp;
 		}
 
-		if(value instanceof Collection<?> c && c.iterator().hasNext()) {
+		if (value instanceof Collection<?> c && c.iterator().hasNext()) {
 			return unwrap(c.iterator().next());
 		}
 
@@ -140,11 +141,17 @@ class PlaceholderAccessor {
 					|| partType == Part.Type.NOT_CONTAINING) {
 				return JdbcValue.of(
 						capturingJdbcValue.withBinding(ParameterBinding.like(capturingJdbcValue.getBinding(), partType)),
-						JDBCType.OTHER);
+						parameterSqlType(valueType));
 			}
 
 			return JdbcValue.of(capturingJdbcValue.withValue(super.prepareParameterValue(value, valueType, partType)),
-					JDBCType.OTHER);
+					parameterSqlType(valueType));
+		}
+
+		private static JDBCType parameterSqlType(Class<?> valueType) {
+			return CharSequence.class.isAssignableFrom(valueType) || valueType == Character.class || valueType == char.class
+					? JDBCType.VARCHAR
+					: JDBCType.OTHER;
 		}
 
 	}
