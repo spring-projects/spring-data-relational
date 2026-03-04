@@ -32,6 +32,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.Column;
@@ -45,6 +46,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  *
  * @author Chirag Tailor
  * @author Mark Paluch
+ * @author wonderfulrosemari
  */
 class SqlParametersFactoryUnitTests {
 
@@ -178,6 +180,22 @@ class SqlParametersFactoryUnitTests {
 			softly.assertThat(parameterSource.getParameterNames()).containsExactlyInAnyOrder("id", "name");
 			softly.assertThat(parameterSource.getValue("id")).isEqualTo(23L);
 			softly.assertThat(parameterSource.getValue("name")).isEqualTo("alpha");
+		});
+	}
+
+	@Test // GH-2113
+	void parametersForInsertExpandAggregateReferenceCompositeId() {
+
+		Locker locker = new Locker(null, AggregateReference.to(new EmployeeId("Engineering", 42L)));
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(locker, Locker.class,
+				Identifier.empty(), IdValueSource.GENERATED);
+
+		SoftAssertions.assertSoftly(softly -> {
+			softly.assertThat(parameterSource.getParameterNames()).contains("organization", "employee_number");
+			softly.assertThat(parameterSource.getParameterNames()).doesNotContain("employee");
+			softly.assertThat(parameterSource.getValue("organization")).isEqualTo("Engineering");
+			softly.assertThat(parameterSource.getValue("employee_number")).isEqualTo(42L);
 		});
 	}
 
@@ -330,5 +348,23 @@ class SqlParametersFactoryUnitTests {
 			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
 			String name //
 	) {
+	}
+
+	private static class Employee {
+		@Id EmployeeId id;
+	}
+
+	private record EmployeeId(String organization, Long employeeNumber) {
+	}
+
+	private static class Locker {
+
+		@Id Long id;
+		AggregateReference<Employee, EmployeeId> employee;
+
+		private Locker(Long id, AggregateReference<Employee, EmployeeId> employee) {
+			this.id = id;
+			this.employee = employee;
+		}
 	}
 }

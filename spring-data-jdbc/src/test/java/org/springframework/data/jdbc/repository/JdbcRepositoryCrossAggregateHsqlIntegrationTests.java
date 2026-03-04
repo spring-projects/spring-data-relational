@@ -47,6 +47,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  *
  * @author Jens Schauder
  * @author Salim Achouche
+ * @author wonderfulrosemari
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
@@ -57,7 +58,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	@Configuration
 	@Import(TestConfiguration.class)
 	@EnableJdbcRepositories(considerNestedRepositories = true,
-			includeFilters = @ComponentScan.Filter(value = { Ones.class, ReferencingAggregateRepository.class },
+			includeFilters = @ComponentScan.Filter(value = { Ones.class, ReferencingAggregateRepository.class, Lockers.class },
 					type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
@@ -70,6 +71,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired Ones ones;
 	@Autowired ReferencingAggregateRepository referencingAggregates;
+	@Autowired Lockers lockers;
 	@Autowired RelationalMappingContext context;
 
 	@SuppressWarnings("ConstantConditions")
@@ -118,6 +120,19 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		assertThat(reloaded.ref()).isEqualTo(idReference);
 	}
 
+	@Test // GH-2113
+	void savesAggregateReferenceWithCompositeId() {
+
+		EmployeeId employeeId = new EmployeeId("Engineering", 42L);
+		template.getJdbcOperations().update(
+				"INSERT INTO employee (employee_number, organization, name) VALUES (42, 'Engineering', 'Ada')");
+
+		lockers.save(new Locker(null, AggregateReference.to(employeeId), 4));
+
+		assertThat(JdbcTestUtils.countRowsInTableWhere(template.getJdbcOperations(), "locker",
+				"employee_number = 42 AND organization = 'Engineering'")).isEqualTo(1);
+	}
+
 	interface Ones extends CrudRepository<AggregateOne, Long> {}
 
 	static class AggregateOne {
@@ -137,6 +152,10 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	}
 
+	interface Lockers extends CrudRepository<Locker, Long> {
+
+	}
+
 	record AggregateWithConvertableId(@Id AggregateId id, String name) {
 
 	}
@@ -147,6 +166,15 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	record ReferencingAggregate(@Id Long id, String name,
 			AggregateReference<AggregateWithConvertableId, AggregateId> ref) {
+	}
+
+	record Employee(@Id EmployeeId id, String name) {
+	}
+
+	record EmployeeId(String organization, Long employeeNumber) {
+	}
+
+	record Locker(@Id Long id, AggregateReference<Employee, EmployeeId> assignedTo, Integer capacity) {
 	}
 
 	@WritingConverter
