@@ -145,7 +145,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.converter = converter;
 
 		this.tree = new PartTree(queryMethod.getName(), queryMethod.getResultProcessor().getReturnedType().getDomainType());
-		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext());
+		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext(), this.converter);
 
 		this.cachedRowMapperFactory = new CachedRowMapperFactory(tree, rowMapperFactory, converter,
 				queryMethod.getResultProcessor());

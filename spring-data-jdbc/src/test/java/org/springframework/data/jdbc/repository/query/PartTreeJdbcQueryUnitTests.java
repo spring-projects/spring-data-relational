@@ -33,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -753,15 +754,46 @@ public class PartTreeJdbcQueryUnitTests {
 				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
+	@Test // GH-2059
+	void createsQueryBySimpleDomainPrimitiveWithCustomConverters() throws Exception {
+
+		JdbcCustomConversions conversions = JdbcCustomConversions.create(JdbcPostgresDialect.INSTANCE, it -> {
+			it.registerConverter(CustomerRefToStringConverter.INSTANCE);
+			it.registerConverter(StringToCustomerRefConverter.INSTANCE);
+		});
+		JdbcMappingContext localContext = new JdbcMappingContext();
+		JdbcConverter localConverter = new MappingJdbcConverter(localContext, mock(RelationResolver.class), conversions,
+				JdbcTypeFactory.unsupported());
+
+		JdbcQueryMethod queryMethod = getQueryMethod(CustomerRepository.class, localContext, "findAllByRef",
+				CustomerRef.class);
+		PartTreeJdbcQuery jdbcQuery = new PartTreeJdbcQuery(localContext, queryMethod, JdbcH2Dialect.INSTANCE,
+				localConverter, mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { new CustomerRef("abc") }),
+				returnedType);
+
+		QueryAssert.assertThat(query).contains(" WHERE \"customers\".\"REF\" = :ref").hasBindValue("ref", "abc");
+	}
+
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return new PartTreeJdbcQuery(mappingContext, queryMethod, JdbcH2Dialect.INSTANCE, converter,
 				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
 	}
 
 	private JdbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
-		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
-		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
-				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
+		return getQueryMethod(UserRepository.class, methodName, parameterTypes);
+	}
+
+	private JdbcQueryMethod getQueryMethod(Class<?> repositoryType, String methodName, Class<?>... parameterTypes)
+			throws Exception {
+		return getQueryMethod(repositoryType, mappingContext, methodName, parameterTypes);
+	}
+
+	private JdbcQueryMethod getQueryMethod(Class<?> repositoryType, JdbcMappingContext mappingContext, String methodName,
+			Class<?>... parameterTypes) throws Exception {
+		Method method = repositoryType.getMethod(methodName, parameterTypes);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(repositoryType), new SpelAwareProxyProjectionFactory(),
+				new PropertiesBasedNamedQueries(new Properties()), mappingContext);
 	}
 
 	private RelationalParametersParameterAccessor getAccessor(JdbcQueryMethod queryMethod, Object[] values) {
@@ -866,6 +898,12 @@ public class PartTreeJdbcQueryUnitTests {
 		long countByFirstName(String name);
 	}
 
+	@NoRepositoryBean
+	interface CustomerRepository extends Repository<Customer, Long> {
+
+		List<Customer> findAllByRef(CustomerRef ref);
+	}
+
 	@Table("users")
 	static class User {
 
@@ -890,6 +928,16 @@ public class PartTreeJdbcQueryUnitTests {
 	record UserId(Long id, String subId) {
 	}
 
+	@Table("customers")
+	static class Customer {
+
+		@Id Long id;
+		CustomerRef ref;
+	}
+
+	record CustomerRef(String value) {
+	}
+
 	record Address(String street, String city) {
 	}
 
@@ -912,6 +960,28 @@ public class PartTreeJdbcQueryUnitTests {
 		@Override
 		public JdbcValue convert(Direction source) {
 			return JdbcValue.of(source.ordinal(), JdbcPostgresDialect.INSTANCE.createSqlType("foo", 4711));
+		}
+	}
+
+	@WritingConverter
+	enum CustomerRefToStringConverter implements Converter<CustomerRef, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(CustomerRef source) {
+			return source.value();
+		}
+	}
+
+	@ReadingConverter
+	enum StringToCustomerRefConverter implements Converter<String, CustomerRef> {
+
+		INSTANCE;
+
+		@Override
+		public CustomerRef convert(String source) {
+			return new CustomerRef(source);
 		}
 	}
 }

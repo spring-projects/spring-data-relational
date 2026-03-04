@@ -24,6 +24,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -152,7 +153,8 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	 * @param tree the tree structure defining the predicate of the query.
 	 * @param parameters parameters for the predicate.
 	 */
-	static void validate(PartTree tree, Parameters<?, ?> parameters, RelationalMappingContext context) {
+	static void validate(PartTree tree, Parameters<?, ?> parameters, RelationalMappingContext context,
+			JdbcConverter converter) {
 
 		RelationalQueryCreator.validate(tree, parameters);
 
@@ -163,12 +165,12 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 						.getPersistentPropertyPath(part.getProperty());
 				AggregatePath path = context.getAggregatePath(propertyPath);
 
-				path.forEach(JdbcQueryCreator::validateProperty);
+				path.forEach(pathElement -> validateProperty(pathElement, converter));
 			}
 		}
 	}
 
-	private static void validateProperty(AggregatePath path) {
+	private static void validateProperty(AggregatePath path, JdbcConverter converter) {
 
 		if (path.isRoot()) {
 			return;
@@ -183,9 +185,18 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 					String.format("Cannot query by multi-valued property: %s", path.getRequiredLeafProperty().getName()));
 		}
 
-		if (!path.isEmbedded() && path.isEntity()) {
+		if (!path.isEmbedded() && path.isEntity() && !hasCustomWriteTarget(path, converter)) {
 			throw new IllegalArgumentException(String.format("Cannot query by nested entity: %s", path.toDotPath()));
 		}
+	}
+
+	private static boolean hasCustomWriteTarget(AggregatePath path, JdbcConverter converter) {
+
+		if (!(converter instanceof AbstractRelationalConverter relationalConverter)) {
+			return false;
+		}
+
+		return relationalConverter.getConversions().hasCustomWriteTarget(path.getRequiredLeafProperty().getActualType());
 	}
 
 	/**
