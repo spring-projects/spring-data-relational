@@ -74,6 +74,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author wonderfulrosemari
  */
 @ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {

@@ -61,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author wonderfulrosemari
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {

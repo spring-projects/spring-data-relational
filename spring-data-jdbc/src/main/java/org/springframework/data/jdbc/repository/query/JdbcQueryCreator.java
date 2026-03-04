@@ -48,6 +48,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
+ * @author wonderfulrosemari
  * @since 2.0
  */
 public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
