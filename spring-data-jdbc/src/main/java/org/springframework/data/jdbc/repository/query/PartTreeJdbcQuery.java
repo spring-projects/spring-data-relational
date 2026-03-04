@@ -61,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author wonderfulrosemari
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -145,7 +146,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.converter = converter;
 
 		this.tree = new PartTree(queryMethod.getName(), queryMethod.getResultProcessor().getReturnedType().getDomainType());
-		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext());
+		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext(), this.converter);
 
 		this.cachedRowMapperFactory = new CachedRowMapperFactory(tree, rowMapperFactory, converter,
 				queryMethod.getResultProcessor());
