@@ -691,11 +691,14 @@ public class QueryMapper {
 			return JdbcUtil.TYPE_UNKNOWN;
 		}
 
-		Object settableValueValue = settableValue.getValue();
+		Object value = settableValue.getValue();
+		if (value instanceof JdbcValue jdbcValue) {
+			return jdbcValue.getJdbcType();
+		}
 
-		Assert.state(settableValueValue != null, "Settable value must not be null");
+		Assert.state(value != null, "Settable value must not be null");
 
-		if (mappedValue.getClass().equals(settableValueValue.getClass())) {
+		if (mappedValue.getClass().equals(value.getClass())) {
 			return JdbcUtil.TYPE_UNKNOWN;
 		}
 

@@ -144,6 +144,22 @@ class JdbcRepositoryMetadataIntegrationTests {
 						"FROM \"MY_USER\" WHERE \"MY_USER\".\"FIRSTNAME\" LIKE :firstname OR (\"MY_USER\".\"FIRSTNAME\" LIKE :firstname1)"));
 	}
 
+	@Test // GH-2239
+	void shouldDocumentDerivedQueryIgnoreCase() throws IOException {
+
+		Resource resource = getResource();
+
+		assertThat(resource).isNotNull();
+		assertThat(resource.exists()).isTrue();
+
+		String json = resource.getContentAsString(StandardCharsets.UTF_8);
+
+		assertThatJson(json).inPath("$.methods[?(@.name == 'findByFirstnameIgnoreCase')].query").isArray().first()
+				.isObject()
+				.hasEntrySatisfying("query", value -> assertThat(value).asString().contains("SELECT \"MY_USER\".\"ID\"",
+						"FROM \"MY_USER\" WHERE UPPER(\"MY_USER\".\"FIRSTNAME\") = UPPER(:firstname)"));
+	}
+
 	@Test // GH-2121
 	void shouldDocumentPagedQuery() throws IOException {
 
