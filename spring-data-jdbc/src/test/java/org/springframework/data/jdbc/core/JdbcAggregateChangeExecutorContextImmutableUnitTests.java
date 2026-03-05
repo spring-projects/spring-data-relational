@@ -35,6 +35,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -120,12 +121,12 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		assertThat(newRoot.list.get(0).id).isEqualTo(24L);
 	}
 
-	@Test
-	// GH-537
+	@Test // GH-537
 	void populatesIdsIfNecessaryForAllRootsThatWereProcessed() {
 
 		DummyEntity root1 = new DummyEntity().withId(123L);
 		when(accessStrategy.update(root1, DummyEntity.class)).thenReturn(true);
+		when(accessStrategy.getDialect()).thenReturn(AnsiDialect.INSTANCE);
 		DbAction.UpdateRoot<DummyEntity> rootUpdate1 = new DbAction.UpdateRoot<>(root1, null);
 		executionContext.executeUpdateRoot(rootUpdate1);
 		Content content1 = new Content();

@@ -354,7 +354,9 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	private <T> void updateWithoutVersion(DbAction.UpdateRoot<T> update) {
-		accessStrategy.update(update.entity(), update.getEntityType());
+
+		boolean updated = accessStrategy.update(update.entity(), update.getEntityType());
+		accessStrategy.getDialect().getUpdateRowCountVerification().rowsModified(updated);
 	}
 
 	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update) {

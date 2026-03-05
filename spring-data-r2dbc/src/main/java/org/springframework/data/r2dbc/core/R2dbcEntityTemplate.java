@@ -689,6 +689,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 					if (persistentEntity.hasVersionProperty()) {
 						sink.error(OptimisticLockingUtils.updateFailed(entity, version, persistentEntity));
 					}
+					try {
+						dataAccessStrategy.getDialect().getUpdateRowCountVerification().rowsModified(rowsUpdated);
+					} catch (DataAccessException ex) {
+						sink.error(ex);
+					}
 				}).then(maybeCallAfterSave(entity, outboundRow, tableName));
 	}
 
