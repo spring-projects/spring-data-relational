@@ -38,6 +38,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	User findByFirstname(String name);
 
+	User findByFirstnameIgnoreCase(String name);
+
 	User findByFirstnameLike(String name);
 
 	User findByFirstnameStartingWith(String name);

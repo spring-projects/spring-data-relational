@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.aot;
 
 import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.util.Collection;
 
 import org.jspecify.annotations.Nullable;
@@ -49,8 +50,8 @@ class PlaceholderAccessor {
 	 * @param binding
 	 * @return
 	 */
-	public static CapturingJdbcValue boundParameter(ParameterBinding binding) {
-		return boundParameter(null, binding);
+	public static CapturingJdbcValue boundParameter(ParameterBinding binding, SQLType jdbcType) {
+		return boundParameter(null, binding, jdbcType);
 	}
 
 	/**
@@ -60,8 +61,8 @@ class PlaceholderAccessor {
 	 * @param binding
 	 * @return
 	 */
-	public static CapturingJdbcValue boundParameter(@Nullable Object value, ParameterBinding binding) {
-		return new CapturingJdbcValue(value, binding);
+	public static CapturingJdbcValue boundParameter(@Nullable Object value, ParameterBinding binding, SQLType jdbcType) {
+		return new CapturingJdbcValue(value, binding, jdbcType);
 	}
 
 	/**
@@ -138,13 +139,10 @@ class PlaceholderAccessor {
 
 			if (partType == Part.Type.STARTING_WITH || partType == Part.Type.ENDING_WITH || partType == Part.Type.CONTAINING
 					|| partType == Part.Type.NOT_CONTAINING) {
-				return JdbcValue.of(
-						capturingJdbcValue.withBinding(ParameterBinding.like(capturingJdbcValue.getBinding(), partType)),
-						JDBCType.OTHER);
+				return capturingJdbcValue.withBinding(ParameterBinding.like(capturingJdbcValue.getBinding(), partType)).wrap();
 			}
 
-			return JdbcValue.of(capturingJdbcValue.withValue(super.prepareParameterValue(value, valueType, partType)),
-					JDBCType.OTHER);
+			return capturingJdbcValue.withValue(super.prepareParameterValue(value, valueType, partType)).wrap();
 		}
 
 	}
@@ -156,8 +154,8 @@ class PlaceholderAccessor {
 
 		private final ParameterBinding binding;
 
-		private CapturingJdbcValue(@Nullable Object value, ParameterBinding binding) {
-			super(value, JDBCType.OTHER);
+		private CapturingJdbcValue(@Nullable Object value, ParameterBinding binding, SQLType jdbcType) {
+			super(value, jdbcType);
 			Assert.notNull(binding, "Parameter binding must not be null");
 			this.binding = binding;
 		}
@@ -172,11 +170,18 @@ class PlaceholderAccessor {
 				return this;
 			}
 
-			return new CapturingJdbcValue(value, binding);
+			return new CapturingJdbcValue(value, binding, getJdbcType());
 		}
 
 		public CapturingJdbcValue withBinding(ParameterBinding binding) {
-			return new CapturingJdbcValue(getValue(), binding);
+			return new CapturingJdbcValue(getValue(), binding, getJdbcType());
+		}
+
+		/**
+		 * Wrap the capturing value into a {@link JdbcValue}.
+		 */
+		public JdbcValue wrap() {
+			return JdbcValue.of(this, getJdbcType());
 		}
 	}
 
@@ -218,8 +223,11 @@ class PlaceholderAccessor {
 		}
 
 		private CapturingJdbcValue capture(RelationalParameters.RelationalParameter parameter) {
+
+			SQLType jdbcType = parameter instanceof JdbcParameters.JdbcParameter jp ? jp.getActualSqlType() : JDBCType.OTHER;
+
 			return boundParameter(ParameterBinding.named(parameter.getRequiredName(),
-					ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())));
+					ParameterBinding.ParameterOrigin.ofParameter(parameter.getIndex())), jdbcType);
 		}
 
 	}
