@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -45,6 +46,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Chirag Tailor
  * @author Mikhail Polivakha
  * @author Mark Paluch
+ * @author wonderfulrosemari
  * @since 2.4
  */
 public class SqlParametersFactory {
@@ -252,11 +254,22 @@ public class SqlParametersFactory {
 				return;
 			}
 
+			RelationalPersistentEntity<?> referenceIdEntity = getReferenceIdEntity(property);
+			if (referenceIdEntity != null) {
+
+				Object value = propertyAccessor.getProperty(property);
+				Object referenceId = value instanceof AggregateReference<?, ?> reference ? reference.getId() : value;
+
+				ParameterSourceHolder additionalParameters = getParameterSource((T) referenceId,
+						(RelationalPersistentEntity<T>) referenceIdEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
+				holder.addAll(additionalParameters);
+				return;
+			}
+
 			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
-				RelationalPersistentEntity<?> embeddedEntity = context
-						.getRequiredPersistentEntity(property.getTypeInformation());
+				RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property);
 				ParameterSourceHolder additionalParameters = getParameterSource((T) value,
 						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				holder.addAll(additionalParameters);
@@ -268,6 +281,16 @@ public class SqlParametersFactory {
 		});
 
 		return holder;
+	}
+
+	@Nullable
+	private RelationalPersistentEntity<?> getReferenceIdEntity(RelationalPersistentProperty property) {
+
+		if (!AggregateReference.class.isAssignableFrom(property.getRawType())) {
+			return null;
+		}
+
+		return context.getPersistentEntity(converter.getColumnType(property));
 	}
 
 	/**

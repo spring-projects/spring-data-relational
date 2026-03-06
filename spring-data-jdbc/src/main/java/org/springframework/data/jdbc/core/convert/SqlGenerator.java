@@ -61,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Kurt Niemi
+ * @author wonderfulrosemari
  */
 public class SqlGenerator {
 
@@ -1306,6 +1307,7 @@ public class SqlGenerator {
 
 			Set<SqlIdentifier> insertable = new LinkedHashSet<>(nonIdColumnNames);
 			insertable.removeAll(readOnlyColumnNames);
+			replaceReferenceColumns(entity, insertable);
 
 			this.insertableColumns = Collections.unmodifiableSet(insertable);
 
@@ -1314,8 +1316,56 @@ public class SqlGenerator {
 			updatable.removeAll(idColumnNames);
 			updatable.removeAll(readOnlyColumnNames);
 			updatable.removeAll(insertOnlyColumnNames);
+			replaceReferenceColumns(entity, updatable);
 
 			this.updatableColumns = Collections.unmodifiableSet(updatable);
+		}
+
+		private void replaceReferenceColumns(RelationalPersistentEntity<?> entity, Set<SqlIdentifier> targetColumns) {
+
+			entity.doWithAll(property -> {
+
+				Set<SqlIdentifier> referenceColumns = getReferenceIdColumns(property);
+				if (referenceColumns.isEmpty()) {
+					return;
+				}
+
+				targetColumns.remove(property.getColumnName());
+				targetColumns.addAll(referenceColumns);
+			});
+		}
+
+		private Set<SqlIdentifier> getReferenceIdColumns(RelationalPersistentProperty property) {
+
+			if (!property.isAssociation()) {
+				return Collections.emptySet();
+			}
+
+			RelationalPersistentEntity<?> referenceIdEntity = mappingContext.getPersistentEntity(converter.getColumnType(property));
+			if (referenceIdEntity == null) {
+				return Collections.emptySet();
+			}
+
+			Set<SqlIdentifier> columns = new LinkedHashSet<>();
+			collectSimpleColumns(referenceIdEntity, property.getEmbeddedPrefix(), columns);
+			return columns;
+		}
+
+		private void collectSimpleColumns(RelationalPersistentEntity<?> entity, String prefix, Set<SqlIdentifier> columns) {
+
+			entity.doWithAll(property -> {
+
+				if (property.isEmbedded() && property.isEntity()) {
+					RelationalPersistentEntity<?> embeddedEntity = mappingContext
+							.getRequiredPersistentEntity(converter.getColumnType(property));
+					collectSimpleColumns(embeddedEntity, prefix + property.getEmbeddedPrefix(), columns);
+					return;
+				}
+
+				if (!property.isEntity()) {
+					columns.add(property.getColumnName().transform(prefix::concat));
+				}
+			});
 		}
 
 		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {

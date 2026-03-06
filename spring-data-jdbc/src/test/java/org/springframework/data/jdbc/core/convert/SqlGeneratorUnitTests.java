@@ -73,6 +73,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
+ * @author wonderfulrosemari
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -657,6 +658,17 @@ class SqlGeneratorUnitTests {
 		);
 	}
 
+	@Test // GH-2113
+	void insertUsesCompositeIdColumnsForAggregateReference() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(WithCompositeIdReference.class, AnsiDialect.INSTANCE);
+
+		String insert = sqlGenerator.getInsert(emptySet());
+
+		assertThat(insert).contains("\"X_ORGANIZATION\"", "\"X_EMPLOYEE_NUMBER\"");
+		assertThat(insert).doesNotContain("\"X_EMPLOYEE\"");
+	}
+
 	@Test // DATAJDBC-324
 	void readOnlyPropertyIncludedIntoQuery_when_generateFindAllSql() {
 
@@ -1104,6 +1116,20 @@ class SqlGeneratorUnitTests {
 	static class OtherAggregate {
 		@Id Long id;
 		String name;
+	}
+
+	@SuppressWarnings("unused")
+	static class AggregateWithCompositeId {
+		@Id CompositeId id;
+	}
+
+	record CompositeId(String organization, Long employeeNumber) {
+	}
+
+	@SuppressWarnings("unused")
+	static class WithCompositeIdReference {
+		@Id Long id;
+		AggregateReference<AggregateWithCompositeId, CompositeId> employee;
 	}
 
 	private static class PrefixingNamingStrategy extends DefaultNamingStrategy {
