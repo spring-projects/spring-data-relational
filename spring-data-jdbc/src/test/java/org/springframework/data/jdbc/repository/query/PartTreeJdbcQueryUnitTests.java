@@ -62,6 +62,7 @@ import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.QueryCreationException;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -74,7 +75,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
- * @author wonderfulrosemari
+ * @author Jin Hyuk Cho
  */
 @ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {
@@ -119,7 +120,7 @@ public class PartTreeJdbcQueryUnitTests {
 	void shouldFailForQueryByReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHated", Hobby.class);
-		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+		assertThatExceptionOfType(QueryCreationException.class).isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // GH-922
@@ -179,14 +180,14 @@ public class PartTreeJdbcQueryUnitTests {
 	void shouldFailForQueryByList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbies", Object.class);
-		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+		assertThatExceptionOfType(QueryCreationException.class).isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // DATAJDBC-318
 	void shouldFailForQueryByEmbeddedList() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
-		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+		assertThatExceptionOfType(QueryCreationException.class).isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // GH-922
@@ -756,12 +757,12 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Test // GH-2059
-	void createsQueryBySimpleDomainPrimitiveWithCustomConverters() throws Exception {
+	void considersConvertersForQueryArguments() throws Exception {
 
 		JdbcCustomConversions conversions = JdbcCustomConversions.create(JdbcPostgresDialect.INSTANCE, it -> {
-			it.registerConverter(CustomerRefToStringConverter.INSTANCE);
-			it.registerConverter(StringToCustomerRefConverter.INSTANCE);
+			it.registerConverters(CustomerRefToStringConverter.INSTANCE, StringToCustomerRefConverter.INSTANCE);
 		});
+
 		JdbcMappingContext localContext = new JdbcMappingContext();
 		JdbcConverter localConverter = new MappingJdbcConverter(localContext, mock(RelationResolver.class), conversions,
 				JdbcTypeFactory.unsupported());
@@ -793,8 +794,8 @@ public class PartTreeJdbcQueryUnitTests {
 	private JdbcQueryMethod getQueryMethod(Class<?> repositoryType, JdbcMappingContext mappingContext, String methodName,
 			Class<?>... parameterTypes) throws Exception {
 		Method method = repositoryType.getMethod(methodName, parameterTypes);
-		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(repositoryType), new SpelAwareProxyProjectionFactory(),
-				new PropertiesBasedNamedQueries(new Properties()), mappingContext);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(repositoryType),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), mappingContext);
 	}
 
 	private RelationalParametersParameterAccessor getAccessor(JdbcQueryMethod queryMethod, Object[] values) {
