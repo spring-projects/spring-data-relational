@@ -23,8 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Diego Krupitza
- * @author wonderfulrosemari
+ * @author Jin Hyuk Cho
  * @since 2.0
  */
 public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
@@ -124,6 +124,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	public JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
 			ReturnedType returnedType, Optional<Lock> lockMode, SqlGeneratorSource sqlGeneratorSource) {
+
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -148,7 +149,7 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 	}
 
 	/**
-	 * Validate parameters for the derived query. Specifically checking that the query method defines scalar parameters
+	 * Validate parameters for the derived query. Specifically, checking that the query method defines scalar parameters
 	 * and collection parameters where required and that invalid parameter declarations are rejected.
 	 *
 	 * @param tree the tree structure defining the predicate of the query.
@@ -177,17 +178,17 @@ public class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> 
 			return;
 		}
 
-		if (!path.getParentPath().isEmbedded() && path.getLength() > 2) {
-			throw new IllegalArgumentException(String.format("Cannot query by nested property: %s", path.toDotPath()));
+		if (path.getLength() > 2 && !path.getParentPath().isEmbedded()) {
+			throw new IllegalStateException(String.format("Cannot query by nested property: %s", path.toDotPath()));
 		}
 
 		if (path.isMultiValued() || path.isMap()) {
-			throw new IllegalArgumentException(
+			throw new IllegalStateException(
 					String.format("Cannot query by multi-valued property: %s", path.getRequiredLeafProperty().getName()));
 		}
 
-		if (!path.isEmbedded() && path.isEntity() && !hasCustomWriteTarget(path, converter)) {
-			throw new IllegalArgumentException(String.format("Cannot query by nested entity: %s", path.toDotPath()));
+		if (path.isEntity() && !path.isEmbedded() && !hasCustomWriteTarget(path, converter)) {
+			throw new IllegalStateException(String.format("Cannot query by nested entity: %s", path.toDotPath()));
 		}
 	}
 

@@ -40,6 +40,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.QueryCreationException;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
@@ -61,7 +62,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Yunyoung LEE
  * @author Nikita Konev
- * @author wonderfulrosemari
+ * @author Jin Hyuk Cho
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -145,11 +146,16 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.dialect = dialect;
 		this.converter = converter;
 
-		this.tree = new PartTree(queryMethod.getName(), queryMethod.getResultProcessor().getReturnedType().getDomainType());
-		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext(), this.converter);
+		try {
+			this.tree = new PartTree(queryMethod.getName(),
+					queryMethod.getResultProcessor().getReturnedType().getDomainType());
+			JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext(), this.converter);
 
-		this.cachedRowMapperFactory = new CachedRowMapperFactory(tree, rowMapperFactory, converter,
-				queryMethod.getResultProcessor());
+			this.cachedRowMapperFactory = new CachedRowMapperFactory(tree, rowMapperFactory, converter,
+					queryMethod.getResultProcessor());
+		} catch (RuntimeException e) {
+			throw QueryCreationException.create(queryMethod, e);
+		}
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {
@@ -164,8 +170,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 				values);
 
 		if (tree.isDelete()) {
-			JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
 
+			JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
 			List<ParametrizedQuery> queries = createDeleteQueries(accessor);
 			Object result = null;
 			for (ParametrizedQuery query : queries) {

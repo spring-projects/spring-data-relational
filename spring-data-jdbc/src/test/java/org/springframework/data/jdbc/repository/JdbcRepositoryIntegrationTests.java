@@ -90,6 +90,7 @@ import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.data.repository.core.support.RepositoryFactoryCustomizer;
@@ -271,10 +272,26 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity two = this.repository.save(createEntity("two"));
 		DummyEntity three = this.repository.save(createEntity("three"));
 
-		List<WithConvertedIdentifier> result = withIdentifierConversion.findAllById(
+		List<WithConversions> result = withIdentifierConversion.findAllById(
 				List.of(new LongIdentifier(one.idProp), new LongIdentifier(two.idProp), new LongIdentifier(three.idProp)));
 
 		assertThat(result).hasSize(3);
+	}
+
+	@Test // GH-2225
+	void findAllByConverter() {
+
+		this.repository.save(createEntity("one"));
+		this.repository.save(createEntity("two"));
+		this.repository.save(createEntity("three"));
+
+		List<WithConversions> result = withIdentifierConversion.findByName(new Name("one"));
+
+		assertThat(result).hasSize(1);
+
+		result = withIdentifierConversion.queryByName(new Name("one"));
+
+		assertThat(result).hasSize(1);
 	}
 
 	@Test // GH-2225
@@ -297,7 +314,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity two = this.repository.save(createEntity("two"));
 		DummyEntity three = this.repository.save(createEntity("three"));
 
-		List<WithConvertedIdentifier> result = withIdentifierConversion.findAllById(
+		List<WithConversions> result = withIdentifierConversion.findAllById(
 				List.of(new LongIdentifier(one.idProp), new LongIdentifier(two.idProp), new LongIdentifier(three.idProp)));
 		withIdentifierConversion.deleteAll(result);
 
@@ -1743,7 +1760,8 @@ public class JdbcRepositoryIntegrationTests {
 		@Primary
 		CustomConversions jdbcCustomConversions(Dialect dialect) {
 			return JdbcConfiguration.createCustomConversions((JdbcDialect) dialect,
-					List.of(LongIdentifierToLongConverter.INSTANCE, NumberToLongIdentifierConverter.INSTANCE));
+					List.of(LongIdentifierToLongConverter.INSTANCE, NumberToLongIdentifierConverter.INSTANCE,
+							NameToStringConverterConverter.INSTANCE, StringToNameConverter.INSTANCE));
 		}
 
 		@Bean
@@ -1797,7 +1815,7 @@ public class JdbcRepositoryIntegrationTests {
 				@Override
 				public String getTableName(Class<?> type) {
 
-					if (type == WithConvertedIdentifier.class) {
+					if (type == WithConversions.class) {
 						return super.getTableName(DummyEntity.class);
 					}
 
@@ -2038,10 +2056,32 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	public static class WithConvertedIdentifier {
+	@WritingConverter
+	enum NameToStringConverterConverter implements Converter<Name, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(Name source) {
+			return source.name;
+		}
+	}
+
+	@ReadingConverter
+	enum StringToNameConverter implements Converter<String, Name> {
+
+		INSTANCE;
+
+		@Override
+		public Name convert(String source) {
+			return new Name(source);
+		}
+	}
+
+	public static class WithConversions {
 
 		@Id LongIdentifier idProp;
-		String name;
+		Name name;
 
 		public LongIdentifier getIdProp() {
 			return idProp;
@@ -2051,16 +2091,28 @@ public class JdbcRepositoryIntegrationTests {
 			this.idProp = idProp;
 		}
 
-		public String getName() {
+		public Name getName() {
 			return name;
 		}
 
-		public void setName(String name) {
+		public void setName(Name name) {
 			this.name = name;
 		}
 	}
 
-	public interface WithIdentifierConversion extends ListCrudRepository<WithConvertedIdentifier, LongIdentifier> {}
+	record Name(String name) {
+
+	}
+
+	@NoRepositoryBean
+	public interface WithIdentifierConversion extends ListCrudRepository<WithConversions, LongIdentifier> {
+
+		List<WithConversions> findByName(Name name);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE name = :name")
+		List<WithConversions> queryByName(Name name);
+
+	}
 
 	public static class DummyEntity {
 
