@@ -47,6 +47,7 @@
 		<r2dbc-mssql.version>1.0.4.RELEASE</r2dbc-mssql.version>
 		<r2dbc-mysql.version>1.4.1</r2dbc-mysql.version>
 		<oracle-r2dbc.version>1.3.0</oracle-r2dbc.version>
+		<r2dbc-pool.version>1.0.2.RELEASE</r2dbc-pool.version>
 
 		<!-- test dependencies -->
 		<archunit.version>1.4.1</archunit.version>

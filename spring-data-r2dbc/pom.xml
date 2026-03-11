@@ -27,7 +27,7 @@
 
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
-		<netty>4.2.3.Final</netty>
+		<netty>4.2.10.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
@@ -182,7 +182,7 @@
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc11</artifactId>
-			<version>23.4.0.24.05</version>
+			<version>${oracle.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -227,6 +227,13 @@
 			<groupId>com.oracle.database.r2dbc</groupId>
 			<artifactId>oracle-r2dbc</artifactId>
 			<version>${oracle-r2dbc.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-pool</artifactId>
+			<version>${r2dbc-pool.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -377,7 +384,6 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
-				<version>1.1.0</version>
 				<executions>
 					<execution>
 						<id>flatten</id>

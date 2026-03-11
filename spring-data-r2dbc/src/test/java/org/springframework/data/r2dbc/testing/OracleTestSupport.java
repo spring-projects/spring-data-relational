@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.testing;
 
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -158,7 +160,10 @@ public class OracleTestSupport {
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
 
 		ConnectionFactoryOptions options = ConnectionUtils.createOptions("oracle", database);
-		return ConnectionFactories.get(options);
+
+		ConnectionPoolConfiguration configuration = ConnectionPoolConfiguration.builder(ConnectionFactories.get(options))
+				.minIdle(0).maxSize(5).build();
+		return new ConnectionPool(configuration);
 	}
 
 	/**
