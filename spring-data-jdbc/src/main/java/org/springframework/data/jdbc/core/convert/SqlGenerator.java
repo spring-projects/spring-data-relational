@@ -15,19 +15,28 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
-import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.AggregatePath;
@@ -74,6 +83,7 @@ public class SqlGenerator {
 
 	private final RelationalPersistentEntity<?> entity;
 	private final RelationalMappingContext mappingContext;
+	private final JdbcConverter converter;
 
 	private final SqlContext sqlContext;
 	private final SqlRenderer sqlRenderer;
@@ -108,6 +118,7 @@ public class SqlGenerator {
 			Dialect dialect) {
 
 		this.mappingContext = mappingContext;
+		this.converter = converter;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
 		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
@@ -641,25 +652,14 @@ public class SqlGenerator {
 				AggregatePath aggregatePath = mappingContext.getAggregatePath(
 						mappingContext.getPersistentPropertyPath(columnName.getReference(), entity.getTypeInformation()));
 
-				includeColumnAndJoin(aggregatePath, pathFilter, joins, columns);
+				includeColumnAndJoin(aggregatePath, pathFilter, joins, columns, table);
 			} catch (InvalidPersistentPropertyPath e) {
 				columns.add(Column.create(columnName, table));
 			}
 		}
 
 		if (columns.isEmpty()) {
-
-			for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
-					.findPersistentPropertyPaths(entity.getType(), Predicates.isTrue())) {
-
-				AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
-
-				if (pathFilter.test(aggregatePath)) {
-					continue;
-				}
-
-				includeColumnAndJoin(aggregatePath, pathFilter, joins, columns);
-			}
+			addColumns(entity, pathFilter, joins, columns, table);
 		}
 
 		for (SqlIdentifier keyColumn : keyColumns) {
@@ -669,30 +669,56 @@ public class SqlGenerator {
 		return new Projection(columns, Joins.of(joins));
 	}
 
-	private void includeColumnAndJoin(AggregatePath aggregatePath, Predicate<AggregatePath> pathFilter,
-			Collection<Join> joins, Collection<Expression> columns) {
+	private void addColumns(RelationalPersistentEntity<?> entity, Predicate<AggregatePath> pathFilter,
+			Collection<Join> joins, Collection<Expression> columns, Table table) {
 
-		if (aggregatePath.isEmbedded()) {
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), Predicates.isTrue())) {
 
-			RelationalPersistentEntity<?> entity = aggregatePath.getRequiredLeafEntity();
+			AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
 
-			for (RelationalPersistentProperty property : entity) {
-
-				AggregatePath nested = aggregatePath.append(property);
-
-				if (pathFilter.test(nested)) {
-					continue;
-				}
-
-				includeColumnAndJoin(nested, pathFilter, joins, columns);
+			if (pathFilter.test(aggregatePath)) {
+				continue;
 			}
 
+			includeColumnAndJoin(aggregatePath, pathFilter, joins, columns, table);
+		}
+	}
+
+	private void addColumns(AggregatePath path, RelationalPersistentEntity<?> entity, Predicate<AggregatePath> pathFilter,
+			Collection<Join> joins, Collection<Expression> columns, Table table) {
+
+		for (RelationalPersistentProperty property : entity) {
+
+			AggregatePath nested = path.append(property);
+
+			if (pathFilter.test(nested)) {
+				continue;
+			}
+
+			includeColumnAndJoin(nested, pathFilter, joins, columns, table);
+		}
+	}
+
+	private void includeColumnAndJoin(AggregatePath path, Predicate<AggregatePath> pathFilter, Collection<Join> joins,
+			Collection<Expression> columns, Table table) {
+
+		RelationalPersistentProperty property = path.getRequiredLeafProperty();
+
+		Association association = Association.detect(property, converter);
+		if (association != null && association.isComplexIdentifier()) {
+			addColumns(path, association.getRequiredTargetIdentifierEntity(), pathFilter, joins, columns, table);
 			return;
 		}
 
-		joins.addAll(getJoins(aggregatePath));
+		if (path.isEmbedded()) {
+			addColumns(path, path.getRequiredLeafEntity(), pathFilter, joins, columns, table);
+			return;
+		}
 
-		Column column = getColumn(aggregatePath);
+		joins.addAll(getJoins(path));
+
+		Column column = getColumn(path);
 		if (column != null) {
 			columns.add(column);
 		}
@@ -1284,7 +1310,7 @@ public class SqlGenerator {
 	 */
 	static class Columns {
 
-		private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+		private final RelationalMappingContext mappingContext;
 		private final JdbcConverter converter;
 
 		private final List<SqlIdentifier> columnNames = new ArrayList<>();
@@ -1296,7 +1322,7 @@ public class SqlGenerator {
 		private final Set<SqlIdentifier> updatableColumns;
 
 		Columns(RelationalPersistentEntity<?> entity,
-				MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext,
+				RelationalMappingContext mappingContext,
 				JdbcConverter converter) {
 
 			this.mappingContext = mappingContext;
@@ -1320,10 +1346,22 @@ public class SqlGenerator {
 
 		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {
 
+
 			entity.doWithAll(property -> {
 
-				// the referencing column of referenced entity is expected to be on the other side of the relation
+				if (Association.isAssociation(property)) {
+
+					Association association = Association.from(property, converter);
+					if (association.isComplexIdentifier()) {
+						populateColumnNameCache(association.getRequiredTargetIdentifierEntity(),
+								prefix + property.getEmbeddedPrefix());
+						return;
+					}
+				}
+
 				if (!property.isEntity()) {
+
+					// the referencing column of referenced entity is expected to be on the other side of the relation
 					initSimpleColumnName(property, prefix);
 				} else if (property.isEmbedded()) {
 					initEmbeddedColumnNames(property, prefix);

@@ -24,14 +24,15 @@ import static org.springframework.data.jdbc.core.convert.DefaultDataAccessStrate
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.Column;
@@ -181,6 +182,37 @@ class SqlParametersFactoryUnitTests {
 		});
 	}
 
+	@Test // GH-2113
+	void parametersForInsertAggregateReference() {
+
+		EmployeeId eid = new EmployeeId("org", 123L);
+		Locker entity = new Locker();
+		entity.assignedTo = AggregateReference.to(eid);
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(entity, Locker.class,
+				Identifier.empty(), IdValueSource.PROVIDED);
+
+		assertThat(parameterSource.getParameterNames()).containsExactlyInAnyOrder("id", "capacity", "organization",
+				"employee_number");
+		assertThat(parameterSource.getValue("organization")).isEqualTo(eid.organization);
+		assertThat(parameterSource.getValue("employee_number")).isEqualTo(eid.employeeNumber);
+	}
+
+	@Test // GH-2113
+	void parametersForUpdateAggregateReference() {
+
+		EmployeeId eid = new EmployeeId("org", 123L);
+		Locker entity = new Locker();
+		entity.assignedTo = AggregateReference.to(eid);
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(entity, Locker.class);
+
+		assertThat(parameterSource.getParameterNames()).containsExactlyInAnyOrder("id", "capacity", "organization",
+				"employee_number");
+		assertThat(parameterSource.getValue("organization")).isEqualTo(eid.organization);
+		assertThat(parameterSource.getValue("employee_number")).isEqualTo(eid.employeeNumber);
+	}
+
 	@WritingConverter
 	enum IdValueToStringConverter implements Converter<IdValue, String> {
 
@@ -214,38 +246,8 @@ class SqlParametersFactoryUnitTests {
 		}
 	}
 
-	private static final class IdValue {
-		private final String id;
+	private record IdValue(String id) {
 
-		public IdValue(String id) {
-			this.id = id;
-		}
-
-		public String getId() {
-			return this.id;
-		}
-
-		public boolean equals(final Object o) {
-			if (o == this)
-				return true;
-			if (!(o instanceof final IdValue other))
-				return false;
-			final Object this$id = this.getId();
-			final Object other$id = other.getId();
-			return Objects.equals(this$id, other$id);
-		}
-
-		public int hashCode() {
-			final int PRIME = 59;
-			int result = 1;
-			final Object $id = this.getId();
-			result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-			return result;
-		}
-
-		public String toString() {
-			return "SqlParametersFactoryTest.IdValue(id=" + this.getId() + ")";
-		}
 	}
 
 	@WritingConverter
@@ -330,5 +332,21 @@ class SqlParametersFactoryUnitTests {
 			@Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) WrappedPk wrappedPk, //
 			String name //
 	) {
+	}
+
+	static class Locker {
+
+		@Id Long id;
+		Integer capacity;
+		AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
+	}
+
+	static class EmployeeWithCompositeId {
+
+		@Id EmployeeId id;
+		String name;
+	}
+
+	private record EmployeeId(String organization, Long employeeNumber) {
 	}
 }

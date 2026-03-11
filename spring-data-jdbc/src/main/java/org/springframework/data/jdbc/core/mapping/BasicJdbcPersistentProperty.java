@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -47,5 +50,25 @@ public class BasicJdbcPersistentProperty extends BasicRelationalPersistentProper
 	@Override
 	public boolean isAssociation() {
 		return super.isAssociation() || AggregateReference.class.isAssignableFrom(getRawType());
+	}
+
+	@Override
+	public @Nullable TypeInformation<?> getAssociationTargetTypeInformation() {
+
+		if (AggregateReference.class.isAssignableFrom(getRawType())) {
+			return getTypeInformation().getComponentType();
+		}
+
+		return super.getAssociationTargetTypeInformation();
+	}
+
+	@Override
+	protected TypeInformation<?> getActualTypeInformation() {
+
+		if (AggregateReference.class.isAssignableFrom(getRawType())) {
+			return getTypeInformation().getRequiredMapValueType();
+		}
+
+		return super.getActualTypeInformation();
 	}
 }
