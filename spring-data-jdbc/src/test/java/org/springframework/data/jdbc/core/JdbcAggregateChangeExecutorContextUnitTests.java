@@ -36,7 +36,11 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.IdValueSource;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.UpdateRowCountVerification;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -196,6 +200,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		root.id = 123L;
 		when(accessStrategy.update(root, DummyEntity.class)).thenReturn(true);
+		when(accessStrategy.getDialect()).thenReturn(AnsiDialect.INSTANCE);
 		DbAction.UpdateRoot<DummyEntity> rootUpdate = new DbAction.UpdateRoot<>(root, null);
 		executionContext.executeUpdateRoot(rootUpdate);
 
@@ -219,6 +224,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		DummyEntity root1 = new DummyEntity();
 		root1.id = 123L;
 		when(accessStrategy.update(root1, DummyEntity.class)).thenReturn(true);
+		when(accessStrategy.getDialect()).thenReturn(AnsiDialect.INSTANCE);
 		DbAction.UpdateRoot<DummyEntity> rootUpdate1 = new DbAction.UpdateRoot<>(root1, null);
 		executionContext.executeUpdateRoot(rootUpdate1);
 		Content content1 = new Content();
@@ -240,6 +246,38 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		assertThat(content1.id).isEqualTo(11L);
 		assertThat(root2.id).isEqualTo(456L);
 		assertThat(content2.id).isEqualTo(12L);
+	}
+
+	@Test // GH-2209
+	void updateWithoutVersionThrowsWhenZeroRowsUpdatedAndDialectIsStrict() {
+
+		root.id = 123L;
+		when(accessStrategy.update(root, DummyEntity.class)).thenReturn(false);
+		Dialect dialect = mock(Dialect.class);
+		when(dialect.getUpdateRowCountVerification()).thenReturn(UpdateRowCountVerification.STRICT);
+		when(accessStrategy.getDialect()).thenReturn(dialect);
+
+		DbAction.UpdateRoot<DummyEntity> rootUpdate = new DbAction.UpdateRoot<>(root, null);
+
+		assertThatThrownBy(() -> executionContext.executeUpdateRoot(rootUpdate)) //
+				.isInstanceOf(IncorrectUpdateSemanticsDataAccessException.class) //
+				.hasMessageContaining("No rows were updated");
+	}
+
+	@Test // GH-2209
+	void updateWithoutVersionSucceedsWhenZeroRowsUpdatedAndDialectIsLenient() {
+
+		root.id = 123L;
+		when(accessStrategy.update(root, DummyEntity.class)).thenReturn(false);
+		Dialect dialect = mock(Dialect.class);
+		when(dialect.getUpdateRowCountVerification()).thenReturn(UpdateRowCountVerification.LENIENT);
+		when(accessStrategy.getDialect()).thenReturn(dialect);
+
+		DbAction.UpdateRoot<DummyEntity> rootUpdate = new DbAction.UpdateRoot<>(root, null);
+		executionContext.executeUpdateRoot(rootUpdate);
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+		assertThat(newRoots).containsExactly(root);
 	}
 
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,

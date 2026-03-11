@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.dialect.InsertRenderContext;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.dialect.OrderByNullPrecedence;
+import org.springframework.data.relational.core.dialect.UpdateRowCountVerification;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -267,6 +268,11 @@ public class DialectResolver {
 		@Override
 		public boolean supportsSingleQueryLoading() {
 			return delegate.supportsSingleQueryLoading();
+		}
+
+		@Override
+		public UpdateRowCountVerification getUpdateRowCountVerification() {
+			return delegate.getUpdateRowCountVerification();
 		}
 	}
 
