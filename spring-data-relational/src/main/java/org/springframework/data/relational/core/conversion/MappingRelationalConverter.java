@@ -507,9 +507,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 				ConversionContext propertyContext = context.forProperty(property);
 				RelationalPropertyValueProvider provider = withContext(propertyContext);
 
+				if (property.isAssociation()) {
+					return (T) readAssociation(propertyContext, provider, source, property);
+				}
+
 				if (property.isEmbedded()) {
-					return (T) readEmbedded(propertyContext, provider, source, property,
-							getMappingContext().getRequiredPersistentEntity(property));
+					return (T) readEmbedded(propertyContext, provider, source, property);
 				}
 
 				return provider.getPropertyValue(property);
@@ -568,9 +571,14 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 			ConversionContext propertyContext = context.forProperty(property);
 			RelationalPropertyValueProvider valueProviderToUse = valueProvider.withContext(propertyContext);
 
+			if (property.isAssociation()) {
+				accessor.setProperty(property,
+						readAssociation(propertyContext, valueProviderToUse, documentAccessor, property));
+				continue;
+			}
+
 			if (property.isEmbedded()) {
-				accessor.setProperty(property, readEmbedded(propertyContext, valueProviderToUse, documentAccessor, property,
-						getMappingContext().getRequiredPersistentEntity(property)));
+				accessor.setProperty(property, readEmbedded(propertyContext, valueProviderToUse, documentAccessor, property));
 				continue;
 			}
 
@@ -586,9 +594,16 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 	}
 
 	@Nullable
+	protected Object readAssociation(ConversionContext conversionContext, RelationalPropertyValueProvider provider,
+			RowDocumentAccessor source, RelationalPersistentProperty property) {
+		return source.get(property);
+	}
+
+	@Nullable
 	private Object readEmbedded(ConversionContext conversionContext, RelationalPropertyValueProvider provider,
-			RowDocumentAccessor source, RelationalPersistentProperty property,
-			RelationalPersistentEntity<?> persistentEntity) {
+			RowDocumentAccessor source, RelationalPersistentProperty property) {
+
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getRequiredPersistentEntity(property);
 
 		if (shouldReadEmbeddable(conversionContext, property, persistentEntity, provider)) {
 			return read(conversionContext, persistentEntity, source);

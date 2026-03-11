@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
@@ -239,7 +240,15 @@ public class SqlParametersFactory {
 
 		ParameterSourceHolder holder = new ParameterSourceHolder();
 
-		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
+		populateParameterSource(instance, persistentEntity, prefix, skipProperty, holder);
+
+		return holder;
+	}
+
+	private void populateParameterSource(Object instance, RelationalPersistentEntity<?> persistentEntity, String prefix,
+			Predicate<RelationalPersistentProperty> skipProperty, ParameterSourceHolder holder) {
+
+		PersistentPropertyAccessor<?> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
 		persistentEntity.doWithAll(property -> {
@@ -252,13 +261,29 @@ public class SqlParametersFactory {
 				return;
 			}
 
+			if (Association.isAssociation(property)) {
+
+				Association association = Association.from(property, converter);
+				if (association.isComplexIdentifier()) {
+
+					Object value = propertyAccessor.getProperty(property);
+					if (value instanceof AggregateReference<?, ?> ar) {
+						value = ar.getId();
+					}
+
+					populateParameterSource(value, association.getRequiredTargetIdentifierEntity(),
+							prefix + property.getEmbeddedPrefix(), skipProperty, holder);
+					return;
+				}
+			}
+
 			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
 				RelationalPersistentEntity<?> embeddedEntity = context
 						.getRequiredPersistentEntity(property.getTypeInformation());
-				ParameterSourceHolder additionalParameters = getParameterSource((T) value,
-						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
+				ParameterSourceHolder additionalParameters = getParameterSource((Object) value,
+						(RelationalPersistentEntity<Object>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				holder.addAll(additionalParameters);
 			} else {
 
@@ -266,8 +291,6 @@ public class SqlParametersFactory {
 				holder.addValue(paramName, property, propertyAccessor.getProperty(property));
 			}
 		});
-
-		return holder;
 	}
 
 	/**

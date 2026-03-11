@@ -225,6 +225,11 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 			return AggregateReference.to(referencedId);
 		}
 
+		if (value instanceof AggregateReference<?, ?> ref
+				&& !targetType.getType().isAssignableFrom(AggregateReference.class)) {
+			return getPotentiallyConvertedSimpleRead(ref.getId(), targetType);
+		}
+
 		return getPotentiallyConvertedSimpleRead(value, targetType);
 	}
 
@@ -352,6 +357,22 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 	}
 
 	@Override
+	protected @Nullable Object readAssociation(ConversionContext conversionContext,
+			RelationalPropertyValueProvider provider, RowDocumentAccessor source, RelationalPersistentProperty property) {
+
+		if (AggregateReference.class.isAssignableFrom(property.getType())) {
+
+			Object propertyValue = provider.getPropertyValue(property);
+			if (propertyValue == null) {
+				return null;
+			}
+			return readValue(AggregateReference.to(propertyValue), property.getTypeInformation().getRequiredActualType());
+		}
+
+		return super.readAssociation(conversionContext, provider, source, property);
+	}
+
+	@Override
 	protected RelationalPropertyValueProvider newValueProvider(RowDocumentAccessor documentAccessor,
 			ValueExpressionEvaluator evaluator, ConversionContext context) {
 
@@ -438,6 +459,13 @@ public class MappingJdbcConverter extends MappingRelationalConverter implements 
 
 			if (getConversions().isSimpleType(property.getActualType())) {
 				return (T) delegate.getValue(aggregatePath);
+			}
+
+			Association association = Association.detect(property, MappingJdbcConverter.this);
+
+			if (association != null && association.isComplexIdentifier()) {
+				return (T) readAggregate(this.context, accessor,
+						association.getRequiredTargetIdentifierEntity().getTypeInformation());
 			}
 
 			if (property.isEntity()) {
