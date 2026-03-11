@@ -27,6 +27,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -657,6 +658,28 @@ class SqlGeneratorUnitTests {
 		);
 	}
 
+	@Test // GH-2113
+	void selectConsidersAggregateReference() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(Locker.class, AnsiDialect.INSTANCE);
+
+		String select = sqlGenerator.getFindOne();
+
+		assertThat(select).contains("X_ORGANIZATION", "X_EMPLOYEE_NUMBER");
+		assertThat(select).doesNotContain("X_ASSIGNED_TO");
+	}
+
+	@Test // GH-2113
+	void insertSqlForEntityWithCompositeKeyReferenceUsesMultipleColumns() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(Locker.class, AnsiDialect.INSTANCE);
+
+		String insert = sqlGenerator.getInsert(emptySet());
+
+		assertThat(insert).contains("organization", "employee_number");
+		assertThat(insert).doesNotContain("assigned_to");
+	}
+
 	@Test // DATAJDBC-324
 	void readOnlyPropertyIncludedIntoQuery_when_generateFindAllSql() {
 
@@ -1137,6 +1160,22 @@ class SqlGeneratorUnitTests {
 		@Id
 		@Column("test\"\"_@id") Long id;
 		@Column("test\"\"_@123") String name;
+	}
+
+	static class Locker {
+
+		@Id Long id;
+		Integer capacity;
+		AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
+	}
+
+	static class EmployeeWithCompositeId {
+
+		@Id EmployeeId id;
+		String name;
+	}
+
+	private record EmployeeId(String organization, Long employeeNumber) {
 	}
 
 	@SuppressWarnings("unused")

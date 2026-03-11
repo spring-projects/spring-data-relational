@@ -198,6 +198,36 @@ class MappingJdbcConverterUnitTests {
 		assertThat(entity.id.id).isEqualTo(123);
 	}
 
+	@Test // GH-2113
+	void shouldReadResolveAggregateReferenceWithCompositeId() {
+
+		RowDocument rowDocument = new RowDocument();
+		rowDocument.put("id", 123L);
+		rowDocument.put("organization", "org");
+		rowDocument.put("employee_number", 42L);
+
+		Locker entity = converter.readAndResolve(TypeInformation.of(Locker.class), rowDocument,
+				Identifier.of(SqlIdentifier.quoted("id"), "123", String.class));
+
+		assertThat(entity.id).isEqualTo(123);
+		assertThat(entity.assignedTo.getId()).isEqualTo(new EmployeeId("org", 42L));
+	}
+
+	@Test // GH-2113
+	void shouldReadResolveRecordAggregateReferenceWithCompositeId() {
+
+		RowDocument rowDocument = new RowDocument();
+		rowDocument.put("id", 123L);
+		rowDocument.put("organization", "org");
+		rowDocument.put("employee_number", 42L);
+
+		LockerWithPlainReference entity = converter.readAndResolve(TypeInformation.of(LockerWithPlainReference.class),
+				rowDocument, Identifier.of(SqlIdentifier.quoted("id"), "123", String.class));
+
+		assertThat(entity.id).isEqualTo(123);
+		assertThat(entity.assignedTo.getId()).isEqualTo(new EmployeeId("org", 42L));
+	}
+
 	private static void checkReadConversion(SoftAssertions softly, MappingJdbcConverter converter, String propertyName,
 			Object expected) {
 
@@ -309,6 +339,36 @@ class MappingJdbcConverterUnitTests {
 		public Long convert(CustomId source) {
 			return source.id;
 		}
+	}
+
+	static class Locker {
+
+		@Id Long id;
+		Integer capacity;
+		AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
+
+	}
+
+	static class LockerWithPlainReference {
+		@Id final Long id;
+		final Integer capacity;
+		final AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
+
+		LockerWithPlainReference(Long id, Integer capacity, EmployeeId assignedTo) {
+			this.id = id;
+			this.capacity = capacity;
+			this.assignedTo = AggregateReference.to(assignedTo);
+		}
+
+	}
+
+	static class EmployeeWithCompositeId {
+
+		@Id EmployeeId id;
+		String name;
+	}
+
+	private record EmployeeId(String organization, Long employeeNumber) {
 	}
 
 }

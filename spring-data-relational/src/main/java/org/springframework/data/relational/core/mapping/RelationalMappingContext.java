@@ -126,7 +126,9 @@ public class RelationalMappingContext
 
 		boolean embeddedDelegation = persistentProperty instanceof EmbeddedRelationalPersistentProperty;
 
-		RelationalPersistentEntity<?> entity = super.getPersistentEntity(persistentProperty);
+		RelationalPersistentEntity<?> entity = persistentProperty.isAssociation()
+				? getPersistentEntity(persistentProperty.getActualType())
+				: super.getPersistentEntity(persistentProperty);
 
 		if (entity != null && (persistentProperty.isEmbedded() || embeddedDelegation)) {
 			return new EmbeddedRelationalPersistentEntity<>(entity, new EmbeddedContext(persistentProperty));
