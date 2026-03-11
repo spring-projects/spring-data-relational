@@ -58,7 +58,7 @@ class DefaultAggregatePath implements AggregatePath {
 		this.context = context;
 		this.path = (PersistentPropertyPath) path;
 		this.rootType = path.getBaseProperty().getOwner();
-		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggegatePath);
+		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggregatePath);
 	}
 
 	DefaultAggregatePath(RelationalMappingContext context, RelationalPersistentEntity<?> rootType) {
@@ -69,7 +69,7 @@ class DefaultAggregatePath implements AggregatePath {
 		this.context = context;
 		this.rootType = rootType;
 		this.path = null;
-		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggegatePath);
+		this.nestedCache = new ConcurrentLruCache<>(32, this::doGetAggregatePath);
 	}
 
 	/**
@@ -117,7 +117,7 @@ class DefaultAggregatePath implements AggregatePath {
 		return tail == null ? appended : appended.append(tail);
 	}
 
-	private AggregatePath doGetAggegatePath(RelationalPersistentProperty property) {
+	private AggregatePath doGetAggregatePath(RelationalPersistentProperty property) {
 
 		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath;
 
