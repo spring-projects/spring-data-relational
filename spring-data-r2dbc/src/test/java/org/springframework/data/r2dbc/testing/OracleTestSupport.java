@@ -72,11 +72,6 @@ public class OracleTestSupport {
 	 */
 	public static ExternalDatabase database() {
 
-		// Disable Oracle support as there's no M1 support yet.
-		if (ConnectionUtils.AARCH64.equals(System.getProperty("os.arch"))) {
-			return ExternalDatabase.unavailable();
-		}
-
 		if (!ClassUtils.isPresent("oracle.r2dbc.impl.OracleConnectionFactoryProviderImpl",
 				OracleTestSupport.class.getClassLoader())) {
 			return ExternalDatabase.unavailable();
@@ -129,7 +124,7 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("gvenzl/oracle-free:23-slim") //
+				OracleContainer container = new OracleContainer("gvenzl/oracle-free:23.26.1-slim-faststart") //
 						.withReuse(true) //
 						.withStartupTimeoutSeconds(200); // the default of 60s isn't sufficient
 				container.start();
