@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -68,6 +70,8 @@ import org.springframework.util.Assert;
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
+
+	private final Log logger = LogFactory.getLog(getClass());
 
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final RelationalMappingContext context;
@@ -177,6 +181,22 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 
 		return true;
+	}
+
+	@Override
+	public <T> @Nullable Object upsert(T instance, Class<T> domainType, Identifier identifier) {
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
+				IdValueSource.PROVIDED);
+
+		String upsertSql = sql(domainType).getUpsert(parameterSource.getIdentifiers());
+
+		if(logger.isTraceEnabled()) {
+			logger.trace("Upsert SQL: " + upsertSql);
+		}
+
+		operations.update(upsertSql, parameterSource);
+		return null;
 	}
 
 	@Override

@@ -23,12 +23,14 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Optional;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.lang.NonNull;
 
@@ -59,6 +61,11 @@ public class JdbcMySqlDialect extends MySqlDialect implements JdbcDialect {
 	}
 
 	protected JdbcMySqlDialect() {}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(MySqlUpsertRenderContext.INSTANCE);
+	}
 
 	@Override
 	public Collection<Object> getConverters() {

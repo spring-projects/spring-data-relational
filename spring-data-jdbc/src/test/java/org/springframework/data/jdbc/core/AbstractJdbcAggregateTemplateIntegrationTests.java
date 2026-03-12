@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
@@ -51,6 +52,7 @@ import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
@@ -185,6 +187,36 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		entity.manual = manual;
 
 		return entity;
+	}
+
+	@Test // GH-493
+	void upsertInsertsWhenIdDoesNotExistAndUpdatesWhenItExists() {
+
+		assumeThat(template).isInstanceOf(JdbcAggregateTemplate.class);
+		JdbcAggregateTemplate jdbcTemplate = (JdbcAggregateTemplate) template;
+		assumeThat(jdbcTemplate.getDataAccessStrategy().getDialect().getUpsertRenderContext().isEmpty()).isFalse();
+
+		if(template.getDataAccessStrategy().getDialect() instanceof SqlServerDialect) {
+			String tableName = "with_insert_only";
+			jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " ON");
+		}
+
+		WithInsertOnly entity = new WithInsertOnly();
+		entity.id = 8888L;
+		entity.insertOnly = "upserted";
+		template.upsert(entity);
+
+		assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("upserted");
+
+		entity.insertOnly = "updated";
+		template.upsert(entity);
+
+		assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("updated");
+
+		if(template.getDataAccessStrategy().getDialect() instanceof SqlServerDialect) {
+			String tableName = "with_insert_only";
+			jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " OFF");
+		}
 	}
 
 	@Test // GH-1446

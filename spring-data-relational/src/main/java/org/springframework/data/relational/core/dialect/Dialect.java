@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.relational.core.sql.Functions;
@@ -146,5 +147,15 @@ public interface Dialect {
 
 	default boolean supportsSingleQueryLoading() {
 		return true;
+	}
+
+	/**
+	 * Returns an {@link UpsertRenderContext} for single-statement upsert if supported by this dialect.
+	 *
+	 * @return optional upsert render context, empty if upsert is not supported.
+	 * @since 4.x
+	 */
+	default Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.empty();
 	}
 }

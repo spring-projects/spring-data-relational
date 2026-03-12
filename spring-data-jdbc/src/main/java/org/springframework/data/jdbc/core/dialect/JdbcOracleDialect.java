@@ -16,8 +16,11 @@
 
 package org.springframework.data.jdbc.core.dialect;
 
+import java.util.Optional;
+
 import org.springframework.data.relational.core.dialect.ObjectArrayColumns;
 import org.springframework.data.relational.core.dialect.OracleDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 
 /**
  * JDBC-specific Oracle Dialect.
@@ -33,6 +36,11 @@ public class JdbcOracleDialect extends OracleDialect implements JdbcDialect {
 	@Override
 	public JdbcArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
+	}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(OracleMergeUpsertRenderContext.INSTANCE);
 	}
 
 }

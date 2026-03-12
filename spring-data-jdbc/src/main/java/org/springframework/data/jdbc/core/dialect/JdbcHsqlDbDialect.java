@@ -15,7 +15,10 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import java.util.Optional;
+
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 
 /**
  * JDBC-specific HsqlDB Dialect.
@@ -30,6 +33,11 @@ public class JdbcHsqlDbDialect extends HsqlDbDialect implements JdbcDialect {
 	@Override
 	public JdbcArrayColumns getArraySupport() {
 		return JdbcArrayColumns.DefaultSupport.INSTANCE;
+	}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(MergeUpsertRenderContext.INSTANCE);
 	}
 
 }

@@ -15,7 +15,10 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import java.util.Optional;
+
 import org.springframework.data.relational.core.dialect.MariaDbDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
@@ -28,6 +31,11 @@ public class JdbcMariaDbDialect extends MariaDbDialect implements JdbcDialect {
 
 	public JdbcMariaDbDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);
+	}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(MySqlUpsertRenderContext.INSTANCE);
 	}
 
 }

@@ -88,6 +88,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> @Nullable Object upsert(T instance, Class<T> domainType, Identifier identifier) {
+		return collect(das -> das.upsert(instance, domainType, identifier));
+	}
+
+	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 		return collect(das -> das.update(instance, domainType));
 	}

@@ -22,6 +22,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -29,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 import org.springframework.data.util.ClassUtils;
 
 /**
@@ -63,6 +65,11 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 	@Override
 	public Set<Class<?>> simpleTypes() {
 		return SIMPLE_TYPES;
+	}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(SqlServerMergeUpsertRenderContext.INSTANCE);
 	}
 
 	@Override

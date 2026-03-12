@@ -30,6 +30,7 @@ import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -381,6 +382,34 @@ public class SqlGenerator {
 	 */
 	String getInsert(Set<SqlIdentifier> additionalColumns) {
 		return createInsertSql(additionalColumns);
+	}
+
+	/**
+	 * Create a dialect-specific upsert statement (insert or update by id). Requires the dialect to support upsert via
+	 * {@link Dialect#getUpsertRenderContext()}.
+	 *
+	 * @param additionalColumns additional column names to include in the insert (e.g. back-references).
+	 * @return the upsert SQL statement.
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
+	 */
+	String getUpsert(Set<SqlIdentifier> additionalColumns) {
+
+		// TODO: create some nice api like the one we have for inserts
+
+		UpsertRenderContext context = dialect.getUpsertRenderContext()
+				.orElseThrow(() -> new UnsupportedOperationException(
+						"Upsert is not supported by dialect " + dialect.getClass().getName()));
+		Table table = getTable();
+		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
+		columnNamesForInsert.addAll(columns.getInsertableColumns());
+		columnNamesForInsert.addAll(additionalColumns);
+		List<SqlIdentifier> conflictColumns = getIdColumns().stream().map(Column::getName).toList();
+		columnNamesForInsert.addAll(conflictColumns);
+		List<SqlIdentifier> insertColumns = new ArrayList<>(columnNamesForInsert);
+		Function<SqlIdentifier, String> bindMarkerFn = cn -> ":"
+				+ BindParameterNameSanitizer.sanitize(renderReference(cn));
+		return context.renderUpsert(table, insertColumns, conflictColumns, bindMarkerFn,
+				dialect.getIdentifierProcessing());
 	}
 
 	/**

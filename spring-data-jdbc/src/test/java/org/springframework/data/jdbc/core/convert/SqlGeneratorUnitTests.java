@@ -598,6 +598,32 @@ class SqlGeneratorUnitTests {
 				+ "(\"test\"\"_@123\") " + "VALUES (:test_123)");
 	}
 
+	@Test // GH-493
+	void getUpsertThrowsWhenDialectDoesNotSupportUpsert() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		assertThatThrownBy(() -> sqlGenerator.getUpsert(emptySet())) //
+				.isInstanceOf(UnsupportedOperationException.class) //
+				.hasMessageContaining("Upsert is not supported");
+	}
+
+	@Test // GH-493
+	void getUpsertReturnsSqlWhenDialectSupportsUpsert() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, JdbcPostgresDialect.INSTANCE);
+
+		String upsert = sqlGenerator.getUpsert(emptySet());
+
+		assertThat(upsert) //
+				.startsWith("INSERT INTO") //
+				.contains("ON CONFLICT") //
+				.contains("DO UPDATE SET") //
+				.contains(":id1") //
+				.contains(":x_name") //
+				.contains(":x_other");
+	}
+
 	@Test // DATAJDBC-266
 	void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
 

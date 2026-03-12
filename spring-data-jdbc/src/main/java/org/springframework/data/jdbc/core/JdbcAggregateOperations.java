@@ -116,6 +116,18 @@ public interface JdbcAggregateOperations {
 	<T> List<T> updateAll(Iterable<T> instances);
 
 	/**
+	 * Upserts a single aggregate root (insert if row for id does not exist, update if it exists). The instance must have
+	 * an id set. Only supported when the dialect supports single-statement upsert.
+	 *
+	 * @param instance the aggregate root to upsert. Must not be {@code null}. Must have an id set.
+	 * @param <T> the type of the aggregate root.
+	 * @return the same instance (possibly with generated id set if the dialect returns one).
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
+	 * @since 4.x
+	 */
+	<T> T upsert(T instance);
+
+	/**
 	 * Counts the number of aggregates of a given type.
 	 *
 	 * @param domainType the type of the aggregates to be counted.

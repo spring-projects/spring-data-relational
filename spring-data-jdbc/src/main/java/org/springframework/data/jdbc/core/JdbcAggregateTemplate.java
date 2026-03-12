@@ -41,6 +41,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
@@ -264,6 +265,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	@Override
 	public <T> List<T> updateAll(Iterable<T> instances) {
 		return doInBatch(instances, entity -> createUpdateChange(prepareVersionForUpdate(entity)));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T upsert(T instance) {
+
+		Assert.notNull(instance, "Aggregate instance must not be null");
+
+		Class<T> entityType = (Class<T>) ClassUtils.getUserClass(instance);
+		accessStrategy.upsert(instance, entityType, Identifier.empty());
+		return instance;
 	}
 
 	private <T> List<T> saveInBatch(Iterable<T> instances, Function<T, AggregateChangeCreator<T>> changes) {
@@ -734,7 +746,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 
 	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<T> change) {
 
-		eventDelegate.publishEvent(() -> new AfterDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
+		eventDelegate.publishEvent(() -> new AfterDeleteEvent<>(
+				org.springframework.data.relational.core.mapping.event.Identifier.of(id), aggregateRoot, change));
 
 		if (aggregateRoot != null && entityCallbacks != null) {
 			entityCallbacks.callback(AfterDeleteCallback.class, aggregateRoot);
@@ -744,7 +757,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 	@Nullable
 	private <T> T triggerBeforeDelete(@Nullable T aggregateRoot, Object id, MutableAggregateChange<T> change) {
 
-		eventDelegate.publishEvent(() -> new BeforeDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
+		eventDelegate.publishEvent(() -> new BeforeDeleteEvent<>(
+				org.springframework.data.relational.core.mapping.event.Identifier.of(id), aggregateRoot, change));
 
 		if (aggregateRoot != null && entityCallbacks != null) {
 			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, change);

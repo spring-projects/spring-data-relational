@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -34,6 +35,7 @@ import java.util.function.Consumer;
 import org.postgresql.core.Oid;
 import org.postgresql.jdbc.TypeInfoCache;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -76,6 +78,11 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	@Override
 	public JdbcArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
+	}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(PostgresUpsertRenderContext.INSTANCE);
 	}
 
 	/**

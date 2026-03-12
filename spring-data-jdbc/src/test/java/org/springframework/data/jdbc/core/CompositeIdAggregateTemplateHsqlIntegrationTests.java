@@ -60,6 +60,19 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 		assertThat(reloaded).isEqualTo(entity);
 	}
 
+	@Test // GH-493
+	void upsertAndLoadSimpleEntity() {
+
+		SimpleEntity entity = template.upsert(new SimpleEntity(new WrappedPk(23L), "alpha"));
+
+		assertThat(entity.wrappedPk).isNotNull() //
+			.extracting(WrappedPk::id).isNotNull();
+
+		SimpleEntity reloaded = template.findById(entity.wrappedPk, SimpleEntity.class);
+
+		assertThat(reloaded).isEqualTo(entity);
+	}
+
 	@Test // GH-574
 	void saveAndLoadEntityWithList() {
 
@@ -79,6 +92,17 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 
 		SimpleEntityWithEmbeddedPk entity = template
 				.insert(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "alpha"));
+
+		SimpleEntityWithEmbeddedPk reloaded = template.findById(entity.embeddedPk, SimpleEntityWithEmbeddedPk.class);
+
+		assertThat(reloaded).isEqualTo(entity);
+	}
+
+	@Test // GH-493
+	void upsertAndLoadSimpleEntityWithEmbeddedPk() {
+
+		SimpleEntityWithEmbeddedPk entity = template
+			.upsert(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "alpha"));
 
 		SimpleEntityWithEmbeddedPk reloaded = template.findById(entity.embeddedPk, SimpleEntityWithEmbeddedPk.class);
 
@@ -152,6 +176,22 @@ class CompositeIdAggregateTemplateHsqlIntegrationTests {
 
 		SimpleEntityWithEmbeddedPk updated = new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "ALPHA");
 		template.save(updated);
+
+		Iterable<SimpleEntityWithEmbeddedPk> reloaded = template.findAll(SimpleEntityWithEmbeddedPk.class);
+
+		assertThat(reloaded).containsExactlyInAnyOrder(updated, entities.get(1), entities.get(2));
+	}
+
+	@Test // GH-493
+	void upsertUpdatesExistingSingleSimpleEntityWithEmbeddedPk() {
+
+		List<SimpleEntityWithEmbeddedPk> entities = (List<SimpleEntityWithEmbeddedPk>) template
+			.insertAll(List.of(new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "alpha"),
+				new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "y"), "beta"),
+				new SimpleEntityWithEmbeddedPk(new EmbeddedPk(24L, "y"), "gamma")));
+
+		SimpleEntityWithEmbeddedPk updated = new SimpleEntityWithEmbeddedPk(new EmbeddedPk(23L, "x"), "ALPHA");
+		template.upsert(updated);
 
 		Iterable<SimpleEntityWithEmbeddedPk> reloaded = template.findAll(SimpleEntityWithEmbeddedPk.class);
 

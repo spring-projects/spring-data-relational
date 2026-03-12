@@ -20,11 +20,13 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.Jsr310TimestampBasedConverters;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
+import org.springframework.data.relational.core.dialect.UpsertRenderContext;
 
 /**
  * {@link Db2Dialect} that registers JDBC specific converters.
@@ -38,6 +40,11 @@ public class JdbcDb2Dialect extends Db2Dialect implements JdbcDialect {
 	public static final JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
 
 	protected JdbcDb2Dialect() {}
+
+	@Override
+	public Optional<UpsertRenderContext> getUpsertRenderContext() {
+		return Optional.of(MergeUpsertRenderContext.INSTANCE);
+	}
 
 	@Override
 	public Collection<Object> getConverters() {
