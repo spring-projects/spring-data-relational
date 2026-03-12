@@ -22,6 +22,7 @@ import java.util.Collection;
 import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
+import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
 
 /**
  * Entrypoint to build SQL statements.
@@ -118,6 +119,16 @@ public abstract class StatementBuilder {
 	 */
 	public static UpdateBuilder update() {
 		return Update.builder();
+	}
+
+	/**
+	 * Start building an upsert statement for the given {@link Table}.
+	 *
+	 * @param table the target table; must not be {@literal null}.
+	 * @return the first builder step.
+	 */
+	public static UpsertInsert upsert(Table table) {
+		return Upsert.builder(table);
 	}
 
 	/**

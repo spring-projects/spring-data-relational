@@ -185,6 +185,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> int upsert(T instance, Class<? super T> domainType) {
+		throw new UnsupportedOperationException("Upsert is not supported by MyBatisDataAccessStrategy");
+	}
+
+	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
 		return sqlSession().update(namespace(domainType) + ".update",

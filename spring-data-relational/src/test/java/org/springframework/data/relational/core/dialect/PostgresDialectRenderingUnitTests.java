@@ -15,18 +15,19 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
@@ -37,10 +38,11 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 public class PostgresDialectRenderingUnitTests {
 
-	private final RenderContextFactory factory = new RenderContextFactory(PostgresDialect.INSTANCE);
+	private final RenderContextFactory factory = new RenderContextFactory(new PostgresDialect());
 
 	@BeforeEach
 	public void before() throws Exception {
@@ -156,10 +158,8 @@ public class PostgresDialectRenderingUnitTests {
 	void shouldRenderSelectOrderByWithNoOptions() {
 
 		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk())
-				.from(table)
-				.orderBy(OrderByField.from(Column.create("bar", table)))
-				.build();
+		Select select = StatementBuilder.select(table.asterisk()).from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table))).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
@@ -170,10 +170,8 @@ public class PostgresDialectRenderingUnitTests {
 	void shouldRenderSelectOrderByWithDirection() {
 
 		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk())
-				.from(table)
-				.orderBy(OrderByField.from(Column.create("bar", table), Sort.Direction.ASC))
-				.build();
+		Select select = StatementBuilder.select(table.asterisk()).from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table), Sort.Direction.ASC)).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
@@ -184,10 +182,8 @@ public class PostgresDialectRenderingUnitTests {
 	void shouldRenderSelectOrderByWithNullPrecedence() {
 
 		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk())
-				.from(table)
-				.orderBy(OrderByField.from(Column.create("bar", table))
-						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+		Select select = StatementBuilder.select(table.asterisk()).from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table)).withNullHandling(Sort.NullHandling.NULLS_FIRST))
 				.build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
@@ -199,14 +195,61 @@ public class PostgresDialectRenderingUnitTests {
 	void shouldRenderSelectOrderByWithDirectionAndNullHandling() {
 
 		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk())
-				.from(table)
-				.orderBy(OrderByField.from(Column.create("bar", table), Sort.Direction.DESC)
-						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+		Select select = StatementBuilder
+				.select(table.asterisk()).from(table).orderBy(OrderByField
+						.from(Column.create("bar", table), Sort.Direction.DESC).withNullHandling(Sort.NullHandling.NULLS_FIRST))
 				.build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar DESC NULLS FIRST");
+	}
+
+	@Test // GH-493
+	void rendersUpsertHappyPath() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), nameColumn.set(SQL.bindMarker(":name"))).onConflict(idColumn)
+				.update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualToIgnoringWhitespace(
+				"INSERT INTO my_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWithValues() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.literalOf(42)), nameColumn.set(SQL.literalOf("batman"))).onConflict(idColumn).update()
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualToIgnoringWhitespace(
+				"INSERT INTO my_table (id, name) VALUES (42, 'batman') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWhereConflictColumnsMatchInsertColumns() { // renders DO NOTHING
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column tenantColumn = table.column("tenant_id");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), tenantColumn.set(SQL.bindMarker(":tenant_id")))
+				.onConflict(idColumn, tenantColumn).update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualTo(
+				"INSERT INTO my_table (id, tenant_id) VALUES (:id, :tenant_id) ON CONFLICT (id, tenant_id) DO NOTHING");
 	}
 }

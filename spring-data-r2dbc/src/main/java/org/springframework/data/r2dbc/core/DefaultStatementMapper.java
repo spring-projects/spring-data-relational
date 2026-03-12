@@ -29,8 +29,24 @@ import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.AssignValue;
+import org.springframework.data.relational.core.sql.Assignment;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.DeleteBuilder;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Insert;
+import org.springframework.data.relational.core.sql.InsertBuilder;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWithBuild;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SelectBuilder;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.UpdateBuilder;
+import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -46,6 +62,7 @@ import org.springframework.util.Assert;
  * @author Roman Chigvintsev
  * @author Mingyuan Wu
  * @author Diego Krupitza
+ * @author Christoph Strobl
  */
 class DefaultStatementMapper implements StatementMapper {
 
@@ -228,6 +245,11 @@ class DefaultStatementMapper implements StatementMapper {
 	}
 
 	@Override
+	public PreparedOperation<?> getMappedObject(UpsertSpec upsertSpec) {
+		return getMappedObject(upsertSpec, null);
+	}
+
+	@Override
 	public RenderContext getRenderContext() {
 		return renderContext;
 	}
@@ -256,6 +278,29 @@ class DefaultStatementMapper implements StatementMapper {
 		}
 
 		return new DefaultPreparedOperation<>(delete, this.renderContext, bindings);
+	}
+
+	private PreparedOperation<Upsert> getMappedObject(UpsertSpec upsertSpec,
+			@Nullable RelationalPersistentEntity<?> entity) {
+
+		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
+		Table table = Table.create(toSql(upsertSpec.getTable()));
+
+		BoundAssignments boundAssignments = this.updateMapper.getMappedObject(bindMarkers, upsertSpec.getAssignments(),
+				table, entity);
+		Bindings bindings = boundAssignments.getBindings();
+
+		List<SqlIdentifier> conflictColumnIds = upsertSpec.getConflictColumns();
+		Assert.notEmpty(conflictColumnIds, "Conflict columns must not be empty for upsert");
+
+		Column[] conflictColumns = conflictColumnIds.stream().map(table::column).toArray(Column[]::new);
+
+		Upsert upsert = StatementBuilder.upsert(table) //
+				.insert(boundAssignments.getAssignments()) //
+				.onConflict(conflictColumns) //
+				.update().build();
+
+		return new DefaultPreparedOperation<>(upsert, this.renderContext, bindings);
 	}
 
 	private String toSql(SqlIdentifier identifier) {
@@ -309,6 +354,10 @@ class DefaultStatementMapper implements StatementMapper {
 				return sqlRenderer.render((Delete) this.source);
 			}
 
+			if (this.source instanceof Upsert) {
+				return sqlRenderer.render((Upsert) this.source);
+			}
+
 			throw new IllegalStateException("Cannot render " + this.getSource());
 		}
 
@@ -350,6 +399,11 @@ class DefaultStatementMapper implements StatementMapper {
 		@Override
 		public PreparedOperation<?> getMappedObject(DeleteSpec deleteSpec) {
 			return DefaultStatementMapper.this.getMappedObject(deleteSpec, this.entity);
+		}
+
+		@Override
+		public PreparedOperation<?> getMappedObject(UpsertSpec upsertSpec) {
+			return DefaultStatementMapper.this.getMappedObject(upsertSpec, this.entity);
 		}
 
 		@Override

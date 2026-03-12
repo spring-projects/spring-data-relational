@@ -15,11 +15,13 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.util.Assert;
 
 /**
@@ -81,6 +83,7 @@ public class RenderContextFactory {
 		private final Dialect renderingDialect;
 		private final SelectRenderContext selectRenderContext;
 		private final InsertRenderContext insertRenderContext;
+		private final UpsertRenderContext upsertRenderContext;
 
 		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, Dialect renderingDialect,
 				SelectRenderContext selectRenderContext) {
@@ -95,6 +98,7 @@ public class RenderContextFactory {
 			this.renderingDialect = renderingDialect;
 			this.selectRenderContext = selectRenderContext;
 			this.insertRenderContext = renderingDialect.getInsertRenderContext();
+			this.upsertRenderContext = renderingDialect.getUpsertRenderContext();
 		}
 
 		@Override
@@ -115,6 +119,11 @@ public class RenderContextFactory {
 		@Override
 		public InsertRenderContext getInsertRenderContext() {
 			return insertRenderContext;
+		}
+
+		@Override
+		public UpsertRenderContext getUpsertRenderContext() {
+			return upsertRenderContext;
 		}
 	}
 }

@@ -15,15 +15,17 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
@@ -33,6 +35,7 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Christoph Strobl
  */
 public class MySqlDialectRenderingUnitTests {
 
@@ -122,5 +125,53 @@ public class MySqlDialectRenderingUnitTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 LOCK IN SHARE MODE");
+	}
+
+	@Test // GH-493
+	void rendersUpsertHappyPath() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), nameColumn.set(SQL.bindMarker(":name"))).onConflict(idColumn)
+				.update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualToIgnoringWhitespace(
+				"INSERT INTO my_table (id, name) VALUES (:id, :name) ON DUPLICATE KEY UPDATE name = VALUES(name)");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWithValues() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.literalOf(42)), nameColumn.set(SQL.literalOf("batman"))).onConflict(idColumn).update()
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualToIgnoringWhitespace(
+				"INSERT INTO my_table (id, name) VALUES (42, 'batman') ON DUPLICATE KEY UPDATE name = VALUES(name)");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWhereConflictColumnsMatchInsertColumns() { // renders first column only for UPDATE
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column tenantColumn = table.column("tenant_id");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), tenantColumn.set(SQL.bindMarker(":tenant_id")))
+				.onConflict(idColumn, tenantColumn).update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualTo(
+				"INSERT INTO my_table (id, tenant_id) VALUES (:id, :tenant_id) ON DUPLICATE KEY UPDATE id = VALUES(id)");
 	}
 }

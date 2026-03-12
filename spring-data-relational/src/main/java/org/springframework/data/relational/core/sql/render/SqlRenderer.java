@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.util.Assert;
 
 /**
@@ -26,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 1.1
  * @see RenderContext
  */
@@ -90,6 +92,16 @@ public class SqlRenderer implements Renderer {
 	}
 
 	/**
+	 * Renders a {@link Upsert} statement into its Standard SQL representation.
+	 *
+	 * @param update must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Upsert update) {
+		return create().render(update);
+	}
+
+	/**
 	 * Renders a {@link Delete} statement into its SQL representation.
 	 *
 	 * @param delete must not be {@literal null}.
@@ -149,6 +161,15 @@ public class SqlRenderer implements Renderer {
 
 		DeleteStatementVisitor visitor = new DeleteStatementVisitor(context);
 		delete.visit(visitor);
+
+		return visitor.getRenderedPart().toString();
+	}
+
+	@Override
+	public String render(Upsert upsert) {
+
+		UpsertStatementVisitor visitor = new UpsertStatementVisitor(context);
+		upsert.visit(visitor);
 
 		return visitor.getRenderedPart().toString();
 	}

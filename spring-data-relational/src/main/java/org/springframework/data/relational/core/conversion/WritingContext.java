@@ -40,6 +40,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 class WritingContext<T> {
 
@@ -102,6 +103,18 @@ class WritingContext<T> {
 			deleteReferenced().forEach(aggregateChange::addAction);
 			insertReferenced().forEach(aggregateChange::addAction);
 		}
+	}
+
+	/**
+	 * Leaves out the isNew check
+	 *
+	 * @since 4.x
+	 */
+	void upsert() { // TODO: how does that really go together with save?
+
+		setRootAction(new DbAction.UpsertRoot<>(root));
+		deleteReferenced().forEach(aggregateChange::addAction);
+		insertReferenced().forEach(aggregateChange::addAction);
 	}
 
 	private boolean isNew(Object o) {

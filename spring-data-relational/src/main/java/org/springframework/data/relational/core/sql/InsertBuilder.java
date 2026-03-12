@@ -17,6 +17,8 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.Collection;
 
+import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertResolution;
+
 /**
  * Entry point to construct an {@link Insert} statement.
  *
@@ -187,10 +189,14 @@ public interface InsertBuilder {
 		InsertValuesWithBuild values(Collection<? extends Expression> values);
 	}
 
+	interface UpsertToggle { // TODO: do we need/want this? should we keep upsert or enhance insert?
+		UpsertResolution onConflict(Column... columns);
+	}
+
 	/**
 	 * Interface exposing the {@link Insert} build method.
 	 */
-	interface BuildInsert {
+	interface BuildInsert extends UpsertToggle {
 
 		/**
 		 * Build the {@link Insert} statement.

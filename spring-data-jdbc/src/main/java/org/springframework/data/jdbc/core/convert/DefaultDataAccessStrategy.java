@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.VERSION_SQL_PARAMETER;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -68,6 +69,8 @@ import org.springframework.util.Assert;
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
+
+	private final Log logger = LogFactory.getLog(getClass());
 
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final RelationalMappingContext context;
@@ -177,6 +180,21 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 
 		return true;
+	}
+
+	@Override
+	public <T> int upsert(T instance, Class<? super T> domainType) {
+
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, Identifier.empty(),
+				IdValueSource.PROVIDED);
+
+		String statement = sql(domainType).getUpsert(parameterSource.getIdentifiers());
+
+		if (logger.isTraceEnabled()) {
+			logger.trace("Upsert: [%s]".formatted(statement));
+		}
+
+		return operations.update(statement, parameterSource);
 	}
 
 	@Override

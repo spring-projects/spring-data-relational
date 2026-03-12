@@ -49,6 +49,11 @@ final class SimpleRenderContext implements RenderContext {
 		return InsertRenderContexts.DEFAULT;
 	}
 
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return StandardSqlUpsertRenderContext.INSTANCE;
+	}
+
 	public RenderNamingStrategy getNamingStrategy() {
 		return this.namingStrategy;
 	}

@@ -81,6 +81,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
+	public <T> int upsert(T instance, Class<? super T> domainType) {
+		return delegate.upsert(instance, domainType);
+	}
+
+	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 		return delegate.update(instance, domainType);
 	}

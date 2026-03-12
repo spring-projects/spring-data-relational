@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
@@ -51,6 +52,7 @@ import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
@@ -185,6 +187,110 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		entity.manual = manual;
 
 		return entity;
+	}
+
+	private void withSqlServerIdentityInsertOn(JdbcAggregateOperations jdbcAggregateTemplate, String tableName,
+			Runnable action) {
+
+		if (jdbcAggregateTemplate.getDataAccessStrategy().getDialect() instanceof SqlServerDialect) {
+			jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " ON");
+			try {
+				action.run();
+			} finally {
+				jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " OFF");
+			}
+		} else {
+			action.run();
+		}
+	}
+
+	@Test // GH-493
+	void upsertInsertsWhenIdDoesNotExistAndUpdatesWhenItExists() {
+
+		withSqlServerIdentityInsertOn(template, "with_insert_only", () -> {
+
+			WithInsertOnly entity = new WithInsertOnly();
+			entity.id = 8888L;
+			entity.insertOnly = "upserted";
+			template.upsert(entity);
+
+			assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("upserted");
+
+			entity.insertOnly = "updated";
+			template.upsert(entity);
+
+			assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("updated");
+		});
+	}
+
+	@Test // GH-493
+	void upsertWhenMatchedAndUpdateAssignmentsEqualConflictKeyOnly() {
+
+		long id = 8889L;
+		withSqlServerIdentityInsertOn(template, "with_id_only", () -> {
+
+			WithIdOnly first = new WithIdOnly();
+			first.id = id;
+			template.upsert(first);
+
+			WithIdOnly second = new WithIdOnly();
+			second.id = id;
+			template.upsert(second);
+
+			assertThat(template.findById(id, WithIdOnly.class).id).isEqualTo(id);
+		});
+	}
+
+	@Test // GH-493
+	void upsertNoOpWhenNonKeyColumnsAlreadyMatch() {
+
+		long id = 8890L;
+		withSqlServerIdentityInsertOn(template, "LEGO_SET", () -> {
+
+			LegoSet lego = new LegoSet();
+			lego.id = id;
+			lego.name = "millennium";
+			template.upsert(lego);
+			template.upsert(lego);
+
+			assertThat(template.findById(id, LegoSet.class).name).isEqualTo("millennium");
+		});
+	}
+
+	@Test // GH-493
+	void upsertAfterDeleteInsertsAgain() {
+
+		long id = 8891L;
+		withSqlServerIdentityInsertOn(template, "LEGO_SET", () -> {
+
+			LegoSet lego = new LegoSet();
+			lego.id = id;
+			lego.name = "first";
+			template.upsert(lego);
+
+			template.deleteById(id, LegoSet.class);
+
+			lego.name = "second";
+			template.upsert(lego);
+
+			assertThat(template.findById(id, LegoSet.class).name).isEqualTo("second");
+		});
+	}
+
+	@Test // GH-493
+	void upsertExistingRowWithSameInsertOnlyValue() {
+
+		withSqlServerIdentityInsertOn(template, "with_insert_only", () -> {
+
+			long id = 8892L;
+			WithInsertOnly entity = new WithInsertOnly();
+			entity.id = id;
+			entity.insertOnly = "unchanged";
+			template.upsert(entity);
+			template.upsert(entity);
+
+			assertThat(template.findById(id, WithInsertOnly.class).insertOnly).isEqualTo("unchanged");
+		});
 	}
 
 	@Test // GH-1446

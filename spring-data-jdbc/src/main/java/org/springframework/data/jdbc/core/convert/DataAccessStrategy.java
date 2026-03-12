@@ -45,6 +45,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Christoph Strobl
  */
 public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationResolver {
 
@@ -117,6 +118,19 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	 * @since 2.0
 	 */
 	<T> boolean updateWithVersion(T instance, Class<T> domainType, Number previousVersion);
+
+	/**
+	 * Upserts the data of a single entity (insert if row for id does not exist, update if it exists). Requires the
+	 * instance to hold an id. Only supported when the dialect supports single-statement upsert.
+	 *
+	 * @param instance the instance to upsert. Must not be {@code null}. Must have an id set.
+	 * @param domainType the type of the instance. Must not be {@code null}.
+	 * @param <T> the type of the instance.
+	 * @return the number of rows affected by the upsert.
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
+	 * @since 4.x
+	 */
+	<T> int upsert(T instance, Class<? super T> domainType);
 
 	/**
 	 * Deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading

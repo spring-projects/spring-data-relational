@@ -245,7 +245,7 @@ public class SqlParametersFactory {
 		return holder;
 	}
 
-	private void populateParameterSource(Object instance, RelationalPersistentEntity<?> persistentEntity, String prefix,
+	private void populateParameterSource(@Nullable Object instance, RelationalPersistentEntity<?> persistentEntity, String prefix,
 			Predicate<RelationalPersistentProperty> skipProperty, ParameterSourceHolder holder) {
 
 		PersistentPropertyAccessor<?> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)

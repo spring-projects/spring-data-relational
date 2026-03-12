@@ -18,6 +18,8 @@ package org.springframework.data.relational.core.dialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -117,5 +119,10 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public IdGeneration getIdGeneration() {
 		return ID_GENERATION;
+	}
+
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return StandardSqlUpsertRenderContext.INSTANCE;
 	}
 }

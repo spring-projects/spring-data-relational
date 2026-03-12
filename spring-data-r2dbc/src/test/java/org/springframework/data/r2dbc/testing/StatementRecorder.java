@@ -25,6 +25,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
+import org.springframework.data.r2dbc.mapping.ParameterAdapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -306,12 +307,18 @@ public class StatementRecorder implements ConnectionFactory {
 
 		@Override
 		public Statement bind(int index, Object o) {
+			if(o instanceof ParameterAdapter adapter) {
+				o = adapter.getValue();
+			}
 			this.bindings.put(index, Parameter.from(o));
 			return this;
 		}
 
 		@Override
 		public Statement bind(String identifier, Object o) {
+			if(o instanceof ParameterAdapter adapter) {
+				o = adapter.getValue();
+			}
 			this.bindings.put(identifier, Parameter.from(o));
 			return this;
 		}

@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 public interface DbAction<T> {
 
@@ -49,34 +50,32 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record Insert<T>(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
-						 WithEntity<?> dependingOn,
-						 Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
-						 IdValueSource idValueSource) implements WithDependingOn<T> {
+	record Insert<T>(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+			WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
+			IdValueSource idValueSource) implements WithDependingOn<T> {
 
-			public Insert(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
-						  WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
-						  IdValueSource idValueSource) {
+		public Insert(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+				WithEntity<?> dependingOn, Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers,
+				IdValueSource idValueSource) {
 
-				this.entity = entity;
-				this.propertyPath = propertyPath;
-				this.dependingOn = dependingOn;
-				this.qualifiers = Map.copyOf(qualifiers);
-				this.idValueSource = idValueSource;
-			}
-
-			@Override
-			public Class<T> getEntityType() {
-				return WithDependingOn.super.getEntityType();
-			}
-
+			this.entity = entity;
+			this.propertyPath = propertyPath;
+			this.dependingOn = dependingOn;
+			this.qualifiers = Map.copyOf(qualifiers);
+			this.idValueSource = idValueSource;
+		}
 
 		@Override
-			public String toString() {
-				return "Insert{" + "entity=" + entity + ", propertyPath=" + propertyPath + ", dependingOn=" + dependingOn
-						+ ", idValueSource=" + idValueSource + ", qualifiers=" + qualifiers + '}';
-			}
+		public Class<T> getEntityType() {
+			return WithDependingOn.super.getEntityType();
 		}
+
+		@Override
+		public String toString() {
+			return "Insert{" + "entity=" + entity + ", propertyPath=" + propertyPath + ", dependingOn=" + dependingOn
+					+ ", idValueSource=" + idValueSource + ", qualifiers=" + qualifiers + '}';
+		}
+	}
 
 	/**
 	 * Represents an insert statement for the root of an aggregate. Upon a successful insert, the initial version and
@@ -111,6 +110,44 @@ public interface DbAction<T> {
 		@Override
 		public String toString() {
 			return "InsertRoot{" + "entity=" + entity + ", idValueSource=" + idValueSource + '}';
+		}
+	}
+
+	/**
+	 * Represents an upsert statement for the aggregate root. The entity must carry a provided id since upsert requires a
+	 * known identity to determine whether to insert or update.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 * @author Christoph Strobl
+	 * @since 4.x
+	 */
+	class UpsertRoot<T> implements WithRoot<T> {
+
+		private T entity;
+
+		public UpsertRoot(T entity) {
+			this.entity = entity;
+		}
+
+		public T entity() {
+			return this.entity;
+		}
+
+		@Override
+		public void setEntity(T entity) {
+			this.entity = entity;
+		}
+
+		@Override
+		public IdValueSource idValueSource() {
+			return IdValueSource.PROVIDED;
+		}
+
+		@Override
+		public String toString() {
+
+			// TODO: toString is so inconsistent in here using the DbAction prefix :/
+			return "DbAction.UpsertRoot{" + "entity=" + entity + '}';
 		}
 	}
 
@@ -159,14 +196,13 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record Delete<T>(Object rootId,
-						 PersistentPropertyPath<RelationalPersistentProperty> propertyPath) implements WithPropertyPath<T> {
-
+	record Delete<T>(Object rootId,
+			PersistentPropertyPath<RelationalPersistentProperty> propertyPath) implements WithPropertyPath<T> {
 
 		public String toString() {
-				return "DbAction.Delete(rootId=" + this.rootId() + ", propertyPath=" + this.propertyPath() + ")";
-			}
+			return "DbAction.Delete(rootId=" + this.rootId() + ", propertyPath=" + this.propertyPath() + ")";
 		}
+	}
 
 	/**
 	 * Represents a delete statement for an aggregate root when only the ID is known.
@@ -177,15 +213,14 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record DeleteRoot<T>(Object id, Class<T> getEntityType, @Nullable Number previousVersion) implements DbAction<T> {
-
+	record DeleteRoot<T>(Object id, Class<T> getEntityType, @Nullable Number previousVersion) implements DbAction<T> {
 
 		public String toString() {
 
-				return "DbAction.DeleteRoot(id=" + this.id() + ", entityType=" + this.getEntityType() + ", previousVersion="
-						+ this.previousVersion() + ")";
-			}
+			return "DbAction.DeleteRoot(id=" + this.id() + ", entityType=" + this.getEntityType() + ", previousVersion="
+					+ this.previousVersion() + ")";
 		}
+	}
 
 	/**
 	 * Represents a delete statement for all entities that are reachable via a given path from any aggregate root of a
@@ -193,14 +228,13 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record DeleteAll<T>(
+	record DeleteAll<T>(
 			PersistentPropertyPath<RelationalPersistentProperty> propertyPath) implements WithPropertyPath<T> {
 
-
 		public String toString() {
-				return "DbAction.DeleteAll(propertyPath=" + this.propertyPath() + ")";
-			}
+			return "DbAction.DeleteAll(propertyPath=" + this.propertyPath() + ")";
 		}
+	}
 
 	/**
 	 * Represents a delete statement for all aggregate roots of a given type.
@@ -211,13 +245,12 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-		record DeleteAllRoot<T>(Class<T> getEntityType) implements DbAction<T> {
-
+	record DeleteAllRoot<T>(Class<T> getEntityType) implements DbAction<T> {
 
 		public String toString() {
-				return "DbAction.DeleteAllRoot(entityType=" + this.getEntityType() + ")";
-			}
+			return "DbAction.DeleteAllRoot(entityType=" + this.getEntityType() + ")";
 		}
+	}
 
 	/**
 	 * Represents an acquire lock statement for an aggregate root when only the ID is known.

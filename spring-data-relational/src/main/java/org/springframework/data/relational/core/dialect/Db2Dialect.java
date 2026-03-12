@@ -20,6 +20,8 @@ import java.util.Collections;
 
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
  * An SQL dialect for DB2.
@@ -112,5 +114,10 @@ public class Db2Dialect extends AbstractDialect {
 	@Override
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+	}
+
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return StandardSqlUpsertRenderContext.INSTANCE;
 	}
 }

@@ -45,7 +45,35 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.AssignValue;
+import org.springframework.data.relational.core.sql.Assignment;
+import org.springframework.data.relational.core.sql.Assignments;
+import org.springframework.data.relational.core.sql.BindMarker;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Comparison;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.DeleteBuilder;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.In;
+import org.springframework.data.relational.core.sql.Insert;
+import org.springframework.data.relational.core.sql.InsertBuilder;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SelectBuilder;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TupleExpression;
+import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.UpdateBuilder;
+import org.springframework.data.relational.core.sql.Upsert;
+import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Predicates;
@@ -70,6 +98,7 @@ import org.springframework.util.Assert;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Kurt Niemi
+ * @author Christoph Strobl
  */
 public class SqlGenerator {
 
@@ -86,6 +115,7 @@ public class SqlGenerator {
 	private final JdbcConverter converter;
 
 	private final SqlContext sqlContext;
+	private final RenderContext renderContext;
 	private final SqlRenderer sqlRenderer;
 	private final Columns columns;
 
@@ -121,7 +151,8 @@ public class SqlGenerator {
 		this.converter = converter;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
-		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
+		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
+		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
 		this.queryMapper = new QueryMapper(converter);
 		this.dialect = dialect;
@@ -392,6 +423,45 @@ public class SqlGenerator {
 	 */
 	String getInsert(Set<SqlIdentifier> additionalColumns) {
 		return createInsertSql(additionalColumns);
+	}
+
+	/**
+	 * Create a dialect-specific upsert statement (insert or update by id).
+	 *
+	 * @param additionalColumns additional column names to include in the insert (e.g. back-references).
+	 * @return the upsert SQL statement.
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
+	 * @since 4.x
+	 */
+	String getUpsert(Set<SqlIdentifier> additionalColumns) {
+		return render(createUpsertSql(additionalColumns));
+	}
+
+	/**
+	 * @param additionalColumns
+	 * @return
+	 * @since 4.x
+	 */
+	private Upsert createUpsertSql(Set<SqlIdentifier> additionalColumns) {
+
+		Table table = getTable();
+
+		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
+		columnNamesForInsert.addAll(columns.getInsertableColumns());
+		columnNamesForInsert.addAll(additionalColumns);
+
+		List<Column> idColumns = getIdColumns();
+		List<SqlIdentifier> conflictColumns = idColumns.stream().map(Column::getName).toList();
+		columnNamesForInsert.addAll(conflictColumns);
+
+		List<Assignment> assignments = columnNamesForInsert.stream() //
+				.map(this::assignColumnValue) //
+				.collect(Collectors.toList());
+
+		return StatementBuilder.upsert(table) //
+				.insert(assignments) //
+				.onConflict(idColumns) //
+				.update().build();
 	}
 
 	/**
@@ -938,15 +1008,17 @@ public class SqlGenerator {
 
 		List<AssignValue> assignments = columns.getUpdatableColumns() //
 				.stream() //
-				.map(columnName -> Assignments.value( //
-						table.column(columnName), //
-						getBindMarker(columnName))) //
+				.map(this::assignColumnValue) //
 				.collect(Collectors.toList());
 
 		return Update.builder() //
 				.table(table) //
 				.set(assignments) //
 				.where(equalityIdWhereCondition());
+	}
+
+	private AssignValue assignColumnValue(SqlIdentifier columnName) {
+		return Assignments.value(getTable().column(columnName), getBindMarker(columnName));
 	}
 
 	private String createDeleteByIdSql() {
@@ -1030,6 +1102,10 @@ public class SqlGenerator {
 
 	private String render(Delete delete) {
 		return this.sqlRenderer.render(delete);
+	}
+
+	private String render(Upsert upsert) {
+		return this.sqlRenderer.render(upsert);
 	}
 
 	private Table getTable() {

@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.relational.core.sql.InsertBuilder.UpsertToggle;
+import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertResolution;
 import org.springframework.util.Assert;
 
 /**
@@ -99,6 +101,17 @@ class DefaultInsertBuilder
 		this.values.addAll(values);
 
 		return this;
+	}
+
+	@Override
+	@SuppressWarnings("NullAway")
+	public UpsertResolution onConflict(Column... columns) {
+
+		List<Assignment> assignments = new ArrayList<>(this.columns.size());
+		for(int i = 0; i < this.columns.size(); i++) {
+			assignments.add(Assignments.value(this.columns.get(i), this.values.get(i)));
+		}
+		return new DefaultUpsertBuilder(this.into).insert(assignments).onConflict(columns);
 	}
 
 	@Override

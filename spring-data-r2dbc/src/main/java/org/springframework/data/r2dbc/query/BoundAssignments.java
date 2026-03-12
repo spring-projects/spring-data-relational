@@ -17,7 +17,10 @@ package org.springframework.data.r2dbc.query;
 
 import java.util.List;
 
+import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Assignment;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.util.Assert;
 
@@ -25,6 +28,7 @@ import org.springframework.util.Assert;
  * Value object representing {@link Assignment}s with their {@link Bindings}.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 public class BoundAssignments {
 
@@ -47,5 +51,20 @@ public class BoundAssignments {
 
 	public List<Assignment> getAssignments() {
 		return assignments;
+	}
+
+	/**
+	 * Resolve the bound {@link Assignment} for the given {@code indentifier}..
+	 *
+	 * @param identifier the column to look up.
+	 * @return the bind marker {@link Expression} for {@code column}.
+	 * @throws IllegalStateException if no assignment for {@code column} is found.
+	 */
+	public Assignment getAssignment(SqlIdentifier identifier) {
+		return assignments.stream().filter(AssignValue.class::isInstance) //
+				.map(AssignValue.class::cast) //
+				.filter(av -> av.getColumn().getName().equals(identifier)) //
+				.findFirst() //
+				.orElseThrow(() -> new IllegalStateException("No assignment found for: " + identifier));
 	}
 }

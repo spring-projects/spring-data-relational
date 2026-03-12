@@ -79,6 +79,13 @@ Operating on single aggregates, named exactly as mentioned above, and with an `A
 
 `insert` and `update` skip the test if the entity is new and assume a new or existing aggregate as indicated by their names.
 
+=== Upsert
+
+`JdbcAggregateTemplate` also offers `upsert(instance)`, which performs a single-statement *upsert*: insert the row if no row exists for the entity's id, or update it if it already exists.
+The instance must have an id set; upsert is only supported when the database dialect supports it (e.g. PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, DB2, HSQLDB).
+Use upsert when you want to persist a root entity by id in one round-trip without checking beforehand whether the row exists.
+Upsert does not sync referenced entities (children); it only writes the aggregate root row.
+
 === Querying
 
 `JdbcAggregateTemplate` offers a considerable array of methods for querying aggregates and about collections of aggregates.
