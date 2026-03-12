@@ -28,12 +28,14 @@ import org.springframework.util.Assert;
  * ability for an optimized batch operation to be used.
  *
  * @author Chirag Tailor
+ * @author Christoph Strobl
  * @since 3.0
  */
 public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T, RootAggregateChange<T>> {
 
 	private final Class<T> entityType;
 	private final List<DbAction<?>> rootActions = new ArrayList<>();
+
 	/**
 	 * Holds a list of InsertRoot actions that are compatible with each other, in the sense, that they might be combined
 	 * into a single batch.
@@ -77,6 +79,10 @@ public class SaveBatchingAggregateChange<T> implements BatchingAggregateChange<T
 		aggregateChange.forEachAction(action -> {
 
 			if (action instanceof DbAction.UpdateRoot<?> rootAction) {
+
+				combineBatchCandidatesIntoSingleBatchRootAction();
+				rootActions.add(rootAction);
+			} else if (action instanceof DbAction.UpsertRoot<?> rootAction) {
 
 				combineBatchCandidatesIntoSingleBatchRootAction();
 				rootActions.add(rootAction);

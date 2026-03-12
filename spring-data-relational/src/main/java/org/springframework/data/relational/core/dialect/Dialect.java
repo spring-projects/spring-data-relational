@@ -25,6 +25,9 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
+import org.springframework.util.ClassUtils;
 
 /**
  * Represents a dialect that is implemented by a particular database. Please note that not all features are supported by
@@ -40,6 +43,14 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * @since 1.1
  */
 public interface Dialect {
+
+	/**
+	 * @return the name of the dialect.
+	 * @since 4.x
+	 */
+	default String getName() {
+		return ClassUtils.getShortName(getClass());
+	}
 
 	/**
 	 * Return the {@link LimitClause} used by this dialect.
@@ -146,5 +157,16 @@ public interface Dialect {
 
 	default boolean supportsSingleQueryLoading() {
 		return true;
+	}
+
+	/**
+	 * Returns an {@link UpsertRenderContext} for single-statement upsert.
+	 *
+	 * @return the upsert render context. {@link StandardSqlUpsertRenderContext} by default.
+	 * @throws UnsupportedOperationException if the dialect does not support single-statement upsert.
+	 * @since 4.x
+	 */
+	default UpsertRenderContext getUpsertRenderContext() {
+		return StandardSqlUpsertRenderContext.INSTANCE;
 	}
 }

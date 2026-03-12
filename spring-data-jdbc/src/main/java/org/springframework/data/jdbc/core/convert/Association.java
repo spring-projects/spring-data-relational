@@ -91,6 +91,11 @@ class Association {
 	}
 
 	private static boolean hasMultipleColumns(@Nullable RelationalPersistentEntity<?> identifierEntity) {
+
+		if( identifierEntity == null ) {
+			return false;
+		}
+
 		Iterator<RelationalPersistentProperty> iterator = identifierEntity.iterator();
 		if (iterator.hasNext()) {
 			iterator.next();

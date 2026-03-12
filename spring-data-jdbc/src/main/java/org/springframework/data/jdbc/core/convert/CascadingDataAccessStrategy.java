@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.lang.Boolean.*;
+import static java.lang.Boolean.TRUE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -49,6 +48,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Diego Krupitza
  * @author Sergey Korotaev
+ * @author Christoph Strobl
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -85,6 +85,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	public <T> @Nullable Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType,
 			IdValueSource idValueSource) {
 		return collect(das -> das.insert(insertSubjects, domainType, idValueSource));
+	}
+
+	@Override
+	public <T> int upsert(T instance, Class<? super T> domainType) {
+		return collect(das -> das.upsert(instance, domainType));
 	}
 
 	@Override

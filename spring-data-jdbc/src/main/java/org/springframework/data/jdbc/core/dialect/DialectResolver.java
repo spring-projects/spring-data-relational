@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.dialect.OrderByNullPrecedence;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -205,6 +206,11 @@ public class DialectResolver {
 		}
 
 		@Override
+		public String getName() {
+			return delegate.getName();
+		}
+
+		@Override
 		public LimitClause limit() {
 			return delegate.limit();
 		}
@@ -267,6 +273,11 @@ public class DialectResolver {
 		@Override
 		public boolean supportsSingleQueryLoading() {
 			return delegate.supportsSingleQueryLoading();
+		}
+
+		@Override
+		public UpsertRenderContext getUpsertRenderContext() {
+			return delegate.getUpsertRenderContext();
 		}
 	}
 

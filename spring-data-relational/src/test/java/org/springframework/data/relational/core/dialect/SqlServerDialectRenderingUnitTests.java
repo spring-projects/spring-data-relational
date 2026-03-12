@@ -15,18 +15,19 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
@@ -37,10 +38,11 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 public class SqlServerDialectRenderingUnitTests {
 
-	private final RenderContextFactory factory = new RenderContextFactory(SqlServerDialect.INSTANCE);
+	private final RenderContextFactory factory = new RenderContextFactory(new SqlServerDialect());
 
 	@BeforeEach
 	public void before() {
@@ -128,8 +130,7 @@ public class SqlServerDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo(
-			"SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK)");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK)");
 	}
 
 	@Test // DATAJDBC-498
@@ -141,8 +142,7 @@ public class SqlServerDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo(
-			"SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK)");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK)");
 	}
 
 	@Test // DATAJDBC-498
@@ -155,7 +155,7 @@ public class SqlServerDialectRenderingUnitTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo(
-			"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+				"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-498
@@ -168,7 +168,7 @@ public class SqlServerDialectRenderingUnitTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo(
-			"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+				"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-498
@@ -177,11 +177,12 @@ public class SqlServerDialectRenderingUnitTests {
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
 		Select select = StatementBuilder.select(table.asterisk()).from(table).orderBy(table.column("column_1")).limit(10)
-			.offset(20).lock(lockMode).build();
+				.offset(20).lock(lockMode).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+		assertThat(sql).isEqualTo(
+				"SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-498
@@ -190,25 +191,72 @@ public class SqlServerDialectRenderingUnitTests {
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;
 		Select select = StatementBuilder.select(table.asterisk()).from(table).orderBy(table.column("column_1")).limit(10)
-			.offset(20).lock(lockMode).build();
+				.offset(20).lock(lockMode).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+		assertThat(sql).isEqualTo(
+				"SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByIgnoringNullHandling() {
 
 		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk())
-				.from(table)
-				.orderBy(OrderByField.from(Column.create("bar", table))
-						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+		Select select = StatementBuilder.select(table.asterisk()).from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table)).withNullHandling(Sort.NullHandling.NULLS_FIRST))
 				.build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar");
+	}
+
+	@Test // GH-493
+	void rendersUpsertHappyPath() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), nameColumn.set(SQL.bindMarker(":name"))).onConflict(idColumn)
+				.update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualTo(
+				"MERGE INTO my_table \"_t\" USING (VALUES (:id, :name)) AS \"_s\" (id, name) ON \"_t\".id = \"_s\".id WHEN MATCHED THEN UPDATE SET \"_t\".name = \"_s\".name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (\"_s\".id, \"_s\".name);");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWithValues() {
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column nameColumn = table.column("name");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.literalOf(42)), nameColumn.set(SQL.literalOf("batman"))).onConflict(idColumn).update()
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualTo(
+				"MERGE INTO my_table \"_t\" USING (VALUES (42, 'batman')) AS \"_s\" (id, name) ON \"_t\".id = \"_s\".id WHEN MATCHED THEN UPDATE SET \"_t\".name = \"_s\".name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (\"_s\".id, \"_s\".name);");
+	}
+
+	@Test // GH-493
+	void rendersUpsertWhereConflictColumnsMatchInsertColumns() { // omits `WHEN MATCHED`
+
+		Table table = Table.create("my_table");
+		Column idColumn = table.column("id");
+		Column tenantColumn = table.column("tenant_id");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(idColumn.set(SQL.bindMarker(":id")), tenantColumn.set(SQL.bindMarker(":tenant_id")))
+				.onConflict(idColumn, tenantColumn).update().build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
+
+		assertThat(sql).isEqualTo(
+				"MERGE INTO my_table \"_t\" USING (VALUES (:id, :tenant_id)) AS \"_s\" (id, tenant_id) ON \"_t\".id = \"_s\".id AND \"_t\".tenant_id = \"_s\".tenant_id WHEN NOT MATCHED THEN INSERT (id, tenant_id) VALUES (\"_s\".id, \"_s\".tenant_id);");
 	}
 }

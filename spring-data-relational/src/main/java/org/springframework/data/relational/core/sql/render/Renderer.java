@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.Upsert;
 
 /**
  * SQL renderer for {@link Select} and {@link Delete} statements.
@@ -59,4 +60,12 @@ public interface Renderer {
 	 * @return the rendered statement.
 	 */
 	String render(Delete delete);
+
+	/**
+	 * Render the {@link Upsert} AST into a SQL statement.
+	 *
+	 * @param upsert the statement to render, must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	String render(Upsert upsert);
 }

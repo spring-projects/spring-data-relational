@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.*;
  * Unit tests for {@link SaveBatchingAggregateChange}.
  *
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 class SaveBatchingAggregateChangeTest {
 
@@ -47,6 +48,7 @@ class SaveBatchingAggregateChangeTest {
 
 	@Nested
 	class RootActionsTests {
+
 		@Test // GH-537
 		void yieldsUpdateRoot() {
 
@@ -130,6 +132,20 @@ class SaveBatchingAggregateChangeTest {
 			change.add(aggregateChange);
 
 			assertThat(extractActions(change)).containsExactly(rootInsert);
+		}
+
+		@Test // GH-493
+		void yieldsUpsertRoot() {
+
+			Root root = new Root(1L, null);
+			DbAction.UpsertRoot<Root> rootUpsert = new DbAction.UpsertRoot<>(root);
+			RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+			aggregateChange.setRootAction(rootUpsert);
+
+			BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+			change.add(aggregateChange);
+
+			assertThat(extractActions(change)).containsExactly(rootUpsert);
 		}
 
 		@Test // GH-537
@@ -240,6 +256,75 @@ class SaveBatchingAggregateChangeTest {
 			assertThat(getBatchWithValueAction(actions, Root.class, DbAction.BatchInsertRoot.class).getActions())
 					.containsExactly(root1Insert, root2Insert);
 		}
+	}
+
+	@Test // GH-493
+	void yieldsUpsertRootBeforeDeleteActions() {
+
+		Root root = new Root(1L, null);
+		DbAction.UpsertRoot<Root> rootUpsert = new DbAction.UpsertRoot<>(root);
+		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+		aggregateChange.setRootAction(rootUpsert);
+
+		DbAction.Delete<Intermediate> intermediateDelete = new DbAction.Delete<>(1L,
+				context.getPersistentPropertyPath("intermediate", Root.class));
+		aggregateChange.addAction(intermediateDelete);
+
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange);
+
+		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
+				Tuple.tuple(DbAction.UpsertRoot.class, Root.class), //
+				Tuple.tuple(DbAction.Delete.class, Intermediate.class));
+	}
+
+	@Test // GH-493
+	void yieldsUpsertRootBeforeInsertActions() {
+
+		Root root = new Root(1L, null);
+		DbAction.UpsertRoot<Root> rootUpsert = new DbAction.UpsertRoot<>(root);
+		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+		aggregateChange.setRootAction(rootUpsert);
+
+		Intermediate intermediate = new Intermediate(null, "intermediate", null);
+		DbAction.Insert<Intermediate> intermediateInsert = new DbAction.Insert<>(intermediate,
+				context.getPersistentPropertyPath("intermediate", Root.class), rootUpsert, emptyMap(),
+				IdValueSource.GENERATED);
+		aggregateChange.addAction(intermediateInsert);
+
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange);
+
+		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
+				Tuple.tuple(DbAction.UpsertRoot.class, Root.class), //
+				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
+	}
+
+	@Test // GH-493
+	void yieldsUpsertRootWithDeleteActionsBeforeInsertActions() {
+
+		Root root = new Root(1L, null);
+		DbAction.UpsertRoot<Root> rootUpsert = new DbAction.UpsertRoot<>(root);
+		RootAggregateChange<Root> aggregateChange = MutableAggregateChange.forSave(root);
+		aggregateChange.setRootAction(rootUpsert);
+
+		DbAction.Delete<Intermediate> intermediateDelete = new DbAction.Delete<>(1L,
+				context.getPersistentPropertyPath("intermediate", Root.class));
+		aggregateChange.addAction(intermediateDelete);
+
+		Intermediate intermediate = new Intermediate(null, "intermediate", null);
+		DbAction.Insert<Intermediate> intermediateInsert = new DbAction.Insert<>(intermediate,
+				context.getPersistentPropertyPath("intermediate", Root.class), rootUpsert, emptyMap(),
+				IdValueSource.GENERATED);
+		aggregateChange.addAction(intermediateInsert);
+
+		BatchingAggregateChange<Root, RootAggregateChange<Root>> change = BatchingAggregateChange.forSave(Root.class);
+		change.add(aggregateChange);
+
+		assertThat(extractActions(change)).extracting(DbAction::getClass, DbAction::getEntityType).containsExactly( //
+				Tuple.tuple(DbAction.UpsertRoot.class, Root.class), //
+				Tuple.tuple(DbAction.Delete.class, Intermediate.class), //
+				Tuple.tuple(DbAction.BatchInsert.class, Intermediate.class));
 	}
 
 	@Test // GH-537

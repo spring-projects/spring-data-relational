@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -54,6 +53,7 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.ParameterAdapter;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
@@ -253,6 +253,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	@Override
 	public <T> ReactiveInsert<T> insert(Class<T> domainType) {
 		return new ReactiveInsertOperationSupport(this).insert(domainType);
+	}
+
+	@Override
+	public <T> ReactiveUpsert<T> upsert(Class<T> domainType) {
+		return new ReactiveUpsertOperationSupport(this).upsert(domainType);
 	}
 
 	@Override
@@ -575,6 +580,60 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				.last(entity).flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
+	@Override
+	public <T> Mono<T> upsert(T entity) throws DataAccessException {
+
+		Assert.notNull(entity, "Entity must not be null");
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
+		return doUpsert(entity, persistentEntity, persistentEntity.getQualifiedTableName());
+	}
+
+	<T> Mono<T> doUpsert(T entity, SqlIdentifier tableName) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
+		return doUpsert(entity, persistentEntity, tableName);
+	}
+
+	<T> Mono<T> doUpsert(T entity, RelationalPersistentEntity<T> persistentEntity, SqlIdentifier tableName) {
+
+		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
+
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(onBeforeConvert);
+
+			return maybeCallBeforeSave(onBeforeConvert, outboundRow, tableName) //
+					.flatMap(entityToSave -> doUpsert(entityToSave, tableName, outboundRow, persistentEntity));
+		});
+	}
+
+	private <T> Mono<T> doUpsert(T entity, SqlIdentifier tableName, OutboundRow outboundRow,
+			RelationalPersistentEntity<T> persistentEntity) {
+
+		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+		StatementMapper.UpsertSpec upsert = mapper.createUpsert(tableName);
+
+		for (SqlIdentifier column : outboundRow.keySet()) {
+			io.r2dbc.spi.Parameter settableValue = ParameterAdapter.wrap(outboundRow.get(column));
+			if (settableValue.getValue() != null) {
+				upsert = upsert.withColumn(column, settableValue);
+			}
+		}
+
+		List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(persistentEntity.getType());
+		for (SqlIdentifier idColumn : identifierColumns) {
+			upsert = upsert.withConflictColumn(idColumn);
+		}
+
+		PreparedOperation<?> operation = mapper.getMappedObject(upsert);
+
+		return this.databaseClient.sql(operation) //
+				.filter(statementFilterFunction) //
+				.fetch() //
+				.rowsUpdated() //
+				.thenReturn(entity) //
+				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
+	}
+
 	@SuppressWarnings("unchecked")
 	private <T> T setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
 
@@ -667,8 +726,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <T> Mono<T> doUpdate(T entity, @Nullable Object version, SqlIdentifier tableName,
-			RelationalPersistentEntity<T> persistentEntity,
-			Criteria criteria, OutboundRow outboundRow) {
+			RelationalPersistentEntity<T> persistentEntity, Criteria criteria, OutboundRow outboundRow) {
 
 		Update update = Update.from((Map) outboundRow);
 		StatementMapper mapper = dataAccessStrategy.getStatementMapper();

@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Mikhail Polivakha
+ * @author Christoph Strobl
  * @since 2.0
  */
 class AggregateChangeExecutor {
@@ -87,6 +88,8 @@ class AggregateChangeExecutor {
 			executionContext.executeInsert(insert);
 		} else if (action instanceof DbAction.BatchInsert<?> batchInsert) {
 			executionContext.executeBatchInsert(batchInsert);
+		} else if (action instanceof DbAction.UpsertRoot<?> upsertRoot) {
+			executionContext.executeUpsertRoot(upsertRoot);
 		} else if (action instanceof DbAction.UpdateRoot<?> updateRoot) {
 			executionContext.executeUpdateRoot(updateRoot);
 		} else if (action instanceof DbAction.Delete<?> delete) {

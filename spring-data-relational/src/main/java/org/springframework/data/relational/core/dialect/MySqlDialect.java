@@ -23,6 +23,8 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterC
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.render.MySqlUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.util.Assert;
 
 /**
@@ -169,5 +171,10 @@ public class MySqlDialect extends AbstractDialect {
 								.formatted(this.getClass().getSimpleName()));
 			}
 		};
+	}
+
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return MySqlUpsertRenderContext.INSTANCE;
 	}
 }

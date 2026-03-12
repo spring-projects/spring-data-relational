@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * mocked or stubbed.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 1.1
  * @see DatabaseClient
  */
@@ -165,9 +166,9 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * additional pre-processing such as named parameter expansion. Results of the query are mapped onto
 	 * {@code entityClass}.
 	 *
-	 * @param operation   the prepared operation wrapping a SQL query and bind parameters.
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
 	 * @param entityClass the entity type must not be {@literal null}.
-	 * @param resultType  the returned entity, type must not be {@literal null}.
+	 * @param resultType the returned entity, type must not be {@literal null}.
 	 * @return a {@link RowsFetchSpec} ready to materialize.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 * @since 3.2.1
@@ -265,6 +266,19 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
 	<T> Mono<T> insert(T entity) throws DataAccessException;
+
+	/**
+	 * Upsert (insert-or-update) the given entity by its primary key and emit the entity afterwards.
+	 * <p>
+	 * The upsert uses the entity's identifier columns as conflict keys: if a row with the same key already exists it is
+	 * updated, otherwise a new row is inserted.
+	 *
+	 * @param entity the entity to upsert, must not be {@literal null}.
+	 * @return the upserted entity.
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @since 4.x
+	 */
+	<T> Mono<T> upsert(T entity) throws DataAccessException;
 
 	/**
 	 * Update the given entity and emit the entity if the update was applied.

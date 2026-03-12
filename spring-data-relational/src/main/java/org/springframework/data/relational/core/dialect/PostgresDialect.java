@@ -34,6 +34,8 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.TableLike;
+import org.springframework.data.relational.core.sql.render.PostgresUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
  * An SQL dialect for Postgres.
@@ -169,5 +171,10 @@ public class PostgresDialect extends AbstractDialect {
 	@Override
 	public IdGeneration getIdGeneration() {
 		return idGeneration;
+	}
+
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return PostgresUpsertRenderContext.INSTANCE;
 	}
 }

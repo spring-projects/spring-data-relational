@@ -19,8 +19,9 @@ package org.springframework.data.r2dbc.core;
  * Stripped down interface providing access to a fluent API that specifies a basic set of reactive R2DBC operations.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 1.1
  * @see R2dbcEntityOperations
  */
-public interface FluentR2dbcOperations
-		extends ReactiveSelectOperation, ReactiveInsertOperation, ReactiveUpdateOperation, ReactiveDeleteOperation {}
+public interface FluentR2dbcOperations extends ReactiveSelectOperation, ReactiveInsertOperation,
+		ReactiveUpdateOperation, ReactiveDeleteOperation, ReactiveUpsertOperation {}

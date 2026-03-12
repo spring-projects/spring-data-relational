@@ -22,6 +22,8 @@ import java.util.Collection;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.render.OracleUpsertRenderContext;
+import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
  * An SQL dialect for Oracle.
@@ -64,6 +66,11 @@ public class OracleDialect extends AnsiDialect {
 	@Override
 	public IdGeneration getIdGeneration() {
 		return ID_GENERATION;
+	}
+
+	@Override
+	public UpsertRenderContext getUpsertRenderContext() {
+		return OracleUpsertRenderContext.INSTANCE;
 	}
 
 	@Override

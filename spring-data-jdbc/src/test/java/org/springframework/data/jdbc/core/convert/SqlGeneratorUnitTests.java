@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
@@ -597,6 +598,33 @@ class SqlGeneratorUnitTests {
 
 		assertThat(insert).isEqualTo("INSERT INTO \"ENTITY_WITH_QUOTED_COLUMN_NAME\" " //
 				+ "(\"test\"\"_@123\") " + "VALUES (:test_123)");
+	}
+
+	@Test // GH-493
+	void getUpsertThrowsWhenDialectDoesNotSupportUpsert() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+		String upsert = sqlGenerator.getUpsert(emptySet());
+		assertThat(upsert) //
+			.startsWith("MERGE INTO dummy_entity") //
+			.contains("WHEN MATCHED THEN UPDATE") //
+			.contains("WHEN NOT MATCHED THEN INSERT");
+	}
+
+	@Test // GH-493
+	void getUpsertReturnsSqlWhenDialectSupportsUpsert() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, JdbcPostgresDialect.INSTANCE);
+
+		String upsert = sqlGenerator.getUpsert(emptySet());
+
+		assertThat(upsert) //
+				.startsWith("INSERT INTO") //
+				.contains("ON CONFLICT") //
+				.contains("DO UPDATE SET") //
+				.contains(":id1") //
+				.contains(":x_name") //
+				.contains(":x_other");
 	}
 
 	@Test // DATAJDBC-266

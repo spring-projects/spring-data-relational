@@ -50,4 +50,5 @@ public class NonQuotingDialect extends AbstractDialect implements Dialect {
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.create(new IdentifierProcessing.Quoting(""), IdentifierProcessing.LetterCasing.AS_IS);
 	}
+
 }

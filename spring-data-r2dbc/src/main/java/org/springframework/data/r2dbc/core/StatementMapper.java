@@ -31,8 +31,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.mapping.ParameterAdapter;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.sql.Assignment;
+import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -55,6 +58,7 @@ import org.springframework.util.Assert;
  * @author Roman Chigvintsev
  * @author Mingyuan Wu
  * @author Diego Krupitza
+ * @author Christoph Strobl
  */
 public interface StatementMapper {
 
@@ -205,6 +209,37 @@ public interface StatementMapper {
 	default DeleteSpec createDelete(SqlIdentifier table) {
 		return DeleteSpec.create(table);
 	}
+
+	/**
+	 * Create an {@code UPSERT} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link UpsertSpec}.
+	 * @since 4.x
+	 */
+	default UpsertSpec createUpsert(String table) {
+		return UpsertSpec.create(table);
+	}
+
+	/**
+	 * Create an {@code UPSERT} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link UpsertSpec}.
+	 * @since 4.x
+	 */
+	default UpsertSpec createUpsert(SqlIdentifier table) {
+		return UpsertSpec.create(table);
+	}
+
+	/**
+	 * Map an upsert specification to a {@link PreparedOperation}.
+	 *
+	 * @param upsertSpec the upsert operation definition, must not be {@literal null}.
+	 * @return the {@link PreparedOperation} for {@link UpsertSpec}.
+	 * @since 4.x
+	 */
+	PreparedOperation<?> getMappedObject(UpsertSpec upsertSpec);
 
 	/**
 	 * Returns {@link RenderContext}.
@@ -643,6 +678,122 @@ public interface StatementMapper {
 
 		public @Nullable CriteriaDefinition getCriteria() {
 			return this.criteria;
+		}
+	}
+
+	/**
+	 * {@code UPSERT} specification.
+	 *
+	 * @author Christoph Strobl
+	 * @since 4.x
+	 */
+	class UpsertSpec {
+
+		private final SqlIdentifier table;
+		private final Map<SqlIdentifier, io.r2dbc.spi.Parameter> assignments;
+		private final List<SqlIdentifier> conflictColumns;
+
+		protected UpsertSpec(SqlIdentifier table, Map<SqlIdentifier, io.r2dbc.spi.Parameter> assignments,
+				List<SqlIdentifier> conflictColumns) {
+
+			this.table = table;
+			this.assignments = assignments;
+			this.conflictColumns = conflictColumns;
+		}
+
+		/**
+		 * Create an {@code UPSERT} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link UpsertSpec}.
+		 */
+		public static UpsertSpec create(String table) {
+			return create(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Create an {@code UPSERT} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link UpsertSpec}.
+		 */
+		public static UpsertSpec create(SqlIdentifier table) {
+			return new UpsertSpec(table, Collections.emptyMap(), Collections.emptyList());
+		}
+
+		/**
+		 * Associate a column with a {@link Parameter} and create a new {@link UpsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link UpsertSpec}.
+		 */
+		@SuppressWarnings("deprecation")
+		public UpsertSpec withColumn(String column, Parameter value) {
+			return withColumn(column, ParameterAdapter.wrap(value));
+		}
+		/**
+		 * Associate a column with a {@link io.r2dbc.spi.Parameter} and create a new {@link UpsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link UpsertSpec}.
+		 */
+		public UpsertSpec withColumn(String column, io.r2dbc.spi.Parameter value) {
+			return withColumn(SqlIdentifier.unquoted(column), value);
+		}
+
+		/**
+		 * Associate a column with a {@link Parameter} and create a new {@link UpsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link UpsertSpec}.
+		 */
+		@SuppressWarnings("deprecation")
+		public UpsertSpec withColumn(SqlIdentifier column, Parameter value) {
+			return withColumn(column, ParameterAdapter.wrap(value));
+		}
+
+		/**
+		 * Associate a column with a {@link io.r2dbc.spi.Parameter} and create a new {@link UpsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link UpsertSpec}.
+		 */
+		public UpsertSpec withColumn(SqlIdentifier column, io.r2dbc.spi.Parameter value) {
+
+			Map<SqlIdentifier, io.r2dbc.spi.Parameter> values = new LinkedHashMap<>(this.assignments);
+			values.put(column, value);
+
+			return new UpsertSpec(this.table, values, this.conflictColumns);
+		}
+
+		/**
+		 * Mark a column as a conflict key (typically the primary key) and create a new {@link UpsertSpec}.
+		 *
+		 * @param column the conflict column identifier.
+		 * @return the {@link UpsertSpec}.
+		 */
+		public UpsertSpec withConflictColumn(SqlIdentifier column) {
+
+			List<SqlIdentifier> conflict = new ArrayList<>(this.conflictColumns);
+			conflict.add(column);
+
+			return new UpsertSpec(this.table, this.assignments, conflict);
+		}
+
+		public SqlIdentifier getTable() {
+			return this.table;
+		}
+
+		public Map<SqlIdentifier, io.r2dbc.spi.Parameter> getAssignments() {
+			return Collections.unmodifiableMap(this.assignments);
+		}
+
+		public List<SqlIdentifier> getConflictColumns() {
+			return Collections.unmodifiableList(this.conflictColumns);
 		}
 	}
 }

@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * @author Mark Paluch
  * @author Mikhail Polivakha
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 1.1
  */
 public interface RenderContext {
@@ -52,4 +53,10 @@ public interface RenderContext {
 	 * @return the {@link InsertRenderContext}
 	 */
 	InsertRenderContext getInsertRenderContext();
+
+	/**
+	 * @return the {@link UpsertRenderContext}.
+	 * @since 4.x
+	 */
+	UpsertRenderContext getUpsertRenderContext();
 }

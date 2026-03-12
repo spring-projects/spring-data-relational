@@ -60,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
@@ -118,6 +119,17 @@ class JdbcAggregateChangeExecutionContext {
 		for (int i = 0; i < inserts.size(); i++) {
 			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
 		}
+	}
+
+	/**
+	 * @param upsert
+	 * @param <T>
+	 * @since 4.x
+	 */
+	<T> void executeUpsertRoot(DbAction.UpsertRoot<T> upsert) {
+
+		accessStrategy.upsert(upsert.entity(), upsert.getEntityType());
+		add(new DbActionExecutionResult(upsert));
 	}
 
 	<T> void executeUpdateRoot(DbAction.UpdateRoot<T> update) {
@@ -276,7 +288,8 @@ class JdbcAggregateChangeExecutionContext {
 
 			Object newEntity = setIdAndCascadingProperties(action, result.getGeneratedId(), cascadingValues);
 
-			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot) {
+			if (action instanceof DbAction.InsertRoot || action instanceof DbAction.UpdateRoot
+					|| action instanceof DbAction.UpsertRoot) {
 				// noinspection unchecked
 				roots.add((T) newEntity);
 			}
@@ -299,8 +312,9 @@ class JdbcAggregateChangeExecutionContext {
 
 		if (roots.isEmpty()) {
 			throw new IllegalStateException(
-					String.format("Cannot retrieve the resulting instance(s) unless a %s or %s action was successfully executed",
-							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName()));
+					String.format("Cannot retrieve the resulting instance(s) unless a %s, %s, or %s action was successfully executed",
+							DbAction.InsertRoot.class.getName(), DbAction.UpdateRoot.class.getName(),
+							DbAction.UpsertRoot.class.getName()));
 		}
 
 		Collections.reverse(roots);
@@ -342,6 +356,10 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		if (action instanceof DbAction.UpdateRoot) {
+			return pathToValue;
+		}
+
+		if (action instanceof DbAction.UpsertRoot) {
 			return pathToValue;
 		}
 

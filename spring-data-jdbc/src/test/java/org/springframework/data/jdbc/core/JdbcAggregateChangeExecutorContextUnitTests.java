@@ -47,6 +47,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Jens Schauder
  * @author Umut Erturk
  * @author Chirag Tailor
+ * @author Christoph Strobl
  */
 public class JdbcAggregateChangeExecutorContextUnitTests {
 
@@ -84,6 +85,27 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
+		executionContext.executeInsert(createInsert(rootInsert, "content", content, null, IdValueSource.GENERATED));
+
+		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoots).containsExactly(root);
+		assertThat(root.id).isEqualTo(23L);
+
+		assertThat(content.id).isEqualTo(24L);
+	}
+
+	@Test // GH-493
+	public void idGenerationOfChildWhenDoingUpsert() {
+
+		Content content = new Content();
+
+		root.id = 23L;
+		when(accessStrategy.upsert(root, DummyEntity.class)).thenReturn(1);
+		when(accessStrategy.insert(content, Content.class, createBackRef(23L), IdValueSource.GENERATED)).thenReturn(24L);
+
+		DbAction.UpsertRoot<DummyEntity> rootInsert = new DbAction.UpsertRoot<>(root);
+		executionContext.executeUpsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null, IdValueSource.GENERATED));
 
 		List<DummyEntity> newRoots = executionContext.populateIdsIfNecessary();
