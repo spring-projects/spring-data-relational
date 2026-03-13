@@ -261,7 +261,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public boolean isEmbedded() {
-		return isEmbedded || (isIdProperty() && isEntity());
+		return isEmbedded || isCompositeId();
+	}
+
+	private boolean isCompositeId() {
+		return isIdProperty() && isEntity();
 	}
 
 	@Override
