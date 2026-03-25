@@ -36,7 +36,7 @@
 		<hsqldb.version>2.7.3</hsqldb.version>
 		<mariadb-java-client.version>3.5.7</mariadb-java-client.version>
 		<mssql.version>13.4.0.jre11</mssql.version>
-		<mysql-connector-java.version>9.5.0</mysql-connector-java.version>
+		<mysql-connector-java.version>9.6.0</mysql-connector-java.version>
 		<postgresql.version>42.7.10</postgresql.version>
 		<oracle.version>23.26.1.0.0</oracle.version>
 
