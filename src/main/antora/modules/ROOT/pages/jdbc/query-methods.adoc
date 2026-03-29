@@ -119,6 +119,10 @@ The following table shows the keywords that are supported for query methods:
 | `findByFirstnameNotContaining(String name)`
 | `firstname NOT LIKE '%' + name + '%'`
 
+| `IgnoreCase` on String
+| `findByFirstnameLikeIgnoreCase(String name)`
+| `UPPER(firstname) LIKE '%' + UPPER(name) + '%'`
+
 | `(No keyword)`
 | `findByFirstname(String name)`
 | `firstname = name`
