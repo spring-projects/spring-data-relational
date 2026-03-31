@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.KeysetScrollPosition;
@@ -247,13 +246,10 @@ public class StatementFactory {
 			if (columns.isEmpty() || values.isEmpty())
 				return Criteria.empty();
 
-			Map<String, Sort.Direction> directions = sort.stream()
-					.collect(Collectors.toMap(Sort.Order::getProperty, Sort.Order::getDirection));
-
-			return buildKeysetCriteria(columns, values, keyset.scrollsForward(), directions);
+			return buildKeysetCriteria(columns, values, keyset.scrollsForward(), sort);
 		}
 
-		Criteria buildKeysetCriteria(List<String> columns, List<Object> values, boolean isForward, Map<String, Sort.Direction> directions) {
+		Criteria buildKeysetCriteria(List<String> columns, List<Object> values, boolean isForward, Sort sort) {
 			if (columns.isEmpty())
 				return Criteria.empty();
 
@@ -268,10 +264,10 @@ public class StatementFactory {
 			columns = columns.subList(1, columns.size());
 			values = values.subList(1, values.size());
 
-			Sort.Direction direction = directions.get(column);
-			Assert.notNull(direction, "ScrollPosition key should be sorted.");
+			Sort.Order sortOrder = sort.getOrderFor(column);
+			Assert.notNull(sortOrder, "ScrollPosition key should be sorted.");
 
-			boolean isAscending = isForward ^ direction.isDescending();
+			boolean isAscending = isForward ^ sortOrder.getDirection().isDescending();
 
 			Criteria gt
 				= isAscending ? Criteria.where(column).greaterThan(val) : Criteria.where(column).lessThan(val);
@@ -282,7 +278,7 @@ public class StatementFactory {
 			Criteria gte
 				= isAscending ? Criteria.where(column).greaterThanOrEquals(val) : Criteria.where(column).lessThanOrEquals(val);
 
-			Criteria nested = gt.or(buildKeysetCriteria(columns, values, isForward, directions));
+			Criteria nested = gt.or(buildKeysetCriteria(columns, values, isForward, sort));
 
 			return gte.and(nested);
 		}
