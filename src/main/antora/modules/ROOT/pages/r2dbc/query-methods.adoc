@@ -50,89 +50,31 @@ The following table shows the keywords that are supported for query methods:
 [cols="1,2,3",options="header",subs="quotes"]
 .Supported keywords for query methods
 |===
-| Keyword
-| Sample
-| Logical result
-
-| `After`
-| `findByBirthdateAfter(Date date)`
-| `birthdate > date`
-
-| `GreaterThan`
-| `findByAgeGreaterThan(int age)`
-| `age > age`
-
-| `GreaterThanEqual`
-| `findByAgeGreaterThanEqual(int age)`
-| `age >= age`
-
-| `Before`
-| `findByBirthdateBefore(Date date)`
-| `birthdate < date`
-
-| `LessThan`
-| `findByAgeLessThan(int age)`
-| `age < age`
-
-| `LessThanEqual`
-| `findByAgeLessThanEqual(int age)`
-| `age \<= age`
-
-| `Between`
-| `findByAgeBetween(int from, int to)`
-| `age BETWEEN from AND to`
-
-| `NotBetween`
-| `findByAgeNotBetween(int from, int to)`
-| `age NOT BETWEEN from AND to`
-
-| `In`
-| `findByAgeIn(Collection<Integer> ages)`
-| `age IN (age1, age2, ageN)`
-
-| `NotIn`
-| `findByAgeNotIn(Collection ages)`
-| `age NOT IN (age1, age2, ageN)`
-
-| `IsNotNull`, `NotNull`
-| `findByFirstnameNotNull()`
-| `firstname IS NOT NULL`
-
-| `IsNull`, `Null`
-| `findByFirstnameNull()`
-| `firstname IS NULL`
-
-| `Like`, `StartingWith`, `EndingWith`
-| `findByFirstnameLike(String name)`
-| `firstname LIKE name`
-
-| `NotLike`, `IsNotLike`
-| `findByFirstnameNotLike(String name)`
-| `firstname NOT LIKE name`
-
-| `Containing` on String
-| `findByFirstnameContaining(String name)`
-| `firstname LIKE '%' + name +'%'`
-
-| `NotContaining` on String
-| `findByFirstnameNotContaining(String name)`
-| `firstname NOT LIKE '%' + name +'%'`
-
-| `(No keyword)`
-| `findByFirstname(String name)`
-| `firstname = name`
-
-| `Not`
-| `findByFirstnameNot(String name)`
-| `firstname != name`
-
-| `IsTrue`, `True`
-| `findByActiveIsTrue()`
-| `active IS TRUE`
-
-| `IsFalse`,  `False`
-| `findByActiveIsFalse()`
-| `active IS FALSE`
+| Keyword|Sample|Logical result
+|`And`|`findByLastnameAndFirstname`|`… WHERE lastname = :lastname AND firstname = :firstname`
+|`Or`|`findByLastnameOrFirstname`|`… WHERE lastname = :lastname OR firstname = :firstname`
+|`Is`, `Equals`|`findByFirstname`,`findByFirstnameIs`,`findByFirstnameEquals`|`… WHERE firstname = :firstname` (or `… WHERE firstname IS NULL` if the argument is `null`)
+|`Between`|`findByStartDateBetween`|`… WHERE startDate BETWEEN :startDate and :startDate1`
+|`LessThan`|`findByAgeLessThan`|`… WHERE age < :age`
+|`LessThanEqual`|`findByAgeLessThanEqual`|`… WHERE age \<= :age`
+|`GreaterThan`|`findByAgeGreaterThan`|`… WHERE age > :age`
+|`GreaterThanEqual`|`findByAgeGreaterThanEqual`|`… WHERE age >= :age`
+|`After`|`findByStartDateAfter`|`… WHERE startDate > :startDate`
+|`Before`|`findByStartDateBefore`|`… WHERE startDate < :startDate`
+|`IsNull`, `Null`|`findByAge(Is)Null`|`… WHERE age IS NULL`
+|`IsNotNull`, `NotNull`|`findByAge(Is)NotNull`|`… WHERE age IS NOT NULL`
+|`Like`|`findByFirstnameLike`|`… WHERE firstname LIKE :firstname`
+|`NotLike`|`findByFirstnameNotLike`|`… WHERE firstname NOT LIKE :firstname`
+|`StartingWith`|`findByFirstnameStartingWith`|`… WHERE firstname LIKE :firstname` (parameter bound with appended `%`)
+|`EndingWith`|`findByFirstnameEndingWith`|`… WHERE firstname LIKE :firstname` (parameter bound with prepended `%`)
+|`Containing`|`findByFirstnameContaining`|`… WHERE firstname LIKE :firstname` (parameter bound wrapped in `%`)
+|`OrderBy`|`findByAgeOrderByLastnameDesc`|`… WHERE age = :age ORDER BY lastname DESC`
+|`Not`|`findByLastnameNot`|`… WHERE lastname <> :lastname` (or `… WHERE lastname IS NOT NULL` if the argument is `null`)
+|`In`|`findByAgeIn(Collection<Age> ages)`|`… WHERE age IN (:ages)`
+|`NotIn`|`findByAgeNotIn(Collection<Age> ages)`|`… WHERE age NOT IN (:ages)`
+|`True`|`findByActiveTrue()`|`… WHERE active = :active` (with `active` being `TRUE`)
+|`False`|`findByActiveFalse()`|`… WHERE active = :active` (with `active` being `FALSE`)
+|`IgnoreCase`|`findByFirstnameIgnoreCase`|`… where UPPER(firstname) = UPPER(:firstname)`
 |===
 
 [[r2dbc.repositories.modifying]]
