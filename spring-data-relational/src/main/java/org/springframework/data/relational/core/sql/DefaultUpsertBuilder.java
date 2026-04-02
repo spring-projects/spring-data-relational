@@ -18,11 +18,11 @@ package org.springframework.data.relational.core.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import org.springframework.data.relational.core.sql.UpsertBuilder.BuildUpsert;
 import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
-import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertOnConflict;
-import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertResolution;
+import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertOnMatch;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -32,7 +32,8 @@ import org.springframework.util.ObjectUtils;
  * @author Christoph Strobl
  * @since 4.x
  */
-class DefaultUpsertBuilder implements UpsertBuilder, UpsertInsert, UpsertOnConflict, UpsertResolution, BuildUpsert {
+class DefaultUpsertBuilder
+		implements UpsertBuilder, UpsertInsert, UpsertOnMatch, BuildUpsert, UpsertBuilder.ConflictResolution {
 
 	private final Table table;
 	private final List<Assignment> assignments = new ArrayList<>();
@@ -45,7 +46,7 @@ class DefaultUpsertBuilder implements UpsertBuilder, UpsertInsert, UpsertOnConfl
 	}
 
 	@Override
-	public UpsertOnConflict insert(Collection<? extends Assignment> assignments) {
+	public UpsertOnMatch insert(Collection<? extends Assignment> assignments) {
 
 		Assert.notNull(assignments, "Assignments must not be null");
 		this.assignments.addAll(assignments);
@@ -53,15 +54,16 @@ class DefaultUpsertBuilder implements UpsertBuilder, UpsertInsert, UpsertOnConfl
 	}
 
 	@Override
-	public UpsertResolution onConflict(Collection<? extends Column> columns) {
+	public BuildUpsert onConflict(Function<ConflictColumn, ConflictResolution> resolution) {
 
-		Assert.notNull(columns, "Conflict columns must not be null");
-		this.conflictColumns.addAll(columns);
-		return this;
-	}
+		Assert.notNull(resolution, "ConflictResolution Consumer must not be null");
 
-	@Override
-	public BuildUpsert update() {
+		ConflictColumn conflictResolution = columns -> (OngoingConflictResolution) () -> {
+			conflictColumns.addAll(columns);
+			return DefaultUpsertBuilder.this;
+		};
+
+		resolution.apply(conflictResolution);
 		return this;
 	}
 
@@ -74,7 +76,9 @@ class DefaultUpsertBuilder implements UpsertBuilder, UpsertInsert, UpsertOnConfl
 	void validate() {
 
 		Assert.state(!this.conflictColumns.isEmpty(), "Conflict columns must not be empty");
+
 		for (Column column : this.conflictColumns) {
+
 			boolean present = this.assignments.stream().map(it -> {
 				if (it instanceof AssignValue av) {
 					return av.getColumn();
@@ -82,6 +86,7 @@ class DefaultUpsertBuilder implements UpsertBuilder, UpsertInsert, UpsertOnConfl
 				return null;
 			}).anyMatch(it -> ObjectUtils.nullSafeEquals(column.getName().getReference(),
 					it != null ? it.getName().getReference() : null));
+
 			if (!present) {
 				throw new IllegalStateException("No value for conflict column [%s]".formatted(column.getName().getReference()));
 			}

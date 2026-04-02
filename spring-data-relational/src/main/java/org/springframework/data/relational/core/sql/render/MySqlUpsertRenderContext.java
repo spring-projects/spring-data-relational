@@ -27,6 +27,7 @@ public enum MySqlUpsertRenderContext implements UpsertRenderContext {
 
 	@Override
 	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderer.mySql();
+		return UpsertStatementRenderers.mySql();
 	}
+
 }

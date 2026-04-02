@@ -20,6 +20,7 @@ package org.springframework.data.relational.core.sql.render;
  * <p>
  * Uses a table value constructor {@code (VALUES (?, ?)) AS s (col1, col2)} as the source so that no SELECT is used.
  *
+ * @author Christoph Strobl
  * @since 4.x
  */
 public enum StandardSqlUpsertRenderContext implements UpsertRenderContext {
@@ -28,6 +29,7 @@ public enum StandardSqlUpsertRenderContext implements UpsertRenderContext {
 
 	@Override
 	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderer.standardSql();
+		return UpsertStatementRenderers.merge();
 	}
+
 }

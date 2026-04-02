@@ -15,9 +15,10 @@
  */
 package org.springframework.data.jdbc.core.sql.render;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.jdbc.core.dialect.JdbcOracleDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.SQL;
@@ -38,7 +39,7 @@ class UpsertRendererUnitTests {
 		Table table = SQL.table("my_table");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(org.springframework.data.jdbc.core.convert.NonQuotingDialect.INSTANCE)
 				.createRenderContext();
@@ -54,7 +55,7 @@ class UpsertRendererUnitTests {
 		Table table = SQL.table("my_table");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect.INSTANCE)
 				.createRenderContext();
@@ -70,7 +71,7 @@ class UpsertRendererUnitTests {
 		Table table = SQL.table("my_table");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect.INSTANCE)
 				.createRenderContext();
@@ -86,7 +87,7 @@ class UpsertRendererUnitTests {
 		Table table = SQL.table("my_table");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect.INSTANCE)
 				.createRenderContext();
@@ -102,7 +103,7 @@ class UpsertRendererUnitTests {
 		Table table = SQL.table("my_table");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcH2Dialect.INSTANCE)
 				.createRenderContext();
@@ -117,7 +118,7 @@ class UpsertRendererUnitTests {
 
 		Table table = SQL.table("ent");
 		Upsert upsert = StatementBuilder.upsert(table).insert(table.column("id").set(SQL.bindMarker(":id")))
-				.onConflict(table.column("id")).update().build();
+				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
 		var context = new RenderContextFactory(JdbcOracleDialect.INSTANCE).createRenderContext();
 		String sql = SqlRenderer.create(context).render(upsert);

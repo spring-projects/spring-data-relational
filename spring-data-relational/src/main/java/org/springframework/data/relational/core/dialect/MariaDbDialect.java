@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
@@ -29,17 +30,20 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  */
 public class MariaDbDialect extends MySqlDialect {
 
+	private static final List<Object> CONVERTERS = Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
+			NumberToBooleanConverter.INSTANCE);
+
 	public MariaDbDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);
 	}
 
 	@Override
-	public Collection<Object> getConverters() {
-		return Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE);
+	public IdGeneration getIdGeneration() {
+		return IdGeneration.create(getIdentifierProcessing());
 	}
 
 	@Override
-	public IdGeneration getIdGeneration() {
-		return IdGeneration.create(getIdentifierProcessing());
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
 	}
 }

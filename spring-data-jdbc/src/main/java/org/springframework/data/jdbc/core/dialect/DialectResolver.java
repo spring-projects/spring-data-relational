@@ -211,8 +211,13 @@ public class DialectResolver {
 		}
 
 		@Override
-		public LimitClause limit() {
-			return delegate.limit();
+		public IdentifierProcessing getIdentifierProcessing() {
+			return delegate.getIdentifierProcessing();
+		}
+
+		@Override
+		public IdGeneration getIdGeneration() {
+			return delegate.getIdGeneration();
 		}
 
 		@Override
@@ -226,26 +231,6 @@ public class DialectResolver {
 		}
 
 		@Override
-		public SelectRenderContext getSelectContext() {
-			return delegate.getSelectContext();
-		}
-
-		@Override
-		public IdentifierProcessing getIdentifierProcessing() {
-			return delegate.getIdentifierProcessing();
-		}
-
-		@Override
-		public Escaper getLikeEscaper() {
-			return delegate.getLikeEscaper();
-		}
-
-		@Override
-		public IdGeneration getIdGeneration() {
-			return delegate.getIdGeneration();
-		}
-
-		@Override
 		public Collection<Object> getConverters() {
 			return delegate.getConverters();
 		}
@@ -253,16 +238,6 @@ public class DialectResolver {
 		@Override
 		public Set<Class<?>> simpleTypes() {
 			return delegate.simpleTypes();
-		}
-
-		@Override
-		public InsertRenderContext getInsertRenderContext() {
-			return delegate.getInsertRenderContext();
-		}
-
-		@Override
-		public OrderByNullPrecedence orderByNullHandling() {
-			return delegate.orderByNullHandling();
 		}
 
 		@Override
@@ -276,9 +251,35 @@ public class DialectResolver {
 		}
 
 		@Override
+		public Escaper getLikeEscaper() {
+			return delegate.getLikeEscaper();
+		}
+
+		@Override
+		public LimitClause limit() {
+			return delegate.limit();
+		}
+
+		@Override
+		public OrderByNullPrecedence orderByNullHandling() {
+			return delegate.orderByNullHandling();
+		}
+
+		@Override
+		public SelectRenderContext getSelectContext() {
+			return delegate.getSelectContext();
+		}
+
+		@Override
+		public InsertRenderContext getInsertRenderContext() {
+			return delegate.getInsertRenderContext();
+		}
+
+		@Override
 		public UpsertRenderContext getUpsertRenderContext() {
 			return delegate.getUpsertRenderContext();
 		}
+
 	}
 
 }

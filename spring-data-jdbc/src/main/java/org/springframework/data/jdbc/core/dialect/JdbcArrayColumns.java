@@ -59,6 +59,20 @@ public interface JdbcArrayColumns extends ArrayColumns {
 	}
 
 	/**
+	 * Returns the default {@link JdbcArrayColumns} support.
+	 */
+	static JdbcArrayColumns defaultSupport() {
+		return DefaultSupport.INSTANCE;
+	}
+
+	/**
+	 * Returns an {@link JdbcArrayColumns} instance indicating that arrays are not supported by a JdbcDialect.
+	 */
+	static JdbcArrayColumns unsupported() {
+		return Unsupported.INSTANCE;
+	}
+
+	/**
 	 * Default {@link ArrayColumns} implementation for dialects that do not support array-typed columns.
 	 */
 	enum Unsupported implements JdbcArrayColumns {
@@ -89,4 +103,5 @@ public interface JdbcArrayColumns extends ArrayColumns {
 			return true;
 		}
 	}
+
 }

@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Fluent builder for {@link Upsert} statements.
@@ -40,7 +41,7 @@ public interface UpsertBuilder {
 		 * @param assignments one or more {@link Assignment column assignments}; must not be {@literal null}.
 		 * @return the next builder step.
 		 */
-		default UpsertOnConflict insert(Assignment... assignments) {
+		default UpsertOnMatch insert(Assignment... assignments) {
 			return insert(List.of(assignments));
 		}
 
@@ -50,38 +51,79 @@ public interface UpsertBuilder {
 		 * @param assignments the {@link Assignment column assignments}; must not be {@literal null}.
 		 * @return the next builder step.
 		 */
-		UpsertOnConflict insert(Collection<? extends Assignment> assignments);
+		UpsertOnMatch insert(Collection<? extends Assignment> assignments);
+
 	}
 
 	/**
 	 * Step for specifying the conflict target columns.
 	 */
-	interface UpsertOnConflict {
+	interface UpsertOnMatch {
 
 		/**
-		 * Declare the columns whose uniqueness constraint drives conflict detection.
+		 * Declare how to resolve a conflict if the row already exists.
 		 *
-		 * @param columns one or more conflict columns; must not be {@literal null}.
+		 * @param resolution the conflict columns; must not be {@literal null}.
 		 * @return the terminal build step.
 		 */
-		default UpsertResolution onConflict(Column... columns) {
-			return onConflict(List.of(columns));
-		}
+		BuildUpsert onConflict(Function<ConflictColumn, ConflictResolution> resolution);
 
-		/**
-		 * Declare the columns whose uniqueness constraint drives conflict detection.
-		 *
-		 * @param columns the conflict columns; must not be {@literal null}.
-		 * @return the terminal build step.
-		 */
-		UpsertResolution onConflict(Collection<? extends Column> columns);
 	}
 
 	/**
 	 * Step for specifying what to do when a conflict is detected.
 	 */
-	interface UpsertResolution {
-		BuildUpsert update();
+	interface ConflictColumn {
+
+		/**
+		 * Start building the conflict resolution by specifying a conflict/matching column.
+		 *
+		 * @param column the column to specify conflict resolution; must not be {@literal null}.
+		 * @return the terminal build step.
+		 */
+		default OngoingConflictResolution with(Column column) {
+			return with(List.of(column));
+		}
+
+		/**
+		 * Start building the conflict resolution by specifying conflict/matching columns.
+		 *
+		 * @param columns the columns to specify conflict resolution; must not be {@literal null}.
+		 * @return the terminal build step.
+		 */
+		default OngoingConflictResolution with(Column... columns) {
+			return with(List.of(columns));
+		}
+
+		/**
+		 * Start building the conflict resolution by specifying conflict/matching columns.
+		 *
+		 * @param columns the columns to specify conflict resolution; must not be {@literal null}.
+		 * @return the terminal build step.
+		 */
+		OngoingConflictResolution with(Collection<? extends Column> columns);
+
+	}
+
+	/**
+	 * Step for specifying what to do when a conflict is detected.
+	 */
+	interface OngoingConflictResolution {
+
+		/**
+		 * Resolve the conflict by updating the existing row using the previously specified assignments for non-conflicting
+		 * columns that are not part of {@link ConflictColumn#with}.
+		 *
+		 * @return the conflict resolution strategy.
+		 */
+		ConflictResolution updateRemainingColumns();
+	}
+
+	/**
+	 * The actual conflict resolution strategy.
+	 */
+	interface ConflictResolution {
+
 	}
 
 	/**
@@ -95,5 +137,7 @@ public interface UpsertBuilder {
 		 * @return the {@link Upsert} statement.
 		 */
 		Upsert build();
+
 	}
+
 }

@@ -42,6 +42,21 @@ public interface ArrayColumns {
 	Class<?> getArrayType(Class<?> userType);
 
 	/**
+	 * Returns an instance of {@link ArrayColumns} indicating that array-typed columns are not supported.
+	 */
+	static ArrayColumns unsupported() {
+		return Unsupported.INSTANCE;
+	}
+
+	/**
+	 * Returns an instance of {@link ArrayColumns} indicating that array-typed columns are supported using
+	 * {@code Object[]}.
+	 */
+	static ArrayColumns objectArray() {
+		return ObjectArrayColumns.INSTANCE;
+	}
+
+	/**
 	 * Default {@link ArrayColumns} implementation for dialects that do not support array-typed columns.
 	 */
 	enum Unsupported implements ArrayColumns {
@@ -75,4 +90,5 @@ public interface ArrayColumns {
 
 		return componentType;
 	}
+
 }

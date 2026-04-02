@@ -36,16 +36,19 @@ import org.springframework.data.relational.core.dialect.Db2Dialect;
 public class JdbcDb2Dialect extends Db2Dialect implements JdbcDialect {
 
 	public static final JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
+	private final List<Object> converters;
 
-	protected JdbcDb2Dialect() {}
-
-	@Override
-	public Collection<Object> getConverters() {
+	protected JdbcDb2Dialect() {
 
 		List<Object> converters = new ArrayList<>(super.getConverters());
 		converters.add(OffsetDateTimeToTimestampConverter.INSTANCE);
 		converters.add(Jsr310TimestampBasedConverters.LocalDateTimeToTimestampConverter.INSTANCE);
 
+		this.converters = List.copyOf(converters);
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
 		return converters;
 	}
 
@@ -66,4 +69,5 @@ public class JdbcDb2Dialect extends Db2Dialect implements JdbcDialect {
 			return Timestamp.from(source.toInstant());
 		}
 	}
+
 }

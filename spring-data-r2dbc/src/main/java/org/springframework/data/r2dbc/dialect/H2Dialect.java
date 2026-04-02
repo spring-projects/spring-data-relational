@@ -42,6 +42,11 @@ public class H2Dialect extends org.springframework.data.relational.core.dialect.
 			.of(() -> new SimpleTypeArrayColumns(ObjectArrayColumns.INSTANCE, getSimpleTypeHolder()));
 
 	@Override
+	public ArrayColumns getArraySupport() {
+		return this.arrayColumns.get();
+	}
+
+	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
 		return INDEXED;
 	}
@@ -51,8 +56,4 @@ public class H2Dialect extends org.springframework.data.relational.core.dialect.
 		return identifier.getReference();
 	}
 
-	@Override
-	public ArrayColumns getArraySupport() {
-		return this.arrayColumns.get();
-	}
 }

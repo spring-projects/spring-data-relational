@@ -34,15 +34,6 @@ import org.springframework.data.util.Lazy;
  */
 public class SqlServerDialect extends AbstractDialect {
 
-	/**
-	 * Singleton instance.
-	 *
-	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.SqlServerDialect} or
-	 * 						 {@code org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect}.
-	 */
-	@Deprecated(forRemoval = true)
-	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
-
 	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing
 			.create(IdentifierProcessing.Quoting.ANSI, IdentifierProcessing.LetterCasing.AS_IS);
 
@@ -59,12 +50,22 @@ public class SqlServerDialect extends AbstractDialect {
 		}
 	};
 
-	protected SqlServerDialect() {}
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
 
-	@Override
-	public IdGeneration getIdGeneration() {
-		return ID_GENERATION;
-	}
+		@Override
+		public String getLock(LockOptions lockOptions) {
+
+			return switch (lockOptions.getLockMode()) {
+				case PESSIMISTIC_WRITE -> "WITH (UPDLOCK, ROWLOCK)";
+				case PESSIMISTIC_READ -> "WITH (HOLDLOCK, ROWLOCK)";
+			};
+		}
+
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_FROM_TABLE;
+		}
+	};
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -89,29 +90,28 @@ public class SqlServerDialect extends AbstractDialect {
 		}
 	};
 
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
+	/**
+	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.SqlServerDialect} or
+	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect}.
+	 */
+	@Deprecated(forRemoval = true) public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
-		@Override
-		public String getLock(LockOptions lockOptions) {
-
-			return switch (lockOptions.getLockMode()) {
-				case PESSIMISTIC_WRITE -> "WITH (UPDLOCK, ROWLOCK)";
-				case PESSIMISTIC_READ -> "WITH (HOLDLOCK, ROWLOCK)";
-			};
-		}
-
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_FROM_TABLE;
-		}
-	};
 
 	private final Lazy<SelectRenderContext> selectRenderContext = Lazy
 			.of(() -> new SqlServerSelectRenderContext(getAfterFromTable(), getAfterOrderBy()));
 
+	protected SqlServerDialect() {}
+
 	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
+	public IdentifierProcessing getIdentifierProcessing() {
+		return IDENTIFIER_PROCESSING;
+	}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
 	}
 
 	@Override
@@ -125,18 +125,8 @@ public class SqlServerDialect extends AbstractDialect {
 	}
 
 	@Override
-	public SelectRenderContext getSelectContext() {
-		return selectRenderContext.get();
-	}
-
-	@Override
-	public IdentifierProcessing getIdentifierProcessing() {
-		return IDENTIFIER_PROCESSING;
-	}
-
-	@Override
-	public InsertRenderContext getInsertRenderContext() {
-		return InsertRenderContexts.MS_SQL_SERVER;
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
 	}
 
 	@Override
@@ -145,7 +135,18 @@ public class SqlServerDialect extends AbstractDialect {
 	}
 
 	@Override
+	public SelectRenderContext getSelectContext() {
+		return selectRenderContext.get();
+	}
+
+	@Override
+	public InsertRenderContext getInsertRenderContext() {
+		return InsertRenderContexts.MS_SQL_SERVER;
+	}
+
+	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
 		return SqlServerUpsertRenderContext.INSTANCE;
 	}
+
 }

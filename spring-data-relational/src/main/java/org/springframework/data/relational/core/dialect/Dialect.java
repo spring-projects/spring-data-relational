@@ -30,9 +30,11 @@ import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.util.ClassUtils;
 
 /**
- * Represents a dialect that is implemented by a particular database. Please note that not all features are supported by
- * all vendors. Dialects typically express this with feature flags. Methods for unsupported functionality may throw
- * {@link UnsupportedOperationException}.
+ * Represents a dialect for a particular database.
+ * <p>
+ * Note that not all features are supported by all vendors. Dialect implementations provide feature flags and objects
+ * that describe how a database runs certain commands or handles types such as array. Methods for unsupported
+ * functionality may throw {@link UnsupportedOperationException}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -45,6 +47,8 @@ import org.springframework.util.ClassUtils;
 public interface Dialect {
 
 	/**
+	 * Returns the name of the dialect.
+	 *
 	 * @return the name of the dialect.
 	 * @since 4.x
 	 */
@@ -53,38 +57,8 @@ public interface Dialect {
 	}
 
 	/**
-	 * Return the {@link LimitClause} used by this dialect.
-	 *
-	 * @return the {@link LimitClause} used by this dialect.
-	 */
-	LimitClause limit();
-
-	/**
-	 * Return the {@link LockClause} used by this dialect.
-	 *
-	 * @return the {@link LockClause} used by this dialect.
-	 */
-	LockClause lock();
-
-	/**
-	 * Returns the array support object that describes how array-typed columns are supported by this dialect.
-	 *
-	 * @return the array support object that describes how array-typed columns are supported by this dialect.
-	 */
-	default ArrayColumns getArraySupport() {
-		return ArrayColumns.Unsupported.INSTANCE;
-	}
-
-	/**
-	 * Obtain the {@link SelectRenderContext}.
-	 *
-	 * @return the {@link SelectRenderContext}.
-	 */
-	SelectRenderContext getSelectContext();
-
-	/**
-	 * Returns the {@link IdentifierProcessing} used for processing {@link SqlIdentifier} when converting them to SQL
-	 * snippets or parameter names.
+	 * Returns the {@link IdentifierProcessing handling of table- and column names (identifiers)} used for processing
+	 * {@link SqlIdentifier} when converting them to SQL snippets or parameter names.
 	 *
 	 * @return the {@link IdentifierProcessing}. Guaranteed to be not {@literal null}.
 	 * @since 2.0
@@ -94,17 +68,28 @@ public interface Dialect {
 	}
 
 	/**
-	 * Returns the {@link Escaper} used for {@code LIKE} value escaping.
+	 * Returns the {@link IdGeneration} used for generating identifiers.
 	 *
-	 * @return the {@link Escaper} used for {@code LIKE} value escaping.
-	 * @since 2.0
+	 * @return the {@link IdGeneration} used for generating identifiers.
 	 */
-	default Escaper getLikeEscaper() {
-		return Escaper.DEFAULT;
-	}
-
 	default IdGeneration getIdGeneration() {
 		return IdGeneration.DEFAULT;
+	}
+
+	/**
+	 * Return the {@link LockClause} used by this dialect.
+	 *
+	 * @return the {@link LockClause} used by this dialect.
+	 */
+	LockClause lock();
+
+	/**
+	 * Returns the array support object that describes how array-typed columns should be handled by this dialect.
+	 *
+	 * @return the array support object that describes how array-typed columns should be handled by this dialect.
+	 */
+	default ArrayColumns getArraySupport() {
+		return ArrayColumns.unsupported();
 	}
 
 	/**
@@ -127,13 +112,40 @@ public interface Dialect {
 	}
 
 	/**
-	 * @return an appropriate {@link InsertRenderContext} for that specific dialect. for most of the Dialects the default
-	 *         implementation will be valid, but, for example, in case of {@link SqlServerDialect} it is not.
-	 * @since 2.4
+	 * Provide a SQL function that is suitable for implementing an exists-query. The default is `COUNT(1)`, but for some
+	 * databases a {@code LEAST(COUNT(1), 1)} might be required, which doesn't get accepted by other databases.
+	 *
+	 * @since 3.0
 	 */
-	default InsertRenderContext getInsertRenderContext() {
-		return InsertRenderContexts.DEFAULT;
+	default SimpleFunction getExistsFunction() {
+		return Functions.count(SQL.literalOf(1));
 	}
+
+	/**
+	 * Return whether the dialect supports single query loading.
+	 *
+	 * @return {@literal true} if the dialect supports single query loading; {@literal false} otherwise.
+	 */
+	default boolean supportsSingleQueryLoading() {
+		return true;
+	}
+
+	/**
+	 * Returns the {@link Escaper} used for {@code LIKE} value escaping.
+	 *
+	 * @return the {@link Escaper} used for {@code LIKE} value escaping.
+	 * @since 2.0
+	 */
+	default Escaper getLikeEscaper() {
+		return Escaper.DEFAULT;
+	}
+
+	/**
+	 * Return the {@link LimitClause} used by this dialect.
+	 *
+	 * @return the {@link LimitClause} used by this dialect.
+	 */
+	LimitClause limit();
 
 	/**
 	 * Return the {@link OrderByNullPrecedence} used by this dialect.
@@ -146,17 +158,19 @@ public interface Dialect {
 	}
 
 	/**
-	 * Provide a SQL function that is suitable for implementing an exists-query. The default is `COUNT(1)`, but for some
-	 * database a `LEAST(COUNT(1), 1)` might be required, which doesn't get accepted by other databases.
+	 * Obtain the {@link SelectRenderContext}.
 	 *
-	 * @since 3.0
+	 * @return the {@link SelectRenderContext}.
 	 */
-	default SimpleFunction getExistsFunction() {
-		return Functions.count(SQL.literalOf(1));
-	}
+	SelectRenderContext getSelectContext();
 
-	default boolean supportsSingleQueryLoading() {
-		return true;
+	/**
+	 * @return an appropriate {@link InsertRenderContext} for that specific dialect. for most of the Dialects the default
+	 *         implementation will be valid, but, for example, in case of {@link SqlServerDialect} it is not.
+	 * @since 2.4
+	 */
+	default InsertRenderContext getInsertRenderContext() {
+		return InsertRenderContexts.DEFAULT;
 	}
 
 	/**
@@ -169,4 +183,5 @@ public interface Dialect {
 	default UpsertRenderContext getUpsertRenderContext() {
 		return StandardSqlUpsertRenderContext.INSTANCE;
 	}
+
 }

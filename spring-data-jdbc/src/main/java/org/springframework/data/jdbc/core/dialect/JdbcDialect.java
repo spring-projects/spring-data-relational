@@ -29,11 +29,9 @@ import org.springframework.data.relational.core.dialect.Dialect;
 public interface JdbcDialect extends Dialect {
 
 	/**
-	 * Returns the JDBC specific array support object that describes how array-typed columns are supported by this
-	 * dialect.
+	 * Returns the JDBC-specific array support object that describes how this dialect supports array-typed columns.
 	 *
-	 * @return the JDBC specific array support object that describes how array-typed columns are supported by this
-	 *         dialect.
+	 * @return the JDBC-specific array support object that describes how this dialect supports array-typed columns.
 	 */
 	default JdbcArrayColumns getArraySupport() {
 		return JdbcArrayColumns.Unsupported.INSTANCE;
@@ -41,10 +39,10 @@ public interface JdbcDialect extends Dialect {
 
 	/**
 	 * Returns the {@link JdbcArrayColumns array support} for the given {@link Dialect}. Defaults to
-	 * {@link JdbcArrayColumns.Unsupported} iff the dialect is not an instance of {@code JdbcDialect}.
+	 * {@link JdbcArrayColumns.Unsupported} if the dialect is not an instance of {@code JdbcDialect}.
 	 *
 	 * @param dialect the dialect to check for array support.
-	 * @return the {@link JdbcArrayColumns} instance that describes how array-typed columns are supported by the dialect.
+	 * @return the {@link JdbcArrayColumns} instance that describes how this dialect supports array-typed columns.
 	 * @since 4.0
 	 */
 	static JdbcArrayColumns getArraySupport(Dialect dialect) {

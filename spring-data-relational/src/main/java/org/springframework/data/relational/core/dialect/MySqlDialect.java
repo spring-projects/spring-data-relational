@@ -37,47 +37,37 @@ import org.springframework.util.Assert;
  */
 public class MySqlDialect extends AbstractDialect {
 
-	/**
-	 * MySQL defaults for {@link IdentifierProcessing}.
-	 * 
-	 * @deprecated Construct your own {@link IdentifierProcessing}. There is no one standard identifier processing for
-	 *             MySql.See
-	 * 
-	 *             <pre>
-	 * 	  <a href=
-	"https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html">Identifier Case Sensitivity</a>
-	 *             </pre>
-	 */
-	@Deprecated(forRemoval = true,
-			since = "4.0") public static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing
-					.create(new Quoting("`"), LetterCasing.LOWER_CASE);
+	private static final IdGeneration ID_GENERATION = new IdGeneration() {
 
-	/**
-	 * Singleton instance.
-	 *
-	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.MySqlDialect} or
-	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect}
-	 */
-	@Deprecated(forRemoval = true) public static final MySqlDialect INSTANCE = new MySqlDialect();
+		@Override
+		public boolean sequencesSupported() {
+			return false;
+		}
 
-	private final IdentifierProcessing identifierProcessing;
+		@Override
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
+			throw new UnsupportedOperationException(
+					"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket"
+							.formatted(this.getClass().getSimpleName()));
+		}
+	};
 
-	protected MySqlDialect() {
-		this(MYSQL_IDENTIFIER_PROCESSING);
-	}
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
 
-	/**
-	 * Creates a new {@link MySqlDialect} given {@link IdentifierProcessing}.
-	 *
-	 * @param identifierProcessing must not be null.
-	 * @since 2.0
-	 */
-	public MySqlDialect(IdentifierProcessing identifierProcessing) {
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			return switch (lockOptions.getLockMode()) {
+				case PESSIMISTIC_WRITE -> "FOR UPDATE";
+				case PESSIMISTIC_READ -> "LOCK IN SHARE MODE";
+			};
+		}
 
-		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
 
-		this.identifierProcessing = identifierProcessing;
-	}
+	};
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -104,39 +94,49 @@ public class MySqlDialect extends AbstractDialect {
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
 		}
+
 	};
 
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
+	/**
+	 * MySQL defaults for {@link IdentifierProcessing}.
+	 *
+	 * @deprecated Construct your own {@link IdentifierProcessing}. There is no one standard identifier processing for
+	 *             MySql. See <a href="https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html">Identifier Case Sensitivity</a>.
+	 */
+	@Deprecated(forRemoval = true,
+			since = "4.0")
+	public static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing
+					.create(new Quoting("`"), LetterCasing.LOWER_CASE);
 
-		@Override
-		public String getLock(LockOptions lockOptions) {
-			switch (lockOptions.getLockMode()) {
+	/**
+	 * Singleton instance.
+	 *
+	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.MySqlDialect} or
+	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect}
+	 */
+	@Deprecated(forRemoval = true)
+	public static final MySqlDialect INSTANCE = new MySqlDialect();
 
-				case PESSIMISTIC_WRITE:
-					return "FOR UPDATE";
+	private static final Collection<Object> CONVERTERS = Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
+			NumberToBooleanConverter.INSTANCE);
 
-				case PESSIMISTIC_READ:
-					return "LOCK IN SHARE MODE";
+	private final IdentifierProcessing identifierProcessing;
 
-				default:
-					return "";
-			}
-		}
-
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_ORDER_BY;
-		}
-	};
-
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
+	protected MySqlDialect() {
+		this(MYSQL_IDENTIFIER_PROCESSING);
 	}
 
-	@Override
-	public LockClause lock() {
-		return LOCK_CLAUSE;
+	/**
+	 * Creates a new {@link MySqlDialect} given {@link IdentifierProcessing}.
+	 *
+	 * @param identifierProcessing must not be null.
+	 * @since 2.0
+	 */
+	public MySqlDialect(IdentifierProcessing identifierProcessing) {
+
+		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
+
+		this.identifierProcessing = identifierProcessing;
 	}
 
 	@Override
@@ -145,8 +145,23 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
+	}
+
+	@Override
+	public LockClause lock() {
+		return LOCK_CLAUSE;
+	}
+
+	@Override
 	public Collection<Object> getConverters() {
-		return Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE);
+		return CONVERTERS;
+	}
+
+	@Override
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
 	}
 
 	@Override
@@ -155,26 +170,9 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	@Override
-	public IdGeneration getIdGeneration() {
-
-		return new IdGeneration() {
-
-			@Override
-			public boolean sequencesSupported() {
-				return false;
-			}
-
-			@Override
-			public String createSequenceQuery(SqlIdentifier sequenceName) {
-				throw new UnsupportedOperationException(
-						"Currently, there is no support for sequence generation for %s dialect. If you need it, please, submit a ticket"
-								.formatted(this.getClass().getSimpleName()));
-			}
-		};
-	}
-
-	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
 		return MySqlUpsertRenderContext.INSTANCE;
 	}
+
 }
+

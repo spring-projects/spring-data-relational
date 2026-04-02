@@ -45,34 +45,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.AssignValue;
-import org.springframework.data.relational.core.sql.Assignment;
-import org.springframework.data.relational.core.sql.Assignments;
-import org.springframework.data.relational.core.sql.BindMarker;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Comparison;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Conditions;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.DeleteBuilder;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.In;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.InsertBuilder;
-import org.springframework.data.relational.core.sql.LockMode;
-import org.springframework.data.relational.core.sql.OrderByField;
-import org.springframework.data.relational.core.sql.SQL;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.TupleExpression;
-import org.springframework.data.relational.core.sql.Update;
-import org.springframework.data.relational.core.sql.UpdateBuilder;
-import org.springframework.data.relational.core.sql.Upsert;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
@@ -118,6 +91,8 @@ public class SqlGenerator {
 	private final RenderContext renderContext;
 	private final SqlRenderer sqlRenderer;
 	private final Columns columns;
+	private final QueryMapper queryMapper;
+	private final Dialect dialect;
 
 	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSql);
 	private final Lazy<String> findAllSql = Lazy.of(this::createFindAllSql);
@@ -133,8 +108,7 @@ public class SqlGenerator {
 	private final Lazy<String> deleteByIdInSql = Lazy.of(this::createDeleteByIdInSql);
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
-	private final QueryMapper queryMapper;
-	private final Dialect dialect;
+
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
@@ -169,94 +143,6 @@ public class SqlGenerator {
 	 */
 	public SelectBuilder.SelectWhere createSelectBuilder(Table table, Predicate<AggregatePath> pathFilter) {
 		return createSelectBuilder(table, pathFilter, Collections.emptyList(), Query.empty());
-	}
-
-	/**
-	 * When deleting entities there is a fundamental difference between deleting
-	 * <ol>
-	 * <li>the aggregate root.</li>
-	 * <li>a first level entity which still references the root id directly</li>
-	 * <li>and all other entities which have to use a subselect to navigate from the id of the aggregate root to something
-	 * referenced by the table in question.</li>
-	 * </ol>
-	 * For paths of the second kind this method returns {@literal true}.
-	 *
-	 * @param path the path to analyze.
-	 * @return If the given path is considered deeply nested.
-	 */
-	private static boolean isFirstNonRoot(AggregatePath path) {
-		return path.getLength() == FIRST_NON_ROOT_LENGTH;
-	}
-
-	/**
-	 * When deleting entities there is a fundamental difference between deleting
-	 * <ol>
-	 * <li>the aggregate root.</li>
-	 * <li>a first level entity which still references the root id directly</li>
-	 * <li>and all other entities which have to use a subselect to navigate from the id of the aggregate root to something
-	 * referenced by the table in question.</li>
-	 * </ol>
-	 * For paths of the third kind this method returns {@literal true}.
-	 *
-	 * @param path the path to analyze.
-	 * @return If the given path is considered deeply nested.
-	 */
-	private static boolean isDeeplyNested(AggregatePath path) {
-		return path.getLength() > FIRST_NON_ROOT_LENGTH;
-	}
-
-	/**
-	 * Construct an IN-condition based on a {@link Select Sub-Select} which selects the ids (or stand-ins for ids) of the
-	 * given {@literal path} to those that reference the root entities specified by the {@literal rootCondition}.
-	 *
-	 * @param path specifies the table and id to select
-	 * @param conditionFunction a function for construction a where clause
-	 * @param columns map making all columns available as a map from {@link AggregatePath}
-	 * @return the IN condition
-	 */
-	private Condition getSubselectCondition(AggregatePath path,
-			Function<Map<AggregatePath, Column>, Condition> conditionFunction, Map<AggregatePath, Column> columns) {
-
-		AggregatePath parentPath = path.getParentPath();
-
-		if (!parentPath.hasIdProperty()) {
-			if (isDeeplyNested(parentPath)) {
-				return getSubselectCondition(parentPath, conditionFunction, columns);
-			}
-			return conditionFunction.apply(columns);
-		}
-
-		AggregatePath.TableInfo parentPathTableInfo = parentPath.getTableInfo();
-		Table subSelectTable = Table.create(parentPathTableInfo.qualifiedTableName());
-
-		Map<AggregatePath, Column> selectFilterColumns = parentPathTableInfo.effectiveIdColumnInfos().toMap(subSelectTable);
-
-		Condition innerCondition;
-
-		if (isFirstNonRoot(parentPath)) { // if the parent is the root of the path
-			// apply the rootCondition
-			innerCondition = conditionFunction.apply(selectFilterColumns);
-		} else {
-			// otherwise, we need another layer of subselect
-			innerCondition = getSubselectCondition(parentPath, conditionFunction, selectFilterColumns);
-		}
-
-		List<Column> idColumns = parentPathTableInfo.idColumnInfos().toColumnList(subSelectTable);
-
-		Select select = Select.builder() //
-				.select(idColumns) //
-				.from(subSelectTable) //
-				.where(innerCondition).build();
-
-		return Conditions.in(toExpression(columns), select);
-	}
-
-	private Expression toExpression(Map<AggregatePath, Column> columnsMap) {
-		return Expressions.of(new ArrayList<>(columnsMap.values()));
-	}
-
-	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + BindParameterNameSanitizer.sanitize(renderReference(columnName)));
 	}
 
 	/**
@@ -379,6 +265,120 @@ public class SqlGenerator {
 	}
 
 	/**
+	 * Constructs a single sql query that performs select count based on the provided query for checking existence.
+	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		SelectBuilder.SelectJoin baseSelect = getExistsSelect();
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
+	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
+	 *
+	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
+	 *         columns and has only a count in the projection of the select.
+	 */
+	private SelectBuilder.SelectJoin getExistsSelect() {
+
+		Table table = getTable();
+
+		SelectBuilder.SelectJoin baseSelect = StatementBuilder //
+				.select(dialect.getExistsFunction()) //
+				.from(table);
+
+		// collect joins
+		List<Join> joins = new ArrayList<>();
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+			AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
+
+			// add a join if necessary
+			Join join = getJoin(aggregatePath);
+			if (join != null) {
+				joins.add(join);
+			}
+		}
+
+		return addJoins(baseSelect, Joins.of(joins));
+	}
+
+	/**
+	 * Constructs a single sql query that performs select count based on the provided query. Additional the bindings for
+	 * the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String countByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Expression countExpression = Expressions.just("1");
+		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(countExpression);
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select based on the provided query. Additional the bindings for the
+	 * where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return the query string.
+	 */
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder(query);
+
+		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select based on the provided query and pagination information.
+	 * Additionaly, the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null.
+	 * @param pageable the pageable to perform on the select.
+	 * @param parameterSource the source for holding the bindings.
+	 * @return the string.
+	 */
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource, Pageable pageable) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		// first apply query and then pagination. This means possible query sorting and limiting might be overwritten by the
+		// pagination. This is desired.
+		SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(query, parameterSource, selectBuilder);
+		selectOrdered = applyPagination(pageable, selectOrdered);
+		selectOrdered = selectOrdered.orderBy(extractOrderByFields(pageable.getSort()));
+
+		Select select = selectOrdered.build();
+		return render(select);
+	}
+
+	/**
 	 * Create a {@code SELECT COUNT(id) FROM … WHERE :id = …} statement.
 	 *
 	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
@@ -446,22 +446,22 @@ public class SqlGenerator {
 
 		Table table = getTable();
 
-		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
-		columnNamesForInsert.addAll(columns.getInsertableColumns());
-		columnNamesForInsert.addAll(additionalColumns);
+		Set<SqlIdentifier> insert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
+		insert.addAll(columns.getInsertableColumns());
+		insert.addAll(additionalColumns);
 
 		List<Column> idColumns = getIdColumns();
 		List<SqlIdentifier> conflictColumns = idColumns.stream().map(Column::getName).toList();
-		columnNamesForInsert.addAll(conflictColumns);
+		insert.addAll(conflictColumns);
 
-		List<Assignment> assignments = columnNamesForInsert.stream() //
+		List<Assignment> assignments = insert.stream() //
 				.map(this::assignColumnValue) //
 				.collect(Collectors.toList());
 
 		return StatementBuilder.upsert(table) //
 				.insert(assignments) //
-				.onConflict(idColumns) //
-				.update().build();
+				.onConflict(it -> it.with(idColumns).updateRemainingColumns()) //
+				.build();
 	}
 
 	/**
@@ -921,6 +921,95 @@ public class SqlGenerator {
 		return new Join(currentTable, joinCondition);
 	}
 
+	/**
+	 * When deleting entities there is a fundamental difference between deleting
+	 * <ol>
+	 * <li>the aggregate root.</li>
+	 * <li>a first level entity which still references the root id directly</li>
+	 * <li>and all other entities which have to use a subselect to navigate from the id of the aggregate root to something
+	 * referenced by the table in question.</li>
+	 * </ol>
+	 * For paths of the second kind this method returns {@literal true}.
+	 *
+	 * @param path the path to analyze.
+	 * @return If the given path is considered deeply nested.
+	 */
+	private static boolean isFirstNonRoot(AggregatePath path) {
+		return path.getLength() == FIRST_NON_ROOT_LENGTH;
+	}
+
+	/**
+	 * When deleting entities, there is a fundamental difference between deleting
+	 * <ol>
+	 * <li>the aggregate root</li>
+	 * <li>a first-level entity that still references the root id directly</li>
+	 * <li>and all other entities that have to use a subselect to navigate from the id of the aggregate root to something
+	 * referenced by the table in question</li>
+	 * </ol>
+	 * For paths of the third kind this method returns {@literal true}.
+	 *
+	 * @param path the path to analyze.
+	 * @return If the given path is considered deeply nested.
+	 */
+	private static boolean isDeeplyNested(AggregatePath path) {
+		return path.getLength() > FIRST_NON_ROOT_LENGTH;
+	}
+
+	/**
+	 * Construct an IN-condition based on a {@link Select Sub-Select} which selects the ids (or stand-ins for ids) of the
+	 * given {@literal path} to those that reference the root entities specified by the {@literal rootCondition}.
+	 *
+	 * @param path specifies the table and id to select
+	 * @param conditionFunction a function for to construct {@link Condition}s based on the columns of the
+	 *          {@literal path}.
+	 * @param columns map making all columns available as a map from {@link AggregatePath}
+	 * @return the IN condition
+	 */
+	private Condition getSubselectCondition(AggregatePath path,
+			Function<Map<AggregatePath, Column>, Condition> conditionFunction, Map<AggregatePath, Column> columns) {
+
+		AggregatePath parentPath = path.getParentPath();
+
+		if (!parentPath.hasIdProperty()) {
+			if (isDeeplyNested(parentPath)) {
+				return getSubselectCondition(parentPath, conditionFunction, columns);
+			}
+			return conditionFunction.apply(columns);
+		}
+
+		AggregatePath.TableInfo parentPathTableInfo = parentPath.getTableInfo();
+		Table subSelectTable = Table.create(parentPathTableInfo.qualifiedTableName());
+
+		Map<AggregatePath, Column> selectFilterColumns = parentPathTableInfo.effectiveIdColumnInfos().toMap(subSelectTable);
+
+		Condition innerCondition;
+
+		if (isFirstNonRoot(parentPath)) { // if the parent is the root of the path
+			// apply the rootCondition
+			innerCondition = conditionFunction.apply(selectFilterColumns);
+		} else {
+			// otherwise, we need another layer of subselect
+			innerCondition = getSubselectCondition(parentPath, conditionFunction, selectFilterColumns);
+		}
+
+		List<Column> idColumns = parentPathTableInfo.idColumnInfos().toColumnList(subSelectTable);
+
+		Select select = Select.builder() //
+				.select(idColumns) //
+				.from(subSelectTable) //
+				.where(innerCondition).build();
+
+		return Conditions.in(toExpression(columns), select);
+	}
+
+	private Expression toExpression(Map<AggregatePath, Column> columnsMap) {
+		return Expressions.of(new ArrayList<>(columnsMap.values()));
+	}
+
+	private BindMarker getBindMarker(SqlIdentifier columnName) {
+		return SQL.bindMarker(":" + BindParameterNameSanitizer.sanitize(renderReference(columnName)));
+	}
+
 	private String createFindAllInListSql() {
 
 		In condition = idInWhereClause();
@@ -1189,120 +1278,6 @@ public class SqlGenerator {
 	}
 
 	/**
-	 * Constructs a single sql query that performs select based on the provided query. Additional the bindings for the
-	 * where clause are stored after execution into the <code>parameterSource</code>
-	 *
-	 * @param query the query to base the select on. Must not be null
-	 * @param parameterSource the source for holding the bindings
-	 * @return a non null query string.
-	 */
-	public String selectByQuery(Query query, MapSqlParameterSource parameterSource) {
-
-		Assert.notNull(parameterSource, "parameterSource must not be null");
-
-		SelectBuilder.SelectWhere selectBuilder = selectBuilder(query);
-
-		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
-				.build();
-
-		return render(select);
-	}
-
-	/**
-	 * Constructs a single sql query that performs select based on the provided query and pagination information.
-	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
-	 *
-	 * @param query the query to base the select on. Must not be null.
-	 * @param pageable the pageable to perform on the select.
-	 * @param parameterSource the source for holding the bindings.
-	 * @return a non null query string.
-	 */
-	public String selectByQuery(Query query, MapSqlParameterSource parameterSource, Pageable pageable) {
-
-		Assert.notNull(parameterSource, "parameterSource must not be null");
-
-		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
-
-		// first apply query and then pagination. This means possible query sorting and limiting might be overwritten by the
-		// pagination. This is desired.
-		SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(query, parameterSource, selectBuilder);
-		selectOrdered = applyPagination(pageable, selectOrdered);
-		selectOrdered = selectOrdered.orderBy(extractOrderByFields(pageable.getSort()));
-
-		Select select = selectOrdered.build();
-		return render(select);
-	}
-
-	/**
-	 * Constructs a single sql query that performs select count based on the provided query for checking existence.
-	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
-	 *
-	 * @param query the query to base the select on. Must not be null
-	 * @param parameterSource the source for holding the bindings
-	 * @return a non null query string.
-	 */
-	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
-
-		SelectBuilder.SelectJoin baseSelect = getExistsSelect();
-
-		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
-				.build();
-
-		return render(select);
-	}
-
-	/**
-	 * Constructs a single sql query that performs select count based on the provided query. Additional the bindings for
-	 * the where clause are stored after execution into the <code>parameterSource</code>
-	 *
-	 * @param query the query to base the select on. Must not be null
-	 * @param parameterSource the source for holding the bindings
-	 * @return a non null query string.
-	 */
-	public String countByQuery(Query query, MapSqlParameterSource parameterSource) {
-
-		Expression countExpression = Expressions.just("1");
-		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(countExpression);
-
-		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
-				.build();
-
-		return render(select);
-	}
-
-	/**
-	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
-	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
-	 *
-	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
-	 *         columns and has only a count in the projection of the select.
-	 */
-	private SelectBuilder.SelectJoin getExistsSelect() {
-
-		Table table = getTable();
-
-		SelectBuilder.SelectJoin baseSelect = StatementBuilder //
-				.select(dialect.getExistsFunction()) //
-				.from(table);
-
-		// collect joins
-		List<Join> joins = new ArrayList<>();
-		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
-				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
-
-			AggregatePath aggregatePath = mappingContext.getAggregatePath(path);
-
-			// add a join if necessary
-			Join join = getJoin(aggregatePath);
-			if (join != null) {
-				joins.add(join);
-			}
-		}
-
-		return addJoins(baseSelect, Joins.of(joins));
-	}
-
-	/**
 	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
 	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
 	 *
@@ -1488,5 +1463,7 @@ public class SqlGenerator {
 		Set<SqlIdentifier> getUpdatableColumns() {
 			return updatableColumns;
 		}
+
 	}
+
 }

@@ -15,16 +15,19 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.relational.core.sql.UpsertBuilder.BuildUpsert;
 
 /**
+ * Unit tests for {@link UpsertBuilder}.
+ *
  * @author Christoph Strobl
  */
-public class UpsertBuilderUnitTests {
+class UpsertBuilderUnitTests {
 
 	@Test // GH-493
 	void buildErrorsWhenConflictColumnsNotPartOfInsert() {
@@ -34,50 +37,27 @@ public class UpsertBuilderUnitTests {
 		Column usernameColumn = table.column("name");
 
 		BuildUpsert builder = StatementBuilder.upsert(table).insert(usernameColumn.set(SQL.bindMarker()))
-				.onConflict(idColumn).update();
+				.onConflict(it -> it.with(idColumn).updateRemainingColumns());
 
 		assertThatExceptionOfType(IllegalStateException.class).isThrownBy(builder::build);
 	}
 
 	@Test // GH-493
-	public void toStringShouldRenderAnsiMergeStatement() {
+	void toStringShouldRenderAnsiMergeStatement() {
 
 		Table table = SQL.table("users");
 		Column idColumn = table.column("id");
 		Column usernameColumn = table.column("name");
 
 		Upsert upsert = StatementBuilder.upsert(table)
-				.insert(idColumn.set(SQL.bindMarker()), usernameColumn.set(SQL.bindMarker())).onConflict(idColumn).update()
+				.insert(idColumn.set(SQL.bindMarker()), usernameColumn.set(SQL.bindMarker()))
+				.onConflict(it -> it.with(idColumn).updateRemainingColumns())
 				.build();
 
 		String mergeStatement = upsert.toString();
 
 		assertThat(mergeStatement).startsWith("MERGE INTO users \"_t\"").containsSubsequence( //
 				"USING (VALUES (?, ?)) AS \"_s\" (id, name)", //
-				"ON _t.id = _s.id", //
-				"WHEN MATCHED THEN UPDATE SET", //
-				"_t.name = _s.name", //
-				"WHEN NOT MATCHED THEN INSERT (id, name) VALUES (_s.id, _s.name)");
-	}
-
-	@Test // GH-493
-	public void fromInsertToUpsert() {
-
-		Table table = SQL.table("users");
-		Column idColumn = table.column("id");
-		Column usernameColumn = table.column("name");
-
-		Upsert upsert = StatementBuilder.insert().into(table) //
-				.columns(idColumn, usernameColumn) //
-				.values(SQL.bindMarker(), SQL.literalOf("chris")) //
-				.onConflict(idColumn) //
-				.update() //
-				.build();
-
-		String mergeStatement = upsert.toString();
-
-		assertThat(mergeStatement).startsWith("MERGE INTO users \"_t\"").containsSubsequence( //
-				"USING (VALUES (?, 'chris')) AS \"_s\" (id, name)", //
 				"ON _t.id = _s.id", //
 				"WHEN MATCHED THEN UPDATE SET", //
 				"_t.name = _s.name", //

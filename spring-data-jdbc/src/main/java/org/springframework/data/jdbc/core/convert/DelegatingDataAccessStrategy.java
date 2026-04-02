@@ -69,9 +69,9 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+	public <T> @Nullable Object insert(T objectToSave, Class<T> domainType, Identifier identifier,
 			IdValueSource idValueSource) {
-		return delegate.insert(instance, domainType, identifier, idValueSource);
+		return delegate.insert(objectToSave, domainType, identifier, idValueSource);
 	}
 
 	@Override
@@ -81,18 +81,18 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> int upsert(T instance, Class<? super T> domainType) {
-		return delegate.upsert(instance, domainType);
+	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
+		return delegate.upsert(objectToSave, domainType);
 	}
 
 	@Override
-	public <S> boolean update(S instance, Class<S> domainType) {
-		return delegate.update(instance, domainType);
+	public <S> boolean update(S objectToSave, Class<S> domainType) {
+		return delegate.update(objectToSave, domainType);
 	}
 
 	@Override
-	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number nextVersion) {
-		return delegate.updateWithVersion(instance, domainType, nextVersion);
+	public <S> boolean updateWithVersion(S objectToSave, Class<S> domainType, Number nextVersion) {
+		return delegate.updateWithVersion(objectToSave, domainType, nextVersion);
 
 	}
 

@@ -63,7 +63,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	public Dialect getDialect() {
 
 		Assert.notEmpty(strategies, "DataAccessStrategy must have at least one strategy");
-
 		return strategies.get(0).getDialect();
 	}
 
@@ -71,14 +70,13 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	public NamedParameterJdbcOperations getJdbcOperations() {
 
 		Assert.notEmpty(strategies, "DataAccessStrategy must have at least one strategy");
-
 		return strategies.get(0).getJdbcOperations();
 	}
 
 	@Override
-	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+	public <T> @Nullable Object insert(T objectToSave, Class<T> domainType, Identifier identifier,
 			IdValueSource idValueSource) {
-		return collect(das -> das.insert(instance, domainType, identifier, idValueSource));
+		return collect(das -> das.insert(objectToSave, domainType, identifier, idValueSource));
 	}
 
 	@Override
@@ -88,18 +86,18 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> int upsert(T instance, Class<? super T> domainType) {
-		return collect(das -> das.upsert(instance, domainType));
+	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
+		return collect(das -> das.upsert(objectToSave, domainType));
 	}
 
 	@Override
-	public <S> boolean update(S instance, Class<S> domainType) {
-		return collect(das -> das.update(instance, domainType));
+	public <S> boolean update(S objectToSave, Class<S> domainType) {
+		return collect(das -> das.update(objectToSave, domainType));
 	}
 
 	@Override
-	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
-		return collect(das -> das.updateWithVersion(instance, domainType, previousVersion));
+	public <S> boolean updateWithVersion(S objectToSave, Class<S> domainType, Number previousVersion) {
+		return collect(das -> das.updateWithVersion(objectToSave, domainType, previousVersion));
 	}
 
 	@Override
@@ -238,7 +236,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private void collectVoid(Consumer<DataAccessStrategy> consumer) {
-
 		collect(das -> {
 			consumer.accept(das);
 			return TRUE;

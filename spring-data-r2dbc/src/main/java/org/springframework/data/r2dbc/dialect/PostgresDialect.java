@@ -80,29 +80,15 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 	private final Lazy<ArrayColumns> arrayColumns = Lazy
 			.of(() -> new SimpleTypeArrayColumns(ObjectArrayColumns.INSTANCE, getSimpleTypeHolder()));
 
-	@Override
-	public BindMarkersFactory getBindMarkersFactory() {
-		return INDEXED;
-	}
+	private static final List<Object> CONVERTERS = List.copyOf(createConverters());
 
-	@Override
-	public Collection<? extends Class<?>> getSimpleTypes() {
-		return SIMPLE_TYPES;
-	}
-
-	@Override
-	public ArrayColumns getArraySupport() {
-		return this.arrayColumns.get();
-	}
-
-	@Override
-	public Collection<Object> getConverters() {
-
-		if (!GEO_TYPES_PRESENT && !JSON_PRESENT) {
-			return Collections.emptyList();
-		}
+	private static List<Object> createConverters() {
 
 		List<Object> converters = new ArrayList<>();
+		if (!GEO_TYPES_PRESENT && !JSON_PRESENT) {
+			return converters;
+		}
+
 
 		if (GEO_TYPES_PRESENT) {
 			converters.addAll(Arrays.asList(FromPostgresPointConverter.INSTANCE, ToPostgresPointConverter.INSTANCE, //
@@ -116,6 +102,26 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 		}
 
 		return converters;
+	}
+
+	@Override
+	public ArrayColumns getArraySupport() {
+		return this.arrayColumns.get();
+	}
+
+	@Override
+	public BindMarkersFactory getBindMarkersFactory() {
+		return INDEXED;
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
+	}
+
+	@Override
+	public Set<Class<?>> simpleTypes() {
+		return SIMPLE_TYPES;
 	}
 
 	/**

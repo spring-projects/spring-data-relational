@@ -48,6 +48,20 @@ public class H2Dialect extends AbstractDialect {
 			LetterCasing.UPPER_CASE);
 	private static final IdGeneration ID_GENERATION = IdGeneration.create(IDENTIFIER_PROCESSING);
 
+	private static final ArrayColumns ARRAY_COLUMNS = new ArrayColumns() {
+
+		@Override
+		public boolean isSupported() {
+			return true;
+		}
+
+		@Override
+		public Class<?> getArrayType(Class<?> userType) {
+			Assert.notNull(userType, "Array component type must not be null");
+			return ClassUtils.resolvePrimitiveIfNecessary(userType);
+		}
+	};
+
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override
@@ -71,12 +85,8 @@ public class H2Dialect extends AbstractDialect {
 		}
 	};
 
-	protected H2Dialect() {}
 
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
+	protected H2Dialect() {}
 
 	@Override
 	public LockClause lock() {
@@ -84,26 +94,13 @@ public class H2Dialect extends AbstractDialect {
 	}
 
 	@Override
-	public ArrayColumns getArraySupport() {
-		return H2ArrayColumns.INSTANCE;
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
 	}
 
-	protected static class H2ArrayColumns implements ArrayColumns {
-
-		public static final H2ArrayColumns INSTANCE = new H2ArrayColumns();
-
-		@Override
-		public boolean isSupported() {
-			return true;
-		}
-
-		@Override
-		public Class<?> getArrayType(Class<?> userType) {
-
-			Assert.notNull(userType, "Array component type must not be null");
-
-			return ClassUtils.resolvePrimitiveIfNecessary(userType);
-		}
+	@Override
+	public ArrayColumns getArraySupport() {
+		return ARRAY_COLUMNS;
 	}
 
 	@Override

@@ -19,8 +19,8 @@ import microsoft.sql.DateTimeOffset;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -46,31 +46,22 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 
 	private static final @Nullable Class<?> DATE_TIME_OFFSET_CLASS = ClassUtils
 			.loadIfPresent("microsoft.sql.DateTimeOffset", JdbcSqlServerDialect.class.getClassLoader());
-	private static final Set<Class<?>> SIMPLE_TYPES;
-	private static final List<Object> CONVERTERS;
 
-	static {
+	private static final Set<Class<?>> SIMPLE_TYPES = DATE_TIME_OFFSET_CLASS != null ? Set.of(DATE_TIME_OFFSET_CLASS)
+			: Collections.emptySet();
 
-		if (DATE_TIME_OFFSET_CLASS != null) {
-			SIMPLE_TYPES = Set.of(DATE_TIME_OFFSET_CLASS);
-			CONVERTERS = List.of(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE, DateTimeOffsetToInstantConverter.INSTANCE);
-		} else {
-			SIMPLE_TYPES = Set.of();
-			CONVERTERS = List.of();
-		}
+	private static final List<Object> CONVERTERS = DATE_TIME_OFFSET_CLASS != null
+			? List.of(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE, DateTimeOffsetToInstantConverter.INSTANCE)
+			: Collections.emptyList();
+
+	@Override
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
 	}
 
 	@Override
 	public Set<Class<?>> simpleTypes() {
 		return SIMPLE_TYPES;
-	}
-
-	@Override
-	public Collection<Object> getConverters() {
-
-		List<Object> converters = new ArrayList<>(super.getConverters());
-		converters.addAll(CONVERTERS);
-		return converters;
 	}
 
 	@ReadingConverter
@@ -82,6 +73,7 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 		public OffsetDateTime convert(DateTimeOffset source) {
 			return source.getOffsetDateTime();
 		}
+
 	}
 
 	@ReadingConverter
@@ -93,6 +85,7 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 		public Instant convert(DateTimeOffset source) {
 			return source.getOffsetDateTime().toInstant();
 		}
+
 	}
 
 }

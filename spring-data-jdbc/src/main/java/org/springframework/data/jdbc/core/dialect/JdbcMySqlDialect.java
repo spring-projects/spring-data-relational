@@ -23,13 +23,14 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.lang.NonNull;
 
 /**
  * {@link MySqlDialect} that registers JDBC specific converters.
@@ -46,26 +47,34 @@ public class JdbcMySqlDialect extends MySqlDialect implements JdbcDialect {
 	 *
 	 * @deprecated Use the constructor instead. There is no one correct MySqlDialect, since the behaviour of MySql depends
 	 *             on various configuration options. See
-	 * 
+	 *
 	 *             <pre>
 	 * <a href="https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html">Identifier Case Sensitivity</a>
 	 *             </pre>
 	 */
 	@Deprecated(forRemoval = true, since = "4.0") public static final JdbcMySqlDialect INSTANCE = new JdbcMySqlDialect();
 
+	private final List<Object> converters;
+
 	public JdbcMySqlDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);
+		this.converters = createConverters();
 	}
 
-	protected JdbcMySqlDialect() {}
+	protected JdbcMySqlDialect() {
+		this.converters = createConverters();
+	}
+
+	private List<Object> createConverters() {
+
+		List<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(OffsetDateTimeToTimestampJdbcValueConverter.INSTANCE);
+		converters.add(LocalDateTimeToDateConverter.INSTANCE);
+		return List.copyOf(converters);
+	}
 
 	@Override
 	public Collection<Object> getConverters() {
-
-		ArrayList<Object> converters = new ArrayList<>(super.getConverters());
-		converters.add(OffsetDateTimeToTimestampJdbcValueConverter.INSTANCE);
-		converters.add(LocalDateTimeToDateConverter.INSTANCE);
-
 		return converters;
 	}
 
@@ -85,10 +94,10 @@ public class JdbcMySqlDialect extends MySqlDialect implements JdbcDialect {
 
 		INSTANCE;
 
-		@NonNull
 		@Override
 		public Date convert(LocalDateTime source) {
 			return Date.from(source.atZone(systemDefault()).toInstant());
 		}
 	}
+
 }

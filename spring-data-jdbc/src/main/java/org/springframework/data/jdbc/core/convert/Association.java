@@ -36,8 +36,7 @@ class Association {
 
 	private final @Nullable RelationalPersistentEntity<?> identifierEntity;
 
-	private Association(
-			@Nullable RelationalPersistentEntity<?> identifierEntity) {
+	private Association(@Nullable RelationalPersistentEntity<?> identifierEntity) {
 		this.identifierEntity = identifierEntity;
 	}
 
@@ -81,9 +80,8 @@ class Association {
 
 		RelationalPersistentEntity<?> identifierEntity = context.getPersistentEntity(idType);
 
-		if (identifierEntity == null || !hasMultipleColumns(identifierEntity)
-				|| (converter instanceof MappingJdbcConverter mc
-						&& mc.getConversions().hasCustomWriteTarget(idType.getType()))) {
+		if (!hasMultipleColumns(identifierEntity) || (converter instanceof MappingJdbcConverter mc
+				&& mc.getConversions().hasCustomWriteTarget(idType.getType()))) {
 			return new Association(null);
 		}
 
@@ -92,7 +90,7 @@ class Association {
 
 	private static boolean hasMultipleColumns(@Nullable RelationalPersistentEntity<?> identifierEntity) {
 
-		if( identifierEntity == null ) {
+		if (identifierEntity == null) {
 			return false;
 		}
 

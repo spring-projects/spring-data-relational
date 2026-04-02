@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 /**
  * {@link UpsertStatementRenderers}.
  *
+ * @author Christoph Strobl
  * @since 4.x
  */
 public interface UpsertRenderContext {

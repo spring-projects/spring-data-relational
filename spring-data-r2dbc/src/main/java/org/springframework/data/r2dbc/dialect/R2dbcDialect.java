@@ -33,9 +33,11 @@ public interface R2dbcDialect extends Dialect {
 	 *
 	 * @return a collection of types that are natively supported by this database/driver. Defaults to
 	 *         {@link Collections#emptySet()}.
+	 * @deprecated since 4.1 in favor of {@link #simpleTypes()}.
 	 */
+	@Deprecated(since = "4.1")
 	default Collection<? extends Class<?>> getSimpleTypes() {
-		return Collections.emptySet();
+		return simpleTypes();
 	}
 
 	/**
@@ -53,15 +55,6 @@ public interface R2dbcDialect extends Dialect {
 	}
 
 	/**
-	 * Return a collection of converters for this dialect.
-	 *
-	 * @return a collection of converters for this dialect.
-	 */
-	default Collection<Object> getConverters() {
-		return Collections.emptySet();
-	}
-
-	/**
 	 * Render a {@link SqlIdentifier} in a way suitable for registering it as a generated key with a statement through
 	 * {@code Statement#returnGeneratedValues}. The default implementation renders it as it would render a SQL
 	 * representation of the identifier, i.e. with quotes where applicable.
@@ -73,4 +66,5 @@ public interface R2dbcDialect extends Dialect {
 	default String renderForGeneratedValues(SqlIdentifier identifier) {
 		return identifier.toSql(getIdentifierProcessing());
 	}
+
 }

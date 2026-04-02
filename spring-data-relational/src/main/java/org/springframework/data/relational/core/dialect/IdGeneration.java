@@ -22,7 +22,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
- * Encapsulates various properties that are related to ID generation process and specific to given {@link Dialect}
+ * Strategy interface representing dialect-specific identifier generation.
  *
  * @author Jens Schauder
  * @author Chirag Tailor
@@ -31,6 +31,13 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public interface IdGeneration {
 
+	/**
+	 * Creates a new {@code IdGeneration} instance using the given {@link IdentifierProcessing}.
+	 *
+	 * @param identifierProcessing the {@link IdentifierProcessing} to use for rendering identifiers in the generated SQL
+	 *          statements.
+	 * @return a new {@code IdGeneration} instance.
+	 */
 	static IdGeneration create(IdentifierProcessing identifierProcessing) {
 
 		return new IdGeneration() {

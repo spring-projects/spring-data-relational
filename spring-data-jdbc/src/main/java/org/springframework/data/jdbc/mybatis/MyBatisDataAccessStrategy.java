@@ -166,10 +166,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+	public <T> @Nullable Object insert(T objectToSave, Class<T> domainType, Identifier identifier,
 			IdValueSource idValueSource) {
 
-		MyBatisContext myBatisContext = new MyBatisContext(identifier, instance, domainType);
+		MyBatisContext myBatisContext = new MyBatisContext(identifier, objectToSave, domainType);
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
@@ -185,22 +185,22 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> int upsert(T instance, Class<? super T> domainType) {
+	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
 		throw new UnsupportedOperationException("Upsert is not supported by MyBatisDataAccessStrategy");
 	}
 
 	@Override
-	public <S> boolean update(S instance, Class<S> domainType) {
+	public <S> boolean update(S objectToSave, Class<S> domainType) {
 
 		return sqlSession().update(namespace(domainType) + ".update",
-				new MyBatisContext(null, instance, domainType, Collections.emptyMap())) != 0;
+				new MyBatisContext(null, objectToSave, domainType, Collections.emptyMap())) != 0;
 	}
 
 	@Override
-	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
+	public <S> boolean updateWithVersion(S objectToSave, Class<S> domainType, Number previousVersion) {
 
 		String statement = namespace(domainType) + ".updateWithVersion";
-		MyBatisContext parameter = new MyBatisContext(null, instance, domainType,
+		MyBatisContext parameter = new MyBatisContext(null, objectToSave, domainType,
 				Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion));
 		return sqlSession().update(statement, parameter) != 0;
 	}

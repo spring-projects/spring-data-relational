@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
@@ -32,7 +31,18 @@ public class AnsiDialect extends AbstractDialect {
 	 */
 	public static final AnsiDialect INSTANCE = new AnsiDialect();
 
-	protected AnsiDialect() {}
+	static final LockClause LOCK_CLAUSE = new LockClause() {
+
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			return "FOR UPDATE";
+		}
+
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -57,23 +67,8 @@ public class AnsiDialect extends AbstractDialect {
 		}
 	};
 
-	static final LockClause LOCK_CLAUSE = new LockClause() {
+	protected AnsiDialect() {}
 
-		@Override
-		public String getLock(LockOptions lockOptions) {
-			return "FOR UPDATE";
-		}
-
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_ORDER_BY;
-		}
-	};
-
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
 
 	@Override
 	public LockClause lock() {
@@ -86,7 +81,8 @@ public class AnsiDialect extends AbstractDialect {
 	}
 
 	@Override
-	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.ANSI;
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
 	}
+
 }

@@ -268,14 +268,16 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	<T> Mono<T> insert(T entity) throws DataAccessException;
 
 	/**
-	 * Upsert (insert-or-update) the given entity by its primary key and emit the entity afterwards.
+	 * Upserts a single aggregate root, specifically insert if the row with the given identifier does not exist or update
+	 * otherwise. The identifier must be already assigned. Only supported when the dialect supports single-statement
+	 * upsert.
 	 * <p>
-	 * The upsert uses the entity's identifier columns as conflict keys: if a row with the same key already exists it is
-	 * updated, otherwise a new row is inserted.
+	 * Typically, this operation uses {@code MERGE} or {@code INSERT ... ON CONFLICT} syntax.
 	 *
 	 * @param entity the entity to upsert, must not be {@literal null}.
 	 * @return the upserted entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
 	 * @since 4.x
 	 */
 	<T> Mono<T> upsert(T entity) throws DataAccessException;
