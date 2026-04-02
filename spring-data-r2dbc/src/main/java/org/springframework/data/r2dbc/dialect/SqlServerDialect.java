@@ -1,6 +1,5 @@
 package org.springframework.data.r2dbc.dialect;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,7 +31,7 @@ public class SqlServerDialect extends org.springframework.data.relational.core.d
 	}
 
 	@Override
-	public Collection<? extends Class<?>> getSimpleTypes() {
+	public Set<Class<?>> simpleTypes() {
 		return SIMPLE_TYPES;
 	}
 
@@ -54,6 +53,7 @@ public class SqlServerDialect extends org.springframework.data.relational.core.d
 			return "";
 		}
 
-		return "_" + builder.toString();
+		return "_" + builder;
 	}
+
 }

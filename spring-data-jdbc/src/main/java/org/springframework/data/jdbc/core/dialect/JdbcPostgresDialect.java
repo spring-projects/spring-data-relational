@@ -69,13 +69,13 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	}
 
 	@Override
-	public Set<Class<?>> simpleTypes() {
-		return SIMPLE_TYPES;
+	public JdbcArrayColumns getArraySupport() {
+		return ARRAY_COLUMNS;
 	}
 
 	@Override
-	public JdbcArrayColumns getArraySupport() {
-		return ARRAY_COLUMNS;
+	public Set<Class<?>> simpleTypes() {
+		return SIMPLE_TYPES;
 	}
 
 	/**

@@ -38,7 +38,7 @@ public class ObjectArrayColumns implements ArrayColumns {
 	public Class<?> getArrayType(Class<?> userType) {
 
 		Assert.notNull(userType, "Array component type must not be null");
-
 		return ClassUtils.resolvePrimitiveIfNecessary(ArrayColumns.unwrapComponentType(userType));
 	}
+
 }

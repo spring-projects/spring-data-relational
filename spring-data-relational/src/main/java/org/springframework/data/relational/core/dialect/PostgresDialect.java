@@ -55,23 +55,14 @@ public class PostgresDialect extends AbstractDialect {
 	 * @deprecated use either the {@code org.springframework.data.r2dbc.dialect.PostgresDialect} or
 	 *             {@code org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect}.
 	 */
-	@Deprecated(forRemoval = true) public static final PostgresDialect INSTANCE = new PostgresDialect();
+	@Deprecated(forRemoval = true)
+	public static final PostgresDialect INSTANCE = new PostgresDialect();
 
 	private static final Set<Class<?>> POSTGRES_SIMPLE_TYPES = Set.of(UUID.class, URL.class, URI.class, InetAddress.class,
 			Map.class);
 
-	private static final IdentifierProcessing identifierProcessing = IdentifierProcessing.create(Quoting.ANSI,
+	private static final IdentifierProcessing IDENTIFIER_PROCESSING = IdentifierProcessing.create(Quoting.ANSI,
 			LetterCasing.LOWER_CASE);
-
-	private IdGeneration idGeneration = new IdGeneration() {
-
-		@Override
-		public String createSequenceQuery(SqlIdentifier sequenceName) {
-			return "SELECT nextval('%s')".formatted(sequenceName.toSql(getIdentifierProcessing()));
-		}
-	};
-
-	protected PostgresDialect() {}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -96,31 +87,7 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	};
 
-	private static final ObjectArrayColumns ARRAY_COLUMNS = ObjectArrayColumns.INSTANCE;
-
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
-
-	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause();
-
-	@Override
-	public LockClause lock() {
-		return LOCK_CLAUSE;
-	}
-
-	@Override
-	public ArrayColumns getArraySupport() {
-		return ARRAY_COLUMNS;
-	}
-
-	@Override
-	public Collection<Object> getConverters() {
-		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
-	}
-
-	static class PostgresLockClause implements LockClause {
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
 
 		@Override
 		public String getLock(LockOptions lockOptions) {
@@ -139,7 +106,7 @@ public class PostgresDialect extends AbstractDialect {
 			}
 
 			// without schema
-			String tableName = last.toSql(PostgresDialect.identifierProcessing);
+			String tableName = last.toSql(PostgresDialect.IDENTIFIER_PROCESSING);
 
 			return switch (lockOptions.getLockMode()) {
 				case PESSIMISTIC_WRITE -> "FOR UPDATE OF " + tableName;
@@ -151,11 +118,46 @@ public class PostgresDialect extends AbstractDialect {
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
 		}
-	}
+
+	};
+
+	private static final Collection<Object> CONVERTERS = Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+
+	private static final SimpleFunction EXISTS_FUNCTION = Functions.least(Functions.count(SQL.literalOf(1)), SQL.literalOf(1));
+
+	protected PostgresDialect() {}
+
+	private final IdGeneration idGeneration = new IdGeneration() {
+
+		@Override
+		public String createSequenceQuery(SqlIdentifier sequenceName) {
+			return "SELECT nextval('%s')".formatted(sequenceName.toSql(getIdentifierProcessing()));
+		}
+	};
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return identifierProcessing;
+		return IDENTIFIER_PROCESSING;
+	}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return idGeneration;
+	}
+
+	@Override
+	public LockClause lock() {
+		return LOCK_CLAUSE;
+	}
+
+	@Override
+	public ArrayColumns getArraySupport() {
+		return ArrayColumns.objectArray();
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
 	}
 
 	@Override
@@ -165,16 +167,17 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public SimpleFunction getExistsFunction() {
-		return Functions.least(Functions.count(SQL.literalOf(1)), SQL.literalOf(1));
+		return EXISTS_FUNCTION;
 	}
 
 	@Override
-	public IdGeneration getIdGeneration() {
-		return idGeneration;
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
 	}
 
 	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
 		return PostgresUpsertRenderContext.INSTANCE;
 	}
+
 }

@@ -121,10 +121,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> @Nullable Object insert(T instance, Class<T> domainType, Identifier identifier,
+	public <T> @Nullable Object insert(T objectToSave, Class<T> domainType, Identifier identifier,
 			IdValueSource idValueSource) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, identifier,
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(objectToSave, domainType, identifier,
 				idValueSource);
 
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
@@ -156,9 +156,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <S> boolean update(S instance, Class<S> domainType) {
+	public <S> boolean update(S objectToSave, Class<S> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(objectToSave, domainType);
 		if (parameterSource.size() <= 1) {
 			return true; // returning true, because conceptually the one row was correctly updated
 		}
@@ -166,26 +166,26 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
+	public <S> boolean updateWithVersion(S objectToSave, Class<S> domainType, Number previousVersion) {
 
 		// Adjust update statement to set the new version and use the old version in where clause.
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(instance, domainType);
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(objectToSave, domainType);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 
 		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(), parameterSource);
 
 		if (affectedRows == 0) {
 			RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
-			throw OptimisticLockingUtils.updateFailed(instance, previousVersion, persistentEntity);
+			throw OptimisticLockingUtils.updateFailed(objectToSave, previousVersion, persistentEntity);
 		}
 
 		return true;
 	}
 
 	@Override
-	public <T> int upsert(T instance, Class<? super T> domainType) {
+	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(instance, domainType, Identifier.empty(),
+		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(objectToSave, domainType, Identifier.empty(),
 				IdValueSource.PROVIDED);
 
 		String statement = sql(domainType).getUpsert(parameterSource.getIdentifiers());

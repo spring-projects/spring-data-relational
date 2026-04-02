@@ -29,7 +29,7 @@ public class JdbcHsqlDbDialect extends HsqlDbDialect implements JdbcDialect {
 
 	@Override
 	public JdbcArrayColumns getArraySupport() {
-		return JdbcArrayColumns.DefaultSupport.INSTANCE;
+		return JdbcArrayColumns.unsupported();
 	}
 
 }

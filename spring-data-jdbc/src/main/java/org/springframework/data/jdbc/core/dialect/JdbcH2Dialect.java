@@ -27,7 +27,7 @@ public class JdbcH2Dialect extends H2Dialect implements JdbcDialect {
 
 	public static final JdbcH2Dialect INSTANCE = new JdbcH2Dialect();
 
-	private static final JdbcArrayColumns ARRAY_COLUMNS = new JdbcArrayColumnsAdapter(H2ArrayColumns.INSTANCE);
+	private final JdbcArrayColumns ARRAY_COLUMNS = new JdbcArrayColumnsAdapter(super.getArraySupport());
 
 	@Override
 	public JdbcArrayColumns getArraySupport() {

@@ -34,23 +34,6 @@ public class HsqlDbDialect extends AbstractDialect {
 	@Deprecated(forRemoval = true)
 	public static final HsqlDbDialect INSTANCE = new HsqlDbDialect();
 
-	protected HsqlDbDialect() {}
-
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
-
-	@Override
-	public LockClause lock() {
-		return AnsiDialect.LOCK_CLAUSE;
-	}
-
-	@Override
-	public boolean supportsSingleQueryLoading() {
-		return false;
-	}
-
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override
@@ -74,6 +57,23 @@ public class HsqlDbDialect extends AbstractDialect {
 		}
 	};
 
+	protected HsqlDbDialect() {}
+
+	@Override
+	public LockClause lock() {
+		return AnsiDialect.LOCK_CLAUSE;
+	}
+
+	@Override
+	public boolean supportsSingleQueryLoading() {
+		return false;
+	}
+
+	@Override
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
+	}
+
 	@Override
 	public IdGeneration getIdGeneration() {
 		return new IdGeneration() {
@@ -93,8 +93,4 @@ public class HsqlDbDialect extends AbstractDialect {
 		};
 	}
 
-	@Override
-	public UpsertRenderContext getUpsertRenderContext() {
-		return StandardSqlUpsertRenderContext.INSTANCE;
-	}
 }

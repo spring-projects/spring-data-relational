@@ -15,9 +15,8 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static java.util.Arrays.*;
-
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
@@ -61,6 +60,9 @@ public class OracleDialect extends AnsiDialect {
 		}
 	};
 
+	private static final Collection<Object> CONVERTERS = List.of(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
+			NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
+
 	protected OracleDialect() {}
 
 	@Override
@@ -69,14 +71,13 @@ public class OracleDialect extends AnsiDialect {
 	}
 
 	@Override
-	public UpsertRenderContext getUpsertRenderContext() {
-		return OracleUpsertRenderContext.INSTANCE;
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
 	}
 
 	@Override
-	public Collection<Object> getConverters() {
-		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE,
-				BooleanToIntegerConverter.INSTANCE);
+	public UpsertRenderContext getUpsertRenderContext() {
+		return OracleUpsertRenderContext.INSTANCE;
 	}
 
 	@WritingConverter
@@ -87,5 +88,7 @@ public class OracleDialect extends AnsiDialect {
 		public Integer convert(Boolean bool) {
 			return bool ? 1 : 0;
 		}
+
 	}
+
 }

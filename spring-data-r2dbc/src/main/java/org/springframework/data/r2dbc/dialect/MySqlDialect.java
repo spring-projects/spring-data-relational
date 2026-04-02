@@ -53,7 +53,7 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	private static final BindMarkersFactory ANONYMOUS = BindMarkersFactory.anonymous("?");
 
 	/**
-	 * MySQL specific converters.
+	 * MySQL-specific converters.
 	 */
 	private static final List<Object> CONVERTERS = Arrays.asList(ByteToBooleanConverter.INSTANCE,
 			BooleanToByteConverter.INSTANCE);
@@ -64,7 +64,7 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	}
 
 	@Override
-	public Collection<? extends Class<?>> getSimpleTypes() {
+	public Set<Class<?>> simpleTypes() {
 		return SIMPLE_TYPES;
 	}
 

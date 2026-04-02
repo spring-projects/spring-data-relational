@@ -59,13 +59,6 @@ public class Db2Dialect extends AbstractDialect {
 		}
 	};
 
-	protected Db2Dialect() {}
-
-	@Override
-	public IdGeneration getIdGeneration() {
-		return ID_GENERATION;
-	}
-
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override
@@ -89,9 +82,11 @@ public class Db2Dialect extends AbstractDialect {
 		}
 	};
 
+	protected Db2Dialect() {}
+
 	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
 	}
 
 	@Override
@@ -112,12 +107,13 @@ public class Db2Dialect extends AbstractDialect {
 	}
 
 	@Override
+	public LimitClause limit() {
+		return LIMIT_CLAUSE;
+	}
+
+	@Override
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
 
-	@Override
-	public UpsertRenderContext getUpsertRenderContext() {
-		return StandardSqlUpsertRenderContext.INSTANCE;
-	}
 }

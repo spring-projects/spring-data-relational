@@ -59,18 +59,23 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 			CONVERTERS = List.of();
 		}
 	}
+	private final List<Object> converters;
 
-	@Override
-	public Set<Class<?>> simpleTypes() {
-		return SIMPLE_TYPES;
+	public JdbcSqlServerDialect() {
+
+		List<Object> converters = new ArrayList<>(super.getConverters());
+		converters.addAll(CONVERTERS);
+		this.converters = List.copyOf(converters);
 	}
 
 	@Override
 	public Collection<Object> getConverters() {
-
-		List<Object> converters = new ArrayList<>(super.getConverters());
-		converters.addAll(CONVERTERS);
 		return converters;
+	}
+
+	@Override
+	public Set<Class<?>> simpleTypes() {
+		return SIMPLE_TYPES;
 	}
 
 	@ReadingConverter
@@ -82,6 +87,7 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 		public OffsetDateTime convert(DateTimeOffset source) {
 			return source.getOffsetDateTime();
 		}
+
 	}
 
 	@ReadingConverter
@@ -93,6 +99,7 @@ public class JdbcSqlServerDialect extends SqlServerDialect implements JdbcDialec
 		public Instant convert(DateTimeOffset source) {
 			return source.getOffsetDateTime().toInstant();
 		}
+
 	}
 
 }
