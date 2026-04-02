@@ -147,4 +147,16 @@ public interface Dialect {
 	default boolean supportsSingleQueryLoading() {
 		return true;
 	}
+
+	/**
+	 * How to verify the result of an UPDATE (e.g. whether zero rows updated is considered an error). Database and
+	 * driver behavior differs (affected vs matched rows). Override in dialect implementations to reflect
+	 * database-specific semantics.
+	 *
+	 * @return the update row count verification for this dialect. Default is {@link UpdateRowCountVerification#LENIENT}.
+	 * @since 4.1
+	 */
+	default UpdateRowCountVerification getUpdateRowCountVerification() {
+		return UpdateRowCountVerification.LENIENT;
+	}
 }
