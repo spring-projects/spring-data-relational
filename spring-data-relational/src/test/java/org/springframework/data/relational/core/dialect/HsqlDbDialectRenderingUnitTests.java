@@ -15,9 +15,10 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.StatementBuilder;
@@ -39,8 +40,8 @@ class HsqlDbDialectRenderingUnitTests {
 		Column idColumn = table.column("id");
 		Column nameColumn = table.column("name");
 		Upsert upsert = StatementBuilder.upsert(table)
-				.insert(idColumn.set(SQL.bindMarker(":id")), nameColumn.set(SQL.bindMarker(":name"))).onConflict(idColumn)
-				.update().build();
+				.insert(idColumn.set(SQL.bindMarker(":id")), nameColumn.set(SQL.bindMarker(":name")))
+				.onConflict(it -> it.with(idColumn).updateRemainingColumns()).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
 
@@ -55,7 +56,8 @@ class HsqlDbDialectRenderingUnitTests {
 		Column idColumn = table.column("id");
 		Column nameColumn = table.column("name");
 		Upsert upsert = StatementBuilder.upsert(table)
-				.insert(idColumn.set(SQL.literalOf(42)), nameColumn.set(SQL.literalOf("batman"))).onConflict(idColumn).update()
+				.insert(idColumn.set(SQL.literalOf(42)), nameColumn.set(SQL.literalOf("batman")))
+				.onConflict(it -> it.with(idColumn).updateRemainingColumns())
 				.build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
@@ -72,7 +74,7 @@ class HsqlDbDialectRenderingUnitTests {
 		Column tenantColumn = table.column("tenant_id");
 		Upsert upsert = StatementBuilder.upsert(table)
 				.insert(idColumn.set(SQL.bindMarker(":id")), tenantColumn.set(SQL.bindMarker(":tenant_id")))
-				.onConflict(idColumn, tenantColumn).update().build();
+				.onConflict(it -> it.with(idColumn, tenantColumn).updateRemainingColumns()).build();
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(upsert);
 

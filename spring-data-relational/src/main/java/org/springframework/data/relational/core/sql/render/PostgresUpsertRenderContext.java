@@ -26,6 +26,6 @@ public enum PostgresUpsertRenderContext implements UpsertRenderContext {
 
 	@Override
 	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderer.postgres();
+		return UpsertStatementRenderers.postgres();
 	}
 }

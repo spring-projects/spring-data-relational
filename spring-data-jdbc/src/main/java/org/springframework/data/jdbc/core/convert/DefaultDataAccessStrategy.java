@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.springframework.data.jdbc.core.convert.SqlGenerator.VERSION_SQL_PARAMETER;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -76,36 +77,36 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations operations;
-	private final SqlParametersFactory sqlParametersFactory;
+	private final SqlParametersFactory parametersFactory;
 	private final InsertStrategyFactory insertStrategyFactory;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy}
 	 *
-	 * @param sqlGeneratorSource must not be {@literal null}.
+	 * @param sqlSource must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @since 1.1
 	 */
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlParametersFactory sqlParametersFactory,
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlSource, RelationalMappingContext context,
+			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlParametersFactory parametersFactory,
 			InsertStrategyFactory insertStrategyFactory, QueryMappingConfiguration queryMappingConfiguration) {
 
-		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
+		Assert.notNull(sqlSource, "SqlGeneratorSource must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
-		Assert.notNull(sqlParametersFactory, "SqlParametersFactory must not be null");
+		Assert.notNull(parametersFactory, "SqlParametersFactory must not be null");
 		Assert.notNull(insertStrategyFactory, "InsertStrategyFactory must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
 
-		this.sqlGeneratorSource = sqlGeneratorSource;
+		this.sqlGeneratorSource = sqlSource;
 		this.context = context;
 		this.converter = converter;
 		this.operations = operations;
-		this.sqlParametersFactory = sqlParametersFactory;
+		this.parametersFactory = parametersFactory;
 		this.insertStrategyFactory = insertStrategyFactory;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
@@ -124,9 +125,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> @Nullable Object insert(T objectToSave, Class<T> domainType, Identifier identifier,
 			IdValueSource idValueSource) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(objectToSave, domainType, identifier,
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forInsert(objectToSave, domainType, identifier,
 				idValueSource);
-
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
 
 		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
@@ -140,13 +140,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notEmpty(insertSubjects, "Batch insert must contain at least one InsertSubject");
 
 		SqlIdentifierParameterSource[] sqlParameterSources = insertSubjects.stream()
-				.map(insertSubject -> sqlParametersFactory.forInsert( //
-						insertSubject.getInstance(), //
-						domainType, //
-						insertSubject.getIdentifier(), //
-						idValueSource //
-				) //
-				) //
+				.map(insertSubject -> {
+					return parametersFactory.forInsert(insertSubject.getInstance(), domainType, insertSubject.getIdentifier(),
+							idValueSource);
+				})
 				.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
@@ -158,10 +155,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <S> boolean update(S objectToSave, Class<S> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(objectToSave, domainType);
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forUpdate(objectToSave, domainType);
 		if (parameterSource.size() <= 1) {
 			return true; // returning true, because conceptually the one row was correctly updated
 		}
+
 		return operations.update(sql(domainType).getUpdate(), parameterSource) != 0;
 	}
 
@@ -169,7 +167,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <S> boolean updateWithVersion(S objectToSave, Class<S> domainType, Number previousVersion) {
 
 		// Adjust update statement to set the new version and use the old version in where clause.
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forUpdate(objectToSave, domainType);
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forUpdate(objectToSave, domainType);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 
 		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(), parameterSource);
@@ -185,14 +183,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
 
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forInsert(objectToSave, domainType, Identifier.empty(),
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forInsert(objectToSave, domainType,
+				Identifier.empty(),
 				IdValueSource.PROVIDED);
-
 		String statement = sql(domainType).getUpsert(parameterSource.getIdentifiers());
-
-		if (logger.isTraceEnabled()) {
-			logger.trace("Upsert: [%s]".formatted(statement));
-		}
 
 		return operations.update(statement, parameterSource);
 	}
@@ -201,7 +195,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Object id, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
+		SqlParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
 		operations.update(deleteByIdSql, parameter);
 	}
@@ -210,7 +204,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Iterable<Object> ids, Class<?> domainType) {
 
 		String deleteByIdInSql = sql(domainType).getDeleteByIdIn();
-		SqlParameterSource parameter = sqlParametersFactory.forQueryByIds(ids, domainType);
+		SqlParameterSource parameter = parametersFactory.forQueryByIds(ids, domainType);
 
 		operations.update(deleteByIdInSql, parameter);
 	}
@@ -221,9 +215,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(id, "Id must not be null");
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-
-		SqlIdentifierParameterSource parameterSource = sqlParametersFactory.forQueryById(id, domainType);
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forQueryById(id, domainType);
 		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
+
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
 
 		if (affectedRows == 0) {
@@ -235,13 +229,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
-
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
-		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryById(rootId, rootEntity.getType());
+		SqlIdentifierParameterSource parameters = parametersFactory.forQueryById(rootId, rootEntity.getType());
 		operations.update(delete, parameters);
 	}
 
@@ -249,14 +242,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Iterable<Object> rootIds, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(getBaseType(propertyPath));
-
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
-
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
 		String delete = sql(rootEntity.getType()).createDeleteInByPath(propertyPath);
 
-		SqlIdentifierParameterSource parameters = sqlParametersFactory.forQueryByIds(rootIds, rootEntity.getType());
+		SqlIdentifierParameterSource parameters = parametersFactory.forQueryByIds(rootIds, rootEntity.getType());
 		operations.update(delete, parameters);
 	}
 
@@ -267,7 +258,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
-
 		operations.getJdbcOperations().update(sql(getBaseType(propertyPath)).createDeleteAllSql(propertyPath));
 	}
 
@@ -275,7 +265,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
-		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
+		SqlIdentifierParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
 		operations.query(acquireLockByIdSql, parameter, ResultSet::next);
 	}
@@ -284,6 +274,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
+
 		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
 	}
 
@@ -291,8 +282,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public long count(Class<?> domainType) {
 
 		Long result = operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
-
-		Assert.notNull(result, "The result of a count query must not be null");
+		Assert.state(result != null, "The result of a count query must not be null");
 
 		return result;
 	}
@@ -302,7 +292,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T extends @Nullable Object> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
-		SqlIdentifierParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
+		SqlIdentifierParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
 		try {
 			return operations.queryForObject(findOneSql, parameter, getRowMapper(domainType));
@@ -329,7 +319,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return Collections.emptyList();
 		}
 
-		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
+		SqlParameterSource parameterSource = parametersFactory.forQueryByIds(ids, domainType);
 		String findAllInListSql = sql(domainType).getFindAllInList();
 		return operations.query(findAllInListSql, parameterSource, getRowMapper(domainType));
 	}
@@ -341,7 +331,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return Stream.empty();
 		}
 
-		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIds(ids, domainType);
+		SqlParameterSource parameterSource = parametersFactory.forQueryByIds(ids, domainType);
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
 		return operations.queryForStream(findAllInListSql, parameterSource, getRowMapper(domainType));
@@ -364,7 +354,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, propertyPath);
 
-		SqlParameterSource parameterSource = sqlParametersFactory.forQueryByIdentifier(identifier);
+		SqlParameterSource parameterSource = parametersFactory.forQueryByIdentifier(identifier);
 		return operations.query(findAllByProperty, parameterSource, new RowMapper<>() {
 
 			@Override
@@ -392,7 +382,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
 		String existsSql = sql(domainType).getExists();
-		SqlParameterSource parameter = sqlParametersFactory.forQueryById(id, domainType);
+		SqlParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
 		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
 		Assert.state(result != null, "The result of an exists query must not be null");
@@ -476,7 +466,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String sqlQuery = sql(domainType).countByQuery(query, parameterSource);
 
 		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
-
 		Assert.state(result != null, "The result of a count query must not be null.");
 
 		return result;
@@ -525,9 +514,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private Class<?> getBaseType(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		RelationalPersistentProperty baseProperty = propertyPath.getBaseProperty();
-
 		Assert.notNull(baseProperty, "The base property must not be null");
 
 		return baseProperty.getOwner().getType();
 	}
+
 }

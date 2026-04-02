@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @since 4.x
  */
-final class UpsertStatementRenderers {
+class UpsertStatementRenderers {
 
 	/** Target table alias in {@code MERGE} statements. */
 	static final SqlIdentifier MERGE_TARGET_TABLE_ALIAS = SqlIdentifier.quoted("_t");
@@ -37,15 +37,35 @@ final class UpsertStatementRenderers {
 	/** Source (values) alias in {@code MERGE} statements. */
 	static final SqlIdentifier MERGE_SOURCE_TABLE_ALIAS = SqlIdentifier.quoted("_s");
 
+	static UpsertStatementRenderer merge() {
+		return Merge.INSTANCE;
+	}
+
+	static UpsertStatementRenderer mySql() {
+		return MySql.INSTANCE;
+	}
+
+	static UpsertStatementRenderer oracle() {
+		return Oracle.INSTANCE;
+	}
+
+	static UpsertStatementRenderer postgres() {
+		return Postgres.INSTANCE;
+	}
+
+	static UpsertStatementRenderer sqlServer() {
+		return SqlServer.INSTANCE;
+	}
+
 	private UpsertStatementRenderers() {}
 
 	/**
 	 * Standard SQL {@code MERGE} using a table value constructor {@code (VALUES (?, ?)) AS s (col1, col2)} (H2, HSQLDB,
 	 * DB2, etc.).
 	 */
-	static class StandardSql implements UpsertStatementRenderer {
+	static class Merge implements UpsertStatementRenderer {
 
-		static final StandardSql INSTANCE = new StandardSql();
+		static final Merge INSTANCE = new Merge();
 
 		@Override
 		public String render(Table table, Columns columns, UpsertRenderingContext ctx) {
@@ -119,12 +139,8 @@ final class UpsertStatementRenderers {
 					"EXCLUDED.%s"::formatted, Collectors.joining(", "));
 
 			return "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s".formatted(//
-					tableName, //
-					insertColumnNames, //
-					bindMarkers, //
-					conflictColumnNames, //
+					tableName, insertColumnNames, bindMarkers, conflictColumnNames,
 					setValues);
-
 		}
 	}
 
@@ -221,16 +237,18 @@ final class UpsertStatementRenderers {
 	}
 
 	/**
-	 * SQL Server {@code MERGE}: same body as {@link StandardSql} with a trailing semicolon (batch separator).
+	 * SQL Server {@code MERGE}: same body as {@link Merge} with a trailing semicolon (batch separator).
 	 */
-	static class SqlServer extends StandardSql {
+	static class SqlServer extends Merge {
 
 		private static final String STATEMENT_TERMINATOR = ";";
+
 		static final SqlServer INSTANCE = new SqlServer();
 
 		@Override
 		public String render(Table table, Columns columns, UpsertRenderingContext ctx) {
 			return super.render(table, columns, ctx) + STATEMENT_TERMINATOR;
 		}
+
 	}
 }

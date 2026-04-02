@@ -26,6 +26,6 @@ public enum OracleUpsertRenderContext implements UpsertRenderContext {
 
 	@Override
 	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderer.oracle();
+		return UpsertStatementRenderers.oracle();
 	}
 }

@@ -22,15 +22,11 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.render.UpsertStatementRenderers.MySql;
-import org.springframework.data.relational.core.sql.render.UpsertStatementRenderers.Oracle;
-import org.springframework.data.relational.core.sql.render.UpsertStatementRenderers.Postgres;
-import org.springframework.data.relational.core.sql.render.UpsertStatementRenderers.SqlServer;
-import org.springframework.data.relational.core.sql.render.UpsertStatementRenderers.StandardSql;
 
 /**
  * Dialect-specific upsert SQL as a single statement string (e.g. {@code MERGE}, {@code INSERT ... ON CONFLICT},
@@ -42,26 +38,6 @@ import org.springframework.data.relational.core.sql.render.UpsertStatementRender
  * @since 4.x
  */
 public interface UpsertStatementRenderer {
-
-	static UpsertStatementRenderer standardSql() {
-		return StandardSql.INSTANCE;
-	}
-
-	static UpsertStatementRenderer mySql() {
-		return MySql.INSTANCE;
-	}
-
-	static UpsertStatementRenderer oracle() {
-		return Oracle.INSTANCE;
-	}
-
-	static UpsertStatementRenderer postgres() {
-		return Postgres.INSTANCE;
-	}
-
-	static UpsertStatementRenderer sqlServer() {
-		return SqlServer.INSTANCE;
-	}
 
 	/**
 	 * Render the full upsert statement for {@code table}.
@@ -81,7 +57,7 @@ public interface UpsertStatementRenderer {
 
 		/**
 		 * Backs upsert rendering with {@code renderContext} (quoting, bind marker style).
-		 * 
+		 *
 		 * @param renderContext active SQL render context
 		 * @return context passed to {@link UpsertStatementRenderer#render}
 		 */
@@ -206,7 +182,7 @@ public interface UpsertStatementRenderer {
 		}
 	}
 
-	final class Columns {
+	class Columns {
 
 		private final Map<SqlIdentifier, CharSequence> bindings;
 		private final List<Column> insertColumns;

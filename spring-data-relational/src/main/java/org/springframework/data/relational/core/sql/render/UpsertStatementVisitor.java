@@ -51,12 +51,13 @@ public class UpsertStatementVisitor extends DelegatingVisitor implements PartRen
 	}
 
 	@Override
-	public @Nullable Delegation doEnter(Visitable segment) {
+	@Nullable
+	Delegation doEnter(Visitable segment) {
 		return Delegation.retain();
 	}
 
 	@Override
-	public Delegation doLeave(Visitable segment) {
+	Delegation doLeave(Visitable segment) {
 
 		if (segment instanceof Upsert source) {
 

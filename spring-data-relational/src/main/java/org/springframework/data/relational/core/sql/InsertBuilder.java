@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.Collection;
 
-import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertResolution;
 
 /**
  * Entry point to construct an {@link Insert} statement.
@@ -73,6 +72,7 @@ public interface InsertBuilder {
 		 * @see Column
 		 */
 		InsertIntoColumnsAndValuesWithBuild columns(Collection<Column> columns);
+
 	}
 
 	/**
@@ -112,6 +112,7 @@ public interface InsertBuilder {
 		 */
 		@Override
 		InsertValuesWithBuild values(Collection<? extends Expression> values);
+
 	}
 
 	/**
@@ -151,6 +152,7 @@ public interface InsertBuilder {
 		 */
 		@Override
 		InsertValuesWithBuild values(Collection<? extends Expression> values);
+
 	}
 
 	/**
@@ -187,16 +189,13 @@ public interface InsertBuilder {
 		 * @see Column
 		 */
 		InsertValuesWithBuild values(Collection<? extends Expression> values);
-	}
 
-	interface UpsertToggle { // TODO: do we need/want this? should we keep upsert or enhance insert?
-		UpsertResolution onConflict(Column... columns);
 	}
 
 	/**
 	 * Interface exposing the {@link Insert} build method.
 	 */
-	interface BuildInsert extends UpsertToggle {
+	interface BuildInsert {
 
 		/**
 		 * Build the {@link Insert} statement.
@@ -204,5 +203,7 @@ public interface InsertBuilder {
 		 * @return the build and immutable {@link Insert} statement.
 		 */
 		Insert build();
+
 	}
+
 }

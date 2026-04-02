@@ -62,7 +62,7 @@ public interface JdbcArrayColumns extends ArrayColumns {
 	 * Returns the default {@link JdbcArrayColumns} support.
 	 */
 	static JdbcArrayColumns defaultSupport() {
-		return Unsupported.INSTANCE;
+		return DefaultSupport.INSTANCE;
 	}
 
 	/**

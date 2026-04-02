@@ -15,12 +15,13 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.Column;
@@ -31,7 +32,7 @@ import org.springframework.data.relational.core.sql.render.UpsertStatementRender
 /**
  * Unit tests for {@link StandardSqlUpsertRenderContext}.
  */
-class StandardSqlUpsertRenderContextUnitTests {
+class MergeUpsertRenderContextUnitTests {
 
 	private static final Table TABLE = Table.create(SqlIdentifier.unquoted("my_table"));
 

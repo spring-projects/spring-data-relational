@@ -62,7 +62,7 @@ abstract class DelegatingVisitor implements Visitor {
 	 * @return
 	 */
 	@Nullable
-	public abstract Delegation doEnter(Visitable segment);
+	abstract Delegation doEnter(Visitable segment);
 
 	@Override
 	public final void enter(Visitable segment) {
@@ -95,7 +95,7 @@ abstract class DelegatingVisitor implements Visitor {
 	 * @param segment must not be {@literal null}.
 	 * @return
 	 */
-	public abstract Delegation doLeave(Visitable segment);
+	abstract Delegation doLeave(Visitable segment);
 
 	public final void leave(Visitable segment) {
 		doLeave0(segment);

@@ -21,8 +21,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.relational.core.sql.InsertBuilder.UpsertToggle;
-import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertResolution;
+
 import org.springframework.util.Assert;
 
 /**
@@ -42,7 +41,6 @@ class DefaultInsertBuilder
 	public InsertIntoColumnsAndValuesWithBuild into(Table table) {
 
 		Assert.notNull(table, "Insert Into Table must not be null");
-
 		this.into = table;
 		return this;
 	}
@@ -51,9 +49,7 @@ class DefaultInsertBuilder
 	public InsertIntoColumnsAndValuesWithBuild column(Column column) {
 
 		Assert.notNull(column, "Column must not be null");
-
 		this.columns.add(column);
-
 		return this;
 	}
 
@@ -61,7 +57,6 @@ class DefaultInsertBuilder
 	public InsertIntoColumnsAndValuesWithBuild columns(Column... columns) {
 
 		Assert.notNull(columns, "Columns must not be null");
-
 		return columns(Arrays.asList(columns));
 	}
 
@@ -69,9 +64,7 @@ class DefaultInsertBuilder
 	public InsertIntoColumnsAndValuesWithBuild columns(Collection<Column> columns) {
 
 		Assert.notNull(columns, "Columns must not be null");
-
 		this.columns.addAll(columns);
-
 		return this;
 	}
 
@@ -79,9 +72,7 @@ class DefaultInsertBuilder
 	public InsertValuesWithBuild value(Expression value) {
 
 		Assert.notNull(value, "Value must not be null");
-
 		this.values.add(value);
-
 		return this;
 	}
 
@@ -89,7 +80,6 @@ class DefaultInsertBuilder
 	public InsertValuesWithBuild values(Expression... values) {
 
 		Assert.notNull(values, "Values must not be null");
-
 		return values(Arrays.asList(values));
 	}
 
@@ -97,25 +87,13 @@ class DefaultInsertBuilder
 	public InsertValuesWithBuild values(Collection<? extends Expression> values) {
 
 		Assert.notNull(values, "Values must not be null");
-
 		this.values.addAll(values);
-
 		return this;
-	}
-
-	@Override
-	@SuppressWarnings("NullAway")
-	public UpsertResolution onConflict(Column... columns) {
-
-		List<Assignment> assignments = new ArrayList<>(this.columns.size());
-		for(int i = 0; i < this.columns.size(); i++) {
-			assignments.add(Assignments.value(this.columns.get(i), this.values.get(i)));
-		}
-		return new DefaultUpsertBuilder(this.into).insert(assignments).onConflict(columns);
 	}
 
 	@Override
 	public Insert build() {
 		return new DefaultInsert(this.into, this.columns, this.values);
 	}
+
 }

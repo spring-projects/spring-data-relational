@@ -84,12 +84,12 @@ public interface Dialect {
 	LockClause lock();
 
 	/**
-	 * Returns the array support object that describes how array-typed columns are supported by this dialect.
+	 * Returns the array support object that describes how array-typed columns should be handled by this dialect.
 	 *
-	 * @return the array support object that describes how array-typed columns are supported by this dialect.
+	 * @return the array support object that describes how array-typed columns should be handled by this dialect.
 	 */
 	default ArrayColumns getArraySupport() {
-		return ArrayColumns.Unsupported.INSTANCE;
+		return ArrayColumns.unsupported();
 	}
 
 	/**

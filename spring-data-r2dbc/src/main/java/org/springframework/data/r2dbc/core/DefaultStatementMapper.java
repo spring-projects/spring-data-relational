@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -29,24 +30,8 @@ import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
-import org.springframework.data.relational.core.sql.AssignValue;
-import org.springframework.data.relational.core.sql.Assignment;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.DeleteBuilder;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.InsertBuilder;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWithBuild;
-import org.springframework.data.relational.core.sql.OrderByField;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Update;
-import org.springframework.data.relational.core.sql.UpdateBuilder;
-import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.r2dbc.core.PreparedOperation;
@@ -297,8 +282,8 @@ class DefaultStatementMapper implements StatementMapper {
 
 		Upsert upsert = StatementBuilder.upsert(table) //
 				.insert(boundAssignments.getAssignments()) //
-				.onConflict(conflictColumns) //
-				.update().build();
+				.onConflict(it -> it.with(conflictColumns).updateRemainingColumns()) //
+				.build();
 
 		return new DefaultPreparedOperation<>(upsert, this.renderContext, bindings);
 	}
