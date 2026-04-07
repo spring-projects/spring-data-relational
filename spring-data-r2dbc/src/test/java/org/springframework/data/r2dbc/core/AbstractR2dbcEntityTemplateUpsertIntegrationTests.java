@@ -151,6 +151,33 @@ public abstract class AbstractR2dbcEntityTemplateUpsertIntegrationTests extends 
 	}
 
 	@Test // GH-493
+	void upsertSetsNullableManualToNull() {
+
+		LegoSet withManual = new LegoSet(8888L, "falcon", 99);
+
+		entityTemplate.upsert(withManual) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual.manual).isEqualTo(99)) //
+				.verifyComplete();
+
+		LegoSet manualCleared = new LegoSet(8888L, "falcon", null);
+
+		entityTemplate.upsert(manualCleared) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual.id).isEqualTo(8888L)) //
+				.verifyComplete();
+
+		entityTemplate.select(LegoSet.class).matching(org.springframework.data.relational.core.query.Query.empty()).all() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.id).isEqualTo(8888L);
+					assertThat(actual.name).isEqualTo("falcon");
+					assertThat(actual.manual).isNull();
+				}) //
+				.verifyComplete();
+	}
+
+	@Test // GH-493
 	void upsertAfterDeleteInsertsAgain() {
 
 		LegoSet first = new LegoSet(8888L, "first", 10);
@@ -203,6 +230,29 @@ public abstract class AbstractR2dbcEntityTemplateUpsertIntegrationTests extends 
 				.as(StepVerifier::create) //
 				.assertNext(actual -> assertThat(actual.insertOnly).isEqualTo("initial")) //
 				.verifyComplete();
+	}
+
+	@Test // GH-493
+	void upsertDoesNotUpdateInsertOnlyColumnOnUpdate() {
+
+		WithInsertOnly entity = new WithInsertOnly(8888L, "initial");
+
+		entityTemplate.upsert(entity) //
+			.as(StepVerifier::create) //
+			.assertNext(actual -> assertThat(actual.insertOnly).isEqualTo("initial")) //
+			.verifyComplete();
+
+		entity.insertOnly = "updated";
+		entityTemplate.upsert(entity) //
+			.as(StepVerifier::create) //
+			.expectNextCount(1)
+			.verifyComplete();
+
+		entityTemplate.select(WithInsertOnly.class).matching(org.springframework.data.relational.core.query.Query.empty())
+			.all() //
+			.as(StepVerifier::create) //
+			.assertNext(actual -> assertThat(actual.insertOnly).isEqualTo("initial")) //
+			.verifyComplete();
 	}
 
 	@Test // GH-493

@@ -22,6 +22,7 @@ import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -97,6 +98,7 @@ import org.springframework.util.Assert;
  * @author Sebastian Wieland
  * @author Mikhail Polivakha
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -613,16 +615,22 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.UpsertSpec upsert = mapper.createUpsert(tableName);
 
 		for (SqlIdentifier column : outboundRow.keySet()) {
-			io.r2dbc.spi.Parameter settableValue = ParameterAdapter.wrap(outboundRow.get(column));
-			if (settableValue.getValue() != null) {
-				upsert = upsert.withColumn(column, settableValue);
-			}
+			upsert = upsert.withColumn(column, ParameterAdapter.wrap(outboundRow.get(column)));
 		}
 
 		List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(persistentEntity.getType());
 		for (SqlIdentifier idColumn : identifierColumns) {
 			upsert = upsert.withConflictColumn(idColumn);
 		}
+
+		List<SqlIdentifier> updateColumns = new ArrayList<>();
+		persistentEntity.forEach(p -> {
+			if (!p.isInsertOnly() && !identifierColumns.contains(p.getColumnName())) {
+				updateColumns.add(p.getColumnName());
+			}
+		});
+
+		upsert = upsert.withUpdateColumns(updateColumns);
 
 		PreparedOperation<?> operation = mapper.getMappedObject(upsert);
 

@@ -30,19 +30,21 @@ import org.springframework.util.Assert;
 
 /**
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 class DefaultUpsert implements Upsert {
 
 	private final Table table;
 	private final List<Assignment> assignments;
 	private final List<Column> conflictColumns;
+	private final List<Column> updateColumns;
 
-	DefaultUpsert(Table table, List<Assignment> assignments, List<Column> conflictColumns) {
+	DefaultUpsert(Table table, List<Assignment> assignments, List<Column> conflictColumns, List<Column> updateColumns) {
 
 		this.table = table;
 		this.assignments = new ArrayList<>(assignments);
 		this.conflictColumns = new ArrayList<>(conflictColumns);
+		this.updateColumns = new ArrayList<>(updateColumns);
 	}
 
 	@Override
@@ -61,6 +63,11 @@ class DefaultUpsert implements Upsert {
 	}
 
 	@Override
+	public List<Column> getUpdateColumns() {
+		return updateColumns;
+	}
+
+	@Override
 	public void visit(Visitor visitor) {
 
 		Assert.notNull(visitor, "Visitor must not be null");
@@ -70,6 +77,7 @@ class DefaultUpsert implements Upsert {
 		this.table.visit(visitor);
 		this.conflictColumns.forEach(col -> col.visit(visitor));
 		this.assignments.forEach(it -> it.visit(visitor));
+		this.updateColumns.forEach(col -> col.visit(visitor));
 
 		visitor.leave(this);
 	}

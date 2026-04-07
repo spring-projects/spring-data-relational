@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.relational.core.DialectCapable;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
@@ -77,7 +78,7 @@ public class RenderContextFactory {
 	/**
 	 * {@link RenderContext} derived from {@link Dialect} specifics.
 	 */
-	static class DialectRenderContext implements RenderContext {
+	static class DialectRenderContext implements RenderContext, DialectCapable {
 
 		private final RenderNamingStrategy renderNamingStrategy;
 		private final Dialect renderingDialect;
@@ -124,6 +125,11 @@ public class RenderContextFactory {
 		@Override
 		public UpsertRenderContext getUpsertRenderContext() {
 			return upsertRenderContext;
+		}
+
+		@Override
+		public Dialect getDialect() {
+			return renderingDialect;
 		}
 	}
 }

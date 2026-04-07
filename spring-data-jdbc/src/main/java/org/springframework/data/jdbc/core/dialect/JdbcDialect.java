@@ -28,6 +28,11 @@ import org.springframework.data.relational.core.dialect.Dialect;
  */
 public interface JdbcDialect extends Dialect {
 
+	@Override
+	default String getName() {
+		return Dialect.super.getName().replaceFirst("[jJ]dbc", "");
+	}
+
 	/**
 	 * Returns the JDBC-specific array support object that describes how this dialect supports array-typed columns.
 	 *

@@ -126,7 +126,7 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate root.
 	 * @return the same instance (possibly with a generated id set if the dialect returns one).
 	 * @throws UnsupportedOperationException if the dialect or {@link DataAccessStrategy} does not support upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	<T> T upsert(T instance);
 

@@ -56,7 +56,7 @@ public interface RenderContext {
 
 	/**
 	 * @return the {@link UpsertRenderContext}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	UpsertRenderContext getUpsertRenderContext();
 }

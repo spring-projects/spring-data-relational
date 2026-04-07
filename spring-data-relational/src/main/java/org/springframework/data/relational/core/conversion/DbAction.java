@@ -119,7 +119,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 * @author Christoph Strobl
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	class UpsertRoot<T> implements WithRoot<T> {
 

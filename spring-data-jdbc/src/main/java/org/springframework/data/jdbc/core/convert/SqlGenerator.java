@@ -431,7 +431,7 @@ public class SqlGenerator {
 	 * @param additionalColumns additional column names to include in the insert (e.g. back-references).
 	 * @return the upsert SQL statement.
 	 * @throws UnsupportedOperationException if the dialect does not support upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	String getUpsert(Set<SqlIdentifier> additionalColumns) {
 		return render(createUpsertSql(additionalColumns));
@@ -440,7 +440,7 @@ public class SqlGenerator {
 	/**
 	 * @param additionalColumns
 	 * @return
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	private Upsert createUpsertSql(Set<SqlIdentifier> additionalColumns) {
 
@@ -449,6 +449,8 @@ public class SqlGenerator {
 		Set<SqlIdentifier> insert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
 		insert.addAll(columns.getInsertableColumns());
 		insert.addAll(additionalColumns);
+
+		Set<Column> updateColumns = columns.updatableColumns.stream().map(table::column).collect(Collectors.toSet());
 
 		List<Column> idColumns = getIdColumns();
 		List<SqlIdentifier> conflictColumns = idColumns.stream().map(Column::getName).toList();
@@ -460,7 +462,7 @@ public class SqlGenerator {
 
 		return StatementBuilder.upsert(table) //
 				.insert(assignments) //
-				.onConflict(it -> it.with(idColumns).updateRemainingColumns()) //
+				.onConflict(it -> it.with(idColumns).update(updateColumns)) //
 				.build();
 	}
 

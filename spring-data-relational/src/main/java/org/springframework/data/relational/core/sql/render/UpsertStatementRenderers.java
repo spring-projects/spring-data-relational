@@ -16,8 +16,10 @@
 package org.springframework.data.relational.core.sql.render;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -27,7 +29,7 @@ import org.springframework.util.Assert;
  * Concrete {@link UpsertStatementRenderer} implementations.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 class UpsertStatementRenderers {
 
@@ -36,6 +38,19 @@ class UpsertStatementRenderers {
 
 	/** Source (values) alias in {@code MERGE} statements. */
 	static final SqlIdentifier MERGE_SOURCE_TABLE_ALIAS = SqlIdentifier.quoted("_s");
+
+	/** Return the {@link UpsertStatementRenderer} for the given {@link Dialect}. */
+	static UpsertStatementRenderer forDialect(Dialect dialect) {
+
+		String dialectName = dialect.getName().toLowerCase(Locale.US).replace("dialect", "");
+		return switch (dialectName) {
+			case "mysql", "mariadb" -> mySql();
+			case "oracle" -> oracle();
+			case "postgres" -> postgres();
+			case "sqlserver" -> sqlServer();
+			default -> merge();
+		};
+	}
 
 	static UpsertStatementRenderer merge() {
 		return Merge.INSTANCE;
@@ -139,8 +154,7 @@ class UpsertStatementRenderers {
 					"EXCLUDED.%s"::formatted, Collectors.joining(", "));
 
 			return "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s".formatted(//
-					tableName, insertColumnNames, bindMarkers, conflictColumnNames,
-					setValues);
+					tableName, insertColumnNames, bindMarkers, conflictColumnNames, setValues);
 		}
 	}
 

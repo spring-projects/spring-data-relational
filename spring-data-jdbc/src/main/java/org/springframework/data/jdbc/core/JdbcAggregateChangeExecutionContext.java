@@ -124,7 +124,7 @@ class JdbcAggregateChangeExecutionContext {
 	/**
 	 * @param upsert
 	 * @param <T>
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	<T> void executeUpsertRoot(DbAction.UpsertRoot<T> upsert) {
 

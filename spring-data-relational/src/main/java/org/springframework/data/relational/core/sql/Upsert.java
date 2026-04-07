@@ -24,7 +24,7 @@ import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
  * An upsert (MERGE / INSERT … ON CONFLICT / INSERT … ON DUPLICATE KEY) statement.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 public interface Upsert extends Segment, Visitable { // TODO: should we rename this to Merge?
 
@@ -59,4 +59,7 @@ public interface Upsert extends Segment, Visitable { // TODO: should we rename t
 
 	/** @return the columns that identify a conflicting row. */
 	List<Column> getConflictColumns();
+
+	/** @return the columns to be assigned in the UPDATE part. */
+	List<Column> getUpdateColumns();
 }

@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.data.relational.core.sql.Functions;
@@ -50,7 +51,7 @@ public interface Dialect {
 	 * Returns the name of the dialect.
 	 *
 	 * @return the name of the dialect.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default String getName() {
 		return ClassUtils.getShortName(getClass());
@@ -178,7 +179,7 @@ public interface Dialect {
 	 *
 	 * @return the upsert render context. {@link StandardSqlUpsertRenderContext} by default.
 	 * @throws UnsupportedOperationException if the dialect does not support single-statement upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default UpsertRenderContext getUpsertRenderContext() {
 		return StandardSqlUpsertRenderContext.INSTANCE;

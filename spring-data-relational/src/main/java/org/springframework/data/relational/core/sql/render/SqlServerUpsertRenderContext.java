@@ -16,16 +16,16 @@
 package org.springframework.data.relational.core.sql.render;
 
 /**
- * SQL Server MERGE upsert. Delegates to {@link UpsertStatementRenderers.Merge} and appends a required semicolon.
+ * SQL Server MERGE upsert. The statement body matches {@link UpsertStatementRenderers.Merge} with a trailing semicolon.
  *
- * @since 4.x
+ * @since 4.1
  */
 public enum SqlServerUpsertRenderContext implements UpsertRenderContext {
 
 	INSTANCE;
 
 	@Override
-	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderers.sqlServer();
+	public boolean supportsUpsert() {
+		return true;
 	}
 }

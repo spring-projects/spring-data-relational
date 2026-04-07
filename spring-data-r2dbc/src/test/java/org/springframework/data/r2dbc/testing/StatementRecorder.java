@@ -310,7 +310,11 @@ public class StatementRecorder implements ConnectionFactory {
 			if(o instanceof ParameterAdapter adapter) {
 				o = adapter.getValue();
 			}
-			this.bindings.put(index, Parameter.from(o));
+			if(o == null) {
+				this.bindings.put(index, Parameter.empty(Object.class));
+			} else {
+				this.bindings.put(index, Parameter.from(o));
+			}
 			return this;
 		}
 
@@ -319,7 +323,11 @@ public class StatementRecorder implements ConnectionFactory {
 			if(o instanceof ParameterAdapter adapter) {
 				o = adapter.getValue();
 			}
-			this.bindings.put(identifier, Parameter.from(o));
+			if(o == null) {
+				this.bindings.put(identifier, Parameter.empty(Object.class));
+			} else {
+				this.bindings.put(identifier, Parameter.from(o));
+			}
 			return this;
 		}
 

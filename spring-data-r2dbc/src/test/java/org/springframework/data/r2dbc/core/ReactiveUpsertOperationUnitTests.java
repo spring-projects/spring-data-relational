@@ -79,9 +79,10 @@ public class ReactiveUpsertOperationUnitTests {
 		assertThat(statement.getSql()).startsWith("INSERT INTO person");
 		assertThat(statement.getSql()).contains("ON CONFLICT");
 		assertThat(statement.getSql()).contains("DO UPDATE SET");
-		assertThat(statement.getBindings()).hasSize(2) //
+		assertThat(statement.getBindings()).hasSize(3) //
 				.containsEntry(0, Parameter.from(42L)) //
-				.containsEntry(1, Parameter.from("Walter"));
+				.containsEntry(1, Parameter.from("Walter"))
+				.containsEntry(2, Parameter.empty(Object.class));
 	}
 
 	@Test // GH-493

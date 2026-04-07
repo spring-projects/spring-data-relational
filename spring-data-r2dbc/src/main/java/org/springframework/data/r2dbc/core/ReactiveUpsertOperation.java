@@ -36,7 +36,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * </pre>
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 public interface ReactiveUpsertOperation {
 

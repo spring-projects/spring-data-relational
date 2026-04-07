@@ -130,7 +130,7 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	 * @param <T> the type of the object.
 	 * @return the number of rows affected by the upsert.
 	 * @throws UnsupportedOperationException if the dialect does not support upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	<T> int upsert(T objectToSave, Class<? super T> domainType);
 

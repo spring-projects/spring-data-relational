@@ -215,7 +215,7 @@ public interface StatementMapper {
 	 *
 	 * @param table
 	 * @return the {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default UpsertSpec createUpsert(String table) {
 		return UpsertSpec.create(table);
@@ -226,7 +226,7 @@ public interface StatementMapper {
 	 *
 	 * @param table
 	 * @return the {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default UpsertSpec createUpsert(SqlIdentifier table) {
 		return UpsertSpec.create(table);
@@ -237,7 +237,7 @@ public interface StatementMapper {
 	 *
 	 * @param upsertSpec the upsert operation definition, must not be {@literal null}.
 	 * @return the {@link PreparedOperation} for {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	PreparedOperation<?> getMappedObject(UpsertSpec upsertSpec);
 
@@ -685,20 +685,22 @@ public interface StatementMapper {
 	 * {@code UPSERT} specification.
 	 *
 	 * @author Christoph Strobl
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	class UpsertSpec {
 
 		private final SqlIdentifier table;
 		private final Map<SqlIdentifier, io.r2dbc.spi.Parameter> assignments;
 		private final List<SqlIdentifier> conflictColumns;
+		private final List<SqlIdentifier> updateColumns;
 
 		protected UpsertSpec(SqlIdentifier table, Map<SqlIdentifier, io.r2dbc.spi.Parameter> assignments,
-				List<SqlIdentifier> conflictColumns) {
+				List<SqlIdentifier> conflictColumns, List<SqlIdentifier> updateColumns) {
 
 			this.table = table;
 			this.assignments = assignments;
 			this.conflictColumns = conflictColumns;
+			this.updateColumns = updateColumns;
 		}
 
 		/**
@@ -718,7 +720,7 @@ public interface StatementMapper {
 		 * @return the {@link UpsertSpec}.
 		 */
 		public static UpsertSpec create(SqlIdentifier table) {
-			return new UpsertSpec(table, Collections.emptyMap(), Collections.emptyList());
+			return new UpsertSpec(table, Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
 		}
 
 		/**
@@ -767,7 +769,7 @@ public interface StatementMapper {
 			Map<SqlIdentifier, io.r2dbc.spi.Parameter> values = new LinkedHashMap<>(this.assignments);
 			values.put(column, value);
 
-			return new UpsertSpec(this.table, values, this.conflictColumns);
+			return new UpsertSpec(this.table, values, this.conflictColumns, this.updateColumns);
 		}
 
 		/**
@@ -781,7 +783,11 @@ public interface StatementMapper {
 			List<SqlIdentifier> conflict = new ArrayList<>(this.conflictColumns);
 			conflict.add(column);
 
-			return new UpsertSpec(this.table, this.assignments, conflict);
+			return new UpsertSpec(this.table, this.assignments, conflict, this.updateColumns);
+		}
+
+		public UpsertSpec withUpdateColumns(List<SqlIdentifier> updateColumns) {
+			return new UpsertSpec(this.table, this.assignments, this.conflictColumns, updateColumns);
 		}
 
 		public SqlIdentifier getTable() {
@@ -794,6 +800,10 @@ public interface StatementMapper {
 
 		public List<SqlIdentifier> getConflictColumns() {
 			return Collections.unmodifiableList(this.conflictColumns);
+		}
+
+		public List<SqlIdentifier> getUpdateColumns() {
+			return  Collections.unmodifiableList(updateColumns);
 		}
 	}
 }

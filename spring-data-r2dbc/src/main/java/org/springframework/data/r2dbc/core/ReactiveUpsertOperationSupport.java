@@ -25,7 +25,7 @@ import org.springframework.util.Assert;
  * Implementation of {@link ReactiveUpsertOperation}.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 record ReactiveUpsertOperationSupport(R2dbcEntityTemplate template) implements ReactiveUpsertOperation {
 

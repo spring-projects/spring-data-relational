@@ -16,13 +16,16 @@
 package org.springframework.data.relational.core.sql.render;
 
 /**
- * {@link UpsertStatementRenderers}.
+ * Configuration for upsert SQL rendering.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 public interface UpsertRenderContext {
 
-	UpsertStatementRenderer renderer();
+	/**
+	 * @return true if the database supports upsert.
+	 */
+	boolean supportsUpsert();
 
 }
