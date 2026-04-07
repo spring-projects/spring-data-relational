@@ -278,7 +278,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @return the upserted entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 * @throws UnsupportedOperationException if the dialect does not support upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	<T> Mono<T> upsert(T entity) throws DataAccessException;
 

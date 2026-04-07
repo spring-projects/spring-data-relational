@@ -18,14 +18,14 @@ package org.springframework.data.relational.core.sql.render;
 /**
  * PostgreSQL upsert using {@code INSERT ... ON CONFLICT ... DO UPDATE SET}.
  *
- * @since 4.x
+ * @since 4.1
  */
 public enum PostgresUpsertRenderContext implements UpsertRenderContext {
 
 	INSTANCE;
 
 	@Override
-	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderers.postgres();
+	public boolean supportsUpsert() {
+		return true;
 	}
 }

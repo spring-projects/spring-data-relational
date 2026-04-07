@@ -21,15 +21,15 @@ package org.springframework.data.relational.core.sql.render;
  * Uses a table value constructor {@code (VALUES (?, ?)) AS s (col1, col2)} as the source so that no SELECT is used.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 public enum StandardSqlUpsertRenderContext implements UpsertRenderContext {
 
 	INSTANCE;
 
 	@Override
-	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderers.merge();
+	public boolean supportsUpsert() {
+		return true;
 	}
 
 }

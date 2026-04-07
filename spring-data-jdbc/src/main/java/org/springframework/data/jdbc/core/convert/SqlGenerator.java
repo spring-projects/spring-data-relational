@@ -431,7 +431,7 @@ public class SqlGenerator {
 	 * @param additionalColumns additional column names to include in the insert (e.g. back-references).
 	 * @return the upsert SQL statement.
 	 * @throws UnsupportedOperationException if the dialect does not support upsert.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	String getUpsert(Set<SqlIdentifier> additionalColumns) {
 		return render(createUpsertSql(additionalColumns));
@@ -440,7 +440,7 @@ public class SqlGenerator {
 	/**
 	 * @param additionalColumns
 	 * @return
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	private Upsert createUpsertSql(Set<SqlIdentifier> additionalColumns) {
 

@@ -25,7 +25,7 @@ import java.util.function.Function;
  * Usage: {@code StatementBuilder.upsert(table).insert(col.set(marker), …).onConflict(idCol).update()}
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  * @see StatementBuilder
  */
 public interface UpsertBuilder {

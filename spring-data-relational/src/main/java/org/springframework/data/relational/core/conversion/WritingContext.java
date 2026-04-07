@@ -108,7 +108,7 @@ class WritingContext<T> {
 	/**
 	 * Leaves out the isNew check
 	 *
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	void upsert() { // TODO: how does that really go together with save?
 

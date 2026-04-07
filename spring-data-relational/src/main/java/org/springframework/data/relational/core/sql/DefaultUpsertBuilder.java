@@ -30,7 +30,7 @@ import org.springframework.util.ObjectUtils;
  * Default {@link UpsertBuilder} implementation.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 class DefaultUpsertBuilder
 		implements UpsertBuilder, UpsertInsert, UpsertOnMatch, BuildUpsert, UpsertBuilder.ConflictResolution {

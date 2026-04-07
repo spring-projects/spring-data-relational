@@ -215,7 +215,7 @@ public interface StatementMapper {
 	 *
 	 * @param table
 	 * @return the {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default UpsertSpec createUpsert(String table) {
 		return UpsertSpec.create(table);
@@ -226,7 +226,7 @@ public interface StatementMapper {
 	 *
 	 * @param table
 	 * @return the {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	default UpsertSpec createUpsert(SqlIdentifier table) {
 		return UpsertSpec.create(table);
@@ -237,7 +237,7 @@ public interface StatementMapper {
 	 *
 	 * @param upsertSpec the upsert operation definition, must not be {@literal null}.
 	 * @return the {@link PreparedOperation} for {@link UpsertSpec}.
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	PreparedOperation<?> getMappedObject(UpsertSpec upsertSpec);
 
@@ -685,7 +685,7 @@ public interface StatementMapper {
 	 * {@code UPSERT} specification.
 	 *
 	 * @author Christoph Strobl
-	 * @since 4.x
+	 * @since 4.1
 	 */
 	class UpsertSpec {
 

@@ -50,7 +50,7 @@ class MergeUpsertRenderContextUnitTests {
 		Map<SqlIdentifier, CharSequence> bindings = Map.of(insertCols.get(0).getName(),
 				insertCols.get(0).getName().getReference());
 
-		String sql = StandardSqlUpsertRenderContext.INSTANCE.renderer().render(TABLE,
+		String sql = UpsertStatementRenderers.merge().render(TABLE,
 				new UpsertStatementRenderer.Columns(insertCols, conflictCols, bindings), ctx);
 
 		assertThat(sql).contains("ON \"_t\".tenant_id = \"_s\".tenant_id AND \"_t\".id = \"_s\".id");

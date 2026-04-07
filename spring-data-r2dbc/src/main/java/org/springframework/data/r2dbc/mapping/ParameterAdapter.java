@@ -25,7 +25,7 @@ import org.springframework.util.ObjectUtils;
 
 /**
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 @SuppressWarnings("deprecation")
 public class ParameterAdapter implements io.r2dbc.spi.Parameter {

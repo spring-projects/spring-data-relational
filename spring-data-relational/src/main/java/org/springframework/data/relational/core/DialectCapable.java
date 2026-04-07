@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql.render;
+package org.springframework.data.relational.core;
+
+import org.springframework.data.relational.core.dialect.Dialect;
 
 /**
- * MySQL / MariaDB upsert using {@code INSERT ... ON DUPLICATE KEY UPDATE}.
- *
  * @author Christoph Strobl
  * @since 4.1
  */
-public enum MySqlUpsertRenderContext implements UpsertRenderContext {
+public interface DialectCapable {
 
-	INSTANCE;
-
-	@Override
-	public boolean supportsUpsert() {
-		return true;
-	}
+	Dialect getDialect();
 }

@@ -17,11 +17,13 @@ package org.springframework.data.relational.core.sql.render;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.relational.core.DialectCapable;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
@@ -34,10 +36,10 @@ import org.springframework.util.Assert;
 /**
  * {@link PartRenderer} for {@link Upsert} statements. Uses the {@link Upsert} interface accessors directly to obtain
  * the insert assignments and conflict columns, then delegates dialect-specific rendering to
- * {@link UpsertRenderContext#renderer()}.
+ * {@link UpsertStatementRenderers#forDialect(Dialect)}.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
 public class UpsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
@@ -61,31 +63,44 @@ public class UpsertStatementVisitor extends DelegatingVisitor implements PartRen
 
 		if (segment instanceof Upsert source) {
 
-			// TODO: this is highly inefficient - maybe we should just work with sqlidentifiers
-			Map<Column, CharSequence> insertColumns = new LinkedHashMap<>();
-			for (var assignment : source.getAssignments()) {
-				if (assignment instanceof AssignValue av) {
-					insertColumns.put(av.getColumn(), getBinding(av.getValue(), context));
-				}
-			}
+			Assert.isTrue(context.getUpsertRenderContext().supportsUpsert(), "Upsert is not supported by dialect");
 
-			Map<SqlIdentifier, CharSequence> bindings = new HashMap<>(insertColumns.size());
-			for (Entry<Column, CharSequence> e : insertColumns.entrySet()) {
-				if (bindings.put(e.getKey().getName(), e.getValue()) != null) {
-					throw new IllegalStateException("Duplicate key");
-				}
-			}
+			InsertColumnsAndBindings columnsAndBindings = resolveInsertColumnsAndBindings(source);
 
-			UpsertRenderContext upsertContext = context.getUpsertRenderContext();
-			UpsertRenderingContext renderingContext = UpsertRenderingContext.of(context, bindings::get);
-			String sql = upsertContext.renderer().render(source.getTable(), new UpsertStatementRenderer.Columns(
-					new ArrayList<>(insertColumns.keySet()), source.getConflictColumns(), bindings), renderingContext);
+			Dialect dialect = context instanceof DialectCapable dialectCapable ? dialectCapable.getDialect()
+					: AnsiDialect.INSTANCE;
+
+			UpsertStatementRenderer statementRenderer = UpsertStatementRenderers.forDialect(dialect);
+			UpsertRenderingContext renderingContext = UpsertRenderingContext.of(context, columnsAndBindings.bindings()::get);
+
+			String sql = statementRenderer.render(source.getTable(), new UpsertStatementRenderer.Columns(
+					columnsAndBindings.insertColumns(), source.getConflictColumns(), columnsAndBindings.bindings()), renderingContext);
 			builder.append(sql);
 
 			return Delegation.leave();
 		}
 
 		return Delegation.retain();
+	}
+
+	private InsertColumnsAndBindings resolveInsertColumnsAndBindings(Upsert source) {
+
+		var assignments = source.getAssignments();
+		List<Column> insertColumns = new ArrayList<>(assignments.size());
+		Map<SqlIdentifier, CharSequence> bindings = new HashMap<>(assignments.size());
+
+		for (var assignment : assignments) {
+			if (assignment instanceof AssignValue av) {
+				Column column = av.getColumn();
+				insertColumns.add(column);
+				CharSequence binding = getBinding(av.getValue(), context);
+				if (bindings.put(column.getName(), binding) != null) {
+					throw new IllegalStateException("Duplicate key %s".formatted(column.getName()));
+				}
+			}
+		}
+
+		return new InsertColumnsAndBindings(insertColumns, bindings);
 	}
 
 	CharSequence getBinding(Expression expression, RenderContext context) {
@@ -98,5 +113,8 @@ public class UpsertStatementVisitor extends DelegatingVisitor implements PartRen
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;
+	}
+
+	private record InsertColumnsAndBindings(List<Column> insertColumns, Map<SqlIdentifier, CharSequence> bindings) {
 	}
 }

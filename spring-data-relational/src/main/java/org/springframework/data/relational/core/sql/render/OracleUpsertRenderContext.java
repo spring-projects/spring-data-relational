@@ -18,14 +18,14 @@ package org.springframework.data.relational.core.sql.render;
 /**
  * Oracle MERGE upsert. Uses {@code SELECT ... FROM DUAL} for source values.
  *
- * @since 4.x
+ * @since 4.1
  */
 public enum OracleUpsertRenderContext implements UpsertRenderContext {
 
 	INSTANCE;
 
 	@Override
-	public UpsertStatementRenderer renderer() {
-		return UpsertStatementRenderers.oracle();
+	public boolean supportsUpsert() {
+		return true;
 	}
 }

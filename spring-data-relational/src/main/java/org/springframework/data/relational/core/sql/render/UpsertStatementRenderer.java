@@ -22,7 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -35,9 +34,9 @@ import org.springframework.data.relational.core.sql.Table;
  * {@link RenderContext}. Concrete renderers are defined in {@link UpsertStatementRenderers}.
  *
  * @author Christoph Strobl
- * @since 4.x
+ * @since 4.1
  */
-public interface UpsertStatementRenderer {
+interface UpsertStatementRenderer {
 
 	/**
 	 * Render the full upsert statement for {@code table}.
@@ -61,7 +60,8 @@ public interface UpsertStatementRenderer {
 		 * @param renderContext active SQL render context
 		 * @return context passed to {@link UpsertStatementRenderer#render}
 		 */
-		static UpsertRenderingContext of(RenderContext renderContext, Function<SqlIdentifier, CharSequence> bindMarkerResolution) {
+		static UpsertRenderingContext of(RenderContext renderContext,
+				Function<SqlIdentifier, CharSequence> bindMarkerResolution) {
 
 			return new UpsertRenderingContext() {
 
