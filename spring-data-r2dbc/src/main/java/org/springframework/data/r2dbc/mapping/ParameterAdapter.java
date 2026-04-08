@@ -84,7 +84,7 @@ public class ParameterAdapter implements io.r2dbc.spi.Parameter {
 		if (!(o instanceof ParameterAdapter that)) {
 			return false;
 		}
-		return Objects.equals(delegate, that.delegate) && inferredType.equals(that.inferredType);
+		return Objects.equals(delegate, that.delegate);
 	}
 
 	private boolean equals(Parameter that) {
@@ -93,7 +93,7 @@ public class ParameterAdapter implements io.r2dbc.spi.Parameter {
 
 	@Override
 	public int hashCode() {
-		return delegate != null ? delegate.hashCode() : -1;
+		return Objects.hashCode(delegate);
 	}
 
 	@Override

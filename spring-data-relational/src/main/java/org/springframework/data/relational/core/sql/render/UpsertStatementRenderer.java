@@ -207,7 +207,7 @@ interface UpsertStatementRenderer {
 		}
 
 		/**
-		 * Columns insert.
+		 * Columns to insert.
 		 */
 		public List<Column> insertColumns() {
 			return insertColumns;
