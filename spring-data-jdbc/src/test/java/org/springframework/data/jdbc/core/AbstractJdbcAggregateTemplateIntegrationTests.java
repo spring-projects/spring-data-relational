@@ -207,6 +207,42 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Test // GH-493
 	void upsertInsertsWhenIdDoesNotExistAndUpdatesWhenItExists() {
 
+		long id = 8891L;
+		withSqlServerIdentityInsertOn(template, "LEGO_SET", () -> {
+
+			LegoSet lego = new LegoSet();
+			lego.id = id;
+			lego.name = "upserted";
+			template.upsert(lego);
+
+			lego.name = "updated";
+			template.upsert(lego);
+
+			assertThat(template.findById(id, LegoSet.class).name).isEqualTo("updated");
+		});
+	}
+
+	@Test // GH-493
+	void upsertUpdatesExistingWithNullValues() {
+
+		long id = 8891L;
+		withSqlServerIdentityInsertOn(template, "LEGO_SET", () -> {
+
+			LegoSet lego = new LegoSet();
+			lego.id = id;
+			lego.name = "upserted";
+			template.upsert(lego);
+
+			lego.name = null;
+			template.upsert(lego);
+
+			assertThat(template.findById(id, LegoSet.class).name).isEqualTo(null);
+		});
+	}
+
+	@Test // GH-493
+	void upsertInsertsWhenIdDoesNotExistDoesNotUpdateExistingInsertOnlyColumns() {
+
 		withSqlServerIdentityInsertOn(template, "with_insert_only", () -> {
 
 			WithInsertOnly entity = new WithInsertOnly();
@@ -219,7 +255,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			entity.insertOnly = "updated";
 			template.upsert(entity);
 
-			assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("updated");
+			assertThat(template.findById(8888L, WithInsertOnly.class).insertOnly).isEqualTo("upserted");
 		});
 	}
 

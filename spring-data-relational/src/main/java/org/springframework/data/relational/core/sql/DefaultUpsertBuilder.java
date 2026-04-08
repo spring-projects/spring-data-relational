@@ -38,6 +38,7 @@ class DefaultUpsertBuilder
 	private final Table table;
 	private final List<Assignment> assignments = new ArrayList<>();
 	private final List<Column> conflictColumns = new ArrayList<>();
+	private final List<Column> updateColumns = new ArrayList<>();
 
 	DefaultUpsertBuilder(Table table) {
 
@@ -58,19 +59,39 @@ class DefaultUpsertBuilder
 
 		Assert.notNull(resolution, "ConflictResolution Consumer must not be null");
 
-		ConflictColumn conflictResolution = columns -> (OngoingConflictResolution) () -> {
-			conflictColumns.addAll(columns);
-			return DefaultUpsertBuilder.this;
+		ConflictColumn conflictResolution = columns -> new OngoingConflictResolution() {
+
+			@Override
+			public ConflictResolution updateRemainingColumns() {
+
+				conflictColumns.addAll(columns);
+
+				List<Column> toUpdate = assignments.stream().map(it -> (AssignValue) it).map(AssignValue::getColumn)
+					.filter(col -> conflictColumns.stream().noneMatch(it -> it.getName().equals(col.getName())))
+					.toList();
+				updateColumns.addAll(toUpdate);
+				return DefaultUpsertBuilder.this;
+			}
+
+			@Override
+			public ConflictResolution update(Collection<Column> columnsToUpdate) {
+
+				conflictColumns.addAll(columns);
+				updateColumns.addAll(columnsToUpdate);
+				return DefaultUpsertBuilder.this;
+			}
 		};
 
 		resolution.apply(conflictResolution);
 		return this;
 	}
 
+
+
 	@Override
 	public Upsert build() {
 		validate();
-		return new DefaultUpsert(this.table, this.assignments, this.conflictColumns);
+		return new DefaultUpsert(this.table, this.assignments, this.conflictColumns, this.updateColumns);
 	}
 
 	void validate() {

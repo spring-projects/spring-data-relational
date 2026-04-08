@@ -117,6 +117,22 @@ public interface UpsertBuilder {
 		 * @return the conflict resolution strategy.
 		 */
 		ConflictResolution updateRemainingColumns();
+
+		/**
+		 * Resolve the conflict by updating the given {@link Column columns} of the existing row.
+		 *
+		 * @return the conflict resolution strategy.
+		 */
+		default ConflictResolution update(Column... columns) {
+			return update(List.of(columns));
+		}
+
+		/**
+		 * Resolve the conflict by updating the given {@link Column columns} of the existing row.
+		 *
+		 * @return the conflict resolution strategy.
+		 */
+		ConflictResolution update(Collection<Column> columns);
 	}
 
 	/**

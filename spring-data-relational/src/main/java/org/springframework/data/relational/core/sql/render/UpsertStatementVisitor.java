@@ -74,7 +74,7 @@ public class UpsertStatementVisitor extends DelegatingVisitor implements PartRen
 			UpsertRenderingContext renderingContext = UpsertRenderingContext.of(context, columnsAndBindings.bindings()::get);
 
 			String sql = statementRenderer.render(source.getTable(), new UpsertStatementRenderer.Columns(
-					columnsAndBindings.insertColumns(), source.getConflictColumns(), columnsAndBindings.bindings()), renderingContext);
+					columnsAndBindings.insertColumns(), source.getConflictColumns(), source.getUpdateColumns(), columnsAndBindings.bindings()), renderingContext);
 			builder.append(sql);
 
 			return Delegation.leave();

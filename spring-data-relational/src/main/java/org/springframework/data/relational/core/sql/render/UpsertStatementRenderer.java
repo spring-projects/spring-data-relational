@@ -189,14 +189,13 @@ interface UpsertStatementRenderer {
 		private final List<Column> conflictColumns;
 		private final List<Column> updateColumns;
 
-		public Columns(List<Column> insertColumns, List<Column> conflictColumns,
+		public Columns(List<Column> insertColumns, List<Column> conflictColumns, List<Column> updateColumns,
 				Map<SqlIdentifier, CharSequence> bindings) {
 
 			this.bindings = bindings;
 			this.insertColumns = insertColumns;
 			this.conflictColumns = conflictColumns;
-			this.updateColumns = insertColumns.stream()
-					.filter(col -> conflictColumns.stream().noneMatch(it -> it.getName().equals(col.getName()))).toList();
+			this.updateColumns = updateColumns;
 		}
 
 		/**

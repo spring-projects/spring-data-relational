@@ -279,10 +279,11 @@ class DefaultStatementMapper implements StatementMapper {
 		Assert.notEmpty(conflictColumnIds, "Conflict columns must not be empty for upsert");
 
 		Column[] conflictColumns = conflictColumnIds.stream().map(table::column).toArray(Column[]::new);
+		Column[] updateColumns = upsertSpec.getUpdateColumns().stream().map(table::column).toArray(Column[]::new);
 
 		Upsert upsert = StatementBuilder.upsert(table) //
 				.insert(boundAssignments.getAssignments()) //
-				.onConflict(it -> it.with(conflictColumns).updateRemainingColumns()) //
+				.onConflict(it -> it.with(conflictColumns).update(updateColumns)) //
 				.build();
 
 		return new DefaultPreparedOperation<>(upsert, this.renderContext, bindings);

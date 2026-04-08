@@ -59,4 +59,7 @@ public interface Upsert extends Segment, Visitable { // TODO: should we rename t
 
 	/** @return the columns that identify a conflicting row. */
 	List<Column> getConflictColumns();
+
+	/** @return the columns to be assigned in the UPDATE part. */
+	List<Column> getUpdateColumns();
 }

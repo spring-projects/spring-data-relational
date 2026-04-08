@@ -450,6 +450,8 @@ public class SqlGenerator {
 		insert.addAll(columns.getInsertableColumns());
 		insert.addAll(additionalColumns);
 
+		Set<Column> updateColumns = columns.updatableColumns.stream().map(table::column).collect(Collectors.toSet());
+
 		List<Column> idColumns = getIdColumns();
 		List<SqlIdentifier> conflictColumns = idColumns.stream().map(Column::getName).toList();
 		insert.addAll(conflictColumns);
@@ -460,7 +462,7 @@ public class SqlGenerator {
 
 		return StatementBuilder.upsert(table) //
 				.insert(assignments) //
-				.onConflict(it -> it.with(idColumns).updateRemainingColumns()) //
+				.onConflict(it -> it.with(idColumns).update(updateColumns)) //
 				.build();
 	}
 

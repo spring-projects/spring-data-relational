@@ -42,16 +42,18 @@ class MergeUpsertRenderContextUnitTests {
 		List<SqlIdentifier> insertColumns = List.of(SqlIdentifier.unquoted("tenant_id"), SqlIdentifier.unquoted("id"),
 				SqlIdentifier.unquoted("name"));
 		List<SqlIdentifier> conflictColumns = List.of(SqlIdentifier.unquoted("tenant_id"), SqlIdentifier.unquoted("id"));
+		List<SqlIdentifier> updateColumns = List.of(SqlIdentifier.unquoted("name"));
 
 		UpsertRenderingContext ctx = UpsertRenderingContext.of(
 				new RenderContextFactory(AnsiDialect.INSTANCE).createRenderContext(), it -> ":%s".formatted(it.getReference()));
 		List<Column> insertCols = insertColumns.stream().map(id -> Column.create(id, TABLE)).toList();
 		List<Column> conflictCols = conflictColumns.stream().map(id -> Column.create(id, TABLE)).toList();
+		List<Column> updateCols = updateColumns.stream().map(id -> Column.create(id, TABLE)).toList();
 		Map<SqlIdentifier, CharSequence> bindings = Map.of(insertCols.get(0).getName(),
 				insertCols.get(0).getName().getReference());
 
 		String sql = UpsertStatementRenderers.merge().render(TABLE,
-				new UpsertStatementRenderer.Columns(insertCols, conflictCols, bindings), ctx);
+				new UpsertStatementRenderer.Columns(insertCols, conflictCols, updateCols, bindings), ctx);
 
 		assertThat(sql).contains("ON \"_t\".tenant_id = \"_s\".tenant_id AND \"_t\".id = \"_s\".id");
 		assertThat(sql).contains("WHEN MATCHED THEN UPDATE SET \"_t\".name = \"_s\".name");
