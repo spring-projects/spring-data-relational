@@ -40,9 +40,9 @@ class UpsertStatementRenderers {
 	static final SqlIdentifier MERGE_SOURCE_TABLE_ALIAS = SqlIdentifier.quoted("_s");
 
 	/** Return the {@link UpsertStatementRenderer} for the given {@link Dialect}. */
-	static UpsertStatementRenderer forDialect(Dialect dialect) {
+	static UpsertStatementRenderer from(Dialect dialect) {
 
-		String dialectName = dialect.getName().toLowerCase(Locale.US).replace("dialect", "");
+		String dialectName = dialect.getName().toLowerCase(Locale.ROOT).replace("dialect", "");
 		return switch (dialectName) {
 			case "mysql", "mariadb" -> mySql();
 			case "oracle" -> oracle();
@@ -52,22 +52,37 @@ class UpsertStatementRenderers {
 		};
 	}
 
+	/**
+	 * {@code MERGE} upsert statement renderer.
+	 */
 	static UpsertStatementRenderer merge() {
 		return Merge.INSTANCE;
 	}
 
+	/**
+	 * MySQL-specific renderer using {@code INSERT ... ON DUPLICATE KEY UPDATE}.
+	 */
 	static UpsertStatementRenderer mySql() {
 		return MySql.INSTANCE;
 	}
 
+	/**
+	 * Oracle-specific renderer using {@code MERGE} with {@code SELECT ... FROM DUAL} as source.
+	 */
 	static UpsertStatementRenderer oracle() {
 		return Oracle.INSTANCE;
 	}
 
+	/**
+	 * PostgreSQL-specific renderer using {@code INSERT ... ON CONFLICT ... DO UPDATE SET} / {@code DO NOTHING}.
+	 */
 	static UpsertStatementRenderer postgres() {
 		return Postgres.INSTANCE;
 	}
 
+	/**
+	 * SQL Server-specific renderer using {@code MERGE} with a trailing semicolon (batch separator).
+	 */
 	static UpsertStatementRenderer sqlServer() {
 		return SqlServer.INSTANCE;
 	}
@@ -124,9 +139,12 @@ class UpsertStatementRenderers {
 					updateSetClause, //
 					insertClause);
 		}
+
 	}
 
-	/** PostgreSQL {@code INSERT ... ON CONFLICT ... DO UPDATE SET} / {@code DO NOTHING}. */
+	/**
+	 * PostgreSQL {@code INSERT ... ON CONFLICT ... DO UPDATE SET} / {@code DO NOTHING}.
+	 */
 	static class Postgres implements UpsertStatementRenderer {
 
 		static final Postgres INSTANCE = new Postgres();
@@ -156,6 +174,7 @@ class UpsertStatementRenderers {
 			return "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s".formatted(//
 					tableName, insertColumnNames, bindMarkers, conflictColumnNames, setValues);
 		}
+
 	}
 
 	/**
@@ -198,11 +217,14 @@ class UpsertStatementRenderers {
 			 *
 			 * Note to future self: We cannot use INSERT IGNORE here, as it would suppress data validation errors.
 			 */
+
 			return columns.conflictColumns().subList(0, 1);
 		}
 	}
 
-	/** Oracle {@code MERGE} with {@code SELECT ... FROM DUAL} as source. */
+	/**
+	 * Oracle {@code MERGE} with {@code SELECT ... FROM DUAL} as source.
+	 */
 	static class Oracle implements UpsertStatementRenderer {
 
 		static final Oracle INSTANCE = new Oracle();
@@ -248,6 +270,7 @@ class UpsertStatementRenderers {
 					updateSetClause, //
 					insertClause);
 		}
+
 	}
 
 	/**
@@ -265,4 +288,5 @@ class UpsertStatementRenderers {
 		}
 
 	}
+
 }

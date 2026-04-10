@@ -26,7 +26,7 @@ import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
  * @author Christoph Strobl
  * @since 4.1
  */
-public interface Upsert extends Segment, Visitable { // TODO: should we rename this to Merge?
+public interface Upsert extends Segment, Visitable {
 
 	/**
 	 * Start building an {@link Upsert} for the given {@link Table}.
@@ -51,15 +51,24 @@ public interface Upsert extends Segment, Visitable { // TODO: should we rename t
 		return builder.build();
 	}
 
-	/** @return the target table. */
+	/**
+	 * Return the target table.
+	 */
 	Table getTable();
 
-	/** @return the column-value assignments for the INSERT part. */
+	/**
+	 * Return the column-value assignments for the {@code INSERT} part.
+	 */
 	List<Assignment> getAssignments();
 
-	/** @return the columns that identify a conflicting row. */
+	/**
+	 * Return columns that identify a conflicting row.
+	 */
 	List<Column> getConflictColumns();
 
-	/** @return the columns to be assigned in the UPDATE part. */
+	/**
+	 * Return columns to be assigned in the {@code UPDATE} part.
+	 */
 	List<Column> getUpdateColumns();
+
 }

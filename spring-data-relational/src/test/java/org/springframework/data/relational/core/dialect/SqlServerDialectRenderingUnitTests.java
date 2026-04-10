@@ -41,17 +41,17 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * @author Chirag Tailor
  * @author Christoph Strobl
  */
-public class SqlServerDialectRenderingUnitTests {
+class SqlServerDialectRenderingUnitTests {
 
 	private final RenderContextFactory factory = new RenderContextFactory(new SqlServerDialect());
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		factory.setNamingStrategy(NamingStrategies.asIs());
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSimpleSelect() {
+	void shouldRenderSimpleSelect() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).build();
@@ -62,7 +62,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldApplyNamingStrategy() {
+	void shouldApplyNamingStrategy() {
 
 		factory.setNamingStrategy(NamingStrategies.toUpper());
 
@@ -75,7 +75,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithLimit() {
+	void shouldRenderSelectWithLimit() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).limit(10).build();
@@ -87,7 +87,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithOffset() {
+	void shouldRenderSelectWithOffset() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).offset(10).build();
@@ -99,7 +99,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithLimitOffset() {
+	void shouldRenderSelectWithLimitOffset() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).limit(10).offset(20).build();
@@ -111,7 +111,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithLimitOffsetAndOrderBy() {
+	void shouldRenderSelectWithLimitOffsetAndOrderBy() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).orderBy(table.column("column_1")).limit(10)
@@ -123,7 +123,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLockWrite() {
+	void shouldRenderSelectWithLockWrite() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
@@ -135,7 +135,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLockRead() {
+	void shouldRenderSelectWithLockRead() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;
@@ -147,7 +147,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitOffsetWithLockWrite() {
+	void shouldRenderSelectWithLimitOffsetWithLockWrite() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
@@ -160,7 +160,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitOffsetWithLockRead() {
+	void shouldRenderSelectWithLimitOffsetWithLockRead() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;
@@ -173,7 +173,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitOffsetAndOrderByWithLockWrite() {
+	void shouldRenderSelectWithLimitOffsetAndOrderByWithLockWrite() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
@@ -187,7 +187,7 @@ public class SqlServerDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitOffsetAndOrderByWithLockRead() {
+	void shouldRenderSelectWithLimitOffsetAndOrderByWithLockRead() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;
@@ -261,4 +261,5 @@ public class SqlServerDialectRenderingUnitTests {
 		assertThat(sql).isEqualTo(
 				"MERGE INTO my_table \"_t\" USING (VALUES (:id, :tenant_id)) AS \"_s\" (id, tenant_id) ON \"_t\".id = \"_s\".id AND \"_t\".tenant_id = \"_s\".tenant_id WHEN NOT MATCHED THEN INSERT (id, tenant_id) VALUES (\"_s\".id, \"_s\".tenant_id);");
 	}
+
 }

@@ -31,7 +31,7 @@ import org.springframework.data.relational.core.sql.Where;
  * @author Myeonghyeon Lee
  * @since 1.1
  */
-class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
+class SelectStatementVisitor extends DelegatingVisitor implements RenderingVisitor {
 
 	private final RenderContext context;
 	private final SelectRenderContext selectRenderContext;

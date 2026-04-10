@@ -54,6 +54,15 @@ public interface Renderer {
 	String render(Update update);
 
 	/**
+	 * Render the {@link Upsert} AST into a SQL statement.
+	 *
+	 * @param upsert the statement to render, must not be {@literal null}.
+	 * @return the rendered statement.
+	 * @since 4.1
+	 */
+	String render(Upsert upsert);
+
+	/**
 	 * Render the {@link Delete} AST into a SQL statement.
 	 *
 	 * @param delete the statement to render, must not be {@literal null}.
@@ -61,11 +70,4 @@ public interface Renderer {
 	 */
 	String render(Delete delete);
 
-	/**
-	 * Render the {@link Upsert} AST into a SQL statement.
-	 *
-	 * @param upsert the statement to render, must not be {@literal null}.
-	 * @return the rendered statement.
-	 */
-	String render(Upsert upsert);
 }

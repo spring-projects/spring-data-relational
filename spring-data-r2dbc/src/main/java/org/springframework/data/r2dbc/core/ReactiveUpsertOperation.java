@@ -23,9 +23,11 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * The {@link ReactiveUpsertOperation} interface allows creation and execution of {@code UPSERT} (insert-or-update)
  * operations in a fluent API style.
  * <p>
- * By default, the table to operate on is derived from the initial {@link Class domainType} and can be defined there
- * via {@link org.springframework.data.relational.core.mapping.Table} annotation. Using {@code inTable} allows
- * overriding the table name for the execution.
+ * By default, the table to operate on is derived from the initial {@link Class domainType} and can be defined there via
+ * {@link org.springframework.data.relational.core.mapping.Table} annotation. Using {@code inTable} allows overriding
+ * the table name for the execution.
+ * <p>
+ * <strong>Note:</strong> Upserts currently do not support optimistic locking.
  *
  * <pre>
  *     <code>
@@ -79,6 +81,7 @@ public interface ReactiveUpsertOperation {
 		 * @throws IllegalArgumentException if {@link SqlIdentifier table} is {@literal null}.
 		 */
 		TerminatingUpsert<T> inTable(SqlIdentifier table);
+
 	}
 
 	/**
@@ -95,6 +98,7 @@ public interface ReactiveUpsertOperation {
 		 * @see Mono
 		 */
 		Mono<T> one(T object);
+
 	}
 
 	/**

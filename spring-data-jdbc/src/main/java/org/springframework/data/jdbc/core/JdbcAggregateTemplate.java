@@ -41,7 +41,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
-import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
@@ -273,7 +272,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 
 		Assert.notNull(instance, "Aggregate instance must not be null");
 
-		return performSave(new EntityAndChangeCreator<>(instance, entity -> createUpsertChange(entity)));
+		return performSave(new EntityAndChangeCreator<>(instance, this::createUpsertChange));
 	}
 
 	private <T> List<T> saveInBatch(Iterable<T> instances, Function<T, AggregateChangeCreator<T>> changes) {
@@ -632,13 +631,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 				: entity -> createUpdateChange(prepareVersionForUpdate(entity));
 	}
 
-	private <T> RootAggregateChange<T> createUpsertChange(T instance) {
-
-		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
-		new RelationalEntityUpsertWriter<T>(context).write(instance, aggregateChange);
-		return aggregateChange;
-	}
-
 	private <T> RootAggregateChange<T> createInsertChange(T instance) {
 
 		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
@@ -650,6 +642,13 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
 				entityAndVersion.version);
 		new RelationalEntityUpdateWriter<T>(context).write(entityAndVersion.entity, aggregateChange);
+		return aggregateChange;
+	}
+
+	private <T> RootAggregateChange<T> createUpsertChange(T instance) {
+
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
+		new RelationalEntityUpsertWriter<T>(context).write(instance, aggregateChange);
 		return aggregateChange;
 	}
 

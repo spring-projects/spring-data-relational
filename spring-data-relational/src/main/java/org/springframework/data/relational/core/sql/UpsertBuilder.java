@@ -22,7 +22,11 @@ import java.util.function.Function;
 /**
  * Fluent builder for {@link Upsert} statements.
  * <p>
- * Usage: {@code StatementBuilder.upsert(table).insert(col.set(marker), …).onConflict(idCol).update()}
+ * Usage:
+ *
+ * <pre class="code">
+ *     StatementBuilder.upsert(table).insert(col.set(marker), …).onConflict(idCol).update();
+ * </pre>
  *
  * @author Christoph Strobl
  * @since 4.1

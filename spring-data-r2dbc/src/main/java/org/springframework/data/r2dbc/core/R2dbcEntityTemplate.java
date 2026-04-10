@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -582,66 +584,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				.last(entity).flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
-	@Override
-	public <T> Mono<T> upsert(T entity) throws DataAccessException {
-
-		Assert.notNull(entity, "Entity must not be null");
-
-		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
-		return doUpsert(entity, persistentEntity, persistentEntity.getQualifiedTableName());
-	}
-
-	<T> Mono<T> doUpsert(T entity, SqlIdentifier tableName) {
-
-		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
-		return doUpsert(entity, persistentEntity, tableName);
-	}
-
-	<T> Mono<T> doUpsert(T entity, RelationalPersistentEntity<T> persistentEntity, SqlIdentifier tableName) {
-
-		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
-
-			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(onBeforeConvert);
-
-			return maybeCallBeforeSave(onBeforeConvert, outboundRow, tableName) //
-					.flatMap(entityToSave -> doUpsert(entityToSave, tableName, outboundRow, persistentEntity));
-		});
-	}
-
-	private <T> Mono<T> doUpsert(T entity, SqlIdentifier tableName, OutboundRow outboundRow,
-			RelationalPersistentEntity<T> persistentEntity) {
-
-		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
-		StatementMapper.UpsertSpec upsert = mapper.createUpsert(tableName);
-
-		for (SqlIdentifier column : outboundRow.keySet()) {
-			upsert = upsert.withColumn(column, ParameterAdapter.wrap(outboundRow.get(column)));
-		}
-
-		List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(persistentEntity.getType());
-		for (SqlIdentifier idColumn : identifierColumns) {
-			upsert = upsert.withConflictColumn(idColumn);
-		}
-
-		List<SqlIdentifier> updateColumns = new ArrayList<>();
-		persistentEntity.forEach(p -> {
-			if (!p.isInsertOnly() && !identifierColumns.contains(p.getColumnName())) {
-				updateColumns.add(p.getColumnName());
-			}
-		});
-
-		upsert = upsert.withUpdateColumns(updateColumns);
-
-		PreparedOperation<?> operation = mapper.getMappedObject(upsert);
-
-		return this.databaseClient.sql(operation) //
-				.filter(statementFilterFunction) //
-				.fetch() //
-				.rowsUpdated() //
-				.thenReturn(entity) //
-				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
-	}
-
 	@SuppressWarnings("unchecked")
 	private <T> T setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
 
@@ -756,6 +698,66 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 						sink.error(OptimisticLockingUtils.updateFailed(entity, version, persistentEntity));
 					}
 				}).then(maybeCallAfterSave(entity, outboundRow, tableName));
+	}
+
+	@Override
+	public <T> Mono<T> upsert(T entity) throws DataAccessException {
+
+		Assert.notNull(entity, "Entity must not be null");
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
+		return doUpsert(entity, persistentEntity, persistentEntity.getQualifiedTableName());
+	}
+
+	<T> Mono<T> doUpsert(T entity, SqlIdentifier tableName) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
+		return doUpsert(entity, persistentEntity, tableName);
+	}
+
+	<T> Mono<T> doUpsert(T entity, RelationalPersistentEntity<T> persistentEntity, SqlIdentifier tableName) {
+
+		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
+
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(onBeforeConvert);
+
+			return maybeCallBeforeSave(onBeforeConvert, outboundRow, tableName) //
+					.flatMap(entityToSave -> doUpsert(entityToSave, tableName, outboundRow, persistentEntity));
+		});
+	}
+
+	private <T> Mono<T> doUpsert(T entity, SqlIdentifier tableName, OutboundRow outboundRow,
+			RelationalPersistentEntity<T> persistentEntity) {
+
+		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+		StatementMapper.UpsertSpec upsert = mapper.createUpsert(tableName);
+
+		for (SqlIdentifier column : outboundRow.keySet()) {
+			upsert = upsert.withColumn(column, ParameterAdapter.wrap(Objects.requireNonNull(outboundRow.get(column))));
+		}
+
+		List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(persistentEntity.getType());
+		for (SqlIdentifier idColumn : identifierColumns) {
+			upsert = upsert.withConflictColumn(idColumn);
+		}
+
+		List<SqlIdentifier> updateColumns = new ArrayList<>();
+		persistentEntity.forEach(p -> {
+			if (!p.isInsertOnly() && !identifierColumns.contains(p.getColumnName())) {
+				updateColumns.add(p.getColumnName());
+			}
+		});
+
+		upsert = upsert.withUpdateColumns(updateColumns);
+
+		PreparedOperation<?> operation = mapper.getMappedObject(upsert);
+
+		return this.databaseClient.sql(operation) //
+				.filter(statementFilterFunction) //
+				.fetch() //
+				.rowsUpdated() //
+				.thenReturn(entity) //
+				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
 	@SuppressWarnings("unchecked")

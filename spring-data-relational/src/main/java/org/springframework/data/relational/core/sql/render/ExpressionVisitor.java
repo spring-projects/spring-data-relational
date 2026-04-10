@@ -169,6 +169,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	 * @since 2.3
 	 */
 	enum AliasHandling {
+
 		/**
 		 * The alias does not get used.
 		 */
@@ -178,5 +179,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		 * The alias gets used. This means aliased columns get rendered as {@literal <alias>}.
 		 */
 		USE
+
 	}
+
 }

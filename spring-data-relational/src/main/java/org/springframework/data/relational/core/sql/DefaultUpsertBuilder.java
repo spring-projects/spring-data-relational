@@ -67,8 +67,7 @@ class DefaultUpsertBuilder
 				conflictColumns.addAll(columns);
 
 				List<Column> toUpdate = assignments.stream().map(it -> (AssignValue) it).map(AssignValue::getColumn)
-					.filter(col -> conflictColumns.stream().noneMatch(it -> it.getName().equals(col.getName())))
-					.toList();
+						.filter(col -> conflictColumns.stream().noneMatch(it -> it.getName().equals(col.getName()))).toList();
 				updateColumns.addAll(toUpdate);
 				return DefaultUpsertBuilder.this;
 			}
@@ -86,8 +85,6 @@ class DefaultUpsertBuilder
 		return this;
 	}
 
-
-
 	@Override
 	public Upsert build() {
 		validate();
@@ -100,17 +97,16 @@ class DefaultUpsertBuilder
 
 		for (Column column : this.conflictColumns) {
 
-			boolean present = this.assignments.stream().map(it -> {
-				if (it instanceof AssignValue av) {
-					return av.getColumn();
+			for (Assignment assignment : this.assignments) {
+				if (assignment instanceof AssignValue av) {
+					if (ObjectUtils.nullSafeEquals(column.getName().getReference(), av.getColumn().getName().getReference())) {
+						return;
+					}
 				}
-				return null;
-			}).anyMatch(it -> ObjectUtils.nullSafeEquals(column.getName().getReference(),
-					it != null ? it.getName().getReference() : null));
-
-			if (!present) {
-				throw new IllegalStateException("No value for conflict column [%s]".formatted(column.getName().getReference()));
 			}
+
+			throw new IllegalStateException("No value for conflict column [%s]".formatted(column.getName().getReference()));
 		}
 	}
+
 }

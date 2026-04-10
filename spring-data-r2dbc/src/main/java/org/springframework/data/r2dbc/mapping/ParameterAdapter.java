@@ -21,9 +21,12 @@ import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.r2dbc.core.Parameter;
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
+ * Adapter for a {@link Parameter} to an {@link io.r2dbc.spi.Parameter}.
+ *
  * @author Christoph Strobl
  * @since 4.1
  */
@@ -51,11 +54,13 @@ public class ParameterAdapter implements io.r2dbc.spi.Parameter {
 
 	/**
 	 * Wraps a {@link Parameter} into an {@link io.r2dbc.spi.Parameter}.
-	 * 
-	 * @param parameter can be {@literal null}.
+	 *
+	 * @param parameter
 	 * @return new instance of {@link ParameterAdapter}.
 	 */
-	public static io.r2dbc.spi.Parameter wrap(@Nullable Parameter parameter) {
+	public static io.r2dbc.spi.Parameter wrap(Parameter parameter) {
+
+		Assert.notNull(parameter, "Parameter must not be null");
 		return new ParameterAdapter(parameter);
 	}
 

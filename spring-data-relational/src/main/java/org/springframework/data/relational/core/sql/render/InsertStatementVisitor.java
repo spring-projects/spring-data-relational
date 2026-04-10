@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @since 1.1
  */
-class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
+class InsertStatementVisitor extends DelegatingVisitor implements RenderingVisitor {
 
 	private final StringBuilder builder = new StringBuilder();
 	private final StringBuilder into = new StringBuilder();
@@ -137,4 +137,5 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 			into.append(it);
 		});
 	}
+
 }

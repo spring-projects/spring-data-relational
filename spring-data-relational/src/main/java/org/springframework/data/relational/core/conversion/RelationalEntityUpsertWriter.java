@@ -38,4 +38,5 @@ public class RelationalEntityUpsertWriter<T> implements EntityWriter<T, RootAggr
 	public void write(T root, RootAggregateChange<T> aggregateChange) {
 		new WritingContext<>(context, root, aggregateChange).upsert();
 	}
+
 }

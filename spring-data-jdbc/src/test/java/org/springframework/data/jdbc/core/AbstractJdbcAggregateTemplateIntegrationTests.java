@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.core;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestConfiguration.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
@@ -231,12 +230,22 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			LegoSet lego = new LegoSet();
 			lego.id = id;
 			lego.name = "upserted";
+
+			Manual manual = new Manual();
+			manual.id = 42L;
+			manual.content = "Accelerates to 99% of light speed; Destroys almost everything. See https://what-if.xkcd.com/1/";
+			lego.manual = manual;
+
 			template.upsert(lego);
 
 			lego.name = null;
 			template.upsert(lego);
 
-			assertThat(template.findById(id, LegoSet.class).name).isEqualTo(null);
+			LegoSet loaded = template.findById(id, LegoSet.class);
+
+			assertThat(loaded.name).isEqualTo(null);
+			assertThat(loaded.manual).isNotNull();
+			assertThat(loaded.manual.content).isEqualTo(manual.content);
 		});
 	}
 

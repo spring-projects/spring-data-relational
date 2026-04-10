@@ -4,7 +4,7 @@
 `R2dbcEntityTemplate` is the central entrypoint for Spring Data R2DBC.
 It provides direct entity-oriented methods and a more narrow, fluent interface for typical ad-hoc use-cases, such as querying, inserting, updating, and deleting data.
 
-The entry points (`insert()`, `select()`, `update()`, and others) follow a natural naming schema based on the operation to be run.
+The entry points (`insert()`, `select()`, `update()`, `upsert()`, and others) follow a natural naming schema based on the operation to be run.
 Moving on from the entry point, the API is designed to offer only context-dependent methods that lead to a terminating method that creates and runs a SQL statement.
 Spring Data R2DBC uses a `R2dbcDialect` abstraction to determine bind markers, pagination support and the data types natively supported by the underlying driver.
 
@@ -38,7 +38,8 @@ The following insert and update operations are available:
 A similar set of insert operations is also available:
 
 * `Mono<T>` *insert* `(T objectToSave)`: Insert the object to the default table.
-* `Mono<T>` *update* `(T objectToSave)`: Insert the object to the default table.
+* `Mono<T>` *update* `(T objectToSave)`: Update the object in the default table.
+* `Mono<T>` *upsert* `(T objectToSave)`: Upsert (merge) the object to the default table.
 
 Table names can be customized by using the fluent API.
 
@@ -145,6 +146,31 @@ include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=update]
 <3> Specify a query that translates into a `WHERE` clause.
 <4> Apply the `Update` object.
 Set in this case `age` to `42` and return the number of affected rows.
+
+[[r2dbc.entityoperations.fluent-api.upsert]]
+== Upserting Data
+
+`R2dbcEntityOperations` provides an `upsert(instance)` operation for cases where you need to persist an entity in a single database round-trip without prior existence checks.
+The operation performs a native database upsert: Insert the row when no matching row for the associated primary exists, update it otherwise.
+
+Note that this operation requires the entity instance to have an identifier value.
+Database dialect support is required as well: The feature is available for PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, and HSQLDB.
+
+NOTE: Upserts currently do not support optimistic locking.
+
+Upserting data starts by specifying the object to upsert by accepting the `objectToSave`.
+Consider the following upsert operation:
+
+[source,java]
+----
+Person modified = …
+
+include::example$r2dbc/R2dbcEntityTemplateSnippets.java[tag=upsert]
+----
+
+<1> Update `Person` objects and apply mapping based on mapping metadata.
+<2> Provide the object to be upserted.
+
 
 [[r2dbc.entityoperations.fluent-api.delete]]
 == Deleting Data

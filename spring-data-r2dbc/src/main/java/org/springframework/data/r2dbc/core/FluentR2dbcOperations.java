@@ -24,4 +24,4 @@ package org.springframework.data.r2dbc.core;
  * @see R2dbcEntityOperations
  */
 public interface FluentR2dbcOperations extends ReactiveSelectOperation, ReactiveInsertOperation,
-		ReactiveUpdateOperation, ReactiveDeleteOperation, ReactiveUpsertOperation {}
+		ReactiveUpdateOperation, ReactiveUpsertOperation, ReactiveDeleteOperation {}

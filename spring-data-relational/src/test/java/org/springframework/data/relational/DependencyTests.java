@@ -17,14 +17,8 @@ package org.springframework.data.relational;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.sql.render.MySqlUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.OracleUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.PostgresUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.data.relational.core.sql.render.SqlServerUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -43,7 +37,7 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
  * @author Mark Paluch
  * @author Christoph Strobl
  */
-public class DependencyTests {
+class DependencyTests {
 
 	@Test
 	void cycleFree() {
@@ -53,14 +47,7 @@ public class DependencyTests {
 				.withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_JARS) // we just analyze the code of this module.
 				.importPackages("org.springframework.data.relational") //
 				.that(onlySpringData()) //
-				.that(ignore(SelectRenderContext.class)) //
-				.that(ignore(UpsertRenderContext.class)) //
-				.that(ignore(PostgresUpsertRenderContext.class)) //
-				.that(ignore(MySqlUpsertRenderContext.class)) //
-				.that(ignore(OracleUpsertRenderContext.class)) //
-				.that(ignore(SqlServerUpsertRenderContext.class)) //
-				.that(ignore(StandardSqlUpsertRenderContext.class)) //
-				.that(ignore("org.springframework.data.relational.core.sql.DefaultUpsert")) //
+				.that(ignorePackageAndSubpackages("org.springframework.data.relational.core.sql")) //
 				.that(ignore(RenderContextFactory.class));
 
 		ArchRule rule = SlicesRuleDefinition.slices() //

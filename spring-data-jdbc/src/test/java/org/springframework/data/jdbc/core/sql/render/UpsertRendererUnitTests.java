@@ -19,17 +19,25 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.jdbc.core.convert.NonQuotingDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcOracleDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.Upsert;
+import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
- * Unit tests for rendering {@link Upsert} AST via {@link SqlRenderer} with dialect-specific
- * {@link org.springframework.data.relational.core.sql.render.UpsertRenderContext}.
+ * Unit tests for rendering {@link Upsert}.
+ *
+ * @author Christoph Strobl
  */
 class UpsertRendererUnitTests {
 
@@ -41,8 +49,7 @@ class UpsertRendererUnitTests {
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(org.springframework.data.jdbc.core.convert.NonQuotingDialect.INSTANCE)
-				.createRenderContext();
+		RenderContext context = getRenderContext(NonQuotingDialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
@@ -57,8 +64,7 @@ class UpsertRendererUnitTests {
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect.INSTANCE)
-				.createRenderContext();
+		RenderContext context = getRenderContext(JdbcPostgresDialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
@@ -73,8 +79,7 @@ class UpsertRendererUnitTests {
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect.INSTANCE)
-				.createRenderContext();
+		RenderContext context = getRenderContext(JdbcMySqlDialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
@@ -89,8 +94,7 @@ class UpsertRendererUnitTests {
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect.INSTANCE)
-				.createRenderContext();
+		RenderContext context = getRenderContext(JdbcSqlServerDialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
@@ -105,8 +109,7 @@ class UpsertRendererUnitTests {
 				.insert(table.column("id").set(SQL.bindMarker(":id")), table.column("name").set(SQL.bindMarker(":name")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(org.springframework.data.jdbc.core.dialect.JdbcH2Dialect.INSTANCE)
-				.createRenderContext();
+		RenderContext context = getRenderContext(JdbcH2Dialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
@@ -120,10 +123,15 @@ class UpsertRendererUnitTests {
 		Upsert upsert = StatementBuilder.upsert(table).insert(table.column("id").set(SQL.bindMarker(":id")))
 				.onConflict(it -> it.with(table.column("id")).updateRemainingColumns()).build();
 
-		var context = new RenderContextFactory(JdbcOracleDialect.INSTANCE).createRenderContext();
+		RenderContext context = getRenderContext(JdbcOracleDialect.INSTANCE);
 		String sql = SqlRenderer.create(context).render(upsert);
 
 		assertThat(sql).isEqualToIgnoringWhitespace(
 				"MERGE INTO ent \"_t\" USING (SELECT :id AS id FROM DUAL) \"_s\" ON (\"_t\".id = \"_s\".id) WHEN NOT MATCHED THEN INSERT (id) VALUES (\"_s\".id)");
 	}
+
+	private RenderContext getRenderContext(Dialect dialect) {
+		return new RenderContextFactory(dialect).createRenderContext();
+	}
+
 }

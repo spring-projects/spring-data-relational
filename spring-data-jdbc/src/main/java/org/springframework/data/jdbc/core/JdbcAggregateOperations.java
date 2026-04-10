@@ -67,7 +67,7 @@ public interface JdbcAggregateOperations {
 	<T> List<T> saveAll(Iterable<T> instances);
 
 	/**
-	 * Dedicated insert function. This skips the test if the aggregate root is new and makes an insert.
+	 * Dedicated insert function. This skips the check whether the aggregate root is new and makes an insert.
 	 * <p>
 	 * This is useful if the client provides an id for new aggregate roots.
 	 * </p>
@@ -92,8 +92,8 @@ public interface JdbcAggregateOperations {
 	<T> Iterable<T> insertAll(Iterable<T> instances);
 
 	/**
-	 * Dedicated update function. This skips the test if the aggregate root is new or not and always performs an update
-	 * operation.
+	 * Dedicated update function. This skips the check whether the aggregate root is new or not and always performs an
+	 * update operation.
 	 *
 	 * @param instance the aggregate root of the aggregate to be inserted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
@@ -116,13 +116,15 @@ public interface JdbcAggregateOperations {
 	<T> List<T> updateAll(Iterable<T> instances);
 
 	/**
-	 * Upserts a single aggregate root, specifically insert if the row with the given identifier does not exist or update
+	 * Upserts an aggregate root, specifically insert if the row with the given identifier does not exist or update
 	 * otherwise. The identifier must be already assigned. Only supported when the dialect supports single-statement
 	 * upsert.
 	 * <p>
 	 * Typically, this operation uses {@code MERGE} or {@code INSERT ... ON CONFLICT} syntax.
+	 * <p>
+	 * <strong>Note:</strong> Upserts currently do not support optimistic locking.
 	 *
-	 * @param instance the aggregate root to upsert. Must not be {@code null}. Must have an id set.
+	 * @param instance the aggregate root to upsert. Must not be {@code null} and must have an id set.
 	 * @param <T> the type of the aggregate root.
 	 * @return the same instance (possibly with a generated id set if the dialect returns one).
 	 * @throws UnsupportedOperationException if the dialect or {@link DataAccessStrategy} does not support upsert.

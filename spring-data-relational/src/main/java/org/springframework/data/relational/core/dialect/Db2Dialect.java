@@ -20,8 +20,6 @@ import java.util.Collections;
 
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
  * An SQL dialect for DB2.

@@ -16,16 +16,44 @@
 package org.springframework.data.relational.core.sql.render;
 
 /**
- * Standard SQL {@code MERGE} upsert for dialects that support it (like H2, HSQLDB, SQL Server, DB2).
- * <p>
- * Uses a table value constructor {@code (VALUES (?, ?)) AS s (col1, col2)} as the source so that no SELECT is used.
- *
  * @author Christoph Strobl
+ * @author Mark Paluch
  * @since 4.1
  */
-public enum StandardSqlUpsertRenderContext implements UpsertRenderContext {
+public enum UpsertRenderContexts implements UpsertRenderContext {
 
-	INSTANCE;
+	/**
+	 * MySQL / MariaDB upsert using {@code INSERT ... ON DUPLICATE KEY UPDATE}.
+	 */
+	MYSQL,
+
+	/**
+	 * Oracle MERGE upsert. Uses {@code SELECT ... FROM DUAL} for source values.
+	 */
+	ORACLE,
+
+	/**
+	 * SQL Server MERGE upsert. The statement body matches {@link UpsertStatementRenderers.Merge} with a trailing
+	 * semicolon.
+	 */
+	SQL_SERVER,
+
+	/**
+	 * Standard SQL {@code MERGE} upsert for dialects that support it (like H2, HSQLDB, SQL Server, DB2).
+	 * <p>
+	 * Uses a table value constructor {@code (VALUES (?, ?)) AS s (col1, col2)} as the source so that no SELECT is used.c
+	 */
+	MERGE,
+
+	/**
+	 * Unsupported dialect.
+	 */
+	UNSUPPORTED {
+		@Override
+		public boolean supportsUpsert() {
+			return false;
+		}
+	};
 
 	@Override
 	public boolean supportsUpsert() {

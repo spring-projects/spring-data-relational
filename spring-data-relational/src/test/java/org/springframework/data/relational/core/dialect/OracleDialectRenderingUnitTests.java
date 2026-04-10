@@ -27,6 +27,8 @@ import org.springframework.data.relational.core.sql.Upsert;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
+ * Tests for {@link OracleDialect}-specific rendering.
+ *
  * @author Christoph Strobl
  */
 class OracleDialectRenderingUnitTests {
@@ -81,4 +83,5 @@ class OracleDialectRenderingUnitTests {
 		assertThat(sql).isEqualTo(
 				"MERGE INTO my_table \"_t\" USING (SELECT :id AS id, :tenant_id AS tenant_id FROM DUAL) \"_s\" ON (\"_t\".id = \"_s\".id AND \"_t\".tenant_id = \"_s\".tenant_id) WHEN NOT MATCHED THEN INSERT (id, tenant_id) VALUES (\"_s\".id, \"_s\".tenant_id)");
 	}
+
 }

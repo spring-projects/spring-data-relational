@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.data.relational.core.sql.Functions;
@@ -26,7 +25,6 @@ import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
 import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.util.ClassUtils;
 
@@ -177,12 +175,12 @@ public interface Dialect {
 	/**
 	 * Returns an {@link UpsertRenderContext} for single-statement upsert.
 	 *
-	 * @return the upsert render context. {@link StandardSqlUpsertRenderContext} by default.
+	 * @return the upsert render context, defaults to standard {@code MERGE}.
 	 * @throws UnsupportedOperationException if the dialect does not support single-statement upsert.
 	 * @since 4.1
 	 */
 	default UpsertRenderContext getUpsertRenderContext() {
-		return StandardSqlUpsertRenderContext.INSTANCE;
+		return UpsertRenderContexts.MERGE;
 	}
 
 }

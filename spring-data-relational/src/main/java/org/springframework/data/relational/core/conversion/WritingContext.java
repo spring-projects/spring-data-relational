@@ -121,7 +121,7 @@ class WritingContext<T> {
 		return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
 	}
 
-	//// Operations on all paths
+	// Operations on all paths
 
 	private List<DbAction<?>> insertReferenced() {
 
@@ -187,7 +187,7 @@ class WritingContext<T> {
 		return new DbAction.Delete<>(id, path);
 	}
 
-	//// methods not directly related to the creation of DbActions
+	// methods not directly related to the creation of DbActions
 
 	private void setRootAction(DbAction.WithRoot<T> dbAction) {
 		aggregateChange.setRootAction(dbAction);

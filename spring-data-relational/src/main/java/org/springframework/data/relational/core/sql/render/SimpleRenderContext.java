@@ -26,13 +26,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * @author Jens Schauder
  * @since 1.1
  */
-final class SimpleRenderContext implements RenderContext {
-
-	private final RenderNamingStrategy namingStrategy;
-
-	SimpleRenderContext(RenderNamingStrategy namingStrategy) {
-		this.namingStrategy = namingStrategy;
-	}
+record SimpleRenderContext(RenderNamingStrategy getNamingStrategy) implements RenderContext {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
@@ -51,17 +45,12 @@ final class SimpleRenderContext implements RenderContext {
 
 	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
-		return StandardSqlUpsertRenderContext.INSTANCE;
-	}
-
-	public RenderNamingStrategy getNamingStrategy() {
-		return this.namingStrategy;
+		return UpsertRenderContexts.MERGE;
 	}
 
 	@Override
 	public String toString() {
-
-		return "SimpleRenderContext{" + "namingStrategy=" + namingStrategy + '}';
+		return "SimpleRenderContext{" + "namingStrategy=" + getNamingStrategy + '}';
 	}
 
 	enum DefaultSelectRenderContext implements SelectRenderContext {

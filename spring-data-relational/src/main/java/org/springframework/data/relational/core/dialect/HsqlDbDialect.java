@@ -16,8 +16,6 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.render.StandardSqlUpsertRenderContext;
-import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
  * A {@link Dialect} for HsqlDb.

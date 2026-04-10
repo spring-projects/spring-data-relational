@@ -43,7 +43,6 @@ class R2dbcEntityTemplateSnippets {
 		// end::insertAndSelect[]
 	}
 
-
 	void select(R2dbcEntityTemplate template) {
 
 		// tag::select[]
@@ -67,8 +66,8 @@ class R2dbcEntityTemplateSnippets {
 			.from("other_person")
 			.matching(query(where("firstname").is("John")			// <2>
 				.and("lastname").in("Doe", "White"))
-			  .sort(by(desc("id"))))													// <3>
-			.one();																						// <4>
+			  .sort(by(desc("id"))))						// <3>
+			.one();											// <4>
 		// end::fullSelect[]
 	}
 
@@ -76,7 +75,7 @@ class R2dbcEntityTemplateSnippets {
 
 		// tag::insert[]
 		Mono<Person> insert = template.insert(Person.class)	// <1>
-				.using(new Person("John", "Doe")); // <2>
+				.using(new Person("John", "Doe")); 			// <2>
 		// end::insert[]
 	}
 
@@ -84,26 +83,38 @@ class R2dbcEntityTemplateSnippets {
 
 		// tag::update[]
 		Mono<Long> update = template.update(Person.class)	// <1>
-				.inTable("other_table")														// <2>
+				.inTable("other_table")						// <2>
 				.matching(query(where("firstname").is("John")))		// <3>
-				.apply(update("age", 42));												// <4>
+				.apply(update("age", 42));					// <4>
 		// end::update[]
+	}
+
+	void fluentUpsert(R2dbcEntityTemplate template) {
+
+		Person modified = new Person("John", "Doe");
+		// tag::upsert[]
+		Mono<Person> update = template.upsert(Person.class)	// <1>
+				.inTable("other_table")						// <2>
+				.one(modified);
+		// end::upsert[]
 	}
 
 	void delete(R2dbcEntityTemplate template) {
 
 		// tag::delete[]
 		Mono<Long> delete = template.delete(Person.class)	// <1>
-				.from("other_table")															// <2>
+				.from("other_table")						// <2>
 				.matching(query(where("firstname").is("John")))		// <3>
-				.all();																						// <4>
+				.all();										// <4>
 		// end::delete[]
 	}
 
 	static class Person {
 		String firstname, lastname;
+
 		public Person(String firstname, String lastname) {
-	this.firstname = firstname;
-	this.lastname = lastname;
-}}
+			this.firstname = firstname;
+			this.lastname = lastname;
+		}
+	}
 }

@@ -19,7 +19,6 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.data.relational.core.sql.render.SqlServerUpsertRenderContext;
 import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 import org.springframework.data.util.Lazy;
 
@@ -146,7 +145,7 @@ public class SqlServerDialect extends AbstractDialect {
 
 	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
-		return SqlServerUpsertRenderContext.INSTANCE;
+		return UpsertRenderContexts.SQL_SERVER;
 	}
 
 }

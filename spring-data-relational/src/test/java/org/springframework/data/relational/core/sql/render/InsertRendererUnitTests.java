@@ -28,10 +28,10 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class InsertRendererUnitTests {
+class InsertRendererUnitTests {
 
 	@Test // DATAJDBC-335
-	public void shouldRenderInsert() {
+	void shouldRenderInsert() {
 
 		Table bar = SQL.table("bar");
 
@@ -41,7 +41,7 @@ public class InsertRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-335
-	public void shouldRenderInsertColumn() {
+	void shouldRenderInsertColumn() {
 
 		Table bar = SQL.table("bar");
 
@@ -51,7 +51,7 @@ public class InsertRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-335
-	public void shouldRenderInsertMultipleColumns() {
+	void shouldRenderInsertMultipleColumns() {
 
 		Table bar = SQL.table("bar");
 
@@ -62,7 +62,7 @@ public class InsertRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderInsertWithZeroColumns() {
+	void shouldRenderInsertWithZeroColumns() {
 
 		Table bar = SQL.table("bar");
 

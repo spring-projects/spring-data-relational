@@ -15,18 +15,27 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.data.relational.core.sql.Visitor;
+
 /**
- * MySQL / MariaDB upsert using {@code INSERT ... ON DUPLICATE KEY UPDATE}.
+ * A {@link org.springframework.data.relational.core.sql.Visitor} that renders a {@link Visitable} into a
+ * {@link String}.
  *
- * @author Christoph Strobl
+ * @author Mark Paluch
  * @since 4.1
  */
-public enum MySqlUpsertRenderContext implements UpsertRenderContext {
+interface RenderingVisitor extends PartRenderer, Visitor {
 
-	INSTANCE;
-
-	@Override
-	public boolean supportsUpsert() {
-		return true;
+	/**
+	 * Render the given {@link Visitable} into a {@link String}.
+	 *
+	 * @param visitable the visitable object such as a {@code Select} or {@code Insert}.
+	 * @return the rendered {@link String}.
+	 */
+	default String render(Visitable visitable) {
+		visitable.visit(this);
+		return getRenderedPart().toString();
 	}
+
 }

@@ -38,17 +38,17 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
  */
-public class MySqlDialectRenderingUnitTests {
+class MySqlDialectRenderingUnitTests {
 
 	private final RenderContextFactory factory = new RenderContextFactory(new MySqlDialect());
 
 	@BeforeEach
-	public void before() {
+	void before() {
 		factory.setNamingStrategy(NamingStrategies.asIs());
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithLimit() {
+	void shouldRenderSelectWithLimit() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).limit(10).build();
@@ -59,7 +59,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithOffset() {
+	void shouldRenderSelectWithOffset() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).offset(10).build();
@@ -70,7 +70,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-278
-	public void shouldRenderSelectWithLimitOffset() {
+	void shouldRenderSelectWithLimitOffset() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).limit(10).offset(20).build();
@@ -81,7 +81,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLockWrite() {
+	void shouldRenderSelectWithLockWrite() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
@@ -93,7 +93,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLockRead() {
+	void shouldRenderSelectWithLockRead() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;
@@ -105,7 +105,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitWithLockWrite() {
+	void shouldRenderSelectWithLimitWithLockWrite() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_WRITE;
@@ -117,7 +117,7 @@ public class MySqlDialectRenderingUnitTests {
 	}
 
 	@Test // DATAJDBC-498
-	public void shouldRenderSelectWithLimitWithLockRead() {
+	void shouldRenderSelectWithLimitWithLockRead() {
 
 		Table table = Table.create("foo");
 		LockMode lockMode = LockMode.PESSIMISTIC_READ;

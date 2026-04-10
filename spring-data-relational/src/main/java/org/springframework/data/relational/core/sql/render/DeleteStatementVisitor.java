@@ -26,7 +26,7 @@ import org.springframework.data.relational.core.sql.Where;
  * @author Mark Paluch
  * @since 1.1
  */
-class DeleteStatementVisitor extends DelegatingVisitor implements PartRenderer {
+class DeleteStatementVisitor extends DelegatingVisitor implements RenderingVisitor {
 
 	private final StringBuilder builder = new StringBuilder();
 	private final StringBuilder from = new StringBuilder();

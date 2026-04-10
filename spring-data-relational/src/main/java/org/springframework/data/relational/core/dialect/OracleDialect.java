@@ -21,7 +21,6 @@ import java.util.List;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.render.OracleUpsertRenderContext;
 import org.springframework.data.relational.core.sql.render.UpsertRenderContext;
 
 /**
@@ -77,7 +76,7 @@ public class OracleDialect extends AnsiDialect {
 
 	@Override
 	public UpsertRenderContext getUpsertRenderContext() {
-		return OracleUpsertRenderContext.INSTANCE;
+		return UpsertRenderContexts.ORACLE;
 	}
 
 	@WritingConverter

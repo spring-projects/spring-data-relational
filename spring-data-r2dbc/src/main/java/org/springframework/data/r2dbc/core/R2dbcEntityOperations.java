@@ -268,21 +268,6 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	<T> Mono<T> insert(T entity) throws DataAccessException;
 
 	/**
-	 * Upserts a single aggregate root, specifically insert if the row with the given identifier does not exist or update
-	 * otherwise. The identifier must be already assigned. Only supported when the dialect supports single-statement
-	 * upsert.
-	 * <p>
-	 * Typically, this operation uses {@code MERGE} or {@code INSERT ... ON CONFLICT} syntax.
-	 *
-	 * @param entity the entity to upsert, must not be {@literal null}.
-	 * @return the upserted entity.
-	 * @throws DataAccessException if there is any problem issuing the execution.
-	 * @throws UnsupportedOperationException if the dialect does not support upsert.
-	 * @since 4.1
-	 */
-	<T> Mono<T> upsert(T entity) throws DataAccessException;
-
-	/**
 	 * Update the given entity and emit the entity if the update was applied.
 	 *
 	 * @param entity the entity to update, must not be {@literal null}.
@@ -293,6 +278,23 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 *           {@link org.springframework.data.annotation.Version} is defined.
 	 */
 	<T> Mono<T> update(T entity) throws DataAccessException;
+
+	/**
+	 * Upserts the given entity, specifically insert if the row with the given identifier does not exist or update
+	 * otherwise. The identifier must be already assigned. Only supported when the dialect supports single-statement
+	 * upsert.
+	 * <p>
+	 * Typically, this operation uses {@code MERGE} or {@code INSERT ... ON CONFLICT} syntax.
+	 * <p>
+	 * <strong>Note:</strong> Upserts currently do not support optimistic locking.
+	 *
+	 * @param entity the entity to upsert, must not be {@literal null}.
+	 * @return the upserted entity.
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @throws UnsupportedOperationException if the dialect does not support upsert.
+	 * @since 4.1
+	 */
+	<T> Mono<T> upsert(T entity) throws DataAccessException;
 
 	/**
 	 * Delete the given entity and emit the entity if the delete was applied.

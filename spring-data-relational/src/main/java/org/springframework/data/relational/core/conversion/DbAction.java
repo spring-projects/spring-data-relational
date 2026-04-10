@@ -145,7 +145,6 @@ public interface DbAction<T> {
 
 		@Override
 		public String toString() {
-
 			// TODO: toString is so inconsistent in here using the DbAction prefix :/
 			return "DbAction.UpsertRoot{" + "entity=" + entity + '}';
 		}

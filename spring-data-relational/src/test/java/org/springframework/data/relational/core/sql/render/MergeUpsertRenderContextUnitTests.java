@@ -34,21 +34,21 @@ import org.springframework.data.relational.core.sql.render.UpsertStatementRender
  */
 class MergeUpsertRenderContextUnitTests {
 
-	private static final Table TABLE = Table.create(SqlIdentifier.unquoted("my_table"));
+	private static final Table TABLE = Table.create("my_table");
 
 	@Test // GH-493
 	void mergeUpsertWithMultipleConflictColumnsBuildsFilterClauseWithAllColumns() {
 
-		List<SqlIdentifier> insertColumns = List.of(SqlIdentifier.unquoted("tenant_id"), SqlIdentifier.unquoted("id"),
-				SqlIdentifier.unquoted("name"));
-		List<SqlIdentifier> conflictColumns = List.of(SqlIdentifier.unquoted("tenant_id"), SqlIdentifier.unquoted("id"));
-		List<SqlIdentifier> updateColumns = List.of(SqlIdentifier.unquoted("name"));
+		List<String> insertColumns = List.of("tenant_id", "id", "name");
+		List<String> conflictColumns = List.of("tenant_id", "id");
+		List<String> updateColumns = List.of("name");
 
 		UpsertRenderingContext ctx = UpsertRenderingContext.of(
 				new RenderContextFactory(AnsiDialect.INSTANCE).createRenderContext(), it -> ":%s".formatted(it.getReference()));
-		List<Column> insertCols = insertColumns.stream().map(id -> Column.create(id, TABLE)).toList();
-		List<Column> conflictCols = conflictColumns.stream().map(id -> Column.create(id, TABLE)).toList();
-		List<Column> updateCols = updateColumns.stream().map(id -> Column.create(id, TABLE)).toList();
+
+		List<Column> insertCols = getColumns(insertColumns);
+		List<Column> conflictCols = getColumns(conflictColumns);
+		List<Column> updateCols = getColumns(updateColumns);
 		Map<SqlIdentifier, CharSequence> bindings = Map.of(insertCols.get(0).getName(),
 				insertCols.get(0).getName().getReference());
 
@@ -60,4 +60,9 @@ class MergeUpsertRenderContextUnitTests {
 		assertThat(sql).contains(
 				"WHEN NOT MATCHED THEN INSERT (tenant_id, id, name) VALUES (\"_s\".tenant_id, \"_s\".id, \"_s\".name)");
 	}
+
+	private List<Column> getColumns(List<String> insertColumns) {
+		return insertColumns.stream().map(id -> Column.create(id, TABLE)).toList();
+	}
+
 }

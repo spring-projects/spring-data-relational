@@ -38,7 +38,6 @@ public class SqlRenderer implements Renderer {
 	private SqlRenderer(RenderContext context) {
 
 		Assert.notNull(context, "RenderContext must not be null");
-
 		this.context = context;
 	}
 
@@ -96,6 +95,7 @@ public class SqlRenderer implements Renderer {
 	 *
 	 * @param update must not be {@literal null}.
 	 * @return the rendered statement.
+	 * @since 4.1
 	 */
 	public static String toString(Upsert update) {
 		return create().render(update);
@@ -111,66 +111,29 @@ public class SqlRenderer implements Renderer {
 		return create().render(delete);
 	}
 
-	/**
-	 * Render the {@link Select} AST into a SQL statement.
-	 *
-	 * @return the rendered statement.
-	 */
 	@Override
 	public String render(Select select) {
-
-		SelectStatementVisitor visitor = new SelectStatementVisitor(context);
-		select.visit(visitor);
-
-		return visitor.getRenderedPart().toString();
+		return new SelectStatementVisitor(context).render(select);
 	}
 
-	/**
-	 * Render the {@link Insert} AST into a SQL statement.
-	 *
-	 * @return the rendered statement.
-	 */
 	@Override
 	public String render(Insert insert) {
-		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
-		insert.visit(visitor);
-		return visitor.getRenderedPart().toString();
+		return new InsertStatementVisitor(context).render(insert);
 	}
 
-	/**
-	 * Render the {@link Update} AST into a SQL statement.
-	 *
-	 * @return the rendered statement.
-	 */
 	@Override
 	public String render(Update update) {
-
-		UpdateStatementVisitor visitor = new UpdateStatementVisitor(context);
-		update.visit(visitor);
-
-		return visitor.getRenderedPart().toString();
-	}
-
-	/**
-	 * Render the {@link Delete} AST into a SQL statement.
-	 *
-	 * @return the rendered statement.
-	 */
-	@Override
-	public String render(Delete delete) {
-
-		DeleteStatementVisitor visitor = new DeleteStatementVisitor(context);
-		delete.visit(visitor);
-
-		return visitor.getRenderedPart().toString();
+		return new UpdateStatementVisitor(context).render(update);
 	}
 
 	@Override
 	public String render(Upsert upsert) {
-
-		UpsertStatementVisitor visitor = new UpsertStatementVisitor(context);
-		upsert.visit(visitor);
-
-		return visitor.getRenderedPart().toString();
+		return new UpsertStatementVisitor(context).render(upsert);
 	}
+
+	@Override
+	public String render(Delete delete) {
+		return new DeleteStatementVisitor(context).render(delete);
+	}
+
 }

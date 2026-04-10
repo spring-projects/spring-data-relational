@@ -66,5 +66,7 @@ record ReactiveUpsertOperationSupport(R2dbcEntityTemplate template) implements R
 		private SqlIdentifier getTableName() {
 			return tableName != null ? tableName : template.getTableName(domainType);
 		}
+
 	}
+
 }
