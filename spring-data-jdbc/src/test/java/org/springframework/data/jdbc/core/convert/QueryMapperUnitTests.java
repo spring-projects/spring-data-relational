@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -371,6 +372,50 @@ public class QueryMapperUnitTests {
 		assertThat(map(criteria, WithCompositeId.class)).hasToString("1 = 1");
 	}
 
+	@Test // GH-2276
+	void shouldMapInForAggregateReferenceWithCompositeId() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").in(AggregateReference.to(new TargetCompositeId(1, "a")),
+				AggregateReference.to(new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" = ?[:tenant] AND dependantroot.\"NAME\" = ?[:name]) OR (dependantroot.\"TENANT\" = ?[:tenant2] AND dependantroot.\"NAME\" = ?[:name3])");
+	}
+
+	@Test // GH-2276
+	void shouldMapInForBareCompositeIdWhenPropertyIsAggregateReference() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").in(List.of(new TargetCompositeId(1, "a"), new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" = ?[:tenant] AND dependantroot.\"NAME\" = ?[:name]) OR (dependantroot.\"TENANT\" = ?[:tenant2] AND dependantroot.\"NAME\" = ?[:name3])");
+	}
+
+	@Test // GH-2276
+	void shouldMapNotInForAggregateReferenceWithCompositeId() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").notIn(AggregateReference.to(new TargetCompositeId(1, "a")),
+				AggregateReference.to(new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" != ?[:tenant] AND dependantroot.\"NAME\" != ?[:name]) OR (dependantroot.\"TENANT\" != ?[:tenant2] AND dependantroot.\"NAME\" != ?[:name3])");
+	}
+
 	@Test
 	void shouldMapIsNotInWithCollectionToStringConverter() {
 
@@ -597,6 +642,18 @@ public class QueryMapperUnitTests {
 	}
 
 	private record WithCompositeId(@Id CompositeId id) {
+	}
+
+	private record TargetCompositeId(int tenant, String name) {
+	}
+
+	private static class ReferencedRoot {
+		@Id TargetCompositeId id;
+	}
+
+	private static class DependantRoot {
+
+		AggregateReference<ReferencedRoot, TargetCompositeId> referredRoot;
 	}
 
 	static class WithEmbeddable {
