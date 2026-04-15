@@ -225,7 +225,7 @@ class QueryMapperUnitTests {
 		criteria = Criteria.where("id").not(new CompositeId(1, "a")).or("foo").is("bar");
 
 		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
-				"(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2]) OR withcompositeid.foo = ?[$3]");
+				"(withcompositeid.tenant != ?[$1] OR withcompositeid.name != ?[$2]) OR withcompositeid.foo = ?[$3]");
 	}
 
 	@Test // gh-300
@@ -402,11 +402,11 @@ class QueryMapperUnitTests {
 
 		Criteria criteria = Criteria.where("id").notIn(new CompositeId(1, "a"));
 		assertThat(map(criteria, WithCompositeId.class).getCondition())
-				.hasToString("(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2])");
+				.hasToString("(withcompositeid.tenant != ?[$1] OR withcompositeid.name != ?[$2])");
 
 		criteria = Criteria.where("id").notIn(new CompositeId(1, "a"), new CompositeId(2, "b"));
 		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString(
-				"(withcompositeid.tenant != ?[$1] AND withcompositeid.name != ?[$2]) OR (withcompositeid.tenant != ?[$3] AND withcompositeid.name != ?[$4])");
+				"(withcompositeid.tenant != ?[$1] OR withcompositeid.name != ?[$2]) AND (withcompositeid.tenant != ?[$3] OR withcompositeid.name != ?[$4])");
 
 		criteria = Criteria.where("id").notIn();
 		assertThat(map(criteria, WithCompositeId.class).getCondition()).hasToString("1 = 1");

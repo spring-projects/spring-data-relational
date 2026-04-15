@@ -192,7 +192,7 @@ public class QueryMapperUnitTests {
 		criteria = Criteria.where("id").not(new CompositeId(1, "a")).or("foo").is("bar");
 
 		assertThat(map(criteria, WithCompositeId.class)).hasToString(
-				"(withcompositeid.\"TENANT\" != ?[:tenant3] AND withcompositeid.\"NAME\" != ?[:name4]) OR withcompositeid.foo = ?[:foo5]");
+				"(withcompositeid.\"TENANT\" != ?[:tenant3] OR withcompositeid.\"NAME\" != ?[:name4]) OR withcompositeid.foo = ?[:foo5]");
 	}
 
 	@Test // DATAJDBC-318
@@ -362,11 +362,11 @@ public class QueryMapperUnitTests {
 
 		Criteria criteria = Criteria.where("id").notIn(new CompositeId(1, "a"));
 		assertThat(map(criteria, WithCompositeId.class))
-				.hasToString("(withcompositeid.\"TENANT\" != ?[:tenant] AND withcompositeid.\"NAME\" != ?[:name])");
+				.hasToString("(withcompositeid.\"TENANT\" != ?[:tenant] OR withcompositeid.\"NAME\" != ?[:name])");
 
 		criteria = Criteria.where("id").notIn(new CompositeId(1, "a"), new CompositeId(2, "b"));
 		assertThat(map(criteria, WithCompositeId.class)).hasToString(
-				"(withcompositeid.\"TENANT\" != ?[:tenant2] AND withcompositeid.\"NAME\" != ?[:name3]) OR (withcompositeid.\"TENANT\" != ?[:tenant4] AND withcompositeid.\"NAME\" != ?[:name5])");
+				"(withcompositeid.\"TENANT\" != ?[:tenant2] OR withcompositeid.\"NAME\" != ?[:name3]) AND (withcompositeid.\"TENANT\" != ?[:tenant4] OR withcompositeid.\"NAME\" != ?[:name5])");
 
 		criteria = Criteria.where("id").notIn();
 		assertThat(map(criteria, WithCompositeId.class)).hasToString("1 = 1");
@@ -413,7 +413,7 @@ public class QueryMapperUnitTests {
 				context.getRequiredPersistentEntity(DependantRoot.class));
 
 		assertThat(condition).hasToString(
-				"(dependantroot.\"TENANT\" != ?[:tenant] AND dependantroot.\"NAME\" != ?[:name]) OR (dependantroot.\"TENANT\" != ?[:tenant2] AND dependantroot.\"NAME\" != ?[:name3])");
+				"(dependantroot.\"TENANT\" != ?[:tenant] OR dependantroot.\"NAME\" != ?[:name]) AND (dependantroot.\"TENANT\" != ?[:tenant2] OR dependantroot.\"NAME\" != ?[:name3])");
 	}
 
 	@Test

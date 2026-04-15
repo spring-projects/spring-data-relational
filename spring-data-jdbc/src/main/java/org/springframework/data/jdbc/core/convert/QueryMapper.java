@@ -52,6 +52,7 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.OrCondition;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -319,7 +320,6 @@ public class QueryMapper {
 		// Single embedded entity
 		if (propertyField.isEmbedded()) {
 
-			// IN/NOT_IN with collection of composite/embedded values: expand to (… AND …) OR (…)
 			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
 					&& value instanceof Collection<?> collection) {
 
@@ -333,6 +333,9 @@ public class QueryMapper {
 					.getRequiredPersistentEntity(propertyField.getRequiredProperty());
 
 			Condition condition = mapEmbeddedObjectCondition(criteria, parameterSource, table, embeddedEntity, embedded);
+			if (!embedded && condition instanceof OrCondition) {
+				return Conditions.nest(condition);
+			}
 			return embedded || !(condition instanceof AndCondition) ? condition : Conditions.nest(condition);
 		}
 
@@ -396,6 +399,9 @@ public class QueryMapper {
 	/**
 	 * Expands {@link Comparator#IN}/{@link Comparator#NOT_IN} over a collection to a disjunction of nested conditions,
 	 * one per element (used for embedded types and composite association identifiers).
+	 * <p>
+	 * IN: (col = v AND …) OR (…) per element.
+	 * NOT_IN: AND over tuple negations; each negation is (col != v OR …), i.e. NOT (c1 = v1 AND c2 = v2) ≡ (c1 != v1 OR c2 != v2).
 	 */
 	@SuppressWarnings("NullAway")
 	private Condition expandInCollectionComparison(Comparator comparator, Collection<?> collection,
@@ -408,9 +414,8 @@ public class QueryMapper {
 		Condition condition = null;
 		for (Object element : collection) {
 			Condition next = Conditions.nest(nestedConditionFactory.apply(element));
-			condition = condition == null ? next : condition.or(next);
+			condition = condition == null ? next : (Comparator.IN.equals(comparator) ? condition.or(next) : condition.and(next));
 		}
-
 		return condition;
 	}
 
@@ -516,17 +521,22 @@ public class QueryMapper {
 
 		PersistentPropertyAccessor<Object> embeddedAccessor = embeddedEntity.getPropertyAccessor(criteria.getValue());
 
-		Condition condition = Conditions.unrestricted();
+		Comparator tupleComparator = criteria.getComparator();
+		Assert.notNull(tupleComparator, "Comparator must not be null");
+
+		boolean negateTuple = Comparator.NEQ.equals(tupleComparator);
+
+		Condition condition = null;
 		for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
 
 			Object propertyValue = embeddedAccessor.getProperty(embeddedProperty);
 
 			CriteriaDefinition cw = new EmbeddedPropertyCriteria(criteria, embeddedProperty, propertyValue);
 			Condition mapped = mapCondition(cw, parameterSource, table, embeddedEntity, embedded);
-			condition = condition.and(mapped);
+			condition = condition == null ? mapped : (negateTuple ? condition.or(mapped) : condition.and(mapped));
 		}
 
-		return condition;
+		return condition != null ? condition : Conditions.unrestricted();
 	}
 
 	@Nullable
