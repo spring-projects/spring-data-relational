@@ -236,7 +236,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	void upsertUpdatesExistingWithNullValues() {
 
 		long id = 8891L;
-		withSqlServerIdentityInsertOn(template, List.of("LEGO_SET", "MANUAL"), () -> {
+		withSqlServerIdentityInsertOn(template, List.of("LEGO_SET"), () -> {
 
 			LegoSet lego = new LegoSet();
 			lego.id = id;
@@ -245,7 +245,11 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			Manual manual = new Manual();
 			manual.id = 42L;
 			manual.content = "Accelerates to 99% of light speed; Destroys almost everything. See https://what-if.xkcd.com/1/";
-			lego.manual = manual;
+
+			// Only one table with identity insert on at the time guard
+			if (!(template.getDataAccessStrategy().getDialect() instanceof SqlServerDialect)) {
+				lego.manual = manual;
+			}
 
 			template.upsert(lego);
 
@@ -255,8 +259,12 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 			LegoSet loaded = template.findById(id, LegoSet.class);
 
 			assertThat(loaded.name).isEqualTo(null);
-			assertThat(loaded.manual).isNotNull();
-			assertThat(loaded.manual.content).isEqualTo(manual.content);
+
+			if (!(template.getDataAccessStrategy().getDialect() instanceof SqlServerDialect)) {
+				assertThat(loaded.manual).isNotNull();
+				assertThat(loaded.manual.content).isEqualTo(manual.content);
+			}
+
 		});
 	}
 

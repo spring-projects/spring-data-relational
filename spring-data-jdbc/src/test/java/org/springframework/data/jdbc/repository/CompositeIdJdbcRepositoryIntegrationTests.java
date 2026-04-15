@@ -50,7 +50,7 @@ class CompositeIdJdbcRepositoryIntegrationTests {
 	@Autowired JdbcAggregateOperations jdbcAggregateOperations;
 
 	@Test // GH-2276
-	void findAllByPkNotInUsesTupleSemanticsForCompositeId() {
+	void findAllByCompositePkNotInLooksRowsUpCorrectly() {
 
 		this.jdbcAggregateOperations.insert(new WithCompositeId(new CompositeId(42, "HBAR"), "Walter"));
 		this.jdbcAggregateOperations.insert(new WithCompositeId(new CompositeId(23, "2PI"), "Jesse"));
