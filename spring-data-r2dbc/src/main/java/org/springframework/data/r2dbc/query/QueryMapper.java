@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -51,6 +52,7 @@ import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Maps {@link CriteriaDefinition} and {@link Sort} objects considering mapping metadata and dialect-specific
@@ -61,6 +63,7 @@ import org.springframework.util.ClassUtils;
  * @author Manousos Mathioudakis
  * @author Jens Schauder
  * @author Yan Qiang
+ * @author Christoph Strobl
  */
 public class QueryMapper {
 
@@ -368,10 +371,7 @@ public class QueryMapper {
 			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
 					&& value instanceof Collection<?> collection) {
 
-				Condition condition = null;
-
-				for (Object o : collection) {
-
+				return expandInCollectionComparison(comparator, collection, element -> {
 					CriteriaWrapper cw = new CriteriaWrapper(criteria) {
 
 						@Override
@@ -382,7 +382,7 @@ public class QueryMapper {
 						@Nullable
 						@Override
 						public Object getValue() {
-							return o;
+							return element;
 						}
 
 						@Override
@@ -390,16 +390,8 @@ public class QueryMapper {
 							return criteriaColumn;
 						}
 					};
-
-					Condition c = Conditions.nest(mapCondition(cw, bindings, table, entity, true));
-					condition = condition == null ? c : condition.or(c);
-				}
-
-				if (condition == null) {
-					return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
-				}
-
-				return condition;
+					return mapCondition(cw, bindings, table, entity, true);
+				});
 			}
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
@@ -407,7 +399,10 @@ public class QueryMapper {
 			PersistentPropertyAccessor<Object> propertyAccessor = getEmbeddedPropertyAccessor(value, embeddedEntity,
 					propertyField);
 
-			Condition condition = Conditions.unrestricted();
+			Assert.notNull(comparator, "Comparator must not be null");
+			boolean negateTuple = Comparator.NEQ.equals(comparator);
+
+			Condition condition = null;
 
 			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
 
@@ -428,9 +423,13 @@ public class QueryMapper {
 				};
 
 				Condition mapped = mapCondition(cw, bindings, table, embeddedEntity, true);
-				condition = condition.and(mapped);
+				condition = condition == null ? mapped : (negateTuple ? condition.or(mapped) : condition.and(mapped));
 			}
 
+			condition = condition != null ? condition : Conditions.unrestricted();
+			if (!embedded && condition instanceof OrCondition) {
+				return Conditions.nest(condition);
+			}
 			return embedded || !(condition instanceof AndCondition) ? condition : Conditions.nest(condition);
 		}
 
@@ -459,6 +458,29 @@ public class QueryMapper {
 		}
 
 		return createCondition(column, mappedValue, typeHint, bindings, comparator, criteria.isIgnoreCase());
+	}
+
+	/**
+	 * Expands {@link Comparator#IN}/{@link Comparator#NOT_IN} over a collection to a disjunction of nested conditions,
+	 * one per element (used for embedded types and composite association identifiers).
+	 * <p>
+	 * IN: (col = v AND …) OR (…) per element.
+	 * NOT_IN: AND over tuple negations; each negation is (col != v OR …), i.e. NOT (c1 = v1 AND c2 = v2) ≡ (c1 != v1 OR c2 != v2).
+	 */
+	@SuppressWarnings("NullAway")
+	private Condition expandInCollectionComparison(Comparator comparator, Collection<?> collection,
+			Function<Object, Condition> nestedConditionFactory) {
+
+		if (CollectionUtils.isEmpty(collection)) {
+			return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
+		}
+
+		Condition condition = null;
+		for (Object element : collection) {
+			Condition next = Conditions.nest(nestedConditionFactory.apply(element));
+			condition = condition == null ? next : (Comparator.IN.equals(comparator) ? condition.or(next) : condition.and(next));
+		}
+		return condition;
 	}
 
 	static PersistentPropertyAccessor<Object> getEmbeddedPropertyAccessor(@Nullable Object value,

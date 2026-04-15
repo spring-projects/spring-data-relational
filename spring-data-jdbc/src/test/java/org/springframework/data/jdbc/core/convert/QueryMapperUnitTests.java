@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -191,7 +192,7 @@ public class QueryMapperUnitTests {
 		criteria = Criteria.where("id").not(new CompositeId(1, "a")).or("foo").is("bar");
 
 		assertThat(map(criteria, WithCompositeId.class)).hasToString(
-				"(withcompositeid.\"TENANT\" != ?[:tenant3] AND withcompositeid.\"NAME\" != ?[:name4]) OR withcompositeid.foo = ?[:foo5]");
+				"(withcompositeid.\"TENANT\" != ?[:tenant3] OR withcompositeid.\"NAME\" != ?[:name4]) OR withcompositeid.foo = ?[:foo5]");
 	}
 
 	@Test // DATAJDBC-318
@@ -361,14 +362,58 @@ public class QueryMapperUnitTests {
 
 		Criteria criteria = Criteria.where("id").notIn(new CompositeId(1, "a"));
 		assertThat(map(criteria, WithCompositeId.class))
-				.hasToString("(withcompositeid.\"TENANT\" != ?[:tenant] AND withcompositeid.\"NAME\" != ?[:name])");
+				.hasToString("(withcompositeid.\"TENANT\" != ?[:tenant] OR withcompositeid.\"NAME\" != ?[:name])");
 
 		criteria = Criteria.where("id").notIn(new CompositeId(1, "a"), new CompositeId(2, "b"));
 		assertThat(map(criteria, WithCompositeId.class)).hasToString(
-				"(withcompositeid.\"TENANT\" != ?[:tenant2] AND withcompositeid.\"NAME\" != ?[:name3]) OR (withcompositeid.\"TENANT\" != ?[:tenant4] AND withcompositeid.\"NAME\" != ?[:name5])");
+				"(withcompositeid.\"TENANT\" != ?[:tenant2] OR withcompositeid.\"NAME\" != ?[:name3]) AND (withcompositeid.\"TENANT\" != ?[:tenant4] OR withcompositeid.\"NAME\" != ?[:name5])");
 
 		criteria = Criteria.where("id").notIn();
 		assertThat(map(criteria, WithCompositeId.class)).hasToString("1 = 1");
+	}
+
+	@Test // GH-2276
+	void shouldMapInForAggregateReferenceWithCompositeId() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").in(AggregateReference.to(new TargetCompositeId(1, "a")),
+				AggregateReference.to(new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" = ?[:tenant] AND dependantroot.\"NAME\" = ?[:name]) OR (dependantroot.\"TENANT\" = ?[:tenant2] AND dependantroot.\"NAME\" = ?[:name3])");
+	}
+
+	@Test // GH-2276
+	void shouldMapInForBareCompositeIdWhenPropertyIsAggregateReference() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").in(List.of(new TargetCompositeId(1, "a"), new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" = ?[:tenant] AND dependantroot.\"NAME\" = ?[:name]) OR (dependantroot.\"TENANT\" = ?[:tenant2] AND dependantroot.\"NAME\" = ?[:name3])");
+	}
+
+	@Test // GH-2276
+	void shouldMapNotInForAggregateReferenceWithCompositeId() {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+		Criteria criteria = Criteria.where("referredRoot").notIn(AggregateReference.to(new TargetCompositeId(1, "a")),
+				AggregateReference.to(new TargetCompositeId(2, "b")));
+
+		Condition condition = mapper.getMappedObject(parameters, criteria, Table.create("dependantroot"),
+				context.getRequiredPersistentEntity(DependantRoot.class));
+
+		assertThat(condition).hasToString(
+				"(dependantroot.\"TENANT\" != ?[:tenant] OR dependantroot.\"NAME\" != ?[:name]) AND (dependantroot.\"TENANT\" != ?[:tenant2] OR dependantroot.\"NAME\" != ?[:name3])");
 	}
 
 	@Test
@@ -597,6 +642,18 @@ public class QueryMapperUnitTests {
 	}
 
 	private record WithCompositeId(@Id CompositeId id) {
+	}
+
+	private record TargetCompositeId(int tenant, String name) {
+	}
+
+	private static class ReferencedRoot {
+		@Id TargetCompositeId id;
+	}
+
+	private static class DependantRoot {
+
+		AggregateReference<ReferencedRoot, TargetCompositeId> referredRoot;
 	}
 
 	static class WithEmbeddable {

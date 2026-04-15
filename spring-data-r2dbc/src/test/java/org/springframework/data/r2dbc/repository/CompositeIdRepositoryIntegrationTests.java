@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,6 +62,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 @ExtendWith(SpringExtension.class)
 public class CompositeIdRepositoryIntegrationTests {
@@ -233,8 +235,27 @@ public class CompositeIdRepositoryIntegrationTests {
 				.verifyComplete();
 	}
 
+	@Test // GH-2276
+	void findAllByCompositePkNotInLooksRowsUpCorrectly() {
+
+		this.jdbc.execute("INSERT INTO with_composite_id VALUES (42, '2PI','Extra')");
+
+		repository.findAllByPkNotIn(List.of(new CompositeId(42, "HBAR"), new CompositeId(23, "2PI"))) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.assertNext(rows -> assertThat(rows).singleElement() //
+						.satisfies(row -> {
+							assertThat(row.name()).isEqualTo("Extra");
+							assertThat(row.pk()).isEqualTo(new CompositeId(42, "2PI"));
+						})) //
+				.verifyComplete();
+	}
+
 	interface WithCompositeIdRepository extends ReactiveCrudRepository<WithCompositeId, CompositeId> {
+
 		Flux<WithCompositeId> findByName(String name);
+
+		Flux<WithCompositeId> findAllByPkNotIn(Collection<CompositeId> ids);
 	}
 
 	@Table("with_composite_id")

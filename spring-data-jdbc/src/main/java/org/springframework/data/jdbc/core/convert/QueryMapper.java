@@ -22,14 +22,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.core.PropertyPath;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.MappingException;
@@ -41,12 +42,28 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.query.ValueFunction;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.AndCondition;
+import org.springframework.data.relational.core.sql.AsteriskFromTable;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.OrCondition;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SimpleFunction;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.relational.domain.SqlSort;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Maps {@link CriteriaDefinition} and {@link Sort} objects considering mapping metadata and dialect-specific
@@ -303,42 +320,11 @@ public class QueryMapper {
 		// Single embedded entity
 		if (propertyField.isEmbedded()) {
 
-			// IN/NOT_IN with collection of composite/embedded values: expand to (… AND …) OR (…)
 			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
-				&& value instanceof Collection<?> collection) {
+					&& value instanceof Collection<?> collection) {
 
-				Condition condition = null;
-
-				for (Object o : collection) {
-
-					CriteriaWrapper cw = new CriteriaWrapper(criteria) {
-
-						@Override
-						public @Nullable Comparator getComparator() {
-							return Comparator.IN.equals(comparator) ? Comparator.EQ : Comparator.NEQ;
-						}
-
-						@Nullable
-						@Override
-						public Object getValue() {
-							return o;
-						}
-
-						@Override
-						public @Nullable SqlIdentifier getColumn() {
-							return criteriaColumn;
-						}
-					};
-
-					Condition c = Conditions.nest(mapCondition(cw, parameterSource, table, entity, true));
-					condition = condition == null ? c : condition.or(c);
-				}
-
-				if (condition == null) {
-					return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
-				}
-
-				return condition;
+				return expandInCollectionComparison(comparator, collection,
+						element -> mapCondition(new ListElementCriteria(criteria, element), parameterSource, table, entity, true));
 			}
 
 			PersistentPropertyPath<RelationalPersistentProperty> path = ((MetadataBackedField) propertyField).getPath();
@@ -347,7 +333,33 @@ public class QueryMapper {
 					.getRequiredPersistentEntity(propertyField.getRequiredProperty());
 
 			Condition condition = mapEmbeddedObjectCondition(criteria, parameterSource, table, embeddedEntity, embedded);
+			if (!embedded && condition instanceof OrCondition) {
+				return Conditions.nest(condition);
+			}
 			return embedded || !(condition instanceof AndCondition) ? condition : Conditions.nest(condition);
+		}
+
+		// AggregateReference (and similar associations) to a composite identifier: expand IN/NOT_IN like embedded
+		if (propertyField instanceof MetadataBackedField metadataBackedField && metadataBackedField.property != null) {
+
+			RelationalPersistentProperty associationProperty = metadataBackedField.property;
+
+			if (Association.isAssociation(associationProperty)) {
+
+				Association association = Association.from(associationProperty, converter);
+
+				if (association.isComplexIdentifier() //
+						&& (Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
+						&& value instanceof Collection<?> collection) {
+
+					RelationalPersistentEntity<?> identifierEntity = association.getRequiredTargetIdentifierEntity();
+
+					return expandInCollectionComparison(comparator, collection,
+							element -> mapEmbeddedObjectCondition(
+									new ListElementCriteria(criteria, unwrapAssociationCriteriaValue(element)), parameterSource, table,
+									identifierEntity, true));
+				}
+			}
 		}
 
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
@@ -382,6 +394,29 @@ public class QueryMapper {
 		}
 
 		return createCondition(column, mappedValue, sqlType, parameterSource, comparator, criteria.isIgnoreCase());
+	}
+
+	/**
+	 * Expands {@link Comparator#IN}/{@link Comparator#NOT_IN} over a collection to a disjunction of nested conditions,
+	 * one per element (used for embedded types and composite association identifiers).
+	 * <p>
+	 * IN: (col = v AND …) OR (…) per element.
+	 * NOT_IN: AND over tuple negations; each negation is (col != v OR …), i.e. NOT (c1 = v1 AND c2 = v2) ≡ (c1 != v1 OR c2 != v2).
+	 */
+	@SuppressWarnings("NullAway")
+	private Condition expandInCollectionComparison(Comparator comparator, Collection<?> collection,
+			Function<Object, Condition> nestedConditionFactory) {
+
+		if (CollectionUtils.isEmpty(collection)) {
+			return Comparator.IN.equals(comparator) ? Conditions.unrestricted().not() : Conditions.unrestricted();
+		}
+
+		Condition condition = null;
+		for (Object element : collection) {
+			Condition next = Conditions.nest(nestedConditionFactory.apply(element));
+			condition = condition == null ? next : (Comparator.IN.equals(comparator) ? condition.or(next) : condition.and(next));
+		}
+		return condition;
 	}
 
 	/**
@@ -469,6 +504,15 @@ public class QueryMapper {
 		);
 	}
 
+	private static Object unwrapAssociationCriteriaValue(Object value) {
+
+		if (value instanceof AggregateReference<?, ?> aggregateReference) {
+			return aggregateReference.getId();
+		}
+
+		return value;
+	}
+
 	private Condition mapEmbeddedObjectCondition(CriteriaDefinition criteria, MapSqlParameterSource parameterSource,
 			Table table, RelationalPersistentEntity<?> embeddedEntity, boolean embedded) {
 
@@ -477,30 +521,22 @@ public class QueryMapper {
 
 		PersistentPropertyAccessor<Object> embeddedAccessor = embeddedEntity.getPropertyAccessor(criteria.getValue());
 
-		Condition condition = Conditions.unrestricted();
+		Comparator tupleComparator = criteria.getComparator();
+		Assert.notNull(tupleComparator, "Comparator must not be null");
+
+		boolean negateTuple = Comparator.NEQ.equals(tupleComparator);
+
+		Condition condition = null;
 		for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
 
 			Object propertyValue = embeddedAccessor.getProperty(embeddedProperty);
 
-			CriteriaWrapper cw = new CriteriaWrapper(criteria) {
-
-				@Override
-				public SqlIdentifier getColumn() {
-					return SqlIdentifier.unquoted(embeddedProperty.getName());
-				}
-
-				@Nullable
-				@Override
-				public Object getValue() {
-					return propertyValue;
-				}
-			};
-
+			CriteriaDefinition cw = new EmbeddedPropertyCriteria(criteria, embeddedProperty, propertyValue);
 			Condition mapped = mapCondition(cw, parameterSource, table, embeddedEntity, embedded);
-			condition = condition.and(mapped);
+			condition = condition == null ? mapped : (negateTuple ? condition.or(mapped) : condition.and(mapped));
 		}
 
-		return condition;
+		return condition != null ? condition : Conditions.unrestricted();
 	}
 
 	@Nullable
@@ -742,12 +778,76 @@ public class QueryMapper {
 		return uniqueName;
 	}
 
+	/**
+	 * {@link CriteriaDefinition} view of one element when expanding {@code IN}/{@code NOT IN} over embedded or composite
+	 * identifier values.
+	 */
+	private static final class ListElementCriteria extends CriteriaWrapper {
+
+		// private final SqlIdentifier column;
+		// private final Comparator comparator;
+		private final Object elementValue;
+
+		ListElementCriteria(CriteriaDefinition delegate, Object elementValue) {
+			super(delegate);
+			// this.column = column;
+			// this.comparator = comparator;
+			this.elementValue = elementValue;
+		}
+
+		@Override
+		public @Nullable Comparator getComparator() {
+			Comparator elementComparator = getDelegate().getComparator();
+			return Comparator.IN.equals(elementComparator) ? Comparator.EQ : Comparator.NEQ;
+		}
+
+		@Override
+		public @Nullable SqlIdentifier getColumn() {
+			return getDelegate().getColumn();
+		}
+
+		@Override
+		public @Nullable Object getValue() {
+			return this.elementValue;
+		}
+	}
+
+	/**
+	 * {@link CriteriaDefinition} for a single property of an embedded object, delegating flags to the outer criteria.
+	 */
+	private static final class EmbeddedPropertyCriteria extends CriteriaWrapper {
+
+		private final SqlIdentifier propertyColumn;
+		private final @Nullable Object propertyValue;
+
+		EmbeddedPropertyCriteria(CriteriaDefinition delegate, RelationalPersistentProperty embeddedProperty,
+				@Nullable Object propertyValue) {
+			super(delegate);
+			this.propertyColumn = SqlIdentifier.unquoted(embeddedProperty.getName());
+			this.propertyValue = propertyValue;
+		}
+
+		@Override
+		public SqlIdentifier getColumn() {
+			return this.propertyColumn;
+		}
+
+		@Override
+		public @Nullable Object getValue() {
+			return this.propertyValue;
+		}
+	}
+
 	abstract static class CriteriaWrapper implements CriteriaDefinition {
 
 		private final CriteriaDefinition delegate;
 
 		public CriteriaWrapper(CriteriaDefinition delegate) {
 			this.delegate = delegate;
+		}
+
+		protected CriteriaDefinition getDelegate() {
+			return delegate;
 		}
 
 		@Nullable
@@ -760,6 +860,7 @@ public class QueryMapper {
 		public boolean isIgnoreCase() {
 			return delegate.isIgnoreCase();
 		}
+
 		@Override
 		public boolean isGroup() {
 			return false;
@@ -775,7 +876,6 @@ public class QueryMapper {
 		public SqlIdentifier getColumn() {
 			return null;
 		}
-
 
 		@Nullable
 		@Override
