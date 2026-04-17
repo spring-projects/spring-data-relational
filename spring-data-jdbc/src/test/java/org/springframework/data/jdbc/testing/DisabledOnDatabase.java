@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-present the original author or authors.
+ * Copyright 2026-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import org.springframework.data.jdbc.testing.TestClassCustomizer.TestClassCustom
 import org.springframework.test.context.ContextCustomizerFactories;
 
 /**
- * Selects a database configuration on which the test class is enabled.
+ * Selects a database configuration on which the test class is disabled.
  * <p>
- * Using this annotation will enable the test configuration if no test environment is given. If a test environment is
+ * Using this annotation will disable the test configuration if no test environment is given. If a test environment is
  * configured through {@link Environment#getActiveProfiles()}, then the test class will be skipped if the environment
  * doesn't match the specified {@link DatabaseType}.
  * <p>
@@ -42,7 +42,7 @@ import org.springframework.test.context.ContextCustomizerFactories;
  * annotated features must match to run a test.
  *
  * @author Mark Paluch
- * @see DisabledOnDatabase
+ * @see EnabledOnDatabase
  * @see DatabaseTypeCondition
  * @see OnDatabaseCondition
  */
@@ -53,11 +53,19 @@ import org.springframework.test.context.ContextCustomizerFactories;
 @ExtendWith(OnDatabaseCondition.class)
 @Documented
 @Inherited
-public @interface EnabledOnDatabase {
+public @interface DisabledOnDatabase {
 
 	/**
 	 * Database type on which the annotated class should be enabled.
 	 */
 	DatabaseType value();
+
+	/**
+	 * Custom reason to provide if the test or container is disabled.
+	 * <p>
+	 * If a custom reason is supplied, it will be combined with the default reason for this annotation. If a custom reason
+	 * is not supplied, the default reason will be used.
+	 */
+	String disabledReason() default "";
 
 }

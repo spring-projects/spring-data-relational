@@ -45,6 +45,8 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.DisabledOnDatabase;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
@@ -190,24 +192,13 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 	private void withSqlServerIdentityInsertOn(JdbcAggregateOperations jdbcAggregateTemplate, String tableName,
 			Runnable action) {
-		withSqlServerIdentityInsertOn(jdbcAggregateTemplate, List.of(tableName), action);
-	}
-
-	private void withSqlServerIdentityInsertOn(JdbcAggregateOperations jdbcAggregateTemplate, List<String> tableNames,
-			Runnable action) {
 
 		if (jdbcAggregateTemplate.getDataAccessStrategy().getDialect() instanceof SqlServerDialect) {
-
-			for (String tableName : tableNames) {
-				jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " ON");
-			}
+			jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " ON");
 			try {
 				action.run();
 			} finally {
-
-				for (String tableName : tableNames) {
-					jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " OFF");
-				}
+				jdbc.getJdbcOperations().execute("SET IDENTITY_INSERT " + tableName + " OFF");
 			}
 		} else {
 			action.run();
@@ -233,10 +224,12 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-493
-	void upsertUpdatesExistingWithNullValues() {
+	@DisabledOnDatabase(value = DatabaseType.SQL_SERVER,
+			disabledReason = "SQL Server supports only a single table for enabling IDENTITY INSERT")
+	void upsertUpdatesEntitiesWithNullValues() {
 
 		long id = 8891L;
-		withSqlServerIdentityInsertOn(template, List.of("LEGO_SET", "MANUAL"), () -> {
+		withSqlServerIdentityInsertOn(template, "LEGO_SET", () -> {
 
 			LegoSet lego = new LegoSet();
 			lego.id = id;

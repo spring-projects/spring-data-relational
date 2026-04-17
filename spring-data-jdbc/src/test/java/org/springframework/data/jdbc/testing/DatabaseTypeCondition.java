@@ -56,22 +56,33 @@ class DatabaseTypeCondition implements Condition, TestExecutionListener {
 	private static void evaluate(AnnotatedElement element, ConfigurableEnvironment environment,
 			boolean enabledByDefault) {
 
-		Optional<DatabaseType> databaseType = AnnotationUtils.findAnnotation(element, ConditionalOnDatabase.class)
+		Optional<DatabaseType> enabledOn = AnnotationUtils.findAnnotation(element, ConditionalOnDatabase.class)
 				.map(ConditionalOnDatabase::value);
 
-		if (databaseType.isEmpty()) {
-			databaseType = AnnotationUtils.findAnnotation(element, EnabledOnDatabase.class).map(EnabledOnDatabase::value);
+		if (enabledOn.isEmpty()) {
+			enabledOn = AnnotationUtils.findAnnotation(element, EnabledOnDatabase.class).map(EnabledOnDatabase::value);
 		}
 
-		if (databaseType.isPresent()) {
+		if (enabledOn.isPresent()) {
 
-			DatabaseType type = databaseType.get();
+			DatabaseType type = enabledOn.get();
 
 			if (enabledByDefault) {
 				EnabledOnDatabaseCustomizer.customizeEnvironment(environment, type);
 			}
 
-			assumeThat(environment.getActiveProfiles()).as("Enabled profiles").contains(type.getProfile());
+			assumeThat(environment.getActiveProfiles()).as("@EnabledOnDatabase: Enabled profiles")
+					.contains(type.getProfile());
+		}
+
+		Optional<DatabaseType> disabledOn = AnnotationUtils.findAnnotation(element, DisabledOnDatabase.class)
+				.map(DisabledOnDatabase::value);
+
+		if (disabledOn.isPresent()) {
+
+			DatabaseType type = disabledOn.get();
+			assumeThat(environment.getActiveProfiles()).as("@DisabledOnDatabase: Enabled profiles")
+					.doesNotContain(type.getProfile());
 		}
 	}
 
