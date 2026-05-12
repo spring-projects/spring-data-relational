@@ -134,6 +134,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	List<UserDto> findDtoByFirstname(String name);
 
+	@Query(value = "SELECT * FROM MY_USER WHERE firstname = :name")
+	List<UserDto> findDtoUsingStringBasedQueryByFirstname(String name);
+
 	// -------------------------------------------------------------------------
 	// Projections: Interface
 	// -------------------------------------------------------------------------
