@@ -748,7 +748,7 @@ class JdbcCodeBlocks {
 
 				Type typeToRead;
 
-				if (isProjecting) {
+				if (isProjecting && !context.getReturnedType().isDtoProjection()) {
 					typeToRead = context.getReturnedType().getDomainType();
 				} else {
 					typeToRead = methodReturn.getActualReturnClass();

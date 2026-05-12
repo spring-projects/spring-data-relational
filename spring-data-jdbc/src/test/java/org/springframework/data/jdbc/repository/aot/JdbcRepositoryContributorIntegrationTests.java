@@ -364,6 +364,14 @@ class JdbcRepositoryContributorIntegrationTests {
 		assertThat(dtos).hasSize(1).extracting(UserDto::firstname).containsOnly("Walter");
 	}
 
+	@Test // GH-2283
+	void shouldProjectListToDtoForStringBasedQuery() {
+
+		List<UserDto> dtos = fragment.findDtoUsingStringBasedQueryByFirstname("Walter");
+
+		assertThat(dtos).hasSize(1).extracting(UserDto::firstname).containsOnly("Walter");
+	}
+
 	@Test // GH-2121
 	void shouldProjectOneToInterface() {
 
