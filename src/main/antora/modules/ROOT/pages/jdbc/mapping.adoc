@@ -22,8 +22,8 @@ The same name mapping is applied for mapping fields to column names.
 For example, the `firstName` field maps to the `FIRST_NAME` column.
 You can control this mapping by providing a custom `NamingStrategy`.
 See <<mapping.configuration,Mapping Configuration>> for more detail.
-Table and column names that are derived from property or class names are used in SQL statements without quotes by default.
-You can control this behavior by setting `RelationalMappingContext.setForceQuote(true)`.
+Table and column names that are derived from property or class names are used in SQL statements with quotes by default.
+You can control this behavior by setting `RelationalMappingContext.setForceQuote(false)`.
 
 * The converter uses any Spring Converters registered with `CustomConversions` to override the default mapping of object properties to row columns and values.
 
