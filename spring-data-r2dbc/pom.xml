@@ -27,7 +27,7 @@
 
 		<r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 		<reactive-streams.version>1.0.4</reactive-streams.version>
-		<netty>4.2.10.Final</netty>
+		<netty>4.2.13.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
