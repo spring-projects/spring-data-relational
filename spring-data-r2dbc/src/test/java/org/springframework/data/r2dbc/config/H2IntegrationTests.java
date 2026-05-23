@@ -15,9 +15,13 @@
  */
 package org.springframework.data.r2dbc.config;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.dialect.H2Dialect;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
@@ -42,6 +48,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration test for {@link DatabaseClient} and repositories using H2.
  *
  * @author Mark Paluch
+ * @author YeongJae Min
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -85,6 +92,29 @@ class H2IntegrationTests {
 				.verifyComplete();
 	}
 
+	@Test // GH-502
+	void shouldReadAndWriteDurationAsInterval() {
+
+		jdbc.execute("DROP TABLE IF EXISTS \"duration_holder\"");
+		jdbc.execute("CREATE TABLE \"duration_holder\" (" //
+				+ "\"ID\" integer PRIMARY KEY," //
+				+ "\"DURATION\" INTERVAL SECOND(18, 9)" //
+				+ ")");
+
+		DurationHolder durationHolder = new DurationHolder();
+		durationHolder.id = 1;
+		durationHolder.duration = Duration.ofSeconds(42, 123_000_000);
+
+		R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
+
+		template.insert(durationHolder) //
+				.thenMany(template.select(org.springframework.data.relational.core.query.Query.empty(),
+						DurationHolder.class)) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> assertThat(actual.duration).isEqualTo(durationHolder.duration)) //
+				.verifyComplete();
+	}
+
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = H2Repository.class),
@@ -108,5 +138,12 @@ class H2IntegrationTests {
 		@Id Integer id;
 		String name;
 		Integer manual;
+	}
+
+	@Table("duration_holder")
+	static class DurationHolder {
+
+		@Id Integer id;
+		Duration duration;
 	}
 }

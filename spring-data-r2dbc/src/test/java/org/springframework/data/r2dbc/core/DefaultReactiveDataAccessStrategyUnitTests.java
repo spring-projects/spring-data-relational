@@ -2,15 +2,21 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.h2.api.Interval;
+
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.H2Dialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.testing.OutboundRowAssert;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -18,6 +24,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * Unit tests for {@link DefaultReactiveDataAccessStrategy}.
  *
  * @author Jens Schauder
+ * @author YeongJae Min
  */
 class DefaultReactiveDataAccessStrategyUnitTests {
 
@@ -31,6 +38,15 @@ class DefaultReactiveDataAccessStrategyUnitTests {
 
 		assertThat(dataAccessStrategy.getAllColumns(fixture.entityType()))
 				.containsExactlyInAnyOrder(sqlIdentifiers.toArray(new SqlIdentifier[0]));
+	}
+
+	@Test // GH-502
+	void shouldWriteDurationAsH2Interval() {
+
+		OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(new WithDuration(Duration.ofMillis(-500)));
+
+		OutboundRowAssert.assertThat(outboundRow).withColumn(SqlIdentifier.quoted("DURATION"))
+				.hasValue(Interval.ofSeconds(0, -500_000_000)).hasType(Interval.class);
 	}
 
 	static Stream<Fixture> fixtures() {
@@ -60,6 +76,9 @@ class DefaultReactiveDataAccessStrategyUnitTests {
 	}
 
 	record WithEmbeddedId(@Id @Embedded.Empty(prefix = "ID_") Level2 id, String name) {
+	}
+
+	record WithDuration(Duration duration) {
 	}
 
 }
