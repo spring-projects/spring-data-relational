@@ -29,10 +29,12 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -45,6 +47,9 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.CapturingEventListener;
+import org.springframework.data.jdbc.testing.DatabaseType;
+import org.springframework.data.jdbc.testing.DisabledOnDatabase;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;
@@ -57,6 +62,8 @@ import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
+import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -88,8 +95,14 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 	@Autowired RelationalMappingContext mappingContext;
 	@Autowired NamedParameterJdbcOperations jdbc;
+	@Autowired CapturingEventListener eventListener;
 
 	LegoSet legoSet = createLegoSet("Star Destroyer");
+
+	@BeforeEach
+	void beforeEach() {
+		eventListener.clear();
+	}
 
 	/**
 	 * creates an instance of {@link NoIdListChain4} with the following properties:
@@ -1445,6 +1458,18 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
+	@Test // GH-2282
+	void templateStreamShouldTriggerAfterConvertEventsCorrectly() {
+
+		template.save(legoSet);
+
+		eventListener.startRecording();
+		List<LegoSet> legoSetsLoaded = template.streamAll(LegoSet.class).toList();
+		eventListener.stopRecording();
+
+		assertThat(eventListener.getEvents()).hasSize(legoSetsLoaded.size()).hasOnlyElementsOfType(AfterConvertEvent.class);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -2334,6 +2359,11 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 				aggregate.setId(UUID.randomUUID().toString());
 				return aggregate;
 			};
+		}
+
+		@Bean
+		ApplicationListener<AbstractRelationalEvent<?>> eventListener() {
+			return new CapturingEventListener();
 		}
 
 	}
