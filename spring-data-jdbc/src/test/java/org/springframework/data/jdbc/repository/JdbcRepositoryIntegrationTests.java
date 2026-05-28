@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -36,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -49,7 +49,6 @@ import org.junit.jupiter.params.provider.NullSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -64,6 +63,8 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.*;
+import org.springframework.data.jdbc.CapturingEventListener;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
@@ -84,7 +85,6 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Sequence;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.Lock;
@@ -170,8 +170,7 @@ public class JdbcRepositoryIntegrationTests {
 	public void before() {
 
 		repository.deleteAll();
-
-		eventListener.events.clear();
+		eventListener.clear();
 	}
 
 	@Test // DATAJDBC-95
@@ -493,22 +492,36 @@ public class JdbcRepositoryIntegrationTests {
 	public void queryMethodShouldEmitEvents() {
 
 		repository.save(createEntity());
-		eventListener.events.clear();
 
+		eventListener.startRecording();
 		repository.findAllWithSql();
+		eventListener.stopRecording();
 
-		assertThat(eventListener.events).hasSize(1).hasOnlyElementsOfType(AfterConvertEvent.class);
+		assertThat(eventListener.getEvents()).hasSize(1).hasOnlyElementsOfType(AfterConvertEvent.class);
+	}
+
+	@Test // GH-2282
+	public void streamShouldTriggerConvertEventOnlyOnce() {
+
+		repository.save(createEntity());
+
+		eventListener.startRecording();
+		repository.streamAllWithSql().collect(Collectors.toSet());
+		eventListener.stopRecording();
+
+		assertThat(eventListener.getEvents()).hasSize(1).hasOnlyElementsOfType(AfterConvertEvent.class);
 	}
 
 	@Test // DATAJDBC-318
 	public void queryMethodWithCustomRowMapperDoesNotEmitEvents() {
 
 		repository.save(createEntity());
-		eventListener.events.clear();
 
+		eventListener.startRecording();
 		repository.findAllWithCustomMapper();
+		eventListener.stopRecording();
 
-		assertThat(eventListener.events).isEmpty();
+		assertThat(eventListener.getEvents()).isEmpty();
 	}
 
 	@Test // DATAJDBC-234
@@ -1630,6 +1643,9 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findAllWithSql();
 
 		@Query("SELECT * FROM DUMMY_ENTITY")
+		Stream<DummyEntity> streamAllWithSql();
+
+		@Query("SELECT * FROM DUMMY_ENTITY")
 		<T> List<T> findProjectedWithSql(Class<T> targetType);
 
 		List<DummyProjection> findProjectedByName(String name);
@@ -1907,14 +1923,8 @@ public class JdbcRepositoryIntegrationTests {
 		}
 	}
 
-	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
+	static class MyEventListener extends CapturingEventListener {
 
-		private final List<AbstractRelationalEvent<?>> events = new ArrayList<>();
-
-		@Override
-		public void onApplicationEvent(AbstractRelationalEvent<?> event) {
-			events.add(event);
-		}
 	}
 
 	// DATAJDBC-397
