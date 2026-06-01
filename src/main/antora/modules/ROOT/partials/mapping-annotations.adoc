@@ -24,11 +24,11 @@ Within the mapping framework it can be applied to constructor arguments.
 This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
 In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
 * `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, letting the name be different from the field name of the class.
-Names specified with a `@Column` annotation are always quoted when used in SQL statements.
-For most databases, this means that these names are case-sensitive.
+Names specified with a `@Column` annotation are quoted when `forceQuote` is enabled (default).
+For most databases, quoting means that these names are case-sensitive.
 It also means that you can use special characters in these names.
 However, this is not recommended, since it may cause problems with other tools.
 * `@Version`: Applied at field level is used for optimistic locking and checked for modification on save operations.
-The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
-The initially stored value is `zero` (`one` for primitive types).
+A value of `null` for wrapper types (or `zero` for primitive types) marks the entity as new.
+The initially stored value is `zero` for wrapper types (`one` for primitive types).
 The version gets incremented automatically on every update.

@@ -32,10 +32,7 @@ To create a Spring project in STS:
 
 . Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted.
 Then enter a project and a package name, such as `org.spring.r2dbc.example`.
-. Add the following to the `pom.xml` files `dependencies` element:
-+
-
-. Add the following to the pom.xml files `dependencies` element:
+. Add the following to the `pom.xml` file `dependencies` element:
 +
 [source,xml,subs="+attributes"]
 ----
@@ -118,13 +115,13 @@ When you run the main program, the preceding examples produce output similar to 
 
 [source]
 ----
-2018-11-28 10:47:03,893 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person(
+2018-11-28 10:47:03,893 DEBUG ework.core.DatabaseClient: 310 - Executing SQL statement [CREATE TABLE person(
      id VARCHAR(255) PRIMARY KEY,
      name VARCHAR(255),
      age INT
  )]
-2018-11-28 10:47:04,074 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
-2018-11-28 10:47:04,092 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
+2018-11-28 10:47:04,074 DEBUG ework.core.DatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
+2018-11-28 10:47:04,092 DEBUG ework.core.DatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
 2018-11-28 10:47:04,436  INFO        org.spring.r2dbc.example.R2dbcApp:  43 - Person [id='joe', name='Joe', age=34]
 ----
 
@@ -132,7 +129,8 @@ Even in this simple example, there are few things to notice:
 
 * You can create an instance of the central helper class in Spring Data R2DBC (`R2dbcEntityTemplate`) by using a standard `io.r2dbc.spi.ConnectionFactory` object.
 * The mapper works against standard POJO objects without the need for any additional metadata (though you can, optionally, provide that information -- see xref:r2dbc/mapping.adoc[here].).
-* Mapping conventions can use field access.Notice that the `Person` class has only getters.
+* Mapping conventions can use field access.
+Notice that the `Person` class has only getters.
 * If the constructor argument names match the column names of the stored row, they are used to instantiate the object.
 
 [[r2dbc.examples-repo]]
@@ -180,8 +178,8 @@ Alternatively, you can implement your own `R2dbcDialect`.
 
 [TIP]
 ====
-Dialects are resolved by javadoc:org.springframework.data.r2dbc.dialect.DialectResolver[] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
-+ You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
+Dialects are resolved by javadoc:org.springframework.data.r2dbc.dialect.DialectResolver[] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`. +
+You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 To do so:
 

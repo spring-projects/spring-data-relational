@@ -23,7 +23,7 @@ For example, the `firstName` field maps to the `FIRST_NAME` column.
 You can control this mapping by providing a custom `NamingStrategy`.
 See <<mapping.configuration,Mapping Configuration>> for more detail.
 Table and column names that are derived from property or class names are used in SQL statements with quotes by default.
-You can control this behavior by setting `RelationalMappingContext.setForceQuote(false)`.
+You can control this behavior by setting `JdbcMappingContext.setForceQuote(false)`, or use `JdbcMappingContext.forPlainIdentifiers()` to create a context with plain (unquoted) identifiers.
 
 * The converter uses any Spring Converters registered with `CustomConversions` to override the default mapping of object properties to row columns and values.
 
@@ -111,7 +111,7 @@ If the referenced id is an `@Embedded` id, the back reference consists of multip
 E.g. the back reference to a `Person` entity, with a composite id with the properties `firstName` and `lastName` will consist of the two columns `PERSON_FIRST_NAME` and `PERSON_LAST_NAME`.
 
 Alternatively you may choose to have them named by the entity name of the referencing entity ignoring `@Table` annotations.
-You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `RelationalMappingContext`.
+You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `DefaultNamingStrategy`.
 
 For `List` and `Map` references an additional column is required for holding the list index or map key.
 It is based on the foreign key column with an additional `_KEY` suffix.
