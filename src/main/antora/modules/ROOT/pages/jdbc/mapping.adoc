@@ -107,7 +107,7 @@ All references in an aggregate result in a foreign key relationship in the oppos
 By default, the name of the foreign key column is the table name of the referencing entity.
 
 Alternatively you may choose to have them named by the entity name of the referencing entity ignoring `@Table` annotations.
-You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `RelationalMappingContext`.
+You activate this behaviour by calling `setForeignKeyNaming(ForeignKeyNaming.IGNORE_RENAMING)` on the `DefaultNamingStrategy`.
 
 For `List` and `Map` references an additional column is required for holding the list index or map key.
 It is based on the foreign key column with an additional `_KEY` suffix.

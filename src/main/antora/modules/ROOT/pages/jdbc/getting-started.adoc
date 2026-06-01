@@ -165,6 +165,6 @@ To do so:
 
 . Implement your own `Dialect`.
 . Implement a `JdbcDialectProvider` returning the `Dialect`.
-. Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
-`org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider`=<fully qualified name of your JdbcDialectProvider>`.
+. Register the provider by creating a `spring.factories` resource under `META-INF` and perform the registration by adding a line +
+`org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider=<fully qualified name of your JdbcDialectProvider>`.
 ====

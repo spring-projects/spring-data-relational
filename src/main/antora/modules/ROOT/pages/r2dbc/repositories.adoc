@@ -118,6 +118,6 @@ static class MySQLConfiguration {
 }
 ----
 
-Note that `@EnableR2dbcRepositories` allows configuration either through `databaseClientRef` or `entityOperationsRef`.
+Note that `@EnableR2dbcRepositories` allows configuration through `entityOperationsRef`.
 Using various `DatabaseClient` beans is useful when connecting to multiple databases of the same type.
-When using different database systems that differ in their dialect, use `@EnableR2dbcRepositories`(entityOperationsRef = …)` instead.
+When using different database systems that differ in their dialect, use `@EnableR2dbcRepositories(entityOperationsRef = …)` instead.

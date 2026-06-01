@@ -29,7 +29,7 @@ Once generated the table name will be cached, so it is dynamic per mapping conte
 [[entity-persistence.custom-column-name]]
 == Override column names
 
-When the column naming strategy does not match your database table names, you can override the table name with the javadoc:org.springframework.data.relational.core.mapping.Column[] annotation.
+When the column naming strategy does not match your database column names, you can override the column name with the javadoc:org.springframework.data.relational.core.mapping.Column[] annotation.
 The element `value` of this annotation provides the custom column name.
 The following example maps the `name` property of the `MyEntity` class to the `CUSTOM_COLUMN_NAME` column in the database:
 
@@ -47,8 +47,9 @@ class MyEntity {
 ifdef::mapped-collection[]
 
 The javadoc:org.springframework.data.relational.core.mapping.MappedCollection[]
-annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship).
-`idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
+annotation can be used on Sets, Lists, and Maps (one-to-many relationships).
+The `idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
+It also customizes the back-reference column name for single-entity (one-to-one) references.
 In the following example the corresponding table for the `MySubEntity` class has a `NAME` column, and the `CUSTOM_MY_ENTITY_ID_COLUMN_NAME` column of the `MyEntity` id for relationship reasons:
 
 [source,java]
@@ -124,7 +125,7 @@ Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value fo
 ====
 
 If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
-This element represents a prefix and is prepend for each column name in the embedded object.
+This element represents a prefix and is prepended to each column name in the embedded object.
 
 [TIP]
 ====
@@ -171,7 +172,8 @@ For updates these properties will be ignored.
 [[mapping.custom.object.construction]]
 == Customized Object Construction
 
-The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation.The values to be used for the constructor parameters are resolved in the following way:
+The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation.
+The values to be used for the constructor parameters are resolved in the following way:
 
 * If a parameter is annotated with the `@Value` annotation, the given expression is evaluated, and the result is used as the parameter value.
 * If the Java type has a property whose name matches the given field of the input row, then its property information is used to select the appropriate constructor parameter to which to pass the input field value.

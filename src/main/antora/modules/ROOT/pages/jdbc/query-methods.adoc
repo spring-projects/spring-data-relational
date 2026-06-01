@@ -9,7 +9,7 @@ Defining such a query is a matter of declaring a method on the repository interf
 .PersonRepository with query methods
 [source,java]
 ----
-interface PersonRepository extends PagingAndSortingRepository<Person, String> {
+interface PersonRepository extends PagingAndSortingRepository<Person, Long> {
 
     List<Person> findByFirstname(String firstname);                                   <1>
 
@@ -40,7 +40,7 @@ Thus, the method name results in a query expression of `SELECT … FROM person W
 <4> Run a paginated query returning `Page<Person>`.Selects only data within the given page bounds and potentially a count query to determine the total count. `ResultSetExtractor` customization is not supported.
 <5> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
-<6> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
+<6> In contrast to <5>, the first entity is always emitted even if the query yields more results.
 <7> The `findByLastname` method shows a query for all people with the given `lastname`.
 <8> The `streamByLastname` method returns a `Stream`, which makes values possible as soon as they are returned from the database.
 <9> You can use the Spring Expression Language to dynamically resolve parameters.
@@ -98,7 +98,7 @@ The following example shows how to use `@Query` to declare a query method:
 ----
 interface UserRepository extends CrudRepository<User, Long> {
 
-    @Query("select firstName, lastName from User u where u.emailAddress = :email")
+    @Query("SELECT first_name, last_name FROM user WHERE email_address = :email")
     User findByEmailAddress(@Param("email") String email);
 }
 ----
@@ -184,10 +184,9 @@ It also means that, once the connection to the database is closed, the stream ca
 
 The `@Query` annotation allows you to specify a custom `RowMapper` or `ResultSetExtractor` to use.
 The attributes `rowMapperClass` and `resultSetExtractorClass` allow you to specify classes to use, which will get instantiated using a default constructor.
-Alternatively you may set `rowMapperClassRef` or `resultSetExtractorClassRef` to a bean name from your Spring application context.
+Alternatively you may set `rowMapperRef` or `resultSetExtractorRef` to a bean name from your Spring application context.
 
-If you want to use a certain `RowMapper` not just for a single method but for all methods with custom queries returning a certain type,
-you may register a `RowMapperMap` bean and registering a `RowMapper` per method return type.
+If you want to use a certain `RowMapper` not just for a single method but for all methods with custom queries returning a certain type, you may register a `QueryMappingConfiguration` bean and registering a `RowMapper` per method return type.
 The following example shows how to register `DefaultQueryMappingConfiguration`:
 
 [source,java]

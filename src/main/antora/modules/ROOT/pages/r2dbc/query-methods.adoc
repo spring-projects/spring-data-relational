@@ -35,7 +35,7 @@ Thus, the method name results in a query expression of `SELECT â€¦ FROM person W
 <3> Use `Pageable` to pass offset and sorting parameters to the database.
 <4> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
-<5> Unless <4>, the first entity is always emitted even if the query yields more result rows.
+<5> Unlike <4>, the first entity is always emitted even if the query yields more result rows.
 <6> The `findByLastname` method shows a query for all people with the given last name.
 <7> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 The annotated query uses native bind markers, which are Postgres bind markers in this example.
@@ -87,7 +87,7 @@ Using keywords from the preceding table can be used in conjunction with `deleteâ
 ====
 [source,java]
 ----
-interface ReactivePersonRepository extends ReactiveSortingRepository<Person, String> {
+interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Long> {
 
     Mono<Integer> deleteByLastname(String lastname);            <1>
 
@@ -134,7 +134,7 @@ The following example shows how to use `@Query` to declare a query method:
 ----
 interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
-    @Query("select firstName, lastName from User u where u.emailAddress = :email")
+    @Query("SELECT first_name, last_name FROM user WHERE email_address = :email")
     Flux<User> findByEmailAddress(@Param("email") String email);
 }
 ----
