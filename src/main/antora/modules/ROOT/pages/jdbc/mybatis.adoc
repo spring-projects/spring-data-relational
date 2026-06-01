@@ -35,7 +35,7 @@ If one is found, that statement (including its configured mapping to an entity) 
 The name of the statement is constructed by concatenating the fully qualified name of the entity type with `Mapper.` and a `String` determining the kind of statement.
 For example, if an instance of `org.example.User` is to be inserted, Spring Data JDBC looks for a statement named `org.example.UserMapper.insert`.
 
-When the statement is run, an instance of [`MyBatisContext`] gets passed as an argument, which makes various arguments available to the statement.
+When the statement is run, an instance of javadoc:org.springframework.data.jdbc.core.mapping.MyBatisContext[] gets passed as an argument, which makes various arguments available to the statement.
 
 The following table describes the available MyBatis statements:
 

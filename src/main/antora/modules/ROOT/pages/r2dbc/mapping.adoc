@@ -22,10 +22,11 @@ The same name mapping is applied for mapping fields to column names.
 For example, the `firstName` field maps to the `FIRST_NAME` column.
 You can control this mapping by providing a custom `NamingStrategy`.
 See <<mapping.configuration,Mapping Configuration>> for more detail.
-Table and column names that are derived from property or class names are used in SQL statements without quotes by default.
-You can control this behavior by setting `RelationalMappingContext.setForceQuote(true)`.
+Table and column names that are derived from property or class names are used in SQL statements with quotes by default.
+You can control this behavior by setting `R2dbcMappingContext.setForceQuote(false)`, or use `R2dbcMappingContext.forPlainIdentifiers()` to create a context with plain (unquoted) identifiers.
 
-* Nested objects are not supported.
+* Arbitrarily nested objects are not supported by convention.
+Use `@Embedded` for value objects that map to columns in the same table — see <<entity-persistence.embedded-entities>>.
 
 * The converter uses any Spring Converters registered with `CustomConversions` to override the default mapping of object properties to row columns and values.
 
@@ -47,12 +48,10 @@ By creating your own instance, you can register Spring converters to map specifi
 You can configure the `MappingR2dbcConverter` as well as `DatabaseClient` and `ConnectionFactory` by using Java-based metadata.
 The following example uses Spring's Java-based configuration:
 
-If you set `setForceQuote` of the `R2dbcMappingContext to` true, table and column names derived from classes and properties are used with database specific quotes.
-This means that it is OK to use reserved SQL words (such as order) in these names.
-You can do so by overriding `r2dbcMappingContext(Optional<NamingStrategy>)` of `AbstractR2dbcConfiguration`.
-Spring Data converts the letter casing of such a name to that form which is also used by the configured database when no quoting is used.
-Therefore, you can use unquoted names when creating tables, as long as you do not use keywords or special characters in your names.
-For databases that adhere to the SQL standard, this means that names are converted to upper case.
+By default, table and column names derived from classes and properties are used with database-specific quotes, meaning they are typically case-sensitive and reserved SQL words (such as `order`) can be used safely in names.
+To disable quoting, override `r2dbcMappingContext(Optional<NamingStrategy>)` in `AbstractR2dbcConfiguration` and return `R2dbcMappingContext.forPlainIdentifiers(…)`, or call `context.setForceQuote(false)` on the context.
+When quoting is disabled, Spring Data converts identifier casing to the form used by the configured database without quoting.
+For databases that adhere to the SQL standard, names are converted to upper case, so you can use unquoted names when creating tables as long as you do not use keywords or special characters.
 The quoting character and the way names get capitalized is controlled by the used `R2dbcDialect`.
 See xref:r2dbc/getting-started.adoc#r2dbc.dialects[R2DBC Drivers] for how to configure custom dialects.
 
@@ -77,7 +76,7 @@ public class MyAppConfig extends AbstractR2dbcConfiguration {
 
 `AbstractR2dbcConfiguration` requires you to implement a method that defines a `ConnectionFactory`.
 
-You can add additional converters to the converter by overriding the `r2dbcCustomConversions` method.
+You can add additional converters to the converter by overriding the `getCustomConverters` method.
 
 You can configure a custom `NamingStrategy` by registering it as a bean.
 The `NamingStrategy` controls how the names of classes and properties get converted to the names of tables and columns.
@@ -185,9 +184,9 @@ include::partial$mapping.adoc[]
 When storing and querying your objects, it is often convenient to have a `R2dbcConverter` instance to handle the mapping of all Java types to `OutboundRow` instances.
 However, you may sometimes want the `R2dbcConverter` instances to do most of the work but let you selectively handle the conversion for a particular type -- perhaps to optimize performance.
 
-To selectively handle the conversion yourself, register one or more one or more `org.springframework.core.convert.converter.Converter` instances with the `R2dbcConverter`.
+To selectively handle the conversion yourself, register one or more `org.springframework.core.convert.converter.Converter` instances with the `R2dbcConverter`.
 
-You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters.
+You can use the `getCustomConverters` method in `AbstractR2dbcConfiguration` to configure converters.
 The examples xref:r2dbc/mapping.adoc#mapping.configuration[at the beginning of this chapter] show how to perform the configuration with Java.
 
 NOTE: Custom top-level entity conversion requires asymmetric types for conversion.
@@ -237,7 +236,7 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
 
 Some databases, such as https://github.com/pgjdbc/r2dbc-postgresql#postgres-enum-types[Postgres], can natively write enum values using their database-specific enumerated column type.
 Spring Data converts `Enum` values by default to `String` values for maximum portability.
-To retain the actual enum value, register a `@Writing` converter whose source and target types use the actual enum type to avoid using `Enum.name()` conversion.
+To retain the actual enum value, register a `@WritingConverter` whose source and target types use the actual enum type to avoid using `Enum.name()` conversion.
 Additionally, you need to configure the enum type on the driver level so that the driver is aware how to represent the enum type.
 
 The following example shows the involved components to read and write `Color` enum values natively:

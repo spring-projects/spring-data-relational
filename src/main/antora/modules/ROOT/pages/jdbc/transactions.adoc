@@ -74,7 +74,7 @@ interface UserRepository extends CrudRepository<User, Long> {
 
     @Modifying
     @Transactional
-    @Query("delete from User u where u.active = false")
+    @Query("DELETE FROM user WHERE active = false")
     void deleteInactiveUsers();
 }
 ----
