@@ -27,3 +27,4 @@ jobs:
         uses: spring-projects/spring-data-build/actions/maven-build@3.5.x
         with:
           run: ./mvnw -Dsort -B -U -Pall-dbs clean dependency:list verify
+          settings-xml: '${{ vars.SETTINGS_XML }}'
