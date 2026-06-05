@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
@@ -48,8 +49,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.CapturingEventListener;
-import org.springframework.data.jdbc.testing.DatabaseType;
-import org.springframework.data.jdbc.testing.DisabledOnDatabase;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
@@ -58,7 +57,6 @@ import org.springframework.data.jdbc.testing.TestClass;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
-import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
@@ -251,7 +249,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, two.name, 2));
 	}
 
@@ -267,7 +265,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, null, 2));
 	}
 
@@ -349,8 +347,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 
 		Stream<LegoSet> streamable = template.streamAll(LegoSet.class);
 
-		assertThat(streamable)
-				.extracting("id", "manual.id", "manual.content") //
+		assertThat(streamable).extracting("id", "manual.id", "manual.content") //
 				.containsExactly(tuple(legoSet.id, legoSet.manual.id, legoSet.manual.content));
 	}
 
@@ -761,7 +758,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	void saveAndLoadAnEntityWithEmptyArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
-		arrayOwner.digits = new String[] { };
+		arrayOwner.digits = new String[] {};
 
 		ArrayOwner saved = template.save(arrayOwner);
 
@@ -885,7 +882,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new HashSet<>(asList("one", "two", "three")));
 	}
 
-	@Test //GH-1737
+	@Test // GH-1737
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	void saveAndLoadEmbeddedArray() {
 
@@ -900,7 +897,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.embeddedStringList.digits).containsExactly("one", "two", "three");
 	}
 
-	@Test //GH-1737
+	@Test // GH-1737
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	void saveAndLoadEmptyEmbeddedArray() {
 
@@ -2245,8 +2242,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Table("BEFORE_CONVERT_CALLBACK_FOR_SAVE_BATCH")
 	static class BeforeConvertCallbackForSaveBatch {
 
-		@Id
-		private String id;
+		@Id private String id;
 
 		private String name;
 
