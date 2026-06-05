@@ -48,8 +48,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.CapturingEventListener;
-import org.springframework.data.jdbc.testing.DatabaseType;
-import org.springframework.data.jdbc.testing.DisabledOnDatabase;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.IntegrationTest;
 import org.springframework.data.jdbc.testing.TestClass;

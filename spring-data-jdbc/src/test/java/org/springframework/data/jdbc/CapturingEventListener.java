@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 the original author or authors.
+ * Copyright 2026-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,20 @@ package org.springframework.data.jdbc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 
 /**
+ * {@link ApplicationListener} that captures {@link AbstractRelationalEvent RelationalEvents}.
+ *
  * @author Christoph Strobl
  */
 public class CapturingEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
 
 	private final List<AbstractRelationalEvent<?>> events = new ArrayList<>(5);
-	private final AtomicBoolean record = new AtomicBoolean(false);
+
+	private volatile boolean record;
 
 	@Override
 	public void onApplicationEvent(AbstractRelationalEvent<?> event) {
@@ -37,27 +39,27 @@ public class CapturingEventListener implements ApplicationListener<AbstractRelat
 		if (!isRecording()) {
 			return;
 		}
-
-		events.add(event);
+		this.events.add(event);
 	}
 
 	public boolean isRecording() {
-		return record.get();
-	}
-
-	public List<AbstractRelationalEvent<?>> getEvents() {
-		return Collections.unmodifiableList(events);
-	}
-
-	public void clear() {
-		events.clear();
+		return this.record;
 	}
 
 	public void startRecording() {
-		record.set(true);
+		this.record = true;
 	}
 
 	public void stopRecording() {
-		record.set(false);
+		this.record = false;
 	}
+
+	public List<AbstractRelationalEvent<?>> getEvents() {
+		return Collections.unmodifiableList(this.events);
+	}
+
+	public void clear() {
+		this.events.clear();
+	}
+
 }
