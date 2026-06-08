@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.support.ExampleMatcherAccessor;
 import org.springframework.util.Assert;
 
@@ -39,6 +40,7 @@ import org.springframework.util.Assert;
  * @since 2.2
  * @author Greg Turnquist
  * @author Jens Schauder
+ * @author Christoph Strobl
  */
 public class RelationalExampleMapper {
 
@@ -105,23 +107,26 @@ public class RelationalExampleMapper {
 				case DEFAULT:
 				case EXACT:
 					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
+						? Criteria.where(column).isNull().or(column).is(convPropValue).ignoreCase(ignoreCase)
+						: Criteria.where(column).is(convPropValue).ignoreCase(ignoreCase));
 					break;
 				case ENDING:
+					ValueFunction<String> endingValueFunction = escaper -> "%" + escaper.escape(convPropValue.toString());
 					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue).ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue).ignoreCase(ignoreCase));
+						? Criteria.where(column).isNull().or(column).like(endingValueFunction).ignoreCase(ignoreCase)
+						: Criteria.where(column).like(endingValueFunction).ignoreCase(ignoreCase));
 					break;
 				case STARTING:
+					ValueFunction<String> startingValueFunction = escaper -> escaper.escape(convPropValue.toString()) + "%";
 					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like(convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like(convPropValue + "%").ignoreCase(ignoreCase));
+						? Criteria.where(column).isNull().or(column).like(startingValueFunction).ignoreCase(ignoreCase)
+						: Criteria.where(column).like(startingValueFunction).ignoreCase(ignoreCase));
 					break;
 				case CONTAINING:
+					ValueFunction<String> containingValueFunction = escaper -> "%" + escaper.escape(convPropValue.toString()) + "%";
 					criteriaBasedOnProperties.add(includeNulls(example) //
-							? Criteria.where(column).isNull().or(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase)
-							: Criteria.where(column).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
+						? Criteria.where(column).isNull().or(column).like(containingValueFunction).ignoreCase(ignoreCase)
+						: Criteria.where(column).like(containingValueFunction).ignoreCase(ignoreCase));
 					break;
 				default:
 					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported");
