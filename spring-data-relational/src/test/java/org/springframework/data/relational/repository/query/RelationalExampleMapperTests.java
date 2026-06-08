@@ -31,8 +31,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.query.ValueFunction;
 
 /**
  * Verify that the {@link RelationalExampleMapper} properly turns {@link Example}s into {@link Query}'s.
@@ -179,6 +181,22 @@ class RelationalExampleMapperTests {
 		assertThat(query.getCriteria()) //
 				.map(Object::toString) //
 				.hasValue("(firstname LIKE '%do')");
+	}
+
+	@Test // GH-2309
+	void queryByExampleShouldEscapeSpecialCharactersInStringMatching() {
+
+		Person person = new Person(null, "%", null, null, null, null);
+
+		ExampleMatcher matcher = matching().withStringMatcher(ENDING);
+		Example<Person> example = Example.of(person, matcher);
+
+		Query query = exampleMapper.getMappedExample(example);
+
+		assertThat(query.getCriteria().get().getGroup().get(0).getValue()).isInstanceOf(ValueFunction.class)
+			.satisfies(it -> {
+				assertThat(((ValueFunction<?>) it).apply(Escaper.of('!'))).isEqualTo("%!%");
+			});
 	}
 
 	@Test // GH-929
