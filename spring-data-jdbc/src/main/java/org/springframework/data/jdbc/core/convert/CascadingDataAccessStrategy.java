@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static java.lang.Boolean.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -25,9 +26,10 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
-
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -94,7 +96,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
-		return collect(das -> das.updateWithVersion(instance, domainType, previousVersion));
+		return cascadePropagatingOptimisticLocking(
+				das -> das.updateWithVersion(instance, domainType, previousVersion));
 	}
 
 	@Override
@@ -109,7 +112,10 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
-		collectVoid(das -> das.deleteWithVersion(id, domainType, previousVersion));
+		cascadePropagatingOptimisticLocking(das -> {
+			das.deleteWithVersion(id, domainType, previousVersion);
+			return TRUE;
+		});
 	}
 
 	@Override
@@ -238,5 +244,25 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 			consumer.accept(das);
 			return TRUE;
 		});
+	}
+
+	/**
+	 * Cascade through the configured strategies like {@link #collect(Function)} but propagate
+	 * {@link OptimisticLockingFailureException}, since those are not a sign that query in question is not implemented.
+	 */
+	private <T> T cascadePropagatingOptimisticLocking(Function<DataAccessStrategy, T> function) {
+
+		List<Exception> exceptions = new ArrayList<>();
+		for (DataAccessStrategy strategy : strategies) {
+			try {
+				return function.apply(strategy);
+			} catch (OptimisticLockingFailureException ex) {
+				throw ex;
+			} catch (RuntimeException ex) {
+				exceptions.add(ex);
+			}
+		}
+		throw new CombinedDataAccessException("Failed to perform data access with all available strategies",
+				Collections.unmodifiableList(exceptions));
 	}
 }
