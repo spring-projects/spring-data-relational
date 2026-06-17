@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"https://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springframework.data.jdbc.mybatis.VersionedEntityMapper">
+	<update id="updateWithVersion" parameterType="MyBatisContext">
+		UPDATE versioned_entity
+		SET version = #{instance.version,javaType=java.lang.Long,jdbcType=BIGINT},
+		    name    = #{instance.name}
+		WHERE id = #{instance.id}
+		AND version = #{additionalValues[___oldOptimisticLockingVersion],javaType=java.lang.Long,jdbcType=BIGINT}
+	</update>
+	<delete id="deleteWithVersion" parameterType="MyBatisContext">
+		DELETE FROM versioned_entity
+		WHERE id = #{id}
+		AND version = #{additionalValues[___oldOptimisticLockingVersion],javaType=java.lang.Long,jdbcType=BIGINT}
+	</delete>
+</mapper>

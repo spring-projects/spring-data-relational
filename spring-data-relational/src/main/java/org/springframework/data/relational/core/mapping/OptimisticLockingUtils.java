@@ -84,4 +84,18 @@ public class OptimisticLockingUtils {
 				id, version, persistentEntity.getTableName()));
 	}
 
+	/**
+	 * Create an {@link OptimisticLockingFailureException} for a delete failure.
+	 *
+	 * @param id the object identifier.
+	 * @param version the object version.
+	 * @param domainType the class of the entity to be deleted
+	 * @return the exception.
+	 */
+	public static <T> OptimisticLockingFailureException deleteFailed(Object id, Number version, Class<T> domainType) {
+
+		return new OptimisticLockingFailureException(String.format(
+				"Failed to delete versioned entity with id '%s' (version '%s') of type [%s]; Was the entity updated or deleted concurrently?",
+				id, version, domainType));
+	}
 }
