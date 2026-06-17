@@ -47,6 +47,7 @@ import org.springframework.data.jdbc.core.dialect.DialectResolver;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.OptimisticLockingUtils;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
@@ -224,7 +225,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statement = namespace(domainType) + ".deleteWithVersion";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType,
 				Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion));
-		sqlSession().delete(statement, parameter);
+		int affectedRows = sqlSession().delete(statement, parameter);
+		if (affectedRows == 0) {
+			throw OptimisticLockingUtils.deleteFailed(id, previousVersion,  domainType);
+		}
 	}
 
 	@Override

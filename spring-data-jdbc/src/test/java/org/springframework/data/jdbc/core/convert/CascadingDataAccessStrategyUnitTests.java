@@ -24,6 +24,7 @@ import junit.framework.AssertionFailedError;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -83,6 +84,71 @@ public class CascadingDataAccessStrategyUnitTests {
 		Iterable<Object> findAll = access.findAllByPath(identifier, mock(PersistentPropertyPath.class));
 
 		assertThat(findAll).containsExactly("success");
+	}
+
+	@Test // GH-2316
+	public void updateWithVersionPropagatesOptimisticLockingFailure() {
+
+		DataAccessStrategy throwsOlfe = mock(DataAccessStrategy.class);
+		doThrow(new OptimisticLockingFailureException("version mismatch")) //
+				.when(throwsOlfe).updateWithVersion("entity", String.class, 1L);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(throwsOlfe, mayNotCall));
+
+		assertThatExceptionOfType(OptimisticLockingFailureException.class) //
+				.isThrownBy(() -> access.updateWithVersion("entity", String.class, 1L)) //
+				.withMessage("version mismatch");
+	}
+
+	@Test // GH-2316
+	public void updateWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
+
+		doReturn(true).when(succeeds).updateWithVersion("entity", String.class, 1L);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
+
+		assertThat(access.updateWithVersion("entity", String.class, 1L)).isTrue();
+	}
+
+	@Test // GH-2316
+	public void updateWithVersionFailsIfAllStrategiesFail() {
+
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
+
+		assertThatExceptionOfType(CombinedDataAccessException.class) //
+				.isThrownBy(() -> access.updateWithVersion("entity", String.class, 1L)) //
+				.withMessageContaining("Failed to perform data access with all available strategies");
+	}
+
+	@Test // GH-2316
+	public void deleteWithVersionPropagatesOptimisticLockingFailure() {
+
+		DataAccessStrategy throwsOlfe = mock(DataAccessStrategy.class);
+		doThrow(new OptimisticLockingFailureException("version mismatch")) //
+				.when(throwsOlfe).deleteWithVersion(23L, String.class, 1L);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(throwsOlfe, mayNotCall));
+
+		assertThatExceptionOfType(OptimisticLockingFailureException.class) //
+				.isThrownBy(() -> access.deleteWithVersion(23L, String.class, 1L)) //
+				.withMessage("version mismatch");
+	}
+
+	@Test // GH-2316
+	public void deleteWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
+
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
+
+		access.deleteWithVersion(23L, String.class, 1L);
+
+		verify(succeeds).deleteWithVersion(23L, String.class, 1L);
+	}
+
+	@Test // GH-2316
+	public void deleteWithVersionFailsIfAllStrategiesFail() {
+
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
+
+		assertThatExceptionOfType(CombinedDataAccessException.class) //
+				.isThrownBy(() -> access.deleteWithVersion(23L, String.class, 1L)) //
+				.withMessageContaining("Failed to perform data access with all available strategies");
 	}
 
 }
