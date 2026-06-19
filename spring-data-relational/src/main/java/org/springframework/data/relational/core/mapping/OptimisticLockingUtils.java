@@ -27,6 +27,7 @@ import org.springframework.data.mapping.PersistentProperty;
  * Strictly for internal use within the framework.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 4.0.1
  */
 public class OptimisticLockingUtils {
@@ -91,6 +92,7 @@ public class OptimisticLockingUtils {
 	 * @param version the object version.
 	 * @param domainType the class of the entity to be deleted
 	 * @return the exception.
+	 * @since 4.1.1
 	 */
 	public static <T> OptimisticLockingFailureException deleteFailed(Object id, Number version, Class<T> domainType) {
 
@@ -98,4 +100,5 @@ public class OptimisticLockingUtils {
 				"Failed to delete versioned entity with id '%s' (version '%s') of type [%s]; Was the entity updated or deleted concurrently?",
 				id, version, domainType));
 	}
+
 }
