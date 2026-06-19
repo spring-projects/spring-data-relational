@@ -60,7 +60,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
-public class MyBatisHsqlIntegrationTests {
+class MyBatisHsqlIntegrationTests {
 
 	@Autowired SqlSessionFactory sqlSessionFactory;
 	@Autowired DummyEntityRepository repository;
@@ -68,7 +68,7 @@ public class MyBatisHsqlIntegrationTests {
 	@Autowired NamedParameterJdbcOperations jdbc;
 
 	@Test // DATAJDBC-123
-	public void mybatisSelfTest() {
+	void mybatisSelfTest() {
 
 		SqlSession session = sqlSessionFactory.openSession();
 
@@ -76,7 +76,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // DATAJDBC-123
-	public void myBatisGetsUsedForInsertAndSelect() {
+	void myBatisGetsUsedForInsertAndSelect() {
 
 		DummyEntity entity = new DummyEntity(null, "some name");
 		DummyEntity saved = repository.save(entity);
@@ -89,7 +89,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void deleteOfVersionedAggregateWithCurrentVersionSucceeds() {
+	void deleteOfVersionedAggregateWithCurrentVersionSucceeds() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -101,7 +101,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void deleteOfVersionedAggregateWithStaleVersionThrowsOptimisticLockingFailureException() {
+	void deleteOfVersionedAggregateWithStaleVersionThrowsOptimisticLockingFailureException() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -114,7 +114,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void deleteOfConcurrentlyDeletedVersionedAggregateThrowsOptimisticLockingFailureException() {
+	void deleteOfConcurrentlyDeletedVersionedAggregateThrowsOptimisticLockingFailureException() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -126,7 +126,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void updateOfVersionedAggregateWithCurrentVersionSucceeds() {
+	void updateOfVersionedAggregateWithCurrentVersionSucceeds() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -139,7 +139,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void updateOfVersionedAggregateWithStaleVersionThrowsOptimisticLockingFailureException() {
+	void updateOfVersionedAggregateWithStaleVersionThrowsOptimisticLockingFailureException() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -152,7 +152,7 @@ public class MyBatisHsqlIntegrationTests {
 	}
 
 	@Test // GH-2316
-	public void updateOfConcurrentlyDeletedVersionedAggregateThrowsOptimisticLockingFailureException() {
+	void updateOfConcurrentlyDeletedVersionedAggregateThrowsOptimisticLockingFailureException() {
 
 		VersionedEntity saved = template.save(new VersionedEntity(null, null, "first"));
 
@@ -209,5 +209,7 @@ public class MyBatisHsqlIntegrationTests {
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
 					new NamedParameterJdbcTemplate(db), sqlSession, JdbcHsqlDbDialect.INSTANCE, QueryMappingConfiguration.EMPTY);
 		}
+
 	}
+
 }

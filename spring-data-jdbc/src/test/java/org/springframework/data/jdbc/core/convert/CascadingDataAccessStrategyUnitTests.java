@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Jens Schauder
  */
-public class CascadingDataAccessStrategyUnitTests {
+class CascadingDataAccessStrategyUnitTests {
 
 	int errorIndex = 1;
 	String[] errorMessages = { "Sorry I don't support this method; Please try again later", "Still no luck" };
@@ -50,7 +50,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	});
 
 	@Test // DATAJDBC-123
-	public void findByReturnsFirstSuccess() {
+	void findByReturnsFirstSuccess() {
 
 		doReturn("success").when(succeeds).findById(23L, String.class);
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
@@ -61,7 +61,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-123
-	public void findByFailsIfAllStrategiesFail() {
+	void findByFailsIfAllStrategiesFail() {
 
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
 
@@ -74,7 +74,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // DATAJDBC-123
-	public void findByPropertyReturnsFirstSuccess() {
+	void findByPropertyReturnsFirstSuccess() {
 
 		Identifier identifier = Identifier.of(SqlIdentifier.quoted("id-name"), 23L, Long.class);
 		doReturn(Collections.singletonList("success")).when(succeeds).findAllByPath(eq(identifier),
@@ -87,7 +87,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void updateWithVersionPropagatesOptimisticLockingFailure() {
+	void updateWithVersionPropagatesOptimisticLockingFailure() {
 
 		DataAccessStrategy throwsOlfe = mock(DataAccessStrategy.class);
 		doThrow(new OptimisticLockingFailureException("version mismatch")) //
@@ -100,7 +100,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void updateWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
+	void updateWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
 
 		doReturn(true).when(succeeds).updateWithVersion("entity", String.class, 1L);
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
@@ -109,7 +109,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void updateWithVersionFailsIfAllStrategiesFail() {
+	void updateWithVersionFailsIfAllStrategiesFail() {
 
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
 
@@ -119,7 +119,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void deleteWithVersionPropagatesOptimisticLockingFailure() {
+	void deleteWithVersionPropagatesOptimisticLockingFailure() {
 
 		DataAccessStrategy throwsOlfe = mock(DataAccessStrategy.class);
 		doThrow(new OptimisticLockingFailureException("version mismatch")) //
@@ -132,7 +132,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void deleteWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
+	void deleteWithVersionSkipsStrategyThatDoesNotSupportTheOperation() {
 
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
 
@@ -142,7 +142,7 @@ public class CascadingDataAccessStrategyUnitTests {
 	}
 
 	@Test // GH-2316
-	public void deleteWithVersionFailsIfAllStrategiesFail() {
+	void deleteWithVersionFailsIfAllStrategiesFail() {
 
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
 
