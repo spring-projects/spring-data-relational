@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -152,4 +153,74 @@ public class RelationalMappingContextUnitTests {
 	static class Inherit1 extends Base {}
 
 	static class Inherit2 extends Base {}
+
+	// GH-2061 - Tests for Set<T> validation in @MappedCollection context
+
+	@Test // GH-2061
+	void doesNotThrowExceptionForInvalidSetUsage() {
+		context = new RelationalMappingContext();
+		context.setSimpleTypeHolder(holder);
+
+		// Should not throw exception, just log warning
+		assertThatCode(() -> context.getPersistentEntity(AggregateWithInvalidSet.class))
+			.doesNotThrowAnyException();
+	}
+
+	@Test // GH-2061
+	void doesNotThrowExceptionWhenSetElementHasId() {
+		context = new RelationalMappingContext();
+		context.setSimpleTypeHolder(holder);
+
+		assertThatCode(() -> context.getPersistentEntity(AggregateWithValidSetHavingId.class))
+			.doesNotThrowAnyException();
+	}
+
+	@Test // GH-2061
+	void doesNotThrowExceptionWhenSetElementWithoutIdHasNoReferences() {
+		context = new RelationalMappingContext();
+		context.setSimpleTypeHolder(holder);
+
+		assertThatCode(() -> context.getPersistentEntity(AggregateWithValidSetWithoutReferences.class))
+			.doesNotThrowAnyException();
+	}
+
+	// Test entities for GH-2061
+	static class AggregateWithInvalidSet {
+		@Id Long id;
+		@MappedCollection(idColumn = "aggregate_id", keyColumn = "idx")
+		Set<InvalidElement> elements;
+	}
+
+	static class InvalidElement {
+		String name;
+		OtherEntity reference;
+	}
+
+	static class OtherEntity {
+		@Id Long id;
+		String value;
+	}
+
+	static class AggregateWithValidSetHavingId {
+		@Id Long id;
+		@MappedCollection(idColumn = "aggregate_id")
+		Set<ElementWithId> elements;
+	}
+
+	static class ElementWithId {
+		@Id Long id;
+		String name;
+		OtherEntity reference;
+	}
+
+	static class AggregateWithValidSetWithoutReferences {
+		@Id Long id;
+		@MappedCollection(idColumn = "aggregate_id", keyColumn = "idx")
+		Set<SimpleElement> elements;
+	}
+
+	static class SimpleElement {
+		String name;
+		int value;
+	}
 }
