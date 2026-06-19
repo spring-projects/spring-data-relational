@@ -250,11 +250,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	/**
-	 * Cascade through the configured strategies like {@link #collect(Function)} but propagate an
-	 * {@link OptimisticLockingFailureException} from the first strategy that raises it instead of treating it as a signal
-	 * to try the next strategy. An optimistic locking failure means the operation reached the database and the version
-	 * check failed; subsequent strategies would either repeat the failure or perform a duplicate, possibly successful,
-	 * write — both wrong.
+	 * Cascade through the configured strategies like {@link #collect(Function)} but propagate
+	 * {@link OptimisticLockingFailureException}, since those are not a sign that query in question is not implemented.
 	 */
 	private <T> T cascadePropagatingOptimisticLocking(Function<DataAccessStrategy, T> function) {
 
