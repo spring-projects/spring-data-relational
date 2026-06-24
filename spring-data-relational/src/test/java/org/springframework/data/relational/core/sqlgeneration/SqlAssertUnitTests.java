@@ -21,6 +21,7 @@ import static org.springframework.data.relational.core.sqlgeneration.SqlAssert.*
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.relational.core.sql.Expressions;
 
 /**
  * Tests for SqlAssert.
@@ -147,6 +148,12 @@ class SqlAssertUnitTests {
 			assertThatThrownBy(() -> sqlAssert.hasExactlyColumns(func("count", col("x")))) //
 					.hasMessageContaining("count(x, y)") //
 					.hasMessageContaining("count(x)");
+		}
+
+		@Test // GH-2320
+		void matchesMinusExpression() {
+			SqlAssert sqlAssert = assertThatParsed("select x - 3 from t");
+			sqlAssert.hasExactlyColumns(col("x").minus(3));
 		}
 	}
 

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
@@ -184,9 +185,9 @@ public class RowDocumentResultSetExtractorUnitTests {
 
 			testerFor(WithSets.class).resultSet(rsc -> {
 				rsc.withPath("id1").withKey("first").withPath("first.dummyName") //
-						.withRow(1, 1, "Dummy Alfred")//
-						.withRow(1, 2, "Dummy Berta") //
-						.withRow(1, 3, "Dummy Carl");
+						.withRow(1, 0, "Dummy Alfred")//
+						.withRow(1, 1, "Dummy Berta") //
+						.withRow(1, 2, "Dummy Carl");
 			}).run(document -> {
 
 				assertThat(document).containsEntry("id1", 1).containsEntry("first",
@@ -200,9 +201,9 @@ public class RowDocumentResultSetExtractorUnitTests {
 
 			testerFor(WithSets.class).resultSet(rsc -> {
 				rsc.withPaths("id1", "name").withKey("first").withPath("first.dummyName") //
-						.withRow(1, "Simplicissimus", 1, "Dummy Alfred")//
-						.withRow(1, null, 2, "Dummy Berta") //
-						.withRow(1, null, 3, "Dummy Carl");
+						.withRow(1, "Simplicissimus", 0, "Dummy Alfred")//
+						.withRow(1, null, 1, "Dummy Berta") //
+						.withRow(1, null, 2, "Dummy Carl");
 			}).run(document -> {
 
 				assertThat(document).containsEntry("id1", 1).containsEntry("name", "Simplicissimus").containsEntry("first",
@@ -216,9 +217,9 @@ public class RowDocumentResultSetExtractorUnitTests {
 
 			testerFor(WithSets.class).resultSet(rsc -> {
 				rsc.withPaths("id1").withKey("first").withPath("first.dummyName").withKey("second").withPath("second.dummyName") //
-						.withRow(1, 1, "Dummy Alfred", 1, "Other Ephraim")//
-						.withRow(1, 2, "Dummy Berta", 2, "Other Zeno") //
-						.withRow(1, 3, "Dummy Carl", null, null);
+						.withRow(1, 0, "Dummy Alfred", 0, "Other Ephraim")//
+						.withRow(1, 1, "Dummy Berta", 1, "Other Zeno") //
+						.withRow(1, 2, "Dummy Carl", null, null);
 			}).run(document -> {
 
 				assertThat(document).hasSize(3)
@@ -238,9 +239,9 @@ public class RowDocumentResultSetExtractorUnitTests {
 
 				testerFor(WithList.class).resultSet(rsc -> {
 					rsc.withPaths("id").withKey("withoutIds").withPath("withoutIds.name") //
-							.withRow(1, 1, "Dummy Alfred")//
-							.withRow(1, 2, "Dummy Berta") //
-							.withRow(1, 3, "Dummy Carl");
+							.withRow(1, 0, "Dummy Alfred")//
+							.withRow(1, 1, "Dummy Berta") //
+							.withRow(1, 2, "Dummy Carl");
 				}).run(document -> {
 
 					assertThat(document).hasSize(2).containsEntry("without_ids",
@@ -265,6 +266,16 @@ public class RowDocumentResultSetExtractorUnitTests {
 							.contains(new RowDocument().append("name", "Dummy Berta"))
 							.contains(new RowDocument().append("name", "Dummy Carl"));
 				});
+			}
+
+			@Test // GH-2320
+			void failsOnNegativeListIndex() {
+
+				assertThatExceptionOfType(MappingException.class).isThrownBy(() -> //
+				testerFor(WithList.class).resultSet(rsc -> {
+					rsc.withPaths("id").withKey("withoutIds").withPath("withoutIds.name") //
+							.withRow(1, -1, "Dummy Alfred");
+				}).run(document -> {}));
 			}
 		}
 	}
@@ -292,8 +303,8 @@ public class RowDocumentResultSetExtractorUnitTests {
 
 			testerFor(WithMapsAndList.class).resultSet(rsc -> {
 				rsc.withPaths("id1").withKey("map").withPath("map.dummyName").withKey("list").withPath("list.name") //
-						.withRow(1, "alpha", "Dummy Alfred", 1, "Other Ephraim")//
-						.withRow(1, "beta", "Dummy Berta", 2, "Other Zeno") //
+						.withRow(1, "alpha", "Dummy Alfred", 0, "Other Ephraim")//
+						.withRow(1, "beta", "Dummy Berta", 1, "Other Zeno") //
 						.withRow(1, "gamma", "Dummy Carl", null, null);
 			}).run(document -> {
 

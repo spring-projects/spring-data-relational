@@ -68,8 +68,8 @@ class SingleQuerySqlGeneratorUnitTests {
 					) //
 					.hasInlineViewSelectingFrom("\"trivial_aggregate\"") //
 					.hasExactlyColumns( //
-							lit(1).as(rnAlias()), //
-							lit(1).as(rcAlias()), //
+							lit(0).as(rnAlias()), //
+							lit(0).as(rcAlias()), //
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					);
@@ -92,8 +92,8 @@ class SingleQuerySqlGeneratorUnitTests {
 					) //
 					.hasInlineViewSelectingFrom("\"trivial_aggregate\"") //
 					.hasExactlyColumns( //
-							lit(1).as(rnAlias()), //
-							lit(1).as(rcAlias()), //
+							lit(0).as(rnAlias()), //
+							lit(0).as(rcAlias()), //
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
@@ -117,8 +117,8 @@ class SingleQuerySqlGeneratorUnitTests {
 					) //
 					.hasInlineViewSelectingFrom("\"trivial_aggregate\"") //
 					.hasExactlyColumns( //
-							lit(1).as(rnAlias()), //
-							lit(1).as(rcAlias()), //
+							lit(0).as(rnAlias()), //
+							lit(0).as(rcAlias()), //
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
@@ -157,22 +157,22 @@ class SingleQuerySqlGeneratorUnitTests {
 							col(trivialsRowNumber), //
 							col(alias("trivials.id")), //
 							col(alias("trivials.name")), //
-							func("greatest", func("coalesce", col(rootRowNumber), lit(1)),
-									func("coalesce", col(trivialsRowNumber), lit(1))), //
+							func("greatest", func("coalesce", col(rootRowNumber), lit(0)),
+									func("coalesce", col(trivialsRowNumber), lit(0))), //
 							col(backref), //
 							col(keyAlias) //
 					).extractWhereClause() //
 					.isEqualTo("");
 			baseSelect.hasInlineViewSelectingFrom("\"single_reference_aggregate\"") //
 					.hasExactlyColumns( //
-							lit(1).as(rnAlias()), lit(1).as(rootCount), //
+							lit(0).as(rnAlias()), lit(0).as(rootCount), //
 							col("\"id\"").as(alias("id")), //
 							col("\"name\"").as(alias("name")) //
 					) //
 					.extractWhereClause().isEqualTo("\"single_reference_aggregate\".id = :id");
 			baseSelect.hasInlineViewSelectingFrom("\"trivial_aggregate\"") //
 					.hasExactlyColumns( //
-							rn(col("\"single_reference_aggregate\"")).as(trivialsRowNumber), //
+							rn(col("\"single_reference_aggregate\"")).minus(1).as(trivialsRowNumber), //
 							count(col("\"single_reference_aggregate\"")).as(rcAlias("trivials")), //
 							col("\"id\"").as(alias("trivials.id")), //
 							col("\"name\"").as(alias("trivials.name")), //

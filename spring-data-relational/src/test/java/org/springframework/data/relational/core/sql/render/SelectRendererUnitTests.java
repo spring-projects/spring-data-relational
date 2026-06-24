@@ -883,4 +883,29 @@ class SelectRendererUnitTests {
 			assertThat(rendered).isEqualTo("SELECT ROW_NUMBER() OVER(PARTITION BY employee.department) FROM employee");
 		}
 	}
+
+	@Nested
+	class BinaryOperationTests {
+
+		Table employee = SQL.table("employee");
+		Column salary = employee.column("salary");
+		Column bonus = employee.column("bonus");
+
+		@Test // GH-2320
+		void renderBinaryOperation() {
+
+			Select select = StatementBuilder.select(Expressions.plus(salary, bonus)).from(employee).build();
+
+			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.salary + employee.bonus FROM employee");
+		}
+
+		@Test // GH-2320
+		void renderBinaryOperationWithAlias() {
+
+			Select select = StatementBuilder.select(Expressions.plus(salary, bonus).as("total")).from(employee).build();
+
+			assertThat(SqlRenderer.toString(select))
+					.isEqualTo("SELECT employee.salary + employee.bonus AS total FROM employee");
+		}
+	}
 }

@@ -8,6 +8,8 @@ DROP TABLE IF EXISTS PersistableSeq;
 DROP SEQUENCE IF EXISTS persistable_seq_seq;
 DROP TABLE IF EXISTS PrimitiveIdSeq;
 DROP SEQUENCE IF EXISTS primitive_seq_seq;
+DROP TABLE IF EXISTS IdSeqWithVersion;
+DROP SEQUENCE IF EXISTS seq_with_version_seq;
 
 CREATE TABLE ReadOnlyIdEntity
 (
