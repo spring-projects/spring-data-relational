@@ -71,7 +71,13 @@ public class ExpressionVisitorUnitTests {
 				fixture("Null", SQL.nullLiteral(), "NULL"), //
 				fixture("Cast", Expressions.cast(Column.create("col", Table.create("tab")), "JSON"), "CAST(tab.col AS JSON)"), //
 				fixture("Cast with alias", Expressions.cast(Column.create("col", Table.create("tab")).as("alias"), "JSON"),
-						"CAST(tab.col AS JSON)")); //
+						"CAST(tab.col AS JSON)"), //
+				fixture("plus",
+						Expressions.plus(Column.create("a", Table.create("tab")),
+								Column.create("b", Table.create("tab"))),
+						"tab.a + tab.b"), //
+				fixture("Binary operation between literals",
+						Expressions.minus(SQL.literalOf(1L), SQL.literalOf(2L)), "1 - 2"));
 	}
 
 	@Test // GH-1003
