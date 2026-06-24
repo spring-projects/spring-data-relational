@@ -32,7 +32,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -401,7 +400,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, two.name, 2));
 	}
 
@@ -417,7 +416,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		Iterable<SimpleListParent> reloadedById = template.findAll(query, SimpleListParent.class);
 
 		assertThat(reloadedById) //
-				.extracting(e -> e.id, e-> e.name, e -> e.content.size()) //
+				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, null, 2));
 	}
 
@@ -1545,9 +1544,11 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Test // GH-1656
 	void mapWithEnumKey() {
 
-		EnumMapOwner enumMapOwner = template
-				.save(
-				new EnumMapOwner(null, "OwnerName", Map.of(Color.BLUE, new MapElement("Element"))));
+		EnumMapOwner enumMapOwner = template.save( //
+				new EnumMapOwner(null, "OwnerName", //
+						Map.of(Color.BLUE, new MapElement("Element")) //
+				) //
+		);
 
 		Iterable<EnumMapOwner> enumMapOwners = template.findAll(EnumMapOwner.class);
 
@@ -2396,8 +2397,7 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 	@Table("BEFORE_CONVERT_CALLBACK_FOR_SAVE_BATCH")
 	static class BeforeConvertCallbackForSaveBatch {
 
-		@Id
-		private String id;
+		@Id private String id;
 
 		private String name;
 

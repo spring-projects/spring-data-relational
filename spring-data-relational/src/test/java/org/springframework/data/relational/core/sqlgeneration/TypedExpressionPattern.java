@@ -50,4 +50,8 @@ abstract class TypedExpressionPattern<T> implements SelectItemPattern, Expressio
 	}
 
 	abstract boolean matches(T expression);
+
+	public TypedExpressionPattern minus(int i) {
+		return new SubtractionPattern(this, new LiteralPattern(i));
+	}
 }

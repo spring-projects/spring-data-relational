@@ -162,12 +162,12 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		List<Expression> columns = new ArrayList<>();
 
 		String rowNumberAlias = aliases.getRowNumberAlias(basePath);
-		Expression rownumber = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowNumberAlias)
+		Expression rownumber = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(0), rowNumberAlias)
 				: createRowNumberExpression(basePath, table, rowNumberAlias);
 		columns.add(rownumber);
 
 		String rowCountAlias = aliases.getRowCountAlias(basePath);
-		Expression count = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(1), rowCountAlias) //
+		Expression count = basePath.isRoot() ? new AliasedExpression(SQL.literalOf(0), rowCountAlias) //
 				: AnalyticFunction.create("count", Expressions.just("*")) //
 						.partitionBy(basePath.getTableInfo().backReferenceColumnInfos().toColumnList(table) //
 						).as(rowCountAlias);
@@ -238,12 +238,13 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 		return null;
 	}
 
-	private static AnalyticFunction createRowNumberExpression(AggregatePath basePath, Table table,
+	private static Expression createRowNumberExpression(AggregatePath basePath, Table table,
 			String rowNumberAlias) {
 		AggregatePath.ColumnInfos reverseColumnInfos = basePath.getTableInfo().backReferenceColumnInfos();
-		return AnalyticFunction.create("row_number") //
+		return Expressions.minus(AnalyticFunction.create("row_number") //
 				.partitionBy(reverseColumnInfos.toColumnList(table)) //
-				.orderBy(reverseColumnInfos.toColumnList(table)) //
+				.orderBy(reverseColumnInfos.toColumnList(table)), //
+				SQL.literalOf(1)) //
 				.as(rowNumberAlias);
 	}
 
@@ -315,10 +316,10 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 				Condition mutualJoin = Conditions.isEqual(leftRowNumber, rightRowNumber).or(Conditions.isNull(leftRowNumber))
 						.or(Conditions.isNull(rightRowNumber))
-						.or(Conditions.nest(Conditions.isGreater(leftRowNumber, rightRowCount)
-								.and(Conditions.isEqual(rightRowNumber, SQL.literalOf(1)))))
-						.or(Conditions.nest(Conditions.isGreater(rightRowNumber, leftRowCount)
-								.and(Conditions.isEqual(leftRowNumber, SQL.literalOf(1)))));
+						.or(Conditions.nest(Conditions.isGreaterOrEqualTo(leftRowNumber, rightRowCount)
+								.and(Conditions.isEqual(rightRowNumber, SQL.literalOf(0)))))
+						.or(Conditions.nest(Conditions.isGreaterOrEqualTo(rightRowNumber, leftRowCount)
+								.and(Conditions.isEqual(leftRowNumber, SQL.literalOf(0)))));
 
 				mutualJoin = Conditions.nest(mutualJoin);
 
@@ -414,7 +415,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 		List<Expression> guarded = new ArrayList<>();
 		for (Expression expression : expressions) {
-			guarded.add(Functions.coalesce(expression, SQL.literalOf(1)));
+			guarded.add(Functions.coalesce(expression, SQL.literalOf(0)));
 		}
 		return Functions.greatest(guarded);
 	}

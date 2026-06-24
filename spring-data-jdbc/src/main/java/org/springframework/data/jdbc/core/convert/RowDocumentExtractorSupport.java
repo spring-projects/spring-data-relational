@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -488,14 +489,13 @@ abstract class RowDocumentExtractorSupport {
 		abstract Object get();
 	}
 
-	// TODO: Are we 0 or 1 based?
 	private static class ListContainer extends CollectionContainer {
 
 		private final Map<Number, Object> list = new TreeMap<>(Comparator.comparing(Number::longValue));
 
 		@Override
 		public void add(Object key, @Nullable Object value) {
-			list.put(((Number) key).intValue() - 1, value);
+			list.put(((Number) key).intValue(), value);
 		}
 
 		@Override
@@ -503,10 +503,14 @@ abstract class RowDocumentExtractorSupport {
 
 			List<@Nullable Object> result = new ArrayList<>(list.size());
 
-			// TODO: How do we go about padding? Should we insert null values?
 			list.forEach((index, o) -> {
 
-				while (result.size() < index.intValue()) {
+				int intValue = index.intValue();
+				if (intValue < 0) {
+					throw new MappingException("Can't build a List with negativ index = " + intValue);
+				}
+
+				while (result.size() < intValue) {
 					result.add(null);
 				}
 

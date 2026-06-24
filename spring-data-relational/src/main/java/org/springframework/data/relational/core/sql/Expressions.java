@@ -83,6 +83,14 @@ public abstract class Expressions {
 		return new TupleExpression(columns);
 	}
 
+	public static BinaryOperation plus(Expression left, Expression right) {
+		return new BinaryOperation(left, "+", right);
+	}
+
+	public static BinaryOperation minus(Expression left, Expression right) {
+		return new BinaryOperation(left, "-", right);
+	}
+
 	// Utility constructor.
 	private Expressions() {}
 
