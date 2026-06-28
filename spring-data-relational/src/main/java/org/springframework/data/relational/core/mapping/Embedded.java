@@ -57,6 +57,11 @@ public @interface Embedded {
 	String prefix() default "";
 
 	/**
+	 * @return suffix for columns in the embedded value object. An empty {@link String} by default.
+	 */
+	String suffix() default "";
+
+	/**
 	 * Load strategy to be used {@link Embedded#onEmpty()}.
 	 *
 	 * @author Christoph Strobl
@@ -104,6 +109,12 @@ public @interface Embedded {
 		 */
 		@AliasFor(annotation = Embedded.class, attribute = "prefix")
 		String prefix() default "";
+
+		/**
+		 * @return suffix for columns in the embedded value object. An empty {@link String} by default.
+		 */
+		@AliasFor(annotation = Embedded.class, attribute = "suffix")
+		String suffix() default "";
 	}
 
 	/**
@@ -144,5 +155,11 @@ public @interface Embedded {
 		 */
 		@AliasFor(annotation = Embedded.class, attribute = "prefix")
 		String prefix() default "";
+
+		/**
+		 * @return suffix for columns in the embedded value object. An empty {@link String} by default.
+		 */
+		@AliasFor(annotation = Embedded.class, attribute = "suffix")
+		String suffix() default "";
 	}
 }
