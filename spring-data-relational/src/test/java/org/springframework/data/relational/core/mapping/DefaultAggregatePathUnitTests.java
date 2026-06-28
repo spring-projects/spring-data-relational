@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import org.springframework.data.relational.core.sql.Table;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Sanghun Lee
  */
 class DefaultAggregatePathUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
@@ -165,6 +167,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path().getTableInfo().qualifierColumnInfo()).isEqualTo(null);
 			softly.assertThat(path("second.third").getTableInfo().qualifierColumnInfo()).isEqualTo(null);
 			softly.assertThat(path("secondList.third2").getTableInfo().qualifierColumnInfo()).isEqualTo(null);
+			softly.assertThat(path("secondCollection").getTableInfo().qualifierColumnInfo()).isEqualTo(null);
 			softly.assertThat(path("secondList").getTableInfo().qualifierColumnInfo().name())
 					.isEqualTo(SqlIdentifier.quoted("DUMMY_ENTITY_KEY"));
 
@@ -179,6 +182,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path().getTableInfo().qualifierColumnType()).isEqualTo(null);
 			softly.assertThat(path("second.third").getTableInfo().qualifierColumnType()).isEqualTo(null);
 			softly.assertThat(path("secondList.third2").getTableInfo().qualifierColumnType()).isEqualTo(null);
+			softly.assertThat(path("secondCollection").getTableInfo().qualifierColumnType()).isEqualTo(null);
 			softly.assertThat(path("secondList").getTableInfo().qualifierColumnType()).isEqualTo(Integer.class);
 
 		});
@@ -264,6 +268,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("second.third2").isQualified()).isFalse();
 			softly.assertThat(path("secondList.third2").isQualified()).isFalse();
 			softly.assertThat(path("secondList").isQualified()).isTrue();
+			softly.assertThat(path("secondCollection").isQualified()).isFalse();
 		});
 	}
 
@@ -294,6 +299,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("secondMap.third2").isCollectionLike()).isFalse();
 			softly.assertThat(path("secondMap").isCollectionLike()).isFalse();
 			softly.assertThat(path("secondList").isCollectionLike()).isTrue();
+			softly.assertThat(path("secondCollection").isCollectionLike()).isTrue();
 		});
 	}
 
@@ -309,6 +315,7 @@ class DefaultAggregatePathUnitTests {
 			softly.assertThat(path("secondMap.third2").isOrdered()).isFalse();
 			softly.assertThat(path("secondMap").isOrdered()).isFalse();
 			softly.assertThat(path("secondList").isOrdered()).isTrue();
+			softly.assertThat(path("secondCollection").isOrdered()).isFalse();
 		});
 	}
 
@@ -544,6 +551,7 @@ class DefaultAggregatePathUnitTests {
 		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "sec") Second second2;
 		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) Second second3;
 		List<Second> secondList;
+		Collection<Second> secondCollection;
 		Map<String, Second> secondMap;
 		WithId withId;
 	}
