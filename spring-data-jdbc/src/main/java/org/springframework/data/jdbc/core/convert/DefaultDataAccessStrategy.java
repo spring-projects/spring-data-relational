@@ -25,11 +25,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -72,8 +70,6 @@ import org.springframework.util.Assert;
  */
 @SuppressWarnings("SqlSourceToSinkFlow")
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
-
-	private final Log logger = LogFactory.getLog(getClass());
 
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final RelationalMappingContext context;
@@ -276,7 +272,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
-
 		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
 	}
 
@@ -296,11 +291,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
-		try {
-			return operations.queryForObject(findOneSql, parameter, getRowMapper(domainType));
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
+		return DataAccessUtils.singleResult(operations.query(findOneSql, parameter, getRowMapper(domainType)));
 	}
 
 	@Override
@@ -410,15 +401,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
-
-		PreparedQuery operation = prepareQuery(domainType, query, SqlGenerator::selectByQuery);
-
-		try {
-			// TODO
-			return Optional.ofNullable(operations.queryForObject(operation.sql(), operation, getRowMapper(domainType)));
-		} catch (EmptyResultDataAccessException e) {
-			return Optional.empty();
-		}
+		return DataAccessUtils.optionalResult(findAll(query, domainType));
 	}
 
 	@Override
