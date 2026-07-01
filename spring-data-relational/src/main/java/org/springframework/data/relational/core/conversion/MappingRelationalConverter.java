@@ -815,12 +815,11 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 		// if we succeeded converting the members of the collection, we actually ignore the fallback targetType since that
 		// was derived without considering custom conversions.
 		Class<?> targetType = type.getType();
-		if (!mapped.isEmpty()) {
+		if (!mapped.isEmpty() && mapped.get(0) != null) {
 
 			Class<?> targetComponentType = mapped.get(0).getClass();
 			targetType = Array.newInstance(targetComponentType, 0).getClass();
 		}
-
 		Object converted = getConversionService().convert(mapped, targetType);
 
 		Assert.state(converted != null, "Converted must not be null");
