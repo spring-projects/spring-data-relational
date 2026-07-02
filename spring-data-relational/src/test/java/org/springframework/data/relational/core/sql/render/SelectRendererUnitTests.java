@@ -567,6 +567,29 @@ class SelectRendererUnitTests {
 				"SELECT table.first FROM table WHERE (table.first, 1, table.middle, table.last) IN (some expression)");
 	}
 
+	@Test // GH-2320
+	void renderInfixOperation() {
+
+		Table employee = SQL.table("employee");
+		Column salary = employee.column("salary");
+		Column bonus = employee.column("bonus");
+		Select select = StatementBuilder.select(Expressions.plus(salary, bonus)).from(employee).build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.salary + employee.bonus FROM employee");
+	}
+
+	@Test // GH-2320
+	void renderInfixOperationWithAlias() {
+
+		Table employee = SQL.table("employee");
+		Column salary = employee.column("salary");
+		Column bonus = employee.column("bonus");
+		Select select = StatementBuilder.select(Expressions.plus(salary, bonus).as("total")).from(employee).build();
+
+		assertThat(SqlRenderer.toString(select))
+				.isEqualTo("SELECT employee.salary + employee.bonus AS total FROM employee");
+	}
+
 	/**
 	 * Tests for rendering joins.
 	 */
@@ -884,28 +907,4 @@ class SelectRendererUnitTests {
 		}
 	}
 
-	@Nested
-	class BinaryOperationTests {
-
-		Table employee = SQL.table("employee");
-		Column salary = employee.column("salary");
-		Column bonus = employee.column("bonus");
-
-		@Test // GH-2320
-		void renderBinaryOperation() {
-
-			Select select = StatementBuilder.select(Expressions.plus(salary, bonus)).from(employee).build();
-
-			assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.salary + employee.bonus FROM employee");
-		}
-
-		@Test // GH-2320
-		void renderBinaryOperationWithAlias() {
-
-			Select select = StatementBuilder.select(Expressions.plus(salary, bonus).as("total")).from(employee).build();
-
-			assertThat(SqlRenderer.toString(select))
-					.isEqualTo("SELECT employee.salary + employee.bonus AS total FROM employee");
-		}
-	}
 }

@@ -70,7 +70,7 @@ public abstract class Expressions {
 	 * {@link Expression}. Otherwise, it creates and returns a {@link TupleExpression} that represents multiple columns as
 	 * a single expression.
 	 *
-	 * @param columns the list of {@link Column}s to include in the expression; must not be {@literal null}.
+	 * @param columns the list of {@link Column}s to include in the expression.
 	 * @return an {@link Expression} corresponding to the input columns: either a single column or a
 	 *         {@link TupleExpression} for multiple columns.
 	 * @since 4.0
@@ -83,12 +83,30 @@ public abstract class Expressions {
 		return new TupleExpression(columns);
 	}
 
-	public static BinaryOperation plus(Expression left, Expression right) {
-		return new BinaryOperation(left, "+", right);
+	/**
+	 * Creates an {@link InfixOperation arithmetic operation} that adds {@code right} to {@code left} using the {@code +}
+	 * operator.
+	 *
+	 * @param left the left-hand operand.
+	 * @param right the right-hand operand.
+	 * @return the addition {@link InfixOperation}.
+	 * @since 4.0.7
+	 */
+	public static InfixOperation plus(Expression left, Expression right) {
+		return InfixOperation.create(left, "+", right);
 	}
 
-	public static BinaryOperation minus(Expression left, Expression right) {
-		return new BinaryOperation(left, "-", right);
+	/**
+	 * Creates an {@link InfixOperation arithmetic operation} that subtracts {@code right} from {@code left} using the
+	 * {@code -} operator.
+	 *
+	 * @param left the left-hand operand.
+	 * @param right the right-hand operand.
+	 * @return the subtraction {@link InfixOperation}.
+	 * @since 4.0.7
+	 */
+	public static InfixOperation minus(Expression left, Expression right) {
+		return InfixOperation.create(left, "-", right);
 	}
 
 	// Utility constructor.

@@ -18,29 +18,29 @@ package org.springframework.data.relational.core.sql.render;
 import java.util.StringJoiner;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.relational.core.sql.BinaryOperation;
+import org.springframework.data.relational.core.sql.InfixOperation;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.util.Assert;
 
 /**
- * Renders a {@link BinaryOperation} by delegating to an {@link ExpressionVisitor} for each operand and joining the
+ * Renders a {@link InfixOperation} by delegating to an {@link ExpressionVisitor} for each operand and joining the
  * rendered parts with the operator.
  *
  * @author Jens Schauder
- * @since 4.2
+ * @since 4.0.7
  */
-class BinaryOperationVisitor extends TypedSubtreeVisitor<BinaryOperation> implements PartRenderer {
+class InfixOperationVisitor extends TypedSubtreeVisitor<InfixOperation> implements PartRenderer {
 
 	private final RenderContext context;
 	private @Nullable StringJoiner joiner;
 	private @Nullable ExpressionVisitor expressionVisitor;
 
-	BinaryOperationVisitor(RenderContext context) {
+	InfixOperationVisitor(RenderContext context) {
 		this.context = context;
 	}
 
 	@Override
-	Delegation enterMatched(BinaryOperation operation) {
+	Delegation enterMatched(InfixOperation operation) {
 
 		joiner = new StringJoiner(" " + operation.getOperator() + " ");
 		return super.enterMatched(operation);
