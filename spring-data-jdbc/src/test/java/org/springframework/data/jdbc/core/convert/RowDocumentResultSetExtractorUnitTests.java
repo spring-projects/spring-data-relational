@@ -271,11 +271,15 @@ public class RowDocumentResultSetExtractorUnitTests {
 			@Test // GH-2320
 			void failsOnNegativeListIndex() {
 
-				assertThatExceptionOfType(MappingException.class).isThrownBy(() -> //
+				MappingException exception = catchThrowableOfType(MappingException.class, () -> //
 				testerFor(WithList.class).resultSet(rsc -> {
 					rsc.withPaths("id").withKey("withoutIds").withPath("withoutIds.name") //
 							.withRow(1, -1, "Dummy Alfred");
 				}).run(document -> {}));
+
+				assertThat(exception).hasMessage("Can't build a List using negative indices (-1)");
+				assertThat(exception.getCause()).isInstanceOf(MappingException.class)
+						.hasMessage("Can't add negative indices (-1)");
 			}
 		}
 	}
