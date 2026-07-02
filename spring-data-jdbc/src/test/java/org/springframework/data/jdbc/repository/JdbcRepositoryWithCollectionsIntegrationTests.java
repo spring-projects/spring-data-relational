@@ -20,6 +20,8 @@ import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature
 
 import junit.framework.AssertionFailedError;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,12 +46,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  * @author Thomas Lang
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author Sanghun Lee
  */
 @IntegrationTest
 class JdbcRepositoryWithCollectionsIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired CollectionAggregateRepository collectionAggregateRepository;
 
 	private static DummyEntity createDummyEntity() {
 
@@ -175,6 +179,29 @@ class JdbcRepositoryWithCollectionsIntegrationTests {
 		assertThat(count).isEqualTo(0);
 	}
 
+	@Test // GH-848
+	void saveAndLoadCollectionWithDuplicateElements() {
+
+		CollectionAggregate aggregate = new CollectionAggregate();
+		aggregate.name = "collection aggregate";
+		aggregate.content.add(new CollectionElement("duplicate"));
+		aggregate.content.add(new CollectionElement("duplicate"));
+		aggregate.content.add(new CollectionElement("unique"));
+
+		CollectionAggregate saved = collectionAggregateRepository.save(aggregate);
+
+		assertThat(saved.id).isNotNull();
+		assertThat(saved.content).allMatch(element -> element.id != null);
+
+		CollectionAggregate reloaded = collectionAggregateRepository.findById(saved.id)
+				.orElseThrow(AssertionFailedError::new);
+
+		assertThat(reloaded.content) //
+				.isNotNull() //
+				.extracting(element -> element.content) //
+				.containsExactlyInAnyOrder("duplicate", "duplicate", "unique");
+	}
+
     @Test // GH-771
     void deleteByName() {
 
@@ -206,6 +233,8 @@ class JdbcRepositoryWithCollectionsIntegrationTests {
         long deleteByName(String name);
     }
 
+	interface CollectionAggregateRepository extends CrudRepository<CollectionAggregate, Long> {}
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -213,6 +242,11 @@ class JdbcRepositoryWithCollectionsIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository(JdbcRepositoryFactory factory) {
 			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		CollectionAggregateRepository collectionAggregateRepository(JdbcRepositoryFactory factory) {
+			return factory.getRepository(CollectionAggregateRepository.class);
 		}
 	}
 
@@ -251,6 +285,23 @@ class JdbcRepositoryWithCollectionsIntegrationTests {
 
 		String content;
 		@Id private Long id;
+	}
+
+	static class CollectionAggregate {
+
+		@Id private Long id;
+		String name;
+		Collection<CollectionElement> content = new ArrayList<>();
+	}
+
+	static class CollectionElement {
+
+		@Id private Long id;
+		String content;
+
+		CollectionElement(String content) {
+			this.content = content;
+		}
 	}
 
 }

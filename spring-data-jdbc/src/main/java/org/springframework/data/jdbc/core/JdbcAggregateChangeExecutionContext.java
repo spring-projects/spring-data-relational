@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.CollectionFactory;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.InsertSubject;
@@ -61,6 +63,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @author Sanghun Lee
  */
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
@@ -393,7 +396,8 @@ class JdbcAggregateChangeExecutionContext {
 	private static class StagedValues {
 
 		static final List<MultiValueAggregator<?>> aggregators = Arrays.asList(SetAggregator.INSTANCE,
-				MapAggregator.INSTANCE, ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
+				MapAggregator.INSTANCE, ListAggregator.INSTANCE, CollectionAggregator.INSTANCE,
+				SingleElementAggregator.INSTANCE);
 
 		Map<DbAction, Map<PersistentPropertyPath, StagedValue>> values = new HashMap<>();
 
@@ -423,7 +427,7 @@ class JdbcAggregateChangeExecutionContext {
 					dbAction -> new HashMap<>());
 
 			StagedValue stagedValue = valuesForPath.computeIfAbsent(path,
-					persistentPropertyPath -> new StagedValue(aggregator.createEmptyInstance()));
+					persistentPropertyPath -> new StagedValue(aggregator.createEmptyInstance(path.getLeafProperty())));
 			T currentValue = (T) stagedValue.value;
 
 			stagedValue.value = aggregator.add(currentValue, qualifier, value);
@@ -482,7 +486,7 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		@Nullable
-		T createEmptyInstance();
+		T createEmptyInstance(PersistentProperty property);
 
 		T add(@Nullable T aggregate, @Nullable Object qualifier, Object value);
 
@@ -498,7 +502,7 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		@Override
-		public Set createEmptyInstance() {
+		public Set createEmptyInstance(PersistentProperty property) {
 			return new HashSet();
 		}
 
@@ -519,11 +523,11 @@ class JdbcAggregateChangeExecutionContext {
 
 		@Override
 		public boolean handles(PersistentProperty property) {
-			return property.isCollectionLike();
+			return property.getType().isArray() || List.class.isAssignableFrom(property.getType());
 		}
 
 		@Override
-		public List createEmptyInstance() {
+		public List createEmptyInstance(PersistentProperty property) {
 			return new ArrayList();
 		}
 
@@ -545,6 +549,31 @@ class JdbcAggregateChangeExecutionContext {
 		}
 	}
 
+	private enum CollectionAggregator implements MultiValueAggregator<Collection> {
+
+		INSTANCE;
+
+		@Override
+		public Class<Collection> handledType() {
+			return Collection.class;
+		}
+
+		@Override
+		public Collection createEmptyInstance(PersistentProperty property) {
+			return CollectionFactory.createCollection(property.getType(), property.getActualType(), 0);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Collection add(@Nullable Collection collection, @Nullable Object qualifier, Object value) {
+
+			Assert.notNull(collection, "Collection must not be null");
+
+			collection.add(value);
+			return collection;
+		}
+	}
+
 	private enum MapAggregator implements MultiValueAggregator<Map> {
 
 		INSTANCE;
@@ -555,7 +584,7 @@ class JdbcAggregateChangeExecutionContext {
 		}
 
 		@Override
-		public Map createEmptyInstance() {
+		public Map createEmptyInstance(PersistentProperty property) {
 			return new HashMap();
 		}
 
@@ -576,7 +605,7 @@ class JdbcAggregateChangeExecutionContext {
 
 		@Override
 		@Nullable
-		public Object createEmptyInstance() {
+		public Object createEmptyInstance(PersistentProperty property) {
 			return null;
 		}
 

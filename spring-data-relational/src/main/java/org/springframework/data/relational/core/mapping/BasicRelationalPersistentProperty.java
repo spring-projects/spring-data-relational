@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,6 +46,7 @@ import org.springframework.util.StringUtils;
  * @author Kurt Niemi
  * @author Sergey Korotaev
  * @author Mark Paluch
+ * @author Sanghun Lee
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -289,7 +291,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	private boolean isListLike() {
-		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
+		return isCollectionLike() && (getType().isArray() || List.class.isAssignableFrom(getType()));
 	}
 
 	private @Nullable SqlIdentifier determineSequenceName() {
