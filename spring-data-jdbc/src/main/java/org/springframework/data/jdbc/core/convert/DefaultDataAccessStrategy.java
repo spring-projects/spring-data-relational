@@ -22,13 +22,12 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -69,9 +68,8 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @since 1.1
  */
+@SuppressWarnings("SqlSourceToSinkFlow")
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
-
-	private final Log logger = LogFactory.getLog(getClass());
 
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final RelationalMappingContext context;
@@ -274,7 +272,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
-
 		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
 	}
 
@@ -294,11 +291,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findOneSql = sql(domainType).getFindOne();
 		SqlIdentifierParameterSource parameter = parametersFactory.forQueryById(id, domainType);
 
-		try {
-			return operations.queryForObject(findOneSql, parameter, getRowMapper(domainType));
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
+		return DataAccessUtils.singleResult(operations.query(findOneSql, parameter, getRowMapper(domainType)));
 	}
 
 	@Override
@@ -408,51 +401,36 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Optional<T> findOne(Query query, Class<T> domainType) {
-
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
-
-		try {
-			return Optional.ofNullable(operations.queryForObject(sqlQuery, parameterSource, getRowMapper(domainType)));
-		} catch (EmptyResultDataAccessException e) {
-			return Optional.empty();
-		}
+		return DataAccessUtils.optionalResult(findAll(query, domainType));
 	}
 
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> domainType) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
-
-		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
+		PreparedQuery operation = prepareQuery(domainType, query, SqlGenerator::selectByQuery);
+		return operations.query(operation.sql(), operation, getRowMapper(domainType));
 	}
 
 	@Override
 	public <T> Stream<T> streamAll(Query query, Class<T> domainType) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
-
-		return operations.queryForStream(sqlQuery, parameterSource, getRowMapper(domainType));
+		PreparedQuery operation = prepareQuery(domainType, query, SqlGenerator::selectByQuery);
+		return operations.queryForStream(operation.sql(), operation, getRowMapper(domainType));
 	}
 
 	@Override
 	public <T> List<T> findAll(Query query, Class<T> domainType, Pageable pageable) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource, pageable);
-
-		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
+		PreparedQuery operation = prepareQuery(domainType,
+				(sql, parameterSource) -> sql.selectByQuery(query, parameterSource, pageable));
+		return operations.query(operation.sql(), operation, getRowMapper(domainType));
 	}
 
 	@Override
 	public <T> boolean exists(Query query, Class<T> domainType) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).existsByQuery(query, parameterSource);
-
-		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
+		PreparedQuery operation = prepareQuery(domainType, query, SqlGenerator::existsByQuery);
+		Boolean result = operations.queryForObject(operation.sql(), operation, Boolean.class);
 
 		Assert.state(result != null, "The result of an exists query must not be null");
 
@@ -462,10 +440,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> long count(Query query, Class<T> domainType) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(domainType).countByQuery(query, parameterSource);
+		PreparedQuery operation = prepareQuery(domainType, query, SqlGenerator::countByQuery);
+		Long result = operations.queryForObject(operation.sql(), operation, Long.class);
 
-		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
 		Assert.state(result != null, "The result of a count query must not be null.");
 
 		return result;
@@ -517,6 +494,59 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(baseProperty, "The base property must not be null");
 
 		return baseProperty.getOwner().getType();
+	}
+
+	private PreparedQuery prepareQuery(Class<?> domainType,
+			BiFunction<SqlGenerator, MapSqlParameterSource, String> queryCreator) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sql = queryCreator.apply(sql(domainType), parameterSource);
+		return new PreparedQuery(sql, new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper()));
+	}
+
+	private PreparedQuery prepareQuery(Class<?> domainType, Query query, QueryCreator queryCreator) {
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sql = queryCreator.createQuery(sql(domainType), query, parameterSource);
+		return new PreparedQuery(sql, new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper()));
+	}
+
+	interface QueryCreator {
+		String createQuery(SqlGenerator sql, Query query, MapSqlParameterSource parameterSource);
+	}
+
+	record PreparedQuery(String sql, SqlParameterSource parameterSource) implements SqlParameterSource {
+
+		@Override
+		public boolean hasValue(String paramName) {
+			return parameterSource.hasValue(paramName);
+		}
+
+		@Override
+		public @Nullable Object getValue(String paramName) throws IllegalArgumentException {
+			return parameterSource.getValue(paramName);
+		}
+
+		@Override
+		public int getSqlType(String paramName) {
+			return parameterSource.getSqlType(paramName);
+		}
+
+		@Override
+		public @Nullable String getTypeName(String paramName) {
+			return parameterSource.getTypeName(paramName);
+		}
+
+		@Override
+		public String @Nullable [] getParameterNames() {
+			return parameterSource.getParameterNames();
+		}
+
+		@Override
+		public String toString() {
+			return sql();
+		}
+
 	}
 
 }

@@ -19,6 +19,7 @@ import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.domain.ExampleMatcher.*;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -62,9 +63,17 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.domain.ScrollPosition;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.data.jdbc.CapturingEventListener;
-import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
@@ -1247,6 +1256,24 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isOne();
 	}
 
+	@Test // GH-2317
+	void countByExampleConsidersLike() {
+
+		DummyEntity entity = createEntity();
+		entity.setName("Diego");
+		entity.setPointInTime(Instant.now());
+		repository.save(entity);
+
+		DummyEntity exampleEntitiy = createEntity();
+		exampleEntitiy.setName("Di");
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy, matching()
+				.withMatcher(DummyEntity::getName, GenericPropertyMatchers.contains()).withIgnorePaths(DummyEntity::isFlag));
+
+		long count = repository.count(example);
+		assertThat(count).isOne();
+	}
+
 	@Test // GH-1192
 	void fetchByExampleFluentAllSimple() {
 
@@ -1296,7 +1323,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.saveAll(Arrays.asList(one, two, three, four));
 
-		Example<DummyEntity> example = Example.of(one, ExampleMatcher.matching().withIgnorePaths("name", "idProp"));
+		Example<DummyEntity> example = Example.of(one, matching().withIgnorePaths("name", "idProp"));
 
 		Window<DummyEntity> first = repository.findBy(example, q -> q.limit(2).sortBy(Sort.by("name")))
 				.scroll(ScrollPosition.offset());
