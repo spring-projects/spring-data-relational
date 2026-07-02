@@ -96,15 +96,14 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 				.forEach(e -> expressions.add(filteredColumnExpression(queryMeta.rowNumber.toString(), e.toString())));
 
 		for (QueryMeta meta : inlineQueries) {
-
 			meta.simpleColumns
 					.forEach(e -> expressions.add(filteredColumnExpression(meta.rowNumber.toString(), e.toString())));
 
 			if (meta.id != null) {
-				expressions.add(meta.id);
+				expressions.add(filteredColumnExpression(meta.rowNumber.toString(), meta.id.toString()));
 			}
 			if (meta.key != null) {
-				expressions.add(meta.key);
+				expressions.add(filteredColumnExpression(meta.rowNumber.toString(), meta.key.toString()));
 			}
 		}
 
