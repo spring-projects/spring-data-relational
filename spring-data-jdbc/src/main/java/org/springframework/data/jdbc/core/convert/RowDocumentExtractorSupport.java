@@ -16,13 +16,13 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -491,26 +491,34 @@ abstract class RowDocumentExtractorSupport {
 
 	private static class ListContainer extends CollectionContainer {
 
-		private final Map<Number, Object> list = new TreeMap<>(Comparator.comparing(Number::longValue));
+		private final Map<Integer, @Nullable Object> list = new TreeMap<>();
+		private @Nullable Exception addException;
 
 		@Override
 		public void add(Object key, @Nullable Object value) {
-			list.put(((Number) key).intValue(), value);
+			int index = ((Number) key).intValue();
+			if (index < 0 && addException == null) {
+				addException = new MappingException("Can't add negative indices (%d)".formatted(index));
+			}
+			list.put(index, value);
 		}
 
 		@Override
 		public List<@Nullable Object> get() {
 
 			List<@Nullable Object> result = new ArrayList<>(list.size());
-
 			list.forEach((index, o) -> {
 
-				int intValue = index.intValue();
-				if (intValue < 0) {
-					throw new MappingException("Can't build a List with negativ index = " + intValue);
+				if (index < 0) {
+
+					String message = "Can't build a List using negative indices (%d)".formatted(index);
+					if (addException != null) {
+						throw new MappingException(message, addException);
+					}
+					throw new MappingException(message);
 				}
 
-				while (result.size() < intValue) {
+				while (result.size() < index) {
 					result.add(null);
 				}
 

@@ -115,9 +115,9 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			CastVisitor visitor = new CastVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
-		} else if (segment instanceof BinaryOperation) {
+		} else if (segment instanceof InfixOperation) {
 
-			BinaryOperationVisitor visitor = new BinaryOperationVisitor(context);
+			InfixOperationVisitor visitor = new InfixOperationVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		} else if (segment instanceof CaseExpression) {
