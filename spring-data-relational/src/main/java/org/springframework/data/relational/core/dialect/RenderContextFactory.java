@@ -127,6 +127,11 @@ public class RenderContextFactory {
 		}
 
 		@Override
+		public Escaper getStringLiteralEscaper() {
+			return renderingDialect.getStringLiteralEscaper();
+		}
+
+		@Override
 		public Dialect getDialect() {
 			return renderingDialect;
 		}

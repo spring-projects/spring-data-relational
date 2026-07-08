@@ -195,7 +195,7 @@ class RelationalExampleMapperTests {
 
 		assertThat(query.getCriteria().get().getGroup().get(0).getValue()).isInstanceOf(ValueFunction.class)
 			.satisfies(it -> {
-				assertThat(((ValueFunction<?>) it).apply(Escaper.of('!'))).isEqualTo("%!%");
+				assertThat(((ValueFunction<?>) it).apply(Escaper.rewriteLikeWith('!'))).isEqualTo("%!%");
 			});
 	}
 

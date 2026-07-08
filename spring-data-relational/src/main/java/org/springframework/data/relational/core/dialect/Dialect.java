@@ -136,7 +136,20 @@ public interface Dialect {
 	 * @since 2.0
 	 */
 	default Escaper getLikeEscaper() {
-		return Escaper.DEFAULT;
+		return Escaper.ANSI_LIKE_ESCAPER;
+	}
+
+	/**
+	 * Returns the {@link Escaper} used for escaping the content of string literals.
+	 * <p>
+	 * The default follows the SQL standard of doubling a single quote ({@code '} &rarr; {@code ''}). Dialects that
+	 * require a different strategy must override this method.
+	 *
+	 * @return the {@link Escaper} used for string literal escaping.
+	 * @since 4.2
+	 */
+	default Escaper getStringLiteralEscaper() {
+		return Escaper.ANSI_LITERAL_ESCAPER;
 	}
 
 	/**
