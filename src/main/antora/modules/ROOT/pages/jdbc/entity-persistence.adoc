@@ -104,7 +104,7 @@ template.findOne(query(where("name").is("Gandalf")), Person.class);
 The javadoc:org.springframework.data.relational.core.query.Query[] returned by the `query` method defines the list of columns to select, a where clause (through a CriteriaDefinition), and specification of limit and offset clauses.
 For details of the `Query` class, see its JavaDoc.
 
-The javadoc:org.springframework.data.relational.core.query.Criteria[] class, of which `where` is a static member, provides implementations of org.springframework.data.relational.core.query.CriteriaDefinition[], which represent the where-clause of the query.
+The javadoc:org.springframework.data.relational.core.query.Criteria[] class, of which `where` is a static member, provides implementations of javadoc:org.springframework.data.relational.core.query.CriteriaDefinition[], which represent the where-clause of the query.
 
 [[jdbc.criteria]]
 include::../commons/criteria-methods.adoc[]

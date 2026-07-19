@@ -176,6 +176,8 @@ The mapping metadata infrastructure is defined in the separate `spring-data-comm
 Specific subclasses are used in the R2DBC support to support annotation based metadata.
 Other strategies can also be put in place (if there is demand).
 
+:mapped-collection: true
+:embedded-entities: true
 include::partial$mapping.adoc[]
 
 [[mapping.explicit.converters]]
