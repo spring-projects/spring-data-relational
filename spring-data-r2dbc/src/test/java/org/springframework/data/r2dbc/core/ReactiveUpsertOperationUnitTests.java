@@ -28,6 +28,8 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 
@@ -35,6 +37,7 @@ import org.springframework.r2dbc.core.Parameter;
  * Unit tests for {@link ReactiveUpsertOperation}.
  *
  * @author Christoph Strobl
+ * @author leewoo97
  */
 public class ReactiveUpsertOperationUnitTests {
 
@@ -158,6 +161,25 @@ public class ReactiveUpsertOperationUnitTests {
 		assertThat(statement.getSql()).contains("insert_only");
 	}
 
+	@Test // GH-2313
+	void upsertDoesNotUpdateEmbeddedIdProperty() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.upsert(new EntityWithEmbeddedId(new EntityId("one", "two"), "Walter")) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql()).isEqualTo(
+				"INSERT INTO entity (col1, col2, name) VALUES ($1, $2, $3) ON CONFLICT (col1, col2) DO UPDATE SET name = EXCLUDED.name");
+	}
+
 	static class Person {
 
 		@Id Long id;
@@ -182,6 +204,13 @@ public class ReactiveUpsertOperationUnitTests {
 		public void setName(String name) {
 			this.name = name;
 		}
+	}
+
+	@Table("entity")
+	record EntityWithEmbeddedId(@Id @Embedded.Empty EntityId id, String name) {
+	}
+
+	record EntityId(String col1, String col2) {
 	}
 
 }

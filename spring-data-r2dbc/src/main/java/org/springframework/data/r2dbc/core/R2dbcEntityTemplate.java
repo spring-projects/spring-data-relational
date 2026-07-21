@@ -101,6 +101,7 @@ import org.springframework.util.Assert;
  * @author Mikhail Polivakha
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @author leewoo97
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -742,11 +743,18 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 
 		List<SqlIdentifier> updateColumns = new ArrayList<>();
+		Set<SqlIdentifier> insertOnlyColumns = new LinkedHashSet<>();
 		persistentEntity.forEach(p -> {
-			if (!p.isInsertOnly() && !identifierColumns.contains(p.getColumnName())) {
-				updateColumns.add(p.getColumnName());
+			if (p.isInsertOnly()) {
+				insertOnlyColumns.add(p.getColumnName());
 			}
 		});
+
+		for (SqlIdentifier column : outboundRow.keySet()) {
+			if (!identifierColumns.contains(column) && !insertOnlyColumns.contains(column)) {
+				updateColumns.add(column);
+			}
+		}
 
 		upsert = upsert.withUpdateColumns(updateColumns);
 
