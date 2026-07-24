@@ -58,6 +58,7 @@ import org.springframework.data.relational.domain.RowDocument;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Donghwan Kim
  */
 class MappingJdbcConverterUnitTests {
 
@@ -185,6 +186,27 @@ class MappingJdbcConverterUnitTests {
 			checkReadConversion(softly, converter, "uuid", UUID);
 			checkReadConversion(softly, converter, "optionalUuid", Optional.of(UUID));
 		});
+	}
+
+	@Test // GH-2292
+	void writeConverterForSourceTypeWinsOverStorePinnedColumnType() {
+
+		MappingJdbcConverter converter = new MappingJdbcConverter( //
+				context, //
+				(identifier, path) -> {
+					throw new UnsupportedOperationException();
+				}, //
+				new JdbcCustomConversions(List.of(InstantToStringConverter.INSTANCE)), //
+				typeFactory //
+		);
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("instant");
+		Instant value = Instant.parse("2024-05-01T10:15:30Z");
+
+		Object converted = converter.writeValue(value, TypeInformation.of(converter.getColumnType(property)));
+
+		assertThat(converted).isEqualTo(value.toString());
 	}
 
 	@Test // GH-2188
@@ -338,6 +360,16 @@ class MappingJdbcConverterUnitTests {
 		@Override
 		public Long convert(CustomId source) {
 			return source.id;
+		}
+	}
+
+	@WritingConverter
+	enum InstantToStringConverter implements Converter<Instant, String> {
+		INSTANCE;
+
+		@Override
+		public String convert(Instant source) {
+			return source.toString();
 		}
 	}
 

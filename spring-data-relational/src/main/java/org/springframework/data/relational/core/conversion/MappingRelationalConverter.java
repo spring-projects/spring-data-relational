@@ -90,6 +90,7 @@ import org.springframework.util.ObjectUtils;
  * @author Vincent Galloy
  * @author Chanhyeong Cho
  * @author Lukáš Křečan
+ * @author Donghwan Kim
  * @see org.springframework.data.mapping.context.MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -726,9 +727,12 @@ public class MappingRelationalConverter extends AbstractRelationalConverter
 
 	private Optional<Class<?>> determineCustomWriteTarget(Object value, TypeInformation<?> type) {
 
-		return getConversions().getCustomWriteTarget(value.getClass(), type.getType())
-				.or(() -> getConversions().getCustomWriteTarget(type.getType()))
-				.or(() -> getConversions().getCustomWriteTarget(value.getClass()));
+		// A write target registered for the value type takes precedence over the target type pinned by the
+		// store (e.g. Temporal -> Timestamp), so a user converter is not shadowed by a store converter that
+		// happens to register the same source type. See GH-2292.
+		return getConversions().getCustomWriteTarget(value.getClass())
+				.or(() -> getConversions().getCustomWriteTarget(value.getClass(), type.getType()))
+				.or(() -> getConversions().getCustomWriteTarget(type.getType()));
 	}
 
 	@Nullable
