@@ -32,6 +32,8 @@ import java.util.Set;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.schema.LiquibaseChangeSetWriter.ChangeSetMetadata;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -42,6 +44,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  *
  * @author Mark Paluch
  * @author Evgenii Koba
+ * @author Sanghyeok Hyun
  */
 class LiquibaseChangeSetWriterUnitTests {
 
@@ -176,6 +179,56 @@ class LiquibaseChangeSetWriterUnitTests {
 	}
 
 
+	@Test // GH-1600
+	void createForeignKeyForAggregateReference() {
+
+		RelationalMappingContext context = new JdbcMappingContext();
+		context.getRequiredPersistentEntity(Applicant.class);
+		context.getRequiredPersistentEntity(Country.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		assertCreateTable(changeSet, "applicant", Tuple.tuple("id", "BIGINT", true),
+				Tuple.tuple("country", "BIGINT", null));
+
+		assertAddForeignKey(changeSet, "applicant", "country", "country", "id");
+	}
+
+	@Test // GH-1600
+	void createForeignKeysForMultipleAggregateReferencesToSameAggregate() {
+
+		RelationalMappingContext context = new JdbcMappingContext();
+		context.getRequiredPersistentEntity(Trip.class);
+		context.getRequiredPersistentEntity(Country.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		assertAddForeignKey(changeSet, "trip", "origin", "country", "id");
+
+		assertAddForeignKey(changeSet, "trip", "destination", "country", "id");
+	}
+
+	@Test // GH-1600
+	void skipForeignKeyForAggregateReferenceOutsideSchemaGenerationScope() {
+
+		RelationalMappingContext context = new JdbcMappingContext();
+		context.getRequiredPersistentEntity(Applicant.class);
+
+		LiquibaseChangeSetWriter writer = new LiquibaseChangeSetWriter(context);
+		writer.setSchemaFilter(it -> !it.getType().equals(Country.class));
+
+		ChangeSet changeSet = writer.createChangeSet(ChangeSetMetadata.create(), new DatabaseChangeLog());
+
+		assertCreateTable(changeSet, "applicant", Tuple.tuple("id", "BIGINT", true),
+				Tuple.tuple("country", "BIGINT", null));
+
+		assertThat(changeSet.getChanges()).noneMatch(change -> change instanceof AddForeignKeyConstraintChange);
+	}
+
 	void assertCreateTable(ChangeSet changeSet, String tableName, Tuple... columnTuples) {
 		Optional<Change> createTableOptional = changeSet.getChanges().stream().filter(change -> change instanceof CreateTableChange createTableChange && createTableChange.getTableName().equals(tableName)).findFirst();
 		assertThat(createTableOptional.isPresent()).isTrue();
@@ -264,6 +317,24 @@ class LiquibaseChangeSetWriterUnitTests {
 	static class OneToOneLevel2 {
 		NoIdTable table1;
 		@Column("additional_one_to_one_level2") NoIdTable table2;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class Applicant {
+		@Id long id;
+		AggregateReference<Country, Long> country;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class Trip {
+		@Id long id;
+		AggregateReference<Country, Long> origin;
+		AggregateReference<Country, Long> destination;
+	}
+
+	@org.springframework.data.relational.core.mapping.Table
+	static class Country {
+		@Id long id;
 	}
 
 }

@@ -43,6 +43,7 @@ import org.springframework.util.Assert;
  *
  * @author Kurt Niemi
  * @author Evgenii Koba
+ * @author Sanghyeok Hyun
  * @since 3.2
  */
 record Tables(List<Table> tables) {
@@ -51,13 +52,14 @@ record Tables(List<Table> tables) {
 		return from(context.getPersistentEntities().stream(), new DefaultSqlTypeMapping(), null, context);
 	}
 
-	// TODO: Add support (i.e. create tickets) to support entities, embedded properties, and aggregate references.
+	// TODO: Add support (i.e. create tickets) to support entities and embedded properties.
 
 	public static Tables from(Stream<? extends RelationalPersistentEntity<?>> persistentEntities,
 			SqlTypeMapping sqlTypeMapping, @Nullable String defaultSchema,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
 
 		List<ForeignKeyMetadata> foreignKeyMetadataList = new ArrayList<>();
+		List<AggregateReferenceMetadata> aggregateReferenceMetadataList = new ArrayList<>();
 		List<Table> tables = persistentEntities
 				.filter(it -> it.isAnnotationPresent(org.springframework.data.relational.core.mapping.Table.class)) //
 				.map(entity -> {
@@ -81,11 +83,17 @@ record Tables(List<Table> tables) {
 						Column column = new Column(property.getColumnName().getReference(), columnType,
 								sqlTypeMapping.isNullable(property), identifierColumns.contains(property));
 						table.columns().add(column);
+
+						if (property.isAssociation() && property.getAssociationTargetTypeInformation() != null) {
+							aggregateReferenceMetadataList.add(new AggregateReferenceMetadata(table,
+									property.getColumnName().getReference(), property.getAssociationTargetTypeInformation().getType()));
+						}
 					}
 					return table;
 				}).collect(Collectors.toList());
 
 		applyForeignKeyMetadata(tables, foreignKeyMetadataList);
+		applyAggregateReferenceMetadata(tables, aggregateReferenceMetadataList, context);
 
 		return new Tables(tables);
 	}
@@ -136,6 +144,40 @@ record Tables(List<Table> tables) {
 						parentIdColumnNames, foreignKeyMetadata.parentTableName(), parentIdColumnNames));
 			}
 
+		});
+	}
+
+	/**
+	 * Apply aggregate reference information to create foreign keys between aggregates. References to aggregates outside
+	 * of the schema generation scope are skipped.
+	 */
+	private static void applyAggregateReferenceMetadata(List<Table> tables,
+			List<AggregateReferenceMetadata> aggregateReferenceMetadataList,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+
+		aggregateReferenceMetadataList.forEach(metadata -> {
+
+			if (!context.hasPersistentEntityFor(metadata.targetType())) {
+				return;
+			}
+
+			RelationalPersistentEntity<?> targetEntity = context.getRequiredPersistentEntity(metadata.targetType());
+			Table targetTable = findTableByName(tables, targetEntity.getTableName().getReference());
+
+			if (targetTable == null) {
+				return;
+			}
+
+			List<Column> targetIdColumns = targetTable.getIdColumns();
+
+			if (targetIdColumns.size() != 1) {
+				return;
+			}
+
+			Table table = metadata.table();
+			String foreignKeyName = getForeignKeyName(table.name(), List.of(metadata.columnName()));
+			addIfAbsent(table.foreignKeys(), new ForeignKey(foreignKeyName, table.name(), List.of(metadata.columnName()),
+					targetTable.name(), List.of(targetIdColumns.get(0).name())));
 		});
 	}
 
@@ -234,6 +276,10 @@ record Tables(List<Table> tables) {
 
 	private record ForeignKeyMetadata(String tableName, String referencingColumnName, @Nullable String keyColumnName,
 			@Nullable String keyColumnType, String parentTableName) {
+
+	}
+
+	private record AggregateReferenceMetadata(Table table, String columnName, Class<?> targetType) {
 
 	}
 }
