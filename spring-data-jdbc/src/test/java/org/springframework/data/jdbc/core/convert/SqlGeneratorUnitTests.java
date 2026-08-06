@@ -74,6 +74,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Jaeyeon Kim
+ * @author Donghwan Kim
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -463,6 +464,32 @@ class SqlGeneratorUnitTests {
 				"ref.x_content AS ref_x_content", //
 				"FROM dummy_entity", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1");
+	}
+
+	@Test // GH-2112
+	void selectByQueryWithCriteriaOnChildAggregate() {
+
+		Query query = Query.query(Criteria.where("ref.content").is("some content"));
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
+				"WHERE ref.x_content = :x_content" //
+		);
+	}
+
+	@Test // GH-2112
+	void selectByQuerySortedByChildAggregate() {
+
+		Query query = Query.query(Criteria.where("id").is(23L)).sort(Sort.by("ref.content"));
+
+		String sql = sqlGenerator.selectByQuery(query, new MapSqlParameterSource());
+
+		assertThat(sql).contains( //
+				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
+				"ORDER BY ref.x_content ASC" //
+		);
 	}
 
 	@Test // GH-1919
