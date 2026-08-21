@@ -46,6 +46,8 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.DefaultNamingStrategy;
+import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -75,6 +77,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * @author Diego Krupitza
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
+ * @author Seungmin Baek
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -636,6 +639,27 @@ class SqlGeneratorUnitTests {
 
 		assertThat(findAll).containsSubsequence("SELECT",
 				"\"child\".\"PARENT_OF_NO_ID_CHILD\" AS \"CHILD_PARENT_OF_NO_ID_CHILD\"", "FROM");
+	}
+
+	@Test // GH-2366
+	void updateExcludesInsertOnlyEmbeddedProperties() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(WithInsertOnlyEmbedded.class, AnsiDialect.INSTANCE);
+
+		String update = sqlGenerator.getUpdate();
+
+		assertThat(update).contains("X_NAME").doesNotContain("CREATED_BY").doesNotContain("CREATED_AT");
+	}
+
+	@Test // GH-2366
+	void updateExcludesInsertOnlyPropertiesInsideEmbedded() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedInsertOnlyField.class, AnsiDialect.INSTANCE);
+
+		String update = sqlGenerator.getUpdate();
+
+		assertThat(update).doesNotContain("CREATED_BY");
+		assertThat(update).contains("AUDIT_X_UPDATED_BY");
 	}
 
 	@Test // DATAJDBC-262
@@ -1287,4 +1311,18 @@ class SqlGeneratorUnitTests {
 
 	record Child(@Column("NICK_NAME") String nickName, String name) {
 	}
+	record WithInsertOnlyEmbedded(@Id Long id, String name,
+			@InsertOnlyProperty @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") Audit audit) {
+	}
+
+	record Audit(String createdBy, String createdAt) {
+	}
+
+	record WithEmbeddedInsertOnlyField(@Id Long id, String name,
+			@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") AuditFields audit) {
+	}
+
+	record AuditFields(@InsertOnlyProperty String createdBy, String updatedBy) {
+	}
+
 }

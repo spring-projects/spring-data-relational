@@ -29,6 +29,7 @@ import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
@@ -38,6 +39,7 @@ import org.springframework.r2dbc.core.Parameter;
  *
  * @author Christoph Strobl
  * @author Woo Jin-Lee
+ * @author Seungmin Baek
  */
 public class ReactiveUpsertOperationUnitTests {
 
@@ -180,6 +182,25 @@ public class ReactiveUpsertOperationUnitTests {
 				"INSERT INTO entity (col1, col2, name) VALUES ($1, $2, $3) ON CONFLICT (col1, col2) DO UPDATE SET name = EXCLUDED.name");
 	}
 
+	@Test // GH-2366
+	void upsertDoesNotUpdateInsertOnlyEmbeddedProperties() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.upsert(new WithInsertOnlyEmbedded(23L, "Walter", new Audit("creator", "then"))) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		String updateClause = statement.getSql().substring(statement.getSql().indexOf("DO UPDATE SET"));
+		assertThat(updateClause).contains("name").doesNotContain("audit_created_by").doesNotContain("audit_created_at");
+	}
+
 	static class Person {
 
 		@Id Long id;
@@ -211,6 +232,13 @@ public class ReactiveUpsertOperationUnitTests {
 	}
 
 	record EntityId(String col1, String col2) {
+	}
+
+	record WithInsertOnlyEmbedded(@Id Long id, String name,
+			@InsertOnlyProperty @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") Audit audit) {
+	}
+
+	record Audit(String createdBy, String createdAt) {
 	}
 
 }
