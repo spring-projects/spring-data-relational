@@ -70,6 +70,7 @@ import org.springframework.util.Assert;
  * @author Hari Ohm Prasath
  * @author Viktor Ardelean
  * @author Kurt Niemi
+ * @author Seungmin Baek
  */
 public class SqlGenerator {
 
@@ -1328,7 +1329,7 @@ public class SqlGenerator {
 			this.mappingContext = mappingContext;
 			this.converter = converter;
 
-			populateColumnNameCache(entity, "");
+			populateColumnNameCache(entity, "", false);
 
 			Set<SqlIdentifier> insertable = new LinkedHashSet<>(nonIdColumnNames);
 			insertable.removeAll(readOnlyColumnNames);
@@ -1344,7 +1345,7 @@ public class SqlGenerator {
 			this.updatableColumns = Collections.unmodifiableSet(updatable);
 		}
 
-		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {
+		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix, boolean insertOnly) {
 
 
 			entity.doWithAll(property -> {
@@ -1354,7 +1355,7 @@ public class SqlGenerator {
 					Association association = Association.from(property, converter);
 					if (association.isComplexIdentifier()) {
 						populateColumnNameCache(association.getRequiredTargetIdentifierEntity(),
-								prefix + property.getEmbeddedPrefix());
+								prefix + property.getEmbeddedPrefix(), insertOnly);
 						return;
 					}
 				}
@@ -1362,14 +1363,14 @@ public class SqlGenerator {
 				if (!property.isEntity()) {
 
 					// the referencing column of referenced entity is expected to be on the other side of the relation
-					initSimpleColumnName(property, prefix);
+					initSimpleColumnName(property, prefix, insertOnly);
 				} else if (property.isEmbedded()) {
-					initEmbeddedColumnNames(property, prefix);
+					initEmbeddedColumnNames(property, prefix, insertOnly || property.isInsertOnly());
 				}
 			});
 		}
 
-		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
+		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix, boolean insertOnly) {
 
 			SqlIdentifier columnName = property.getColumnName().transform(prefix::concat);
 
@@ -1384,19 +1385,19 @@ public class SqlGenerator {
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
-			if (property.isInsertOnly()) {
+			if (insertOnly || property.isInsertOnly()) {
 				insertOnlyColumnNames.add(columnName);
 			}
 		}
 
-		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix) {
+		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix, boolean insertOnly) {
 
 			String embeddedPrefix = property.getEmbeddedPrefix();
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
 					.getRequiredPersistentEntity(converter.getColumnType(property));
 
-			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix);
+			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix, insertOnly);
 		}
 
 		/**

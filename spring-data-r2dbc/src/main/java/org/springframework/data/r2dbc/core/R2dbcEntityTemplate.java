@@ -63,6 +63,7 @@ import org.springframework.data.relational.core.mapping.OptimisticLockingUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
@@ -97,6 +98,7 @@ import org.springframework.util.Assert;
  * @author Sebastian Wieland
  * @author Mikhail Polivakha
  * @author Jens Schauder
+ * @author Seungmin Baek
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -639,11 +641,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 							idValues.put(sqlIdentifier, outboundRow.remove(sqlIdentifier));
 						});
 
-						persistentEntity.forEach(p -> {
-							if (p.isInsertOnly()) {
-								outboundRow.remove(p.getColumnName());
-							}
-						});
+						getInsertOnlyColumns(persistentEntity).forEach(outboundRow::remove);
 
 						Criteria criteria = null;
 						for (Map.Entry<SqlIdentifier, Object> idAndValue : idValues.entrySet()) {
@@ -812,6 +810,35 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		RelationalPersistentEntity<?> entity = this.mappingContext.getPersistentEntity(entityClass);
 
 		return entity != null ? entity.getQualifiedTableName() : SqlIdentifier.EMPTY;
+	}
+
+	/**
+	 * Collect the column names of all {@link RelationalPersistentProperty#isInsertOnly() insert-only} properties,
+	 * expanding {@link RelationalPersistentProperty#isEmbedded() embedded} properties into their (prefixed) column
+	 * names. Properties within an insert-only embedded property are insert-only themselves.
+	 */
+	private Set<SqlIdentifier> getInsertOnlyColumns(RelationalPersistentEntity<?> persistentEntity) {
+
+		Set<SqlIdentifier> insertOnlyColumns = new LinkedHashSet<>();
+		collectInsertOnlyColumns(persistentEntity, false, insertOnlyColumns);
+		return insertOnlyColumns;
+	}
+
+	private void collectInsertOnlyColumns(RelationalPersistentEntity<?> persistentEntity, boolean insertOnlyParent,
+			Set<SqlIdentifier> insertOnlyColumns) {
+
+		for (RelationalPersistentProperty property : persistentEntity) {
+
+			boolean insertOnly = insertOnlyParent || property.isInsertOnly();
+
+			if (property.isEmbedded()) {
+				RelationalPersistentEntity<?> embeddedEntity = ((RelationalMappingContext) this.mappingContext)
+						.getRequiredPersistentEntity(property);
+				collectInsertOnlyColumns(embeddedEntity, insertOnly, insertOnlyColumns);
+			} else if (insertOnly) {
+				insertOnlyColumns.add(property.getColumnName());
+			}
+		}
 	}
 
 	private RelationalPersistentEntity<?> getRequiredEntity(Class<?> entityClass) {
