@@ -61,6 +61,7 @@ import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.ReactiveAuditingEntityCallback;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -78,6 +79,7 @@ import org.springframework.util.CollectionUtils;
  * @author Jose Luis Leon
  * @author Robert Heim
  * @author Jens Schauder
+ * @author Seungmin Baek
  */
 public class R2dbcEntityTemplateUnitTests {
 
@@ -595,6 +597,44 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(23L));
 	}
 
+	@Test // GH-2366
+	void updateExcludesInsertOnlyEmbeddedProperties() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		entityTemplate.update(new WithInsertOnlyEmbedded(23L, "Alfred", new Audit("creator", "then"))) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).isEqualTo(
+				"UPDATE \"with_insert_only_embedded\" SET \"name\" = $1 WHERE \"with_insert_only_embedded\".\"id\" = $2");
+	}
+
+	@Test // GH-2366
+	void updateExcludesInsertOnlyPropertiesInsideEmbedded() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		entityTemplate.update(new WithEmbeddedInsertOnlyField(23L, "Alfred", new AuditFields("creator", "editor"))) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).isEqualTo(
+				"UPDATE \"with_embedded_insert_only_field\" SET \"name\" = $1, \"audit_updated_by\" = $2 WHERE \"with_embedded_insert_only_field\".\"id\" = $3");
+	}
+
 	@Test // GH-1696
 	void shouldConsiderParameterConverter() {
 
@@ -834,6 +874,20 @@ public class R2dbcEntityTemplateUnitTests {
 			return this.lastModifiedDate == lastModifiedDate ? this
 					: new WithAuditingAndOptimisticLocking(id, version, name, createdDate, lastModifiedDate);
 		}
+	}
+
+	record WithInsertOnlyEmbedded(@Id Long id, String name,
+			@InsertOnlyProperty @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") Audit audit) {
+	}
+
+	record Audit(String createdBy, String createdAt) {
+	}
+
+	record WithEmbeddedInsertOnlyField(@Id Long id, String name,
+			@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") AuditFields audit) {
+	}
+
+	record AuditFields(@InsertOnlyProperty String createdBy, String updatedBy) {
 	}
 
 	record WithInsertOnly(@Id Long id,
