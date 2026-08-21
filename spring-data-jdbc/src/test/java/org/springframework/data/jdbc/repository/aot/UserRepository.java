@@ -60,6 +60,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	Stream<User> streamByAgeGreaterThan(int age);
 
+	List<User> findAllByAgeGreaterThanEqual(int age);
+
 	long countByAgeLessThan(int age);
 
 	short countShortByAgeLessThan(int age);
