@@ -54,6 +54,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * Integration tests for AOT processing via {@link JdbcRepositoryContributor}.
  *
  * @author Mark Paluch
+ * @author Aditya Nikam
  */
 @SpringJUnitConfig(classes = JdbcRepositoryContributorIntegrationTests.JdbcRepositoryContributorConfiguration.class)
 @IntegrationTest
@@ -200,6 +201,14 @@ class JdbcRepositoryContributorIntegrationTests {
 	@Test // GH-2121
 	void streamByAgeGreaterThan() {
 		assertThat(fragment.streamByAgeGreaterThan(20)).hasSize(5);
+	}
+	
+	@Test // GH-2365
+	void shouldFindByAgeGreaterThanEqual() {
+
+		List<User> users = fragment.findAllByAgeGreaterThanEqual(51);
+
+		assertThat(users).hasSize(4);
 	}
 
 	@Test // GH-2121
