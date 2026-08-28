@@ -53,12 +53,6 @@ class LikeVisitor extends FilteredSubtreeVisitor {
 			return Delegation.delegateTo(visitor);
 		}
 
-		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor(context);
-			current = visitor;
-			return Delegation.delegateTo(visitor);
-		}
-
 		throw new IllegalStateException("Cannot provide visitor for " + segment);
 	}
 
