@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.core.PropertyPath;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.core.TypeInformation;
@@ -305,7 +304,7 @@ public class QueryMapper {
 
 			// IN/NOT_IN with collection of composite/embedded values: expand to (… AND …) OR (…)
 			if ((Comparator.IN.equals(comparator) || Comparator.NOT_IN.equals(comparator))
-				&& value instanceof Collection<?> collection) {
+					&& value instanceof Collection<?> collection) {
 
 				Condition condition = null;
 
@@ -760,6 +759,7 @@ public class QueryMapper {
 		public boolean isIgnoreCase() {
 			return delegate.isIgnoreCase();
 		}
+
 		@Override
 		public boolean isGroup() {
 			return false;
@@ -775,7 +775,6 @@ public class QueryMapper {
 		public SqlIdentifier getColumn() {
 			return null;
 		}
-
 
 		@Nullable
 		@Override
