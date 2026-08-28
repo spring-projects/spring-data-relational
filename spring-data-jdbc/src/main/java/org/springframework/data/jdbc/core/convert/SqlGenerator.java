@@ -118,7 +118,7 @@ public class SqlGenerator {
 		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
 		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
-		this.queryMapper = new QueryMapper(converter);
+		this.queryMapper = new QueryMapper(converter, dialect);
 		this.dialect = dialect;
 	}
 

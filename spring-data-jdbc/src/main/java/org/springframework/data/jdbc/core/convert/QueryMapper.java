@@ -36,6 +36,8 @@ import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -63,18 +65,46 @@ public class QueryMapper {
 
 	private final JdbcConverter converter;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final Escaper likeEscaper;
 
 	/**
 	 * Creates a new {@link QueryMapper} with the given {@link JdbcConverter}.
 	 *
 	 * @param converter must not be {@literal null}.
+	 * @deprecated since 4.2, use {@link #QueryMapper(JdbcConverter, Dialect)} instead. Without a {@link Dialect} the
+	 *             {@link Escaper} for {@code LIKE} values falls back to {@link Escaper#DEFAULT}, which does not know
+	 *             about dialect specific wildcards such as SQL Server's {@code [} and {@code ]}.
 	 */
+	@Deprecated(since = "4.2", forRemoval = true)
 	public QueryMapper(JdbcConverter converter) {
+		this(converter, Escaper.DEFAULT);
+	}
+
+	/**
+	 * Creates a new {@link QueryMapper} with the given {@link JdbcConverter} and {@link Dialect}.
+	 *
+	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
+	 * @since 4.2
+	 */
+	public QueryMapper(JdbcConverter converter, Dialect dialect) {
+		this(converter, requireLikeEscaper(dialect));
+	}
+
+	private static Escaper requireLikeEscaper(Dialect dialect) {
+
+		Assert.notNull(dialect, "Dialect must not be null");
+
+		return dialect.getLikeEscaper();
+	}
+
+	private QueryMapper(JdbcConverter converter, Escaper likeEscaper) {
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
 
 		this.converter = converter;
 		this.mappingContext = converter.getMappingContext();
+		this.likeEscaper = likeEscaper;
 	}
 
 	/**
@@ -363,7 +393,8 @@ public class QueryMapper {
 			sqlType = getTypeHint(mappedValue, actualType.getType(), settableValue);
 		} else if (criteria.getValue() instanceof ValueFunction valueFunction) {
 
-			mappedValue = valueFunction.map(v -> convertValue(comparator, v, propertyField.getTypeHint()));
+			mappedValue = valueFunction.map(v -> convertValue(comparator, v, propertyField.getTypeHint()))
+					.apply(likeEscaper);
 			sqlType = propertyField.getSqlType();
 
 		} else if (propertyField instanceof MetadataBackedField metadataBackedField //

@@ -1245,6 +1245,26 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(count).isOne();
 	}
 
+	record Fixture(String pattern, List<String> result) {
+		String[] resultArray() {
+			return result.toArray(new String[0]);
+		}
+	}
+
+	@Test // GH-2372
+	public void findAllByExampleWithAContainsMatcher() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("discount 50% off"), new DummyEntity("discount 5000 off")));
+
+		ExampleMatcher matcher = ExampleMatcher.matching().withMatcher("name",
+				ExampleMatcher.GenericPropertyMatchers.contains());
+
+		assertThat(repository.findAll(Example.of(new DummyEntity("50"), matcher))) //
+				.extracting(DummyEntity::getName)
+				.containsExactlyInAnyOrder("discount 50% off", "discount 5000 off");
+
+	}
+
 	@Test // GH-1192
 	void fetchByExampleFluentAllSimple() {
 

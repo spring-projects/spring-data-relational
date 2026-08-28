@@ -32,10 +32,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
@@ -58,7 +61,7 @@ public class QueryMapperUnitTests {
 	private JdbcMappingContext context = new JdbcMappingContext();
 	private JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class));
 
-	private QueryMapper mapper = new QueryMapper(converter);
+	private QueryMapper mapper = new QueryMapper(converter, AnsiDialect.INSTANCE);
 	private MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
 	QueryMapper createMapper(Converter<?, ?>... converters) {
@@ -68,7 +71,7 @@ public class QueryMapperUnitTests {
 		JdbcConverter converter = new MappingJdbcConverter(context, mock(RelationResolver.class), conversions,
 				mock(JdbcTypeFactory.class));
 
-		return new QueryMapper(converter);
+		return new QueryMapper(converter, AnsiDialect.INSTANCE);
 	}
 
 	@Test // DATAJDBC-318
@@ -443,6 +446,37 @@ public class QueryMapperUnitTests {
 		assertThat(condition).hasToString("person.\"NAME\" LIKE ?[:name]");
 	}
 
+	@Test // GH-2372
+	void shouldApplyValueFunctionForLike() {
+
+		ValueFunction<String> valueFunction = escaper -> "%" + escaper.escape("50%") + "%";
+
+		map(Criteria.where("name").like(valueFunction));
+
+		assertThat(parameterSource.getValue("name")).isEqualTo("%50\\%%");
+	}
+
+	@Test // GH-2372
+	void shouldApplyValueFunctionForNotLike() {
+
+		ValueFunction<String> valueFunction = escaper -> "%" + escaper.escape("50%") + "%";
+
+		map(Criteria.where("name").notLike(valueFunction));
+
+		assertThat(parameterSource.getValue("name")).isEqualTo("%50\\%%");
+	}
+
+	@Test // GH-2372
+	void shouldApplyDialectSpecificEscaperForLike() {
+
+		ValueFunction<String> valueFunction = escaper -> escaper.escape("a[b]c");
+
+		mapWithSqlServerDialect(Criteria.where("name").like(valueFunction));
+
+		assertThat(parameterSource.getValue("name")).isEqualTo("a\\[b\\]c");
+	}
+
+
 	@Test // DATAJDBC-318
 	void shouldMapSort() {
 
@@ -573,6 +607,12 @@ public class QueryMapperUnitTests {
 
 		return mapper.getMappedObject(parameterSource, criteria, Table.create("person"),
 				context.getRequiredPersistentEntity(Person.class));
+	}
+
+	private Condition mapWithSqlServerDialect(Criteria criteria) {
+
+		return new QueryMapper(converter, JdbcSqlServerDialect.INSTANCE).getMappedObject(parameterSource, criteria,
+				Table.create("person"), context.getRequiredPersistentEntity(Person.class));
 	}
 
 	private Condition map(Criteria criteria, Class<?> entityType) {
