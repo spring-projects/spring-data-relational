@@ -46,7 +46,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +63,6 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.domain.*;
 import org.springframework.data.jdbc.CapturingEventListener;
-import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.config.JdbcConfiguration;
@@ -137,14 +135,14 @@ public class JdbcRepositoryIntegrationTests {
 
 		// Pageable pageRequest, int size, int totalPages, List<String> notContains
 		return Stream.of( //
-				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
-				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
-				Arguments.of(PageRequest.of(2, 10), 10, 10, Arrays.asList("1", "2", "3")), //
-				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
-				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(0, 3, Sort.by("idProp")), 3, 34, Arrays.asList("3", "4", "100")), //
+				Arguments.of(PageRequest.of(1, 10, Sort.by("idProp")), 10, 10, Arrays.asList("9", "20", "30")), //
+				Arguments.of(PageRequest.of(2, 10, Sort.by("idProp")), 10, 10, Arrays.asList("1", "2", "3")), //
+				Arguments.of(PageRequest.of(33, 3, Sort.by("idProp")), 1, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(36, 3, Sort.by("idProp")), 0, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(0, 10000, Sort.by("idProp")), 100, 1, Collections.emptyList()), //
 				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()), //
-				Arguments.of(Pageable.unpaged(), 100, 1, Collections.emptyList()) //
+				Arguments.of(Pageable.unpaged(Sort.by("idProp")), 100, 1, Collections.emptyList()) //
 		);
 	}
 
