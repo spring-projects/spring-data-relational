@@ -35,7 +35,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 class EscapingParameterSourceUnitTests {
 
 	MapSqlParameterSource delegate = new MapSqlParameterSource();
-	Escaper escaper = Escaper.of('x');
+	Escaper escaper = Escaper.rewriteLikeWith('x');
 	EscapingParameterSource escapingParameterSource = new EscapingParameterSource(delegate, escaper);
 
 	@Nested

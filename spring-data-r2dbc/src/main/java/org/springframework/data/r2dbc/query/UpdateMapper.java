@@ -141,7 +141,7 @@ public class UpdateMapper extends QueryMapper {
 
 		} else if (value instanceof ValueFunction<?> valueFunction) {
 
-			mappedValue = valueFunction.map(v -> convertValue(v, propertyField.getTypeHint())).apply(Escaper.DEFAULT);
+			mappedValue = valueFunction.map(v -> convertValue(v, propertyField.getTypeHint())).apply(Escaper.ANSI_LIKE_ESCAPER);
 
 			if (mappedValue == null) {
 				return List.of(Assignments.value(column, SQL.nullLiteral()));

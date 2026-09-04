@@ -119,6 +119,14 @@ public class MySqlDialect extends AbstractDialect {
 	private static final Collection<Object> CONVERTERS = Arrays.asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE,
 			NumberToBooleanConverter.INSTANCE);
 
+	/**
+	 * MySQL (and MariaDB) interpret the backslash as an escape character inside string literals by default. Therefore
+	 * both the backslash itself and the single quote have to be escaped with a leading backslash ({@code \} &rarr;
+	 * {@code \\}, {@code '} &rarr; {@code \'}). This differs from the SQL standard of doubling the single quote. Note that
+	 * this is not correct if the server runs with the {@code NO_BACKSLASH_ESCAPES} SQL mode.
+	 */
+	private static final Escaper STRING_LITERAL_ESCAPER = Escaper.rewriting("'", "\\").with('\\');
+
 	private final IdentifierProcessing identifierProcessing;
 
 	protected MySqlDialect() {
@@ -166,6 +174,11 @@ public class MySqlDialect extends AbstractDialect {
 	@Override
 	public OrderByNullPrecedence orderByNullHandling() {
 		return OrderByNullPrecedence.NONE;
+	}
+
+	@Override
+	public Escaper getStringLiteralEscaper() {
+		return STRING_LITERAL_ESCAPER;
 	}
 
 	@Override

@@ -58,6 +58,8 @@ public class ExpressionVisitorUnitTests {
 
 		return asList( //
 				fixture("String literal", SQL.literalOf("one"), "'one'"), //
+				fixture("String literal with single quote", SQL.literalOf("O'Brien"), "'O''Brien'"), //
+				fixture("String literal with only special LIKE characters", SQL.literalOf("50%_"), "'50%_'"), //
 				fixture("Numeric literal", SQL.literalOf(23L), "23"), //
 				fixture("Boolean literal", SQL.literalOf(true), "TRUE"), //
 				fixture("Just", SQL.literalOf(Expressions.just("just an arbitrary String")), "just an arbitrary String"), //

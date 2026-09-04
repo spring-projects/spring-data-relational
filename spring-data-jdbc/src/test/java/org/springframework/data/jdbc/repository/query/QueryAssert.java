@@ -101,7 +101,7 @@ class QueryAssert extends AbstractAssert<QueryAssert, ParametrizedQuery> {
 	 */
 	public QueryAssert hasBindValue(String key, Object value) {
 
-		SqlParameterSource parameterSource = actual.getParameterSource(Escaper.DEFAULT);
+		SqlParameterSource parameterSource = actual.getParameterSource(Escaper.ANSI_LIKE_ESCAPER);
 		Assertions.assertThat(parameterSource.getValue(key))
 				.describedAs("Parameter source [%s] shouldn contain value [%s] for key [%s]", parameterSource, value, key)
 				.isEqualTo(value);
