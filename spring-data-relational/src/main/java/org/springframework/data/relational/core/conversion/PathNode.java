@@ -34,13 +34,6 @@ import java.util.Map;
  */
 record PathNode(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable PathNode parent, Object value) {
 
-	PathNode(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable PathNode parent, Object value) {
-
-		this.path = path;
-		this.parent = parent;
-		this.value = value;
-	}
-
 	/**
 	 * If the node represents a qualified property (i.e. a {@link List} or {@link Map}) the actual
 	 * value is an element of the {@literal List} or a value of the {@literal Map}, while the {@link #value} is actually a
