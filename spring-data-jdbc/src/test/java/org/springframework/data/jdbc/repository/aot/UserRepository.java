@@ -68,6 +68,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
 	List<User> findTop5ByOrderByAge();
 
+	List<User> findAllByOrderByFirstnameAscAgeAsc();
+
 	Slice<User> findSliceByAgeGreaterThan(Pageable pageable, int age);
 
 	Page<User> findPageByAgeGreaterThan(Pageable pageable, int age);

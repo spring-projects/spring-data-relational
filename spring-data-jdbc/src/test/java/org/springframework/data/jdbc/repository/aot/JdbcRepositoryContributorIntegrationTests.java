@@ -54,6 +54,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * Integration tests for AOT processing via {@link JdbcRepositoryContributor}.
  *
  * @author Mark Paluch
+ * @author Atirna
  */
 @SpringJUnitConfig(classes = JdbcRepositoryContributorIntegrationTests.JdbcRepositoryContributorConfiguration.class)
 @IntegrationTest
@@ -268,6 +269,19 @@ class JdbcRepositoryContributorIntegrationTests {
 
 		assertThat(users).hasSize(5).extracting(User::getFirstname).containsSequence("Flynn", "Skyler", "Gustavo", "Walter",
 				"Mike");
+	}
+
+	@Test // GH-2377
+	void listWithMultipleStaticOrderByProperties() {
+
+		operations.insert(new User("Flynn", 26));
+
+		List<User> users = fragment.findAllByOrderByFirstnameAscAgeAsc();
+
+		assertThat(users).extracting(User::getFirstname).containsExactly("Flynn", "Flynn", "Gustavo", "Hector", "Mike",
+				"Skyler", "Walter");
+		assertThat(users.get(0).getAge()).isEqualTo(16);
+		assertThat(users.get(1).getAge()).isEqualTo(26);
 	}
 
 	@Test // GH-2121
