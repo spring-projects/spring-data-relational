@@ -59,10 +59,12 @@ class AggregateReader implements PathToColumnMapping {
 	private final JdbcConverter converter;
 	private final NamedParameterJdbcOperations jdbcTemplate;
 	private final RowDocumentResultSetExtractor extractor;
+	private final Dialect dialect;
 
 	AggregateReader(Dialect dialect, JdbcConverter converter, NamedParameterJdbcOperations jdbcTemplate) {
 
 		this.aliasFactory = new AliasFactory();
+		this.dialect = dialect;
 		this.converter = converter;
 		this.jdbcTemplate = jdbcTemplate;
 		this.sqlGenerator = new SingleQuerySqlGenerator(converter.getMappingContext(), aliasFactory, dialect);
@@ -171,7 +173,7 @@ class AggregateReader implements PathToColumnMapping {
 	private Condition createCondition(Query query, MapSqlParameterSource parameterSource,
 			RelationalPersistentEntity<?> entity) {
 
-		QueryMapper queryMapper = new QueryMapper(converter);
+		QueryMapper queryMapper = new QueryMapper(converter, dialect);
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		return criteria.map(criteriaDefinition -> queryMapper.getMappedObject(parameterSource, criteriaDefinition,
