@@ -101,7 +101,7 @@ public interface Dialect {
 	}
 
 	/**
-	 * Return the {@link Set} of types considered store native types that can be handeled by the driver.
+	 * Return the {@link Set} of types considered store native types that can be handled by the driver.
 	 *
 	 * @return never {@literal null}.
 	 * @since 2.3

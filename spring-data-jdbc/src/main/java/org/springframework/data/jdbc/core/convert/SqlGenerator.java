@@ -345,7 +345,7 @@ public class SqlGenerator {
 
 	/**
 	 * Constructs a single sql query that performs select based on the provided query and pagination information.
-	 * Additionaly, the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 * Additionally, the bindings for the where clause are stored after execution into the <code>parameterSource</code>
 	 *
 	 * @param query the query to base the select on. Must not be null.
 	 * @param pageable the pageable to perform on the select.

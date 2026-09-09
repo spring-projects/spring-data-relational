@@ -183,7 +183,7 @@ class AggregateReader implements PathToColumnMapping {
 	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
 	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
 	 *
-	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
+	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {@literal null}.
 	 * @return a {@code List} of aggregates, fully converted.
 	 * @throws SQLException on underlying JDBC errors.
 	 */
@@ -204,7 +204,7 @@ class AggregateReader implements PathToColumnMapping {
 	 * {@link RowDocumentResultSetExtractor} and the {@link JdbcConverter}. When used as a method reference this conforms
 	 * to the {@link org.springframework.jdbc.core.ResultSetExtractor} contract.
 	 *
-	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {(}@literal null}.
+	 * @param rs the {@link ResultSet} from which to extract the data. Must not be {@literal null}.
 	 * @return The single instance when the conversion results in exactly one instance. If the {@literal ResultSet} is
 	 *         empty, null is returned.
 	 * @throws SQLException on underlying JDBC errors.

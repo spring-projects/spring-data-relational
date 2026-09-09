@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
 
 /**
  * A part rendering visitor for lists of segments. It can be set up depending on the elements in the list it should
- * handle and the way elemnts should get separated when rendered.
+ * handle and the way elements should get separated when rendered.
  *
  * @author Jens Schauder
  * @since 2.7
