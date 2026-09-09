@@ -405,7 +405,7 @@ public class SingleQuerySqlGenerator implements SqlGenerator {
 
 	/**
 	 * Constructs a SQL function of the following form
-	 * {@code GREATEST(Coalesce(x1, 1), Coalesce(x2, 1), ..., Coalesce(xN, 1)}. this is used for cobining rownumbers from
+	 * {@code GREATEST(Coalesce(x1, 1), Coalesce(x2, 1), ..., Coalesce(xN, 1)}. this is used for combining rownumbers from
 	 * different child tables. The {@code coalesce} is used because the values {@code x1 ... xN} might be {@code null} and
 	 * we want {@code null} to be equivalent with the first entry.
 	 *
