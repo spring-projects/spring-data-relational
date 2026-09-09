@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * Baseclass for all kinds of "select in parenthesis".
+ * Baseclass for all kinds of "select in parentheses".
  * 
  * @since 3.1
  * @author Mark Paluch

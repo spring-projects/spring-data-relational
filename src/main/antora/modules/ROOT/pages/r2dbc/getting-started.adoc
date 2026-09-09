@@ -128,7 +128,7 @@ When you run the main program, the preceding examples produce output similar to 
 Even in this simple example, there are few things to notice:
 
 * You can create an instance of the central helper class in Spring Data R2DBC (`R2dbcEntityTemplate`) by using a standard `io.r2dbc.spi.ConnectionFactory` object.
-* The mapper works against standard POJO objects without the need for any additional metadata (though you can, optionally, provide that information -- see xref:r2dbc/mapping.adoc[here].).
+* The mapper works against standard POJO objects without the need for any additional metadata (though you can, optionally, provide that information -- see xref:r2dbc/mapping.adoc[here]).
 * Mapping conventions can use field access.
 Notice that the `Person` class has only getters.
 * If the constructor argument names match the column names of the stored row, they are used to instantiate the object.
