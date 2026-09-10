@@ -70,6 +70,7 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Christoph Strobl
  * @author Aditya Nikam
+ * @author Atirna
  * @since 4.0
  */
 class JdbcCodeBlocks {
@@ -265,15 +266,14 @@ class JdbcCodeBlocks {
 			boolean first = true;
 			for (Sort.Order order : sort) {
 
+				if (!first) {
+					sortBuilder.add(", ");
+				}
+				first = false;
+
 				sortBuilder.add("$T.$L($S)", Sort.Order.class, order.isAscending() ? "asc" : "desc", order.getProperty());
 				if (order.isIgnoreCase()) {
 					sortBuilder.add(".ignoreCase()");
-				}
-
-				if (first) {
-					first = false;
-				} else {
-					sortBuilder.add(", ");
 				}
 			}
 
