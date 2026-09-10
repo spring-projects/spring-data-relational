@@ -1345,7 +1345,8 @@ public class SqlGenerator {
 			this.updatableColumns = Collections.unmodifiableSet(updatable);
 		}
 
-		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix, boolean insertOnly) {
+		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix,
+				boolean ancestorIsInsertOnly) {
 
 
 			entity.doWithAll(property -> {
@@ -1355,7 +1356,7 @@ public class SqlGenerator {
 					Association association = Association.from(property, converter);
 					if (association.isComplexIdentifier()) {
 						populateColumnNameCache(association.getRequiredTargetIdentifierEntity(),
-								prefix + property.getEmbeddedPrefix(), insertOnly);
+								prefix + property.getEmbeddedPrefix(), ancestorIsInsertOnly || property.isInsertOnly());
 						return;
 					}
 				}
@@ -1363,14 +1364,15 @@ public class SqlGenerator {
 				if (!property.isEntity()) {
 
 					// the referencing column of referenced entity is expected to be on the other side of the relation
-					initSimpleColumnName(property, prefix, insertOnly);
+					initSimpleColumnName(property, prefix, ancestorIsInsertOnly);
 				} else if (property.isEmbedded()) {
-					initEmbeddedColumnNames(property, prefix, insertOnly || property.isInsertOnly());
+					initEmbeddedColumnNames(property, prefix, ancestorIsInsertOnly || property.isInsertOnly());
 				}
 			});
 		}
 
-		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix, boolean insertOnly) {
+		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix,
+				boolean ancestorIsInsertOnly) {
 
 			SqlIdentifier columnName = property.getColumnName().transform(prefix::concat);
 
@@ -1385,19 +1387,20 @@ public class SqlGenerator {
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
-			if (insertOnly || property.isInsertOnly()) {
+			if (ancestorIsInsertOnly || property.isInsertOnly()) {
 				insertOnlyColumnNames.add(columnName);
 			}
 		}
 
-		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix, boolean insertOnly) {
+		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix,
+				boolean ancestorIsInsertOnly) {
 
 			String embeddedPrefix = property.getEmbeddedPrefix();
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
 					.getRequiredPersistentEntity(converter.getColumnType(property));
 
-			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix, insertOnly);
+			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix, ancestorIsInsertOnly);
 		}
 
 		/**

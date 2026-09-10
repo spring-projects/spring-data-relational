@@ -634,6 +634,17 @@ class SqlGeneratorUnitTests {
 		assertThat(update).contains("AUDIT_X_UPDATED_BY");
 	}
 
+	@Test // GH-2366
+	void updateExcludesInsertOnlyComplexIdentifierAssociation() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(LockerWithInsertOnlyAssignee.class, AnsiDialect.INSTANCE);
+
+		String update = sqlGenerator.getUpdate();
+
+		assertThat(update).contains("X_CAPACITY");
+		assertThat(update).doesNotContain("X_ORGANIZATION").doesNotContain("X_EMPLOYEE_NUMBER");
+	}
+
 	@Test // DATAJDBC-262
 	void update() {
 
@@ -1193,6 +1204,13 @@ class SqlGeneratorUnitTests {
 		AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
 	}
 
+	static class LockerWithInsertOnlyAssignee {
+
+		@Id Long id;
+		Integer capacity;
+		@InsertOnlyProperty AggregateReference<EmployeeWithCompositeId, EmployeeId> assignedTo;
+	}
+
 	static class EmployeeWithCompositeId {
 
 		@Id EmployeeId id;
@@ -1283,6 +1301,7 @@ class SqlGeneratorUnitTests {
 
 	record Child(@Column("NICK_NAME") String nickName, String name) {
 	}
+
 	record WithInsertOnlyEmbedded(@Id Long id, String name,
 			@InsertOnlyProperty @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "audit_") Audit audit) {
 	}
