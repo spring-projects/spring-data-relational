@@ -86,7 +86,7 @@ public class ReactiveUpsertOperationUnitTests {
 		assertThat(statement.getSql()).contains("DO UPDATE SET");
 		assertThat(statement.getBindings()).hasSize(3) //
 				.containsEntry(0, Parameter.from(42L)) //
-				.containsEntry(1, Parameter.from("Walter"))
+				.containsEntry(1, Parameter.from("Walter")) //
 				.containsEntry(2, Parameter.empty(Object.class));
 	}
 
@@ -207,8 +207,7 @@ public class ReactiveUpsertOperationUnitTests {
 
 		@Column("THE_NAME") String name;
 
-		@org.springframework.data.relational.core.mapping.InsertOnlyProperty
-		String insertOnly;
+		@org.springframework.data.relational.core.mapping.InsertOnlyProperty String insertOnly;
 
 		Person() {}
 

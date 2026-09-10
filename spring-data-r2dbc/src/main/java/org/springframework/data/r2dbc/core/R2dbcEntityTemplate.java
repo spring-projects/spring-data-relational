@@ -64,9 +64,9 @@ import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.conversion.AbstractRelationalConverter;
 import org.springframework.data.relational.core.mapping.OptimisticLockingUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyTranslator;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
@@ -883,11 +883,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return entity != null ? entity.getQualifiedTableName() : SqlIdentifier.EMPTY;
 	}
 
-	/**
-	 * Collect the column names of all {@link RelationalPersistentProperty#isInsertOnly() insert-only} properties,
-	 * expanding {@link RelationalPersistentProperty#isEmbedded() embedded} properties into their (prefixed) column
-	 * names. Properties within an insert-only embedded property are insert-only themselves.
-	 */
 	private Set<SqlIdentifier> getInsertOnlyColumns(RelationalPersistentEntity<?> persistentEntity) {
 
 		Set<SqlIdentifier> insertOnlyColumns = new LinkedHashSet<>();
@@ -895,12 +890,12 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return insertOnlyColumns;
 	}
 
-	private void collectInsertOnlyColumns(RelationalPersistentEntity<?> persistentEntity, boolean insertOnlyParent,
+	private void collectInsertOnlyColumns(RelationalPersistentEntity<?> persistentEntity, boolean ancestorIsInsertOnly,
 			Set<SqlIdentifier> insertOnlyColumns) {
 
 		for (RelationalPersistentProperty property : persistentEntity) {
 
-			boolean insertOnly = insertOnlyParent || property.isInsertOnly();
+			boolean insertOnly = ancestorIsInsertOnly || property.isInsertOnly();
 
 			if (property.isEmbedded()) {
 				RelationalPersistentEntity<?> embeddedEntity = ((RelationalMappingContext) this.mappingContext)
