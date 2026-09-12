@@ -84,6 +84,13 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	}
 
 	/**
+	 * @return Suffix for embedded columns. If the column is not embedded the return value is empty.
+	 */
+	default String getEmbeddedSuffix() {
+		return "";
+	}
+
+	/**
 	 * Returns whether an empty embedded object is supposed to be created for this property.
 	 */
 	boolean shouldCreateEmptyEmbedded();

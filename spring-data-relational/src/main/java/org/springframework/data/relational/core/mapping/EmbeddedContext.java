@@ -32,4 +32,14 @@ record EmbeddedContext(RelationalPersistentProperty ownerProperty) {
 		String embeddedPrefix = ownerProperty.getEmbeddedPrefix();
 		return embeddedPrefix + name;
 	}
+
+	public String withEmbeddedSuffix(String name) {
+
+		if (!ownerProperty.isEmbedded()) {
+			return name;
+		}
+
+		String embeddedSuffix = ownerProperty.getEmbeddedSuffix();
+		return name + embeddedSuffix;
+	}
 }
