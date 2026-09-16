@@ -717,8 +717,8 @@ public class PartTreeJdbcQueryUnitTests {
 				.contains(TABLE + ".\"USER_STREET\" = :user_street", //
 						" AND ", //
 						TABLE + ".\"USER_CITY\" = :user_city");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_street")).isEqualTo("Hello");
-		assertThat(query.getParameterSource(Escaper.DEFAULT).getValue("user_city")).isEqualTo("World");
+		assertThat(query.getParameterSource(Escaper.ANSI_LIKE_ESCAPER).getValue("user_street")).isEqualTo("Hello");
+		assertThat(query.getParameterSource(Escaper.ANSI_LIKE_ESCAPER).getValue("user_city")).isEqualTo("World");
 	}
 
 	@Test // GH-2187

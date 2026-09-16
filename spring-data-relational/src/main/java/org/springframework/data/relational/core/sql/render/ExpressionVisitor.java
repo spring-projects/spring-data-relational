@@ -125,8 +125,13 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			CaseExpressionVisitor visitor = new CaseExpressionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
+		} else if (segment instanceof StringLiteral stringLiteral) {
+
+			CharSequence content = stringLiteral.getContent();
+			String escaped = context.getStringLiteralEscaper().escape(content == null ? null : content.toString());
+			value = "'" + (escaped == null ? "" : escaped) + "'";
 		} else {
-			// works for literals and just and possibly more
+			// works for `just` and possibly more
 			value = segment.toString();
 		}
 
