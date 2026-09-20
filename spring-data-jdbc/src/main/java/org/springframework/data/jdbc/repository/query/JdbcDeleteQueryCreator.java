@@ -88,7 +88,7 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 
 		this.context = context;
 		this.entityMetadata = entityMetadata;
-		this.queryMapper = new QueryMapper(converter);
+		this.queryMapper = new QueryMapper(converter, dialect);
 		this.renderContextFactory = new RenderContextFactory(dialect);
 	}
 

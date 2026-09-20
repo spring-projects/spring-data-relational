@@ -66,7 +66,7 @@ public class StatementFactory {
 	public StatementFactory(JdbcConverter converter, Dialect dialect) {
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.converter = converter;
-		this.queryMapper = new QueryMapper(converter);
+		this.queryMapper = new QueryMapper(converter, dialect);
 		this.dialect = dialect;
 		this.sqlGeneratorSource = new SqlGeneratorSource(converter, dialect);
 	}
