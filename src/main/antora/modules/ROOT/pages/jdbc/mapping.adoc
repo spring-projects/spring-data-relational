@@ -219,7 +219,7 @@ If you are migrating from an older version of Spring Data JDBC and have `Abstrac
 ====
 If you want to rely on https://spring.io/projects/spring-boot[Spring Boot] to bootstrap Spring Data JDBC, but still want to override certain aspects of the configuration, you may want to expose beans of that type.
 For custom conversions you may e.g. choose to register a bean of type `JdbcCustomConversions` that will be picked up by the Boot infrastructure.
-To learn more about this please make sure to read the Spring Boot https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#data.sql.jdbc[Reference Documentation].
+To learn more about this please make sure to read the Spring Boot https://docs.spring.io/spring-boot/reference/data/sql.html#data.sql.jdbc[Reference Documentation].
 ====
 
 [[jdbc.custom-converters.jdbc-value]]
