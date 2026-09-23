@@ -256,6 +256,11 @@ public class DialectResolver {
 		}
 
 		@Override
+		public Escaper getStringLiteralEscaper() {
+			return delegate.getStringLiteralEscaper();
+		}
+
+		@Override
 		public LimitClause limit() {
 			return delegate.limit();
 		}
