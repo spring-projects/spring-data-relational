@@ -16,19 +16,27 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
  * Unit tests for {@link DefaultDataAccessStrategy}.
@@ -113,6 +121,25 @@ class DefaultDataAccessStrategyUnitTests {
 		verify(insertStrategyFactory).batchInsertStrategy(IdValueSource.GENERATED, null);
 	}
 
+	@Test // GH-1159
+	void countByExample() {
+
+		RelationalExampleMapper exampleMapper = new RelationalExampleMapper(context);
+
+		Person person = new Person();
+		person.name = "Walter";
+		Example<Person> example = Example.of(person,
+				ExampleMatcher.matching().withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING));
+		Query query = exampleMapper.getMappedExample(example);
+
+		ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+		doReturn(1L).when(namedJdbcOperations).queryForObject(anyString(), captor.capture(), (Class<?>) eq(Long.class));
+		accessStrategy.count(query, Person.class);
+
+		SqlParameterSource parameters = captor.getValue();
+		assertThat(parameters.getValue("name")).isEqualTo("%Walter%");
+	}
+
 	private static class DummyEntity {
 
 		@Id private final Long id;
@@ -120,6 +147,13 @@ class DefaultDataAccessStrategyUnitTests {
 		public DummyEntity(Long id) {
 			this.id = id;
 		}
+	}
+
+	static class Person {
+
+		private @Id Long id;
+		private String name;
+
 	}
 
 	private static class DummyEntityWithoutIdAnnotation {

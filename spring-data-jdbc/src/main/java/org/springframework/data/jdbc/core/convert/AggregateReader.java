@@ -54,6 +54,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 class AggregateReader implements PathToColumnMapping {
 
+	private final Dialect dialect;
 	private final AliasFactory aliasFactory;
 	private final SqlGenerator sqlGenerator;
 	private final JdbcConverter converter;
@@ -62,6 +63,7 @@ class AggregateReader implements PathToColumnMapping {
 
 	AggregateReader(Dialect dialect, JdbcConverter converter, NamedParameterJdbcOperations jdbcTemplate) {
 
+		this.dialect = dialect;
 		this.aliasFactory = new AliasFactory();
 		this.converter = converter;
 		this.jdbcTemplate = jdbcTemplate;
@@ -164,7 +166,7 @@ class AggregateReader implements PathToColumnMapping {
 		Condition condition = createCondition(query, parameterSource, entity);
 		String sql = sqlGenerator.findAll(entity, condition);
 
-		return jdbcTemplate.query(sql, parameterSource, extractor);
+		return jdbcTemplate.query(sql, new EscapingParameterSource(parameterSource, dialect.getLikeEscaper()), extractor);
 	}
 
 	@Nullable
