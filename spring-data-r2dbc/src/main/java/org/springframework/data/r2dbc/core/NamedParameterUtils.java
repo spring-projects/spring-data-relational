@@ -498,7 +498,7 @@ abstract class NamedParameterUtils {
 			}
 
 			private void bind(BindTarget target, Iterator<BindMarker> markers,
-							  Object valueToBind) {
+							Object valueToBind) {
 
 				Assert.isTrue(markers.hasNext(),
 						() -> String.format(
