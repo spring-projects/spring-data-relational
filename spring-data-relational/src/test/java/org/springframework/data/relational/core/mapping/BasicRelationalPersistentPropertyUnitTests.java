@@ -139,7 +139,7 @@ class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertThat(arrayOfString.isCollectionLike() && !arrayOfString.isEntity())
 				.describedAs("arrayOfString is a Collection of a simple type.").isTrue();
 		softly.assertThat(listOfEntity.isCollectionLike() && !listOfEntity.isEntity())
-				.describedAs("listOfEntity  is a Collection of a simple type.").isFalse();
+				.describedAs("listOfEntity is a Collection of a simple type.").isFalse();
 		softly.assertThat(arrayOfEntity.isCollectionLike() && !arrayOfEntity.isEntity())
 				.describedAs("arrayOfEntity is a Collection of a simple type.").isFalse();
 
