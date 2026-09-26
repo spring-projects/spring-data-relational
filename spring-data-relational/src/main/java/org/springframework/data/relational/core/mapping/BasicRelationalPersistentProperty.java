@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.mapping;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.expression.ValueExpression;

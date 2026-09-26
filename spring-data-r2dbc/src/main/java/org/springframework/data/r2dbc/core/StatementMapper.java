@@ -802,7 +802,7 @@ public interface StatementMapper {
 		}
 
 		public List<SqlIdentifier> getUpdateColumns() {
-			return  Collections.unmodifiableList(updateColumns);
+			return Collections.unmodifiableList(updateColumns);
 		}
 
 	}
