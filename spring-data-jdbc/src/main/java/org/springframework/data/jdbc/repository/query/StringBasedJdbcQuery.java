@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository.query;
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Constructor;
-import java.sql.JDBCType;
 import java.sql.SQLType;
 import java.util.LinkedHashMap;
 import java.util.function.Function;
