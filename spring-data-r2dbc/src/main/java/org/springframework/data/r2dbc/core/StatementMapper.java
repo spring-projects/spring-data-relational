@@ -733,6 +733,7 @@ public interface StatementMapper {
 		public UpsertSpec withColumn(String column, Parameter value) {
 			return withColumn(column, ParameterAdapter.wrap(value));
 		}
+
 		/**
 		 * Associate a column with a {@link io.r2dbc.spi.Parameter} and create a new {@link UpsertSpec}.
 		 *

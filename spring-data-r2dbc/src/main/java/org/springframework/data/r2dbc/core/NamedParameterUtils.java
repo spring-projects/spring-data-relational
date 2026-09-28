@@ -356,17 +356,16 @@ abstract class NamedParameterUtils {
 
 	private record ParameterHolder(String parameterName, int startIndex, int endIndex) {
 
-
 		@Override
-			public boolean equals(@Nullable Object o) {
-				if (this == o)
-					return true;
-				if (o instanceof ParameterHolder that) {
-					return this.startIndex == that.startIndex && this.endIndex == that.endIndex
-							&& Objects.equals(this.parameterName, that.parameterName);
-				}
-				return false;
+		public boolean equals(@Nullable Object o) {
+			if (this == o)
+				return true;
+			if (o instanceof ParameterHolder that) {
+				return this.startIndex == that.startIndex && this.endIndex == that.endIndex
+						&& Objects.equals(this.parameterName, that.parameterName);
 			}
+			return false;
+		}
 
 	}
 
@@ -456,116 +455,114 @@ abstract class NamedParameterUtils {
 	 * Expanded query that allows binding of parameters using parameter names that were used to expand the query. Binding
 	 * unrolls {@link Collection}s and nested arrays.
 	 */
-		private record ExpandedQuery(String expandedSql, NamedParameters parameters,
-									 BindParameterSource parameterSource) implements PreparedOperation<String> {
+	private record ExpandedQuery(String expandedSql, NamedParameters parameters,
+			BindParameterSource parameterSource) implements PreparedOperation<String> {
 
 		@SuppressWarnings("unchecked")
-			public void bind(BindTarget target, String identifier, Object value) {
+		public void bind(BindTarget target, String identifier, Object value) {
 
-				List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
+			List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
 
-				if (bindMarkers == null) {
+			if (bindMarkers == null) {
 
-					target.bind(identifier, value);
-					return;
-				}
+				target.bind(identifier, value);
+				return;
+			}
 
-				for (List<BindMarker> outer : bindMarkers) {
-					if (value instanceof Collection) {
-						Collection<Object> collection = (Collection<Object>) value;
+			for (List<BindMarker> outer : bindMarkers) {
+				if (value instanceof Collection) {
+					Collection<Object> collection = (Collection<Object>) value;
 
-						Iterator<Object> iterator = collection.iterator();
-						Iterator<BindMarker> markers = outer.iterator();
+					Iterator<Object> iterator = collection.iterator();
+					Iterator<BindMarker> markers = outer.iterator();
 
-						while (iterator.hasNext()) {
+					while (iterator.hasNext()) {
 
-							Object valueToBind = iterator.next();
+						Object valueToBind = iterator.next();
 
-							if (valueToBind instanceof Object[] objects) {
-								for (Object object : objects) {
-									bind(target, markers, object);
-								}
-							} else {
-								bind(target, markers, valueToBind);
+						if (valueToBind instanceof Object[] objects) {
+							for (Object object : objects) {
+								bind(target, markers, object);
 							}
-						}
-					} else {
-						for (BindMarker bindMarker : outer) {
-							bindMarker.bind(target, value);
+						} else {
+							bind(target, markers, valueToBind);
 						}
 					}
-				}
-			}
-
-			private void bind(BindTarget target, Iterator<BindMarker> markers,
-							Object valueToBind) {
-
-				Assert.isTrue(markers.hasNext(),
-						() -> String.format(
-								"No bind marker for value [%s] in SQL [%s]; Check that the query was expanded using the same arguments",
-								valueToBind, toQuery()));
-
-				markers.next().bind(target, valueToBind);
-			}
-
-			public void bindNull(BindTarget target, String identifier,
-								 Class<?> valueType) {
-
-				List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
-
-				if (bindMarkers == null) {
-
-					target.bindNull(identifier, valueType);
-					return;
-				}
-
-				for (List<BindMarker> outer : bindMarkers) {
+				} else {
 					for (BindMarker bindMarker : outer) {
-						bindMarker.bindNull(target, valueType);
+						bindMarker.bind(target, value);
 					}
 				}
-			}
-
-			@Nullable
-			List<List<BindMarker>> getBindMarkers(String identifier) {
-
-				List<NamedParameters.NamedParameter> parameters = this.parameters.getMarker(identifier);
-
-				if (parameters == null) {
-					return null;
-				}
-
-				List<List<BindMarker>> markers = new ArrayList<>();
-				for (NamedParameters.NamedParameter parameter : parameters) {
-					markers.add(new ArrayList<>(parameter.placeholders));
-				}
-
-				return markers;
-			}
-
-			@Override
-			public String getSource() {
-				return this.expandedSql;
-			}
-
-			@Override
-			public void bindTo(BindTarget target) {
-
-				for (String namedParameter : this.parameterSource.getParameterNames()) {
-
-					Object value = this.parameterSource.getValue(namedParameter);
-
-					if (value == null) {
-						bindNull(target, namedParameter, this.parameterSource.getType(namedParameter));
-					} else {
-						bind(target, namedParameter, value);
-					}
-				}
-			}
-
-			@Override
-			public String toQuery() {
-				return this.expandedSql;
 			}
 		}
+
+		private void bind(BindTarget target, Iterator<BindMarker> markers, Object valueToBind) {
+
+			Assert.isTrue(markers.hasNext(),
+					() -> String.format(
+							"No bind marker for value [%s] in SQL [%s]; Check that the query was expanded using the same arguments",
+							valueToBind, toQuery()));
+
+			markers.next().bind(target, valueToBind);
+		}
+
+		public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
+
+			List<List<BindMarker>> bindMarkers = getBindMarkers(identifier);
+
+			if (bindMarkers == null) {
+
+				target.bindNull(identifier, valueType);
+				return;
+			}
+
+			for (List<BindMarker> outer : bindMarkers) {
+				for (BindMarker bindMarker : outer) {
+					bindMarker.bindNull(target, valueType);
+				}
+			}
+		}
+
+		@Nullable
+		List<List<BindMarker>> getBindMarkers(String identifier) {
+
+			List<NamedParameters.NamedParameter> parameters = this.parameters.getMarker(identifier);
+
+			if (parameters == null) {
+				return null;
+			}
+
+			List<List<BindMarker>> markers = new ArrayList<>();
+			for (NamedParameters.NamedParameter parameter : parameters) {
+				markers.add(new ArrayList<>(parameter.placeholders));
+			}
+
+			return markers;
+		}
+
+		@Override
+		public String getSource() {
+			return this.expandedSql;
+		}
+
+		@Override
+		public void bindTo(BindTarget target) {
+
+			for (String namedParameter : this.parameterSource.getParameterNames()) {
+
+				Object value = this.parameterSource.getValue(namedParameter);
+
+				if (value == null) {
+					bindNull(target, namedParameter, this.parameterSource.getType(namedParameter));
+				} else {
+					bind(target, namedParameter, value);
+				}
+			}
+		}
+
+		@Override
+		public String toQuery() {
+			return this.expandedSql;
+		}
+	}
 }
