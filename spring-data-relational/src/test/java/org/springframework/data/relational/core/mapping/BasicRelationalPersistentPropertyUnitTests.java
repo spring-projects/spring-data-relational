@@ -396,7 +396,8 @@ class BasicRelationalPersistentPropertyUnitTests {
 					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
 			final Object other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot = other
 					.getPoorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot();
-			if (!Objects.equals(this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot, other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
+			if (!Objects.equals(this$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot,
+					other$poorDeveloperProgrammaticallyAskingToShootThemselvesInTheFoot))
 				return false;
 			final Object this$embeddableEntity = this.getEmbeddableEntity();
 			final Object other$embeddableEntity = other.getEmbeddableEntity();
@@ -472,37 +473,36 @@ class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	// DATAJDBC-111
-		private record EmbeddableEntity(String embeddedTest) {
-
+	private record EmbeddableEntity(String embeddedTest) {
 
 		public boolean equals(final Object o) {
-				if (o == this)
-					return true;
-				if (!(o instanceof EmbeddableEntity other))
-					return false;
-				if (!other.canEqual(this))
-					return false;
-				final Object this$embeddedTest = this.embeddedTest();
-				final Object other$embeddedTest = other.embeddedTest();
-				return Objects.equals(this$embeddedTest, other$embeddedTest);
-			}
-
-			boolean canEqual(final Object other) {
-				return other instanceof EmbeddableEntity;
-			}
-
-			public int hashCode() {
-				final int PRIME = 59;
-				int result = 1;
-				final Object $embeddedTest = this.embeddedTest();
-				result = result * PRIME + ($embeddedTest == null ? 43 : $embeddedTest.hashCode());
-				return result;
-			}
-
-			public String toString() {
-				return "BasicRelationalPersistentPropertyUnitTests.EmbeddableEntity(embeddedTest=" + this.embeddedTest() + ")";
-			}
+			if (o == this)
+				return true;
+			if (!(o instanceof EmbeddableEntity other))
+				return false;
+			if (!other.canEqual(this))
+				return false;
+			final Object this$embeddedTest = this.embeddedTest();
+			final Object other$embeddedTest = other.embeddedTest();
+			return Objects.equals(this$embeddedTest, other$embeddedTest);
 		}
+
+		boolean canEqual(final Object other) {
+			return other instanceof EmbeddableEntity;
+		}
+
+		public int hashCode() {
+			final int PRIME = 59;
+			int result = 1;
+			final Object $embeddedTest = this.embeddedTest();
+			result = result * PRIME + ($embeddedTest == null ? 43 : $embeddedTest.hashCode());
+			return result;
+		}
+
+		public String toString() {
+			return "BasicRelationalPersistentPropertyUnitTests.EmbeddableEntity(embeddedTest=" + this.embeddedTest() + ")";
+		}
+	}
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}

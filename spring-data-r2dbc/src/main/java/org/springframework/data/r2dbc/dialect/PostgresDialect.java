@@ -88,7 +88,6 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 			return converters;
 		}
 
-
 		if (GEO_TYPES_PRESENT) {
 			converters.addAll(Arrays.asList(FromPostgresPointConverter.INSTANCE, ToPostgresPointConverter.INSTANCE, //
 					FromPostgresCircleConverter.INSTANCE, ToPostgresCircleConverter.INSTANCE, //
