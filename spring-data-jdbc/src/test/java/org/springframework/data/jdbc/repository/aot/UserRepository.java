@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.aot;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
@@ -53,6 +54,8 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 	List<User> findByFriend(AggregateReference<User, Long> friend);
 
 	List<User> findAllByAgeBetween(int start, int end);
+
+	Set<User> findUsersByAgeBetween(int start, int end);
 
 	Streamable<User> findStreamableByAgeBetween(int start, int end);
 
