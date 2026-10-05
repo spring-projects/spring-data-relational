@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -32,7 +31,7 @@
 		<!-- databases and jdbc drivers -->
 		<!-- note that these currently do not control the versions of databases used via Testcontainers for testing -->
 		<db2.version>12.1.5.0</db2.version>
-		<h2.version>2.5.250</h2.version>
+		<h2.version>2.5.252</h2.version>
 		<hikari.version>5.1.0</hikari.version>
 		<hsqldb.version>2.7.3</hsqldb.version>
 		<mariadb-java-client.version>3.5.10</mariadb-java-client.version>
