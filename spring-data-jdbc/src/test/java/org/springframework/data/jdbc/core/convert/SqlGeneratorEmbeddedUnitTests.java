@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Bastian Wilhelm
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Sharang Gupta
  */
 class SqlGeneratorEmbeddedUnitTests {
 
@@ -175,6 +176,17 @@ class SqlGeneratorEmbeddedUnitTests {
 				.contains(" WHERE ") //
 				.contains("with_embedded_id.one = :one") //
 				.contains("with_embedded_id.two = :two");
+	}
+
+	@Test // GH-2338
+	void updateExcludesEmbeddedIdColumnsFromSetClause() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(WithEmbeddedId.class);
+
+		String sql = sqlGenerator.getUpdate();
+
+		assertThat(sql).isEqualTo("UPDATE with_embedded_id SET name = :name " //
+				+ "WHERE with_embedded_id.one = :one AND with_embedded_id.two = :two");
 	}
 
 	@Test // GH-574
