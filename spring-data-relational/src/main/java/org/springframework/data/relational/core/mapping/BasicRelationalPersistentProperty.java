@@ -62,6 +62,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final @Nullable ValueExpression collectionKeyColumnNameExpression;
 	private final boolean isEmbedded;
 	private final String embeddedPrefix;
+	private final String embeddedSuffix;
 
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
@@ -89,6 +90,9 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.isEmbedded = isAnnotationPresent(Embedded.class);
 		this.embeddedPrefix = Optional.ofNullable(findAnnotation(Embedded.class)) //
 				.map(Embedded::prefix) //
+				.orElse("");
+		this.embeddedSuffix = Optional.ofNullable(findAnnotation(Embedded.class)) //
+				.map(Embedded::suffix) //
 				.orElse("");
 
 		Lazy<Optional<SqlIdentifier>> collectionIdColumnName = null;
@@ -268,6 +272,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public String getEmbeddedPrefix() {
 		return isEmbedded() ? embeddedPrefix : "";
+	}
+
+	@Override
+	public String getEmbeddedSuffix() {
+		return isEmbedded() ? embeddedSuffix : "";
 	}
 
 	@Override
