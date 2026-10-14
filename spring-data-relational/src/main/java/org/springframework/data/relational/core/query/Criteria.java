@@ -572,7 +572,7 @@ public class Criteria implements CriteriaDefinition {
 		}
 
 		if (value instanceof ValueFunction<?>) {
-			value = ((ValueFunction<?>) value).apply(Escaper.DEFAULT);
+			value = ((ValueFunction<?>) value).apply(Escaper.ANSI_LIKE_ESCAPER);
 		}
 
 		if (value != null) {
