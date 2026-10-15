@@ -116,6 +116,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
  * @author Mikhail Polivakha
  * @author Paul Jones
  * @author Christoph Strobl
+ * @author Dmytro Shubchynskyi
  */
 @IntegrationTest
 public class JdbcRepositoryIntegrationTests {
@@ -1400,6 +1401,61 @@ public class JdbcRepositoryIntegrationTests {
 
 		projection = repository.findBy(example, p -> p.project("flag").as(DummyProjection.class).firstValue());
 		assertThat(projection.name()).isNull();
+	}
+
+	@Test // GH-2408
+	void fetchByExampleFluentFirstValueShouldReturnNullWhenNoMatch() {
+
+		repository.save(createEntity());
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		DummyEntity result = repository.findBy(example, FluentQuery.FetchableFluentQuery::firstValue);
+
+		assertThat(result).isNull();
+	}
+
+	@Test // GH-2408
+	void fetchByExampleFluentOneValueShouldReturnNullWhenNoMatch() {
+
+		repository.save(createEntity());
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		DummyEntity result = repository.findBy(example, FluentQuery.FetchableFluentQuery::oneValue);
+
+		assertThat(result).isNull();
+	}
+
+	@Test // GH-2408
+	void fetchByExampleFluentFirstShouldReturnEmptyWhenNoMatch() {
+
+		repository.save(createEntity());
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		Optional<DummyEntity> result = repository.findBy(example, FluentQuery.FetchableFluentQuery::first);
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test // GH-2408
+	void fetchByExampleFluentOneShouldReturnEmptyWhenNoMatch() {
+
+		repository.save(createEntity());
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		Optional<DummyEntity> result = repository.findBy(example, FluentQuery.FetchableFluentQuery::one);
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test // GH-2408
+	void fetchByExampleFluentOneValueShouldRejectMultipleMatches() {
+
+		repository.save(createEntity());
+		repository.save(createEntity());
+		Example<DummyEntity> example = Example.of(createEntity());
+
+		assertThatThrownBy(() -> repository.findBy(example, FluentQuery.FetchableFluentQuery::oneValue))
+				.isInstanceOf(IncorrectResultSizeDataAccessException.class).hasMessageContaining("expected 1, actual 2");
 	}
 
 	@Test // GH-1192
