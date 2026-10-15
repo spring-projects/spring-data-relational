@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -516,6 +517,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 	 *
 	 * @author Jens Schauder
 	 * @author Mark Paluch
+	 * @author Jacques Mironneau
 	 * @since 4.0
 	 */
 	class ColumnInfos {
@@ -532,7 +534,7 @@ public interface AggregatePath extends Iterable<AggregatePath>, Comparable<Aggre
 
 			this.columnInfos = new TreeMap<>();
 			this.columnInfos.putAll(columnInfos);
-			this.columnCache = new HashMap<>(columnInfos.size(), 1f);
+			this.columnCache = new ConcurrentHashMap<>(columnInfos.size(), 1f);
 		}
 
 		/**
