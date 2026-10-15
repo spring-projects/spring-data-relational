@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  * Default {@link UpdateBuilder} implementation.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAndOr, UpdateAssign {
@@ -103,7 +104,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		Assert.notNull(condition, "Condition must not be null");
 		Assert.state(this.where != null, "Where must not be null");
 
-		this.where = this.where.and(condition);
+		this.where = this.where.or(condition);
 
 		return this;
 	}
