@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.sql.Update;
  * Unit tests for {@link SqlRenderer}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class UpdateRendererUnitTests {
 
@@ -77,5 +78,22 @@ public class UpdateRendererUnitTests {
 		Update update = StatementBuilder.update(table).set(column.set(SQL.bindMarker())).where(column.isNull()).build();
 
 		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET foo = ? WHERE mytable.foo IS NULL");
+	}
+
+	@Test // GH-2413
+	public void shouldRenderUpdateWithOrCondition() {
+
+		Table table = SQL.table("mytable");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
+
+		Update update = StatementBuilder.update(table) //
+				.set(foo.set(SQL.bindMarker())) //
+				.where(foo.isNull()) //
+				.or(bar.isNull()) //
+				.build();
+
+		assertThat(SqlRenderer.toString(update))
+				.isEqualTo("UPDATE mytable SET foo = ? WHERE mytable.foo IS NULL OR mytable.bar IS NULL");
 	}
 }
