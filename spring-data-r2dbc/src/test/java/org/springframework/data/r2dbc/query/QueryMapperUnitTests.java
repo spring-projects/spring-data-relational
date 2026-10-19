@@ -25,12 +25,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -528,7 +528,7 @@ class QueryMapperUnitTests {
 
 		assertThatThrownBy(() -> mapper.getMappedSort(Table.create("tbl"), sort,
 				mapper.getMappingContext().getRequiredPersistentEntity(Person.class)))
-				.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(InvalidDataAccessApiUsageException.class);
 	}
 
 	@Test // gh-369

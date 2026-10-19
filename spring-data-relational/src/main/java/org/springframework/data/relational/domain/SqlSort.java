@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
+
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.SqlIdentifiers;
 import org.springframework.util.Assert;
@@ -34,6 +36,10 @@ import org.springframework.util.Assert;
  * @since 3.1
  */
 public class SqlSort extends Sort {
+
+	private static final String PUNCTATION_PATTERN = "Sort expression '%s' must only contain property references or "
+			+ "aliases used in the select clause; If you really want to use something other than that for sorting, please use "
+			+ "RelationalSort.unsafe(…)";
 
 	private static final long serialVersionUID = 1L;
 
@@ -64,11 +70,13 @@ public class SqlSort extends Sort {
 		return new SqlSort(direction, Arrays.asList(paths));
 	}
 
+
 	/**
-	 * Validates a {@link org.springframework.data.domain.Sort.Order}, to be either safe for use in SQL or to be
-	 * explicitly marked unsafe.
+	 * Check any given {@link SqlOrder#isUnsafe()} order for presence of at least one property offending the
+	 * {@link #PUNCTATION_PATTERN} and throw an {@link InvalidDataAccessApiUsageException} indicating potential unsafe
+	 * order by expression.
 	 *
-	 * @param order the {@link org.springframework.data.domain.Sort.Order} to validate. Must not be null.
+	 * @param order
 	 */
 	public static void validate(Sort.Order order) {
 
@@ -79,8 +87,7 @@ public class SqlSort extends Sort {
 		}
 
 		if (!SqlIdentifiers.isValidPath(property)) {
-			throw new IllegalArgumentException(
-					"order fields that are not marked as unsafe must only consist of letters, digits, combining marks, '.' and '_'. If you want to sort by arbitrary expressions please use RelationalSort.unsafe. Note that such expressions become part of SQL statements and therefore need to be sanitized to prevent SQL injection attacks.");
+			throw new InvalidDataAccessApiUsageException(PUNCTATION_PATTERN.formatted(order));
 		}
 	}
 

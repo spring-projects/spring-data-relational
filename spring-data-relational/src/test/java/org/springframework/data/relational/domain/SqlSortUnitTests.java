@@ -21,12 +21,13 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Sort;
 
 /**
- * Unit tests for {@link SqlSort} and
- * {@link SqlSort.SqlOrder}.
- * 
+ * Unit tests for {@link SqlSort} and {@link SqlSort.SqlOrder}.
+ *
  * @author Jens Schauder
  */
 class SqlSortUnitTests {
@@ -99,16 +100,17 @@ class SqlSortUnitTests {
 			"①" })
 	void validateRejectsEverythingElse(String property) {
 
-		assertThatIllegalArgumentException() //
+		assertThatExceptionOfType(InvalidDataAccessApiUsageException.class) //
 				.isThrownBy(() -> SqlSort.validate(Sort.Order.by(property))) //
-				.withMessageContaining("must only consist of");
+				.withMessageContaining("must only contain property references");
 	}
 
 	@ParameterizedTest // GH-2378
 	@ValueSource(strings = { "name\n", "name\r", "name\r\n", "name\u0085", "name\u2028", "name\u2029" })
 	void validateRejectsTrailingLineTerminators(String property) {
 
-		assertThatIllegalArgumentException().isThrownBy(() -> SqlSort.validate(Sort.Order.by(property)));
+		assertThatExceptionOfType(InvalidDataAccessApiUsageException.class)
+				.isThrownBy(() -> SqlSort.validate(Sort.Order.by(property)));
 	}
 
 	@ParameterizedTest // GH-2378
