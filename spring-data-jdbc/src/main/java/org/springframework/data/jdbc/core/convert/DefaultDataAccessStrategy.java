@@ -31,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.repository.query.EscapingParameterSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -455,7 +456,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
-		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
+		return operations.query(sqlQuery, new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper()),
+				getRowMapper(domainType));
 	}
 
 	@Override
