@@ -120,7 +120,7 @@ public class SqlServerDialect extends AbstractDialect {
 
 	@Override
 	public Escaper getLikeEscaper() {
-		return Escaper.DEFAULT.withRewriteFor("[", "]");
+		return Escaper.ANSI_LIKE_ESCAPER.withRewriteFor("[", "]");
 	}
 
 	@Override
