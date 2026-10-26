@@ -1,0 +1,76 @@
+/*
+ * Copyright 2023-present the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.springframework.data.jdbc.core.convert;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.query.ValueFunction;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.util.Assert;
+
+/**
+ * This {@link SqlParameterSource} will apply escaping to its values.
+ *
+ * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 4.1.1
+ */
+class EscapingParameterSource implements SqlParameterSource {
+
+	private final SqlParameterSource parameterSource;
+	private final Escaper escaper;
+
+	public EscapingParameterSource(SqlParameterSource parameterSource, Escaper escaper) {
+
+		this.parameterSource = parameterSource;
+		this.escaper = escaper;
+	}
+
+	@Override
+	public boolean hasValue(String paramName) {
+		return parameterSource.hasValue(paramName);
+	}
+
+	@Override
+	public @Nullable Object getValue(String paramName) throws IllegalArgumentException {
+
+		Object value = parameterSource.getValue(paramName);
+		if (value instanceof ValueFunction<?> valueFunction) {
+			return valueFunction.apply(escaper);
+		}
+		return value;
+	}
+
+	@Override
+	public int getSqlType(String paramName) {
+		return parameterSource.getSqlType(paramName);
+	}
+
+	@Override
+	public @Nullable String getTypeName(String paramName) {
+		return parameterSource.getTypeName(paramName);
+	}
+
+	@Override
+	public String[] getParameterNames() {
+		String[] parameterNames = parameterSource.getParameterNames();
+
+		Assert.state(parameterNames != null, "Parameter names must not be null");
+
+		return parameterNames;
+	}
+}
