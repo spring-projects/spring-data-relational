@@ -36,6 +36,7 @@ import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.AggregatePath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -57,6 +58,7 @@ import org.springframework.util.ClassUtils;
  * @author Yan Qiang
  * @author Mikhail Fedorov
  * @author Christoph Strobl
+ * @author Donghwan Kim
  * @since 3.0
  */
 public class QueryMapper {
@@ -127,7 +129,7 @@ public class QueryMapper {
 			return fields;
 		}
 
-		return List.of(OrderByField.from(table.column(field.getMappedColumnName())));
+		return List.of(OrderByField.from(getTable(table, field).column(field.getMappedColumnName())));
 	}
 
 	/**
@@ -351,7 +353,7 @@ public class QueryMapper {
 		}
 
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
-		Column column = table.column(propertyField.getMappedColumnName());
+		Column column = getTable(table, propertyField).column(propertyField.getMappedColumnName());
 		Object mappedValue;
 		SQLType sqlType;
 
@@ -467,6 +469,35 @@ public class QueryMapper {
 				converter.getColumnType(property), //
 				converter.getTargetSqlType(property) //
 		);
+	}
+
+	/**
+	 * Returns the {@link Table} a column of the given {@link Field} belongs to. For a property of a child aggregate that
+	 * is the joined table the child is selected from, for everything else the table of the aggregate root.
+	 */
+	private Table getTable(Table rootTable, Field field) {
+
+		if (!(field instanceof MetadataBackedField metadataBackedField)) {
+			return rootTable;
+		}
+
+		PersistentPropertyPath<RelationalPersistentProperty> path = metadataBackedField.getPath();
+
+		if (path == null) {
+			return rootTable;
+		}
+
+		AggregatePath aggregatePath = converter.getMappingContext().getAggregatePath(path);
+
+		// the column of an entity-valued property lives in the owning table, not in the table of the entity itself
+		if (aggregatePath.isEntity()) {
+			return rootTable;
+		}
+
+		AggregatePath.TableInfo tableInfo = aggregatePath.getTableInfo();
+		SqlIdentifier tableAlias = tableInfo.tableAlias();
+
+		return tableAlias == null ? rootTable : Table.create(tableInfo.qualifiedTableName()).as(tableAlias);
 	}
 
 	private Condition mapEmbeddedObjectCondition(CriteriaDefinition criteria, MapSqlParameterSource parameterSource,
