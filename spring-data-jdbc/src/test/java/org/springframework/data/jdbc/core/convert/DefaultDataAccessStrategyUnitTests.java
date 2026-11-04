@@ -113,6 +113,36 @@ class DefaultDataAccessStrategyUnitTests {
 		verify(insertStrategyFactory).batchInsertStrategy(IdValueSource.GENERATED, null);
 	}
 
+	@Test // GH-2429
+	void shouldNotGeneratedIdOnInsertWithSuppliedId() {
+
+		Identifier identifier = Identifier.of(SqlIdentifier.quoted("ID"), ORIGINAL_ID, Long.class);
+		when(sqlParametersFactory.forInsert(any(), any(), any(), any())).thenReturn(createParametersWithId());
+
+		accessStrategy.insert(new DummyEntity(null), DummyEntity.class, identifier, IdValueSource.GENERATED);
+
+		verify(insertStrategyFactory).insertStrategy(IdValueSource.PROVIDED, SqlIdentifier.quoted("ID"));
+	}
+
+	@Test // GH-2429
+	void shouldNotGeneratedIdOnBatchInsertWithSuppliedId() {
+
+		Identifier identifier = Identifier.of(SqlIdentifier.quoted("ID"), ORIGINAL_ID, Long.class);
+		when(sqlParametersFactory.forInsert(any(), any(), any(), any())).thenReturn(createParametersWithId());
+
+		accessStrategy.insert(singletonList(InsertSubject.describedBy(new DummyEntity(null), identifier)),
+				DummyEntity.class, IdValueSource.GENERATED);
+
+		verify(insertStrategyFactory).batchInsertStrategy(IdValueSource.PROVIDED, SqlIdentifier.quoted("ID"));
+	}
+
+	SqlIdentifierParameterSource createParametersWithId() {
+
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource();
+		parameterSource.addValue(SqlIdentifier.quoted("ID"), ORIGINAL_ID);
+		return parameterSource;
+	}
+
 	private static class DummyEntity {
 
 		@Id private final Long id;
