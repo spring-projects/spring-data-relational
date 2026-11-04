@@ -128,9 +128,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		SqlIdentifierParameterSource parameterSource = parametersFactory.forInsert(objectToSave, domainType, identifier,
 				idValueSource);
 		String insertSql = sql(domainType).getInsert(parameterSource.getIdentifiers());
+		SqlIdentifier idColumn = getIdColumn(domainType);
 
-		return insertStrategyFactory.insertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				parameterSource);
+		return insertStrategyFactory.insertStrategy(getIdValueSource(idValueSource, idColumn, parameterSource), idColumn)
+				.execute(insertSql, parameterSource);
 	}
 
 	@Override
@@ -147,9 +148,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				.toArray(SqlIdentifierParameterSource[]::new);
 
 		String insertSql = sql(domainType).getInsert(sqlParameterSources[0].getIdentifiers());
+		SqlIdentifier idColumn = getIdColumn(domainType);
 
-		return insertStrategyFactory.batchInsertStrategy(idValueSource, getIdColumn(domainType)).execute(insertSql,
-				sqlParameterSources);
+		return insertStrategyFactory
+				.batchInsertStrategy(getIdValueSource(idValueSource, idColumn, sqlParameterSources[0]), idColumn)
+				.execute(insertSql, sqlParameterSources);
 	}
 
 	@Override
@@ -509,6 +512,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return Optional.ofNullable(context.getRequiredPersistentEntity(domainType).getIdProperty())
 				.map(RelationalPersistentProperty::getColumnName).orElse(null);
+	}
+
+	// Avoid key generation if the identifier is already provided.
+	private static IdValueSource getIdValueSource(IdValueSource idValueSource, @Nullable SqlIdentifier idColumn,
+			SqlIdentifierParameterSource parameterSource) {
+
+		if (IdValueSource.GENERATED.equals(idValueSource) && idColumn != null
+				&& parameterSource.getIdentifiers().contains(idColumn)) {
+			return IdValueSource.PROVIDED;
+		}
+
+		return idValueSource;
 	}
 
 	private Class<?> getBaseType(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
