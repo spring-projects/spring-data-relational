@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -71,8 +69,6 @@ import org.springframework.util.Assert;
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
-
-	private final Log logger = LogFactory.getLog(getClass());
 
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final RelationalMappingContext context;
@@ -155,11 +151,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <S> boolean update(S objectToSave, Class<S> domainType) {
 
 		SqlIdentifierParameterSource parameterSource = parametersFactory.forUpdate(objectToSave, domainType);
-		if (parameterSource.size() <= 1) {
-			return true; // returning true, because conceptually the one row was correctly updated
-		}
-
-		return operations.update(sql(domainType).getUpdate(), parameterSource) != 0;
+		return parameterSource.size() <= 1 // returning true, because conceptually the one row was correctly updated
+				|| operations.update(sql(domainType).getUpdate(), parameterSource) != 0;
 	}
 
 	@Override

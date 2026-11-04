@@ -61,7 +61,6 @@ class ExpressionEvaluatingParameterBinder {
 	 *
 	 * @param bindTarget must not be {@literal null}.
 	 * @param parameterAccessor must not be {@literal null}.
-	 * @param evaluator must not be {@literal null}.
 	 */
 	void bind(BindTarget bindTarget,
 			RelationalParameterAccessor parameterAccessor, ValueEvaluationContext evaluationContext) {
@@ -110,7 +109,7 @@ class ExpressionEvaluatingParameterBinder {
 
 			Optional<String> name = bindableParameter.getName();
 
-			if (name.isPresent() && (isNamedParameterReferencedFromQuery(name)) || !expressionQuery.getBindings().isEmpty()) {
+			if (name.isPresent() && isNamedParameterReferencedFromQuery(name) || !expressionQuery.getBindings().isEmpty()) {
 
 				if (!isNamedParameterReferencedFromQuery(name)) {
 					continue;
@@ -148,7 +147,7 @@ class ExpressionEvaluatingParameterBinder {
 
 	private boolean isNamedParameterReferencedFromQuery(Optional<String> name) {
 
-		if (!name.isPresent()) {
+		if (name.isEmpty()) {
 			return false;
 		}
 
