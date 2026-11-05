@@ -17,10 +17,13 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.OffsetScrollPosition;
@@ -41,6 +44,7 @@ import org.springframework.util.Assert;
  *
  * @author Diego Krupitza
  * @author Mark Paluch
+ * @author Dmytro Shubchynskyi
  * @since 3.0
  */
 class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
@@ -67,17 +71,17 @@ class FetchableFluentQueryByExample<S, R> extends FluentQuerySupport<S, R> {
 	}
 
 	@Override
-	public R oneValue() {
+	public @Nullable R oneValue() {
 
 		return this.entityOperations.findOne(createQuery(), getExampleType())
-				.map(item -> this.getConversionFunction().apply(item)).get();
+				.map(item -> this.getConversionFunction().apply(item)).orElse(null);
 	}
 
 	@Override
-	public R firstValue() {
+	public @Nullable R firstValue() {
 
-		return this.getConversionFunction()
-				.apply(this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).iterator().next());
+		Iterator<S> iterator = this.entityOperations.findAll(createQuery().sort(getSort()), getExampleType()).iterator();
+		return iterator.hasNext() ? this.getConversionFunction().apply(iterator.next()) : null;
 	}
 
 	@Override
