@@ -83,4 +83,14 @@ public class MySqlDialectUnitTests {
 		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ, from))).isEqualTo("LOCK IN SHARE MODE");
 		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
+
+	@Test // GH-2325
+	public void escapesStringLiteralsUsingBackslash() {
+
+		Escaper escaper = new MySqlDialect().getStringLiteralEscaper();
+
+		assertThat(escaper.escape("O'Brien")).isEqualTo("O\\'Brien");
+		assertThat(escaper.escape("back\\slash")).isEqualTo("back\\\\slash");
+		assertThat(escaper.escape("50%_of it")).isEqualTo("50%_of it");
+	}
 }

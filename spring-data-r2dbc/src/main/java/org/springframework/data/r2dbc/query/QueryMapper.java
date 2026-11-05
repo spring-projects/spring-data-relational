@@ -500,7 +500,7 @@ public class QueryMapper {
 			return dialect.getLikeEscaper();
 		}
 
-		return Escaper.DEFAULT;
+		return Escaper.ANSI_LIKE_ESCAPER;
 	}
 
 	/**

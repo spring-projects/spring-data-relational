@@ -25,63 +25,95 @@ import org.junit.jupiter.api.Test;
  * @author Roman Chigvintsev
  * @author Mark Paluch
  * @author Alexander Tochin
+ * @author Jens Schauder
  */
 public class EscaperUnitTests {
 
 	@Test // DATAJDBC-514
 	public void ignoresNulls() {
-		assertThat((Escaper.DEFAULT.escape(null))).isNull();
+		assertThat((Escaper.ANSI_LIKE_ESCAPER.escape(null))).isNull();
 	}
 
 	@Test // DATAJDBC-514
 	public void ignoresEmptyString() {
-		assertThat(Escaper.DEFAULT.escape("")).isEmpty();
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape("")).isEmpty();
 	}
 
 	@Test // DATAJDBC-514
 	public void ignoresBlankString() {
-		assertThat(Escaper.DEFAULT.escape(" ")).isEqualTo(" ");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape(" ")).isEqualTo(" ");
 	}
 
 	@Test // DATAJDBC-514
 	public void throwsExceptionWhenEscapeCharacterIsUnderscore() {
-		assertThatIllegalArgumentException().isThrownBy(() -> Escaper.of('_'));
+		assertThatIllegalArgumentException().isThrownBy(() -> Escaper.rewriteLikeWith('_'));
 	}
 
 	@Test // DATAJDBC-514
 	public void throwsExceptionWhenEscapeCharacterIsPercent() {
-		assertThatIllegalArgumentException().isThrownBy(() -> Escaper.of('%'));
+		assertThatIllegalArgumentException().isThrownBy(() -> Escaper.rewriteLikeWith('%'));
 	}
 
 	@Test // DATAJDBC-514
 	public void escapesUnderscoresUsingDefaultEscapeCharacter() {
-		assertThat(Escaper.DEFAULT.escape("_test_")).isEqualTo("\\_test\\_");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape("_test_")).isEqualTo("\\_test\\_");
 	}
 
 	@Test // DATAJDBC-514
 	public void escapesPercentsUsingDefaultEscapeCharacter() {
-		assertThat(Escaper.DEFAULT.escape("%test%")).isEqualTo("\\%test\\%");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape("%test%")).isEqualTo("\\%test\\%");
 	}
 
 	@Test // DATAJDBC-514
 	public void escapesSpecialCharactersUsingCustomEscapeCharacter() {
-		assertThat(Escaper.of('$').escape("_%")).isEqualTo("$_$%");
+		assertThat(Escaper.rewriteLikeWith('$').escape("_%")).isEqualTo("$_$%");
 	}
 
 	@Test // DATAJDBC-514
 	public void escapesAdditionalCharacters() {
-		assertThat(Escaper.DEFAULT.withRewriteFor("[", "]").escape("Hello Wo[Rr]ld")).isEqualTo("Hello Wo\\[Rr\\]ld");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.withRewriteFor("[", "]").escape("Hello Wo[Rr]ld")).isEqualTo("Hello Wo\\[Rr\\]ld");
 	}
 
 	@Test // GH-2182
 	public void escapesCharactersUsingDefaultEscapeCharacter() {
-		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
 	}
 
 	@Test // GH-2182
 	public void escapesCharactersUsingCustomEscapeCharacter() {
 
-		assertThat(Escaper.DEFAULT.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
-		assertThat(Escaper.of('$').escape("%te$st_")).isEqualTo("$%te$$st$_");
+		assertThat(Escaper.ANSI_LIKE_ESCAPER.escape("%te\\st_")).isEqualTo("\\%te\\\\st\\_");
+		assertThat(Escaper.rewriteLikeWith('$').escape("%te$st_")).isEqualTo("$%te$$st$_");
+	}
+
+	@Test // GH-2325
+	public void allowsEscapeCharacterToBePartOfCharactersToReplace() {
+		assertThatNoException().isThrownBy(() -> Escaper.rewriting("'").with('\''));
+	}
+
+	@Test // GH-2325
+	public void doublesSingleQuoteWhenEscapeCharacterIsSingleQuote() {
+
+		Escaper escaper = Escaper.rewriting("'", "x").with('\'');
+
+		assertThat(escaper.escape("O'Brien")).isEqualTo("O''Brien");
+		assertThat(escaper.escape("''")).isEqualTo("''''");
+	}
+
+	@Test // GH-2325
+	public void doesNotEscapeCharactersThatAreNotConfiguredToBeReplaced() {
+
+		Escaper escaper = Escaper.rewriting("'").with('\'');
+
+		assertThat(escaper.escape("63%_is h_p")).isEqualTo("63%_is h_p");
+	}
+
+	@Test // GH-2325
+	public void escapeCharacterIsHandledExactlyOnceWhenPartOfCharactersToReplace() {
+
+		// step 1 doubles the escape character; step 2 must skip it so it is not doubled again
+		Escaper escaper = Escaper.rewriting("'", "%").with('\'');
+
+		assertThat(escaper.escape("a'b%c")).isEqualTo("a''b'%c");
 	}
 }

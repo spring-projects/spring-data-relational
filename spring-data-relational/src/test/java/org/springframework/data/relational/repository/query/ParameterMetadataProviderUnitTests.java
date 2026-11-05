@@ -46,7 +46,7 @@ public class ParameterMetadataProviderUnitTests {
 
 		assertThat(metadata.value()).isInstanceOf(ValueFunction.class);
 		ValueFunction<Object> function = (ValueFunction<Object>) metadata.value();
-		assertThat(function.apply(Escaper.DEFAULT)).isEqualTo("%hell\\%o%");
+		assertThat(function.apply(Escaper.ANSI_LIKE_ESCAPER)).isEqualTo("%hell\\%o%");
 	}
 
 	@Test // DATAJDBC-514
@@ -56,7 +56,7 @@ public class ParameterMetadataProviderUnitTests {
 
 		assertThat(metadata.value()).isInstanceOf(ValueFunction.class);
 		ValueFunction<Object> function = (ValueFunction<Object>) metadata.value();
-		assertThat(function.apply(Escaper.DEFAULT)).isEqualTo("hell\\%o%");
+		assertThat(function.apply(Escaper.ANSI_LIKE_ESCAPER)).isEqualTo("hell\\%o%");
 	}
 
 	@Test // DATAJDBC-514
