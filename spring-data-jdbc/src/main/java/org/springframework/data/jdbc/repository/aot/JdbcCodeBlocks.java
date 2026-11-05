@@ -692,7 +692,8 @@ class JdbcCodeBlocks {
 
 			builder.addStatement(LordOfTheStrings.returning(returnType) //
 					.when(Collection.class.isAssignableFrom(context.getMethodReturn().toClass()),
-							"($T) convertMany($L, $T.class)", context.getMethodReturn().getTypeName(), result, queryResultType) //
+							"($T) convertMany($L, $T.class, $T.class)", context.getMethodReturn().getTypeName(), result,
+							queryResultType, context.getMethodReturn().toClass()) //
 					.when(context.getRepositoryInformation().getDomainType(),
 							"($1T) ($2L.isEmpty() ? null : $2L.iterator().next())", actualReturnType, result) //
 					.whenBoolean("!$L.isEmpty()", result) //
@@ -831,8 +832,9 @@ class JdbcCodeBlocks {
 							context.localVariable("converted"), TypeDescriptor.class);
 				} else {
 
-					builder.addStatement("return ($T) convertMany($L, %s)".formatted(dynamicProjection ? "$L" : "$T.class"),
-							methodReturn.getTypeName(), result, queryResultTypeRef);
+					builder.addStatement(
+							"return ($1T) convertMany($2L, %s, $3T.class)".formatted(dynamicProjection ? "$4L" : "$4T.class"),
+							methodReturn.getTypeName(), result, methodReturn.toClass(), queryResultTypeRef);
 				}
 			} else if (queryMethod.isStreamQuery()) {
 

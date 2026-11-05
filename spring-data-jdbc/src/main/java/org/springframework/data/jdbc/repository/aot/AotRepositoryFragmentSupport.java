@@ -233,6 +233,11 @@ public class AotRepositoryFragmentSupport {
 	}
 
 	protected @Nullable Object convertMany(@Nullable Object result, Class<?> projection) {
+		return convertMany(result, projection, null);
+	}
+
+	protected @Nullable Object convertMany(@Nullable Object result, Class<?> projection,
+			@Nullable Class<?> collectionType) {
 
 		if (result == null) {
 			return null;
@@ -252,8 +257,8 @@ public class AotRepositoryFragmentSupport {
 
 		if (result instanceof Collection<?> collection) {
 
-			Collection<@Nullable Object> target = CollectionFactory.createCollection(collection.getClass(),
-					collection.size());
+			Class<?> targetType = collectionType != null ? collectionType : collection.getClass();
+			Collection<@Nullable Object> target = CollectionFactory.createCollection(targetType, collection.size());
 			for (Object o : collection) {
 				target.add(convertOne(o, projection));
 			}
