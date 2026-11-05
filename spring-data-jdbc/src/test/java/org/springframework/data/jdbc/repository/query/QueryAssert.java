@@ -103,7 +103,7 @@ class QueryAssert extends AbstractAssert<QueryAssert, ParametrizedQuery> {
 
 		SqlParameterSource parameterSource = actual.getParameterSource(Escaper.DEFAULT);
 		Assertions.assertThat(parameterSource.getValue(key))
-				.describedAs("Parameter source [%s] shouldn contain value [%s] for key [%s]", parameterSource, value, key)
+				.describedAs("Parameter source [%s] should contain value [%s] for key [%s]", parameterSource, value, key)
 				.isEqualTo(value);
 
 		return this;
