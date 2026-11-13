@@ -409,7 +409,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
 		try {
-			return Optional.ofNullable(operations.queryForObject(sqlQuery, parameterSource, getRowMapper(domainType)));
+			return Optional
+					.ofNullable(operations.queryForObject(sqlQuery, applyEscaping(parameterSource), getRowMapper(domainType)));
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
@@ -421,7 +422,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
-		return operations.query(sqlQuery, new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper()),
+		return operations.query(sqlQuery, applyEscaping(parameterSource),
 				getRowMapper(domainType));
 	}
 
@@ -431,7 +432,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource);
 
-		return operations.queryForStream(sqlQuery, parameterSource, getRowMapper(domainType));
+		return operations.queryForStream(sqlQuery, applyEscaping(parameterSource), getRowMapper(domainType));
 	}
 
 	@Override
@@ -440,7 +441,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).selectByQuery(query, parameterSource, pageable);
 
-		return operations.query(sqlQuery, parameterSource, getRowMapper(domainType));
+		return operations.query(sqlQuery, applyEscaping(parameterSource), getRowMapper(domainType));
 	}
 
 	@Override
@@ -449,7 +450,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).existsByQuery(query, parameterSource);
 
-		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
+		Boolean result = operations.queryForObject(sqlQuery, applyEscaping(parameterSource), Boolean.class);
 
 		Assert.state(result != null, "The result of an exists query must not be null");
 
@@ -462,11 +463,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 		String sqlQuery = sql(domainType).countByQuery(query, parameterSource);
 
-		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
-
+		Long result = operations.queryForObject(sqlQuery, applyEscaping(parameterSource), Long.class);
 		Assert.state(result != null, "The result of a count query must not be null.");
 
 		return result;
+	}
+
+	private SqlParameterSource applyEscaping(MapSqlParameterSource parameterSource) {
+		return new EscapingParameterSource(parameterSource, getDialect().getLikeEscaper());
 	}
 
 	private <T> RowMapper<? extends T> getRowMapper(Class<T> domainType) {
