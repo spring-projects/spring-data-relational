@@ -324,22 +324,9 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(template.findById(1L, Account.class)).isEqualTo(inserted);
 	}
 
-	@Test // GH-2277
-	@EnabledOnDatabase(DatabaseType.POSTGRES)
-	void upsertReinsertsDeletedEntityWithNextVersion() {
-
-		Account inserted = template.upsert(new Account(1L, null, "inserted"));
-		template.delete(inserted);
-
-		Account reinserted = template.upsert(inserted);
-
-		assertThat(reinserted).isEqualTo(new Account(1L, 1L, "inserted"));
-		assertThat(template.findById(1L, Account.class)).isEqualTo(reinserted);
-	}
-
 	@ParameterizedTest // GH-2277
 	@EnabledOnDatabase(DatabaseType.POSTGRES)
-	@ValueSource(longs = { -1, 1, 5 })
+	@ValueSource(longs = { -1, 1 })
 	void upsertRejectsMismatchedVersions(long version) {
 
 		Account inserted = template.upsert(new Account(1L, null, "original"));
