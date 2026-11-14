@@ -88,6 +88,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author Vincent Galloy
  * @author Sergey Korotaev
  * @author Sanghun Lee
+ * @author Donghwan Kim
  */
 @IntegrationTest
 abstract class AbstractJdbcAggregateTemplateIntegrationTests {
@@ -403,6 +404,24 @@ abstract class AbstractJdbcAggregateTemplateIntegrationTests {
 		assertThat(reloadedById) //
 				.extracting(e -> e.id, e -> e.name, e -> e.content.size()) //
 				.containsExactly(tuple(two.id, two.name, 2));
+	}
+
+	@Test // GH-2112
+	void findAllByQueryWithCriteriaOnChildAggregate() {
+
+		template.save(createLegoSet("Lava"));
+
+		LegoSet star = createLegoSet("Star");
+		star.manual.content = "Assembly instructions for the Star";
+		template.save(star);
+
+		Query query = Query.query(Criteria.where("manual.content").is(star.manual.content));
+
+		Iterable<LegoSet> reloadedByManualContent = template.findAll(query, LegoSet.class);
+
+		assertThat(reloadedByManualContent) //
+				.extracting(l -> l.name) //
+				.containsExactly("Star");
 	}
 
 	@Test // GH-1803
