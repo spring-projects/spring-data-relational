@@ -29,6 +29,7 @@ import java.util.function.Function;
  * </pre>
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  * @see StatementBuilder
  */
@@ -150,6 +151,18 @@ public interface UpsertBuilder {
 	 * Terminal step that produces the {@link Upsert} statement.
 	 */
 	interface BuildUpsert {
+
+		/**
+		 * Restrict updates of conflicting rows to those matching {@code condition}. Requires dialect support for
+		 * conditional conflict updates; the condition does not restrict inserts.
+		 *
+		 * @param condition must not be {@literal null}.
+		 * @return this builder.
+		 * @since 4.2
+		 */
+		default BuildUpsert where(Condition condition) {
+			throw new UnsupportedOperationException("Conditional upsert is not supported by this builder");
+		}
 
 		/**
 		 * Build the immutable {@link Upsert} statement.

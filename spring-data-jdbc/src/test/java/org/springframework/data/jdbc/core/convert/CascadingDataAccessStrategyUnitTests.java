@@ -24,6 +24,7 @@ import junit.framework.AssertionFailedError;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -33,6 +34,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * Unit tests for {@link CascadingDataAccessStrategy}.
  *
  * @author Jens Schauder
+ * @author YeongJae Min
  */
 class CascadingDataAccessStrategyUnitTests {
 
@@ -97,6 +99,49 @@ class CascadingDataAccessStrategyUnitTests {
 		assertThatExceptionOfType(OptimisticLockingFailureException.class) //
 				.isThrownBy(() -> access.updateWithVersion("entity", String.class, 1L)) //
 				.withMessage("version mismatch");
+	}
+
+	@Test // GH-2277
+	void upsertWithVersionReportsUnsupportedWhenAllStrategiesRejectIt() {
+
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, alwaysFails));
+
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> access.upsertWithVersion("entity", String.class, null));
+	}
+
+	@Test // GH-2277
+	void upsertWithVersionSkipsUnsupportedStrategies() {
+
+		doReturn(1).when(succeeds).upsertWithVersion("entity", String.class, null);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
+
+		assertThat(access.upsertWithVersion("entity", String.class, null)).isEqualTo(1);
+	}
+
+	@Test // GH-2277
+	void upsertWithVersionPropagatesOptimisticLockingFailure() {
+
+		DataAccessStrategy throwsOlfe = mock(DataAccessStrategy.class);
+		doThrow(new OptimisticLockingFailureException("version mismatch")).when(throwsOlfe).upsertWithVersion("entity",
+				String.class, 1L);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(throwsOlfe, mayNotCall));
+
+		assertThatExceptionOfType(OptimisticLockingFailureException.class)
+				.isThrownBy(() -> access.upsertWithVersion("entity", String.class, 1L)).withMessage("version mismatch");
+	}
+
+	@Test // GH-2277
+	void upsertWithVersionDoesNotReportDatabaseFailureAsUnsupported() {
+
+		DataAccessStrategy fails = mock(DataAccessStrategy.class);
+		doThrow(new DataIntegrityViolationException("constraint violation")).when(fails).upsertWithVersion("entity",
+				String.class, 1L);
+		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(fails, alwaysFails));
+
+		assertThatExceptionOfType(CombinedDataAccessException.class)
+				.isThrownBy(() -> access.upsertWithVersion("entity", String.class, 1L))
+				.withMessageContaining("constraint violation");
 	}
 
 	@Test // GH-2316

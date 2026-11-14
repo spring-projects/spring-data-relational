@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Sergey Korotaev
  * @author Tomohiko Ozawa
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  */
 public interface JdbcAggregateOperations {
 
@@ -123,12 +124,18 @@ public interface JdbcAggregateOperations {
 	 * <p>
 	 * Typically, this operation uses {@code MERGE} or {@code INSERT ... ON CONFLICT} syntax.
 	 * <p>
-	 * <strong>Note:</strong> Upserts currently do not support optimistic locking.
+	 * For entities with a {@link org.springframework.data.annotation.Version} property, optimistic locking is supported
+	 * with PostgreSQL. New entities receive the initial version (zero for wrapper types, one for primitive types).
+	 * Otherwise, the version is incremented, and an existing row is updated only if its version matches the previous
+	 * version. If the row does not exist, it is inserted with the incremented version. A new entity cannot overwrite an
+	 * existing row. Other dialects reject versioned upserts.
 	 *
 	 * @param instance the aggregate root to upsert. Must not be {@code null} and must have an id set.
 	 * @param <T> the type of the aggregate root.
-	 * @return the same instance (possibly with a generated id set if the dialect returns one).
+	 * @return the saved instance with its prepared version, which may differ from the input for immutable entities.
 	 * @throws UnsupportedOperationException if the dialect or {@link DataAccessStrategy} does not support upsert.
+	 * @throws org.springframework.dao.OptimisticLockingFailureException if a versioned upsert cannot update a conflicting
+	 *           row because its version does not match.
 	 * @since 4.1
 	 */
 	<T> T upsert(T instance);

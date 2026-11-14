@@ -27,6 +27,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Assignment;
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Upsert;
@@ -40,6 +41,7 @@ import org.springframework.util.Assert;
  * {@link UpsertStatementRenderers#from(Dialect)}.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 class UpsertStatementVisitor extends DelegatingVisitor implements RenderingVisitor {
@@ -68,6 +70,17 @@ class UpsertStatementVisitor extends DelegatingVisitor implements RenderingVisit
 
 		Assert.isTrue(context.getUpsertRenderContext().supportsUpsert(), "Upsert is not supported by dialect");
 
+		Condition updateCondition = source.getUpdateCondition();
+		CharSequence renderedCondition = null;
+		if (updateCondition != null) {
+			if (!context.getUpsertRenderContext().supportsUpdateCondition()) {
+				throw new UnsupportedOperationException("Conditional upsert is not supported by dialect");
+			}
+			ConditionVisitor visitor = new ConditionVisitor(context);
+			updateCondition.visit(visitor);
+			renderedCondition = visitor.getRenderedPart();
+		}
+
 		InsertColumnsAndBindings columnsAndBindings = resolveInsertColumnsAndBindings(source);
 
 		Dialect dialect = context instanceof DialectCapable dialectCapable ? dialectCapable.getDialect()
@@ -76,11 +89,10 @@ class UpsertStatementVisitor extends DelegatingVisitor implements RenderingVisit
 		UpsertStatementRenderer statementRenderer = UpsertStatementRenderers.from(dialect);
 		UpsertRenderingContext renderingContext = UpsertRenderingContext.of(context, columnsAndBindings.bindings()::get);
 
-		String sql = statementRenderer
-				.render(
-						source.getTable(), new UpsertStatementRenderer.Columns(columnsAndBindings.insertColumns(),
-								source.getConflictColumns(), source.getUpdateColumns(), columnsAndBindings.bindings()),
-						renderingContext);
+		String sql = statementRenderer.render(
+				source.getTable(), new UpsertStatementRenderer.Columns(columnsAndBindings.insertColumns(),
+						source.getConflictColumns(), source.getUpdateColumns(), columnsAndBindings.bindings(), renderedCondition),
+				renderingContext);
 		builder.append(sql);
 
 		return Delegation.leave();

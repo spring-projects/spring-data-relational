@@ -18,12 +18,14 @@ package org.springframework.data.relational.core.sql;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
 
 /**
  * An upsert (MERGE / INSERT … ON CONFLICT / INSERT … ON DUPLICATE KEY) statement.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 public interface Upsert extends Segment, Visitable {
@@ -70,5 +72,14 @@ public interface Upsert extends Segment, Visitable {
 	 * Return columns to be assigned in the {@code UPDATE} part.
 	 */
 	List<Column> getUpdateColumns();
+
+	/**
+	 * Return the condition restricting conflict updates, or {@literal null} for unconditional updates.
+	 *
+	 * @since 4.2
+	 */
+	default @Nullable Condition getUpdateCondition() {
+		return null;
+	}
 
 }

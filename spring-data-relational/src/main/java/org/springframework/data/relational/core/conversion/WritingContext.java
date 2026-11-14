@@ -41,6 +41,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
  * @author Christoph Strobl
+ * @author YeongJae Min
  */
 class WritingContext<T> {
 
@@ -112,7 +113,7 @@ class WritingContext<T> {
 	 */
 	void upsert() { // TODO: how does that really go together with save?
 
-		setRootAction(new DbAction.UpsertRoot<>(root));
+		setRootAction(new DbAction.UpsertRoot<>(root, previousVersion));
 		deleteReferenced().forEach(aggregateChange::addAction);
 		insertReferenced().forEach(aggregateChange::addAction);
 	}

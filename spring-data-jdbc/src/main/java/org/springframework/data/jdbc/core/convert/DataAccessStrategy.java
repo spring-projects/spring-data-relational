@@ -47,6 +47,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Sergey Korotaev
  * @author Christoph Strobl
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  */
 public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationResolver {
 
@@ -134,6 +135,23 @@ public interface DataAccessStrategy extends ReadingDataAccessStrategy, RelationR
 	 * @since 4.1
 	 */
 	<T> int upsert(T objectToSave, Class<? super T> domainType);
+
+	/**
+	 * Upsert an entity with its prepared version, updating a conflicting row only when its version matches
+	 * {@code previousVersion}. A {@literal null} previous version permits inserts only.
+	 *
+	 * @param objectToSave the entity with an assigned identifier and the version to store.
+	 * @param domainType the entity type.
+	 * @param previousVersion the expected stored version, or {@literal null} for a new entity.
+	 * @param <T> the entity type.
+	 * @return the number of affected rows.
+	 * @throws OptimisticLockingFailureException if no row was inserted or updated.
+	 * @throws UnsupportedOperationException if the strategy or dialect does not support versioned upsert.
+	 * @since 4.2
+	 */
+	default <T> int upsertWithVersion(T objectToSave, Class<? super T> domainType, @Nullable Number previousVersion) {
+		throw new UnsupportedOperationException("Versioned upsert is not supported by this DataAccessStrategy");
+	}
 
 	/**
 	 * Deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading

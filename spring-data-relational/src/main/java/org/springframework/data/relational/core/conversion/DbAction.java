@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
  * @author Chirag Tailor
  * @author Christoph Strobl
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  */
 public interface DbAction<T> {
 
@@ -126,9 +127,24 @@ public interface DbAction<T> {
 	class UpsertRoot<T> implements WithRoot<T> {
 
 		private T entity;
+		private final @Nullable Number previousVersion;
 
 		public UpsertRoot(T entity) {
+			this(entity, null);
+		}
+
+		/**
+		 * @param entity the entity with its prepared version.
+		 * @param previousVersion the expected stored version, or {@literal null} for a new entity.
+		 * @since 4.2
+		 */
+		public UpsertRoot(T entity, @Nullable Number previousVersion) {
 			this.entity = entity;
+			this.previousVersion = previousVersion;
+		}
+
+		public @Nullable Number getPreviousVersion() {
+			return previousVersion;
 		}
 
 		public T entity() {

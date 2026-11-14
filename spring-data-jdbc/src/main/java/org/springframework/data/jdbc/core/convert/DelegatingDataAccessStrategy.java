@@ -43,6 +43,7 @@ import org.springframework.util.Assert;
  * @author Diego Krupitza
  * @author Sergey Korotaev
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -84,6 +85,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
 		return delegate.upsert(objectToSave, domainType);
+	}
+
+	@Override
+	public <T> int upsertWithVersion(T objectToSave, Class<? super T> domainType, @Nullable Number previousVersion) {
+		return delegate.upsertWithVersion(objectToSave, domainType, previousVersion);
 	}
 
 	@Override

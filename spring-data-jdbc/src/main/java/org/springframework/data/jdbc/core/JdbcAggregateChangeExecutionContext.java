@@ -54,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Sanghun Lee
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  */
 @SuppressWarnings("rawtypes")
 class JdbcAggregateChangeExecutionContext {
@@ -120,7 +121,11 @@ class JdbcAggregateChangeExecutionContext {
 	 */
 	<T> void executeUpsertRoot(DbAction.UpsertRoot<T> upsert) {
 
-		accessStrategy.upsert(upsert.entity(), upsert.getEntityType());
+		if (getRequiredPersistentEntity(upsert.getEntityType()).hasVersionProperty()) {
+			accessStrategy.upsertWithVersion(upsert.entity(), upsert.getEntityType(), upsert.getPreviousVersion());
+		} else {
+			accessStrategy.upsert(upsert.entity(), upsert.getEntityType());
+		}
 		add(new DbActionExecutionResult(upsert));
 	}
 
