@@ -139,6 +139,7 @@ public interface DbAction<T> {
 		 * @since 4.2
 		 */
 		public UpsertRoot(T entity, @Nullable Number previousVersion) {
+
 			this.entity = entity;
 			this.previousVersion = previousVersion;
 		}
