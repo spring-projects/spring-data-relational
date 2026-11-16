@@ -1,5 +1,6 @@
 package org.springframework.data.relational.core.mapping;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.expression.ValueEvaluationContext;
@@ -20,6 +21,7 @@ import org.springframework.util.Assert;
  * @author Kurt Niemi
  * @author Sergey Korotaev
  * @author Mark Paluch
+ * @author Paul Jones
  * @see SqlIdentifierSanitizer
  * @since 3.2
  */
@@ -28,7 +30,7 @@ class SqlIdentifierExpressionEvaluator {
 	private EvaluationContextProvider provider;
 
 	private SqlIdentifierSanitizer sanitizer = SqlIdentifierSanitizer.words();
-	private Environment environment = new StandardEnvironment();
+	private @Nullable Environment environment;
 
 	public SqlIdentifierExpressionEvaluator(EvaluationContextProvider provider) {
 		this.provider = provider;
@@ -39,7 +41,7 @@ class SqlIdentifierExpressionEvaluator {
 		Assert.notNull(expression, "Expression must not be null.");
 
 		EvaluationContext evaluationContext = provider.getEvaluationContext(null);
-		ValueEvaluationContext valueEvaluationContext = ValueEvaluationContext.of(environment, evaluationContext);
+		ValueEvaluationContext valueEvaluationContext = ValueEvaluationContext.of(getEnvironment(), evaluationContext);
 
 		Object value = expression.evaluate(valueEvaluationContext);
 		if (value instanceof SqlIdentifier sqlIdentifier) {
@@ -66,6 +68,15 @@ class SqlIdentifierExpressionEvaluator {
 		Assert.notNull(provider, "EvaluationContextProvider must not be null");
 
 		this.provider = provider;
+	}
+
+	private Environment getEnvironment() {
+
+		if (environment == null) {
+			environment = new StandardEnvironment();
+		}
+
+		return environment;
 	}
 
 	public void setEnvironment(Environment environment) {
