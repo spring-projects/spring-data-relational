@@ -25,6 +25,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  *
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author Sharang Gupta
  */
 @IntegrationTest
 @EnabledOnDatabase(DatabaseType.HSQL)
@@ -34,9 +35,13 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 	@Autowired DummyEntityRepository repository;
 
 	private static DummyEntity createDummyEntity() {
+		return createDummyEntity("Entity Name");
+	}
+
+	private static DummyEntity createDummyEntity(String name) {
 
 		DummyEntity entity = new DummyEntity();
-		entity.name = "Entity Name";
+		entity.name = name;
 		return entity;
 	}
 
@@ -58,6 +63,28 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 
 		Long count = template.queryForObject("select count(1) from grand_child_element", new HashMap<>(), Long.class);
 		assertThat(count).isEqualTo(0);
+	}
+
+	@Test
+	void deleteByNameKeepsTheGrandChildrenOfOtherAggregates() {
+
+		DummyEntity other = createDummyEntity("Other Name");
+		other.content.add(createChildElement("three"));
+		other.content.add(createChildElement("four"));
+		other = repository.save(other);
+
+		DummyEntity entity = createDummyEntity();
+		entity.content.add(createChildElement("one"));
+		entity.content.add(createChildElement("two"));
+		entity = repository.save(entity);
+
+		// the id of the deleted aggregate root is also the id of a child of the other aggregate
+		assertThat(other.content).extracting(child -> child.id).contains(entity.id);
+
+		assertThat(repository.deleteByName("Entity Name")).isEqualTo(1);
+
+		DummyEntity reloaded = repository.findById(other.id).orElseThrow();
+		assertThat(reloaded.content).hasSize(2).allSatisfy(child -> assertThat(child.content).hasSize(2));
 	}
 
 	private ChildElement createChildElement(String name) {

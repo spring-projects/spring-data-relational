@@ -57,6 +57,7 @@ import org.springframework.util.Assert;
  *
  * @author Yunyoung LEE
  * @author Nikita Konev
+ * @author Sharang Gupta
  * @since 3.5
  */
 class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQuery>> {
@@ -138,6 +139,12 @@ class JdbcDeleteQueryCreator extends RelationalQueryCreator<List<ParametrizedQue
 			AggregatePath aggregatePath = context.getAggregatePath(path);
 
 			if (aggregatePath.isEmbedded() || !aggregatePath.isEntity()) {
+				continue;
+			}
+
+			// The back reference of an entity nested in an entity with an id holds that id, not the id selected by
+			// parentSelect. Such entities get deleted by the recursion for the entity holding the id.
+			if (!aggregatePath.getIdDefiningParentPath().isRoot()) {
 				continue;
 			}
 
