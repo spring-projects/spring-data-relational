@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.DatabaseType;
 import org.springframework.data.jdbc.testing.EnabledOnDatabase;
@@ -32,11 +33,19 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired CustomIdDummyEntityRepository customIdRepository;
 
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
 		entity.name = "Entity Name";
+		return entity;
+	}
+
+	private static CustomIdDummyEntity createCustomIdDummyEntity() {
+
+		CustomIdDummyEntity entity = new CustomIdDummyEntity();
+		entity.name = "Custom ID Entity Name";
 		return entity;
 	}
 
@@ -60,6 +69,26 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 		assertThat(count).isEqualTo(0);
 	}
 
+	@Test // DATAJDBC-2123
+	void deleteByNameWithCustomIdColumn() {
+
+		CustomIdChildElement element1 = createCustomIdChildElement("one");
+		CustomIdChildElement element2 = createCustomIdChildElement("two");
+
+		CustomIdDummyEntity entity = createCustomIdDummyEntity();
+		entity.content.add(element1);
+		entity.content.add(element2);
+
+		entity = customIdRepository.save(entity);
+
+		assertThat(customIdRepository.deleteByName("Custom ID Entity Name")).isEqualTo(1);
+
+		assertThat(customIdRepository.findById(entity.id)).isEmpty();
+
+		Long count = template.queryForObject("select count(1) from custom_id_grand_child_element", new HashMap<>(), Long.class);
+		assertThat(count).isEqualTo(0);
+	}
+
 	private ChildElement createChildElement(String name) {
 
 		ChildElement element = new ChildElement();
@@ -76,7 +105,27 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 		return element;
 	}
 
+	private CustomIdChildElement createCustomIdChildElement(String name) {
+
+		CustomIdChildElement element = new CustomIdChildElement();
+		element.name = name;
+		element.content.add(createCustomIdGrandChildElement(name + "1"));
+		element.content.add(createCustomIdGrandChildElement(name + "2"));
+		return element;
+	}
+
+	private CustomIdGrandChildElement createCustomIdGrandChildElement(String content) {
+
+		CustomIdGrandChildElement element = new CustomIdGrandChildElement();
+		element.content = content;
+		return element;
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+		long deleteByName(String name);
+	}
+
+	interface CustomIdDummyEntityRepository extends CrudRepository<CustomIdDummyEntity, Long> {
 		long deleteByName(String name);
 	}
 
@@ -94,6 +143,11 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		CustomIdDummyEntityRepository customIdDummyEntityRepository() {
+			return factory.getRepository(CustomIdDummyEntityRepository.class);
 		}
 	}
 
@@ -117,5 +171,25 @@ class JdbcRepositoryWithCollectionsChainHsqlIntegrationTests {
 		String content;
 		@Id private Long id;
 	}
+
+    static class CustomIdDummyEntity {
+
+        String name;
+        Set<CustomIdChildElement> content = new HashSet<>();
+        @Id private Long id;
+    }
+
+    static class CustomIdChildElement {
+
+        String name;
+        Set<CustomIdGrandChildElement> content = new HashSet<>();
+        @Id @Column("CHILD_ID") private Long id;
+    }
+
+    static class CustomIdGrandChildElement {
+
+        String content;
+        @Id private Long id;
+    }
 
 }
