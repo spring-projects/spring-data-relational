@@ -195,13 +195,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			Assert.state(this.dataAccessStrategy != null, "DataAccessStrategy is required and must not be null");
 			Assert.state(this.converter != null, "RelationalConverter is required and must not be null");
 
-			JdbcAggregateOperations operations = new JdbcAggregateTemplate(converter, dataAccessStrategy);
-
-			repositoryFactory = new JdbcRepositoryFactory(operations);
-			repositoryFactory.setEntityCallbacks(entityCallbacks);
+			JdbcAggregateTemplate aggregateTemplate = new JdbcAggregateTemplate(converter, dataAccessStrategy);
+			aggregateTemplate.setEntityCallbacks(entityCallbacks);
+			repositoryFactory = new JdbcRepositoryFactory(aggregateTemplate);
 		}
 
-		repositoryFactory.setApplicationEventPublisher(this.publisher);
 		repositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 		repositoryFactory.setBeanFactory(beanFactory);
 
