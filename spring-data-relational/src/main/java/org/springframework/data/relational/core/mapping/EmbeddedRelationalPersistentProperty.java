@@ -55,8 +55,15 @@ class EmbeddedRelationalPersistentProperty implements RelationalPersistentProper
 	}
 
 	@Override
+	public String getEmbeddedSuffix() {
+		return context.withEmbeddedSuffix(delegate.getEmbeddedSuffix());
+	}
+
+	@Override
 	public SqlIdentifier getColumnName() {
-		return delegate.getColumnName().transform(context::withEmbeddedPrefix);
+		return delegate.getColumnName()
+				.transform(context::withEmbeddedPrefix)
+				.transform(context::withEmbeddedSuffix);
 	}
 
 	@Override

@@ -93,7 +93,7 @@ class BasicRelationalPersistentPropertyUnitTests {
 		assertThat(property.getKeyColumn()).isEqualTo(quoted("key_col"));
 	}
 
-	@Test // DATAJDBC-111
+	@Test // DATAJDBC-111, GH-2303
 	void detectsEmbeddedEntity() {
 
 		final RelationalPersistentEntity<?> requiredPersistentEntity = context
@@ -101,11 +101,12 @@ class BasicRelationalPersistentPropertyUnitTests {
 
 		SoftAssertions softly = new SoftAssertions();
 
-		BiConsumer<String, String> checkEmbedded = (name, prefix) -> {
-
+		BiConsumer<String, String[]> checkEmbedded = (name, args) -> {
+			String expectedPrefix = args[0];
+			String expectedSuffix = args[1];
 			RelationalPersistentProperty property = requiredPersistentEntity.getRequiredPersistentProperty(name);
 
-			if (!prefix.isEmpty()) {
+			if (!expectedPrefix.isEmpty() || !expectedSuffix.isEmpty()) {
 				softly.assertThat(property.isEmbedded()) //
 						.describedAs(name + " is embedded") //
 						.isTrue();
@@ -113,13 +114,19 @@ class BasicRelationalPersistentPropertyUnitTests {
 
 			softly.assertThat(property.getEmbeddedPrefix()) //
 					.describedAs(name + " prefix") //
-					.isEqualTo(prefix);
+					.isEqualTo(expectedPrefix);
+
+			softly.assertThat(property.getEmbeddedSuffix()) //
+					.describedAs(name + " suffix") //
+					.isEqualTo(expectedSuffix);
 		};
 
-		checkEmbedded.accept("someList", "");
-		checkEmbedded.accept("id", "");
-		checkEmbedded.accept("embeddableEntity", "");
-		checkEmbedded.accept("prefixedEmbeddableEntity", "prefix");
+		checkEmbedded.accept("someList", new String[]{"", ""});
+		checkEmbedded.accept("id", new String[]{"", ""});
+		checkEmbedded.accept("embeddableEntity", new String[]{"", ""});
+
+		checkEmbedded.accept("prefixedEmbeddableEntity", new String[]{"prefix", ""});
+		checkEmbedded.accept("suffixedEmbeddableEntity", new String[]{"", "_suffixed"});
 
 		softly.assertAll();
 	}
@@ -190,6 +197,18 @@ class BasicRelationalPersistentPropertyUnitTests {
 				.isEqualTo(SqlIdentifier.from(SqlIdentifier.quoted("public"), SqlIdentifier.quoted("my_seq")));
 	}
 
+	@Test // GH-2303
+	void detectsEmbeddedEntitySuffix() {
+		final RelationalPersistentEntity<?> requiredPersistentEntity = context
+				.getRequiredPersistentEntity(DummyEntity.class);
+
+		RelationalPersistentProperty property = requiredPersistentEntity
+				.getRequiredPersistentProperty("suffixedEmbeddableEntity");
+
+		assertThat(property.isEmbedded()).isTrue();
+		assertThat(property.getEmbeddedSuffix()).isEqualTo("_suffixed");
+	}
+
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
@@ -229,6 +248,8 @@ class BasicRelationalPersistentPropertyUnitTests {
 
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix") EmbeddableEntity prefixedEmbeddableEntity;
+
+		private @Embedded(onEmpty = OnEmpty.USE_NULL, suffix = "_suffixed") EmbeddableEntity suffixedEmbeddableEntity;
 
 		public DummyEntity(Long id, SomeEnum someEnum, LocalDateTime localDateTime, ZonedDateTime zonedDateTime,
 				List<String> listOfString, String[] arrayOfString, List<OtherEntity> listOfEntity,
