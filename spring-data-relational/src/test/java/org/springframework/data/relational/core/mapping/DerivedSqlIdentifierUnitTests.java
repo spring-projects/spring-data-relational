@@ -30,13 +30,13 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Mark Paluch
  * @author Kurt Niemi
  */
-public class DerivedSqlIdentifierUnitTests {
+class DerivedSqlIdentifierUnitTests {
 
-	public static final IdentifierProcessing BRACKETS_LOWER_CASE = IdentifierProcessing.create(new Quoting("[", "]"),
+	private static final IdentifierProcessing BRACKETS_LOWER_CASE = IdentifierProcessing.create(new Quoting("[", "]"),
 			LetterCasing.LOWER_CASE);
 
 	@Test // DATAJDBC-386
-	public void quotedSimpleObjectIdentifierWithAdjustableLetterCasing() {
+	void quotedSimpleObjectIdentifierWithAdjustableLetterCasing() {
 
 		SqlIdentifier identifier = new DerivedSqlIdentifier("someName", true);
 
@@ -45,7 +45,7 @@ public class DerivedSqlIdentifierUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void unquotedSimpleObjectIdentifierWithAdjustableLetterCasing() {
+	void unquotedSimpleObjectIdentifierWithAdjustableLetterCasing() {
 
 		SqlIdentifier identifier = new DerivedSqlIdentifier("someName", false);
 		String sql = identifier.toSql(BRACKETS_LOWER_CASE);
@@ -55,7 +55,7 @@ public class DerivedSqlIdentifierUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void quotedMultipartObjectIdentifierWithAdjustableLetterCase() {
+	void quotedMultipartObjectIdentifierWithAdjustableLetterCase() {
 
 		SqlIdentifier identifier = SqlIdentifier.from(new DerivedSqlIdentifier("some", true),
 				new DerivedSqlIdentifier("name", true));
@@ -65,7 +65,7 @@ public class DerivedSqlIdentifierUnitTests {
 	}
 
 	@Test // DATAJDBC-386
-	public void equality() {
+	void equality() {
 
 		SqlIdentifier basis = new DerivedSqlIdentifier("simple", false);
 		SqlIdentifier equal = new DerivedSqlIdentifier("simple", false);

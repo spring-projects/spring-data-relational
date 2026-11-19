@@ -23,13 +23,17 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.core.TypeInformation;
+import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.expression.ValueEvaluationContextProvider;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.spel.EvaluationContextProvider;
+import org.springframework.data.spel.ExpressionDependencies;
 import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
 import org.springframework.util.Assert;
 
@@ -50,8 +54,28 @@ public class RelationalMappingContext
 
 	private boolean forceQuote = true;
 
+	private @Nullable Environment environment;
+
+	private EvaluationContextProvider evaluationContextProvider = EvaluationContextProvider.DEFAULT;
+
+	private final ValueEvaluationContextProvider valueEvaluationContextProvider = new ValueEvaluationContextProvider() {
+
+		@Override
+		public ValueEvaluationContext getEvaluationContext(@Nullable Object rootObject) {
+			return ValueEvaluationContext.of(getEnvironment(), evaluationContextProvider.getEvaluationContext(rootObject));
+		}
+
+		@Override
+		public ValueEvaluationContext getEvaluationContext(@Nullable Object rootObject,
+				ExpressionDependencies dependencies) {
+			return ValueEvaluationContext.of(getEnvironment(),
+					evaluationContextProvider.getEvaluationContext(rootObject, dependencies));
+		}
+	};
+
 	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator = new SqlIdentifierExpressionEvaluator(
-			EvaluationContextProvider.DEFAULT);
+			valueEvaluationContextProvider);
+
 	private boolean singleQueryLoadingEnabled = false;
 
 	/**
@@ -111,12 +135,24 @@ public class RelationalMappingContext
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.sqlIdentifierExpressionEvaluator.setProvider(new ExtensionAwareEvaluationContextProvider(applicationContext));
+
+		if (this.environment == null) {
+			this.environment = applicationContext.getEnvironment();
+		}
+		this.evaluationContextProvider = new ExtensionAwareEvaluationContextProvider(applicationContext);
+	}
+
+	private Environment getEnvironment() {
+
+		if (environment == null) {
+			this.environment = new StandardEnvironment();
+		}
+		return this.environment;
 	}
 
 	@Override
 	public void setEnvironment(Environment environment) {
-		this.sqlIdentifierExpressionEvaluator.setEnvironment(environment);
+		this.environment = environment;
 		super.setEnvironment(environment);
 	}
 
@@ -141,7 +177,8 @@ public class RelationalMappingContext
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
 		BasicRelationalPersistentEntity<T> entity = new BasicRelationalPersistentEntity<>(typeInformation,
-				this.namingStrategy, this.sqlIdentifierExpressionEvaluator);
+				this.namingStrategy);
+		entity.setSqlIdentifierExpressionEvaluator(this.sqlIdentifierExpressionEvaluator);
 		entity.setForceQuote(isForceQuote());
 
 		return entity;
