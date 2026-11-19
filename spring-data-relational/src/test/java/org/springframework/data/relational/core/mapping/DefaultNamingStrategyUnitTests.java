@@ -31,21 +31,21 @@ import org.springframework.data.relational.core.mapping.BasicRelationalPersisten
  * @author Oliver Gierke
  * @author Jens Schauder
  */
-public class DefaultNamingStrategyUnitTests {
+class DefaultNamingStrategyUnitTests {
 
 	private final NamingStrategy target = DefaultNamingStrategy.INSTANCE;
 	private final RelationalMappingContext context = new RelationalMappingContext(target);
 	private final RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test
-	public void getTableName() {
+	void getTableName() {
 
 		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("dummy_sub_entity");
 	}
 
 	@Test
-	public void getColumnName() {
+	void getColumnName() {
 
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
@@ -54,21 +54,21 @@ public class DefaultNamingStrategyUnitTests {
 	}
 
 	@Test
-	public void getReverseColumnName() {
+	void getReverseColumnName() {
 
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("dummy_entity");
 	}
 
 	@Test
-	public void getKeyColumn() {
+	void getKeyColumn() {
 
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("dummy_entity_key");
 	}
 
 	@Test
-	public void getSchema() {
+	void getSchema() {
 		assertThat(target.getSchema()).isEqualTo("");
 	}
 
