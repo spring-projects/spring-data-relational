@@ -21,12 +21,9 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.data.core.TypeInformation;
 import org.springframework.data.expression.ValueExpression;
-import org.springframework.data.expression.ValueExpressionParser;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
-import org.springframework.expression.Expression;
-import org.springframework.expression.common.LiteralExpression;
 import org.springframework.util.StringUtils;
 
 /**
@@ -44,13 +41,12 @@ import org.springframework.util.StringUtils;
 class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
 
-	private static final ValueExpressionParser PARSER = ValueExpressionParser.create();
-
 	private final Lazy<SqlIdentifier> tableName;
 	private final @Nullable ValueExpression tableNameExpression;
 	private final Lazy<Optional<SqlIdentifier>> schemaName;
 	private final @Nullable ValueExpression schemaNameExpression;
-	private final SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator;
+
+	private @Nullable SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator;
 	private boolean forceQuote = true;
 
 	/**
@@ -58,12 +54,9 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 	 *
 	 * @param information must not be {@literal null}.
 	 */
-	BasicRelationalPersistentEntity(TypeInformation<T> information, NamingStrategy namingStrategy,
-			SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
+	BasicRelationalPersistentEntity(TypeInformation<T> information, NamingStrategy namingStrategy) {
 
 		super(information);
-
-		this.sqlIdentifierExpressionEvaluator = sqlIdentifierExpressionEvaluator;
 
 		Lazy<Optional<SqlIdentifier>> defaultSchema = Lazy.of(() -> StringUtils.hasText(namingStrategy.getSchema())
 				? Optional.of(createDerivedSqlIdentifier(namingStrategy.getSchema()))
@@ -75,12 +68,12 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 			this.tableName = Lazy.of(() -> StringUtils.hasText(table.value()) ? createSqlIdentifier(table.value())
 					: createDerivedSqlIdentifier(namingStrategy.getTableName(getType())));
-			this.tableNameExpression = detectExpression(table.value());
+			this.tableNameExpression = ValueExpressionDelegate.detectExpression(table.value());
 
 			this.schemaName = StringUtils.hasText(table.schema())
 					? Lazy.of(() -> Optional.of(createSqlIdentifier(table.schema())))
 					: defaultSchema;
-			this.schemaNameExpression = detectExpression(table.schema());
+			this.schemaNameExpression = ValueExpressionDelegate.detectExpression(table.schema());
 
 		} else {
 
@@ -91,29 +84,24 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 		}
 	}
 
-	/**
-	 * Returns a SpEL {@link Expression} if the given {@link String} is actually an expression that does not evaluate to a
-	 * {@link LiteralExpression} (indicating that no subsequent evaluation is necessary).
-	 *
-	 * @param potentialExpression can be {@literal null}
-	 * @return can be {@literal null}.
-	 */
-	private static @Nullable ValueExpression detectExpression(@Nullable String potentialExpression) {
-
-		if (!StringUtils.hasText(potentialExpression)) {
-			return null;
-		}
-
-		ValueExpression expression = PARSER.parse(potentialExpression);
-		return expression.isLiteral() ? null : expression;
-	}
-
 	private SqlIdentifier createSqlIdentifier(String name) {
 		return isForceQuote() ? SqlIdentifier.quoted(name) : SqlIdentifier.unquoted(name);
 	}
 
 	private SqlIdentifier createDerivedSqlIdentifier(String name) {
 		return new DerivedSqlIdentifier(name, isForceQuote());
+	}
+
+	private SqlIdentifierExpressionEvaluator getSqlIdentifierExpressionEvaluator() {
+
+		if (this.sqlIdentifierExpressionEvaluator == null) {
+			this.sqlIdentifierExpressionEvaluator = ValueExpressionDelegate.getSqlIdentifierExpressionEvaluator();
+		}
+		return this.sqlIdentifierExpressionEvaluator;
+	}
+
+	void setSqlIdentifierExpressionEvaluator(SqlIdentifierExpressionEvaluator sqlIdentifierExpressionEvaluator) {
+		this.sqlIdentifierExpressionEvaluator = sqlIdentifierExpressionEvaluator;
 	}
 
 	public boolean isForceQuote() {
@@ -131,7 +119,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 			return tableName.get();
 		}
 
-		return sqlIdentifierExpressionEvaluator.evaluate(tableNameExpression, isForceQuote());
+		return getSqlIdentifierExpressionEvaluator().evaluate(tableNameExpression, isForceQuote());
 	}
 
 	@Override
@@ -139,7 +127,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 
 		SqlIdentifier schema;
 		if (schemaNameExpression != null) {
-			schema = sqlIdentifierExpressionEvaluator.evaluate(schemaNameExpression, isForceQuote());
+			schema = getSqlIdentifierExpressionEvaluator().evaluate(schemaNameExpression, isForceQuote());
 		} else {
 			schema = schemaName.get().orElse(null);
 		}
@@ -149,7 +137,7 @@ class BasicRelationalPersistentEntity<T> extends BasicPersistentEntity<T, Relati
 		}
 
 		if (schemaNameExpression != null) {
-			schema = sqlIdentifierExpressionEvaluator.evaluate(schemaNameExpression, isForceQuote());
+			schema = getSqlIdentifierExpressionEvaluator().evaluate(schemaNameExpression, isForceQuote());
 		}
 
 		return SqlIdentifier.from(schema, getTableName());

@@ -27,6 +27,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.mock.env.MockEnvironment;
 
 /**
  * Unit tests for {@link RelationalMappingContext}.
@@ -118,6 +119,25 @@ public class RelationalMappingContextUnitTests {
 		AggregatePath aggregatePath2 = context.getAggregatePath(path2);
 
 		assertThat((Object) aggregatePath1).isNotEqualTo(aggregatePath2);
+	}
+
+	@Test // GH-2431
+	void shouldEvaluateTableAndColumnNamesExpressions() {
+
+		context.setEnvironment(
+				new MockEnvironment().withProperty("test.table", "customers").withProperty("test.column", "display_name"));
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(EntityWithExpressions.class);
+
+		assertThat(entity.getTableName()).isEqualTo(SqlIdentifier.quoted("my_customers"));
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnName())
+				.isEqualTo(SqlIdentifier.quoted("my_display_name"));
+	}
+
+	@Table("my_${test.table}")
+	static class EntityWithExpressions {
+		@Id Long id;
+		@Column("my_${test.column}") String name;
 	}
 
 	static class EntityWithUuid {
