@@ -1,12 +1,9 @@
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.expression.ValueEvaluationContext;
+import org.springframework.data.expression.ValueEvaluationContextProvider;
 import org.springframework.data.expression.ValueExpression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.spel.EvaluationContextProvider;
-import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
 import org.springframework.util.Assert;
 
@@ -25,12 +22,11 @@ import org.springframework.util.Assert;
  */
 class SqlIdentifierExpressionEvaluator {
 
-	private EvaluationContextProvider provider;
+	private final ValueEvaluationContextProvider provider;
 
 	private SqlIdentifierSanitizer sanitizer = SqlIdentifierSanitizer.words();
-	private Environment environment = new StandardEnvironment();
 
-	public SqlIdentifierExpressionEvaluator(EvaluationContextProvider provider) {
+	public SqlIdentifierExpressionEvaluator(ValueEvaluationContextProvider provider) {
 		this.provider = provider;
 	}
 
@@ -38,10 +34,9 @@ class SqlIdentifierExpressionEvaluator {
 
 		Assert.notNull(expression, "Expression must not be null.");
 
-		EvaluationContext evaluationContext = provider.getEvaluationContext(null);
-		ValueEvaluationContext valueEvaluationContext = ValueEvaluationContext.of(environment, evaluationContext);
+		ValueEvaluationContext evaluationContext = provider.getEvaluationContext(null);
+		Object value = expression.evaluate(evaluationContext);
 
-		Object value = expression.evaluate(valueEvaluationContext);
 		if (value instanceof SqlIdentifier sqlIdentifier) {
 			return sqlIdentifier;
 		}
@@ -61,17 +56,4 @@ class SqlIdentifierExpressionEvaluator {
 		this.sanitizer = sanitizer;
 	}
 
-	public void setProvider(EvaluationContextProvider provider) {
-
-		Assert.notNull(provider, "EvaluationContextProvider must not be null");
-
-		this.provider = provider;
-	}
-
-	public void setEnvironment(Environment environment) {
-
-		Assert.notNull(environment, "Environment must not be null");
-
-		this.environment = environment;
-	}
 }
