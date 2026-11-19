@@ -190,7 +190,6 @@ public class RelationalMappingContext
 
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
 				simpleTypeHolder, this.namingStrategy);
-		persistentProperty.setSqlIdentifierExpressionEvaluator(this.sqlIdentifierExpressionEvaluator);
 		applyDefaults(persistentProperty);
 
 		return persistentProperty;
@@ -218,7 +217,9 @@ public class RelationalMappingContext
 	}
 
 	protected void applyDefaults(BasicRelationalPersistentProperty persistentProperty) {
+
 		persistentProperty.setForceQuote(isForceQuote());
+		persistentProperty.setSqlIdentifierExpressionEvaluator(this.sqlIdentifierExpressionEvaluator);
 	}
 
 	/**

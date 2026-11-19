@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.mock.env.MockEnvironment;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -128,6 +129,17 @@ public class BasicJdbcPersistentPropertyUnitTests {
 					.as("uuid") //
 					.isFalse();
 		});
+	}
+
+	@Test // GH-2431
+	void evaluatesColumnNameExpressionUsingContextEnvironment() {
+
+		JdbcMappingContext context = new JdbcMappingContext();
+		context.setEnvironment(new MockEnvironment().withProperty("test.column", "display_name"));
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithColumnExpression.class);
+
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo(quoted("my_display_name"));
 	}
 
 	private AggregatePath getPersistentPropertyPath(Class<?> type, String propertyName) {
@@ -224,6 +236,13 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		public void setName(String name) {
 			this.name = name;
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private static class WithColumnExpression {
+
+		@Id Long id;
+		@Column("my_${test.column}") String name;
 	}
 
 	private static class WithCollections {
