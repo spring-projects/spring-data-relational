@@ -77,6 +77,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * @author Viktor Ardelean
  * @author Jaeyeon Kim
  * @author Seungmin Baek
+ * @author Sharang Gupta
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -719,6 +720,18 @@ class SqlGeneratorUnitTests {
 
 		assertThat(update).contains("X_CAPACITY");
 		assertThat(update).doesNotContain("X_ORGANIZATION").doesNotContain("X_EMPLOYEE_NUMBER");
+	}
+
+	@Test // GH-2338
+	void updateExcludesCompositeIdColumnsFromSetClause() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(EmployeeWithCompositeId.class, AnsiDialect.INSTANCE);
+
+		assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase( //
+				"UPDATE \"EMPLOYEE_WITH_COMPOSITE_ID\" " //
+						+ "SET \"X_NAME\" = :X_NAME " //
+						+ "WHERE \"EMPLOYEE_WITH_COMPOSITE_ID\".\"X_EMPLOYEE_NUMBER\" = :X_EMPLOYEE_NUMBER " //
+						+ "AND \"EMPLOYEE_WITH_COMPOSITE_ID\".\"X_ORGANIZATION\" = :X_ORGANIZATION");
 	}
 
 	@Test // DATAJDBC-262

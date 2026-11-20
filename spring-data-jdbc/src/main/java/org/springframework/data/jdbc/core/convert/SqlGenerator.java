@@ -64,6 +64,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Jaeyeon Kim
  * @author Seungmin Baek
+ * @author Sharang Gupta
  */
 public class SqlGenerator {
 
@@ -1437,6 +1438,7 @@ public class SqlGenerator {
 	 *
 	 * @author Mark Paluch
 	 * @author Jens Schauder
+	 * @author Sharang Gupta
 	 */
 	static class Columns {
 
@@ -1456,7 +1458,7 @@ public class SqlGenerator {
 			this.mappingContext = mappingContext;
 			this.converter = converter;
 
-			populateColumnNameCache(entity, "", false);
+			populateColumnNameCache(entity, Nesting.ROOT);
 
 			Set<SqlIdentifier> insertable = new LinkedHashSet<>(nonIdColumnNames);
 			insertable.removeAll(readOnlyColumnNames);
@@ -1472,8 +1474,7 @@ public class SqlGenerator {
 			this.updatableColumns = Collections.unmodifiableSet(updatable);
 		}
 
-		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix,
-				boolean ancestorIsInsertOnly) {
+		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, Nesting nesting) {
 
 			entity.doWithAll(property -> {
 
@@ -1481,8 +1482,7 @@ public class SqlGenerator {
 
 					Association association = Association.from(property, converter);
 					if (association.isComplexIdentifier()) {
-						populateColumnNameCache(association.getRequiredTargetIdentifierEntity(),
-								prefix + property.getEmbeddedPrefix(), ancestorIsInsertOnly || property.isInsertOnly());
+						populateColumnNameCache(association.getRequiredTargetIdentifierEntity(), nesting.descendInto(property));
 						return;
 					}
 				}
@@ -1490,43 +1490,54 @@ public class SqlGenerator {
 				if (!property.isEntity()) {
 
 					// the referencing column of referenced entity is expected to be on the other side of the relation
-					initSimpleColumnName(property, prefix, ancestorIsInsertOnly);
+					initSimpleColumnName(property, nesting);
 				} else if (property.isEmbedded()) {
-					initEmbeddedColumnNames(property, prefix, ancestorIsInsertOnly || property.isInsertOnly());
+					initEmbeddedColumnNames(property, nesting);
 				}
 			});
 		}
 
-		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix,
-				boolean ancestorIsInsertOnly) {
+		private void initSimpleColumnName(RelationalPersistentProperty property, Nesting nesting) {
 
-			SqlIdentifier columnName = property.getColumnName().transform(prefix::concat);
+			SqlIdentifier columnName = property.getColumnName().transform(nesting.prefix()::concat);
 
 			columnNames.add(columnName);
 
-			if (!property.getOwner().isIdProperty(property)) {
-				nonIdColumnNames.add(columnName);
-			} else {
+			if (nesting.partOfIdentifier() || property.isIdProperty()) {
 				idColumnNames.add(columnName);
+			} else {
+				nonIdColumnNames.add(columnName);
 			}
 
 			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
-			if (ancestorIsInsertOnly || property.isInsertOnly()) {
+			if (nesting.insertOnly() || property.isInsertOnly()) {
 				insertOnlyColumnNames.add(columnName);
 			}
 		}
 
-		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix,
-				boolean ancestorIsInsertOnly) {
-
-			String embeddedPrefix = property.getEmbeddedPrefix();
+		private void initEmbeddedColumnNames(RelationalPersistentProperty property, Nesting nesting) {
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
 					.getRequiredPersistentEntity(converter.getColumnType(property));
 
-			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix, ancestorIsInsertOnly);
+			populateColumnNameCache(embeddedEntity, nesting.descendInto(property));
+		}
+
+		/**
+		 * Attributes a property inherits from the properties enclosing it: the accumulated column prefix, whether it is
+		 * reached through an insert-only property and whether it is part of the identifier. A composite identifier is
+		 * declared through {@code @Id} on the enclosing property, so its columns do not carry the annotation themselves.
+		 */
+		private record Nesting(String prefix, boolean insertOnly, boolean partOfIdentifier) {
+
+			static final Nesting ROOT = new Nesting("", false, false);
+
+			Nesting descendInto(RelationalPersistentProperty property) {
+				return new Nesting(prefix + property.getEmbeddedPrefix(), insertOnly || property.isInsertOnly(),
+						partOfIdentifier || property.isIdProperty());
+			}
 		}
 
 		/**
