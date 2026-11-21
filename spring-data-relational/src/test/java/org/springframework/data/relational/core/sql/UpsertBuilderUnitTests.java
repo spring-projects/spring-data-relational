@@ -19,15 +19,26 @@ import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.relational.core.sql.UpsertBuilder.BuildUpsert;
 
 /**
  * Unit tests for {@link UpsertBuilder}.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  */
 class UpsertBuilderUnitTests {
+
+	@Test // GH-2277
+	void conditionalUpdateRequiresColumnsToUpdate() {
+
+		Table table = SQL.table("users");
+		Column id = table.column("id");
+		BuildUpsert builder = StatementBuilder.upsert(table).insert(id.set(SQL.bindMarker(":id")))
+				.onConflict(it -> it.with(id).updateRemainingColumns()).where(id.isEqualTo(SQL.bindMarker(":expectedId")));
+
+		assertThatExceptionOfType(IllegalStateException.class).isThrownBy(builder::build);
+	}
 
 	@Test // GH-493
 	void buildErrorsWhenConflictColumnsNotPartOfInsert() {
@@ -62,6 +73,20 @@ class UpsertBuilderUnitTests {
 				"WHEN MATCHED THEN UPDATE SET", //
 				"_t.name = _s.name", //
 				"WHEN NOT MATCHED THEN INSERT (id, name) VALUES (_s.id, _s.name)");
+	}
+
+	@Test // GH-2277
+	void toStringOfConditionalUpsertIncludesTheUpdateCondition() {
+
+		Table table = SQL.table("users");
+		Column id = table.column("id");
+		Column version = table.column("version");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(id.set(SQL.bindMarker(":id")), version.set(SQL.bindMarker(":nextVersion")))
+				.onConflict(it -> it.with(id).update(version)).where(version.isEqualTo(SQL.bindMarker(":previousVersion")))
+				.build();
+
+		assertThat(upsert.toString()).contains("users", "version", ":id", ":nextVersion", ":previousVersion");
 	}
 
 }

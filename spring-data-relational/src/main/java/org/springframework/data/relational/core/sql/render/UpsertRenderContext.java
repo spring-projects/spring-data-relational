@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql.render;
  * Configuration for upsert SQL rendering.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 public interface UpsertRenderContext {
@@ -27,5 +28,13 @@ public interface UpsertRenderContext {
 	 * @return true if the database supports upsert.
 	 */
 	boolean supportsUpsert();
+
+	/**
+	 * @return whether the dialect supports a condition restricting conflict updates.
+	 * @since 4.2
+	 */
+	default boolean supportsUpdateCondition() {
+		return false;
+	}
 
 }
