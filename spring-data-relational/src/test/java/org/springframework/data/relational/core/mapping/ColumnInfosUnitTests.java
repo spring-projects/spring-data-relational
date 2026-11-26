@@ -22,15 +22,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
-
 /**
  * Unit tests for the construction of {@link org.springframework.data.relational.core.mapping.AggregatePath.ColumnInfos}
  *
  * @author Jens Schauder
+ * @author Jacques Mironneau
  */
 class ColumnInfosUnitTests {
 
@@ -77,6 +85,34 @@ class ColumnInfosUnitTests {
 		List<String> collector = new ArrayList<>();
 		columnInfos.forEach((ap, ci) -> collector.add(ap.toDotPath() + "+" + ci.name()));
 		assertThat(collector).containsExactly("id.one+\"ONE\"", "id.two+\"TWO\"");
+	}
+	@Test
+	void toColumnListIsThreadSafeUnderConcurrentAccess() throws Exception {
+
+		int threads = 16;
+		ExecutorService pool = Executors.newFixedThreadPool(threads);
+
+		try {
+			for (int iteration = 0; iteration < 50; iteration++) {
+				AggregatePath.ColumnInfos columnInfos = basePath(DummyEntity.class).getTableInfo().idColumnInfos();
+				CyclicBarrier barrier = new CyclicBarrier(threads);
+				List<Future<List<Column>>> futures = new ArrayList<>(threads);
+
+				for (int i = 0; i < threads; i++) {
+					futures.add(pool.submit(() -> {
+						barrier.await();
+						return columnInfos.toColumnList(TABLE);
+					}));
+				}
+
+				for (Future<List<Column>> future : futures) {
+					assertThat(future.get(5, TimeUnit.SECONDS)).containsExactly(TABLE.column(ID));
+				}
+			}
+		} finally {
+			pool.shutdown();
+			assertThat(pool.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+		}
 	}
 
 	private AggregatePath getPath(Class<?> type, String name) {
