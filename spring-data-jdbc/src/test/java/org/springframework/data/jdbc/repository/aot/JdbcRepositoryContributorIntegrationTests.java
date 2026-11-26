@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -187,6 +188,14 @@ class JdbcRepositoryContributorIntegrationTests {
 	void shouldFindBetween() {
 
 		List<User> users = fragment.findAllByAgeBetween(40, 51);
+
+		assertThat(users).hasSize(2);
+	}
+
+	@Test // GH-2382
+	void shouldFindBetweenAsSet() {
+
+		Set<User> users = fragment.findUsersByAgeBetween(40, 51);
 
 		assertThat(users).hasSize(2);
 	}
