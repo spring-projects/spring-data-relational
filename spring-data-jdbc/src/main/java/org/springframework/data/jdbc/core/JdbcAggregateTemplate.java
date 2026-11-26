@@ -69,6 +69,7 @@ import org.springframework.util.ClassUtils;
  * @author Sergey Korotaev
  * @author Mikhail Polivakha
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  */
 @SuppressWarnings("removal")
 public class JdbcAggregateTemplate implements JdbcAggregateOperations, ApplicationContextAware {
@@ -649,9 +650,26 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations, Applicati
 
 	private <T> RootAggregateChange<T> createUpsertChange(T instance) {
 
-		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
-		new RelationalEntityUpsertWriter<T>(context).write(instance, aggregateChange);
+		EntityAndPreviousVersion<T> entityAndVersion = prepareVersionForUpsert(instance);
+		RootAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(entityAndVersion.entity,
+				entityAndVersion.version);
+		new RelationalEntityUpsertWriter<T>(context).write(entityAndVersion.entity, aggregateChange);
 		return aggregateChange;
+	}
+
+	private <T> EntityAndPreviousVersion<T> prepareVersionForUpsert(T instance) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(instance);
+		if (!persistentEntity.hasVersionProperty()) {
+			return new EntityAndPreviousVersion<>(instance, null);
+		}
+
+		Number version = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance, persistentEntity, converter);
+		boolean primitiveVersion = persistentEntity.getRequiredVersionProperty().getActualType().isPrimitive();
+		if (version == null || (primitiveVersion && version.longValue() == 0)) {
+			return new EntityAndPreviousVersion<>(prepareVersionForInsert(instance), null);
+		}
+		return prepareVersionForUpdate(instance);
 	}
 
 	private <T> T prepareVersionForInsert(T instance) {

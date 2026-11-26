@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.UpsertBuilder.BuildUpsert;
 import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertInsert;
 import org.springframework.data.relational.core.sql.UpsertBuilder.UpsertOnMatch;
@@ -30,6 +31,7 @@ import org.springframework.util.ObjectUtils;
  * Default {@link UpsertBuilder} implementation.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 class DefaultUpsertBuilder
@@ -39,6 +41,7 @@ class DefaultUpsertBuilder
 	private final List<Assignment> assignments = new ArrayList<>();
 	private final List<Column> conflictColumns = new ArrayList<>();
 	private final List<Column> updateColumns = new ArrayList<>();
+	private @Nullable Condition updateCondition;
 
 	DefaultUpsertBuilder(Table table) {
 
@@ -86,14 +89,25 @@ class DefaultUpsertBuilder
 	}
 
 	@Override
+	public BuildUpsert where(Condition condition) {
+
+		Assert.notNull(condition, "Condition must not be null");
+		this.updateCondition = condition;
+		return this;
+	}
+
+	@Override
 	public Upsert build() {
 		validate();
-		return new DefaultUpsert(this.table, this.assignments, this.conflictColumns, this.updateColumns);
+		return new DefaultUpsert(this.table, this.assignments, this.conflictColumns, this.updateColumns,
+				this.updateCondition);
 	}
 
 	void validate() {
 
 		Assert.state(!this.conflictColumns.isEmpty(), "Conflict columns must not be empty");
+		Assert.state(this.updateCondition == null || !this.updateColumns.isEmpty(),
+				"Update columns must not be empty when an update condition is specified");
 
 		for (Column column : this.conflictColumns) {
 

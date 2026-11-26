@@ -17,10 +17,16 @@ package org.springframework.data.jdbc.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.data.jdbc.core.convert.NonQuotingDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcHsqlDbDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcMariaDbDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcOracleDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
@@ -28,6 +34,7 @@ import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.Upsert;
@@ -38,6 +45,7 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * Unit tests for rendering {@link Upsert}.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  */
 class UpsertRendererUnitTests {
 
@@ -132,6 +140,66 @@ class UpsertRendererUnitTests {
 
 	private RenderContext getRenderContext(Dialect dialect) {
 		return new RenderContextFactory(dialect).createRenderContext();
+	}
+
+	@Test // GH-2277
+	void postgresRendersConditionalUpsertWithQuotedNamesAndSeparateVersionBinding() {
+
+		Table table = Table.create(SqlIdentifier.from(SqlIdentifier.quoted("sample"), SqlIdentifier.quoted("Account")));
+		var id = table.column(SqlIdentifier.quoted("Id"));
+		var version = table.column(SqlIdentifier.quoted("Version"));
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(id.set(SQL.bindMarker(":id")), version.set(SQL.bindMarker(":nextVersion")))
+				.onConflict(it -> it.with(id).update(version)).where(version.isEqualTo(SQL.bindMarker(":previousVersion")))
+				.build();
+
+		String sql = SqlRenderer.create(getRenderContext(JdbcPostgresDialect.INSTANCE)).render(upsert);
+
+		assertThat(sql).isEqualToIgnoringWhitespace(
+				"INSERT INTO \"sample\".\"Account\" (\"Id\", \"Version\") VALUES (:id, :nextVersion) "
+						+ "ON CONFLICT (\"Id\") DO UPDATE SET \"Version\" = EXCLUDED.\"Version\" "
+						+ "WHERE \"sample\".\"Account\".\"Version\" = :previousVersion");
+	}
+
+	@ParameterizedTest // GH-2277
+	@MethodSource("dialectsWithoutConditionalUpsert")
+	void unsupportedDialectsRejectConditionalUpsert(Dialect dialect) {
+
+		Table table = SQL.table("account");
+		var id = table.column("id");
+		var version = table.column("version");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(id.set(SQL.bindMarker(":id")), version.set(SQL.bindMarker(":version")))
+				.onConflict(it -> it.with(id).update(version)).where(version.isEqualTo(SQL.bindMarker(":previousVersion")))
+				.build();
+
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> SqlRenderer.create(getRenderContext(dialect)).render(upsert));
+	}
+
+	@Test // GH-2277
+	void postgresRendersTargetAliasReferencedByUpdateCondition() {
+
+		Table table = SQL.table("account").as(SqlIdentifier.quoted("Current"));
+		var id = table.column("id");
+		var version = table.column("version");
+		Upsert upsert = StatementBuilder.upsert(table)
+				.insert(id.set(SQL.bindMarker(":id")), version.set(SQL.bindMarker(":nextVersion")))
+				.onConflict(it -> it.with(id).update(version)).where(version.isEqualTo(SQL.bindMarker(":previousVersion")))
+				.build();
+
+		String sql = SqlRenderer.create(getRenderContext(JdbcPostgresDialect.INSTANCE)).render(upsert);
+
+		assertThat(sql)
+				.isEqualToIgnoringWhitespace("INSERT INTO account AS \"Current\" (id, version) VALUES (:id, :nextVersion) "
+						+ "ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version "
+						+ "WHERE \"Current\".version = :previousVersion");
+	}
+
+	static Stream<Dialect> dialectsWithoutConditionalUpsert() {
+		return Stream.of(JdbcH2Dialect.INSTANCE, JdbcHsqlDbDialect.INSTANCE, JdbcMySqlDialect.INSTANCE,
+				JdbcMariaDbDialect.INSTANCE, JdbcOracleDialect.INSTANCE, JdbcSqlServerDialect.INSTANCE,
+				JdbcDb2Dialect.INSTANCE);
 	}
 
 }

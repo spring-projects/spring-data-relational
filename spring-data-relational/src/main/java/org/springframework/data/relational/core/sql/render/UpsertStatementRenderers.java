@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -29,6 +30,7 @@ import org.springframework.util.Assert;
  * Concrete {@link UpsertStatementRenderer} implementations.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 class UpsertStatementRenderers {
@@ -157,6 +159,9 @@ class UpsertStatementRenderers {
 
 			CharSequence tableName = ctx.tableName(table);
 			CharSequence insertColumnNames = ctx.columnNames(columns.insertColumns(), Collectors.joining(", "));
+			if (table instanceof Aliased) {
+				tableName = tableName + " AS " + NameRenderer.reference(ctx.renderContext(), table);
+			}
 			CharSequence conflictColumnNames = ctx.columnNames(columns.conflictColumns(), Collectors.joining(", "));
 			CharSequence bindMarkers = ctx.bindMarkers(columns.insertColumns(), Collectors.joining(", "));
 
@@ -171,8 +176,9 @@ class UpsertStatementRenderers {
 			CharSequence setValues = ctx.assignments(SqlIdentifier.EMPTY, columns.updateColumns(), SqlIdentifier.EMPTY,
 					"EXCLUDED.%s"::formatted, Collectors.joining(", "));
 
-			return "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s".formatted(//
-					tableName, insertColumnNames, bindMarkers, conflictColumnNames, setValues);
+			String condition = columns.updateCondition() == null ? "" : " WHERE " + columns.updateCondition();
+			return "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s%s".formatted(//
+					tableName, insertColumnNames, bindMarkers, conflictColumnNames, setValues, condition);
 		}
 
 	}

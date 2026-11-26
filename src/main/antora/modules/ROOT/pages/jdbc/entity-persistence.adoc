@@ -87,7 +87,17 @@ The operation performs a native database upsert: Insert the row when no matching
 Note that this operation requires the entity instance to have an identifier value.
 Database dialect support is required as well: The feature is available for PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, DB2, and HSQLDB.
 
-NOTE: Upserts currently do not support optimistic locking.
+For entities with a `@Version` property, optimistic locking is supported with PostgreSQL.
+New entities receive version `0` for wrapper version types or `1` for primitive version types.
+An entity with an existing version receives the next version, and a conflicting row is updated only if its stored version matches the entity's previous version.
+A version mismatch raises `OptimisticLockingFailureException` without modifying the stored aggregate.
+An entity with a new version (`null` for wrapper types or `0` for primitive types) cannot overwrite an existing row.
+
+If an entity already carries a version but no row exists for its identifier, upsert inserts it with the next version.
+This also permits recreating a deleted row.
+Use a transaction when upserting aggregates with referenced entities so that a failure in a subsequent child operation rolls back the entire aggregate change.
+
+NOTE: Versioned upserts with other dialects raise `UnsupportedOperationException`. Upserts without a version property retain their existing behavior.
 
 === Querying
 

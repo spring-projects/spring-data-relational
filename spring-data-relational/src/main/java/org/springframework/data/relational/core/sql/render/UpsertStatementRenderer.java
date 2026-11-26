@@ -22,7 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -37,6 +36,7 @@ import org.springframework.data.relational.core.sql.Table;
  * renderers are defined in {@link UpsertStatementRenderers}.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 interface UpsertStatementRenderer {
@@ -217,14 +217,26 @@ interface UpsertStatementRenderer {
 		private final List<Column> insertColumns;
 		private final List<Column> conflictColumns;
 		private final List<Column> updateColumns;
+		private final @Nullable CharSequence updateCondition;
 
 		public Columns(List<Column> insertColumns, List<Column> conflictColumns, List<Column> updateColumns,
 				Map<SqlIdentifier, CharSequence> bindings) {
+			this(insertColumns, conflictColumns, updateColumns, bindings, null);
+		}
+
+		public Columns(List<Column> insertColumns, List<Column> conflictColumns, List<Column> updateColumns,
+				Map<SqlIdentifier, CharSequence> bindings, @Nullable CharSequence updateCondition) {
 
 			this.bindings = bindings;
 			this.insertColumns = insertColumns;
 			this.conflictColumns = conflictColumns;
 			this.updateColumns = updateColumns;
+			this.updateCondition = updateCondition;
+		}
+
+		@Nullable
+		CharSequence updateCondition() {
+			return updateCondition;
 		}
 
 		/**

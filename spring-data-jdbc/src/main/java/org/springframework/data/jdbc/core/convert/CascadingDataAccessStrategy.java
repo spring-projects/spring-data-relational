@@ -53,6 +53,7 @@ import org.springframework.util.Assert;
  * @author Sergey Korotaev
  * @author Christoph Strobl
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -92,6 +93,12 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> int upsert(T objectToSave, Class<? super T> domainType) {
 		return collect(das -> das.upsert(objectToSave, domainType));
+	}
+
+	@Override
+	public <T> int upsertWithVersion(T objectToSave, Class<? super T> domainType, @Nullable Number previousVersion) {
+		return cascadePropagatingOptimisticLocking(das -> das.upsertWithVersion(objectToSave, domainType, previousVersion),
+				true);
 	}
 
 	@Override
@@ -269,6 +276,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	 * {@link OptimisticLockingFailureException}, since those are not a sign that query in question is not implemented.
 	 */
 	private <T> T cascadePropagatingOptimisticLocking(Function<DataAccessStrategy, T> function) {
+		return cascadePropagatingOptimisticLocking(function, false);
+	}
+
+	private <T> T cascadePropagatingOptimisticLocking(Function<DataAccessStrategy, T> function,
+			boolean preserveUnsupported) {
 
 		List<Exception> exceptions = new ArrayList<>();
 		for (DataAccessStrategy strategy : strategies) {
@@ -280,7 +292,12 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 				exceptions.add(ex);
 			}
 		}
-		throw new CombinedDataAccessException("Failed to perform data access with all available strategies",
-				Collections.unmodifiableList(exceptions));
+		CombinedDataAccessException failure = new CombinedDataAccessException(
+				"Failed to perform data access with all available strategies", Collections.unmodifiableList(exceptions));
+		if (preserveUnsupported && exceptions.stream().allMatch(UnsupportedOperationException.class::isInstance)) {
+			throw new UnsupportedOperationException("Versioned upsert is not supported by any configured DataAccessStrategy",
+					failure);
+		}
+		throw failure;
 	}
 }

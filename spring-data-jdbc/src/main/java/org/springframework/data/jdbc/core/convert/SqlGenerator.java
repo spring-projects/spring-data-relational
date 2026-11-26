@@ -64,6 +64,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Jaeyeon Kim
  * @author Seungmin Baek
+ * @author YeongJae Min
  */
 public class SqlGenerator {
 
@@ -425,7 +426,23 @@ public class SqlGenerator {
 	 * @since 4.1
 	 */
 	String getUpsert(Set<SqlIdentifier> additionalColumns) {
-		return render(createUpsertSql(additionalColumns));
+		return render(createUpsertSql(additionalColumns, false));
+	}
+
+	/**
+	 * Create an upsert whose conflict update requires the previous optimistic locking version.
+	 *
+	 * @param additionalColumns additional insert columns.
+	 * @return the upsert SQL statement.
+	 * @throws UnsupportedOperationException if the dialect does not support versioned upsert.
+	 * @since 4.2
+	 */
+	String getUpsertWithVersion(Set<SqlIdentifier> additionalColumns) {
+
+		if (!renderContext.getUpsertRenderContext().supportsUpsert()) {
+			throw new UnsupportedOperationException("Versioned upsert is not supported by dialect");
+		}
+		return render(createUpsertSql(additionalColumns, true));
 	}
 
 	/**
@@ -433,7 +450,7 @@ public class SqlGenerator {
 	 * @return
 	 * @since 4.1
 	 */
-	private Upsert createUpsertSql(Set<SqlIdentifier> additionalColumns) {
+	private Upsert createUpsertSql(Set<SqlIdentifier> additionalColumns, boolean withVersion) {
 
 		Table table = getTable();
 
@@ -451,10 +468,14 @@ public class SqlGenerator {
 				.map(this::assignColumnValue) //
 				.collect(Collectors.toList());
 
-		return StatementBuilder.upsert(table) //
+		UpsertBuilder.BuildUpsert builder = StatementBuilder.upsert(table) //
 				.insert(assignments) //
-				.onConflict(it -> it.with(idColumns).update(updateColumns)) //
-				.build();
+				.onConflict(it -> it.with(idColumns).update(updateColumns));
+
+		if (withVersion) {
+			builder.where(getVersionColumn().isEqualTo(getBindMarker(VERSION_SQL_PARAMETER)));
+		}
+		return builder.build();
 	}
 
 	/**

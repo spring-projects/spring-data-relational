@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.util.Assert;
 
@@ -25,17 +26,20 @@ import org.springframework.util.Assert;
  * Default implementation of {@link Upsert}.
  *
  * @author Christoph Strobl
+ * @author YeongJae Min
  * @since 4.1
  */
 record DefaultUpsert(Table table, List<Assignment> assignments, List<Column> conflictColumns,
-		List<Column> updateColumns) implements Upsert {
+		List<Column> updateColumns, @Nullable Condition updateCondition) implements Upsert {
 
-	DefaultUpsert(Table table, List<Assignment> assignments, List<Column> conflictColumns, List<Column> updateColumns) {
+	DefaultUpsert(Table table, List<Assignment> assignments, List<Column> conflictColumns, List<Column> updateColumns,
+			@Nullable Condition updateCondition) {
 
 		this.table = table;
 		this.assignments = new ArrayList<>(assignments);
 		this.conflictColumns = new ArrayList<>(conflictColumns);
 		this.updateColumns = new ArrayList<>(updateColumns);
+		this.updateCondition = updateCondition;
 	}
 
 	@Override
@@ -59,6 +63,11 @@ record DefaultUpsert(Table table, List<Assignment> assignments, List<Column> con
 	}
 
 	@Override
+	public @Nullable Condition getUpdateCondition() {
+		return updateCondition();
+	}
+
+	@Override
 	public void visit(Visitor visitor) {
 
 		Assert.notNull(visitor, "Visitor must not be null");
@@ -69,12 +78,22 @@ record DefaultUpsert(Table table, List<Assignment> assignments, List<Column> con
 		this.conflictColumns.forEach(col -> col.visit(visitor));
 		this.assignments.forEach(it -> it.visit(visitor));
 		this.updateColumns.forEach(col -> col.visit(visitor));
+		if (this.updateCondition != null) {
+			this.updateCondition.visit(visitor);
+		}
 
 		visitor.leave(this);
 	}
 
 	@Override
 	public String toString() {
+
+		if (this.updateCondition != null) {
+			// Keep diagnostics independent of conditional-upsert dialect support.
+			return "Upsert{table=" + this.table + ", assignments=" + this.assignments + ", conflictColumns="
+					+ this.conflictColumns + ", updateColumns=" + this.updateColumns + ", updateCondition=" + this.updateCondition
+					+ '}';
+		}
 		return SqlRenderer.toString(this);
 	}
 

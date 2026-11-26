@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -69,6 +68,7 @@ import org.springframework.util.Assert;
  * @author Sergey Korotaev
  * @author Mikhail Polivakha
  * @author Jaeyeon Kim
+ * @author YeongJae Min
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -191,6 +191,24 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String statement = sql(domainType).getUpsert(parameterSource.getIdentifiers());
 
 		return operations.update(statement, parameterSource);
+	}
+
+	@Override
+	public <T> int upsertWithVersion(T objectToSave, Class<? super T> domainType, @Nullable Number previousVersion) {
+
+		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(domainType);
+		RelationalPersistentProperty versionProperty = persistentEntity.getRequiredVersionProperty();
+		SqlIdentifierParameterSource parameterSource = parametersFactory.forInsert(objectToSave, domainType,
+				Identifier.empty(), IdValueSource.PROVIDED);
+		String statement = sql(domainType).getUpsertWithVersion(parameterSource.getIdentifiers());
+		parameterSource.addValue(VERSION_SQL_PARAMETER, converter.writeJdbcValue(previousVersion,
+				converter.getColumnType(versionProperty), converter.getTargetSqlType(versionProperty)));
+
+		int affectedRows = operations.update(statement, parameterSource);
+		if (affectedRows == 0) {
+			throw OptimisticLockingUtils.updateFailed(objectToSave, previousVersion, persistentEntity);
+		}
+		return affectedRows;
 	}
 
 	@Override
