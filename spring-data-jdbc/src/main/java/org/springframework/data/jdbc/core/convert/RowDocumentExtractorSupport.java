@@ -266,25 +266,6 @@ abstract class RowDocumentExtractorSupport {
 			}
 		}
 
-		/**
-		 * Read properties of embedded from the result set and store them under their column names
-		 */
-		private void collectEmbeddedValues(RS row, RowDocument document, RelationalPersistentProperty property,
-				AggregatePath path) {
-
-			RelationalPersistentEntity<?> embeddedHolder = aggregateContext.getRequiredPersistentEntity(property);
-			for (RelationalPersistentProperty embeddedProperty : embeddedHolder) {
-
-				if (embeddedProperty.isQualified() || embeddedProperty.isCollectionLike() || embeddedProperty.isEntity()) {
-					// hell, no!
-					throw new UnsupportedOperationException("Reading maps and collections into embeddable isn't supported yet");
-				}
-
-				AggregatePath nested = path.append(embeddedProperty);
-				aggregateContext.collectValue(row, nested, document, nested.getColumnInfo().name());
-			}
-		}
-
 		@Override
 		boolean hasResult() {
 
