@@ -91,7 +91,7 @@ public class RelationalMappingContextUnitTests {
 		assertThat((Object) one).isSameAs(two);
 	}
 
-	@Test // GH-1586
+	@Test // GH-1586, GH-2303
 	void correctlyCascadesPrefix() {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithEmbedded.class);
@@ -103,8 +103,10 @@ public class RelationalMappingContextUnitTests {
 		RelationalPersistentProperty name = childEntity.getRequiredPersistentProperty("name");
 
 		assertThat(parent.getEmbeddedPrefix()).isEqualTo("prnt_");
+		assertThat(parent.getEmbeddedSuffix()).isEqualTo("_prnt");
 		assertThat(child.getEmbeddedPrefix()).isEqualTo("prnt_chld_");
-		assertThat(name.getColumnName()).isEqualTo(SqlIdentifier.quoted("PRNT_CHLD_NAME"));
+		assertThat(child.getEmbeddedSuffix()).isEqualTo("_chld_prnt");
+		assertThat(name.getColumnName()).isEqualTo(SqlIdentifier.quoted("PRNT_CHLD_NAME_CHLD_PRNT"));
 	}
 
 	@Test // GH-1657
@@ -145,7 +147,7 @@ public class RelationalMappingContextUnitTests {
 	}
 
 	static class WithEmbedded {
-		@Embedded.Empty(prefix = "prnt_") Parent parent;
+		@Embedded.Empty(prefix = "prnt_", suffix = "_prnt") Parent parent;
 	}
 
 	static class WithEmbeddedId {
@@ -158,7 +160,7 @@ public class RelationalMappingContextUnitTests {
 
 	static class Parent {
 
-		@Embedded.Empty(prefix = "chld_") Child child;
+		@Embedded.Empty(prefix = "chld_", suffix = "_chld") Child child;
 	}
 
 	static class Child {
